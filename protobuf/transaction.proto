@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+package transaction;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "server/internal/infrastructure/messaging/dao";
+
+message Transaction {
+  int32 id = 1;
+  int32 amount = 2;
+  int32 currency = 3;
+  int32 sender = 4;
+  int32 receiver = 5;
+  int32 category = 6;
+  google.protobuf.Timestamp date = 7;
+  optional string note = 8;
+}
+
+message GetAllTransactionsRequest {
+}
+
+message GetAllTransactionsResponse {
+  repeated Transaction transactions = 1;
+}
+
+message CreateTransactionRequest {
+  int32 amount = 1;
+  int32 currency = 2;
+  int32 sender = 3;
+  int32 receiver = 4;
+  int32 category = 5;
+  google.protobuf.Timestamp date = 6;
+  optional string note = 7;
+}
+
+message CreateTransactionResponse {
+  int32 id = 1;
+}
+
+service TransactionService {
+  rpc GetAllTransactions (GetAllTransactionsRequest) returns (GetAllTransactionsResponse);
+  rpc CreateTransaction (CreateTransactionRequest) returns (CreateTransactionResponse);
+}

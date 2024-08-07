@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package account;
+
+option go_package = "server/internal/infrastructure/messaging/dao";
+
+message Account {
+  int32 id = 1;
+  string name = 2;
+  int32 initial_amount = 3;
+}
+
+message GetAllAccountsRequest {
+}
+
+message GetAllAccountsResponse {
+  repeated Account accounts = 1;
+}
+
+message CreateAccountRequest {
+  string name = 1;
+  int32 initial_amount = 2;
+}
+
+message CreateAccountResponse {
+  int32 id = 1;
+}
+
+service AccountService {
+  rpc GetAllAccounts (GetAllAccountsRequest) returns (GetAllAccountsResponse);
+  rpc CreateAccount (CreateAccountRequest) returns (CreateAccountResponse);
+}

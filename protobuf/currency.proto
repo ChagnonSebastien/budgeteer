@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package currency;
+
+option go_package = "server/internal/infrastructure/messaging/dao";
+
+message Currency {
+  int32 id = 1;
+  string name = 2;
+  string symbol = 3;
+}
+
+message GetAllCurrenciesRequest {
+}
+
+message GetAllCurrenciesResponse {
+  repeated Currency currencies = 1;
+}
+
+message CreateCurrencyRequest {
+  string name = 1;
+  string symbol = 2;
+}
+
+message CreateCurrencyResponse {
+  int32 id = 1;
+}
+
+service CurrencyService {
+  rpc GetAllCurrencies (GetAllCurrenciesRequest) returns (GetAllCurrenciesResponse);
+  rpc CreateCurrency (CreateCurrencyRequest) returns (CreateCurrencyResponse);
+}

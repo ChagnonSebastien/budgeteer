@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+package category;
+
+option go_package = "server/internal/infrastructure/messaging/dao";
+
+message Category {
+  int32 id = 1;
+  string name = 2;
+  string icon_name = 3;
+  int32 parent_id = 4;
+}
+
+message GetAllCategoriesRequest {
+}
+
+message GetAllCategoriesResponse {
+  repeated Category categories = 1;
+}
+
+message CreateCategoryRequest {
+  string name = 1;
+  string icon_name = 2;
+  int32 parent_id = 3;
+}
+
+message CreateCategoryResponse {
+  int32 id = 1;
+}
+
+service CategoryService {
+  rpc GetAllCategories (GetAllCategoriesRequest) returns (GetAllCategoriesResponse);
+  rpc CreateCategory (CreateCategoryRequest) returns (CreateCategoryResponse);
+}

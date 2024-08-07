@@ -1,0 +1,9 @@
+version: "2"
+sql:
+  - engine: "postgresql"
+    queries: "internal/infrastructure/db/dao/queries"
+    schema: "liquibase/changelog"
+    gen:
+      go:
+        package: "dao"
+        out: "internal/infrastructure/db/dao"
