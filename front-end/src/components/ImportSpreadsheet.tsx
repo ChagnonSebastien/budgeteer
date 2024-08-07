@@ -1,7 +1,7 @@
 import { GrpcWebFetchTransport } from '@protobuf-ts/grpcweb-transport';
-import { AccountServiceClient } from '../messaging/dao/account.client';
+import { AccountServiceClient } from '../messaging/dto/account.client';
 import './ImportSpreadsheet.css';
-import { CreateAccountRequest } from '../messaging/dao/account';
+import { CreateAccountRequest } from '../messaging/dto/account';
 
 const transport = new GrpcWebFetchTransport({
   baseUrl: 'http://localhost:8080',

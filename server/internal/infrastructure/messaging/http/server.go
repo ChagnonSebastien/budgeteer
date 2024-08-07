@@ -4,10 +4,14 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"path/filepath"
 
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
 	"google.golang.org/grpc"
 )
+
+const webDirectory = "/app/static/web"
 
 type GrpcWebServer struct {
 	Port       int
@@ -22,7 +26,16 @@ func (s *GrpcWebServer) Serve() {
 			if wrappedGrpc.IsGrpcWebRequest(req) {
 				wrappedGrpc.ServeHTTP(resp, req)
 			} else {
-				http.NotFound(resp, req)
+				if req.URL.Path != "/" {
+					filePath := filepath.Join(webDirectory, req.URL.Path)
+					_, err := os.Stat(filePath)
+					if err == nil {
+						http.ServeFile(resp, req, filePath)
+						return
+					}
+				}
+
+				http.ServeFile(resp, req, filepath.Join(webDirectory, "index.html"))
 			}
 		}),
 		Addr: fmt.Sprintf(":%d", s.Port),

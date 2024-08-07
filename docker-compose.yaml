@@ -3,7 +3,7 @@ name: budgeteer
 services:
   budget-server:
     build:
-      context: ./server
+      context: .
       dockerfile: ./docker/Dockerfile
     ports:
       - "8080:8080"
