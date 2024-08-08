@@ -8,8 +8,8 @@ import (
 	"chagnon.dev/budget-server/internal/infrastructure/db/dao"
 )
 
-func (c *Repository) GetAllCategories(ctx context.Context) ([]model.Category, error) {
-	categoriesDao, err := c.queries.GetAllCategories(ctx)
+func (r *Repository) GetAllCategories(ctx context.Context) ([]model.Category, error) {
+	categoriesDao, err := r.queries.GetAllCategories(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -32,9 +32,10 @@ func (c *Repository) GetAllCategories(ctx context.Context) ([]model.Category, er
 	return categories, nil
 }
 
-func (c *Repository) CreateCategory(ctx context.Context, name, iconName string, parentId int) (int, error) {
-	id, err := c.queries.CreateCategory(ctx, dao.CreateCategoryParams{
-		Name: name,
+func (r *Repository) CreateCategory(ctx context.Context, name, iconName string, parentId int) (int, error) {
+	id, err := r.queries.CreateCategory(ctx, dao.CreateCategoryParams{
+		Name:     name,
+		IconName: iconName,
 		Parent: sql.NullInt32{
 			Int32: int32(parentId),
 			Valid: parentId != 0,

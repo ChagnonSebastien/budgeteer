@@ -24,7 +24,7 @@ func (s *CategoryHandler) CreateCategory(ctx context.Context, req *dto.CreateCat
 	}, nil
 }
 
-func (s *CategoryHandler) GetAllCategories(ctx context.Context, req *dto.GetAllCategoriesRequest) (*dto.GetAllCategoriesResponse, error) {
+func (s *CategoryHandler) GetAllCategories(ctx context.Context, _ *dto.GetAllCategoriesRequest) (*dto.GetAllCategoriesResponse, error) {
 	categories, err := s.categoryService.GetAllCategories(ctx)
 	if err != nil {
 		return nil, err

@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -43,7 +44,7 @@ var startCmd = &cobra.Command{
 			config.Database.Port,
 		)
 		if err != nil {
-			fmt.Println("error creationg connection to database: ", err)
+			fmt.Println("error creating connection to database: ", err)
 		}
 
 		repos := repository.NewRepository(dao.New(db))
@@ -79,7 +80,8 @@ func initConfig() {
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 
 	if err := viper.ReadInConfig(); err != nil {
-		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+		var configFileNotFoundError viper.ConfigFileNotFoundError
+		if errors.As(err, &configFileNotFoundError) {
 			fmt.Println("Config file not found, proceeding without it")
 			return
 		}

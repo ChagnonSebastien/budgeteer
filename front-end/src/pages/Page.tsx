@@ -1,19 +1,17 @@
-import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, IonToolbar } from '@ionic/react';
-import { useParams } from 'react-router';
+import {IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, IonToolbar} from '@ionic/react';
+import {useParams} from 'react-router';
 import ExploreContainer from '../components/ExploreContainer';
 import './Page.css';
 import ImportSpreadsheet from '../components/ImportSpreadsheet';
+import {FC} from "react";
 
-const Page: React.FC = () => {
+const Page: FC = () => {
 
   const { name } = useParams<{ name: string; }>();
 
-  const importPage = <ImportSpreadsheet />
-  const exploreContainer = <ExploreContainer name={name} />
-
-  var displayedPage = exploreContainer
+  let displayedPage = <ExploreContainer name={name}/>;
   if (name == "import") {
-    displayedPage = importPage
+    displayedPage = <ImportSpreadsheet />
   }
 
   return (

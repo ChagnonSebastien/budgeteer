@@ -33,10 +33,11 @@ import '@ionic/react/css/palettes/dark.system.css';
 
 /* Theme variables */
 import './theme/variables.css';
+import {FC} from "react";
 
 setupIonicReact();
 
-const App: React.FC = () => {
+const App: FC = () => {
   return (
     <IonApp>
       <IonReactRouter>

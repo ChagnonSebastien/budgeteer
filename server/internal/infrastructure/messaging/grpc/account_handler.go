@@ -24,7 +24,7 @@ func (s *AccountHandler) CreateAccount(ctx context.Context, req *dto.CreateAccou
 	}, nil
 }
 
-func (s *AccountHandler) GetAllAccounts(ctx context.Context, req *dto.GetAllAccountsRequest) (*dto.GetAllAccountsResponse, error) {
+func (s *AccountHandler) GetAllAccounts(ctx context.Context, _ *dto.GetAllAccountsRequest) (*dto.GetAllAccountsResponse, error) {
 	accounts, err := s.accountService.GetAllAccounts(ctx)
 	if err != nil {
 		return nil, err

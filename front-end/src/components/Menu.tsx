@@ -1,8 +1,6 @@
 import {
   IonContent,
-  IonIcon,
   IonItem,
-  IonItemDivider,
   IonLabel,
   IonList,
   IonListHeader,
@@ -18,6 +16,7 @@ import { MdCategory } from "react-icons/md";
 import { BsCurrencyExchange } from "react-icons/bs";
 import './Menu.css';
 import { IconType } from 'react-icons';
+import {FC} from "react";
 
 interface AppPage {
   title: string;
@@ -48,7 +47,7 @@ const appPages: AppPage[] = [
   },
 ];
 
-const Menu: React.FC = () => {
+const Menu: FC = () => {
   const location = useLocation();
 
   const iconStyle = {margin: '0.5rem'}

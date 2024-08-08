@@ -24,7 +24,7 @@ func (s *CurrencyHandler) CreateCurrency(ctx context.Context, req *dto.CreateCur
 	}, nil
 }
 
-func (s *CurrencyHandler) GetAllCurrencies(ctx context.Context, req *dto.GetAllCurrenciesRequest) (*dto.GetAllCurrenciesResponse, error) {
+func (s *CurrencyHandler) GetAllCurrencies(ctx context.Context, _ *dto.GetAllCurrenciesRequest) (*dto.GetAllCurrenciesResponse, error) {
 	currencies, err := s.currencyService.GetAllCurrencies(ctx)
 	if err != nil {
 		return nil, err

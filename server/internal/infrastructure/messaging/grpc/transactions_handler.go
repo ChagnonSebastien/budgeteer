@@ -47,7 +47,7 @@ func (s *TransactionHandler) CreateTransaction(ctx context.Context, req *dto.Cre
 	}, nil
 }
 
-func (s *TransactionHandler) GetAllTransactions(ctx context.Context, req *dto.GetAllTransactionsRequest) (*dto.GetAllTransactionsResponse, error) {
+func (s *TransactionHandler) GetAllTransactions(ctx context.Context, _ *dto.GetAllTransactionsRequest) (*dto.GetAllTransactionsResponse, error) {
 	transactions, err := s.transactionService.GetAllTransactions(ctx)
 	if err != nil {
 		return nil, err

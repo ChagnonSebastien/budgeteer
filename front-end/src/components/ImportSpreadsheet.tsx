@@ -1,4 +1,4 @@
-import { ChangeEventHandler, useState } from 'react'
+import {ChangeEventHandler, FC} from 'react'
 import { parse as papaparse } from 'papaparse';
 import { GrpcWebFetchTransport } from '@protobuf-ts/grpcweb-transport';
 import { AccountServiceClient } from '../messaging/dto/account.client';
@@ -26,7 +26,7 @@ const currencyService = new CurrencyServiceClient(transport)
 const categoryService = new CategoryServiceClient(transport)
 const transactionService = new TransactionServiceClient(transport)
 
-const ImportSpreadsheet: React.FC = () => {
+const ImportSpreadsheet: FC = () => {
 
   const handleFileChange: ChangeEventHandler<HTMLInputElement> = async (event) => {
     if (!event.target.files?.length) {
@@ -55,12 +55,12 @@ const ImportSpreadsheet: React.FC = () => {
 
           for (const line of results.data) {
 
-            var currency = currencies.find(c => c.symbol === line.Currency)
+            let currency = currencies.find(c => c.symbol === line.Currency)
             if (typeof currency === "undefined") {
               break
             }
 
-            var category = categories.find(c => c.name === line.Category)
+            let category = categories.find(c => c.name === line.Category)
             if (typeof category === "undefined") {
               category = await createCategory(line.Category)
               categories.push(category)

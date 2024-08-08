@@ -7,8 +7,8 @@ import (
 	"chagnon.dev/budget-server/internal/infrastructure/db/dao"
 )
 
-func (c *Repository) GetAllAccountsWithCurrencyIDs(ctx context.Context) ([]model.Account, error) {
-	accountsDao, err := c.queries.GetAllAccountsWithCurrencyIDs(ctx)
+func (r *Repository) GetAllAccountsWithCurrencyIDs(ctx context.Context) ([]model.Account, error) {
+	accountsDao, err := r.queries.GetAllAccountsWithCurrencyIDs(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -31,8 +31,8 @@ func (c *Repository) GetAllAccountsWithCurrencyIDs(ctx context.Context) ([]model
 	return accounts, nil
 }
 
-func (c *Repository) CreateAccount(ctx context.Context, name string, initialAmount int) (int, error) {
-	accountId, err := c.queries.CreateAccount(ctx, dao.CreateAccountParams{
+func (r *Repository) CreateAccount(ctx context.Context, name string, initialAmount int) (int, error) {
+	accountId, err := r.queries.CreateAccount(ctx, dao.CreateAccountParams{
 		Name:          name,
 		InitialAmount: int32(initialAmount),
 	})

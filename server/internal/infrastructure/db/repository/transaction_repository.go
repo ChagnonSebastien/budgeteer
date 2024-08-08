@@ -9,8 +9,8 @@ import (
 	"chagnon.dev/budget-server/internal/infrastructure/db/dao"
 )
 
-func (t *Repository) GetAllTransactions(ctx context.Context) ([]model.Transaction, error) {
-	transactionsDao, err := t.queries.GetAllTransactions(ctx)
+func (r *Repository) GetAllTransactions(ctx context.Context) ([]model.Transaction, error) {
+	transactionsDao, err := r.queries.GetAllTransactions(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -47,8 +47,8 @@ func (t *Repository) GetAllTransactions(ctx context.Context) ([]model.Transactio
 	return transactions, nil
 }
 
-func (t *Repository) CreateTransaction(ctx context.Context, amount int, currencyId, senderAccountId, receiverAccountId, categoryId int, date time.Time, note string) (int, error) {
-	transactionId, err := t.queries.CreateTransaction(ctx, dao.CreateTransactionParams{
+func (r *Repository) CreateTransaction(ctx context.Context, amount int, currencyId, senderAccountId, receiverAccountId, categoryId int, date time.Time, note string) (int, error) {
+	transactionId, err := r.queries.CreateTransaction(ctx, dao.CreateTransactionParams{
 		Amount:   int32(amount),
 		Currency: int32(currencyId),
 		Sender: sql.NullInt32{
