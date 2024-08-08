@@ -1,0 +1,7 @@
+front-end/node_modules
+front-end/dist
+
+# Generated
+front-end/src/messaging/dto
+server/internal/infrastructure/messaging/dto
+server/internal/infrastructure/db/dao

@@ -2,11 +2,13 @@ package grpc
 
 import (
 	"context"
+	"time"
 
 	"chagnon.dev/budget-server/internal/domain/service"
 	"chagnon.dev/budget-server/internal/infrastructure/messaging/dto"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
+
+const layout = "2006-01-02 15:04:05"
 
 type TransactionHandler struct {
 	dto.UnimplementedTransactionServiceServer
@@ -30,13 +32,18 @@ func (s *TransactionHandler) CreateTransaction(ctx context.Context, req *dto.Cre
 		receiver = int(*req.Receiver)
 	}
 
-	newId, err := s.transactionService.CreateTransaction(ctx, int(req.Amount), int(req.Currency), sender, receiver, int(req.Category), req.Date.AsTime(), note)
+	date, err := time.Parse(layout, req.Date)
+	if err != nil {
+		return nil, err
+	}
+
+	newId, err := s.transactionService.CreateTransaction(ctx, int(req.Amount), int(req.Currency), sender, receiver, int(req.Category), date, note)
 	if err != nil {
 		return nil, err
 	}
 
 	return &dto.CreateTransactionResponse{
-		Id: int32(newId),
+		Id: uint32(newId),
 	}, nil
 }
 
@@ -53,26 +60,26 @@ func (s *TransactionHandler) GetAllTransactions(ctx context.Context, req *dto.Ge
 			note = &transaction.Note
 		}
 
-		var sender *int32
+		var sender *uint32
 		if transaction.Sender != 0 {
-			id := int32(transaction.Sender)
+			id := uint32(transaction.Sender)
 			sender = &id
 		}
 
-		var receiver *int32
+		var receiver *uint32
 		if transaction.Receiver != 0 {
-			id := int32(transaction.Receiver)
+			id := uint32(transaction.Receiver)
 			receiver = &id
 		}
 
 		transactionsDto = append(transactionsDto, &dto.Transaction{
-			Id:       int32(transaction.ID),
-			Amount:   int32(transaction.Amount),
-			Currency: int32(transaction.Currency),
+			Id:       uint32(transaction.ID),
+			Amount:   uint32(transaction.Amount),
+			Currency: uint32(transaction.Currency),
 			Sender:   sender,
 			Receiver: receiver,
-			Category: int32(transaction.Category),
-			Date:     timestamppb.New(transaction.Date),
+			Category: uint32(transaction.Category),
+			Date:     transaction.Date.Format(layout),
 			Note:     note,
 		})
 	}

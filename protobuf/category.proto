@@ -5,10 +5,10 @@ package category;
 option go_package = "server/internal/infrastructure/messaging/dto";
 
 message Category {
-  int32 id = 1;
+  uint32 id = 1;
   string name = 2;
   string icon_name = 3;
-  int32 parent_id = 4;
+  uint32 parent_id = 4;
 }
 
 message GetAllCategoriesRequest {
@@ -21,11 +21,11 @@ message GetAllCategoriesResponse {
 message CreateCategoryRequest {
   string name = 1;
   string icon_name = 2;
-  int32 parent_id = 3;
+  uint32 parent_id = 3;
 }
 
 message CreateCategoryResponse {
-  int32 id = 1;
+  uint32 id = 1;
 }
 
 service CategoryService {

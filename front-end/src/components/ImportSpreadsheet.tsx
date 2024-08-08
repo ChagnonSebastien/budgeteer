@@ -15,7 +15,7 @@ import { Account } from '../domain/model/account';
 import { Category } from '../domain/model/category';
 import { Currency } from '../domain/model/currency';
 import { Transaction } from '../domain/model/transaction';
-import { Timestamp } from '../messaging/dto/google/protobuf/timestamp';
+import { formatDateTime } from '../messaging/converter/transactionConverter';
 
 const transport = new GrpcWebFetchTransport({
   baseUrl: 'http://localhost:8080',
@@ -142,7 +142,7 @@ const ImportSpreadsheet: React.FC = () => {
       amount,
       category: category.id,
       currency: currency.id,
-      date: Timestamp.fromDate(date),
+      date: formatDateTime(date),
       note: note,
       receiver: receiver?.id,
       sender: sender?.id,

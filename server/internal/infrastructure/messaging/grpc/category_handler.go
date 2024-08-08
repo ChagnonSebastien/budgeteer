@@ -20,7 +20,7 @@ func (s *CategoryHandler) CreateCategory(ctx context.Context, req *dto.CreateCat
 	}
 
 	return &dto.CreateCategoryResponse{
-		Id: int32(newId),
+		Id: uint32(newId),
 	}, nil
 }
 
@@ -33,10 +33,10 @@ func (s *CategoryHandler) GetAllCategories(ctx context.Context, req *dto.GetAllC
 	categoriesDto := make([]*dto.Category, len(categories))
 	for _, category := range categories {
 		categoriesDto = append(categoriesDto, &dto.Category{
-			Id:       int32(category.ID),
+			Id:       uint32(category.ID),
 			Name:     category.Name,
 			IconName: category.IconName,
-			ParentId: int32(category.ParentId),
+			ParentId: uint32(category.ParentId),
 		})
 	}
 

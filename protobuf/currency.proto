@@ -5,7 +5,7 @@ package currency;
 option go_package = "server/internal/infrastructure/messaging/dto";
 
 message Currency {
-  int32 id = 1;
+  uint32 id = 1;
   string name = 2;
   string symbol = 3;
 }
@@ -23,7 +23,7 @@ message CreateCurrencyRequest {
 }
 
 message CreateCurrencyResponse {
-  int32 id = 1;
+  uint32 id = 1;
 }
 
 service CurrencyService {

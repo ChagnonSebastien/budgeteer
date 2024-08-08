@@ -20,7 +20,7 @@ func (s *CurrencyHandler) CreateCurrency(ctx context.Context, req *dto.CreateCur
 	}
 
 	return &dto.CreateCurrencyResponse{
-		Id: int32(newId),
+		Id: uint32(newId),
 	}, nil
 }
 
@@ -33,7 +33,7 @@ func (s *CurrencyHandler) GetAllCurrencies(ctx context.Context, req *dto.GetAllC
 	currenciesDto := make([]*dto.Currency, len(currencies))
 	for _, currency := range currencies {
 		currenciesDto = append(currenciesDto, &dto.Currency{
-			Id:     int32(currency.ID),
+			Id:     uint32(currency.ID),
 			Name:   currency.Name,
 			Symbol: currency.Symbol,
 		})

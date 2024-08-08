@@ -1,24 +1,38 @@
 import { Transaction } from "../../domain/model/transaction";
-import { Timestamp } from "../dto/google/protobuf/timestamp";
 import { Transaction as TransactionDto } from "../dto/transaction";
 import { Converter } from "./converter";
 
-export class TransactionConverter implements Converter<TransactionDto, Transaction> {
+function padToTwoDigits(num: number) {
+    return num.toString().padStart(2, '0');
+  }
 
-    toDTO(model: TransactionDto): Transaction {
-            return new Transaction(model.id, model.amount, model.currency, model.category, new Date(Number(model.date?.seconds ?? 0)), model.sender, model.receiver, model.note)
+export const formatDateTime = (date: Date): string => {
+    const year = date.getFullYear();
+    const month = padToTwoDigits(date.getMonth() + 1);
+    const day = padToTwoDigits(date.getDate());
+    const hours = padToTwoDigits(date.getHours());
+    const minutes = padToTwoDigits(date.getMinutes());
+    const seconds = padToTwoDigits(date.getSeconds());
+  
+    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+  }
+
+export class TransactionConverter implements Converter<Transaction, TransactionDto> {
+
+    toModel(dto: TransactionDto): Transaction {
+            return new Transaction(dto.id, dto.amount, dto.currency, dto.category, new Date(dto.date), dto.sender, dto.receiver, dto.note)
     }
 
-    toModel(dto: Transaction): TransactionDto {
+    toDTO(model: Transaction): TransactionDto {
         return TransactionDto.create({
-            id: dto.id,
-            amount: dto.amount,
-            category: dto.category,
-            currency: dto.currency,
-            date: Timestamp.fromDate(dto.date),
-            note: dto.note,
-            receiver: dto.receiver,
-            sender: dto.sender,
+            id: model.id,
+            amount: model.amount,
+            category: model.category,
+            currency: model.currency,
+            date: `${formatDateTime(model.date)}`,
+            note: model.note,
+            receiver: model.receiver,
+            sender: model.sender,
         })
     }
     

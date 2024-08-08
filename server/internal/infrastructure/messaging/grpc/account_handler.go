@@ -20,7 +20,7 @@ func (s *AccountHandler) CreateAccount(ctx context.Context, req *dto.CreateAccou
 	}
 
 	return &dto.CreateAccountResponse{
-		Id: int32(newId),
+		Id: uint32(newId),
 	}, nil
 }
 
@@ -33,7 +33,7 @@ func (s *AccountHandler) GetAllAccounts(ctx context.Context, req *dto.GetAllAcco
 	accountsDto := make([]*dto.Account, len(accounts))
 	for _, category := range accounts {
 		accountsDto = append(accountsDto, &dto.Account{
-			Id:            int32(category.ID),
+			Id:            uint32(category.ID),
 			Name:          category.Name,
 			InitialAmount: int32(category.InitialAmount),
 		})

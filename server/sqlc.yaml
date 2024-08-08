@@ -1,7 +1,7 @@
 version: "2"
 sql:
   - engine: "postgresql"
-    queries: "internal/infrastructure/db/dao/queries"
+    queries: "internal/infrastructure/db/queries"
     schema: "liquibase/changelogs"
     gen:
       go:
