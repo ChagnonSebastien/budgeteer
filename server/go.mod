@@ -3,7 +3,6 @@ module chagnon.dev/budget-server
 go 1.22.5
 
 require (
-	github.com/jackc/pgx/v5 v5.6.0
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/viper v1.15.0
 	google.golang.org/grpc v1.65.0
@@ -13,14 +12,12 @@ require (
 require (
 	github.com/cenkalti/backoff/v4 v4.1.1 // indirect
 	github.com/desertbit/timer v0.0.0-20180107155436-c41aec40b27f // indirect
-	github.com/jackc/pgpassfile v1.0.0 // indirect
-	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect
 	github.com/klauspost/compress v1.11.7 // indirect
 	github.com/rs/cors v1.7.0 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
-	golang.org/x/crypto v0.23.0 // indirect
 	golang.org/x/net v0.25.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240805194559-2c9e96a0b5d4 // indirect
+	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	nhooyr.io/websocket v1.8.6 // indirect
 )
 
