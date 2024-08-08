@@ -15,12 +15,22 @@ type TransactionHandler struct {
 }
 
 func (s *TransactionHandler) CreateTransaction(ctx context.Context, req *dto.CreateTransactionRequest) (*dto.CreateTransactionResponse, error) {
-	note := ""
+	var note string
 	if req.Note != nil {
 		note = *req.Note
 	}
 
-	newId, err := s.transactionService.CreateTransaction(ctx, int(req.Amount), int(req.Currency), int(req.Sender), int(req.Receiver), int(req.Category), req.Date.AsTime(), note)
+	var sender int
+	if req.Sender != nil {
+		sender = int(*req.Sender)
+	}
+
+	var receiver int
+	if req.Receiver != nil {
+		receiver = int(*req.Receiver)
+	}
+
+	newId, err := s.transactionService.CreateTransaction(ctx, int(req.Amount), int(req.Currency), sender, receiver, int(req.Category), req.Date.AsTime(), note)
 	if err != nil {
 		return nil, err
 	}
@@ -43,12 +53,24 @@ func (s *TransactionHandler) GetAllTransactions(ctx context.Context, req *dto.Ge
 			note = &transaction.Note
 		}
 
+		var sender *int32
+		if transaction.Sender != 0 {
+			id := int32(transaction.Sender)
+			sender = &id
+		}
+
+		var receiver *int32
+		if transaction.Receiver != 0 {
+			id := int32(transaction.Receiver)
+			receiver = &id
+		}
+
 		transactionsDto = append(transactionsDto, &dto.Transaction{
 			Id:       int32(transaction.ID),
 			Amount:   int32(transaction.Amount),
 			Currency: int32(transaction.Currency),
-			Sender:   int32(transaction.Sender),
-			Receiver: int32(transaction.Receiver),
+			Sender:   sender,
+			Receiver: receiver,
 			Category: int32(transaction.Category),
 			Date:     timestamppb.New(transaction.Date),
 			Note:     note,

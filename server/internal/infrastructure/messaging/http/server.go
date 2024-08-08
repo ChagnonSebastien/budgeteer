@@ -11,10 +11,10 @@ import (
 	"google.golang.org/grpc"
 )
 
+const serverPort = 8080
 const webDirectory = "/app/static/web"
 
 type GrpcWebServer struct {
-	Port       int
 	GrpcServer *grpc.Server
 }
 
@@ -38,10 +38,10 @@ func (s *GrpcWebServer) Serve() {
 				http.ServeFile(resp, req, filepath.Join(webDirectory, "index.html"))
 			}
 		}),
-		Addr: fmt.Sprintf(":%d", s.Port),
+		Addr: fmt.Sprintf(":%d", serverPort),
 	}
 
-	log.Printf("Server is running on port :%d\n", s.Port)
+	log.Printf("Server is running on port :%d\n", serverPort)
 	if err := httpServer.ListenAndServe(); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}

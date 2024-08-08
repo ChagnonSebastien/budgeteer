@@ -16,7 +16,7 @@ func (c *Repository) GetAllCategories(ctx context.Context) ([]model.Category, er
 
 	categories := make([]model.Category, len(categoriesDao))
 	for _, categoryDao := range categoriesDao {
-		parentId := 0
+		var parentId int
 		if categoryDao.Parent.Valid {
 			parentId = int(categoryDao.Parent.Int32)
 		}
@@ -37,7 +37,7 @@ func (c *Repository) CreateCategory(ctx context.Context, name, iconName string, 
 		Name: name,
 		Parent: sql.NullInt32{
 			Int32: int32(parentId),
-			Valid: true,
+			Valid: parentId != 0,
 		},
 	})
 	if err != nil {

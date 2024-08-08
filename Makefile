@@ -1,8 +1,8 @@
 PROTO_FILES := protobuf/*
 
 proto-gen:
-	protoc --plugin=./front-end/node_modules/.bin/protoc-gen-ts_proto --ts_proto_out=./front-end/src/messaging/dao $(PROTO_FILES)
 	protoc --go_out=. --go-grpc_out=. $(PROTO_FILES)
+	npx protoc --ts_out ./front-end/src/messaging/dto --proto_path protobuf protobuf/*
 
 start-dev-front-end:
 	npm run --prefix front-end dev

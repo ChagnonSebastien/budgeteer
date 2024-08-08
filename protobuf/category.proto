@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package category;
 
-option go_package = "server/internal/infrastructure/messaging/dao";
+option go_package = "server/internal/infrastructure/messaging/dto";
 
 message Category {
   int32 id = 1;

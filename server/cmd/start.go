@@ -17,9 +17,6 @@ import (
 )
 
 type Config struct {
-	Server struct {
-		Port int `mapstructure:"port"`
-	} `mapstructure:"server"`
 	Database struct {
 		Host string `mapstructure:"host"`
 		Port int    `mapstructure:"port"`
@@ -37,7 +34,6 @@ var startCmd = &cobra.Command{
 	Short: "Starts the budget server",
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("=== Budget Server ===")
-		fmt.Println("Starting server on port", config.Server.Port)
 		db, err := postgres.NewPostgresDatabase(
 			context.Background(),
 			config.Database.Host,
@@ -53,7 +49,6 @@ var startCmd = &cobra.Command{
 		repos := repository.NewRepository(dao.New(db))
 
 		webServer := http.GrpcWebServer{
-			Port: config.Server.Port,
 			GrpcServer: grpc.NewServerWithHandlers(grpc.Services{
 				Account:     service.NewAccountService(repos),
 				Category:    service.NewCategoryService(repos),

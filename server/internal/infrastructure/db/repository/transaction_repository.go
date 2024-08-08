@@ -17,17 +17,27 @@ func (t *Repository) GetAllTransactions(ctx context.Context) ([]model.Transactio
 
 	transactions := make([]model.Transaction, len(transactionsDao))
 	for _, transactionDao := range transactionsDao {
-		note := ""
+		var note string
 		if transactionDao.Note.Valid {
 			note = transactionDao.Note.String
+		}
+
+		var sender int
+		if transactionDao.Sender.Valid {
+			sender = int(transactionDao.Sender.Int32)
+		}
+
+		var receiver int
+		if transactionDao.Receiver.Valid {
+			receiver = int(transactionDao.Receiver.Int32)
 		}
 
 		transactions = append(transactions, model.Transaction{
 			ID:       int(transactionDao.TransactionID),
 			Amount:   int(transactionDao.Amount),
 			Currency: int(transactionDao.Currency),
-			Sender:   int(transactionDao.Sender),
-			Receiver: int(transactionDao.Receiver),
+			Sender:   sender,
+			Receiver: receiver,
 			Category: int(transactionDao.Category),
 			Date:     transactionDao.Date,
 			Note:     note,
@@ -41,8 +51,14 @@ func (t *Repository) CreateTransaction(ctx context.Context, amount int, currency
 	transactionId, err := t.queries.CreateTransaction(ctx, dao.CreateTransactionParams{
 		Amount:   int32(amount),
 		Currency: int32(currencyId),
-		Sender:   int32(senderAccountId),
-		Receiver: int32(receiverAccountId),
+		Sender: sql.NullInt32{
+			Int32: int32(senderAccountId),
+			Valid: senderAccountId != 0,
+		},
+		Receiver: sql.NullInt32{
+			Int32: int32(receiverAccountId),
+			Valid: receiverAccountId != 0,
+		},
 		Category: int32(categoryId),
 		Date:     date,
 		Note: sql.NullString{

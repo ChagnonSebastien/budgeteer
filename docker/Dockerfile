@@ -33,7 +33,7 @@ COPY --from=builder /app/configs /app/configs
 COPY --from=web-build /app/dist /app/static/web
 
 COPY --from=liquibase /liquibase /liquibase
-COPY liquibase/changelogs liquibase/changelogs
+COPY server/liquibase/changelogs liquibase/changelogs
 #RUN chmod -R +r liquibase/changelogs
 ENV PATH="/liquibase:${PATH}"
 
