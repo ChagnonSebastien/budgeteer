@@ -16,8 +16,9 @@
   `make proto-gen`
 - Run dev environment
   - Database <br>
-    `docker run -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=changeme -e POSTGRES_DB=budgetapp -p 5432:5432 -v postgres_data:/var/lib/postgresql/data postgres:latest` <br>
-    Run liquibase update
+    `docker network create budgetapp-net`
+    `docker run --rm --name budgetapp-postgres --network budgetapp-net -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=changeme -e POSTGRES_DB=budgetapp -p 5432:5432 -v postgres_data:/var/lib/postgresql/data postgres:latest` <br>
+    `docker run --rm --network budgetapp-net -v ./server/liquibase/changelogs:/liquibase/changelogs liquibase update --driver=org.postgresql.Driver --changelog-file=changelogs/db.changelog-master.yaml "--url=jdbc:postgresql://budgetapp-postgres:5432/budgetapp?user=postgres&password=changeme"`
   - Server <br>
     `cd server` <br>
     `go run . start`
