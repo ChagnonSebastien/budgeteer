@@ -2,7 +2,7 @@ import { Category } from "../../domain/model/category";
 import { Category as CategoryDto } from "../dto/category";
 import { Converter } from "./converter";
 
-export class AccountConverter implements Converter<CategoryDto, Category> {
+export class CategoryConverter implements Converter<CategoryDto, Category> {
 
     toDTO(model: CategoryDto): Category {
             return new Category(model.id, model.name, model.iconName, model.parentId)

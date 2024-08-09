@@ -31,12 +31,12 @@ func (s *CurrencyHandler) GetAllCurrencies(ctx context.Context, _ *dto.GetAllCur
 	}
 
 	currenciesDto := make([]*dto.Currency, len(currencies))
-	for _, currency := range currencies {
-		currenciesDto = append(currenciesDto, &dto.Currency{
+	for i, currency := range currencies {
+		currenciesDto[i] = &dto.Currency{
 			Id:     uint32(currency.ID),
 			Name:   currency.Name,
 			Symbol: currency.Symbol,
-		})
+		}
 	}
 
 	return &dto.GetAllCurrenciesResponse{

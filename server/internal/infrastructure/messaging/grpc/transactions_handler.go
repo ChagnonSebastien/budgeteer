@@ -2,6 +2,7 @@ package grpc
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"chagnon.dev/budget-server/internal/domain/service"
@@ -49,12 +50,13 @@ func (s *TransactionHandler) CreateTransaction(ctx context.Context, req *dto.Cre
 
 func (s *TransactionHandler) GetAllTransactions(ctx context.Context, _ *dto.GetAllTransactionsRequest) (*dto.GetAllTransactionsResponse, error) {
 	transactions, err := s.transactionService.GetAllTransactions(ctx)
+	fmt.Println(len(transactions))
 	if err != nil {
 		return nil, err
 	}
 
 	transactionsDto := make([]*dto.Transaction, len(transactions))
-	for _, transaction := range transactions {
+	for i, transaction := range transactions {
 		var note *string
 		if transaction.Note != "" {
 			note = &transaction.Note
@@ -72,7 +74,7 @@ func (s *TransactionHandler) GetAllTransactions(ctx context.Context, _ *dto.GetA
 			receiver = &id
 		}
 
-		transactionsDto = append(transactionsDto, &dto.Transaction{
+		transactionsDto[i] = &dto.Transaction{
 			Id:       uint32(transaction.ID),
 			Amount:   uint32(transaction.Amount),
 			Currency: uint32(transaction.Currency),
@@ -81,7 +83,7 @@ func (s *TransactionHandler) GetAllTransactions(ctx context.Context, _ *dto.GetA
 			Category: uint32(transaction.Category),
 			Date:     transaction.Date.Format(layout),
 			Note:     note,
-		})
+		}
 	}
 
 	return &dto.GetAllTransactionsResponse{

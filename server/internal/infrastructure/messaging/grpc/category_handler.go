@@ -31,13 +31,13 @@ func (s *CategoryHandler) GetAllCategories(ctx context.Context, _ *dto.GetAllCat
 	}
 
 	categoriesDto := make([]*dto.Category, len(categories))
-	for _, category := range categories {
-		categoriesDto = append(categoriesDto, &dto.Category{
+	for i, category := range categories {
+		categoriesDto[i] = &dto.Category{
 			Id:       uint32(category.ID),
 			Name:     category.Name,
 			IconName: category.IconName,
 			ParentId: uint32(category.ParentId),
-		})
+		}
 	}
 
 	return &dto.GetAllCategoriesResponse{

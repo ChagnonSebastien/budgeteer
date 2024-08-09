@@ -14,12 +14,12 @@ func (r *Repository) GetAllCurrencies(ctx context.Context) ([]model.Currency, er
 	}
 
 	currencies := make([]model.Currency, len(currenciesDao))
-	for _, currencyDao := range currenciesDao {
-		currencies = append(currencies, model.Currency{
+	for i, currencyDao := range currenciesDao {
+		currencies[i] = model.Currency{
 			ID:     int(currencyDao.ID),
 			Name:   currencyDao.Name,
 			Symbol: currencyDao.Symbol,
-		})
+		}
 	}
 
 	return currencies, nil

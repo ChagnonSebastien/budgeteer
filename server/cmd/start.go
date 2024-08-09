@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -36,7 +35,6 @@ var startCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("=== Budget Server ===")
 		db, err := postgres.NewPostgresDatabase(
-			context.Background(),
 			config.Database.Host,
 			config.Database.User,
 			config.Database.Pass,

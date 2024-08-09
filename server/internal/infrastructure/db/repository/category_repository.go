@@ -15,18 +15,18 @@ func (r *Repository) GetAllCategories(ctx context.Context) ([]model.Category, er
 	}
 
 	categories := make([]model.Category, len(categoriesDao))
-	for _, categoryDao := range categoriesDao {
+	for i, categoryDao := range categoriesDao {
 		var parentId int
 		if categoryDao.Parent.Valid {
 			parentId = int(categoryDao.Parent.Int32)
 		}
 
-		categories = append(categories, model.Category{
+		categories[i] = model.Category{
 			ID:       int(categoryDao.ID),
 			Name:     categoryDao.Name,
 			ParentId: parentId,
 			IconName: categoryDao.IconName,
-		})
+		}
 	}
 
 	return categories, nil

@@ -16,7 +16,7 @@ func (r *Repository) GetAllTransactions(ctx context.Context) ([]model.Transactio
 	}
 
 	transactions := make([]model.Transaction, len(transactionsDao))
-	for _, transactionDao := range transactionsDao {
+	for i, transactionDao := range transactionsDao {
 		var note string
 		if transactionDao.Note.Valid {
 			note = transactionDao.Note.String
@@ -32,7 +32,7 @@ func (r *Repository) GetAllTransactions(ctx context.Context) ([]model.Transactio
 			receiver = int(transactionDao.Receiver.Int32)
 		}
 
-		transactions = append(transactions, model.Transaction{
+		transactions[i] = model.Transaction{
 			ID:       int(transactionDao.TransactionID),
 			Amount:   int(transactionDao.Amount),
 			Currency: int(transactionDao.Currency),
@@ -41,7 +41,7 @@ func (r *Repository) GetAllTransactions(ctx context.Context) ([]model.Transactio
 			Category: int(transactionDao.Category),
 			Date:     transactionDao.Date,
 			Note:     note,
-		})
+		}
 	}
 
 	return transactions, nil

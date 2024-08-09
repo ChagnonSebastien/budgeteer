@@ -14,18 +14,12 @@ func (r *Repository) GetAllAccountsWithCurrencyIDs(ctx context.Context) ([]model
 	}
 
 	accounts := make([]model.Account, len(accountsDao))
-	for _, accountDao := range accountsDao {
-		currencyIds := make([]int, len(accountDao.CurrencyIds))
-		for _, currencyIdDao := range accountDao.CurrencyIds {
-			currencyIds = append(currencyIds, int(currencyIdDao))
+	for i, accountDao := range accountsDao {
+		accounts[i] = model.Account{
+			ID:            int(accountDao.ID),
+			Name:          accountDao.Name,
+			InitialAmount: int(accountDao.InitialAmount),
 		}
-
-		accounts = append(accounts, model.Account{
-			ID:            int(accountDao.AccountID),
-			Name:          accountDao.AccountName,
-			InitialAmount: int(accountDao.AccountInitialAmount),
-			CurrencyIds:   currencyIds,
-		})
 	}
 
 	return accounts, nil

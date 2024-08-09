@@ -31,12 +31,12 @@ func (s *AccountHandler) GetAllAccounts(ctx context.Context, _ *dto.GetAllAccoun
 	}
 
 	accountsDto := make([]*dto.Account, len(accounts))
-	for _, category := range accounts {
-		accountsDto = append(accountsDto, &dto.Account{
+	for i, category := range accounts {
+		accountsDto[i] = &dto.Account{
 			Id:            uint32(category.ID),
 			Name:          category.Name,
 			InitialAmount: int32(category.InitialAmount),
-		})
+		}
 	}
 
 	return &dto.GetAllAccountsResponse{
