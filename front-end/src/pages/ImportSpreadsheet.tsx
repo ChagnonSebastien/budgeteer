@@ -12,10 +12,10 @@ import { CurrencyServiceClient } from "../messaging/dto/currency.client"
 import { CreateCategoryRequest } from "../messaging/dto/category"
 import { CreateCurrencyRequest } from "../messaging/dto/currency"
 import { CreateTransactionRequest } from "../messaging/dto/transaction"
-import { Account } from "../domain/model/account"
-import { Category } from "../domain/model/category"
-import { Currency } from "../domain/model/currency"
-import { Transaction } from "../domain/model/transaction"
+import Account from "../domain/model/account"
+import Category from "../domain/model/category"
+import Currency from "../domain/model/currency"
+import Transaction from "../domain/model/transaction"
 import { formatDateTime } from "../messaging/converter/transactionConverter"
 
 const transport = new GrpcWebFetchTransport({
@@ -125,7 +125,7 @@ const ImportSpreadsheet: FC = () => {
       name,
     })).response
 
-    return new Category(response.id, name, name)
+    return new Category(response.id, name, name, null)
   }
 
   const createCurrency = async () => {
@@ -151,7 +151,7 @@ const ImportSpreadsheet: FC = () => {
       sender: sender?.id,
     })).response
 
-    return new Transaction(response.id, amount, currency.id, category.id, date, sender?.id, receiver?.id, note)
+    return new Transaction(response.id, amount, currency.id, category.id, date, sender?.id ?? null, receiver?.id ?? null, note ?? null)
   }
 
   return (

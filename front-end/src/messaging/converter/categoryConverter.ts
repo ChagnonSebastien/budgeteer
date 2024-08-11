@@ -1,20 +1,20 @@
-import { Category } from "../../domain/model/category";
-import { Category as CategoryDto } from "../dto/category";
-import { Converter } from "./converter";
+import Category from "../../domain/model/category"
+import { Category as CategoryDto } from "../dto/category"
+import { Converter } from "./converter"
 
-export class CategoryConverter implements Converter<CategoryDto, Category> {
+export class CategoryConverter implements Converter<Category, CategoryDto> {
 
-    toDTO(model: CategoryDto): Category {
-            return new Category(model.id, model.name, model.iconName, model.parentId)
-    }
+  toModel(model: CategoryDto): Promise<Category> {
+    return Promise.resolve(new Category(model.id, model.name, model.iconName, model.parentId))
+  }
 
-    toModel(dto: Category): CategoryDto {
-        return CategoryDto.create({
-            id: dto.id,
-            name: dto.name,
-            iconName: dto.iconName,
-            parentId: dto.parentId,
-        })
-    }
-    
+  toDTO(dto: Category): CategoryDto {
+    return CategoryDto.create({
+      id: dto.id,
+      name: dto.name,
+      iconName: dto.iconName,
+      parentId: dto.parentId ?? undefined,
+    })
+  }
+
 } 

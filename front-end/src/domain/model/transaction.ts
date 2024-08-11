@@ -1,21 +1,43 @@
-export class Transaction {
-    id: number
-    amount: number
-    currency: number
-    sender?: number
-    receiver?: number
-    category: number
-    date: Date
-    note?: string
+import Account from "./account"
+import Category from "./category"
+import Currency from "./currency"
+import Unique from "./Unique"
 
-    constructor(id: number, amount: number, currency: number, category: number, date: Date, sender?: number, receiver?: number, note?: string) {
-        this.id = id
-        this.amount = amount
-        this.currency = currency
-        this.sender = sender
-        this.receiver = receiver
-        this.category = category
-        this.date = date
-        this.note = note
-    }
+export type AugmentedTransaction = Transaction & {
+  readonly currency: Currency
+  readonly category: Category
+  readonly sender?: Account
+  readonly receiver?: Account
+
+}
+
+export default class Transaction implements Unique {
+  readonly id: number
+  readonly amount: number
+  readonly currencyId: number
+  readonly senderId: number | null
+  readonly receiverId: number | null
+  readonly categoryId: number
+  readonly date: Date
+  readonly note: string | null
+
+  constructor(
+    id: number,
+    amount: number,
+    currencyId: number,
+    categoryId: number,
+    date: Date,
+    senderId: number | null,
+    receiverId: number | null,
+    note: string | null,
+  ) {
+    this.id = id
+    this.amount = amount
+    this.currencyId = currencyId
+    this.senderId = senderId
+    this.receiverId = receiverId
+    this.categoryId = categoryId
+    this.date = date
+    this.note = note
+  }
 }

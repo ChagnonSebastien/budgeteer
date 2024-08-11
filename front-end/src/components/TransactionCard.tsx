@@ -7,7 +7,7 @@ interface Props {
   to: string,
   category: string,
   date: Date,
-  note?: string,
+  note: string,
 }
 
 const TransactionCard: FC<Props> = (props) => {

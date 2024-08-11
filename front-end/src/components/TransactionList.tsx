@@ -1,29 +1,22 @@
-import { Transaction } from "../domain/model/transaction"
-import { Account } from "../domain/model/account"
-import { Category } from "../domain/model/category"
-import { Currency } from "../domain/model/currency"
+import { AugmentedTransaction } from "../domain/model/transaction"
 import TransactionCard from "./TransactionCard"
 
 interface Props {
-  transactions: Transaction[];
-  accounts: Account[]
-  category: Category[]
-  currency: Currency[],
+  transactions: AugmentedTransaction[];
 }
 
 export const TransactionList = (props: Props) => {
-  console.log("transaction list")
   return (
     <div style={{overflow: "scroll"}}>
-      {props.transactions.map((transaction: Transaction) => (
+      {props.transactions.map(transaction => (
         <TransactionCard key={transaction.id}
-                         from={props.accounts.find(a => a.id == transaction.sender)?.name ?? "UNKNOWN"}
-                         to={props.accounts.find(a => a.id == transaction.receiver)?.name ?? "UNKNOWN"}
+                         from={transaction.sender?.name ?? "UNKNOWN"}
+                         to={transaction.receiver?.name ?? "UNKNOWN"}
                          amount={(transaction.amount / 100)}
-                         category={props.category.find(a => a.id == transaction.category)?.name ?? "UNKNOWN"}
+                         category={transaction.category.name}
                          date={transaction.date}
-                         currencySymbol={props.currency.find(c => c.id == transaction.currency)?.symbol ?? "UNKNOWN"}
-                         note={transaction.note}
+                         currencySymbol={transaction.currency.symbol}
+                         note={transaction.note ?? ""}
         />
       ))}
     </div>
