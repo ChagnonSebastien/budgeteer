@@ -1,6 +1,8 @@
+import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, IonToolbar } from "@ionic/react"
 import { ChangeEventHandler, FC } from "react"
 import { parse as papaparse } from "papaparse"
 import { GrpcWebFetchTransport } from "@protobuf-ts/grpcweb-transport"
+import PageWithHeader from "../components/PageWithHeader"
 import { AccountServiceClient } from "../messaging/dto/account.client"
 import { CreateAccountRequest } from "../messaging/dto/account"
 
@@ -153,7 +155,7 @@ const ImportSpreadsheet: FC = () => {
   }
 
   return (
-    <div>
+    <PageWithHeader title="Import Spreadsheet" button="return">
       <p>Import spreadsheet</p>
       <label style={{background: "#FEF", borderRadius: "1rem", padding: "1rem", fontSize: "large", margin: "0.5rem"}}>
         Select a file
@@ -165,7 +167,7 @@ const ImportSpreadsheet: FC = () => {
           id="csvFileInput"
         />
       </label>
-    </div>
+    </PageWithHeader>
   )
 }
 

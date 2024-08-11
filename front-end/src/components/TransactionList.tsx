@@ -14,7 +14,7 @@ interface Props {
 export const TransactionList = (props: Props) => {
   console.log("transaction list")
   return (
-    <div style={{overflow: "scroll", height: "50vh"}}>
+    <div style={{overflow: "scroll"}}>
       {props.transactions.map((transaction: Transaction) => (
         <TransactionCard key={transaction.id}
                          from={props.accounts.find(a => a.id == transaction.sender)?.name ?? "UNKNOWN"}

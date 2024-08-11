@@ -62,9 +62,11 @@ const Menu: FC = () => {
           {appPages.map((appPage, index) => {
             return (
               <IonMenuToggle key={index} autoHide={false}>
-                <IonItem className={location.pathname === appPage.url ? "selected" : ""} onClick={() => {
-                  router.push(appPage.url, "root")
-                }}>
+                <IonItem
+                  className={location.pathname === appPage.url ? "selected" : ""}
+                  style={{cursor: "pointer"}}
+                  onClick={() => router.push(appPage.url)}
+                >
                   {appPage.icon({style: iconStyle})}
                   <IonLabel>{appPage.title}</IonLabel>
                 </IonItem>

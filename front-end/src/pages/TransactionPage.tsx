@@ -1,5 +1,7 @@
+import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, IonToolbar } from "@ionic/react"
 import { GrpcWebFetchTransport } from "@protobuf-ts/grpcweb-transport"
 import { FC, useEffect, useState } from "react"
+import PageWithHeader from "../components/PageWithHeader"
 
 import { Account } from "../domain/model/account"
 import { Category } from "../domain/model/category"
@@ -64,11 +66,11 @@ const TransactionPage: FC = () => {
   }, [])
 
   return (
-    <div id="container">
+    <PageWithHeader title="Transactions" button="menu">
       <p>Explore <a target="_blank" rel="noopener noreferrer" href="https://ionicframework.com/docs/components">UI
         Components</a></p>
       <TransactionList transactions={transactions} accounts={accounts} category={categories} currency={currencies}/>
-    </div>
+    </PageWithHeader>
   )
 }
 

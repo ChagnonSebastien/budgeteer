@@ -1,7 +1,7 @@
-import { IonApp, IonRouterOutlet, IonSplitPane, setupIonicReact } from "@ionic/react"
+import { IonApp, IonRedirect, IonRoute, IonRouterOutlet, IonSplitPane, setupIonicReact } from "@ionic/react"
 import { IonReactRouter } from "@ionic/react-router"
 import { Redirect, Route } from "react-router-dom"
-import ImportSpreadsheet from "./components/ImportSpreadsheet"
+import ImportSpreadsheet from "./pages/ImportSpreadsheet"
 import Menu from "./components/Menu"
 import Page from "./pages/Page"
 
@@ -46,11 +46,11 @@ const App: FC = () => {
         <IonSplitPane contentId="main">
           <Menu/>
           <IonRouterOutlet id="main">
-            <Route path="/categories" component={Page}/>
-            <Route path="/currencies" component={Page}/>
-            <Route path="/transactions" component={TransactionPage}/>
-            <Route path="/import" component={ImportSpreadsheet}/>
-            <Route render={() => <Redirect to="/transactions"/>}/>
+            <IonRoute path="/categories" render={() => <Page/>}/>
+            <IonRoute path="/currencies" render={() => <Page/>}/>
+            <IonRoute path="/transactions" render={() => <TransactionPage/>}/>
+            <IonRoute path="/import" render={() => <ImportSpreadsheet/>}/>
+            <IonRoute path="/" exact render={() => <IonRedirect to="/transactions"/>}/>
           </IonRouterOutlet>
         </IonSplitPane>
       </IonReactRouter>
