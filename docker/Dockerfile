@@ -53,7 +53,7 @@ COPY --from=server-build /app/budget-server .
 COPY --from=server-build /app/configs configs
 COPY --from=web-build /app/dist static/web
 COPY --from=liquibase /liquibase /liquibase
-COPY server/liquibase/changelogs liquibase/changelogs
+COPY server/liquibase/changelogs changelogs
 #RUN chmod -R +r liquibase/changelogs
 ENV PATH="/liquibase:${PATH}"
 COPY docker/entrypoint.sh entrypoint.sh

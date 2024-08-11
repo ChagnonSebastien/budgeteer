@@ -4,6 +4,6 @@ connectionstring="jdbc:postgresql://$DATABASE_HOST:$DATABASE_PORT/$DATABASE_NAME
 /liquibase/liquibase update \
   --driver=org.postgresql.Driver \
   --url=$connectionstring \
-  --changeLogFile=./liquibase/changelogs/db.changelog-master.yaml
+  --changeLogFile=./changelogs/db.changelog-master.yaml
 
 ./budget-server start
