@@ -8,17 +8,21 @@ import {
   IonTitle,
   IonToolbar,
 } from "@ionic/react"
-import { FC, useMemo, useRef, useState } from "react"
-import { BiArrowBack } from "react-icons/bi"
+import { FC, useContext, useMemo, useRef, useState } from "react"
 import IconCapsule from "../components/IconCapsule"
 import IconList from "../components/IconList"
 import ContentWithHeader from "../components/ContentWithHeader"
+import { IconToolsContext } from "../components/IconTools"
 
 const CategoryPage: FC = () => {
   const modal = useRef<HTMLIonModalElement>(null)
 
+  const {iconTypeFromName} = useContext(IconToolsContext)
+
   const [filter, setFilter] = useState<string>("")
   const [selectedIcon, setSelectedIcon] = useState<string>()
+
+  const BiArrowBack = useMemo(() => iconTypeFromName("BiArrowBack"), [iconTypeFromName])
 
   const onFilterChange = (event: Event) => {
     const value = (event.target as HTMLIonInputElement).value as string
@@ -32,7 +36,7 @@ const CategoryPage: FC = () => {
 
   return (
     <IonPage>
-      <ContentWithHeader title="Categories" button="menu" onSearch={onFilterChange}>
+      <ContentWithHeader title="Categories" button="menu">
         <IonButton id="open-select-icon-modal" expand="block">
           Select Icon
         </IonButton>
@@ -42,17 +46,9 @@ const CategoryPage: FC = () => {
         </div>
 
         <IonModal ref={modal} trigger="open-select-icon-modal" onWillDismiss={() => modal.current?.dismiss()}>
-          <IonHeader>
-            <IonToolbar>
-              <IonButtons slot="start">
-                <IonButton onClick={() => modal.current?.dismiss()}><BiArrowBack/></IonButton>
-              </IonButtons>
-              <IonTitle>Select Icon</IonTitle>
-            </IonToolbar>
-          </IonHeader>
-          <IonContent>
+          <ContentWithHeader title="Select Icon" button="return" onSearch={onFilterChange}>
             <IconList filter={filter} onSelect={onIconSelect}/>
-          </IonContent>
+          </ContentWithHeader>
         </IonModal>
       </ContentWithHeader>
     </IonPage>

@@ -1,15 +1,9 @@
 import {
-  IonHeader,
   IonInfiniteScroll,
   IonInfiniteScrollContent,
-  IonInput,
-  IonItem,
-  IonList,
-  IonSearchbar,
-  IonToolbar,
 } from "@ionic/react"
-import { FC, useEffect, useMemo, useState } from "react"
-import { iconComponentTypeFromName, iconList } from "./IconTools"
+import { IconToolsContext } from "./IconTools"
+import { FC, useContext, useEffect, useMemo, useState } from "react"
 
 const perfectMultiplier = 4 * 3 * 5 * 7
 
@@ -20,21 +14,31 @@ interface Props {
 
 const IconList: FC<Props> = ({filter, onSelect}) => {
   const [amountItems, setAmountItems] = useState<number>(perfectMultiplier)
+  const {iconNameList, iconTypeFromName} = useContext(IconToolsContext)
 
   useEffect(() => setAmountItems(perfectMultiplier), [filter])
 
   const filteredIcons = useMemo(() => {
-    return iconList.filter(value => value.toLowerCase().includes(filter.toLowerCase())).slice(0, amountItems)
+    return iconNameList.filter(value => value.toLowerCase().includes(filter.toLowerCase())).slice(0, amountItems)
   }, [filter, amountItems])
 
   return (
     <>
-      <div style={{display: "flex", flexWrap: "wrap"}}>
-
+      <div style={{
+        display: "flex",
+        flexWrap: "wrap",
+        justifyContent: "space-evenly",
+        paddingTop: ".5rem",
+      }}>
         {filteredIcons.map(iconName => {
-          const IconType = iconComponentTypeFromName(iconName)
-          return <div key={`icon-list-element-${iconName}`} style={{margin: "0.5rem"}}><IconType
-            onClick={() => onSelect(iconName)} size="2.5rem"/></div>
+          const IconType = iconTypeFromName(iconName)
+          return (
+            <div onClick={() => onSelect(iconName)}
+                 key={`icon-list-element-${iconName}`}
+                 style={{margin: "0.2rem", padding: "0.5rem", backgroundColor: "white", borderRadius: "0.5rem"}}>
+              <IconType size="2.5rem"/>
+            </div>
+          )
         })}
       </div>
       <IonInfiniteScroll

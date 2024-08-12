@@ -10,46 +10,44 @@ import {
 } from "@ionic/react"
 
 import { useLocation } from "react-router-dom"
-import { BiSolidFileImport } from "react-icons/bi"
-import { TbArrowsExchange } from "react-icons/tb"
-import { MdCategory } from "react-icons/md"
-import { BsCurrencyExchange } from "react-icons/bs"
 import "./Menu.css"
-import { IconType } from "react-icons"
-import { FC } from "react"
+import { FC, useContext } from "react"
+import { IconToolsContext } from "./IconTools"
 
 interface AppPage {
   title: string;
   url: string;
-  icon: IconType;
+  iconName: string;
 }
 
 const appPages: AppPage[] = [
   {
     title: "Transactions",
     url: "/transactions",
-    icon: (IconBaseProps) => <TbArrowsExchange {...IconBaseProps} />,
+    iconName: "TbArrowsExchange",
   },
   {
     title: "Categories",
     url: "/categories",
-    icon: (IconBaseProps) => <MdCategory     {...IconBaseProps} />,
+    iconName: "MdCategory",
   },
   {
     title: "Currencies",
     url: "/currencies",
-    icon: (IconBaseProps) => <BsCurrencyExchange {...IconBaseProps} />,
+    iconName: "BsCurrencyExchange",
   },
   {
     title: "Import",
     url: "/import",
-    icon: (IconBaseProps) => <BiSolidFileImport {...IconBaseProps} />,
+    iconName: "BiSolidFileImport",
   },
 ]
 
 const Menu: FC = () => {
   const location = useLocation()
   const router = useIonRouter()
+
+  const {iconTypeFromName} = useContext(IconToolsContext)
 
   const iconStyle = {margin: "0.5rem"}
 
@@ -60,6 +58,7 @@ const Menu: FC = () => {
           <IonListHeader>Budget App</IonListHeader>
           <IonNote>hi@ionicframework.com</IonNote>
           {appPages.map((appPage, index) => {
+            const Icon = iconTypeFromName(appPage.iconName)
             return (
               <IonMenuToggle key={index} autoHide={false}>
                 <IonItem
@@ -67,7 +66,7 @@ const Menu: FC = () => {
                   style={{cursor: "pointer"}}
                   onClick={() => router.push(appPage.url)}
                 >
-                  {appPage.icon({style: iconStyle})}
+                  <Icon style={iconStyle}/>
                   <IonLabel>{appPage.title}</IonLabel>
                 </IonItem>
               </IonMenuToggle>

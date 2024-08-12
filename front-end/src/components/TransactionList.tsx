@@ -15,7 +15,7 @@ export const TransactionList = (props: Props) => {
   const [displayedAmount, setDisplayedAmount] = useState<number>(chunkSize)
 
   const displayedItems = useMemo(() => transactions.slice(0, displayedAmount), [displayedAmount])
-  
+
   return (
     <>
       {displayedItems.map(transaction => (
@@ -23,7 +23,7 @@ export const TransactionList = (props: Props) => {
                          from={transaction.sender?.name ?? "-"}
                          to={transaction.receiver?.name ?? "-"}
                          amount={(transaction.amount / 100)}
-                         categoryIconName="FaBacon"
+                         categoryIconName={transaction.category.iconName}
                          date={transaction.date}
                          currencySymbol={transaction.currency.symbol}
                          note={transaction.note ?? ""}

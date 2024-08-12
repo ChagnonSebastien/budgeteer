@@ -13,6 +13,7 @@ interface Props {
 
 const TransactionCard: FC<Props> = (props) => {
   const {amount, currencySymbol, from, to, categoryIconName, date, note} = props
+
   return (
     <div style={{
       display: "flex",

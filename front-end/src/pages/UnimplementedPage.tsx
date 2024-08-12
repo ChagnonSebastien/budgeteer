@@ -2,7 +2,7 @@ import { IonPage } from "@ionic/react"
 import { FC } from "react"
 import ContentWithHeader from "../components/ContentWithHeader"
 
-const Page: FC = () => {
+const UnimplementedPage: FC = () => {
   return (
     <IonPage>
       <ContentWithHeader title="Unimplemented" button="return">
@@ -12,4 +12,4 @@ const Page: FC = () => {
   )
 }
 
-export default Page
+export default UnimplementedPage

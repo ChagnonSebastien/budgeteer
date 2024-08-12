@@ -1,6 +1,8 @@
 import { DataType } from "csstype"
-import { useMemo } from "react"
-import { iconComponentTypeFromName } from "./IconTools"
+import { useContext, useMemo } from "react"
+import { IconToolsContext } from "./IconTools"
+
+const regexp = new RegExp("^(?<comp>[1-9.]+)(?<unit>[a-z]*)$")
 
 interface Props {
   iconName: string
@@ -12,19 +14,30 @@ interface Props {
 const IconCapsule = (props: Props) => {
   const {iconName, size, color, backgroundColor} = props
 
-  const IconType = useMemo(() => iconComponentTypeFromName(iconName), [iconName])
+  const {iconTypeFromName} = useContext(IconToolsContext)
+
+  const Icon = useMemo(() => iconTypeFromName(iconName), [iconName, iconTypeFromName])
+
+  const {sizeNumber, unit} = useMemo(() => {
+    if (typeof size === "number") {
+      return {sizeNumber: size, unit: ""}
+    } else {
+      const groups = regexp.exec(size)?.groups!
+      return {sizeNumber: parseFloat(groups["comp"]), unit: groups["unit"]}
+    }
+  }, [size])
 
   return (
     <div style={{
       backgroundColor: backgroundColor,
-      borderRadius: `calc(${size} / 2)`,
+      borderRadius: `${sizeNumber * 0.5}${unit}`,
       height: size,
       width: size,
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
     }}>
-      <IconType size={`calc(${size} / 1.6)`} color={color}/>
+      <Icon size={`${sizeNumber * 0.625}${unit}`} color={color}/>
     </div>
   )
 }

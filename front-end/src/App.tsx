@@ -1,14 +1,23 @@
 import { IonApp, IonRoute, IonRouterOutlet, IonSplitPane, setupIonicReact } from "@ionic/react"
 import { IonReactRouter } from "@ionic/react-router"
 import { Redirect } from "react-router"
+import { WithItemTools } from "./components/IconTools"
 import Account from "./domain/model/account"
 import Category from "./domain/model/category"
 import Currency from "./domain/model/currency"
 import Transaction from "./domain/model/transaction"
+import Menu from "./components/Menu"
+import { FC, ReactNode, useContext, useEffect, useState, lazy } from "react"
 import CategoryPage from "./pages/CategoryPage"
 import ImportSpreadsheet from "./pages/ImportSpreadsheet"
-import Menu from "./components/Menu"
-import Page from "./pages/Page"
+import TransactionPage from "./pages/TransactionPage"
+import UnimplementedPage from "./pages/UnimplementedPage"
+import {
+  AccountPersistenceContext,
+  AccountRepositoryContext, CategoryPersistenceContext,
+  CategoryRepositoryContext, CurrencyPersistenceContext,
+  CurrencyRepositoryContext, TransactionPersistenceContext, TransactionRepositoryContext,
+} from "./service/RepositoryContexts"
 
 /* Core CSS required for Ionic components to work properly */
 import "@ionic/react/css/core.css"
@@ -39,16 +48,13 @@ import "@ionic/react/css/palettes/dark.system.css"
 
 /* Theme variables */
 import "./theme/variables.css"
-import { FC, ReactNode, useContext, useEffect, useState } from "react"
-import TransactionPage from "./pages/TransactionPage"
-import {
-  AccountPersistenceContext,
-  AccountRepositoryContext, CategoryPersistenceContext,
-  CategoryRepositoryContext, CurrencyPersistenceContext,
-  CurrencyRepositoryContext, TransactionPersistenceContext, TransactionRepositoryContext,
-} from "./service/RepositoryContexts"
 
 setupIonicReact()
+
+// const CategoryPage = lazy(() => import("./pages/CategoryPage"))
+// const UnimplementedPage = lazy(() => import("./pages/UnimplementedPage"))
+// const TransactionPage = lazy(() => import("./pages/TransactionPage"))
+// const ImportSpreadsheet = lazy(() => import("./pages/ImportSpreadsheet"))
 
 const App: FC = () => {
   const [currencies, setCurrencies] = useState<Currency[] | null>(null)
@@ -73,7 +79,9 @@ const App: FC = () => {
       <CategoryPersistenceContext.Provider value={{state: categories}}>
         <AccountPersistenceContext.Provider value={{state: accounts}}>
           <TransactionPersistenceContext.Provider value={{state: transactions}}>
-            {children}
+            <WithItemTools>
+              {children}
+            </WithItemTools>
           </TransactionPersistenceContext.Provider>
         </AccountPersistenceContext.Provider>
       </CategoryPersistenceContext.Provider>
@@ -89,7 +97,7 @@ const App: FC = () => {
 
             <IonRouterOutlet id="main">
               <IonRoute path="/categories" render={() => <CategoryPage/>}/>
-              <IonRoute path="/currencies" render={() => <Page/>}/>
+              <IonRoute path="/currencies" render={() => <UnimplementedPage/>}/>
               <IonRoute path="/transactions" render={() => <TransactionPage/>}/>
               <IonRoute path="/import" render={() => <ImportSpreadsheet/>}/>
               <IonRoute path="/" exact render={() => <Redirect to="/transactions"/>}/>
