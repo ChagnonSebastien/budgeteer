@@ -5,6 +5,7 @@ import Account from "./domain/model/account"
 import Category from "./domain/model/category"
 import Currency from "./domain/model/currency"
 import Transaction from "./domain/model/transaction"
+import CategoryPage from "./pages/CategoryPage"
 import ImportSpreadsheet from "./pages/ImportSpreadsheet"
 import Menu from "./components/Menu"
 import Page from "./pages/Page"
@@ -87,7 +88,7 @@ const App: FC = () => {
             <Menu/>
 
             <IonRouterOutlet id="main">
-              <IonRoute path="/categories" render={() => <Page/>}/>
+              <IonRoute path="/categories" render={() => <CategoryPage/>}/>
               <IonRoute path="/currencies" render={() => <Page/>}/>
               <IonRoute path="/transactions" render={() => <TransactionPage/>}/>
               <IonRoute path="/import" render={() => <ImportSpreadsheet/>}/>
