@@ -1,17 +1,18 @@
 import { FC, memo } from "react"
+import IconCapsule from "./IconCapsule"
 
 interface Props {
   amount: number;
   currencySymbol: string,
   from: string,
   to: string,
-  category: string,
+  categoryIconName: string,
   date: Date,
   note: string,
 }
 
 const TransactionCard: FC<Props> = (props) => {
-  const {amount, currencySymbol, from, to, category, date, note} = props
+  const {amount, currencySymbol, from, to, categoryIconName, date, note} = props
   return (
     <div style={{
       display: "flex",
@@ -28,14 +29,9 @@ const TransactionCard: FC<Props> = (props) => {
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
-        height: "2.4rem",
-        width: "2.4rem",
-        borderRadius: "1.2rem",
-        backgroundColor: "lime",
         flexShrink: 0,
-        fontSize: "1.5rem",
       }}>
-        {category.charAt(0).toUpperCase()}
+        <IconCapsule iconName={categoryIconName} size="2.4rem" backgroundColor="orange" color="darkslategray"/>
       </div>
       <div style={{
         display: "flex",

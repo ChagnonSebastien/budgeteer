@@ -1,6 +1,6 @@
-import { IonSpinner } from "@ionic/react"
+import { IonPage, IonSpinner } from "@ionic/react"
 import { FC, useContext, useMemo } from "react"
-import PageWithHeader from "../components/PageWithHeader"
+import ContentWithHeader from "../components/ContentWithHeader"
 import { TransactionList } from "../components/TransactionList"
 import { AugmentedTransaction } from "../domain/model/transaction"
 import {
@@ -38,9 +38,11 @@ const TransactionPage: FC = () => {
   }
 
   return (
-    <PageWithHeader title="Transactions" button="menu">
-      {contents}
-    </PageWithHeader>
+    <IonPage>
+      <ContentWithHeader title="Transactions" button="menu">
+        {contents}
+      </ContentWithHeader>
+    </IonPage>
   )
 }
 

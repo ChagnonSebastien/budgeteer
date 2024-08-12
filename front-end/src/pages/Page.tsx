@@ -1,11 +1,14 @@
+import { IonPage } from "@ionic/react"
 import { FC } from "react"
-import PageWithHeader from "../components/PageWithHeader"
+import ContentWithHeader from "../components/ContentWithHeader"
 
 const Page: FC = () => {
   return (
-    <PageWithHeader title="Unimplemented" button="return">
-      Not implemented
-    </PageWithHeader>
+    <IonPage>
+      <ContentWithHeader title="Unimplemented" button="return">
+        Not implemented
+      </ContentWithHeader>
+    </IonPage>
   )
 }
 

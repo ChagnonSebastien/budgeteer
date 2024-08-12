@@ -4,7 +4,7 @@ import {
   IonContent,
   IonHeader,
   IonMenuButton,
-  IonPage,
+  IonSearchbar,
   IonTitle,
   IonToolbar,
 } from "@ionic/react"
@@ -14,10 +14,11 @@ interface Props {
   children: ReactNode | ReactNode[]
   title: string
   button: "menu" | "return" | "none"
-
+  onSearch?: (ev: Event) => void
 }
 
-const PageWithHeader: FC<Props> = ({title, children, button: buttonOption}) => {
+const ContentWithHeader: FC<Props> = (props) => {
+  const {title, children, button: buttonOption, onSearch} = props
   let button = null
   switch (buttonOption) {
     case "return":
@@ -29,7 +30,7 @@ const PageWithHeader: FC<Props> = ({title, children, button: buttonOption}) => {
   }
 
   return (
-    <IonPage key={`page-${title}`}>
+    <>
       <IonHeader translucent>
         <IonToolbar>
           <IonButtons collapse slot="start">
@@ -37,6 +38,11 @@ const PageWithHeader: FC<Props> = ({title, children, button: buttonOption}) => {
           </IonButtons>
           <IonTitle>{title}</IonTitle>
         </IonToolbar>
+        {typeof onSearch !== "undefined" && (
+          <IonToolbar>
+            <IonSearchbar onIonInput={onSearch}/>
+          </IonToolbar>
+        )}
       </IonHeader>
 
       <IonContent fullscreen>
@@ -51,8 +57,8 @@ const PageWithHeader: FC<Props> = ({title, children, button: buttonOption}) => {
 
         {children}
       </IonContent>
-    </IonPage>
+    </>
   )
 }
 
-export default PageWithHeader
+export default ContentWithHeader

@@ -1,30 +1,50 @@
-import { IonInput, IonItem } from "@ionic/react"
-import { FC, useMemo, useState } from "react"
-import { iconComponentTypeFromName, iconTools } from "./IconTools"
+import {
+  IonHeader,
+  IonInfiniteScroll,
+  IonInfiniteScrollContent,
+  IonInput,
+  IonItem,
+  IonList,
+  IonSearchbar,
+  IonToolbar,
+} from "@ionic/react"
+import { FC, useEffect, useMemo, useState } from "react"
+import { iconComponentTypeFromName, iconList } from "./IconTools"
 
+const perfectMultiplier = 4 * 3 * 5 * 7
 
-const IconList: FC = () => {
-  const [filter, setFilter] = useState<string>("")
+interface Props {
+  filter: string,
+  onSelect: (selectedIcon: string) => void
+}
 
-  const onFilterChange = (event: Event) => {
-    const value = (event.target as HTMLIonInputElement).value as string
-    setFilter(value)
-  }
+const IconList: FC<Props> = ({filter, onSelect}) => {
+  const [amountItems, setAmountItems] = useState<number>(perfectMultiplier)
+
+  useEffect(() => setAmountItems(perfectMultiplier), [filter])
+
   const filteredIcons = useMemo(() => {
-    return iconTools.filter(value => value.toLowerCase().includes(filter.toLowerCase())).slice(0, 100)
-  }, [filter])
+    return iconList.filter(value => value.toLowerCase().includes(filter.toLowerCase())).slice(0, amountItems)
+  }, [filter, amountItems])
 
   return (
     <>
-      <IonItem>
-        <IonInput label="Filter" value={filter} onIonInput={onFilterChange}></IonInput>
-      </IonItem>
       <div style={{display: "flex", flexWrap: "wrap"}}>
+
         {filteredIcons.map(iconName => {
           const IconType = iconComponentTypeFromName(iconName)
-          return <div key={`icon-list-element-${iconName}`} style={{margin: "0.3rem"}}><IconType size="2rem"/></div>
+          return <div key={`icon-list-element-${iconName}`} style={{margin: "0.5rem"}}><IconType
+            onClick={() => onSelect(iconName)} size="2.5rem"/></div>
         })}
       </div>
+      <IonInfiniteScroll
+        onIonInfinite={(ev) => {
+          setAmountItems(prevState => prevState + perfectMultiplier)
+          setTimeout(() => ev.target.complete(), 500)
+        }}
+      >
+        <IonInfiniteScrollContent></IonInfiniteScrollContent>
+      </IonInfiniteScroll>
     </>
   )
 }
