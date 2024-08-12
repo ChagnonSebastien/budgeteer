@@ -10,8 +10,8 @@ export const TransactionList = (props: Props) => {
     <div style={{overflow: "scroll"}}>
       {props.transactions.map(transaction => (
         <TransactionCard key={transaction.id}
-                         from={transaction.sender?.name ?? "UNKNOWN"}
-                         to={transaction.receiver?.name ?? "UNKNOWN"}
+                         from={transaction.sender?.name ?? "-"}
+                         to={transaction.receiver?.name ?? "-"}
                          amount={(transaction.amount / 100)}
                          category={transaction.category.name}
                          date={transaction.date}
