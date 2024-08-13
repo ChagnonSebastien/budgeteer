@@ -4,38 +4,23 @@ import {
 } from "@ionic/react"
 import { ChangeEventHandler, FC, useContext, useRef } from "react"
 import { parse as papaparse } from "papaparse"
-import { GrpcWebFetchTransport } from "@protobuf-ts/grpcweb-transport"
 import ContentWithHeader from "../components/ContentWithHeader"
-import { AccountServiceClient } from "../messaging/dto/account.client"
-import { CreateAccountRequest } from "../messaging/dto/account"
-
-import { TransactionServiceClient } from "../messaging/dto/transaction.client"
-import { CategoryServiceClient } from "../messaging/dto/category.client"
-import { CurrencyServiceClient } from "../messaging/dto/currency.client"
-import { CreateCategoryRequest } from "../messaging/dto/category"
-import { CreateCurrencyRequest } from "../messaging/dto/currency"
-import { CreateTransactionRequest } from "../messaging/dto/transaction"
 import Account from "../domain/model/account"
-import Category from "../domain/model/category"
-import Currency from "../domain/model/currency"
 import Transaction from "../domain/model/transaction"
-import { formatDateTime } from "../messaging/converter/transactionConverter"
-import { CategoryRepositoryContext } from "../service/RepositoryContexts"
-
-const transport = new GrpcWebFetchTransport({
-  baseUrl: "http://localhost:8080",
-})
-
-const accountService = new AccountServiceClient(transport)
-const currencyService = new CurrencyServiceClient(transport)
-const categoryService = new CategoryServiceClient(transport)
-const transactionService = new TransactionServiceClient(transport)
+import {
+  AccountServiceContext,
+  CategoryPersistenceContext,
+  CurrencyServiceContext,
+  TransactionServiceContext,
+} from "../service/ServiceContext"
 
 const ImportSpreadsheet: FC = () => {
-
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const categoryRepository = useContext(CategoryRepositoryContext)
+  const {state: categories, create: createCategory, root: rootCategory} = useContext(CategoryPersistenceContext)
+  const {state: currencies, create: createCurrency} = useContext(CurrencyServiceContext)
+  const {state: accounts, create: createAccount} = useContext(AccountServiceContext)
+  const {create: createTransaction} = useContext(TransactionServiceContext)
 
   const handleButtonClick = () => {
     fileInputRef.current?.click()
@@ -48,11 +33,6 @@ const ImportSpreadsheet: FC = () => {
 
     const file = event.target.files[0]
     if (file) {
-
-      const currencies: Currency[] = [await createCurrency()]
-      const accounts: Account[] = []
-      const categories: Category[] = await categoryRepository.getAll()
-      const rootCategory = categories.find(c => c.parentId === null)!
       const transactionPromises: Promise<Transaction>[] = []
 
       papaparse(file, {
@@ -69,31 +49,51 @@ const ImportSpreadsheet: FC = () => {
           }[]
         }) => {
 
-          for (const line of results.data) {
+          const newCurrencies = [...currencies]
+          const newCategories = [...categories]
+          const newAccounts = [...accounts]
 
-            let currency = currencies.find(c => c.symbol === line.Currency)
-            if (typeof currency === "undefined") {
+          for (const line of results.data) {
+            if (!line.Currency) {
               break
             }
 
-            let category = categories.find(c => c.name === line.Category)
-            if (typeof category === "undefined") {
-              category = await createCategory(line.Category, rootCategory.id)
-              categories.push(category)
+            let currency = currencies.find(c => c.symbol === line.Currency)
+            if (typeof currency === "undefined") {
+              currency = await createCurrency({name: "Canadian Dollar", symbol: line.Currency})
+              newCurrencies.push(currency)
             }
 
-            let account = accounts.find(a => a.name === line.Account)
+            let category = newCategories.find(c => c.name === line.Category)
+            if (typeof category === "undefined") {
+              category = await createCategory({
+                name: line.Category,
+                parentId: rootCategory.id,
+                iconName: "BsQuestionLg",
+                iconColor: "#2F4F4F",
+                iconBackground: "rgb(255, 165, 0)",
+              })
+              newCategories.push(category)
+            }
+
+            let account = newAccounts.find(a => a.name === line.Account)
             if (typeof account === "undefined") {
-              account = await createAccount(0, line.Account)
-              accounts.push(account)
+              account = await createAccount({
+                name: line.Account,
+                initialAmount: 0,
+              })
+              newAccounts.push(account)
             }
 
             let fromto: Account | undefined
             if (line["From/To"] != "") {
-              fromto = accounts.find(a => a.name === line["From/To"])
+              fromto = newAccounts.find(a => a.name === line["From/To"])
               if (typeof fromto === "undefined") {
-                fromto = await createAccount(0, line["From/To"])
-                accounts.push(fromto)
+                fromto = await createAccount({
+                  name: line["From/To"],
+                  initialAmount: 0,
+                })
+                newAccounts.push(fromto)
               }
             }
 
@@ -111,7 +111,15 @@ const ImportSpreadsheet: FC = () => {
               receiver = account
             }
 
-            transactionPromises.push(createTransaction(Math.abs(amount), currency, category, date, sender, receiver, note))
+            transactionPromises.push(createTransaction({
+              amount: Math.abs(amount),
+              currencyId: currency.id,
+              categoryId: category.id,
+              date,
+              senderId: sender?.id ?? null,
+              receiverId: receiver?.id ?? null,
+              note: note ?? null,
+            }))
           }
 
           console.log(await Promise.all(transactionPromises))
@@ -121,50 +129,6 @@ const ImportSpreadsheet: FC = () => {
         },
       })
     }
-  }
-
-  const createAccount = async (initialAmount: number, name: string): Promise<Account> => {
-    let response = await accountService.createAccount(CreateAccountRequest.create({
-      initialAmount,
-      name,
-    })).response
-
-    return new Account(response.id, name, initialAmount)
-  }
-
-  const createCategory = async (name: string, parent: number): Promise<Category> => {
-    let response = await categoryService.createCategory(CreateCategoryRequest.create({
-      iconName: name,
-      name,
-    })).response
-
-    return new Category(response.id, name, "BsQuestionLg", "#2F4F4F", "rgb(255, 165, 0)", parent)
-  }
-
-  const createCurrency = async () => {
-    const name = "Canadian Dollar"
-    const symbol = "CAD"
-
-    let response = await currencyService.createCurrency(CreateCurrencyRequest.create({
-      name,
-      symbol,
-    })).response
-
-    return new Currency(response.id, name, symbol)
-  }
-
-  const createTransaction = async (amount: number, currency: Currency, category: Category, date: Date, sender?: Account, receiver?: Account, note?: string) => {
-    let response = await transactionService.createTransaction(CreateTransactionRequest.create({
-      amount,
-      category: category.id,
-      currency: currency.id,
-      date: formatDateTime(date),
-      note: note,
-      receiver: receiver?.id,
-      sender: sender?.id,
-    })).response
-
-    return new Transaction(response.id, amount, currency.id, category.id, date, sender?.id ?? null, receiver?.id ?? null, note ?? null)
   }
 
   return (

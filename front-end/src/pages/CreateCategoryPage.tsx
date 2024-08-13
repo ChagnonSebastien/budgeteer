@@ -4,13 +4,12 @@ import {
   IonPage, useIonRouter,
 } from "@ionic/react"
 import { HexColorPicker } from "react-colorful"
-import { FC, FormEvent, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react"
+import { FC, FormEvent, useCallback, useContext, useEffect, useRef, useState } from "react"
 import { CategoryList } from "../components/CategoryList"
 import IconCapsule from "../components/IconCapsule"
 import IconList from "../components/IconList"
 import ContentWithHeader from "../components/ContentWithHeader"
-import Category from "../domain/model/category"
-import { CategoryPersistenceContext, CategoryRepositoryContext } from "../service/RepositoryContexts"
+import { CategoryPersistenceContext } from "../service/ServiceContext"
 import { DataType } from "csstype"
 
 const contentHeight = window.innerHeight / 3
@@ -20,30 +19,21 @@ const CreateCategoryPage: FC = () => {
 
   const parentModal = useRef<HTMLIonModalElement>(null)
   const iconModal = useRef<HTMLIonModalElement>(null)
-  const innerColorModal = useRef<HTMLIonModalElement>(null)
-  const outerColorModal = useRef<HTMLIonModalElement>(null)
-  const categoryRepository = useContext(CategoryRepositoryContext)
+
+  const [showInnerColorModal, setShowInnerColorModal] = useState(false)
+  const [showOuterColorModal, setShowOuterColorModal] = useState(false)
+
+  const {state: categories, create: createCategory, root: rootCategory} = useContext(CategoryPersistenceContext)
   const [filter, setFilter] = useState<string>("")
-  const [categories, setCategories] = useState<Category[]>()
 
   const [name, setName] = useState("")
-  const [parent, setParent] = useState<number>()
+  const [parent, setParent] = useState<number>(rootCategory.id)
   const [selectedIcon, setSelectedIcon] = useState<string>("FaQuestion")
   const [innerColor, setInnerColor] = useState<DataType.Color>("#2F4F4F")
   const [outerColor, setOuterColor] = useState<DataType.Color>("#FFA500")
 
   const [errors, setErrors] = useState<{categoryName?: string}>({})
   const [isTouched, setIsTouched] = useState(false)
-
-  useEffect(() => {
-    categoryRepository.getAll().then(response => {
-      setCategories(response)
-      console.log(response)
-      setParent(response.find(c => c.parentId === null)?.id)
-    })
-  }, [categoryRepository.getAll])
-
-  const rootCategory = useMemo(() => categories?.find(c => c.parentId === null), [categories])
 
   function onIconSelect(newIconName: string) {
     console.log(newIconName)
@@ -80,7 +70,13 @@ const CreateCategoryPage: FC = () => {
       return
     }
 
-    categoryRepository.create(name, selectedIcon, parent!, outerColor, innerColor)
+    createCategory({
+      name,
+      iconName: selectedIcon,
+      parentId: parent!,
+      iconBackground: outerColor,
+      iconColor: innerColor,
+    })
       .then(r => (
         router.canGoBack() && router.goBack()
       )).catch(console.error)
@@ -114,7 +110,7 @@ const CreateCategoryPage: FC = () => {
                         label="Parent category"
                         labelPlacement="stacked"
                         placeholder={typeof rootCategory === "undefined" ? "Loading..." : undefined}
-                        value={rootCategory?.name ?? ""}
+                        value={categories?.find(c => c.id === parent)?.name}
                         onFocus={() => parentModal.current?.present()}
                         required
               />
@@ -129,7 +125,8 @@ const CreateCategoryPage: FC = () => {
                                  color="darkslategray" border="1px gray solid" flexShrink={0}/>
                   </div>
                   <div style={{display: "flex", alignItems: "center"}}>
-                    <IonButton id="open-select-outer-color-modal" expand="block" style={{flexGrow: 1}} fill="outline">
+                    <IonButton onClick={() => setShowOuterColorModal(true)} expand="block" style={{flexGrow: 1}}
+                               fill="outline">
                       Select Outer Color
                     </IonButton>
                     <div style={{width: "1rem", flexShrink: 0}}/>
@@ -137,7 +134,8 @@ const CreateCategoryPage: FC = () => {
                                  color="transparent" border="1px gray solid" flexShrink={0}/>
                   </div>
                   <div style={{display: "flex", alignItems: "center"}}>
-                    <IonButton id="open-select-inner-color-modal" expand="block" style={{flexGrow: 1}} fill="outline">
+                    <IonButton onClick={() => setShowInnerColorModal(true)} expand="block" style={{flexGrow: 1}}
+                               fill="outline">
                       Select Inner Color
                     </IonButton>
                     <div style={{width: "1rem", flexShrink: 0}}/>
@@ -184,11 +182,10 @@ const CreateCategoryPage: FC = () => {
             <IconList filter={filter} onSelect={onIconSelect}/>
           </ContentWithHeader>
         </IonModal>
-        <IonModal ref={innerColorModal}
-                  trigger="open-select-inner-color-modal"
-                  onWillDismiss={() => innerColorModal.current?.dismiss()}
+        <IonModal onWillDismiss={() => setShowInnerColorModal(false)}
                   initialBreakpoint={contentHeight / window.innerHeight}
                   breakpoints={[0, contentHeight / window.innerHeight]}
+                  isOpen={showInnerColorModal}
         >
           <IonContent>
             <HexColorPicker color={innerColor} onChange={setInnerColor}
@@ -196,11 +193,10 @@ const CreateCategoryPage: FC = () => {
             />
           </IonContent>
         </IonModal>
-        <IonModal ref={outerColorModal}
-                  trigger="open-select-outer-color-modal"
-                  onWillDismiss={() => outerColorModal.current?.dismiss()}
+        <IonModal onWillDismiss={() => setShowOuterColorModal(false)}
                   initialBreakpoint={contentHeight / window.innerHeight}
                   breakpoints={[0, contentHeight / window.innerHeight]}
+                  isOpen={showOuterColorModal}
         >
           <IonContent>
             <HexColorPicker color={outerColor} onChange={setOuterColor}

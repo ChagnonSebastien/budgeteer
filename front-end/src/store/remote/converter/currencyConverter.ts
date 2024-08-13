@@ -1,4 +1,4 @@
-import Currency from "../../domain/model/currency"
+import Currency from "../../../domain/model/currency"
 import { Currency as CurrencyDto } from "../dto/currency"
 import { Converter } from "./converter"
 

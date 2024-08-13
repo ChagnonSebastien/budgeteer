@@ -4,23 +4,19 @@ import ContentWithHeader from "../components/ContentWithHeader"
 import { TransactionList } from "../components/TransactionList"
 import { AugmentedTransaction } from "../domain/model/transaction"
 import {
-  AccountPersistenceContext,
-  CategoryPersistenceContext, CurrencyPersistenceContext,
-  TransactionPersistenceContext,
-} from "../service/RepositoryContexts"
+  AccountServiceContext,
+  CategoryPersistenceContext,
+  CurrencyServiceContext,
+  TransactionServiceContext,
+} from "../service/ServiceContext"
 
 const TransactionPage: FC = () => {
-  const {state: transactions} = useContext(TransactionPersistenceContext)
-  const {state: currencies} = useContext(CurrencyPersistenceContext)
+  const {state: transactions} = useContext(TransactionServiceContext)
+  const {state: currencies} = useContext(CurrencyServiceContext)
   const {state: categories} = useContext(CategoryPersistenceContext)
-  const {state: accounts} = useContext(AccountPersistenceContext)
+  const {state: accounts} = useContext(AccountServiceContext)
 
-  const augmentedTransaction = useMemo<AugmentedTransaction[] | undefined>(() => {
-    if (transactions === null) return
-    if (currencies === null) return
-    if (categories === null) return
-    if (accounts === null) return
-
+  const augmentedTransaction = useMemo<AugmentedTransaction[]>(() => {
     return transactions.map<AugmentedTransaction>(transaction => ({
       ...transaction,
       category: categories.find(c => c.id === transaction.categoryId)!,

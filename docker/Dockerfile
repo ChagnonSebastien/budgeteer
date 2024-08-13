@@ -16,16 +16,16 @@ RUN npm install -D @protobuf-ts/plugin
 ENV PATH="$PATH:$GOPATH/bin:/app/node_modules/.bin"
 COPY protobuf protobuf
 RUN protoc --go_out=. --go-grpc_out=. protobuf/*
-RUN mkdir -p front-end/src/messaging/dto
-RUN npx protoc --ts_out ./front-end/src/messaging/dto --proto_path protobuf protobuf/*
+RUN mkdir -p front-end/src/store/remote/dto
+RUN npx protoc --ts_out ./front-end/src/store/remote/dto --proto_path protobuf protobuf/*
 
 
 FROM node:22-alpine AS web-build
 WORKDIR /app
-COPY front-end/package.json front-end/package-lock.json .
+COPY front-end/package.json front-end/package-lock.json ./
 RUN npm install
 COPY front-end .
-COPY --from=protoc /app/front-end/src/messaging/dto src/messaging/dto
+COPY --from=protoc /app/front-end/src/store/remote/dto src/store/remote/dto
 RUN npm run build
 
 

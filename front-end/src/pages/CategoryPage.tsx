@@ -1,31 +1,29 @@
 import {
   IonButton,
-  IonPage, IonRoute, IonRouterOutlet,
+  IonPage,
   useIonRouter,
 } from "@ionic/react"
-import { FC, useContext, useEffect, useState } from "react"
+import { FC, useContext } from "react"
+import { CategoryList } from "../components/CategoryList"
 import ContentWithHeader from "../components/ContentWithHeader"
-import Category from "../domain/model/category"
-import { CategoryRepositoryContext } from "../service/RepositoryContexts"
+import { CategoryPersistenceContext } from "../service/ServiceContext"
 
 
 const CategoryPage: FC = () => {
   const router = useIonRouter()
 
-  const [categories, setCategories] = useState<Category[]>()
-
-  const categoryRepository = useContext(CategoryRepositoryContext)
-
-  useEffect(() => {
-    categoryRepository.getAll().then(setCategories)
-  }, [categoryRepository.getAll])
+  const {state: categories} = useContext(CategoryPersistenceContext)
 
   return (
     <IonPage>
       <ContentWithHeader title="Categories" button="menu">
-        <IonButton expand="block" onClick={() => router.push("/categories/new")}>
-          New
-        </IonButton>
+        <div style={{margin: "1rem"}}>
+          <IonButton expand="block" onClick={() => router.push("/categories/new")}>
+            New
+          </IonButton>
+          <div style={{height: "1rem"}}/>
+          <CategoryList categories={categories}/>
+        </div>
       </ContentWithHeader>
     </IonPage>
 

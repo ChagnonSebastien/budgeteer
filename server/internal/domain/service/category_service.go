@@ -28,7 +28,7 @@ func (a *CategoryService) GetAllCategories(ctx context.Context) ([]model.Categor
 
 	if len(categories) == 0 {
 		rootCategoryName := "Any"
-		rootIconName := "BsQuestionLg"
+		rootIconName := "MdCategory"
 		rootIconColor := "rgb(53, 44, 77)"
 		rootIconBackground := "rgb(242, 198, 230)"
 		rootId, err := a.categoryRepository.CreateCategory(

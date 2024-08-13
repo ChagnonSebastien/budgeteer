@@ -1,4 +1,4 @@
-import Category from "../../domain/model/category"
+import Category from "../../../domain/model/category"
 import { Category as CategoryDto } from "../dto/category"
 import { Converter } from "./converter"
 

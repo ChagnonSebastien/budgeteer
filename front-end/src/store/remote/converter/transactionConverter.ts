@@ -1,4 +1,4 @@
-import Transaction from "../../domain/model/transaction"
+import Transaction from "../../../domain/model/transaction"
 import { Transaction as TransactionDto } from "../dto/transaction"
 import { Converter } from "./converter"
 

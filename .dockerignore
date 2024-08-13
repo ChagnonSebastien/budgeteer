@@ -2,6 +2,6 @@ front-end/node_modules
 front-end/dist
 
 # Generated
-front-end/src/messaging/dto
+front-end/src/store/remote/dto
 server/internal/infrastructure/messaging/dto
 server/internal/infrastructure/db/dao

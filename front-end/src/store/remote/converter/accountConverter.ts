@@ -1,4 +1,4 @@
-import Account from "../../domain/model/account"
+import Account from "../../../domain/model/account"
 import { Account as AccountDto } from "../dto/account"
 import { Converter } from "./converter"
 
