@@ -9,6 +9,7 @@ import Transaction from "./domain/model/transaction"
 import Menu from "./components/Menu"
 import { FC, ReactNode, useContext, useEffect, useState, lazy } from "react"
 import CategoryPage from "./pages/CategoryPage"
+import CreateCategoryPage from "./pages/CreateCategoryPage"
 import ImportSpreadsheet from "./pages/ImportSpreadsheet"
 import TransactionPage from "./pages/TransactionPage"
 import UnimplementedPage from "./pages/UnimplementedPage"
@@ -96,11 +97,12 @@ const App: FC = () => {
             <Menu/>
 
             <IonRouterOutlet id="main">
-              <IonRoute path="/categories" render={() => <CategoryPage/>}/>
-              <IonRoute path="/currencies" render={() => <UnimplementedPage/>}/>
-              <IonRoute path="/transactions" render={() => <TransactionPage/>}/>
-              <IonRoute path="/import" render={() => <ImportSpreadsheet/>}/>
-              <IonRoute path="/" exact render={() => <Redirect to="/transactions"/>}/>
+              <IonRoute exact path="/categories" render={() => <CategoryPage/>}/>
+              <IonRoute exact path="/categories/new" render={() => <CreateCategoryPage/>}/>
+              <IonRoute exact path="/currencies" render={() => <UnimplementedPage/>}/>
+              <IonRoute exact path="/transactions" render={() => <TransactionPage/>}/>
+              <IonRoute exact path="/import" render={() => <ImportSpreadsheet/>}/>
+              <IonRoute exact path="/" render={() => <Redirect to="/transactions"/>}/>
             </IonRouterOutlet>
           </IonSplitPane>
         </StateWrapper>

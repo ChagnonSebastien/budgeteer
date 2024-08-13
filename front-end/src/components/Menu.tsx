@@ -62,7 +62,7 @@ const Menu: FC = () => {
             return (
               <IonMenuToggle key={index} autoHide={false}>
                 <IonItem
-                  className={location.pathname === appPage.url ? "selected" : ""}
+                  className={location.pathname.includes(appPage.url) ? "selected" : ""}
                   style={{cursor: "pointer"}}
                   onClick={() => router.push(appPage.url)}
                 >

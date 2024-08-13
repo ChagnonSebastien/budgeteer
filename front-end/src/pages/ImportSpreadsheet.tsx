@@ -1,5 +1,8 @@
-import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, IonToolbar } from "@ionic/react"
-import { ChangeEventHandler, FC } from "react"
+import {
+  IonButton,
+  IonPage,
+} from "@ionic/react"
+import { ChangeEventHandler, FC, useRef } from "react"
 import { parse as papaparse } from "papaparse"
 import { GrpcWebFetchTransport } from "@protobuf-ts/grpcweb-transport"
 import ContentWithHeader from "../components/ContentWithHeader"
@@ -28,6 +31,12 @@ const categoryService = new CategoryServiceClient(transport)
 const transactionService = new TransactionServiceClient(transport)
 
 const ImportSpreadsheet: FC = () => {
+
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const handleButtonClick = () => {
+    fileInputRef.current?.click()
+  }
 
   const handleFileChange: ChangeEventHandler<HTMLInputElement> = async (event) => {
     if (!event.target.files?.length) {
@@ -157,17 +166,14 @@ const ImportSpreadsheet: FC = () => {
   return (
     <IonPage>
       <ContentWithHeader title="Import Spreadsheet" button="return">
-        <p>Import spreadsheet</p>
-        <label style={{background: "#FEF", borderRadius: "1rem", padding: "1rem", fontSize: "large", margin: "0.5rem"}}>
-          Select a file
-          <input
-            type="file"
-            accept=".csv"
-            onChange={handleFileChange}
-            style={{display: "none"}}
-            id="csvFileInput"
-          />
-        </label>
+        <IonButton expand="block" onClick={handleButtonClick}>Upload CSV</IonButton>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".csv"
+          onChange={handleFileChange}
+          style={{display: "none"}}
+        />
       </ContentWithHeader>
     </IonPage>
   )

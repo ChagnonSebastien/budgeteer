@@ -1,5 +1,5 @@
 import {
-  IonBackButton,
+  IonBackButton, IonButton,
   IonButtons,
   IonContent,
   IonHeader,
@@ -11,14 +11,15 @@ import {
 import { FC, ReactNode } from "react"
 
 interface Props {
-  children: ReactNode | ReactNode[]
-  title: string
-  button: "menu" | "return" | "none"
-  onSearch?: (ev: Event) => void
+  children: ReactNode | ReactNode[],
+  title: string,
+  button: "menu" | "return" | "none",
+  onSearch?: (query: string) => void,
+  onCancel?: () => void
 }
 
 const ContentWithHeader: FC<Props> = (props) => {
-  const {title, children, button: buttonOption, onSearch} = props
+  const {title, children, button: buttonOption, onSearch, onCancel} = props
   let button = null
   switch (buttonOption) {
     case "return":
@@ -33,14 +34,23 @@ const ContentWithHeader: FC<Props> = (props) => {
     <>
       <IonHeader translucent>
         <IonToolbar>
-          <IonButtons collapse slot="start">
-            {button}
-          </IonButtons>
+          {buttonOption !== "none" && (
+            <IonButtons collapse slot="start">
+              {button}
+            </IonButtons>
+          )}
           <IonTitle>{title}</IonTitle>
+          {typeof onCancel !== "undefined" && (
+            <IonButtons collapse slot="end">
+              <IonButton onClick={onCancel}>
+                Cancel
+              </IonButton>
+            </IonButtons>
+          )}
         </IonToolbar>
         {typeof onSearch !== "undefined" && (
           <IonToolbar>
-            <IonSearchbar onIonInput={onSearch}/>
+            <IonSearchbar onIonInput={(event) => onSearch(event.target.value ?? "")}/>
           </IonToolbar>
         )}
       </IonHeader>
