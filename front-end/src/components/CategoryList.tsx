@@ -17,7 +17,8 @@ export const CategoryList = (props: Props) => {
           onSelect && onSelect(category.id)
         }}>
           <div style={{display: "flex", alignItems: "center"}}>
-            <IconCapsule iconName={category.iconName} size={"2rem"} color={"darkslategray"} backgroundColor={"orange"}/>
+            <IconCapsule iconName={category.iconName} size={"2rem"} color={category.iconColor}
+                         backgroundColor={category.iconBackground}/>
             <div style={{width: "1rem"}}/>
             <p>{category.name}</p>
           </div>

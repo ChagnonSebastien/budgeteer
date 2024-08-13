@@ -1,21 +1,23 @@
 import {
   IonButton, IonContent, IonInput,
   IonModal,
-  IonPage,
+  IonPage, useIonRouter,
 } from "@ionic/react"
 import { HexColorPicker } from "react-colorful"
-import { FC, FormEvent, useContext, useEffect, useRef, useState } from "react"
+import { FC, FormEvent, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react"
 import { CategoryList } from "../components/CategoryList"
 import IconCapsule from "../components/IconCapsule"
 import IconList from "../components/IconList"
 import ContentWithHeader from "../components/ContentWithHeader"
 import Category from "../domain/model/category"
-import { CategoryRepositoryContext } from "../service/RepositoryContexts"
+import { CategoryPersistenceContext, CategoryRepositoryContext } from "../service/RepositoryContexts"
 import { DataType } from "csstype"
 
 const contentHeight = window.innerHeight / 3
 
 const CreateCategoryPage: FC = () => {
+  const router = useIonRouter()
+
   const parentModal = useRef<HTMLIonModalElement>(null)
   const iconModal = useRef<HTMLIonModalElement>(null)
   const innerColorModal = useRef<HTMLIonModalElement>(null)
@@ -34,8 +36,14 @@ const CreateCategoryPage: FC = () => {
   const [isTouched, setIsTouched] = useState(false)
 
   useEffect(() => {
-    categoryRepository.getAll().then(setCategories)
+    categoryRepository.getAll().then(response => {
+      setCategories(response)
+      console.log(response)
+      setParent(response.find(c => c.parentId === null)?.id)
+    })
   }, [categoryRepository.getAll])
+
+  const rootCategory = useMemo(() => categories?.find(c => c.parentId === null), [categories])
 
   function onIconSelect(newIconName: string) {
     console.log(newIconName)
@@ -44,7 +52,7 @@ const CreateCategoryPage: FC = () => {
     iconModal.current?.dismiss()
   }
 
-  const validateCategoryName = (categoryName: string) => {
+  const validateCategoryName = useCallback((categoryName: string) => {
     if (!categoryName) {
       return "Category is required"
     }
@@ -53,22 +61,29 @@ const CreateCategoryPage: FC = () => {
       return "Name is already being used"
     }
 
-    return ""
-  }
+    return undefined
+  }, [categories])
+
+  useEffect(() => {
+    setErrors(prevState => ({
+      ...prevState,
+      categoryName: validateCategoryName(name),
+    }))
+  }, [validateCategoryName, name])
+
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
 
-    const categoryNameErr = validateCategoryName(name)
-
-
-    if (categoryNameErr) {
-      setErrors({categoryName: categoryNameErr})
+    if (errors.categoryName) {
+      setIsTouched(true)
       return
     }
 
-    setErrors({})
-    console.log("Form submitted:", {name})
+    categoryRepository.create(name, selectedIcon, parent!, outerColor, innerColor)
+      .then(r => (
+        router.canGoBack() && router.goBack()
+      )).catch(console.error)
   }
 
   return (
@@ -83,20 +98,23 @@ const CreateCategoryPage: FC = () => {
             </div>
             <div style={{padding: "1rem", border: "1px grey solid", borderTop: 0}}>
               <IonInput type="text"
-                        className={`${!errors.categoryName && "ion-valid"} ${errors.categoryName && "ion-invalid"} ${isTouched && "ion-touched"}`}
+                        className={`${errors.categoryName && "ion-invalid"} ${isTouched && "ion-touched"}`}
                         label="Category name"
                         labelPlacement="stacked"
                         placeholder="e.g., Groceries"
                         value={name}
-                        onIonChange={ev => setName(ev.target.value as string)}
+                        onIonInput={ev => {
+                          setName(ev.target.value as string)
+                          setErrors({categoryName: validateCategoryName(ev.target.value as string)})
+                        }}
                         errorText={errors.categoryName}
                         onIonBlur={() => setIsTouched(true)}
               />
               <IonInput type="text"
                         label="Parent category"
                         labelPlacement="stacked"
-                        value={categories?.find(c => c.id == parent)?.name ?? "ERROR"}
-                        onIonChange={ev => setName(ev.target.value as string)}
+                        placeholder={typeof rootCategory === "undefined" ? "Loading..." : undefined}
+                        value={rootCategory?.name ?? ""}
                         onFocus={() => parentModal.current?.present()}
                         required
               />

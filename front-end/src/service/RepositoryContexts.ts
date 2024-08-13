@@ -20,10 +20,15 @@ export const TransactionRepositoryContext = createContext<TransactionRepository>
 
 interface IPersistence<T> {
   state: T[] | null
+
+  getAll(): Promise<T[]>
 }
 
 const nilPersistence = {
   state: null,
+  getAll() {
+    return Promise.reject("Nil persistence")
+  },
 }
 
 export const CategoryPersistenceContext = createContext<IPersistence<Category>>(nilPersistence)

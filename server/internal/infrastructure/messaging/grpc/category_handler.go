@@ -13,8 +13,18 @@ type CategoryHandler struct {
 	categoryService *service.CategoryService
 }
 
-func (s *CategoryHandler) CreateCategory(ctx context.Context, req *dto.CreateCategoryRequest) (*dto.CreateCategoryResponse, error) {
-	newId, err := s.categoryService.CreateCategory(ctx, req.Name, req.IconName, int(req.ParentId))
+func (s *CategoryHandler) CreateCategory(
+	ctx context.Context,
+	req *dto.CreateCategoryRequest,
+) (*dto.CreateCategoryResponse, error) {
+	newId, err := s.categoryService.CreateCategory(
+		ctx,
+		req.Name,
+		req.IconName,
+		req.IconColor,
+		req.IconBackground,
+		int(req.ParentId),
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -24,7 +34,10 @@ func (s *CategoryHandler) CreateCategory(ctx context.Context, req *dto.CreateCat
 	}, nil
 }
 
-func (s *CategoryHandler) GetAllCategories(ctx context.Context, _ *dto.GetAllCategoriesRequest) (*dto.GetAllCategoriesResponse, error) {
+func (s *CategoryHandler) GetAllCategories(
+	ctx context.Context,
+	_ *dto.GetAllCategoriesRequest,
+) (*dto.GetAllCategoriesResponse, error) {
 	categories, err := s.categoryService.GetAllCategories(ctx)
 	if err != nil {
 		return nil, err
@@ -33,10 +46,12 @@ func (s *CategoryHandler) GetAllCategories(ctx context.Context, _ *dto.GetAllCat
 	categoriesDto := make([]*dto.Category, len(categories))
 	for i, category := range categories {
 		categoriesDto[i] = &dto.Category{
-			Id:       uint32(category.ID),
-			Name:     category.Name,
-			IconName: category.IconName,
-			ParentId: uint32(category.ParentId),
+			Id:             uint32(category.ID),
+			Name:           category.Name,
+			ParentId:       uint32(category.ParentId),
+			IconName:       category.IconName,
+			IconColor:      category.IconColor,
+			IconBackground: category.IconBackground,
 		}
 	}
 

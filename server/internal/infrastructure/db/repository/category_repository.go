@@ -22,25 +22,35 @@ func (r *Repository) GetAllCategories(ctx context.Context) ([]model.Category, er
 		}
 
 		categories[i] = model.Category{
-			ID:       int(categoryDao.ID),
-			Name:     categoryDao.Name,
-			ParentId: parentId,
-			IconName: categoryDao.IconName,
+			ID:             int(categoryDao.ID),
+			Name:           categoryDao.Name,
+			ParentId:       parentId,
+			IconName:       categoryDao.IconName,
+			IconColor:      categoryDao.IconColor,
+			IconBackground: categoryDao.IconBackground,
 		}
 	}
 
 	return categories, nil
 }
 
-func (r *Repository) CreateCategory(ctx context.Context, name, iconName string, parentId int) (int, error) {
-	id, err := r.queries.CreateCategory(ctx, dao.CreateCategoryParams{
-		Name:     name,
-		IconName: iconName,
-		Parent: sql.NullInt32{
-			Int32: int32(parentId),
-			Valid: parentId != 0,
+func (r *Repository) CreateCategory(
+	ctx context.Context,
+	name, iconName, iconColor, iconBackground string,
+	parentId int,
+) (int, error) {
+	id, err := r.queries.CreateCategory(
+		ctx, dao.CreateCategoryParams{
+			Name: name,
+			Parent: sql.NullInt32{
+				Int32: int32(parentId),
+				Valid: parentId != 0,
+			},
+			IconName:       iconName,
+			IconColor:      iconColor,
+			IconBackground: iconBackground,
 		},
-	})
+	)
 	if err != nil {
 		return 0, err
 	}

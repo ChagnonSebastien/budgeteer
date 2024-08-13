@@ -2,7 +2,7 @@ import {
   IonButton,
   IonPage,
 } from "@ionic/react"
-import { ChangeEventHandler, FC, useRef } from "react"
+import { ChangeEventHandler, FC, useContext, useRef } from "react"
 import { parse as papaparse } from "papaparse"
 import { GrpcWebFetchTransport } from "@protobuf-ts/grpcweb-transport"
 import ContentWithHeader from "../components/ContentWithHeader"
@@ -20,6 +20,7 @@ import Category from "../domain/model/category"
 import Currency from "../domain/model/currency"
 import Transaction from "../domain/model/transaction"
 import { formatDateTime } from "../messaging/converter/transactionConverter"
+import { CategoryRepositoryContext } from "../service/RepositoryContexts"
 
 const transport = new GrpcWebFetchTransport({
   baseUrl: "http://localhost:8080",
@@ -33,6 +34,8 @@ const transactionService = new TransactionServiceClient(transport)
 const ImportSpreadsheet: FC = () => {
 
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const categoryRepository = useContext(CategoryRepositoryContext)
 
   const handleButtonClick = () => {
     fileInputRef.current?.click()
@@ -48,7 +51,8 @@ const ImportSpreadsheet: FC = () => {
 
       const currencies: Currency[] = [await createCurrency()]
       const accounts: Account[] = []
-      const categories: Category[] = []
+      const categories: Category[] = await categoryRepository.getAll()
+      const rootCategory = categories.find(c => c.parentId === null)!
       const transactionPromises: Promise<Transaction>[] = []
 
       papaparse(file, {
@@ -74,7 +78,7 @@ const ImportSpreadsheet: FC = () => {
 
             let category = categories.find(c => c.name === line.Category)
             if (typeof category === "undefined") {
-              category = await createCategory(line.Category)
+              category = await createCategory(line.Category, rootCategory.id)
               categories.push(category)
             }
 
@@ -128,13 +132,13 @@ const ImportSpreadsheet: FC = () => {
     return new Account(response.id, name, initialAmount)
   }
 
-  const createCategory = async (name: string): Promise<Category> => {
+  const createCategory = async (name: string, parent: number): Promise<Category> => {
     let response = await categoryService.createCategory(CreateCategoryRequest.create({
       iconName: name,
       name,
     })).response
 
-    return new Category(response.id, name, name, null)
+    return new Category(response.id, name, "BsQuestionLg", "#2F4F4F", "rgb(255, 165, 0)", parent)
   }
 
   const createCurrency = async () => {
