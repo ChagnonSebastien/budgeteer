@@ -9,6 +9,7 @@ import (
 type accountRepository interface {
 	GetAllAccountsWithCurrencyIDs(ctx context.Context) ([]model.Account, error)
 	CreateAccount(ctx context.Context, name string, initialAmount int) (int, error)
+	UpdateAccount(ctx context.Context, id int, name string, initialAmount int) error
 }
 
 type AccountService struct {
@@ -25,4 +26,8 @@ func (a *AccountService) GetAllAccounts(ctx context.Context) ([]model.Account, e
 
 func (a *AccountService) CreateAccount(ctx context.Context, name string, initialAmount int) (int, error) {
 	return a.accountRepository.CreateAccount(ctx, name, initialAmount)
+}
+
+func (a *AccountService) UpdateAccount(ctx context.Context, id int, name string, initialAmount int) error {
+	return a.accountRepository.UpdateAccount(ctx, id, name, initialAmount)
 }

@@ -57,3 +57,24 @@ func (r *Repository) CreateCategory(
 
 	return int(id), nil
 }
+
+func (r *Repository) UpdateCategory(
+	ctx context.Context,
+	id int,
+	name, iconName, iconColor, iconBackground string,
+	parentId int,
+) error {
+	return r.queries.UpdateCategory(
+		ctx, dao.UpdateCategoryParams{
+			ID:   int32(id),
+			Name: name,
+			Parent: sql.NullInt32{
+				Int32: int32(parentId),
+				Valid: parentId != 0,
+			},
+			IconName:       iconName,
+			IconColor:      iconColor,
+			IconBackground: iconBackground,
+		},
+	)
+}

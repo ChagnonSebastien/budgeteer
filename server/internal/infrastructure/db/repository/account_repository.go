@@ -26,12 +26,24 @@ func (r *Repository) GetAllAccountsWithCurrencyIDs(ctx context.Context) ([]model
 }
 
 func (r *Repository) CreateAccount(ctx context.Context, name string, initialAmount int) (int, error) {
-	accountId, err := r.queries.CreateAccount(ctx, dao.CreateAccountParams{
-		Name:          name,
-		InitialAmount: int32(initialAmount),
-	})
+	accountId, err := r.queries.CreateAccount(
+		ctx, dao.CreateAccountParams{
+			Name:          name,
+			InitialAmount: int32(initialAmount),
+		},
+	)
 	if err != nil {
 		return 0, err
 	}
 	return int(accountId), nil
+}
+
+func (r *Repository) UpdateAccount(ctx context.Context, id int, name string, initialAmount int) error {
+	return r.queries.UpdateAccount(
+		ctx, dao.UpdateAccountParams{
+			ID:            int32(id),
+			Name:          name,
+			InitialAmount: int32(initialAmount),
+		},
+	)
 }

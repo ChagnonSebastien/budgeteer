@@ -13,7 +13,10 @@ type AccountHandler struct {
 	accountService *service.AccountService
 }
 
-func (s *AccountHandler) CreateAccount(ctx context.Context, req *dto.CreateAccountRequest) (*dto.CreateAccountResponse, error) {
+func (s *AccountHandler) CreateAccount(ctx context.Context, req *dto.CreateAccountRequest) (
+	*dto.CreateAccountResponse,
+	error,
+) {
 	newId, err := s.accountService.CreateAccount(ctx, req.Name, int(req.InitialAmount))
 	if err != nil {
 		return nil, err
@@ -24,7 +27,22 @@ func (s *AccountHandler) CreateAccount(ctx context.Context, req *dto.CreateAccou
 	}, nil
 }
 
-func (s *AccountHandler) GetAllAccounts(ctx context.Context, _ *dto.GetAllAccountsRequest) (*dto.GetAllAccountsResponse, error) {
+func (s *AccountHandler) UpdateAccount(
+	ctx context.Context,
+	req *dto.UpdateAccountRequest,
+) (*dto.UpdateAccountResponse, error) {
+	err := s.accountService.UpdateAccount(ctx, int(req.Account.Id), req.Account.Name, int(req.Account.InitialAmount))
+	if err != nil {
+		return nil, err
+	}
+
+	return &dto.UpdateAccountResponse{}, nil
+}
+
+func (s *AccountHandler) GetAllAccounts(ctx context.Context, _ *dto.GetAllAccountsRequest) (
+	*dto.GetAllAccountsResponse,
+	error,
+) {
 	accounts, err := s.accountService.GetAllAccounts(ctx)
 	if err != nil {
 		return nil, err

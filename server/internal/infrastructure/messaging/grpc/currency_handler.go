@@ -13,7 +13,10 @@ type CurrencyHandler struct {
 	currencyService *service.CurrencyService
 }
 
-func (s *CurrencyHandler) CreateCurrency(ctx context.Context, req *dto.CreateCurrencyRequest) (*dto.CreateCurrencyResponse, error) {
+func (s *CurrencyHandler) CreateCurrency(
+	ctx context.Context,
+	req *dto.CreateCurrencyRequest,
+) (*dto.CreateCurrencyResponse, error) {
 	newId, err := s.currencyService.CreateCurrency(ctx, req.Name, req.Symbol)
 	if err != nil {
 		return nil, err
@@ -24,7 +27,22 @@ func (s *CurrencyHandler) CreateCurrency(ctx context.Context, req *dto.CreateCur
 	}, nil
 }
 
-func (s *CurrencyHandler) GetAllCurrencies(ctx context.Context, _ *dto.GetAllCurrenciesRequest) (*dto.GetAllCurrenciesResponse, error) {
+func (s *CurrencyHandler) UpdateCurrency(
+	ctx context.Context,
+	req *dto.UpdateCurrencyRequest,
+) (*dto.UpdateCurrencyResponse, error) {
+	err := s.currencyService.UpdateCurrency(ctx, int(req.Currency.Id), req.Currency.Name, req.Currency.Symbol)
+	if err != nil {
+		return nil, err
+	}
+
+	return &dto.UpdateCurrencyResponse{}, nil
+}
+
+func (s *CurrencyHandler) GetAllCurrencies(
+	ctx context.Context,
+	_ *dto.GetAllCurrenciesRequest,
+) (*dto.GetAllCurrenciesResponse, error) {
 	currencies, err := s.currencyService.GetAllCurrencies(ctx)
 	if err != nil {
 		return nil, err

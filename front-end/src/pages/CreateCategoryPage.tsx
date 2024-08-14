@@ -1,209 +1,33 @@
 import {
-  IonButton, IonContent, IonInput,
-  IonModal,
   IonPage, useIonRouter,
 } from "@ionic/react"
-import { HexColorPicker } from "react-colorful"
-import { FC, FormEvent, useCallback, useContext, useEffect, useRef, useState } from "react"
-import { CategoryList } from "../components/CategoryList"
-import IconCapsule from "../components/IconCapsule"
-import IconList from "../components/IconList"
+import { FC, useCallback, useContext } from "react"
 import ContentWithHeader from "../components/ContentWithHeader"
+import Category from "../domain/model/category"
 import { CategoryPersistenceContext } from "../service/ServiceContext"
-import { DataType } from "csstype"
-
-const contentHeight = window.innerHeight / 3
+import CategoryForm from "./CategoryForm"
 
 const CreateCategoryPage: FC = () => {
   const router = useIonRouter()
 
-  const parentModal = useRef<HTMLIonModalElement>(null)
-  const iconModal = useRef<HTMLIonModalElement>(null)
+  const {create: createCategory} = useContext(CategoryPersistenceContext)
 
-  const [showInnerColorModal, setShowInnerColorModal] = useState(false)
-  const [showOuterColorModal, setShowOuterColorModal] = useState(false)
-
-  const {state: categories, create: createCategory, root: rootCategory} = useContext(CategoryPersistenceContext)
-  const [filter, setFilter] = useState<string>("")
-
-  const [name, setName] = useState("")
-  const [parent, setParent] = useState<number>(rootCategory.id)
-  const [selectedIcon, setSelectedIcon] = useState<string>("FaQuestion")
-  const [innerColor, setInnerColor] = useState<DataType.Color>("#2F4F4F")
-  const [outerColor, setOuterColor] = useState<DataType.Color>("#FFA500")
-
-  const [errors, setErrors] = useState<{categoryName?: string}>({})
-  const [isTouched, setIsTouched] = useState(false)
-
-  function onIconSelect(newIconName: string) {
-    console.log(newIconName)
-    setSelectedIcon(newIconName)
-    setFilter("")
-    iconModal.current?.dismiss()
-  }
-
-  const validateCategoryName = useCallback((categoryName: string) => {
-    if (!categoryName) {
-      return "Category is required"
+  const onSubmit = useCallback(async (data: Omit<Category, "id">) => {
+    await createCategory(data)
+    if (router.canGoBack()) {
+      router.goBack()
+    } else {
+      router.push("/categories", "back", "replace")
     }
-
-    if (categories?.find(c => c.name === categoryName)) {
-      return "Name is already being used"
-    }
-
-    return undefined
-  }, [categories])
-
-  useEffect(() => {
-    setErrors(prevState => ({
-      ...prevState,
-      categoryName: validateCategoryName(name),
-    }))
-  }, [validateCategoryName, name])
-
-
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-
-    if (errors.categoryName) {
-      setIsTouched(true)
-      return
-    }
-
-    createCategory({
-      name,
-      iconName: selectedIcon,
-      parentId: parent!,
-      iconBackground: outerColor,
-      iconColor: innerColor,
-    })
-      .then(r => (
-        router.canGoBack() && router.goBack()
-      )).catch(console.error)
-  }
+  }, [])
 
   return (
     <IonPage>
       <ContentWithHeader title="Create new category" button="return">
-
-        <form noValidate onSubmit={handleSubmit}>
-          <div style={{margin: "1rem"}}>
-            <div style={{display: "flex"}}>
-              <div style={{color: "gray", margin: "0 1rem", transform: "translate(0, 0.5rem)"}}>Form</div>
-              <div style={{borderBottom: "1px grey solid", flexGrow: 1}}/>
-            </div>
-            <div style={{padding: "1rem", border: "1px grey solid", borderTop: 0}}>
-              <IonInput type="text"
-                        className={`${errors.categoryName && "ion-invalid"} ${isTouched && "ion-touched"}`}
-                        label="Category name"
-                        labelPlacement="stacked"
-                        placeholder="e.g., Groceries"
-                        value={name}
-                        onIonInput={ev => {
-                          setName(ev.target.value as string)
-                          setErrors({categoryName: validateCategoryName(ev.target.value as string)})
-                        }}
-                        errorText={errors.categoryName}
-                        onIonBlur={() => setIsTouched(true)}
-              />
-              <IonInput type="text"
-                        label="Parent category"
-                        labelPlacement="stacked"
-                        placeholder={typeof rootCategory === "undefined" ? "Loading..." : undefined}
-                        value={categories?.find(c => c.id === parent)?.name}
-                        onFocus={() => parentModal.current?.present()}
-                        required
-              />
-              <div style={{display: "flex", marginTop: "1rem", alignItems: "center"}}>
-                <div style={{display: "flex", flexDirection: "column", flexGrow: 1}}>
-                  <div style={{display: "flex", alignItems: "center"}}>
-                    <IonButton id="open-select-icon-modal" expand="block" style={{flexGrow: 1}} fill="outline">
-                      Select Icon
-                    </IonButton>
-                    <div style={{width: "1rem", flexShrink: 0}}/>
-                    <IconCapsule iconName={selectedIcon} size="2rem" backgroundColor="transparent"
-                                 color="darkslategray" border="1px gray solid" flexShrink={0}/>
-                  </div>
-                  <div style={{display: "flex", alignItems: "center"}}>
-                    <IonButton onClick={() => setShowOuterColorModal(true)} expand="block" style={{flexGrow: 1}}
-                               fill="outline">
-                      Select Outer Color
-                    </IonButton>
-                    <div style={{width: "1rem", flexShrink: 0}}/>
-                    <IconCapsule iconName="GrX" size="2rem" backgroundColor={outerColor}
-                                 color="transparent" border="1px gray solid" flexShrink={0}/>
-                  </div>
-                  <div style={{display: "flex", alignItems: "center"}}>
-                    <IonButton onClick={() => setShowInnerColorModal(true)} expand="block" style={{flexGrow: 1}}
-                               fill="outline">
-                      Select Inner Color
-                    </IonButton>
-                    <div style={{width: "1rem", flexShrink: 0}}/>
-                    <IconCapsule iconName="GrX" size="2rem" backgroundColor={innerColor}
-                                 color="transparent" border="1px gray solid" flexShrink={0}/>
-                  </div>
-                </div>
-                <div style={{width: "1rem", flexShrink: 0}}/>
-                <div style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  justifyContent: "center",
-                  padding: "1rem",
-                  border: "2px black solid",
-                }}>
-                  <IconCapsule iconName={selectedIcon} size="5rem" color={innerColor} backgroundColor={outerColor}/>
-                </div>
-
-              </div>
-            </div>
-            <div style={{height: "1rem"}}/>
-            <IonButton type="submit" expand="block">
-              Create
-            </IonButton>
-          </div>
-        </form>
-
-
-        <IonModal ref={parentModal}
-                  onWillDismiss={() => parentModal.current?.dismiss()}>
-          <ContentWithHeader title="Select Icon" button="return"
-                             onCancel={() => parentModal.current?.dismiss()}>
-            <CategoryList categories={categories} onSelect={newParent => {
-              setParent(newParent)
-              parentModal.current?.dismiss()
-            }}/>
-          </ContentWithHeader>
-        </IonModal>
-        <IonModal ref={iconModal}
-                  trigger="open-select-icon-modal"
-                  onWillDismiss={() => iconModal.current?.dismiss()}>
-          <ContentWithHeader title="Select Icon" button="return" onSearch={setFilter}
-                             onCancel={() => iconModal.current?.dismiss()}>
-            <IconList filter={filter} onSelect={onIconSelect}/>
-          </ContentWithHeader>
-        </IonModal>
-        <IonModal onWillDismiss={() => setShowInnerColorModal(false)}
-                  initialBreakpoint={contentHeight / window.innerHeight}
-                  breakpoints={[0, contentHeight / window.innerHeight]}
-                  isOpen={showInnerColorModal}
-        >
-          <IonContent>
-            <HexColorPicker color={innerColor} onChange={setInnerColor}
-                            style={{width: "100%", flexGrow: 1, height: contentHeight}}
-            />
-          </IonContent>
-        </IonModal>
-        <IonModal onWillDismiss={() => setShowOuterColorModal(false)}
-                  initialBreakpoint={contentHeight / window.innerHeight}
-                  breakpoints={[0, contentHeight / window.innerHeight]}
-                  isOpen={showOuterColorModal}
-        >
-          <IonContent>
-            <HexColorPicker color={outerColor} onChange={setOuterColor}
-                            style={{width: "100%", flexGrow: 1, height: contentHeight}}
-            />
-          </IonContent>
-        </IonModal>
+        <CategoryForm
+          onSubmit={onSubmit}
+          submitText="Create"
+        />
       </ContentWithHeader>
     </IonPage>
 

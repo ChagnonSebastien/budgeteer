@@ -39,14 +39,14 @@ const ContentWithHeader: FC<Props> = (props) => {
               {button}
             </IonButtons>
           )}
-          <IonTitle>{title}</IonTitle>
           {typeof onCancel !== "undefined" && (
-            <IonButtons collapse slot="end">
+            <IonButtons collapse slot="start">
               <IonButton onClick={onCancel}>
                 Cancel
               </IonButton>
             </IonButtons>
           )}
+          <IonTitle>{title}</IonTitle>
         </IonToolbar>
         {typeof onSearch !== "undefined" && (
           <IonToolbar>
@@ -55,7 +55,7 @@ const ContentWithHeader: FC<Props> = (props) => {
         )}
       </IonHeader>
 
-      <IonContent fullscreen>
+      <IonContent fullscreen fixedSlotPlacement="before">
         <IonHeader collapse="condense">
           <IonToolbar>
             <IonButtons collapse slot="start">
@@ -66,6 +66,7 @@ const ContentWithHeader: FC<Props> = (props) => {
         </IonHeader>
 
         {children}
+
       </IonContent>
     </>
   )

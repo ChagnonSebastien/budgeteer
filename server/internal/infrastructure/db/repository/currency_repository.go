@@ -26,13 +26,25 @@ func (r *Repository) GetAllCurrencies(ctx context.Context) ([]model.Currency, er
 }
 
 func (r *Repository) CreateCurrency(ctx context.Context, name, symbol string) (int, error) {
-	id, err := r.queries.CreateCurrency(ctx, dao.CreateCurrencyParams{
-		Name:   name,
-		Symbol: symbol,
-	})
+	id, err := r.queries.CreateCurrency(
+		ctx, dao.CreateCurrencyParams{
+			Name:   name,
+			Symbol: symbol,
+		},
+	)
 	if err != nil {
 		return 0, err
 	}
 
 	return int(id), nil
+}
+
+func (r *Repository) UpdateCurrency(ctx context.Context, id int, name, symbol string) error {
+	return r.queries.UpdateCurrency(
+		ctx, dao.UpdateCurrencyParams{
+			ID:     int32(id),
+			Name:   name,
+			Symbol: symbol,
+		},
+	)
 }

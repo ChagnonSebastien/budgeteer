@@ -58,7 +58,7 @@ const ImportSpreadsheet: FC = () => {
               break
             }
 
-            let currency = currencies.find(c => c.symbol === line.Currency)
+            let currency = newCurrencies.find(c => c.symbol === line.Currency)
             if (typeof currency === "undefined") {
               currency = await createCurrency({name: "Canadian Dollar", symbol: line.Currency})
               newCurrencies.push(currency)
@@ -99,7 +99,7 @@ const ImportSpreadsheet: FC = () => {
 
             let amount = Number.parseInt(line.Value.replace(".", ""))
             let date = new Date(line.Date)
-            let note = line.Notes === "" ? undefined : line.Notes
+            let note = line.Notes
 
             let sender: Account | undefined
             let receiver: Account | undefined
@@ -118,7 +118,7 @@ const ImportSpreadsheet: FC = () => {
               date,
               senderId: sender?.id ?? null,
               receiverId: receiver?.id ?? null,
-              note: note ?? null,
+              note,
             }))
           }
 

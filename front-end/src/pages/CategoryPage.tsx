@@ -22,7 +22,7 @@ const CategoryPage: FC = () => {
             New
           </IonButton>
           <div style={{height: "1rem"}}/>
-          <CategoryList categories={categories}/>
+          <CategoryList categories={categories} onSelect={categoryId => router.push(`/categories/edit/${categoryId}`)}/>
         </div>
       </ContentWithHeader>
     </IonPage>

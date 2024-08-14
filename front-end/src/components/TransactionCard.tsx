@@ -1,4 +1,4 @@
-import { FC, memo } from "react"
+import { FC } from "react"
 import IconCapsule from "./IconCapsule"
 
 interface Props {
@@ -7,12 +7,24 @@ interface Props {
   from: string,
   to: string,
   categoryIconName: string,
+  categoryIconColor: string,
+  categoryIconBackground: string,
   date: Date,
   note: string,
 }
 
 const TransactionCard: FC<Props> = (props) => {
-  const {amount, currencySymbol, from, to, categoryIconName, date, note} = props
+  const {
+    amount,
+    currencySymbol,
+    from,
+    to,
+    categoryIconName,
+    date,
+    note,
+    categoryIconColor,
+    categoryIconBackground,
+  } = props
 
   return (
     <div style={{
@@ -32,7 +44,8 @@ const TransactionCard: FC<Props> = (props) => {
         alignItems: "center",
         flexShrink: 0,
       }}>
-        <IconCapsule iconName={categoryIconName} size="2.4rem" backgroundColor="orange" color="darkslategray"/>
+        <IconCapsule iconName={categoryIconName} size="2.4rem" backgroundColor={categoryIconBackground}
+                     color={categoryIconColor}/>
       </div>
       <div style={{
         display: "flex",
@@ -77,4 +90,4 @@ const TransactionCard: FC<Props> = (props) => {
   )
 }
 
-export default memo(TransactionCard)
+export default TransactionCard

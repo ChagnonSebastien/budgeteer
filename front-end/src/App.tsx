@@ -8,9 +8,10 @@ import Category from "./domain/model/category"
 import Currency from "./domain/model/currency"
 import Transaction from "./domain/model/transaction"
 import Menu from "./components/Menu"
-import { FC, ReactNode, useContext, useEffect, useState } from "react"
+import { FC, ReactNode, useEffect, useState } from "react"
 import CategoryPage from "./pages/CategoryPage"
 import CreateCategoryPage from "./pages/CreateCategoryPage"
+import EditCategoryPage from "./pages/EditCategoryPage"
 import ImportSpreadsheet from "./pages/ImportSpreadsheet"
 import TransactionPage from "./pages/TransactionPage"
 import UnimplementedPage from "./pages/UnimplementedPage"
@@ -66,7 +67,7 @@ setupIonicReact()
 // const ImportSpreadsheet = lazy(() => import("./pages/ImportSpreadsheet"))
 
 const transport = new GrpcWebFetchTransport({
-  baseUrl: "http://localhost:8080",
+  baseUrl: import.meta.env.VITE_BACKEND_URL || "/",
 })
 
 
@@ -136,6 +137,7 @@ const App: FC = () => {
             <IonRouterOutlet id="main">
               <IonRoute exact path="/categories" render={() => <CategoryPage/>}/>
               <IonRoute exact path="/categories/new" render={() => <CreateCategoryPage/>}/>
+              <IonRoute exact path="/categories/edit/:categoryId" render={() => <EditCategoryPage/>}/>
               <IonRoute exact path="/currencies" render={() => <UnimplementedPage/>}/>
               <IonRoute exact path="/transactions" render={() => <TransactionPage/>}/>
               <IonRoute exact path="/import" render={() => <ImportSpreadsheet/>}/>

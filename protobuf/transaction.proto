@@ -12,7 +12,7 @@ message Transaction {
   optional uint32 receiver = 5;
   uint32 category = 6;
   string date = 7;
-  optional string note = 8;
+  string note = 8;
 }
 
 message GetAllTransactionsRequest {
@@ -29,14 +29,23 @@ message CreateTransactionRequest {
   optional uint32 receiver = 4;
   uint32 category = 5;
   string date = 6;
-  optional string note = 7;
+  string note = 7;
 }
 
 message CreateTransactionResponse {
   uint32 id = 1;
 }
 
+message UpdateTransactionRequest {
+  Transaction transaction = 1;
+}
+
+message UpdateTransactionResponse {
+
+}
+
 service TransactionService {
   rpc GetAllTransactions (GetAllTransactionsRequest) returns (GetAllTransactionsResponse);
   rpc CreateTransaction (CreateTransactionRequest) returns (CreateTransactionResponse);
+  rpc UpdateTransaction (UpdateTransactionRequest) returns (UpdateTransactionResponse);
 }

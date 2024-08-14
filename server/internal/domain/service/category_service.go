@@ -10,6 +10,7 @@ import (
 type categoryRepository interface {
 	GetAllCategories(ctx context.Context) ([]model.Category, error)
 	CreateCategory(ctx context.Context, name, iconName, iconColor, iconBackground string, parentId int) (int, error)
+	UpdateCategory(ctx context.Context, id int, name, iconName, iconColor, iconBackground string, parentId int) error
 }
 
 type CategoryService struct {
@@ -65,4 +66,13 @@ func (a *CategoryService) CreateCategory(
 	}
 
 	return a.categoryRepository.CreateCategory(ctx, name, iconName, iconColor, iconBackground, parentId)
+}
+
+func (a *CategoryService) UpdateCategory(
+	ctx context.Context,
+	id int,
+	name, iconName, iconColor, iconBackground string,
+	parentId int,
+) error {
+	return a.categoryRepository.UpdateCategory(ctx, id, name, iconName, iconColor, iconBackground, parentId)
 }

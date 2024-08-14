@@ -1,7 +1,7 @@
 import { RpcTransport } from "@protobuf-ts/runtime-rpc"
 import Account from "../../domain/model/account"
 import { AccountConverter } from "./converter/accountConverter"
-import { CreateAccountRequest, GetAllAccountsRequest } from "./dto/account"
+import { CreateAccountRequest, GetAllAccountsRequest, UpdateAccountRequest } from "./dto/account"
 import { AccountServiceClient } from "./dto/account.client"
 
 const conv = new AccountConverter()
@@ -21,9 +21,14 @@ export default class AccountRemoteStore {
 
   public async create(data: Omit<Account, "id">): Promise<Account> {
     const response = await this.client.createAccount(CreateAccountRequest.create({
-      name: data.name,
-      initialAmount: data.initialAmount,
+      ...data,
     })).response
     return new Account(response.id, data.name, data.initialAmount)
+  }
+
+  public async update(id: number, data: Omit<Account, "id">): Promise<void> {
+    await this.client.updateAccount(UpdateAccountRequest.create({
+      account: conv.toDTO({id, ...data}),
+    })).response
   }
 }

@@ -34,6 +34,26 @@ func (s *CategoryHandler) CreateCategory(
 	}, nil
 }
 
+func (s *CategoryHandler) UpdateCategory(
+	ctx context.Context,
+	req *dto.UpdateCategoryRequest,
+) (*dto.UpdateCategoryResponse, error) {
+	err := s.categoryService.UpdateCategory(
+		ctx,
+		int(req.Category.Id),
+		req.Category.Name,
+		req.Category.IconName,
+		req.Category.IconColor,
+		req.Category.IconBackground,
+		int(req.Category.ParentId),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &dto.UpdateCategoryResponse{}, nil
+}
+
 func (s *CategoryHandler) GetAllCategories(
 	ctx context.Context,
 	_ *dto.GetAllCategoriesRequest,

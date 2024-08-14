@@ -26,7 +26,16 @@ message CreateAccountResponse {
   uint32 id = 1;
 }
 
+message UpdateAccountRequest {
+  Account account = 1;
+}
+
+message UpdateAccountResponse {
+
+}
+
 service AccountService {
   rpc GetAllAccounts (GetAllAccountsRequest) returns (GetAllAccountsResponse);
   rpc CreateAccount (CreateAccountRequest) returns (CreateAccountResponse);
+  rpc UpdateAccount (UpdateAccountRequest) returns (UpdateAccountResponse);
 }

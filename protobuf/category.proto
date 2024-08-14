@@ -32,7 +32,16 @@ message CreateCategoryResponse {
   uint32 id = 1;
 }
 
+message UpdateCategoryRequest {
+  Category category = 1;
+}
+
+message UpdateCategoryResponse {
+
+}
+
 service CategoryService {
   rpc GetAllCategories (GetAllCategoriesRequest) returns (GetAllCategoriesResponse);
   rpc CreateCategory (CreateCategoryRequest) returns (CreateCategoryResponse);
+  rpc UpdateCategory (UpdateCategoryRequest) returns (UpdateCategoryResponse);
 }

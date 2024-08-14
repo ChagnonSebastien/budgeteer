@@ -19,7 +19,7 @@ export default class Transaction implements Unique {
   readonly receiverId: number | null
   readonly categoryId: number
   readonly date: Date
-  readonly note: string | null
+  readonly note: string
 
   constructor(
     id: number,
@@ -29,7 +29,7 @@ export default class Transaction implements Unique {
     date: Date,
     senderId: number | null,
     receiverId: number | null,
-    note: string | null,
+    note: string,
   ) {
     this.id = id
     this.amount = amount

@@ -26,7 +26,16 @@ message CreateCurrencyResponse {
   uint32 id = 1;
 }
 
+message UpdateCurrencyRequest {
+  Currency currency = 1;
+}
+
+message UpdateCurrencyResponse {
+
+}
+
 service CurrencyService {
   rpc GetAllCurrencies (GetAllCurrenciesRequest) returns (GetAllCurrenciesResponse);
   rpc CreateCurrency (CreateCurrencyRequest) returns (CreateCurrencyResponse);
+  rpc UpdateCurrency (UpdateCurrencyRequest) returns (UpdateCurrencyResponse);
 }

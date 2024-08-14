@@ -28,7 +28,7 @@ export class TransactionConverter implements Converter<Transaction, TransactionD
       new Date(dto.date),
       dto.sender ?? null,
       dto.receiver ?? null,
-      dto.note ?? null,
+      dto.note,
     )
   }
 
@@ -39,7 +39,7 @@ export class TransactionConverter implements Converter<Transaction, TransactionD
       category: model.categoryId,
       currency: model.currencyId,
       date: `${formatDateTime(model.date)}`,
-      note: model.note ?? undefined,
+      note: model.note,
       receiver: model.receiverId ?? undefined,
       sender: model.senderId ?? undefined,
     })

@@ -12,6 +12,9 @@ const nilPersistence = {
   create<T extends Unique>(_data: Omit<T, "id">): Promise<T> {
     return Promise.reject(new Error("nilPersistence"))
   },
+  update<T extends Unique>(_id: number, _data: Omit<T, "id">): Promise<void> {
+    return Promise.reject(new Error("nilPersistence"))
+  },
   get root(): Category {
     throw new Error("root is not implemented")
   },
