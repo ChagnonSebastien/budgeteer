@@ -8,12 +8,12 @@ import {
 import { HexColorPicker } from "react-colorful"
 import { FC, FormEvent, useCallback, useContext, useEffect, useMemo, useState } from "react"
 import { Omit } from "react-router"
-import { CategoryList } from "../components/CategoryList"
-import IconCapsule from "../components/IconCapsule"
-import IconList from "../components/IconList"
-import ContentWithHeader from "../components/ContentWithHeader"
+import { CategoryList } from "./CategoryList"
+import IconCapsule from "./IconCapsule"
+import IconList from "./IconList"
+import ContentWithHeader from "./ContentWithHeader"
 import Category from "../domain/model/category"
-import { CategoryPersistenceContext } from "../service/ServiceContext"
+import { CategoryServiceContext } from "../service/ServiceContext"
 import { DataType } from "csstype"
 
 const contentHeight = window.innerHeight / 3
@@ -27,7 +27,7 @@ interface Props {
 const CategoryForm: FC<Props> = (props) => {
   const {initialCategory, onSubmit, submitText} = props
 
-  const {state: categories, root: rootCategory} = useContext(CategoryPersistenceContext)
+  const {state: categories, root: rootCategory} = useContext(CategoryServiceContext)
 
   const editingRoot = useMemo(() => initialCategory?.id === rootCategory.id, [initialCategory, rootCategory])
 
@@ -55,7 +55,7 @@ const CategoryForm: FC<Props> = (props) => {
 
   const validateCategoryName = useCallback((categoryName: string) => {
     if (!categoryName) {
-      return "Category is required"
+      return "Amount is required"
     }
 
     if (categories?.find(c => c.id !== initialCategory?.id && c.name === categoryName)) {

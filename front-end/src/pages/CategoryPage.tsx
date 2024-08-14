@@ -6,13 +6,13 @@ import {
 import { FC, useContext } from "react"
 import { CategoryList } from "../components/CategoryList"
 import ContentWithHeader from "../components/ContentWithHeader"
-import { CategoryPersistenceContext } from "../service/ServiceContext"
+import { CategoryServiceContext } from "../service/ServiceContext"
 
 
 const CategoryPage: FC = () => {
   const router = useIonRouter()
 
-  const {state: categories} = useContext(CategoryPersistenceContext)
+  const {state: categories} = useContext(CategoryServiceContext)
 
   return (
     <IonPage>

@@ -9,7 +9,7 @@ import Account from "../domain/model/account"
 import Transaction from "../domain/model/transaction"
 import {
   AccountServiceContext,
-  CategoryPersistenceContext,
+  CategoryServiceContext,
   CurrencyServiceContext,
   TransactionServiceContext,
 } from "../service/ServiceContext"
@@ -17,7 +17,7 @@ import {
 const ImportSpreadsheet: FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const {state: categories, create: createCategory, root: rootCategory} = useContext(CategoryPersistenceContext)
+  const {state: categories, create: createCategory, root: rootCategory} = useContext(CategoryServiceContext)
   const {state: currencies, create: createCurrency} = useContext(CurrencyServiceContext)
   const {state: accounts, create: createAccount} = useContext(AccountServiceContext)
   const {create: createTransaction} = useContext(TransactionServiceContext)

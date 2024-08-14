@@ -20,7 +20,7 @@ const nilPersistence = {
   },
 }
 
-export const CategoryPersistenceContext = createContext<BasicCrudService<Category> & CategoryPersistenceAugmentation>(nilPersistence)
+export const CategoryServiceContext = createContext<BasicCrudService<Category> & CategoryPersistenceAugmentation>(nilPersistence)
 export const CurrencyServiceContext = createContext<BasicCrudService<Currency>>(nilPersistence)
 export const AccountServiceContext = createContext<BasicCrudService<Account>>(nilPersistence)
 export const TransactionServiceContext = createContext<BasicCrudService<Transaction>>(nilPersistence)

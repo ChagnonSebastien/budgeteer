@@ -5,8 +5,8 @@ import { FC, useCallback, useContext, useMemo } from "react"
 import { useParams } from "react-router"
 import ContentWithHeader from "../components/ContentWithHeader"
 import Category from "../domain/model/category"
-import { CategoryPersistenceContext } from "../service/ServiceContext"
-import CategoryForm from "./CategoryForm"
+import { CategoryServiceContext } from "../service/ServiceContext"
+import CategoryForm from "../components/CategoryForm"
 
 interface Params {
   categoryId: string
@@ -16,7 +16,7 @@ const EditCategoryPage: FC = () => {
   const router = useIonRouter()
 
   const {categoryId} = useParams<Params>()
-  const {state: categories, update: updateCategory} = useContext(CategoryPersistenceContext)
+  const {state: categories, update: updateCategory} = useContext(CategoryServiceContext)
   const selectedCategory = useMemo(() => categories.find(c => c.id === parseInt(categoryId)), [categories, categoryId])
 
   const onSubmit = useCallback(async (data: Omit<Category, "id">) => {

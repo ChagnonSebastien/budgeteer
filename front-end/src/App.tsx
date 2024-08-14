@@ -11,6 +11,7 @@ import Menu from "./components/Menu"
 import { FC, ReactNode, useEffect, useState } from "react"
 import CategoryPage from "./pages/CategoryPage"
 import CreateCategoryPage from "./pages/CreateCategoryPage"
+import CreateTransactionPage from "./pages/CreateTransactionPage"
 import EditCategoryPage from "./pages/EditCategoryPage"
 import ImportSpreadsheet from "./pages/ImportSpreadsheet"
 import TransactionPage from "./pages/TransactionPage"
@@ -23,7 +24,7 @@ import { NilPersistenceAugmenter } from "./service/NilAugmenter"
 import { BasicCrudServiceWithPersistence } from "./service/BasicCrudServiceWithPersistence"
 import {
   AccountServiceContext,
-  CategoryPersistenceContext,
+  CategoryServiceContext,
   CurrencyServiceContext,
   TransactionServiceContext,
 } from "./service/ServiceContext"
@@ -103,7 +104,7 @@ const App: FC = () => {
       <BasicCrudServiceWithPersistence
         initialState={categories}
         longTermStore={categoryStore}
-        context={CategoryPersistenceContext}
+        context={CategoryServiceContext}
         Augmenter={CategoryPersistenceAugmenter}
       >
         <BasicCrudServiceWithPersistence
@@ -117,6 +118,7 @@ const App: FC = () => {
             longTermStore={transactionRepository}
             context={TransactionServiceContext}
             Augmenter={NilPersistenceAugmenter}
+            sorter={(a, b) => b.date.getTime() - a.date.getTime()}
           >
             <WithItemTools>
               {children}
@@ -140,6 +142,7 @@ const App: FC = () => {
               <IonRoute exact path="/categories/edit/:categoryId" render={() => <EditCategoryPage/>}/>
               <IonRoute exact path="/currencies" render={() => <UnimplementedPage/>}/>
               <IonRoute exact path="/transactions" render={() => <TransactionPage/>}/>
+              <IonRoute exact path="/transactions/new" render={() => <CreateTransactionPage/>}/>
               <IonRoute exact path="/import" render={() => <ImportSpreadsheet/>}/>
               <IonRoute exact path="/" render={() => <Redirect to="/transactions"/>}/>
             </IonRouterOutlet>

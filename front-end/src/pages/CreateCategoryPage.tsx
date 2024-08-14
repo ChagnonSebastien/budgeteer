@@ -4,13 +4,13 @@ import {
 import { FC, useCallback, useContext } from "react"
 import ContentWithHeader from "../components/ContentWithHeader"
 import Category from "../domain/model/category"
-import { CategoryPersistenceContext } from "../service/ServiceContext"
-import CategoryForm from "./CategoryForm"
+import { CategoryServiceContext } from "../service/ServiceContext"
+import CategoryForm from "../components/CategoryForm"
 
 const CreateCategoryPage: FC = () => {
   const router = useIonRouter()
 
-  const {create: createCategory} = useContext(CategoryPersistenceContext)
+  const {create: createCategory} = useContext(CategoryServiceContext)
 
   const onSubmit = useCallback(async (data: Omit<Category, "id">) => {
     await createCategory(data)

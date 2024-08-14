@@ -14,34 +14,11 @@ export const TransactionList = (props: Props) => {
   const {transactions} = props
 
   const [displayedAmount, setDisplayedAmount] = useState<number>(chunkSize)
-  const {iconTypeFromName} = useContext(IconToolsContext)
 
   const displayedItems = useMemo(() => transactions.slice(0, displayedAmount), [transactions, displayedAmount])
 
-  const FaPlus = useMemo(() => iconTypeFromName("FaPlus"), [iconTypeFromName])
-  const GrTransaction = useMemo(() => iconTypeFromName("GrTransaction"), [iconTypeFromName])
-  const MdOutput = useMemo(() => iconTypeFromName("MdOutput"), [iconTypeFromName])
-  const MdInput = useMemo(() => iconTypeFromName("MdInput"), [iconTypeFromName])
-
   return (
     <>
-      <IonFab vertical="bottom" horizontal="end" slot="fixed">
-        <IonFabButton>
-          <FaPlus/>
-        </IonFabButton>
-        <IonFabList side="top">
-          <IonFabButton color="success">
-            <MdInput/>
-          </IonFabButton>
-          <IonFabButton color="danger">
-            <MdOutput/>
-          </IonFabButton>
-          <IonFabButton color="dark">
-            <GrTransaction/>
-          </IonFabButton>
-        </IonFabList>
-      </IonFab>
-
       {displayedItems.map(transaction => (
         <TransactionCard key={transaction.id}
                          from={transaction.sender?.name ?? "-"}
