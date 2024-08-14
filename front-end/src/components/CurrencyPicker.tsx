@@ -1,34 +1,33 @@
 import { IonInput, IonModal } from "@ionic/react"
-import { StyleReactProps } from "@ionic/react/dist/types/components/react-component-lib/interfaces"
 import { FC, useContext, useMemo, useState } from "react"
-import { AccountServiceContext } from "../service/ServiceContext"
-import { AccountList } from "./AccountList"
+import { CurrencyServiceContext } from "../service/ServiceContext"
 import ContentWithHeader from "./ContentWithHeader"
+import { CurrencyList } from "./CurrencyList"
 
 interface Props {
-  selectedAccountId: number | null,
-  setSelectedAccountId: (id: number) => void,
+  selectedCurrencyId: number | null,
+  setSelectedCurrencyId: (id: number) => void,
   labelText: string,
-  style?: StyleReactProps,
+  style?: {[key: string]: any},
   errorText?: string
 }
 
-const AccountPicker: FC<Props> = (props) => {
-  const {selectedAccountId, setSelectedAccountId, labelText, style, errorText} = props
-  const {state: accounts} = useContext(AccountServiceContext)
-  const selectedAccount = useMemo(() => accounts.find(a => a.id === selectedAccountId), [accounts, selectedAccountId])
+const CurrencyPicker: FC<Props> = (props) => {
+  const {selectedCurrencyId, setSelectedCurrencyId, labelText, style, errorText} = props
+  const {state: currencies} = useContext(CurrencyServiceContext)
+  const selectedCurrency = useMemo(() => currencies.find(a => a.id === selectedCurrencyId), [currencies, selectedCurrencyId])
 
   const [showModal, setShowModal] = useState(false)
 
   return (
     <>
-      <IonInput {...style}
+      <IonInput style={style}
                 errorText={errorText}
                 type="text"
                 label={labelText}
                 labelPlacement="stacked"
                 placeholder={"None"}
-                value={selectedAccount?.name}
+                value={selectedCurrency?.symbol}
                 onFocus={e => {
                   e.target.blur()
                   setShowModal(true)
@@ -39,10 +38,10 @@ const AccountPicker: FC<Props> = (props) => {
                 onWillDismiss={() => setShowModal(false)}>
         <ContentWithHeader title={`Select ${labelText}`} button="return"
                            onCancel={() => setShowModal(false)}>
-          <AccountList
-            accounts={accounts}
+          <CurrencyList
+            currencies={currencies}
             onSelect={newParent => {
-              setSelectedAccountId(newParent)
+              setSelectedCurrencyId(newParent)
               setShowModal(false)
             }}
           />
@@ -52,4 +51,4 @@ const AccountPicker: FC<Props> = (props) => {
   )
 }
 
-export default AccountPicker
+export default CurrencyPicker

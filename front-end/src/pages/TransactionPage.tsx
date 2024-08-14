@@ -1,4 +1,4 @@
-import { IonFab, IonFabButton, IonFabList, IonPage, IonSpinner, useIonRouter } from "@ionic/react"
+import { IonFab, IonFabButton, IonFabList, IonPage, useIonRouter } from "@ionic/react"
 import { FC, useContext, useMemo } from "react"
 import ContentWithHeader from "../components/ContentWithHeader"
 import { IconToolsContext } from "../components/IconTools"
@@ -55,7 +55,11 @@ const TransactionPage: FC = () => {
           </IonFabList>
         </IonFab>
 
-        <TransactionList transactions={augmentedTransaction}/>
+        <TransactionList transactions={augmentedTransaction}
+                         onClick={(transactionId) => {
+                           router.push(`/transactions/edit/${transactionId}`)
+                         }}
+        />
       </ContentWithHeader>
     </IonPage>
   )

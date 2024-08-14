@@ -2,7 +2,7 @@ import { FC } from "react"
 import IconCapsule from "./IconCapsule"
 
 interface Props {
-  amount: number;
+  amount: number,
   currencySymbol: string,
   from: string,
   to: string,
@@ -11,6 +11,7 @@ interface Props {
   categoryIconBackground: string,
   date: Date,
   note: string,
+  onClick: () => void
 }
 
 const TransactionCard: FC<Props> = (props) => {
@@ -24,20 +25,23 @@ const TransactionCard: FC<Props> = (props) => {
     note,
     categoryIconColor,
     categoryIconBackground,
+    onClick,
   } = props
 
   return (
-    <div style={{
-      display: "flex",
-      flexDirection: "row",
-      background: "#f5f3f6",
-      borderRadius: ".3rem",
-      fontSize: "small",
-      textWrap: "nowrap",
-      margin: ".3rem",
-      padding: ".3rem",
-      alignItems: "center",
-    }}>
+    <div
+      onClick={onClick}
+      style={{
+        display: "flex",
+        flexDirection: "row",
+        background: "#f5f3f6",
+        borderRadius: ".3rem",
+        fontSize: "small",
+        textWrap: "nowrap",
+        margin: ".3rem",
+        padding: ".3rem",
+        alignItems: "center",
+      }}>
       <div style={{
         display: "flex",
         justifyContent: "center",

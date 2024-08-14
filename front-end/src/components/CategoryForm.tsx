@@ -8,7 +8,7 @@ import {
 import { HexColorPicker } from "react-colorful"
 import { FC, FormEvent, useCallback, useContext, useEffect, useMemo, useState } from "react"
 import { Omit } from "react-router"
-import { CategoryList } from "./CategoryList"
+import CategoryPicker from "./CategoryPicker"
 import IconCapsule from "./IconCapsule"
 import IconList from "./IconList"
 import ContentWithHeader from "./ContentWithHeader"
@@ -32,13 +32,12 @@ const CategoryForm: FC<Props> = (props) => {
   const editingRoot = useMemo(() => initialCategory?.id === rootCategory.id, [initialCategory, rootCategory])
 
   const [name, setName] = useState(initialCategory?.name ?? "")
-  const [parent, setParent] = useState<number | null>(initialCategory?.parentId ?? rootCategory.id)
+  const [parent, setParent] = useState<number>(initialCategory?.parentId ?? rootCategory.id)
   const [selectedIcon, setSelectedIcon] = useState<string>(initialCategory?.iconName ?? "FaQuestion")
   const [innerColor, setInnerColor] = useState<DataType.Color>(initialCategory?.iconColor ?? "#2F4F4F")
   const [outerColor, setOuterColor] = useState<DataType.Color>(initialCategory?.iconBackground ?? "#FFA500")
 
   const [filter, setFilter] = useState<string>("")
-  const [showParentModal, setShowParentModal] = useState(false)
   const [showIconModal, setShowIconModal] = useState(false)
   const [showInnerColorModal, setShowInnerColorModal] = useState(false)
   const [showOuterColorModal, setShowOuterColorModal] = useState(false)
@@ -117,26 +116,7 @@ const CategoryForm: FC<Props> = (props) => {
           />
 
           {!editingRoot && (
-            <>
-              <IonInput type="text"
-                        label="Parent category"
-                        labelPlacement="stacked"
-                        placeholder={typeof rootCategory === "undefined" ? "Loading..." : undefined}
-                        value={categories?.find(c => c.id === parent)?.name}
-                        onFocus={() => setShowParentModal(true)}
-                        required
-              />
-              <IonModal isOpen={showParentModal}
-                        onWillDismiss={() => setShowParentModal(false)}>
-                <ContentWithHeader title="Select Icon" button="return"
-                                   onCancel={() => setShowParentModal(false)}>
-                  <CategoryList categories={categories} onSelect={newParent => {
-                    setParent(newParent)
-                    setShowParentModal(false)
-                  }}/>
-                </ContentWithHeader>
-              </IonModal>
-            </>
+            <CategoryPicker categoryId={parent} setCategoryId={setParent} labelText="Parent Category"/>
           )}
 
           <div style={{display: "flex", marginTop: "1rem", alignItems: "center"}}>

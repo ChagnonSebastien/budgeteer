@@ -13,6 +13,7 @@ import CategoryPage from "./pages/CategoryPage"
 import CreateCategoryPage from "./pages/CreateCategoryPage"
 import CreateTransactionPage from "./pages/CreateTransactionPage"
 import EditCategoryPage from "./pages/EditCategoryPage"
+import EditTransactionPage from "./pages/EditTransactionPage"
 import ImportSpreadsheet from "./pages/ImportSpreadsheet"
 import TransactionPage from "./pages/TransactionPage"
 import UnimplementedPage from "./pages/UnimplementedPage"
@@ -143,6 +144,7 @@ const App: FC = () => {
               <IonRoute exact path="/currencies" render={() => <UnimplementedPage/>}/>
               <IonRoute exact path="/transactions" render={() => <TransactionPage/>}/>
               <IonRoute exact path="/transactions/new" render={() => <CreateTransactionPage/>}/>
+              <IonRoute exact path="/transactions/edit/:transactionId" render={() => <EditTransactionPage/>}/>
               <IonRoute exact path="/import" render={() => <ImportSpreadsheet/>}/>
               <IonRoute exact path="/" render={() => <Redirect to="/transactions"/>}/>
             </IonRouterOutlet>

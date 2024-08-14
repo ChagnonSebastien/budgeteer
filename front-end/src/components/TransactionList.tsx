@@ -1,17 +1,17 @@
-import { IonButton, IonFab, IonFabButton, IonFabList, IonInfiniteScroll, IonInfiniteScrollContent } from "@ionic/react"
-import { useContext, useMemo, useState } from "react"
+import { IonInfiniteScroll, IonInfiniteScrollContent } from "@ionic/react"
+import { useMemo, useState } from "react"
 import { AugmentedTransaction } from "../domain/model/transaction"
-import { IconToolsContext } from "./IconTools"
 import TransactionCard from "./TransactionCard"
 
 interface Props {
-  transactions: AugmentedTransaction[];
+  transactions: AugmentedTransaction[],
+  onClick: (transactionId: number) => void
 }
 
 const chunkSize = 50
 
 export const TransactionList = (props: Props) => {
-  const {transactions} = props
+  const {transactions, onClick} = props
 
   const [displayedAmount, setDisplayedAmount] = useState<number>(chunkSize)
 
@@ -21,6 +21,7 @@ export const TransactionList = (props: Props) => {
     <>
       {displayedItems.map(transaction => (
         <TransactionCard key={transaction.id}
+                         onClick={() => onClick(transaction.id)}
                          from={transaction.sender?.name ?? "-"}
                          to={transaction.receiver?.name ?? "-"}
                          amount={(transaction.amount / 100)}

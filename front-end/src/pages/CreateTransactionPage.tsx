@@ -41,7 +41,7 @@ const CreateCategoryPage: FC = () => {
 
   return (
     <IonPage>
-      <ContentWithHeader title="Record new transaction" button="return">
+      <ContentWithHeader title={`Record new ${type ?? "transaction"}`} button="return">
         <TransactionForm
           onSubmit={onSubmit}
           submitText="Record"

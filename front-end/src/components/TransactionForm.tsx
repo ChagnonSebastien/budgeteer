@@ -1,19 +1,42 @@
 import {
   IonButton,
-  IonInput, IonItem,
+  IonInput,
   IonModal,
   IonToast,
 } from "@ionic/react"
-import { FC, FormEvent, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react"
+import { FC, FormEvent, useContext, useEffect, useMemo, useState } from "react"
 import { Omit, useParams } from "react-router"
 import Transaction from "../domain/model/transaction"
 import AccountPicker from "./AccountPicker"
 import { CategoryList } from "./CategoryList"
 import ContentWithHeader from "./ContentWithHeader"
-import { AccountServiceContext, CategoryServiceContext, CurrencyServiceContext } from "../service/ServiceContext"
+import { CategoryServiceContext, CurrencyServiceContext } from "../service/ServiceContext"
+import CurrencyPicker from "./CurrencyPicker"
 import IconCapsule from "./IconCapsule"
 
 const NoError = "nil"
+
+const validAmount = new RegExp(`^\\d*[.,]?\\d*$`)
+
+const validateAmount = (value: string) => {
+  if (!value) {
+    return "Amount is required"
+  }
+
+  if (!validAmount.test(value)) {
+    return "Invalid amount. Enter a number"
+  }
+
+  return NoError
+}
+
+const validateAccount = (value: number | null, required: boolean) => {
+  if (value === null && required) {
+    return "Required account for this type of transaction"
+  }
+
+  return NoError
+}
 
 interface FieldStatus {
   isValid: boolean
@@ -35,11 +58,12 @@ const TransactionForm: FC<Props> = (props) => {
   const {state: categories, root: rootCategory} = useContext(CategoryServiceContext)
   const {state: currencies} = useContext(CurrencyServiceContext)
 
-  const [amount, setAmount] = useState<string>(`${initialTransaction?.amount ?? ""}`)
+  const [amount, setAmount] = useState<string>(`${typeof initialTransaction === "undefined" ? "" : initialTransaction.amount / 100}`)
+  const sanitizedAmount = useMemo(() => `0${amount.replace(",", ".")}`, [amount])
   const [currency, setCurrency] = useState<number>(currencies[0].id)
   const [parent, setParent] = useState<number | null>(initialTransaction?.categoryId ?? rootCategory.id)
-  const [sender, setSender] = useState<number>()
-  const [receiver, setReceiver] = useState<number>()
+  const [sender, setSender] = useState<number | null>(initialTransaction?.senderId ?? null)
+  const [receiver, setReceiver] = useState<number | null>(initialTransaction?.receiverId ?? null)
   const [note, setNote] = useState("")
 
   const category = useMemo(() => {
@@ -48,17 +72,19 @@ const TransactionForm: FC<Props> = (props) => {
 
   const [showParentModal, setShowCategoryModal] = useState(false)
 
-  const validateAmount = useCallback((value: string) => {
-    if (!value) {
-      return "Amount is required"
-    }
-
-    return NoError
-  }, [categories])
-
   const [showErrorToast, setShowErrorToast] = useState("")
-  const [errors, setErrors] = useState<{amount: FieldStatus}>({
+  const [errors, setErrors] = useState<{amount: FieldStatus, sender: FieldStatus, receiver: FieldStatus}>({
     amount: {
+      hasVisited: false,
+      isValid: false,
+      errorText: NoError,
+    },
+    sender: {
+      hasVisited: false,
+      isValid: false,
+      errorText: NoError,
+    },
+    receiver: {
       hasVisited: false,
       isValid: false,
       errorText: NoError,
@@ -66,15 +92,27 @@ const TransactionForm: FC<Props> = (props) => {
   })
 
   useEffect(() => {
-    const amountError = validateAmount(amount)
+    const amountError = validateAmount(sanitizedAmount)
+    const senderError = validateAccount(sender, type === "expense" || type === "transfer")
+    const receiverError = validateAccount(receiver, type === "income" || type === "transfer")
     setErrors(prevState => ({
       amount: {
         ...prevState.amount,
         isValid: amountError === NoError,
         errorText: amountError,
       },
+      sender: {
+        ...prevState.sender,
+        isValid: senderError === NoError,
+        errorText: senderError,
+      },
+      receiver: {
+        ...prevState.receiver,
+        isValid: receiverError === NoError,
+        errorText: receiverError,
+      },
     }))
-  }, [validateAmount, amount])
+  }, [sanitizedAmount, sender, receiver])
 
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
@@ -86,19 +124,25 @@ const TransactionForm: FC<Props> = (props) => {
           ...prevState.amount,
           hasVisited: true,
         },
+        sender: {
+          ...prevState.sender,
+          hasVisited: true,
+        },
+        receiver: {
+          ...prevState.receiver,
+          hasVisited: true,
+        },
       }))
       return
     }
 
-    console.log("valid")
-
     onSubmit({
-      amount: parseInt(amount),
+      amount: Math.floor(parseFloat(sanitizedAmount) * 100),
       categoryId: parent!,
       receiverId: receiver ?? null,
       senderId: sender ?? null,
       note,
-      date: new Date(),
+      date: initialTransaction?.date ?? new Date(),
       currencyId: currencies[0].id,
     }).catch(err => {
       setShowErrorToast("Unexpected error while creating the category")
@@ -133,13 +177,8 @@ const TransactionForm: FC<Props> = (props) => {
                       }))}
             />
             <div style={{width: "3rem"}}/>
-            <IonInput type="text"
-                      style={{flexShrink: 2}}
-                      label="Currency"
-                      labelPlacement="floating"
-                      value={currencies.find(c => c.id === currency)?.symbol}
-                      errorText="None"
-            />
+            <CurrencyPicker selectedCurrencyId={currency} setSelectedCurrencyId={setCurrency} labelText="Currency"
+                            style={{flexShrink: 2}} errorText={NoError}/>
           </div>
 
           <div style={{display: "flex", alignItems: "center", cursor: "pointer"}}
@@ -166,9 +205,16 @@ const TransactionForm: FC<Props> = (props) => {
             </ContentWithHeader>
           </IonModal>
 
-          <AccountPicker labelText="From" setSelectedAccountId={setSender} selectedAccountId={sender}/>
+          <AccountPicker labelText="From"
+                         style={{className: classNameFromStatus(errors.sender)}}
+                         errorText={errors.sender.errorText}
+                         setSelectedAccountId={setSender} selectedAccountId={sender}/>
 
-          <AccountPicker labelText="To" setSelectedAccountId={setReceiver} selectedAccountId={receiver}/>
+          <AccountPicker labelText="To"
+                         style={{className: classNameFromStatus(errors.receiver)}}
+                         errorText={errors.receiver.errorText}
+                         setSelectedAccountId={setReceiver}
+                         selectedAccountId={receiver}/>
 
           <IonInput type="text"
                     label="Note"

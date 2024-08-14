@@ -2,21 +2,22 @@ import { IonItem, IonLoading } from "@ionic/react"
 import { Fragment, useMemo } from "react"
 import Account from "../domain/model/account"
 import Category from "../domain/model/category"
+import Currency from "../domain/model/currency"
 import IconCapsule from "./IconCapsule"
 
 interface Props {
-  accounts: Account[],
+  currencies: Currency[],
   onSelect: (value: number) => void
 }
 
-export const AccountList = (props: Props) => {
-  const {accounts, onSelect} = props
+export const CurrencyList = (props: Props) => {
+  const {currencies, onSelect} = props
 
   return (
     <>
-      {accounts.map(account => (
-        <IonItem key={`account-list-${account.id}`} onClick={() => onSelect(account.id)}>
-          {account.name}
+      {currencies.map(currency => (
+        <IonItem key={`account-list-${currency.id}`} onClick={() => onSelect(currency.id)}>
+          {currency.symbol} - {currency.name}
         </IonItem>
       ))}
     </>
