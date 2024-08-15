@@ -1,14 +1,21 @@
-import { IonApp, IonRoute, IonRouterOutlet, IonSplitPane, setupIonicReact } from "@ionic/react"
+import {
+  IonApp,
+  IonLoading, IonRedirect,
+  IonRoute,
+  IonRouterOutlet,
+  IonSplitPane,
+  setupIonicReact,
+} from "@ionic/react"
 import { IonReactRouter } from "@ionic/react-router"
 import { GrpcWebFetchTransport } from "@protobuf-ts/grpcweb-transport"
-import { Redirect } from "react-router"
+import { Redirect, Route, Switch } from "react-router"
 import { WithItemTools } from "./components/IconTools"
 import Account from "./domain/model/account"
 import Category from "./domain/model/category"
 import Currency from "./domain/model/currency"
 import Transaction from "./domain/model/transaction"
 import Menu from "./components/Menu"
-import { FC, ReactNode, useEffect, useState } from "react"
+import { FC, useEffect, useState } from "react"
 import CategoryPage from "./pages/CategoryPage"
 import CreateCategoryPage from "./pages/CreateCategoryPage"
 import CreateTransactionPage from "./pages/CreateTransactionPage"
@@ -29,6 +36,7 @@ import {
   CurrencyServiceContext,
   TransactionServiceContext,
 } from "./service/ServiceContext"
+import TransactionRemoteStore from "./store/remote/TransactionRemoteStore"
 
 /* Core CSS required for Ionic components to work properly */
 import "@ionic/react/css/core.css"
@@ -59,19 +67,13 @@ import "@ionic/react/css/palettes/dark.system.css"
 
 /* Theme variables */
 import "./theme/variables.css"
-import TransactionRemoteStore from "./store/remote/TransactionRemoteStore"
+import WithLogin from "./WithLogin"
 
 setupIonicReact()
-
-// const CategoryPage = lazy(() => import("./pages/CategoryPage"))
-// const UnimplementedPage = lazy(() => import("./pages/UnimplementedPage"))
-// const TransactionPage = lazy(() => import("./pages/TransactionPage"))
-// const ImportSpreadsheet = lazy(() => import("./pages/ImportSpreadsheet"))
 
 const transport = new GrpcWebFetchTransport({
   baseUrl: import.meta.env.VITE_BACKEND_URL || "/",
 })
-
 
 const App: FC = () => {
   const [currencies, setCurrencies] = useState<Currency[] | null>(null)
@@ -91,66 +93,67 @@ const App: FC = () => {
     transactionRepository.getAll().then(setTransactions)
   }, [])
 
-  if (currencies === null || categories === null || accounts === null || transactions === null) {
-    return null
-  }
-
-  const StateWrapper: FC<{children: ReactNode | ReactNode[]}> = ({children}) => (
-    <BasicCrudServiceWithPersistence
-      initialState={currencies}
-      longTermStore={currencyStore}
-      context={CurrencyServiceContext}
-      Augmenter={NilPersistenceAugmenter}
-    >
+  let contents = <IonLoading/>
+  if (!(currencies === null || categories === null || accounts === null || transactions === null)) {
+    contents = (
       <BasicCrudServiceWithPersistence
-        initialState={categories}
-        longTermStore={categoryStore}
-        context={CategoryServiceContext}
-        Augmenter={CategoryPersistenceAugmenter}
+        initialState={currencies}
+        longTermStore={currencyStore}
+        context={CurrencyServiceContext}
+        Augmenter={NilPersistenceAugmenter}
       >
         <BasicCrudServiceWithPersistence
-          initialState={accounts}
-          longTermStore={accountRepository}
-          context={AccountServiceContext}
-          Augmenter={NilPersistenceAugmenter}
+          initialState={categories}
+          longTermStore={categoryStore}
+          context={CategoryServiceContext}
+          Augmenter={CategoryPersistenceAugmenter}
         >
           <BasicCrudServiceWithPersistence
-            initialState={transactions}
-            longTermStore={transactionRepository}
-            context={TransactionServiceContext}
+            initialState={accounts}
+            longTermStore={accountRepository}
+            context={AccountServiceContext}
             Augmenter={NilPersistenceAugmenter}
-            sorter={(a, b) => b.date.getTime() - a.date.getTime()}
           >
-            <WithItemTools>
-              {children}
-            </WithItemTools>
+            <BasicCrudServiceWithPersistence
+              initialState={transactions}
+              longTermStore={transactionRepository}
+              context={TransactionServiceContext}
+              Augmenter={NilPersistenceAugmenter}
+              sorter={(a, b) => b.date.getTime() - a.date.getTime()}
+            >
+              <IonReactRouter>
+                <IonSplitPane contentId="main">
+                  <Menu/>
+
+                  <IonRouterOutlet id="main">
+                    <Switch>
+                      <Route exact path="/categories" render={() => <CategoryPage/>}/>
+                      <Route exact path="/categories/new" render={() => <CreateCategoryPage/>}/>
+                      <Route exact path="/categories/edit/:categoryId" render={() => <EditCategoryPage/>}/>
+                      <Route exact path="/currencies" render={() => <UnimplementedPage/>}/>
+                      <Route exact path="/transactions" render={() => <TransactionPage/>}/>
+                      <Route exact path="/transactions/new" render={() => <CreateTransactionPage/>}/>
+                      <Route exact path="/transactions/edit/:transactionId" render={() => <EditTransactionPage/>}/>
+                      <Route exact path="/import" render={() => <ImportSpreadsheet/>}/>
+                      <Route render={() => (<Redirect to="/transactions"/>)}/>
+                    </Switch>
+                  </IonRouterOutlet>
+                </IonSplitPane>
+              </IonReactRouter>
+            </BasicCrudServiceWithPersistence>
           </BasicCrudServiceWithPersistence>
         </BasicCrudServiceWithPersistence>
       </BasicCrudServiceWithPersistence>
-    </BasicCrudServiceWithPersistence>
-  )
+    )
+  }
 
   return (
     <IonApp>
-      <IonReactRouter>
-        <StateWrapper>
-          <IonSplitPane contentId="main">
-            <Menu/>
-
-            <IonRouterOutlet id="main">
-              <IonRoute exact path="/categories" render={() => <CategoryPage/>}/>
-              <IonRoute exact path="/categories/new" render={() => <CreateCategoryPage/>}/>
-              <IonRoute exact path="/categories/edit/:categoryId" render={() => <EditCategoryPage/>}/>
-              <IonRoute exact path="/currencies" render={() => <UnimplementedPage/>}/>
-              <IonRoute exact path="/transactions" render={() => <TransactionPage/>}/>
-              <IonRoute exact path="/transactions/new" render={() => <CreateTransactionPage/>}/>
-              <IonRoute exact path="/transactions/edit/:transactionId" render={() => <EditTransactionPage/>}/>
-              <IonRoute exact path="/import" render={() => <ImportSpreadsheet/>}/>
-              <IonRoute exact path="/" render={() => <Redirect to="/transactions"/>}/>
-            </IonRouterOutlet>
-          </IonSplitPane>
-        </StateWrapper>
-      </IonReactRouter>
+      <WithItemTools>
+        <WithLogin>
+          {contents}
+        </WithLogin>
+      </WithItemTools>
     </IonApp>
   )
 }

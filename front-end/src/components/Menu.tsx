@@ -1,4 +1,5 @@
 import {
+  IonButton,
   IonContent,
   IonItem,
   IonLabel,
@@ -12,6 +13,7 @@ import {
 import { useLocation } from "react-router-dom"
 import "./Menu.css"
 import { FC, useContext } from "react"
+import { AuthContext } from "../WithLogin"
 import { IconToolsContext } from "./IconTools"
 
 interface AppPage {
@@ -48,6 +50,7 @@ const Menu: FC = () => {
   const router = useIonRouter()
 
   const {iconTypeFromName} = useContext(IconToolsContext)
+  const {logout} = useContext(AuthContext)
 
   const iconStyle = {margin: "0.5rem"}
 
@@ -72,6 +75,7 @@ const Menu: FC = () => {
               </IonMenuToggle>
             )
           })}
+          <IonButton expand="block" onClick={logout}>Logout</IonButton>
         </IonList>
       </IonContent>
     </IonMenu>

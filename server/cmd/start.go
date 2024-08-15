@@ -1,10 +1,17 @@
 package cmd
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"strings"
+
+	"github.com/coreos/go-oidc"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+	"golang.org/x/oauth2"
 
 	"chagnon.dev/budget-server/internal/domain/service"
 	"chagnon.dev/budget-server/internal/infrastructure/db/dao"
@@ -12,9 +19,15 @@ import (
 	"chagnon.dev/budget-server/internal/infrastructure/messaging/grpc"
 	"chagnon.dev/budget-server/internal/infrastructure/messaging/http"
 	"chagnon.dev/budget-server/pkg/infrastructure/postgres"
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
+
+type OidcConfig struct {
+	Enabled      bool   `mapstructure:"enabled"`
+	ClientId     string `mapstructure:"clientId"`
+	ClientSecret string `mapstructure:"clientSecret"`
+	ProviderUrl  string `mapstructure:"providerUrl"`
+	RedirectUrl  string `mapstructure:"redirectUrl"`
+}
 
 type Config struct {
 	Database struct {
@@ -24,6 +37,15 @@ type Config struct {
 		Pass string `mapstructure:"password"`
 		Name string `mapstructure:"name"`
 	} `mapstructure:"database"`
+	Auth struct {
+		Oidc     OidcConfig `mapstructure:"oidc"`
+		UserPass struct {
+			Enabled bool `mapstructure:"enabled"`
+		} `mapstructure:"userpass"`
+	} `mapstructure:"auth"`
+	Server struct {
+		PublicUrl string `mapstructure:"publicUrl"`
+	} `mapstructure:"server"`
 }
 
 var cfgFile string
@@ -33,6 +55,8 @@ var startCmd = &cobra.Command{
 	Use:   "start",
 	Short: "Starts the budget server",
 	Run: func(cmd *cobra.Command, args []string) {
+		ctx := context.Background()
+
 		fmt.Println("=== Budget Server ===")
 		db, err := postgres.NewPostgresDatabase(
 			config.Database.Host,
@@ -42,18 +66,35 @@ var startCmd = &cobra.Command{
 			config.Database.Port,
 		)
 		if err != nil {
-			fmt.Println("error creating connection to database: ", err)
+			log.Fatal("error creating connection to database: ", err)
 		}
 
 		repos := repository.NewRepository(dao.New(db))
 
+		var oidcConfig *oauth2.Config
+		if config.Auth.Oidc.Enabled {
+			oidcConfig = setupOidcConfig(ctx, config.Auth.Oidc, config.Server.PublicUrl)
+		}
+
 		webServer := http.GrpcWebServer{
-			GrpcServer: grpc.NewServerWithHandlers(grpc.Services{
-				Account:     service.NewAccountService(repos),
-				Category:    service.NewCategoryService(repos),
-				Currency:    service.NewCurrencyService(repos),
-				Transaction: service.NewTransactionService(repos),
-			}),
+			GrpcServer: grpc.NewServerWithHandlers(
+				grpc.Services{
+					Account:     service.NewAccountService(repos),
+					Category:    service.NewCategoryService(repos),
+					Currency:    service.NewCurrencyService(repos),
+					Transaction: service.NewTransactionService(repos),
+				},
+				grpc.AuthConfig{
+					UserPassEnabled: config.Auth.UserPass.Enabled,
+					OIDCEnabled:     config.Auth.Oidc.Enabled,
+					ClientID:        config.Auth.Oidc.ClientId,
+					ProviderURL:     config.Auth.Oidc.ProviderUrl,
+					RedirectURL:     config.Auth.Oidc.RedirectUrl,
+				},
+			),
+			OidcConfig:      oidcConfig,
+			OidcIssuer:      config.Auth.Oidc.ProviderUrl,
+			ServerPublicUrl: config.Server.PublicUrl,
 		}
 		webServer.Serve()
 	},
@@ -91,5 +132,24 @@ func initConfig() {
 	if err := viper.Unmarshal(&config); err != nil {
 		fmt.Println("unable to decode into struct: %w", err)
 		os.Exit(1)
+	}
+}
+
+func setupOidcConfig(ctx context.Context, oidcConfig OidcConfig, serverPublicUrl string) *oauth2.Config {
+	if oidcConfig.ClientId == "" || oidcConfig.ClientSecret == "" || oidcConfig.ProviderUrl == "" || oidcConfig.RedirectUrl == "" {
+		return nil
+	}
+
+	provider, err := oidc.NewProvider(ctx, oidcConfig.ProviderUrl)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return &oauth2.Config{
+		ClientID:     oidcConfig.ClientId,
+		ClientSecret: oidcConfig.ClientSecret,
+		Endpoint:     provider.Endpoint(),
+		RedirectURL:  fmt.Sprintf("%s/callback", serverPublicUrl),
+		Scopes:       []string{oidc.ScopeOpenID, "profile", "email"},
 	}
 }

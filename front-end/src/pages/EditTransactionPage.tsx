@@ -1,4 +1,5 @@
 import {
+  IonButton,
   IonPage, useIonRouter,
 } from "@ionic/react"
 import { FC, useCallback, useContext, useMemo } from "react"
@@ -37,12 +38,23 @@ const EditTransactionPage: FC = () => {
   return (
     <IonPage>
       <ContentWithHeader title="Edit Transaction" button="return">
-        <TransactionForm
-          onSubmit={onSubmit}
-          submitText="Save changes"
-          initialTransaction={selectedTransaction}
-          type={null}
-        />
+        <div style={{margin: "1rem"}}>
+
+          <TransactionForm
+            onSubmit={onSubmit}
+            submitText="Update"
+            initialTransaction={selectedTransaction}
+            type={null}
+          />
+
+          <div style={{height: ".5rem"}}/>
+
+          <IonButton color="danger" expand="block" onClick={() => {
+
+          }}>
+            Delete
+          </IonButton>
+        </div>
       </ContentWithHeader>
     </IonPage>
 

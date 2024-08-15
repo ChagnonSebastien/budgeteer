@@ -2,7 +2,6 @@ package grpc
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"chagnon.dev/budget-server/internal/domain/service"
@@ -97,7 +96,6 @@ func (s *TransactionHandler) GetAllTransactions(
 	_ *dto.GetAllTransactionsRequest,
 ) (*dto.GetAllTransactionsResponse, error) {
 	transactions, err := s.transactionService.GetAllTransactions(ctx)
-	fmt.Println(len(transactions))
 	if err != nil {
 		return nil, err
 	}

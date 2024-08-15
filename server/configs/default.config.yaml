@@ -1,6 +1,17 @@
+server:
+  publicUrl: ""
 database:
   host: 127.0.0.1
   port: 5432
   user: postgres
   password: changeme
   name: budgetapp
+auth:
+  userpass:
+    enabled: true
+  oidc:
+    enabled: false
+    clientId: ""
+    clientSecret: ""
+    providerUrl: ""
+    redirectUrl: ""

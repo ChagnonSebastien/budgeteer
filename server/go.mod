@@ -11,13 +11,18 @@ require (
 
 require (
 	github.com/cenkalti/backoff/v4 v4.1.1 // indirect
+	github.com/coreos/go-oidc v2.2.1+incompatible // indirect
 	github.com/desertbit/timer v0.0.0-20180107155436-c41aec40b27f // indirect
 	github.com/klauspost/compress v1.11.7 // indirect
+	github.com/pquerna/cachecontrol v0.2.0 // indirect
 	github.com/rs/cors v1.7.0 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
+	golang.org/x/crypto v0.23.0 // indirect
 	golang.org/x/net v0.25.0 // indirect
+	golang.org/x/oauth2 v0.22.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240805194559-2c9e96a0b5d4 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
+	gopkg.in/square/go-jose.v2 v2.6.0 // indirect
 	nhooyr.io/websocket v1.8.6 // indirect
 )
 

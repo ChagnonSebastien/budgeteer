@@ -156,81 +156,79 @@ const TransactionForm: FC<Props> = (props) => {
 
   return (
     <form noValidate onSubmit={handleSubmit}>
-      <div style={{margin: "1rem"}}>
-        <div style={{display: "flex"}}>
-          <div style={{color: "gray", margin: "0 1rem", transform: "translate(0, 0.5rem)"}}>Form</div>
-          <div style={{borderBottom: "1px grey solid", flexGrow: 1}}/>
-        </div>
-        <div style={{padding: "1rem", border: "1px grey solid", borderTop: 0}}>
-
-          <div style={{display: "flex"}}>
-            <IonInput type="text"
-                      className={classNameFromStatus(errors.amount)}
-                      label="Amount"
-                      labelPlacement="floating"
-                      value={amount}
-                      onIonInput={ev => setAmount(ev.target.value as string)}
-                      errorText={errors.amount.errorText}
-                      onIonBlur={() => setErrors(prevState => ({
-                        ...prevState,
-                        amount: {...prevState.amount, hasVisited: true},
-                      }))}
-            />
-            <div style={{width: "3rem"}}/>
-            <CurrencyPicker selectedCurrencyId={currency} setSelectedCurrencyId={setCurrency} labelText="Currency"
-                            style={{flexShrink: 2}} errorText={NoError}/>
-          </div>
-
-          <div style={{display: "flex", alignItems: "center", cursor: "pointer"}}
-               onClick={() => setShowCategoryModal(true)}>
-            <IconCapsule flexShrink={0} iconName={category.iconName} size="2rem" color={category.iconColor}
-                         backgroundColor={category.iconBackground}/>
-            <div style={{width: "1rem", flexShrink: 0}}/>
-            <IonInput type="text"
-                      label="Category"
-                      labelPlacement="floating"
-                      placeholder={typeof rootCategory === "undefined" ? "Loading..." : undefined}
-                      value={categories?.find(c => c.id === parent)?.name}
-                      onFocus={() => setShowCategoryModal(true)}
-                      errorText="None"
-            />
-          </div>
-          <IonModal isOpen={showParentModal} onWillDismiss={() => setShowCategoryModal(false)}>
-            <ContentWithHeader title="Select Icon" button="return"
-                               onCancel={() => setShowCategoryModal(false)}>
-              <CategoryList categories={categories} onSelect={newParent => {
-                setParent(newParent)
-                setShowCategoryModal(false)
-              }}/>
-            </ContentWithHeader>
-          </IonModal>
-
-          <AccountPicker labelText="From"
-                         style={{className: classNameFromStatus(errors.sender)}}
-                         errorText={errors.sender.errorText}
-                         setSelectedAccountId={setSender} selectedAccountId={sender}/>
-
-          <AccountPicker labelText="To"
-                         style={{className: classNameFromStatus(errors.receiver)}}
-                         errorText={errors.receiver.errorText}
-                         setSelectedAccountId={setReceiver}
-                         selectedAccountId={receiver}/>
-
-          <IonInput type="text"
-                    label="Note"
-                    labelPlacement="stacked"
-                    placeholder="Optional details"
-                    value={note}
-                    onIonInput={ev => setNote(ev.target.value as string)}
-                    errorText="_blank"
-          />
-
-        </div>
-        <div style={{height: "1rem"}}/>
-        <IonButton type="submit" expand="block">
-          {submitText}
-        </IonButton>
+      <div style={{display: "flex"}}>
+        <div style={{color: "gray", margin: "0 1rem", transform: "translate(0, 0.5rem)"}}>Form</div>
+        <div style={{borderBottom: "1px grey solid", flexGrow: 1}}/>
       </div>
+      <div style={{padding: "1rem", border: "1px grey solid", borderTop: 0}}>
+
+        <div style={{display: "flex"}}>
+          <IonInput type="text"
+                    className={classNameFromStatus(errors.amount)}
+                    label="Amount"
+                    labelPlacement="floating"
+                    value={amount}
+                    onIonInput={ev => setAmount(ev.target.value as string)}
+                    errorText={errors.amount.errorText}
+                    onIonBlur={() => setErrors(prevState => ({
+                      ...prevState,
+                      amount: {...prevState.amount, hasVisited: true},
+                    }))}
+          />
+          <div style={{width: "3rem"}}/>
+          <CurrencyPicker selectedCurrencyId={currency} setSelectedCurrencyId={setCurrency} labelText="Currency"
+                          style={{flexShrink: 2}} errorText={NoError}/>
+        </div>
+
+        <div style={{display: "flex", alignItems: "center", cursor: "pointer"}}
+             onClick={() => setShowCategoryModal(true)}>
+          <IconCapsule flexShrink={0} iconName={category.iconName} size="2rem" color={category.iconColor}
+                       backgroundColor={category.iconBackground}/>
+          <div style={{width: "1rem", flexShrink: 0}}/>
+          <IonInput type="text"
+                    label="Category"
+                    labelPlacement="floating"
+                    placeholder={typeof rootCategory === "undefined" ? "Loading..." : undefined}
+                    value={categories?.find(c => c.id === parent)?.name}
+                    onFocus={() => setShowCategoryModal(true)}
+                    errorText="None"
+          />
+        </div>
+        <IonModal isOpen={showParentModal} onWillDismiss={() => setShowCategoryModal(false)}>
+          <ContentWithHeader title="Select Icon" button="return"
+                             onCancel={() => setShowCategoryModal(false)}>
+            <CategoryList categories={categories} onSelect={newParent => {
+              setParent(newParent)
+              setShowCategoryModal(false)
+            }}/>
+          </ContentWithHeader>
+        </IonModal>
+
+        <AccountPicker labelText="From"
+                       style={{className: classNameFromStatus(errors.sender)}}
+                       errorText={errors.sender.errorText}
+                       setSelectedAccountId={setSender} selectedAccountId={sender}/>
+
+        <AccountPicker labelText="To"
+                       style={{className: classNameFromStatus(errors.receiver)}}
+                       errorText={errors.receiver.errorText}
+                       setSelectedAccountId={setReceiver}
+                       selectedAccountId={receiver}/>
+
+        <IonInput type="text"
+                  label="Note"
+                  labelPlacement="stacked"
+                  placeholder="Optional details"
+                  value={note}
+                  onIonInput={ev => setNote(ev.target.value as string)}
+                  errorText="_blank"
+        />
+
+      </div>
+      <div style={{height: "1rem"}}/>
+      <IonButton type="submit" expand="block">
+        {submitText}
+      </IonButton>
 
       <IonToast isOpen={showErrorToast !== ""}
                 message={showErrorToast}
