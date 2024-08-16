@@ -50,7 +50,7 @@ const Menu: FC = () => {
   const router = useIonRouter()
 
   const {iconTypeFromName} = useContext(IconToolsContext)
-  const {logout} = useContext(AuthContext)
+  const {authMethods} = useContext(AuthContext)
 
   const iconStyle = {margin: "0.5rem"}
 
@@ -75,7 +75,7 @@ const Menu: FC = () => {
               </IonMenuToggle>
             )
           })}
-          <IonButton expand="block" onClick={logout}>Logout</IonButton>
+          <IonButton expand="block" onClick={authMethods.oidc?.logout}>Logout</IonButton>
         </IonList>
       </IonContent>
     </IonMenu>

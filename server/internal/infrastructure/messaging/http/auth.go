@@ -1,9 +1,11 @@
 package http
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"log"
 	"math/rand"
 	"net/http"
 	"net/url"
@@ -108,51 +110,6 @@ func (auth *Auth) callbackHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, auth.FrontendPublicUrl, http.StatusTemporaryRedirect)
 }
 
-func (auth *Auth) refreshTokenHandler(w http.ResponseWriter, r *http.Request) {
-	cookie, err := r.Cookie("refresh-token")
-	if err != nil {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return
-	}
-
-	tokenSource := auth.OidcConfig.TokenSource(
-		r.Context(), &oauth2.Token{
-			RefreshToken: cookie.Value,
-		},
-	)
-
-	newToken, err := tokenSource.Token()
-	if err != nil {
-		http.Error(w, "Token refresh failed", http.StatusInternalServerError)
-		return
-	}
-
-	http.SetCookie(
-		w, &http.Cookie{
-			Name:     "auth-token",
-			Value:    newToken.AccessToken,
-			Path:     "/",
-			Expires:  newToken.Expiry,
-			HttpOnly: true,
-			Secure:   true,
-		},
-	)
-
-	http.SetCookie(
-		w, &http.Cookie{
-			Name:     "refresh-token",
-			Value:    newToken.RefreshToken,
-			Path:     "/",
-			Expires:  time.Now().Add(7 * 24 * time.Hour),
-			HttpOnly: true,
-			Secure:   true,
-		},
-	)
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(newToken)
-}
-
 func (auth *Auth) logoutHandler(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(
 		w, &http.Cookie{
@@ -186,6 +143,24 @@ func (auth *Auth) logoutHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, logoutURL, http.StatusTemporaryRedirect)
 }
 
+func (auth *Auth) fetchUserInfo(ctx context.Context, token *oauth2.Token) (*map[string]interface{}, error) {
+	client := auth.OidcConfig.Client(ctx, token)
+
+	resp, err := client.Get(fmt.Sprintf("%s/protocol/openid-connect/userinfo", auth.OidcIssuer))
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		err := resp.Body.Close()
+		if err != nil {
+			log.Printf("Failed to close response body: %v", err)
+		}
+	}()
+
+	var profile map[string]interface{}
+	return &profile, json.NewDecoder(resp.Body).Decode(&profile)
+}
+
 func (auth *Auth) userInfoHandler(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie("auth-token")
 	if err != nil {
@@ -193,22 +168,75 @@ func (auth *Auth) userInfoHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	client := auth.OidcConfig.Client(
+	profile, err := auth.fetchUserInfo(
 		r.Context(), &oauth2.Token{
 			AccessToken: cookie.Value,
 		},
 	)
-
-	resp, err := client.Get(fmt.Sprintf("%s/protocol/openid-connect/userinfo", auth.OidcIssuer))
 	if err != nil {
-		http.Error(w, "Failed to get user info", http.StatusInternalServerError)
+		http.Error(w, "Fetching user Info", http.StatusInternalServerError)
 		return
 	}
-	defer resp.Body.Close()
-
-	var profile map[string]interface{}
-	json.NewDecoder(resp.Body).Decode(&profile)
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(profile)
+	err = json.NewEncoder(w).Encode(profile)
+	if err != nil {
+		log.Printf("failed to encode profile: %v", err)
+		http.Error(w, "encoding response", http.StatusInternalServerError)
+	}
+}
+
+func (auth *Auth) refreshTokenHandler(w http.ResponseWriter, r *http.Request) {
+	cookie, err := r.Cookie("refresh-token")
+	if err != nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	tokenSource := auth.OidcConfig.TokenSource(
+		r.Context(), &oauth2.Token{
+			RefreshToken: cookie.Value,
+		},
+	)
+
+	newToken, err := tokenSource.Token()
+	if err != nil {
+		http.Error(w, "Token refresh failed", http.StatusInternalServerError)
+		return
+	}
+
+	profile, err := auth.fetchUserInfo(r.Context(), newToken)
+	if err != nil {
+		http.Error(w, "Fetching user Info", http.StatusInternalServerError)
+		return
+	}
+
+	http.SetCookie(
+		w, &http.Cookie{
+			Name:     "auth-token",
+			Value:    newToken.AccessToken,
+			Path:     "/",
+			Expires:  newToken.Expiry,
+			HttpOnly: true,
+			Secure:   true,
+		},
+	)
+
+	http.SetCookie(
+		w, &http.Cookie{
+			Name:     "refresh-token",
+			Value:    newToken.RefreshToken,
+			Path:     "/",
+			Expires:  time.Now().Add(7 * 24 * time.Hour),
+			HttpOnly: true,
+			Secure:   true,
+		},
+	)
+
+	w.Header().Set("Content-Type", "application/json")
+	err = json.NewEncoder(w).Encode(profile)
+	if err != nil {
+		log.Printf("failed to encode profile: %v", err)
+		http.Error(w, "encoding response", http.StatusInternalServerError)
+	}
 }

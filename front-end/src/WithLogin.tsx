@@ -1,23 +1,33 @@
-import {
-  IonButton,
-  IonLoading,
-} from "@ionic/react"
-import { useHistory } from "react-router-dom"
+import { Network } from "@capacitor/network"
 import { GrpcWebFetchTransport } from "@protobuf-ts/grpcweb-transport"
-import { createContext, FC, useCallback, useEffect, useState } from "react"
+import { createContext, FC, useCallback, useContext, useEffect, useState } from "react"
 import { CheckAuthMethodsRequest } from "./store/remote/dto/auth"
 import { AuthServiceClient } from "./store/remote/dto/auth.client"
+import UserContext from "./UserContext"
+import { User } from "./UserContext"
 
 const serverUrl = import.meta.env.VITE_BACKEND_URL || window.location.origin
 const transport = new GrpcWebFetchTransport({baseUrl: serverUrl})
+const authClient = new AuthServiceClient(transport)
+
+type AuthMethod = "userPass" | "oidc"
+type AuthMethodStatuses = { [K in AuthMethod]: {login: () => void, logout: () => void} | null };
 
 interface Auth {
-  logout: () => Promise<void>
+  user: User | null
+  synced: boolean
+  hasInternet: boolean
+
+  authMethods: AuthMethodStatuses,
 }
 
 export const AuthContext = createContext<Auth>({
-  logout() {
-    return Promise.reject("Auth context not available")
+  user: null,
+  synced: false,
+  hasInternet: false,
+  authMethods: {
+    oidc: null,
+    userPass: null,
   },
 })
 
@@ -37,7 +47,11 @@ const refreshToken = async () => {
     method: "POST",
     credentials: "include",
   })
-  return response.ok
+  if (response.ok) {
+    return await response.json()
+  } else {
+    return null
+  }
 }
 
 interface Props {
@@ -45,66 +59,89 @@ interface Props {
 }
 
 const WithLogin: FC<Props> = ({children}) => {
-  const hist = useHistory()
+  const [authMethods, setAuthMethods] = useState<AuthMethodStatuses>({
+    oidc: null,
+    userPass: null,
+  })
 
-  const [authClient] = useState(new AuthServiceClient(transport))
-  const [authMethods, setAuthMethods] = useState<{userPass: boolean, oidc: boolean}>()
-  const [user, setUser] = useState<{[property: string]: any} | null>()
+  const userContext = useContext(UserContext)
+  const [user, setUser] = useState<User | null>(userContext.getUser())
+  console.log("user", user)
+  const [synced, setSynced] = useState(false)
+  const [hasInternet, setHasInternet] = useState(false)
 
   useEffect(() => {
-    if (!authMethods?.oidc) return
+    Network.getStatus().then(status => setHasInternet(status.connected))
 
-    fetchUserInfo()
-      .then((user) => {
-        if (user !== null) {
-          setUser(user)
+    const handlePromise = Network.addListener("networkStatusChange", status => {
+      setHasInternet(status.connected)
+    })
+
+    return () => {
+      handlePromise.then(handle => handle.remove())
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!hasInternet || synced) return
+
+    authClient
+      .checkAuthMethods(CheckAuthMethodsRequest.create())
+      .then(authMethodsResponse => {
+        console.log(authMethodsResponse)
+        setAuthMethods({
+          oidc: authMethodsResponse.response.oidc ? {
+            login: oidcLogin,
+            logout: oidcLogout,
+          } : null,
+          userPass: authMethodsResponse.response.userPass ? {
+            login: () => {
+              throw new Error("Not implemented")
+            },
+            logout: () => {
+              throw new Error("Not implemented")
+            },
+          } : null,
+        })
+      })
+      .catch(console.error)
+  }, [hasInternet, synced])
+
+  useEffect(() => {
+    console.log("hasInternet", hasInternet)
+    if (!hasInternet) return
+    console.log("synced", synced)
+    if (synced) return
+    console.log("authMethods.oidc", authMethods.oidc)
+    if (authMethods.oidc === null) return
+
+    refreshToken()
+      .then(async (user) => {
+        setSynced(true)
+
+        if (user === null) {
+          setUser(null)
+          userContext.clearUser()
           return
         }
 
-        refreshToken()
-          .then(refreshed => {
-            if (refreshed) {
-              fetchUserInfo()
-                .then(setUser)
-                .catch(() => setUser(null))
-            } else {
-              setUser(null)
-            }
-          })
-          .catch(() => setUser(null))
+        setUser(user)
+        userContext.upsertUser(user)
       })
-      .catch(() => setUser(null))
-  }, [authMethods?.oidc])
+  }, [authMethods.oidc, synced, hasInternet])
 
-  useEffect(() => {
-    authClient.checkAuthMethods(CheckAuthMethodsRequest.create()).then(async (authMethodsResponse) => {
-      setAuthMethods({
-        oidc: authMethodsResponse.response.oidc,
-        userPass: authMethodsResponse.response.userPass,
-      })
-    })
-  }, [authClient])
 
-  const logout = useCallback(async () => {
+  const oidcLogin = useCallback(() => {
+    window.location.href = `${serverUrl}/auth/login`
+  }, [])
+
+  const oidcLogout = useCallback(() => {
+    userContext.clearUser()
     window.location.href = `${serverUrl}/auth/logout`
   }, [])
 
-  if (typeof user === "undefined") {
-    return <IonLoading/>
-  }
-
-  if (user === null) {
-    return (
-      <IonButton onClick={() => {
-      	window.location.replace(`${serverUrl}/auth/login`)
-      }}>
-        Login
-      </IonButton>
-    )
-  }
-
   return (
-    <AuthContext.Provider value={{logout}}>
+    <AuthContext.Provider value={{authMethods, user, synced, hasInternet}}>
       {children}
     </AuthContext.Provider>
   )

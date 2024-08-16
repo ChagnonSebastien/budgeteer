@@ -19,7 +19,7 @@ const useIconTools = (): IconTools => {
   const [iconLibraries, setIconLibraries] = useState<IconLibraries>(new Map())
 
   useEffect(() => {
-    const loaders = [
+    const loaders: Promise<{prefix: string, icons: Omit<{default: any} | IconLibrary, "default">}>[] = [
       loadLibrary("Fa", import("react-icons/fa6")),
       loadLibrary("Md", import("react-icons/md")),
       loadLibrary("Bi", import("react-icons/bi")),
