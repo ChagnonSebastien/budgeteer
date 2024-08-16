@@ -13,7 +13,16 @@ export default defineConfig({
   plugins: [
     react(),
     legacy(),
-    VitePWA({registerType: "autoUpdate"}),
+    VitePWA({
+      registerType: 'autoUpdate',
+	    workbox: {
+
+	
+    navigateFallbackDenylist: [/^\/auth/, /^\/auth\/login/]    
+          
+        
+      },
+    }),
   ],
   test: {
     globals: true,

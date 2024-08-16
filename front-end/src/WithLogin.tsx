@@ -2,12 +2,13 @@ import {
   IonButton,
   IonLoading,
 } from "@ionic/react"
+import { useHistory } from "react-router-dom"
 import { GrpcWebFetchTransport } from "@protobuf-ts/grpcweb-transport"
 import { createContext, FC, useCallback, useEffect, useState } from "react"
 import { CheckAuthMethodsRequest } from "./store/remote/dto/auth"
 import { AuthServiceClient } from "./store/remote/dto/auth.client"
 
-const serverUrl = import.meta.env.VITE_BACKEND_URL || "/"
+const serverUrl = import.meta.env.VITE_BACKEND_URL || window.location.origin
 const transport = new GrpcWebFetchTransport({baseUrl: serverUrl})
 
 interface Auth {
@@ -21,7 +22,7 @@ export const AuthContext = createContext<Auth>({
 })
 
 const fetchUserInfo = async () => {
-  const response = await fetch(`${serverUrl}/userinfo`, {
+  const response = await fetch(`${serverUrl}/auth/userinfo`, {
     credentials: "include",
   })
   if (response.ok) {
@@ -32,7 +33,7 @@ const fetchUserInfo = async () => {
 }
 
 const refreshToken = async () => {
-  const response = await fetch(`${serverUrl}/refresh-token`, {
+  const response = await fetch(`${serverUrl}/auth/refresh-token`, {
     method: "POST",
     credentials: "include",
   })
@@ -44,6 +45,8 @@ interface Props {
 }
 
 const WithLogin: FC<Props> = ({children}) => {
+  const hist = useHistory()
+
   const [authClient] = useState(new AuthServiceClient(transport))
   const [authMethods, setAuthMethods] = useState<{userPass: boolean, oidc: boolean}>()
   const [user, setUser] = useState<{[property: string]: any} | null>()
@@ -83,7 +86,7 @@ const WithLogin: FC<Props> = ({children}) => {
   }, [authClient])
 
   const logout = useCallback(async () => {
-    window.location.href = `${serverUrl}/logout`
+    window.location.href = `${serverUrl}/auth/logout`
   }, [])
 
   if (typeof user === "undefined") {
@@ -93,7 +96,7 @@ const WithLogin: FC<Props> = ({children}) => {
   if (user === null) {
     return (
       <IonButton onClick={() => {
-        window.location.href = `${serverUrl}/login`
+      	window.location.replace(`${serverUrl}/auth/login`)
       }}>
         Login
       </IonButton>

@@ -149,7 +149,7 @@ func setupOidcConfig(ctx context.Context, oidcConfig OidcConfig, serverPublicUrl
 		ClientID:     oidcConfig.ClientId,
 		ClientSecret: oidcConfig.ClientSecret,
 		Endpoint:     provider.Endpoint(),
-		RedirectURL:  fmt.Sprintf("%s/callback", serverPublicUrl),
+		RedirectURL:  fmt.Sprintf("%s/auth/callback", serverPublicUrl),
 		Scopes:       []string{oidc.ScopeOpenID, "profile", "email"},
 	}
 }

@@ -34,11 +34,11 @@ func (s *GrpcWebServer) Serve() {
 
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("/login", s.loginHandler)
-	mux.HandleFunc("/callback", s.callbackHandler)
-	mux.HandleFunc("/refresh-token", s.refreshTokenHandler)
-	mux.HandleFunc("/logout", s.logoutHandler)
-	mux.HandleFunc("/userinfo", s.userInfoHandler)
+	mux.HandleFunc("/auth/login", s.loginHandler)
+	mux.HandleFunc("/auth/callback", s.callbackHandler)
+	mux.HandleFunc("/auth/refresh-token", s.refreshTokenHandler)
+	mux.HandleFunc("/auth/logout", s.logoutHandler)
+	mux.HandleFunc("/auth/userinfo", s.userInfoHandler)
 
 	mux.HandleFunc("/", s.catchAllHandler)
 
