@@ -76,8 +76,8 @@ var startCmd = &cobra.Command{
 			oidcConfig = setupOidcConfig(ctx, config.Auth.Oidc, config.Server.PublicUrl)
 		}
 
-		webServer := http.GrpcWebServer{
-			GrpcServer: grpc.NewServerWithHandlers(
+		webServer := http.NewServer(
+			grpc.NewServerWithHandlers(
 				grpc.Services{
 					Account:     service.NewAccountService(repos),
 					Category:    service.NewCategoryService(repos),
@@ -92,10 +92,8 @@ var startCmd = &cobra.Command{
 					RedirectURL:     config.Auth.Oidc.RedirectUrl,
 				},
 			),
-			OidcConfig:      oidcConfig,
-			OidcIssuer:      config.Auth.Oidc.ProviderUrl,
-			ServerPublicUrl: config.Server.PublicUrl,
-		}
+			http.NewAuth(oidcConfig, config.Server.PublicUrl, config.Auth.Oidc.ProviderUrl),
+		)
 		webServer.Serve()
 	},
 }

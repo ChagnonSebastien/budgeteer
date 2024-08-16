@@ -14,13 +14,9 @@ export default defineConfig({
     react(),
     legacy(),
     VitePWA({
-      registerType: 'autoUpdate',
-	    workbox: {
-
-	
-    navigateFallbackDenylist: [/^\/auth/, /^\/auth\/login/]    
-          
-        
+      registerType: "autoUpdate",
+      workbox: {
+        navigateFallbackDenylist: [/^\/auth/],
       },
     }),
   ],
