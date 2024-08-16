@@ -38,7 +38,11 @@ const transport = new GrpcWebFetchTransport({
   baseUrl: import.meta.env.VITE_BACKEND_URL || "/",
 })
 
-const AuthenticatedZone: FC = () => {
+interface Props {
+  logout(): void
+}
+
+const AuthenticatedZone: FC<Props> = ({logout}) => {
   const [currencies, setCurrencies] = useState<Currency[] | null>(null)
   const [categories, setCategories] = useState<Category[] | null>(null)
   const [accounts, setAccounts] = useState<Account[] | null>(null)
@@ -86,7 +90,7 @@ const AuthenticatedZone: FC = () => {
             >
               <IonReactRouter>
                 <IonSplitPane contentId="main">
-                  <Menu/>
+                  <Menu logout={logout}/>
 
                   <IonRouterOutlet id="main">
                     <Switch>

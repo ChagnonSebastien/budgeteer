@@ -13,7 +13,7 @@ import {
 import { useLocation } from "react-router-dom"
 import "./Menu.css"
 import { FC, useContext } from "react"
-import { AuthContext } from "../WithLogin"
+import UserContext from "../UserStore"
 import { IconToolsContext } from "./IconTools"
 
 interface AppPage {
@@ -45,12 +45,15 @@ const appPages: AppPage[] = [
   },
 ]
 
-const Menu: FC = () => {
+interface Props {
+  logout(): void
+}
+
+const Menu: FC<Props> = ({logout}) => {
   const location = useLocation()
   const router = useIonRouter()
 
   const {iconTypeFromName} = useContext(IconToolsContext)
-  const {authMethods} = useContext(AuthContext)
 
   const iconStyle = {margin: "0.5rem"}
 
@@ -75,7 +78,7 @@ const Menu: FC = () => {
               </IonMenuToggle>
             )
           })}
-          <IonButton expand="block" onClick={authMethods.oidc?.logout}>Logout</IonButton>
+          <IonButton expand="block" onClick={logout}>Logout</IonButton>
         </IonList>
       </IonContent>
     </IonMenu>

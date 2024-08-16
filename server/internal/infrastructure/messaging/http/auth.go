@@ -2,11 +2,11 @@ package http
 
 import (
 	"context"
+	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"log"
-	"math/rand"
 	"net/http"
 	"net/url"
 	"os"
@@ -15,17 +15,25 @@ import (
 	"golang.org/x/oauth2"
 )
 
+type AuthMethods struct {
+	OIDC     bool `json:"oidc"`
+	UserPass bool `json:"userPass"`
+}
+
 type Auth struct {
 	OidcConfig        *oauth2.Config
 	FrontendPublicUrl string
 	OidcIssuer        string
+	AuthMethods       AuthMethods
 
 	stateToken string
 }
 
 func NewAuth(
+	oidcEnabled,
+	userPassEnabled bool,
 	oidcConfig *oauth2.Config,
-	serverPublicUrl string,
+	serverPublicUrl,
 	oidcIssuer string,
 ) *Auth {
 	frontendUrl := os.Getenv("OVERRIDE_FRONT_END_URL")
@@ -37,6 +45,10 @@ func NewAuth(
 		OidcConfig:        oidcConfig,
 		OidcIssuer:        oidcIssuer,
 		FrontendPublicUrl: frontendUrl,
+		AuthMethods: AuthMethods{
+			OIDC:     oidcEnabled,
+			UserPass: userPassEnabled,
+		},
 	}
 	return auth
 }
@@ -53,7 +65,7 @@ func generateStateToken() string {
 func (auth *Auth) ServeMux() *http.ServeMux {
 	auth.stateToken = generateStateToken()
 	mux := http.NewServeMux()
-	mux.HandleFunc("/info", auth.loginHandler)
+	mux.HandleFunc("/info", auth.infoHandler)
 	mux.HandleFunc("/login", auth.loginHandler)
 	mux.HandleFunc("/callback", auth.callbackHandler)
 	mux.HandleFunc("/userinfo", auth.userInfoHandler)
@@ -62,9 +74,17 @@ func (auth *Auth) ServeMux() *http.ServeMux {
 	return mux
 }
 
+func (auth *Auth) infoHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	if err := json.NewEncoder(w).Encode(auth.AuthMethods); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
 func (auth *Auth) loginHandler(w http.ResponseWriter, r *http.Request) {
-	url := auth.OidcConfig.AuthCodeURL(auth.stateToken)
-	http.Redirect(w, r, url, http.StatusTemporaryRedirect)
+	authCodeURL := auth.OidcConfig.AuthCodeURL(auth.stateToken)
+	http.Redirect(w, r, authCodeURL, http.StatusTemporaryRedirect)
 }
 
 func (auth *Auth) callbackHandler(w http.ResponseWriter, r *http.Request) {

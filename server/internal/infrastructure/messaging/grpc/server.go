@@ -19,30 +19,13 @@ type Services struct {
 	Transaction *service.TransactionService
 }
 
-type AuthConfig struct {
-	UserPassEnabled bool
-	OIDCEnabled     bool
-	ClientID        string
-	ProviderURL     string
-	RedirectURL     string
-}
-
-func NewServerWithHandlers(services Services, authConfig AuthConfig) *grpc.Server {
+func NewServerWithHandlers(services Services) *grpc.Server {
 	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(loggingInterceptor))
 
 	dto.RegisterAccountServiceServer(grpcServer, &AccountHandler{accountService: services.Account})
 	dto.RegisterCategoryServiceServer(grpcServer, &CategoryHandler{categoryService: services.Category})
 	dto.RegisterCurrencyServiceServer(grpcServer, &CurrencyHandler{currencyService: services.Currency})
 	dto.RegisterTransactionServiceServer(grpcServer, &TransactionHandler{transactionService: services.Transaction})
-	dto.RegisterAuthServiceServer(
-		grpcServer, &AuthHandler{
-			UserPassEnabled: authConfig.UserPassEnabled,
-			OIDCEnabled:     authConfig.OIDCEnabled,
-			ClientID:        authConfig.ClientID,
-			ProviderURL:     authConfig.ProviderURL,
-			RedirectURL:     authConfig.RedirectURL,
-		},
-	)
 
 	return grpcServer
 }

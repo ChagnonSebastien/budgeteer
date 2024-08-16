@@ -5,9 +5,9 @@ import {
   setupIonicReact,
 } from "@ionic/react"
 import { WithItemTools } from "./components/IconTools"
-import { FC, useContext } from "react"
+import { FC } from "react"
 import AuthenticatedZone from "./AuthenticatedZone"
-import { AuthContext } from "./WithLogin"
+import useAuthentication from "./UseAuthentication"
 
 /* Core CSS required for Ionic components to work properly */
 import "@ionic/react/css/core.css"
@@ -42,13 +42,13 @@ import "./theme/variables.css"
 setupIonicReact()
 
 const App: FC = () => {
-  const {user, synced, hasInternet, authMethods} = useContext(AuthContext)
+  const {user, synced, hasInternet, authMethods, logout} = useAuthentication()
 
-  if (user !== null) {
+  if (user !== null && (!hasInternet || synced)) {
     return (
       <IonApp>
         <WithItemTools>
-          <AuthenticatedZone/>
+          <AuthenticatedZone logout={logout}/>
         </WithItemTools>
       </IonApp>
     )

@@ -84,15 +84,14 @@ var startCmd = &cobra.Command{
 					Currency:    service.NewCurrencyService(repos),
 					Transaction: service.NewTransactionService(repos),
 				},
-				grpc.AuthConfig{
-					UserPassEnabled: config.Auth.UserPass.Enabled,
-					OIDCEnabled:     config.Auth.Oidc.Enabled,
-					ClientID:        config.Auth.Oidc.ClientId,
-					ProviderURL:     config.Auth.Oidc.ProviderUrl,
-					RedirectURL:     config.Auth.Oidc.RedirectUrl,
-				},
 			),
-			http.NewAuth(oidcConfig, config.Server.PublicUrl, config.Auth.Oidc.ProviderUrl),
+			http.NewAuth(
+				config.Auth.Oidc.Enabled,
+				config.Auth.UserPass.Enabled,
+				oidcConfig,
+				config.Server.PublicUrl,
+				config.Auth.Oidc.ProviderUrl,
+			),
 		)
 		webServer.Serve()
 	},

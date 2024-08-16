@@ -1,8 +1,9 @@
-import { createContext } from "react"
-
 const KEY_USER = "user"
 
+export type AuthMethod = "oidc" | "userPass";
+
 export interface User {
+  authMethod: AuthMethod
   id: string
   email: string
   username: string
@@ -10,16 +11,11 @@ export interface User {
   lastName: string
 }
 
-class UserStore {
+export default class UserStore {
   constructor(private storage: Storage) {
-
   }
 
-  public upsertUser(user: User) {
-    this.storage.setItem(KEY_USER, JSON.stringify(user))
-  }
-
-  public getUser(): User | null {
+  public getUser() {
     const userString = this.storage.getItem(KEY_USER)
     if (userString == null) {
       return null
@@ -28,9 +24,12 @@ class UserStore {
     return JSON.parse(userString)
   }
 
-  public clearUser() {
+  public upsertUser(user: Omit<User, "authMethod">, authMethod: AuthMethod) {
+    this.storage.setItem(KEY_USER, JSON.stringify({...user, authMethod}))
+  }
+
+  public clear() {
     this.storage.removeItem(KEY_USER)
   }
-}
 
-export default createContext(new UserStore(localStorage))
+}
