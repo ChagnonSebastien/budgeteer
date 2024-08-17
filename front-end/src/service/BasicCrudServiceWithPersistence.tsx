@@ -29,7 +29,7 @@ interface Props<T extends Unique, A> {
 export const BasicCrudServiceWithPersistence = <T extends Unique, A>(props: Props<T, A>) => {
   const {initialState, children, context, longTermStore, sorter, Augmenter} = props
 
-  const [state, setState] = useState<T[]>(initialState)
+  const [state, setState] = useState<T[]>(initialState.sort(sorter ?? ((_a: T, _b: T) => 0)))
 
   const create = useCallback(async (data: Omit<T, "id">): Promise<T> => {
     const newItem = await longTermStore.create(data)

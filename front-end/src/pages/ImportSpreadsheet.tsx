@@ -53,7 +53,9 @@ const ImportSpreadsheet: FC = () => {
           const newCategories = [...categories]
           const newAccounts = [...accounts]
 
-          for (const line of results.data) {
+          for (let i = 0; i < results.data.length; i++) {
+            const line = results.data[i]
+
             if (!line.Currency) {
               break
             }
@@ -120,9 +122,11 @@ const ImportSpreadsheet: FC = () => {
               receiverId: receiver?.id ?? null,
               note,
             }))
-          }
 
-          console.log(await Promise.all(transactionPromises))
+            if (category.name === "Transfer between accounts" || category.name === "Credit card bill") {
+              i++
+            }
+          }
         },
         error: (error) => {
           console.error("Error parsing CSV:", error)

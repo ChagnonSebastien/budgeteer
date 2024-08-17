@@ -3,16 +3,51 @@ import {
   IonPage,
   useIonRouter,
 } from "@ionic/react"
-import { FC, useContext } from "react"
+import { FC, useContext, useMemo } from "react"
 import { AccountList } from "../components/AccountList"
 import ContentWithHeader from "../components/ContentWithHeader"
-import { AccountServiceContext } from "../service/ServiceContext"
+import { AccountServiceContext, CurrencyServiceContext, TransactionServiceContext } from "../service/ServiceContext"
 
 
 const AccountsPage: FC = () => {
   const router = useIonRouter()
 
   const {state: accounts} = useContext(AccountServiceContext)
+  const {state: transactions} = useContext(TransactionServiceContext)
+  const {state: currencies} = useContext(CurrencyServiceContext)
+
+  const valuePerAccount = useMemo(() => {
+    const accountAmounts = new Map<number, Map<number, number>>()
+
+    for (const account of accounts) {
+      const initialAmounts = new Map()
+      initialAmounts.set(currencies[0].id, account.initialAmount)
+      accountAmounts.set(account.id, initialAmounts)
+    }
+
+    for (const transaction of transactions) {
+      if (transaction.senderId) {
+        let currencyMap = accountAmounts.get(transaction.senderId)
+        if (!currencyMap) {
+          currencyMap = new Map()
+          accountAmounts.set(transaction.senderId, currencyMap)
+        }
+
+        currencyMap.set(transaction.currencyId, (currencyMap.get(transaction.currencyId) ?? 0) - transaction.amount)
+      }
+
+      if (transaction.receiverId) {
+        let currencyMap = accountAmounts.get(transaction.receiverId)
+        if (!currencyMap) {
+          currencyMap = new Map()
+          accountAmounts.set(transaction.receiverId, currencyMap)
+        }
+        currencyMap.set(transaction.currencyId, (currencyMap.get(transaction.currencyId) ?? 0) + transaction.amount)
+      }
+    }
+
+    return accountAmounts
+  }, [accounts, transactions])
 
   return (
     <IonPage>
@@ -22,7 +57,8 @@ const AccountsPage: FC = () => {
             New
           </IonButton>
           <div style={{height: "1rem"}}/>
-          <AccountList accounts={accounts} onSelect={id => router.push(`/categories/edit/${id}`)}/>
+          <AccountList accounts={accounts} valuePerAccount={valuePerAccount}
+                       onSelect={id => router.push(`/categories/edit/${id}`)}/>
         </div>
       </ContentWithHeader>
     </IonPage>

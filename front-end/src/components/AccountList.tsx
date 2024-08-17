@@ -1,22 +1,35 @@
 import { IonItem, IonLoading } from "@ionic/react"
-import { Fragment, useMemo } from "react"
+import { Fragment, useContext, useMemo } from "react"
 import Account from "../domain/model/account"
 import Category from "../domain/model/category"
+import { CurrencyServiceContext, TransactionServiceContext } from "../service/ServiceContext"
 import IconCapsule from "./IconCapsule"
 
 interface Props {
   accounts: Account[],
-  onSelect: (value: number) => void
+  onSelect: (value: number) => void,
+  valuePerAccount?: Map<number, Map<number, number>>
 }
 
 export const AccountList = (props: Props) => {
-  const {accounts, onSelect} = props
+  const {accounts, onSelect, valuePerAccount} = props
+
+  const {state: currencies} = useContext(CurrencyServiceContext)
 
   return (
     <>
       {accounts.map(account => (
         <IonItem key={`account-list-${account.id}`} onClick={() => onSelect(account.id)}>
-          {account.name}
+          <div style={{flexGrow: 1}}>
+            <div>
+              {account.name}
+            </div>
+            {[...(valuePerAccount?.get(account.id)?.entries() ?? [])].map((entry) => (
+              <div key={`currency-in-account-${entry[0]}`} style={{textAlign: "right"}}>
+                {entry[1] / 100} {currencies.find(c => c.id === entry[0])?.symbol ?? entry[0]}
+              </div>
+            ))}
+          </div>
         </IonItem>
       ))}
     </>
