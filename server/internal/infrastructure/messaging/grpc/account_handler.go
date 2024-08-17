@@ -2,6 +2,7 @@ package grpc
 
 import (
 	"context"
+	"fmt"
 
 	"chagnon.dev/budget-server/internal/domain/service"
 	"chagnon.dev/budget-server/internal/infrastructure/messaging/dto"
@@ -17,6 +18,11 @@ func (s *AccountHandler) CreateAccount(ctx context.Context, req *dto.CreateAccou
 	*dto.CreateAccountResponse,
 	error,
 ) {
+	_, ok := ctx.Value(claimsKey{}).(interface{})
+	if !ok {
+		return nil, fmt.Errorf("invalid claims")
+	}
+
 	newId, err := s.accountService.CreateAccount(ctx, req.Name, int(req.InitialAmount))
 	if err != nil {
 		return nil, err
@@ -31,6 +37,11 @@ func (s *AccountHandler) UpdateAccount(
 	ctx context.Context,
 	req *dto.UpdateAccountRequest,
 ) (*dto.UpdateAccountResponse, error) {
+	_, ok := ctx.Value(claimsKey{}).(interface{})
+	if !ok {
+		return nil, fmt.Errorf("invalid claims")
+	}
+
 	err := s.accountService.UpdateAccount(ctx, int(req.Account.Id), req.Account.Name, int(req.Account.InitialAmount))
 	if err != nil {
 		return nil, err
@@ -43,6 +54,11 @@ func (s *AccountHandler) GetAllAccounts(ctx context.Context, _ *dto.GetAllAccoun
 	*dto.GetAllAccountsResponse,
 	error,
 ) {
+	_, ok := ctx.Value(claimsKey{}).(interface{})
+	if !ok {
+		return nil, fmt.Errorf("invalid claims")
+	}
+
 	accounts, err := s.accountService.GetAllAccounts(ctx)
 	if err != nil {
 		return nil, err

@@ -14,4 +14,3 @@ auth:
     clientId: ""
     clientSecret: ""
     providerUrl: ""
-    redirectUrl: ""

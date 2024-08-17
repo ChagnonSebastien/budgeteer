@@ -26,7 +26,6 @@ type OidcConfig struct {
 	ClientId     string `mapstructure:"clientId"`
 	ClientSecret string `mapstructure:"clientSecret"`
 	ProviderUrl  string `mapstructure:"providerUrl"`
-	RedirectUrl  string `mapstructure:"redirectUrl"`
 }
 
 type Config struct {
@@ -72,8 +71,9 @@ var startCmd = &cobra.Command{
 		repos := repository.NewRepository(dao.New(db))
 
 		var oidcConfig *oauth2.Config
+		var verifier *oidc.IDTokenVerifier
 		if config.Auth.Oidc.Enabled {
-			oidcConfig = setupOidcConfig(ctx, config.Auth.Oidc, config.Server.PublicUrl)
+			oidcConfig, verifier = setupOidcConfig(ctx, config.Auth.Oidc, config.Server.PublicUrl)
 		}
 
 		webServer := http.NewServer(
@@ -84,6 +84,7 @@ var startCmd = &cobra.Command{
 					Currency:    service.NewCurrencyService(repos),
 					Transaction: service.NewTransactionService(repos),
 				},
+				verifier,
 			),
 			http.NewAuth(
 				config.Auth.Oidc.Enabled,
@@ -132,9 +133,12 @@ func initConfig() {
 	}
 }
 
-func setupOidcConfig(ctx context.Context, oidcConfig OidcConfig, serverPublicUrl string) *oauth2.Config {
-	if oidcConfig.ClientId == "" || oidcConfig.ClientSecret == "" || oidcConfig.ProviderUrl == "" || oidcConfig.RedirectUrl == "" {
-		return nil
+func setupOidcConfig(ctx context.Context, oidcConfig OidcConfig, serverPublicUrl string) (
+	*oauth2.Config,
+	*oidc.IDTokenVerifier,
+) {
+	if oidcConfig.ClientId == "" || oidcConfig.ClientSecret == "" || oidcConfig.ProviderUrl == "" {
+		return nil, nil
 	}
 
 	provider, err := oidc.NewProvider(ctx, oidcConfig.ProviderUrl)
@@ -143,10 +147,15 @@ func setupOidcConfig(ctx context.Context, oidcConfig OidcConfig, serverPublicUrl
 	}
 
 	return &oauth2.Config{
-		ClientID:     oidcConfig.ClientId,
-		ClientSecret: oidcConfig.ClientSecret,
-		Endpoint:     provider.Endpoint(),
-		RedirectURL:  fmt.Sprintf("%s/auth/callback", serverPublicUrl),
-		Scopes:       []string{oidc.ScopeOpenID, "profile", "email"},
-	}
+			ClientID:     oidcConfig.ClientId,
+			ClientSecret: oidcConfig.ClientSecret,
+			Endpoint:     provider.Endpoint(),
+			RedirectURL:  fmt.Sprintf("%s/auth/callback", serverPublicUrl),
+			Scopes:       []string{oidc.ScopeOpenID, "profile", "email"},
+		}, provider.Verifier(
+			&oidc.Config{
+				ClientID:          oidcConfig.ClientId,
+				SkipClientIDCheck: true,
+			},
+		)
 }

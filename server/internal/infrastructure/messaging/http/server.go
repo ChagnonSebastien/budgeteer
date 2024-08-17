@@ -30,11 +30,11 @@ func NewServer(grpcServer *grpc.Server, auth *Auth) *GrpcWebServer {
 
 func (s *GrpcWebServer) Serve() {
 	mux := http.NewServeMux()
-	mux.Handle("/auth/", withLogging(http.StripPrefix("/auth", s.auth.ServeMux())))
+	mux.Handle("/auth/", http.StripPrefix("/auth", s.auth.ServeMux()))
 	mux.HandleFunc("/", s.catchAllHandler)
 
 	httpServer := &http.Server{
-		Handler: mux,
+		Handler: withLogging(mux),
 		Addr:    fmt.Sprintf(":%d", serverPort),
 	}
 

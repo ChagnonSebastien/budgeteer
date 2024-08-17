@@ -83,7 +83,11 @@ func (auth *Auth) infoHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (auth *Auth) loginHandler(w http.ResponseWriter, r *http.Request) {
-	authCodeURL := auth.OidcConfig.AuthCodeURL(auth.stateToken)
+	authCodeURL := auth.OidcConfig.AuthCodeURL(
+		auth.stateToken,
+		oauth2.AccessTypeOnline,
+		oauth2.SetAuthURLParam("audience", "budgeteer"),
+	)
 	http.Redirect(w, r, authCodeURL, http.StatusTemporaryRedirect)
 }
 
@@ -101,6 +105,9 @@ func (auth *Auth) callbackHandler(w http.ResponseWriter, r *http.Request) {
 
 	token, err := auth.OidcConfig.Exchange(r.Context(), code)
 	if err != nil {
+		println(err.Error())
+		println(auth.OidcConfig.ClientID)
+		println(auth.OidcConfig.ClientSecret)
 		http.Error(w, "Token exchange failed", http.StatusInternalServerError)
 		return
 	}
