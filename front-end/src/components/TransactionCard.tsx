@@ -34,7 +34,7 @@ const TransactionCard: FC<Props> = (props) => {
       style={{
         display: "flex",
         flexDirection: "row",
-        background: "#f5f3f6",
+        background: "#80808010",
         borderRadius: ".3rem",
         fontSize: "small",
         textWrap: "nowrap",

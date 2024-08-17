@@ -128,7 +128,7 @@ const CategoryForm: FC<Props> = (props) => {
                 </IonButton>
                 <div style={{width: "1rem", flexShrink: 0}}/>
                 <IconCapsule iconName={selectedIcon} size="2rem" backgroundColor="transparent"
-                             color="darkslategray" border="1px gray solid" flexShrink={0}/>
+                             color="gray" border="1px gray solid" flexShrink={0}/>
               </div>
               <IonModal isOpen={showIconModal}
                         onWillDismiss={() => setShowIconModal(false)}>
@@ -187,7 +187,7 @@ const CategoryForm: FC<Props> = (props) => {
               flexDirection: "column",
               justifyContent: "center",
               padding: "1rem",
-              border: "2px black solid",
+              border: "1px gray solid",
             }}>
               <IconCapsule iconName={selectedIcon} size="5rem" color={innerColor} backgroundColor={outerColor}/>
             </div>

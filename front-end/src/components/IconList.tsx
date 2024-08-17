@@ -35,7 +35,7 @@ const IconList: FC<Props> = ({filter, onSelect}) => {
           return (
             <div onClick={() => onSelect(iconName)}
                  key={`icon-list-element-${iconName}`}
-                 style={{margin: "0.2rem", padding: "0.5rem", backgroundColor: "white", borderRadius: "0.5rem"}}>
+                 style={{margin: "0.2rem", padding: "0.5rem", borderRadius: "0.5rem"}}>
               <IconType size="2.5rem"/>
             </div>
           )

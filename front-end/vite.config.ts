@@ -6,7 +6,7 @@ import { defineConfig } from "vite"
 import { VitePWA } from "vite-plugin-pwa"
 
 // https://vitejs.dev/config/
-export default defineConfig({
+export default defineConfig(({mode}) => ({
   server: {
     port: 8000,
   },
@@ -26,6 +26,6 @@ export default defineConfig({
     setupFiles: "./src/setupTests.ts",
   },
   build: {
-    sourcemap: true,
+    sourcemap: mode === "development",
   },
-})
+}))
