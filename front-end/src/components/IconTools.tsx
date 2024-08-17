@@ -55,7 +55,7 @@ const useIconTools = (): IconTools => {
   }, [iconLibraries])
 
   const iconTypeFromNameWithFallback = useCallback((iconName: string): IconType => {
-    return iconTypeFromName(iconName) ?? iconTypeFromName("GrDocumentMissing") ?? (() => <IonSpinner/>)
+    return iconTypeFromName(iconName) ?? iconTypeFromName("GrDocumentMissing") ?? (() => <div/>)
   }, [iconLibraries, iconTypeFromName])
 
   return {
@@ -67,7 +67,7 @@ const useIconTools = (): IconTools => {
 export const IconToolsContext = createContext<IconTools>({
   iconNameList: [],
   iconTypeFromName(_iconName: string) {
-    return () => <IonSpinner/>
+    return () => <div/>
   },
 })
 
@@ -75,11 +75,13 @@ interface Props {
   children: ReactNode[] | ReactNode
 }
 
-export const WithItemTools: FC<Props> = (props) => {
-  const iconTools = useIconTools()
-  return (
-    <IconToolsContext.Provider value={iconTools}>
-      {props.children}
-    </IconToolsContext.Provider>
-  )
+export const withItemTools = (Component: FC): FC => {
+  return () => {
+    const iconTools = useIconTools()
+    return (
+      <IconToolsContext.Provider value={iconTools}>
+        <Component/>
+      </IconToolsContext.Provider>
+    )
+  }
 }

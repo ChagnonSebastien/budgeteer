@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
@@ -110,6 +111,24 @@ func (s *GrpcWebServer) catchAllHandler(resp http.ResponseWriter, req *http.Requ
 			return
 		}
 	}
+
+	securityPolicies := []string{
+		"upgrade-insecure-requests;",
+		"default-src 'self';",
+		"style-src 'self' 'unsafe-inline';",
+		"script-src 'self';",
+		"script-src-elem 'self' 'unsafe-inline';",
+		"worker-src 'self';",
+		fmt.Sprintf("base-uri %s;", s.auth.FrontendPublicUrl),
+		"form-action 'none';",
+		"frame-ancestors 'none';",
+		"object-src 'none';",
+	}
+
+	resp.Header().Set(
+		"Content-Security-Policy",
+		strings.Join(securityPolicies, " "),
+	)
 
 	http.ServeFile(resp, req, filepath.Join(webDirectory, "index.html"))
 }

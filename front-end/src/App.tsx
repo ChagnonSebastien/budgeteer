@@ -1,13 +1,12 @@
 import {
   IonApp,
   IonButton,
-  IonSpinner,
   setupIonicReact,
 } from "@ionic/react"
-import { WithItemTools } from "./components/IconTools"
 import { FC, lazy } from "react"
-import LoadingScreen from "./LoadingScreen"
-import useAuthentication from "./UseAuthentication"
+import { withItemTools } from "./components/IconTools"
+import LoadingScreen from "./components/LoadingScreen"
+import useAuthentication from "./useAuthentication"
 
 /* Core CSS required for Ionic components to work properly */
 import "@ionic/react/css/core.css"
@@ -52,9 +51,7 @@ const App: FC = () => {
     if (!hasInternet || synced) {
       return (
         <IonApp>
-          <WithItemTools>
-            <AuthenticatedZone logout={logout}/>
-          </WithItemTools>
+          <AuthenticatedZone logout={logout}/>
         </IonApp>
       )
     } else {
@@ -83,4 +80,4 @@ const App: FC = () => {
   )
 }
 
-export default App
+export default withItemTools(App)
