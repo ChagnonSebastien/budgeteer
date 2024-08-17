@@ -12,6 +12,7 @@ import Currency from "./domain/model/currency"
 import Transaction from "./domain/model/transaction"
 import Menu from "./components/Menu"
 import { FC, useEffect, useState } from "react"
+import AccountsPage from "./pages/AccountsPage"
 import CategoryPage from "./pages/CategoryPage"
 import CreateCategoryPage from "./pages/CreateCategoryPage"
 import CreateTransactionPage from "./pages/CreateTransactionPage"
@@ -98,7 +99,7 @@ const AuthenticatedZone: FC<Props> = ({logout}) => {
                       <Route exact path="/categories" render={() => <CategoryPage/>}/>
                       <Route exact path="/categories/new" render={() => <CreateCategoryPage/>}/>
                       <Route exact path="/categories/edit/:categoryId" render={() => <EditCategoryPage/>}/>
-                      <Route exact path="/currencies" render={() => <UnimplementedPage/>}/>
+                      <Route exact path="/accounts" render={() => <AccountsPage/>}/>
                       <Route exact path="/transactions" render={() => <TransactionPage/>}/>
                       <Route exact path="/transactions/new" render={() => <CreateTransactionPage/>}/>
                       <Route exact path="/transactions/edit/:transactionId" render={() => <EditTransactionPage/>}/>

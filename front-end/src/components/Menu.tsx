@@ -34,9 +34,9 @@ const appPages: AppPage[] = [
     iconName: "MdCategory",
   },
   {
-    title: "Currencies",
-    url: "/currencies",
-    iconName: "BsCurrencyExchange",
+    title: "Accounts",
+    url: "/accounts",
+    iconName: "MdAccountBalance",
   },
   {
     title: "Import",

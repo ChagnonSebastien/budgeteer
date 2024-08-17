@@ -5,10 +5,8 @@ import { FC, useCallback, useContext, useMemo } from "react"
 import { useLocation } from "react-router-dom"
 import ContentWithHeader from "../components/ContentWithHeader"
 import TransactionForm from "../components/TransactionForm"
-import Category from "../domain/model/category"
 import Transaction from "../domain/model/transaction"
-import { CategoryServiceContext, TransactionServiceContext } from "../service/ServiceContext"
-import CategoryForm from "../components/CategoryForm"
+import { TransactionServiceContext } from "../service/ServiceContext"
 
 const CreateCategoryPage: FC = () => {
   const router = useIonRouter()
