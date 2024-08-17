@@ -6,6 +6,7 @@ import (
 
 	"chagnon.dev/budget-server/internal/domain/service"
 	"chagnon.dev/budget-server/internal/infrastructure/messaging/dto"
+	"chagnon.dev/budget-server/internal/infrastructure/messaging/shared"
 )
 
 type AccountHandler struct {
@@ -18,12 +19,12 @@ func (s *AccountHandler) CreateAccount(ctx context.Context, req *dto.CreateAccou
 	*dto.CreateAccountResponse,
 	error,
 ) {
-	_, ok := ctx.Value(claimsKey{}).(interface{})
+	claims, ok := ctx.Value(shared.ClaimsKey{}).(shared.Claims)
 	if !ok {
 		return nil, fmt.Errorf("invalid claims")
 	}
 
-	newId, err := s.accountService.CreateAccount(ctx, req.Name, int(req.InitialAmount))
+	newId, err := s.accountService.CreateAccount(ctx, claims.Sub, req.Name, int(req.InitialAmount))
 	if err != nil {
 		return nil, err
 	}
@@ -37,12 +38,18 @@ func (s *AccountHandler) UpdateAccount(
 	ctx context.Context,
 	req *dto.UpdateAccountRequest,
 ) (*dto.UpdateAccountResponse, error) {
-	_, ok := ctx.Value(claimsKey{}).(interface{})
+	claims, ok := ctx.Value(shared.ClaimsKey{}).(shared.Claims)
 	if !ok {
 		return nil, fmt.Errorf("invalid claims")
 	}
 
-	err := s.accountService.UpdateAccount(ctx, int(req.Account.Id), req.Account.Name, int(req.Account.InitialAmount))
+	err := s.accountService.UpdateAccount(
+		ctx,
+		claims.Sub,
+		int(req.Account.Id),
+		req.Account.Name,
+		int(req.Account.InitialAmount),
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -54,12 +61,12 @@ func (s *AccountHandler) GetAllAccounts(ctx context.Context, _ *dto.GetAllAccoun
 	*dto.GetAllAccountsResponse,
 	error,
 ) {
-	_, ok := ctx.Value(claimsKey{}).(interface{})
+	claims, ok := ctx.Value(shared.ClaimsKey{}).(shared.Claims)
 	if !ok {
 		return nil, fmt.Errorf("invalid claims")
 	}
 
-	accounts, err := s.accountService.GetAllAccounts(ctx)
+	accounts, err := s.accountService.GetAllAccounts(ctx, claims.Sub)
 	if err != nil {
 		return nil, err
 	}

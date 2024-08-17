@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -12,7 +13,11 @@ import (
 	"os"
 	"time"
 
+	"github.com/coreos/go-oidc"
 	"golang.org/x/oauth2"
+
+	"chagnon.dev/budget-server/internal/domain/service"
+	"chagnon.dev/budget-server/internal/infrastructure/messaging/shared"
 )
 
 type AuthMethods struct {
@@ -21,7 +26,9 @@ type AuthMethods struct {
 }
 
 type Auth struct {
+	UserService       *service.UserService
 	OidcConfig        *oauth2.Config
+	verifier          *oidc.IDTokenVerifier
 	FrontendPublicUrl string
 	OidcIssuer        string
 	AuthMethods       AuthMethods
@@ -30,9 +37,11 @@ type Auth struct {
 }
 
 func NewAuth(
+	userService *service.UserService,
 	oidcEnabled,
 	userPassEnabled bool,
 	oidcConfig *oauth2.Config,
+	verifier *oidc.IDTokenVerifier,
 	serverPublicUrl,
 	oidcIssuer string,
 ) *Auth {
@@ -42,7 +51,9 @@ func NewAuth(
 	}
 
 	auth := &Auth{
+		UserService:       userService,
 		OidcConfig:        oidcConfig,
+		verifier:          verifier,
 		OidcIssuer:        oidcIssuer,
 		FrontendPublicUrl: frontendUrl,
 		AuthMethods: AuthMethods{
@@ -69,7 +80,6 @@ func (auth *Auth) ServeMux() *http.ServeMux {
 	mux.HandleFunc("/login", auth.loginHandler)
 	mux.HandleFunc("/callback", auth.callbackHandler)
 	mux.HandleFunc("/userinfo", auth.userInfoHandler)
-	mux.HandleFunc("/refresh-token", auth.refreshTokenHandler)
 	mux.HandleFunc("/logout", auth.logoutHandler)
 	return mux
 }
@@ -79,6 +89,7 @@ func (auth *Auth) infoHandler(w http.ResponseWriter, r *http.Request) {
 
 	if err := json.NewEncoder(w).Encode(auth.AuthMethods); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 }
 
@@ -103,21 +114,39 @@ func (auth *Auth) callbackHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := auth.OidcConfig.Exchange(r.Context(), code)
+	rawToken, err := auth.OidcConfig.Exchange(r.Context(), code)
 	if err != nil {
-		println(err.Error())
-		println(auth.OidcConfig.ClientID)
-		println(auth.OidcConfig.ClientSecret)
 		http.Error(w, "Token exchange failed", http.StatusInternalServerError)
+		return
+	}
+
+	token, err := auth.verifier.Verify(r.Context(), rawToken.AccessToken)
+	if err != nil {
+		http.Error(w, "verifying access token", http.StatusUnauthorized)
+		return
+	}
+
+	var tokenClaims shared.Claims
+	if err := token.Claims(&tokenClaims); err != nil {
+		http.Error(w, "parsing claims", http.StatusInternalServerError)
+	}
+
+	if err := auth.UserService.Upsert(
+		r.Context(),
+		tokenClaims.Sub,
+		tokenClaims.Username,
+		tokenClaims.Email,
+	); err != nil {
+		http.Error(w, "syncing user with database", http.StatusInternalServerError)
 		return
 	}
 
 	http.SetCookie(
 		w, &http.Cookie{
 			Name:     "auth-token",
-			Value:    token.AccessToken,
+			Value:    rawToken.AccessToken,
 			Path:     "/",
-			Expires:  time.Now().Add(time.Duration(token.Expiry.Second()) * time.Second),
+			Expires:  rawToken.Expiry,
 			HttpOnly: true,
 			Secure:   true,
 		},
@@ -126,7 +155,7 @@ func (auth *Auth) callbackHandler(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(
 		w, &http.Cookie{
 			Name:     "refresh-token",
-			Value:    token.RefreshToken,
+			Value:    rawToken.RefreshToken,
 			Path:     "/",
 			Expires:  time.Now().Add(7 * 24 * time.Hour),
 			HttpOnly: true,
@@ -170,100 +199,91 @@ func (auth *Auth) logoutHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, logoutURL, http.StatusTemporaryRedirect)
 }
 
-func (auth *Auth) fetchUserInfo(ctx context.Context, token *oauth2.Token) (*map[string]interface{}, error) {
-	client := auth.OidcConfig.Client(ctx, token)
-
-	resp, err := client.Get(fmt.Sprintf("%s/protocol/openid-connect/userinfo", auth.OidcIssuer))
+func (auth *Auth) userInfoHandler(resp http.ResponseWriter, req *http.Request) {
+	tokenSource, prevTokenCookie, err := auth.TokenSourceFromCookies(req.Context(), req.Cookie)
 	if err != nil {
-		return nil, err
+		http.Error(resp, "reading tokens from request", http.StatusInternalServerError)
+		return
 	}
-	defer func() {
-		err := resp.Body.Close()
-		if err != nil {
-			log.Printf("Failed to close response body: %v", err)
-		}
-	}()
 
-	var profile map[string]interface{}
-	return &profile, json.NewDecoder(resp.Body).Decode(&profile)
+	rawToken, err := tokenSource.Token()
+	if err != nil {
+		log.Printf("getting valid access token: %s", err)
+		http.Error(resp, "getting valid access token", http.StatusUnauthorized)
+		return
+	}
+
+	token, err := auth.verifier.Verify(req.Context(), rawToken.AccessToken)
+	if err != nil {
+		log.Printf("verifying access token: %s", err)
+		http.Error(resp, "verifying access token", http.StatusUnauthorized)
+		return
+	}
+
+	var tokenClaims shared.Claims
+	if err := token.Claims(&tokenClaims); err != nil {
+		http.Error(resp, "parsing claims", http.StatusInternalServerError)
+	}
+
+	if prevTokenCookie == nil || prevTokenCookie.Value != rawToken.AccessToken {
+		http.SetCookie(
+			resp, &http.Cookie{
+				Name:     "auth-token",
+				Value:    rawToken.AccessToken,
+				Path:     "/",
+				Expires:  rawToken.Expiry,
+				HttpOnly: true,
+				Secure:   true,
+			},
+		)
+
+		http.SetCookie(
+			resp, &http.Cookie{
+				Name:     "refresh-token",
+				Value:    rawToken.RefreshToken,
+				Path:     "/",
+				Expires:  time.Now().Add(7 * 24 * time.Hour),
+				HttpOnly: true,
+				Secure:   true,
+			},
+		)
+	}
+
+	resp.Header().Set("Content-Type", "application/json")
+	if err = json.NewEncoder(resp).Encode(tokenClaims); err != nil {
+		http.Error(resp, "encoding response", http.StatusInternalServerError)
+		return
+	}
 }
 
-func (auth *Auth) userInfoHandler(w http.ResponseWriter, r *http.Request) {
-	cookie, err := r.Cookie("auth-token")
-	if err != nil {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return
+func (auth *Auth) TokenSourceFromCookies(
+	ctx context.Context,
+	getCookie func(name string) (*http.Cookie, error),
+) (oauth2.TokenSource, *http.Cookie, error) {
+	var authToken string
+	authTokenCookie, err := getCookie("auth-token")
+	if errors.Is(err, http.ErrNoCookie) {
+		authToken = ""
+	} else if err != nil {
+		return nil, nil, fmt.Errorf("failed to get auth token: %v", err)
+	} else {
+		authToken = authTokenCookie.Value
 	}
 
-	profile, err := auth.fetchUserInfo(
-		r.Context(), &oauth2.Token{
-			AccessToken: cookie.Value,
+	var refreshToken string
+	refreshTokenCookie, err := getCookie("refresh-token")
+	if errors.Is(err, http.ErrNoCookie) {
+		refreshToken = ""
+	} else if err != nil {
+		return nil, nil, fmt.Errorf("failed to get refresh token: %v", err)
+	} else {
+		refreshToken = refreshTokenCookie.Value
+	}
+
+	return auth.OidcConfig.TokenSource(
+		ctx, &oauth2.Token{
+			AccessToken:  authToken,
+			RefreshToken: refreshToken,
 		},
-	)
-	if err != nil {
-		http.Error(w, "Fetching user Info", http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	err = json.NewEncoder(w).Encode(profile)
-	if err != nil {
-		log.Printf("failed to encode profile: %v", err)
-		http.Error(w, "encoding response", http.StatusInternalServerError)
-	}
-}
-
-func (auth *Auth) refreshTokenHandler(w http.ResponseWriter, r *http.Request) {
-	cookie, err := r.Cookie("refresh-token")
-	if err != nil {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return
-	}
-
-	tokenSource := auth.OidcConfig.TokenSource(
-		r.Context(), &oauth2.Token{
-			RefreshToken: cookie.Value,
-		},
-	)
-
-	newToken, err := tokenSource.Token()
-	if err != nil {
-		http.Error(w, "Token refresh failed", http.StatusInternalServerError)
-		return
-	}
-
-	profile, err := auth.fetchUserInfo(r.Context(), newToken)
-	if err != nil {
-		http.Error(w, "Fetching user Info", http.StatusInternalServerError)
-		return
-	}
-
-	http.SetCookie(
-		w, &http.Cookie{
-			Name:     "auth-token",
-			Value:    newToken.AccessToken,
-			Path:     "/",
-			Expires:  newToken.Expiry,
-			HttpOnly: true,
-			Secure:   true,
-		},
-	)
-
-	http.SetCookie(
-		w, &http.Cookie{
-			Name:     "refresh-token",
-			Value:    newToken.RefreshToken,
-			Path:     "/",
-			Expires:  time.Now().Add(7 * 24 * time.Hour),
-			HttpOnly: true,
-			Secure:   true,
-		},
-	)
-
-	w.Header().Set("Content-Type", "application/json")
-	err = json.NewEncoder(w).Encode(profile)
-	if err != nil {
-		log.Printf("failed to encode profile: %v", err)
-		http.Error(w, "encoding response", http.StatusInternalServerError)
-	}
+	), authTokenCookie, nil
 }

@@ -2,9 +2,11 @@ package grpc
 
 import (
 	"context"
+	"fmt"
 
 	"chagnon.dev/budget-server/internal/domain/service"
 	"chagnon.dev/budget-server/internal/infrastructure/messaging/dto"
+	"chagnon.dev/budget-server/internal/infrastructure/messaging/shared"
 )
 
 type CategoryHandler struct {
@@ -17,8 +19,14 @@ func (s *CategoryHandler) CreateCategory(
 	ctx context.Context,
 	req *dto.CreateCategoryRequest,
 ) (*dto.CreateCategoryResponse, error) {
+	claims, ok := ctx.Value(shared.ClaimsKey{}).(shared.Claims)
+	if !ok {
+		return nil, fmt.Errorf("invalid claims")
+	}
+
 	newId, err := s.categoryService.CreateCategory(
 		ctx,
+		claims.Sub,
 		req.Name,
 		req.IconName,
 		req.IconColor,
@@ -38,8 +46,14 @@ func (s *CategoryHandler) UpdateCategory(
 	ctx context.Context,
 	req *dto.UpdateCategoryRequest,
 ) (*dto.UpdateCategoryResponse, error) {
+	claims, ok := ctx.Value(shared.ClaimsKey{}).(shared.Claims)
+	if !ok {
+		return nil, fmt.Errorf("invalid claims")
+	}
+
 	err := s.categoryService.UpdateCategory(
 		ctx,
+		claims.Sub,
 		int(req.Category.Id),
 		req.Category.Name,
 		req.Category.IconName,
@@ -58,7 +72,12 @@ func (s *CategoryHandler) GetAllCategories(
 	ctx context.Context,
 	_ *dto.GetAllCategoriesRequest,
 ) (*dto.GetAllCategoriesResponse, error) {
-	categories, err := s.categoryService.GetAllCategories(ctx)
+	claims, ok := ctx.Value(shared.ClaimsKey{}).(shared.Claims)
+	if !ok {
+		return nil, fmt.Errorf("invalid claims")
+	}
+
+	categories, err := s.categoryService.GetAllCategories(ctx, claims.Sub)
 	if err != nil {
 		return nil, err
 	}

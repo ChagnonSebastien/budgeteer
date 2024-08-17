@@ -7,8 +7,8 @@ import (
 	"chagnon.dev/budget-server/internal/infrastructure/db/dao"
 )
 
-func (r *Repository) GetAllCurrencies(ctx context.Context) ([]model.Currency, error) {
-	currenciesDao, err := r.queries.GetAllCurrencies(ctx)
+func (r *Repository) GetAllCurrencies(ctx context.Context, userId string) ([]model.Currency, error) {
+	currenciesDao, err := r.queries.GetAllCurrencies(ctx, userId)
 	if err != nil {
 		return nil, err
 	}
@@ -25,9 +25,10 @@ func (r *Repository) GetAllCurrencies(ctx context.Context) ([]model.Currency, er
 	return currencies, nil
 }
 
-func (r *Repository) CreateCurrency(ctx context.Context, name, symbol string) (int, error) {
+func (r *Repository) CreateCurrency(ctx context.Context, userId string, name, symbol string) (int, error) {
 	id, err := r.queries.CreateCurrency(
 		ctx, dao.CreateCurrencyParams{
+			UserID: userId,
 			Name:   name,
 			Symbol: symbol,
 		},
@@ -39,9 +40,10 @@ func (r *Repository) CreateCurrency(ctx context.Context, name, symbol string) (i
 	return int(id), nil
 }
 
-func (r *Repository) UpdateCurrency(ctx context.Context, id int, name, symbol string) error {
+func (r *Repository) UpdateCurrency(ctx context.Context, userId string, id int, name, symbol string) error {
 	return r.queries.UpdateCurrency(
 		ctx, dao.UpdateCurrencyParams{
+			UserID: userId,
 			ID:     int32(id),
 			Name:   name,
 			Symbol: symbol,

@@ -1,6 +1,6 @@
 -- name: GetAllTransactions :many
 SELECT
-    id AS transaction_id,
+    id,
     amount,
     currency,
     sender,
@@ -9,11 +9,12 @@ SELECT
     date,
     note
 FROM
-    transactions;
+    transactions
+WHERE user_id = sqlc.arg(user_id);
 
 -- name: CreateTransaction :one
-INSERT INTO transactions (amount, currency, sender, receiver, category, date, note) 
-VALUES (sqlc.arg(amount), sqlc.arg(currency), sqlc.arg(sender), sqlc.arg(receiver), sqlc.arg(category), sqlc.arg(date), sqlc.arg(note))
+INSERT INTO transactions (user_id, amount, currency, sender, receiver, category, date, note)
+VALUES (sqlc.arg(user_id), sqlc.arg(amount), sqlc.arg(currency), sqlc.arg(sender), sqlc.arg(receiver), sqlc.arg(category), sqlc.arg(date), sqlc.arg(note))
 RETURNING id;
 
 -- name: UpdateTransaction :exec
@@ -26,4 +27,4 @@ SET
     category = sqlc.arg(category),
     date = sqlc.arg(date),
     note = sqlc.arg(note)
-WHERE id = sqlc.arg(id);
+WHERE id = sqlc.arg(id) AND user_id = sqlc.arg(user_id);

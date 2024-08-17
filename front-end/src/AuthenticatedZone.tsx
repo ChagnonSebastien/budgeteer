@@ -5,16 +5,6 @@ import {
 } from "@ionic/react"
 import { IonReactRouter } from "@ionic/react-router"
 import { GrpcWebFetchTransport } from "@protobuf-ts/grpcweb-transport"
-import {
-  ClientStreamingCall, DuplexStreamingCall,
-  MethodInfo, NextClientStreamingFn, NextDuplexStreamingFn, NextServerStreamingFn,
-  NextUnaryFn,
-  RpcOptions,
-  RpcOutputStreamController,
-  ServerStreamingCall,
-  UnaryCall,
-} from "@protobuf-ts/runtime-rpc"
-import { options } from "ionicons/icons"
 import { Redirect, Route, Switch } from "react-router"
 import Account from "./domain/model/account"
 import Category from "./domain/model/category"

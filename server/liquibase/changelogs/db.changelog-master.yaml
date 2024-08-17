@@ -1,3 +1,5 @@
 databaseChangeLog:
   - include:
       file: ./changelogs/001-initial-schema.sql
+  - include:
+      file: ./changelogs/002-added_users.sql

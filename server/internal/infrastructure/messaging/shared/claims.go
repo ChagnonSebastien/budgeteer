@@ -1,10 +1,10 @@
-package grpc
+package shared
 
-type claimsKey struct{}
+type ClaimsKey struct{}
 
 type Claims struct {
 	Email    string `json:"email"`
-	Sid      string `json:"sid"`
+	Sub      string `json:"sub"`
 	Username string `json:"preferred_username"`
 	Name     string `json:"name"`
 }

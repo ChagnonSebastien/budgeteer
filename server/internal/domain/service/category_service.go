@@ -8,9 +8,20 @@ import (
 )
 
 type categoryRepository interface {
-	GetAllCategories(ctx context.Context) ([]model.Category, error)
-	CreateCategory(ctx context.Context, name, iconName, iconColor, iconBackground string, parentId int) (int, error)
-	UpdateCategory(ctx context.Context, id int, name, iconName, iconColor, iconBackground string, parentId int) error
+	GetAllCategories(ctx context.Context, userId string) ([]model.Category, error)
+	CreateCategory(
+		ctx context.Context,
+		userId string,
+		name, iconName, iconColor, iconBackground string,
+		parentId int,
+	) (int, error)
+	UpdateCategory(
+		ctx context.Context,
+		userId string,
+		id int,
+		name, iconName, iconColor, iconBackground string,
+		parentId int,
+	) error
 }
 
 type CategoryService struct {
@@ -21,8 +32,8 @@ func NewCategoryService(categoryRepository categoryRepository) *CategoryService 
 	return &CategoryService{categoryRepository}
 }
 
-func (a *CategoryService) GetAllCategories(ctx context.Context) ([]model.Category, error) {
-	categories, err := a.categoryRepository.GetAllCategories(ctx)
+func (a *CategoryService) GetAllCategories(ctx context.Context, userId string) ([]model.Category, error) {
+	categories, err := a.categoryRepository.GetAllCategories(ctx, userId)
 	if err != nil {
 		return nil, err
 	}
@@ -34,6 +45,7 @@ func (a *CategoryService) GetAllCategories(ctx context.Context) ([]model.Categor
 		rootIconBackground := "rgb(242, 198, 230)"
 		rootId, err := a.categoryRepository.CreateCategory(
 			ctx,
+			userId,
 			rootCategoryName,
 			rootIconName,
 			rootIconColor,
@@ -45,10 +57,12 @@ func (a *CategoryService) GetAllCategories(ctx context.Context) ([]model.Categor
 		}
 		categories = append(
 			categories, model.Category{
-				ID:       rootId,
-				Name:     rootCategoryName,
-				ParentId: 0,
-				IconName: rootIconName,
+				ID:             rootId,
+				Name:           rootCategoryName,
+				ParentId:       0,
+				IconName:       rootIconName,
+				IconColor:      rootIconColor,
+				IconBackground: rootIconBackground,
 			},
 		)
 	}
@@ -58,6 +72,7 @@ func (a *CategoryService) GetAllCategories(ctx context.Context) ([]model.Categor
 
 func (a *CategoryService) CreateCategory(
 	ctx context.Context,
+	userId string,
 	name, iconName, iconColor, iconBackground string,
 	parentId int,
 ) (int, error) {
@@ -65,14 +80,15 @@ func (a *CategoryService) CreateCategory(
 		return 0, fmt.Errorf("cannot create root category from request (parentId=0)")
 	}
 
-	return a.categoryRepository.CreateCategory(ctx, name, iconName, iconColor, iconBackground, parentId)
+	return a.categoryRepository.CreateCategory(ctx, userId, name, iconName, iconColor, iconBackground, parentId)
 }
 
 func (a *CategoryService) UpdateCategory(
 	ctx context.Context,
+	userId string,
 	id int,
 	name, iconName, iconColor, iconBackground string,
 	parentId int,
 ) error {
-	return a.categoryRepository.UpdateCategory(ctx, id, name, iconName, iconColor, iconBackground, parentId)
+	return a.categoryRepository.UpdateCategory(ctx, userId, id, name, iconName, iconColor, iconBackground, parentId)
 }

@@ -2,9 +2,11 @@ package grpc
 
 import (
 	"context"
+	"fmt"
 
 	"chagnon.dev/budget-server/internal/domain/service"
 	"chagnon.dev/budget-server/internal/infrastructure/messaging/dto"
+	"chagnon.dev/budget-server/internal/infrastructure/messaging/shared"
 )
 
 type CurrencyHandler struct {
@@ -17,7 +19,12 @@ func (s *CurrencyHandler) CreateCurrency(
 	ctx context.Context,
 	req *dto.CreateCurrencyRequest,
 ) (*dto.CreateCurrencyResponse, error) {
-	newId, err := s.currencyService.CreateCurrency(ctx, req.Name, req.Symbol)
+	claims, ok := ctx.Value(shared.ClaimsKey{}).(shared.Claims)
+	if !ok {
+		return nil, fmt.Errorf("invalid claims")
+	}
+
+	newId, err := s.currencyService.CreateCurrency(ctx, claims.Sub, req.Name, req.Symbol)
 	if err != nil {
 		return nil, err
 	}
@@ -31,7 +38,18 @@ func (s *CurrencyHandler) UpdateCurrency(
 	ctx context.Context,
 	req *dto.UpdateCurrencyRequest,
 ) (*dto.UpdateCurrencyResponse, error) {
-	err := s.currencyService.UpdateCurrency(ctx, int(req.Currency.Id), req.Currency.Name, req.Currency.Symbol)
+	claims, ok := ctx.Value(shared.ClaimsKey{}).(shared.Claims)
+	if !ok {
+		return nil, fmt.Errorf("invalid claims")
+	}
+
+	err := s.currencyService.UpdateCurrency(
+		ctx,
+		claims.Sub,
+		int(req.Currency.Id),
+		req.Currency.Name,
+		req.Currency.Symbol,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -43,7 +61,12 @@ func (s *CurrencyHandler) GetAllCurrencies(
 	ctx context.Context,
 	_ *dto.GetAllCurrenciesRequest,
 ) (*dto.GetAllCurrenciesResponse, error) {
-	currencies, err := s.currencyService.GetAllCurrencies(ctx)
+	claims, ok := ctx.Value(shared.ClaimsKey{}).(shared.Claims)
+	if !ok {
+		return nil, fmt.Errorf("invalid claims")
+	}
+
+	currencies, err := s.currencyService.GetAllCurrencies(ctx, claims.Sub)
 	if err != nil {
 		return nil, err
 	}

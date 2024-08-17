@@ -1,33 +1,9 @@
 import { Network } from "@capacitor/network"
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import UserStore, { User } from "./UserStore"
 
 const serverUrl = import.meta.env.VITE_BACKEND_URL || window.location.origin
 
-const fetchUserInfo = async (): Promise<Omit<User, "authMethod">> => {
-  const response = await fetch(`${serverUrl}/auth/userinfo`, {
-    credentials: "include",
-  })
-
-  if (!response.ok) {
-    throw new Error("Unable to fetch user info")
-  }
-
-  return response.json()
-}
-
-const refreshToken = async (): Promise<Omit<User, "authMethod">> => {
-  const response = await fetch(`${serverUrl}/auth/refresh-token`, {
-    method: "POST",
-    credentials: "include",
-  })
-
-  if (!response.ok) {
-    throw new Error("Unable to fetch user info")
-  }
-
-  return response.json()
-}
 
 const oidcLogin = () => {
   window.location.href = `${serverUrl}/auth/login`
@@ -46,19 +22,26 @@ const userPassLogout = () => {
 }
 
 type AuthMethod = "oidc" | "userPass"
-type AuthMethodStatuses = { [K in AuthMethod]: {login: () => void} | null };
+type AuthMethodStatuses = { [K in AuthMethod]: (() => void) | null };
 
 const userStore = new UserStore(localStorage)
 
 const useAuthentication = () => {
-  const [authMethods, setAuthMethods] = useState<AuthMethodStatuses>({
-    oidc: null,
-    userPass: null,
-  })
+  const [loginMethods, setLoginMethods] = useState<AuthMethodStatuses | null>(null)
 
   const [user, setUser] = useState<User | null>(userStore.getUser())
   const [synced, setSynced] = useState(false)
-  const [hasInternet, setHasInternet] = useState(false)
+  const [hasInternet, setHasInternet] = useState(true)
+
+  const fetchUserInfo = useCallback(async (): Promise<Omit<User, "authMethod">> => {
+    const response = await fetch(`${serverUrl}/auth/userinfo`, {credentials: "include"})
+
+    if (!response.ok) {
+      throw new Error("Unable to fetch user info")
+    }
+
+    return response.json()
+  }, [])
 
   useEffect(() => {
     Network.getStatus().then(status => setHasInternet(status.connected))
@@ -83,15 +66,9 @@ const useAuthentication = () => {
 
         const authMethodsResponse = await response.json()
 
-        setAuthMethods({
-          oidc: authMethodsResponse.oidc ? {
-            login: oidcLogin,
-          } : null,
-          userPass: authMethodsResponse.userPass ? {
-            login: () => {
-              throw new Error("Not implemented")
-            },
-          } : null,
+        setLoginMethods({
+          oidc: authMethodsResponse.oidc ? oidcLogin : null,
+          userPass: authMethodsResponse.userPass ? userPassLogin : null,
         })
       })
       .catch(console.error)
@@ -101,9 +78,10 @@ const useAuthentication = () => {
   useEffect(() => {
     if (!hasInternet) return
     if (synced) return
-    if (authMethods.oidc === null) return
+    if (user !== null && user.authMethod !== "oidc") return
+    if (user === null && (loginMethods === null || !loginMethods.oidc)) return
 
-    refreshToken()
+    fetchUserInfo()
       .then(async (user) => {
         setUser({...user, authMethod: "oidc"})
         userStore.upsertUser(user, "oidc")
@@ -114,14 +92,14 @@ const useAuthentication = () => {
       })
       .finally(() => setSynced(true))
 
-  }, [authMethods.oidc, synced, hasInternet])
+  }, [synced, hasInternet, user, loginMethods])
 
   const logout = useMemo(() => {
     if (user === null) return () => console.error("cannot logout if not logged in")
     return (user.authMethod === "oidc") ? oidcLogout : userPassLogout
   }, [user])
 
-  return {authMethods, user, synced, hasInternet, logout}
+  return {authMethods: loginMethods, user, synced, hasInternet, logout}
 }
 
 export default useAuthentication

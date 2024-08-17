@@ -7,8 +7,8 @@ import (
 	"chagnon.dev/budget-server/internal/infrastructure/db/dao"
 )
 
-func (r *Repository) GetAllAccountsWithCurrencyIDs(ctx context.Context) ([]model.Account, error) {
-	accountsDao, err := r.queries.GetAllAccountsWithCurrencyIDs(ctx)
+func (r *Repository) GetAllAccountsWithCurrencyIDs(ctx context.Context, userId string) ([]model.Account, error) {
+	accountsDao, err := r.queries.GetAllAccountsWithCurrencyIDs(ctx, userId)
 	if err != nil {
 		return nil, err
 	}
@@ -25,9 +25,10 @@ func (r *Repository) GetAllAccountsWithCurrencyIDs(ctx context.Context) ([]model
 	return accounts, nil
 }
 
-func (r *Repository) CreateAccount(ctx context.Context, name string, initialAmount int) (int, error) {
+func (r *Repository) CreateAccount(ctx context.Context, userId string, name string, initialAmount int) (int, error) {
 	accountId, err := r.queries.CreateAccount(
 		ctx, dao.CreateAccountParams{
+			UserID:        userId,
 			Name:          name,
 			InitialAmount: int32(initialAmount),
 		},
@@ -38,9 +39,10 @@ func (r *Repository) CreateAccount(ctx context.Context, name string, initialAmou
 	return int(accountId), nil
 }
 
-func (r *Repository) UpdateAccount(ctx context.Context, id int, name string, initialAmount int) error {
+func (r *Repository) UpdateAccount(ctx context.Context, userId string, id int, name string, initialAmount int) error {
 	return r.queries.UpdateAccount(
 		ctx, dao.UpdateAccountParams{
+			UserID:        userId,
 			ID:            int32(id),
 			Name:          name,
 			InitialAmount: int32(initialAmount),

@@ -8,9 +8,10 @@ import (
 )
 
 type transactionRepository interface {
-	GetAllTransactions(ctx context.Context) ([]model.Transaction, error)
+	GetAllTransactions(ctx context.Context, userId string) ([]model.Transaction, error)
 	CreateTransaction(
 		ctx context.Context,
+		userId string,
 		amount int,
 		currencyId, senderAccountId, receiverAccountId, categoryId int,
 		date time.Time,
@@ -18,6 +19,7 @@ type transactionRepository interface {
 	) (int, error)
 	UpdateTransaction(
 		ctx context.Context,
+		userId string,
 		id, amount int,
 		currencyId, senderAccountId, receiverAccountId, categoryId int,
 		date time.Time,
@@ -33,12 +35,13 @@ func NewTransactionService(transactionRepository transactionRepository) *Transac
 	return &TransactionService{transactionRepository}
 }
 
-func (a *TransactionService) GetAllTransactions(ctx context.Context) ([]model.Transaction, error) {
-	return a.transactionRepository.GetAllTransactions(ctx)
+func (a *TransactionService) GetAllTransactions(ctx context.Context, userId string) ([]model.Transaction, error) {
+	return a.transactionRepository.GetAllTransactions(ctx, userId)
 }
 
 func (a *TransactionService) CreateTransaction(
 	ctx context.Context,
+	userId string,
 	amount int,
 	currencyId, senderAccountId, receiverAccountId, categoryId int,
 	date time.Time,
@@ -46,6 +49,7 @@ func (a *TransactionService) CreateTransaction(
 ) (int, error) {
 	return a.transactionRepository.CreateTransaction(
 		ctx,
+		userId,
 		amount,
 		currencyId,
 		senderAccountId,
@@ -58,6 +62,7 @@ func (a *TransactionService) CreateTransaction(
 
 func (a *TransactionService) UpdateTransaction(
 	ctx context.Context,
+	userId string,
 	id, amount int,
 	currencyId, senderAccountId, receiverAccountId, categoryId int,
 	date time.Time,
@@ -65,6 +70,7 @@ func (a *TransactionService) UpdateTransaction(
 ) error {
 	return a.transactionRepository.UpdateTransaction(
 		ctx,
+		userId,
 		id,
 		amount,
 		currencyId,

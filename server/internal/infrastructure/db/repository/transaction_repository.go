@@ -9,8 +9,8 @@ import (
 	"chagnon.dev/budget-server/internal/infrastructure/db/dao"
 )
 
-func (r *Repository) GetAllTransactions(ctx context.Context) ([]model.Transaction, error) {
-	transactionsDao, err := r.queries.GetAllTransactions(ctx)
+func (r *Repository) GetAllTransactions(ctx context.Context, userId string) ([]model.Transaction, error) {
+	transactionsDao, err := r.queries.GetAllTransactions(ctx, userId)
 	if err != nil {
 		return nil, err
 	}
@@ -28,7 +28,7 @@ func (r *Repository) GetAllTransactions(ctx context.Context) ([]model.Transactio
 		}
 
 		transactions[i] = model.Transaction{
-			ID:       int(transactionDao.TransactionID),
+			ID:       int(transactionDao.ID),
 			Amount:   int(transactionDao.Amount),
 			Currency: int(transactionDao.Currency),
 			Sender:   sender,
@@ -44,6 +44,7 @@ func (r *Repository) GetAllTransactions(ctx context.Context) ([]model.Transactio
 
 func (r *Repository) CreateTransaction(
 	ctx context.Context,
+	userId string,
 	amount int,
 	currencyId, senderAccountId, receiverAccountId, categoryId int,
 	date time.Time,
@@ -51,6 +52,7 @@ func (r *Repository) CreateTransaction(
 ) (int, error) {
 	transactionId, err := r.queries.CreateTransaction(
 		ctx, dao.CreateTransactionParams{
+			UserID:   userId,
 			Amount:   int32(amount),
 			Currency: int32(currencyId),
 			Sender: sql.NullInt32{
@@ -74,6 +76,7 @@ func (r *Repository) CreateTransaction(
 
 func (r *Repository) UpdateTransaction(
 	ctx context.Context,
+	userId string,
 	id,
 	amount int,
 	currencyId, senderAccountId, receiverAccountId, categoryId int,
@@ -82,6 +85,7 @@ func (r *Repository) UpdateTransaction(
 ) error {
 	return r.queries.UpdateTransaction(
 		ctx, dao.UpdateTransactionParams{
+			UserID:   userId,
 			ID:       int32(id),
 			Amount:   int32(amount),
 			Currency: int32(currencyId),

@@ -2,10 +2,12 @@ package grpc
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"chagnon.dev/budget-server/internal/domain/service"
 	"chagnon.dev/budget-server/internal/infrastructure/messaging/dto"
+	"chagnon.dev/budget-server/internal/infrastructure/messaging/shared"
 )
 
 const layout = "2006-01-02 15:04:05"
@@ -20,6 +22,11 @@ func (s *TransactionHandler) CreateTransaction(
 	ctx context.Context,
 	req *dto.CreateTransactionRequest,
 ) (*dto.CreateTransactionResponse, error) {
+	claims, ok := ctx.Value(shared.ClaimsKey{}).(shared.Claims)
+	if !ok {
+		return nil, fmt.Errorf("invalid claims")
+	}
+
 	var sender int
 	if req.Sender != nil {
 		sender = int(*req.Sender)
@@ -37,6 +44,7 @@ func (s *TransactionHandler) CreateTransaction(
 
 	newId, err := s.transactionService.CreateTransaction(
 		ctx,
+		claims.Sub,
 		int(req.Amount),
 		int(req.Currency),
 		sender,
@@ -58,6 +66,11 @@ func (s *TransactionHandler) UpdateTransaction(
 	ctx context.Context,
 	req *dto.UpdateTransactionRequest,
 ) (*dto.UpdateTransactionResponse, error) {
+	claims, ok := ctx.Value(shared.ClaimsKey{}).(shared.Claims)
+	if !ok {
+		return nil, fmt.Errorf("invalid claims")
+	}
+
 	var sender int
 	if req.Transaction.Sender != nil {
 		sender = int(*req.Transaction.Sender)
@@ -75,6 +88,7 @@ func (s *TransactionHandler) UpdateTransaction(
 
 	err = s.transactionService.UpdateTransaction(
 		ctx,
+		claims.Sub,
 		int(req.Transaction.Id),
 		int(req.Transaction.Amount),
 		int(req.Transaction.Currency),
@@ -95,7 +109,12 @@ func (s *TransactionHandler) GetAllTransactions(
 	ctx context.Context,
 	_ *dto.GetAllTransactionsRequest,
 ) (*dto.GetAllTransactionsResponse, error) {
-	transactions, err := s.transactionService.GetAllTransactions(ctx)
+	claims, ok := ctx.Value(shared.ClaimsKey{}).(shared.Claims)
+	if !ok {
+		return nil, fmt.Errorf("invalid claims")
+	}
+
+	transactions, err := s.transactionService.GetAllTransactions(ctx, claims.Sub)
 	if err != nil {
 		return nil, err
 	}

@@ -5,8 +5,8 @@ import {
   setupIonicReact,
 } from "@ionic/react"
 import { WithItemTools } from "./components/IconTools"
-import { FC } from "react"
-import AuthenticatedZone from "./AuthenticatedZone"
+import { FC, lazy } from "react"
+import LoadingScreen from "./LoadingScreen"
 import useAuthentication from "./UseAuthentication"
 
 /* Core CSS required for Ionic components to work properly */
@@ -39,33 +39,47 @@ import "@ionic/react/css/palettes/dark.system.css"
 /* Theme variables */
 import "./theme/variables.css"
 
+import "./App.css"
+
 setupIonicReact()
+
+const AuthenticatedZone = lazy(() => import("./AuthenticatedZone"))
 
 const App: FC = () => {
   const {user, synced, hasInternet, authMethods, logout} = useAuthentication()
 
-  if (user !== null && (!hasInternet || synced)) {
-    return (
-      <IonApp>
-        <WithItemTools>
-          <AuthenticatedZone logout={logout}/>
-        </WithItemTools>
-      </IonApp>
-    )
+  if (user !== null) {
+    if (!hasInternet || synced) {
+      return (
+        <IonApp>
+          <WithItemTools>
+            <AuthenticatedZone logout={logout}/>
+          </WithItemTools>
+        </IonApp>
+      )
+    } else {
+      return <LoadingScreen/>
+    }
   }
 
   if (!hasInternet) {
-    return <p>Internet connection required on first use</p>
+    return <div className="centered">Internet connection required on first use</div>
   }
 
-  if (authMethods.oidc === null) {
-    return <p>Only OIDC is supported as of now</p>
+  if (authMethods !== null && authMethods.oidc === null) {
+    return <div className="centered">Only OIDC is supported as of now</div>
+  }
+
+  if (authMethods === null || !synced) {
+    return <LoadingScreen/>
   }
 
   return (
-    <IonButton onClick={authMethods.oidc?.login}>
-      {synced ? "OIDC Login" : <IonSpinner/>}
-    </IonButton>
+    <div className="centered">
+      <IonButton onClick={authMethods.oidc!}>
+        OIDC Login
+      </IonButton>
+    </div>
   )
 }
 
