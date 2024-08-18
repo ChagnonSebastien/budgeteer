@@ -31,8 +31,6 @@ func (r *Repository) GetAllAccountsWithCurrencyIDs(ctx context.Context, userId s
 		return nil, err
 	}
 
-	println("amount of account currencies", len(accountsCurrenciesDao))
-
 	accounts := make([]model.Account, len(accountsDao))
 	for i, accountDao := range accountsDao {
 		balances := make([]model.Balance, 0)

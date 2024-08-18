@@ -1,5 +1,5 @@
 import {
-  IonButton, IonIcon,
+  IonButton,
   IonInput,
   IonToast,
 } from "@ionic/react"
@@ -10,20 +10,6 @@ import { AccountServiceContext, CurrencyServiceContext } from "../service/Servic
 import CurrencyPicker from "./CurrencyPicker"
 import { IconToolsContext } from "./IconTools"
 import { NumberInput, NumberInputFieldState } from "./NumberInput"
-
-const validAmount = new RegExp(`^\\d*[.,]?\\d*$`)
-
-const validateInitialAmount = (value: string) => {
-  if (!value) {
-    return "Amount is required"
-  }
-
-  if (!validAmount.test(value)) {
-    return "Invalid amount. Enter a number"
-  }
-
-  return NoError
-}
 
 interface Props {
   initialAccount?: Account,
@@ -98,7 +84,7 @@ const AccountForm: FC<Props> = (props) => {
         isValid: accountNameError == NoError,
       },
     }))
-  }, [validateInitialAmount, name])
+  }, [validateAccountName, name])
 
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
@@ -176,7 +162,8 @@ const AccountForm: FC<Props> = (props) => {
           transformOrigin: "left center",
           transform: "translateY(50%) scale(0.75)",
           maxWidth: "calc(100% / 0.75)",
-        }}>Starting balances
+        }}>
+          Starting balances
         </div>
 
         <div style={{height: "1rem"}}/>

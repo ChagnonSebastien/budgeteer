@@ -16,7 +16,7 @@ const CurrenciesPage: FC = () => {
   return (
     <IonPage>
       <ContentWithHeader title="Currencies" button="menu">
-        <div style={{margin: "1rem"}}>
+        <div style={{padding: "1rem"}}>
           <IonButton expand="block" onClick={() => router.push("/currencies/new")}>
             New
           </IonButton>
