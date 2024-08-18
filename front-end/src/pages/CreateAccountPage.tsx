@@ -2,36 +2,38 @@ import {
   IonPage, useIonRouter,
 } from "@ionic/react"
 import { FC, useCallback, useContext } from "react"
+import AccountForm from "../components/AccountForm"
 import ContentWithHeader from "../components/ContentWithHeader"
-import Category from "../domain/model/category"
-import { CategoryServiceContext } from "../service/ServiceContext"
-import CategoryForm from "../components/CategoryForm"
+import Account from "../domain/model/account"
+import { AccountServiceContext } from "../service/ServiceContext"
 
-const CreateCategoryPage: FC = () => {
+const CreateAccountPage: FC = () => {
   const router = useIonRouter()
 
-  const {create: createCategory} = useContext(CategoryServiceContext)
+  const {create: createAccount} = useContext(AccountServiceContext)
 
-  const onSubmit = useCallback(async (data: Omit<Category, "id">) => {
-    await createCategory(data)
+  const onSubmit = useCallback(async (data: Omit<Account, "id">) => {
+    await createAccount(data)
     if (router.canGoBack()) {
       router.goBack()
     } else {
-      router.push("/categories", "back", "replace")
+      router.push("/accounts", "back", "replace")
     }
   }, [])
 
   return (
     <IonPage>
-      <ContentWithHeader title="Create new category" button="return">
-        <CategoryForm
-          onSubmit={onSubmit}
-          submitText="Create"
-        />
+      <ContentWithHeader title="Create new account" button="return">
+        <div style={{padding: "1rem"}}>
+          <AccountForm
+            onSubmit={onSubmit}
+            submitText="Create"
+          />
+        </div>
       </ContentWithHeader>
     </IonPage>
 
   )
 }
 
-export default CreateCategoryPage
+export default CreateAccountPage

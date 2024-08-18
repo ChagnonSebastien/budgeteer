@@ -14,14 +14,15 @@ const AccountsPage: FC = () => {
 
   const {state: accounts} = useContext(AccountServiceContext)
   const {state: transactions} = useContext(TransactionServiceContext)
-  const {state: currencies} = useContext(CurrencyServiceContext)
 
   const valuePerAccount = useMemo(() => {
     const accountAmounts = new Map<number, Map<number, number>>()
 
     for (const account of accounts) {
       const initialAmounts = new Map()
-      initialAmounts.set(currencies[0].id, account.initialAmount)
+      for (const balance of account.initialAmounts) {
+        initialAmounts.set(balance.currencyId, balance.value)
+      }
       accountAmounts.set(account.id, initialAmounts)
     }
 
@@ -53,12 +54,12 @@ const AccountsPage: FC = () => {
     <IonPage>
       <ContentWithHeader title="Accounts" button="menu">
         <div style={{margin: "1rem"}}>
-          <IonButton expand="block" onClick={() => router.push("/categories/new")}>
+          <IonButton expand="block" onClick={() => router.push("/accounts/new")}>
             New
           </IonButton>
           <div style={{height: "1rem"}}/>
           <AccountList accounts={accounts} valuePerAccount={valuePerAccount}
-                       onSelect={id => router.push(`/categories/edit/${id}`)}/>
+                       onSelect={id => router.push(`/accounts/edit/${id}`)}/>
         </div>
       </ContentWithHeader>
     </IonPage>

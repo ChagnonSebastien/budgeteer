@@ -1,9 +1,5 @@
-import { IonItem, IonLoading } from "@ionic/react"
-import { Fragment, useMemo } from "react"
-import Account from "../domain/model/account"
-import Category from "../domain/model/category"
+import { IonItem } from "@ionic/react"
 import Currency from "../domain/model/currency"
-import IconCapsule from "./IconCapsule"
 
 interface Props {
   currencies: Currency[],

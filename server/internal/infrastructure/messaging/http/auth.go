@@ -280,8 +280,6 @@ func (auth *Auth) TokenSourceFromCookies(
 		refreshToken = refreshTokenCookie.Value
 	}
 
-	println(authToken, refreshToken)
-
 	return auth.OidcConfig.TokenSource(
 		ctx, &oauth2.Token{
 			AccessToken:  authToken,

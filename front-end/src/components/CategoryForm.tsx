@@ -67,7 +67,7 @@ const CategoryForm: FC<Props> = (props) => {
   useEffect(() => {
     setErrors(prevState => ({
       ...prevState,
-      categoryName: validateCategoryName(name),
+      accountName: validateCategoryName(name),
     }))
   }, [validateCategoryName, name])
 

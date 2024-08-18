@@ -82,7 +82,8 @@ const ImportSpreadsheet: FC = () => {
             if (typeof account === "undefined") {
               account = await createAccount({
                 name: line.Account,
-                initialAmount: 0,
+                initialAmounts: [],
+                isMine: false,
               })
               newAccounts.push(account)
             }
@@ -93,7 +94,8 @@ const ImportSpreadsheet: FC = () => {
               if (typeof fromto === "undefined") {
                 fromto = await createAccount({
                   name: line["From/To"],
-                  initialAmount: 0,
+                  initialAmounts: [],
+                  isMine: false,
                 })
                 newAccounts.push(fromto)
               }

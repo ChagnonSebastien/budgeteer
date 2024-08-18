@@ -5,3 +5,5 @@ databaseChangeLog:
       file: ./changelogs/002-added_users.sql
   - include:
       file: ./changelogs/003-account_ownership.sql
+  - include:
+      file: ./changelogs/004-multiple-initial-amounts.sql

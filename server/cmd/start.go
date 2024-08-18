@@ -68,7 +68,7 @@ var startCmd = &cobra.Command{
 			log.Fatal("error creating connection to database: ", err)
 		}
 
-		repos := repository.NewRepository(dao.New(db))
+		repos := repository.NewRepository(dao.New(db), db)
 
 		var oidcConfig *oauth2.Config
 		var verifier *oidc.IDTokenVerifier
@@ -152,7 +152,7 @@ func setupOidcConfig(ctx context.Context, oidcConfig OidcConfig, serverPublicUrl
 			ClientSecret: oidcConfig.ClientSecret,
 			Endpoint:     provider.Endpoint(),
 			RedirectURL:  fmt.Sprintf("%s/auth/callback", serverPublicUrl),
-			Scopes:       []string{oidc.ScopeOpenID, "profile", "email"},
+			Scopes:       []string{oidc.ScopeOpenID, oidc.ScopeOfflineAccess, "profile", "email"},
 		}, provider.Verifier(
 			&oidc.Config{
 				ClientID:          oidcConfig.ClientId,

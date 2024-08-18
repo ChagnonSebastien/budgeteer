@@ -1,9 +1,7 @@
-import { IonItem, IonLoading } from "@ionic/react"
-import { Fragment, useContext, useMemo } from "react"
+import { IonItem } from "@ionic/react"
+import { useContext } from "react"
 import Account from "../domain/model/account"
-import Category from "../domain/model/category"
-import { CurrencyServiceContext, TransactionServiceContext } from "../service/ServiceContext"
-import IconCapsule from "./IconCapsule"
+import { CurrencyServiceContext } from "../service/ServiceContext"
 
 interface Props {
   accounts: Account[],

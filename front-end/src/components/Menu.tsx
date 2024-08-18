@@ -13,7 +13,6 @@ import {
 import { useLocation } from "react-router-dom"
 import "./Menu.css"
 import { FC, useContext } from "react"
-import UserContext from "../UserStore"
 import { IconToolsContext } from "./IconTools"
 
 interface AppPage {

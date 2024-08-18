@@ -1,5 +1,6 @@
 import { IonInput, IonModal } from "@ionic/react"
 import { FC, useContext, useMemo, useState } from "react"
+import Currency from "../domain/model/currency"
 import { CurrencyServiceContext } from "../service/ServiceContext"
 import ContentWithHeader from "./ContentWithHeader"
 import { CurrencyList } from "./CurrencyList"
@@ -9,12 +10,12 @@ interface Props {
   setSelectedCurrencyId: (id: number) => void,
   labelText: string,
   style?: {[key: string]: any},
-  errorText?: string
+  errorText?: string,
+  currencies: Currency[]
 }
 
 const CurrencyPicker: FC<Props> = (props) => {
-  const {selectedCurrencyId, setSelectedCurrencyId, labelText, style, errorText} = props
-  const {state: currencies} = useContext(CurrencyServiceContext)
+  const {selectedCurrencyId, setSelectedCurrencyId, labelText, style, errorText, currencies} = props
   const selectedCurrency = useMemo(() => currencies.find(a => a.id === selectedCurrencyId), [currencies, selectedCurrencyId])
 
   const [showModal, setShowModal] = useState(false)

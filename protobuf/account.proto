@@ -4,10 +4,16 @@ package account;
 
 option go_package = "server/internal/infrastructure/messaging/dto";
 
+message CurrencyBalance {
+  int32 currencyId = 1;
+  int32 amount = 2;
+}
+
 message Account {
   uint32 id = 1;
   string name = 2;
-  int32 initial_amount = 3;
+  repeated CurrencyBalance balances = 3;
+  bool is_mine = 4;
 }
 
 message GetAllAccountsRequest {
@@ -19,7 +25,8 @@ message GetAllAccountsResponse {
 
 message CreateAccountRequest {
   string name = 1;
-  int32 initial_amount = 2;
+  repeated CurrencyBalance balances = 2;
+  bool is_mine = 3;
 }
 
 message CreateAccountResponse {

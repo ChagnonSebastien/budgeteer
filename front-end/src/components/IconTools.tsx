@@ -1,5 +1,4 @@
-import { IonSpinner } from "@ionic/react"
-import { createContext, FC, ReactNode, useCallback, useEffect, useMemo, useState } from "react"
+import { createContext, FC, useCallback, useEffect, useMemo, useState } from "react"
 import type { IconType } from "react-icons"
 
 type IconLibrary = {[iconName: string]: IconType}
@@ -70,10 +69,6 @@ export const IconToolsContext = createContext<IconTools>({
     return () => <div/>
   },
 })
-
-interface Props {
-  children: ReactNode[] | ReactNode
-}
 
 export const withItemTools = (Component: FC): FC => {
   return () => {

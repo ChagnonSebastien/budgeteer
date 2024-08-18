@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"chagnon.dev/budget-server/internal/domain/model"
 	"chagnon.dev/budget-server/internal/domain/service"
 	"chagnon.dev/budget-server/internal/infrastructure/messaging/dto"
 	"chagnon.dev/budget-server/internal/infrastructure/messaging/shared"
@@ -24,7 +25,17 @@ func (s *AccountHandler) CreateAccount(ctx context.Context, req *dto.CreateAccou
 		return nil, fmt.Errorf("invalid claims")
 	}
 
-	newId, err := s.accountService.CreateAccount(ctx, claims.Sub, req.Name, int(req.InitialAmount), req.IsMine)
+	balances := make([]model.Balance, 0, len(req.Balances))
+	for _, balance := range req.Balances {
+		balances = append(
+			balances, model.Balance{
+				CurrencyId: int(balance.CurrencyId),
+				Value:      int(balance.Amount),
+			},
+		)
+	}
+
+	newId, err := s.accountService.CreateAccount(ctx, claims.Sub, req.Name, balances, req.IsMine)
 	if err != nil {
 		return nil, err
 	}
@@ -43,12 +54,22 @@ func (s *AccountHandler) UpdateAccount(
 		return nil, fmt.Errorf("invalid claims")
 	}
 
+	balances := make([]model.Balance, len(req.Account.Balances))
+	for _, balance := range req.Account.Balances {
+		balances = append(
+			balances, model.Balance{
+				CurrencyId: int(balance.CurrencyId),
+				Value:      int(balance.Amount),
+			},
+		)
+	}
+
 	err := s.accountService.UpdateAccount(
 		ctx,
 		claims.Sub,
 		int(req.Account.Id),
 		req.Account.Name,
-		int(req.Account.InitialAmount),
+		balances,
 		req.Account.IsMine,
 	)
 	if err != nil {
@@ -73,12 +94,22 @@ func (s *AccountHandler) GetAllAccounts(ctx context.Context, _ *dto.GetAllAccoun
 	}
 
 	accountsDto := make([]*dto.Account, len(accounts))
-	for i, category := range accounts {
+	for i, account := range accounts {
+		balances := make([]*dto.CurrencyBalance, 0)
+		for _, balance := range account.InitialBalances {
+			balances = append(
+				balances, &dto.CurrencyBalance{
+					CurrencyId: int32(balance.CurrencyId),
+					Amount:     int32(balance.Value),
+				},
+			)
+		}
+
 		accountsDto[i] = &dto.Account{
-			Id:            uint32(category.ID),
-			Name:          category.Name,
-			InitialAmount: int32(category.InitialAmount),
-			IsMine:        category.IsMine,
+			Id:       uint32(account.ID),
+			Name:     account.Name,
+			Balances: balances,
+			IsMine:   account.IsMine,
 		}
 	}
 

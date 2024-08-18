@@ -14,6 +14,7 @@ import Menu from "./components/Menu"
 import { FC, useEffect, useState } from "react"
 import AccountsPage from "./pages/AccountsPage"
 import CategoryPage from "./pages/CategoryPage"
+import CreateAccountPage from "./pages/CreateAccountPage"
 import CreateCategoryPage from "./pages/CreateCategoryPage"
 import CreateTransactionPage from "./pages/CreateTransactionPage"
 import EditCategoryPage from "./pages/EditCategoryPage"
@@ -40,6 +41,11 @@ const transport = new GrpcWebFetchTransport({
   fetchInit: {credentials: "include"},
 })
 
+const currencyStore = new CurrencyRemoteStore(transport)
+const categoryStore = new CategoryRemoteStore(transport)
+const accountRepository = new AccountRemoteStore(transport)
+const transactionRepository = new TransactionRemoteStore(transport)
+
 interface Props {
   logout(): void
 }
@@ -49,11 +55,6 @@ const AuthenticatedZone: FC<Props> = ({logout}) => {
   const [categories, setCategories] = useState<Category[] | null>(null)
   const [accounts, setAccounts] = useState<Account[] | null>(null)
   const [transactions, setTransactions] = useState<Transaction[] | null>(null)
-
-  const [currencyStore] = useState(new CurrencyRemoteStore(transport))
-  const [categoryStore] = useState(new CategoryRemoteStore(transport))
-  const [accountRepository] = useState(new AccountRemoteStore(transport))
-  const [transactionRepository] = useState(new TransactionRemoteStore(transport))
 
   useEffect(() => {
     currencyStore.getAll().then(setCurrencies)
@@ -100,6 +101,7 @@ const AuthenticatedZone: FC<Props> = ({logout}) => {
                       <Route exact path="/categories/new" render={() => <CreateCategoryPage/>}/>
                       <Route exact path="/categories/edit/:categoryId" render={() => <EditCategoryPage/>}/>
                       <Route exact path="/accounts" render={() => <AccountsPage/>}/>
+                      <Route exact path="/accounts/new" render={() => <CreateAccountPage/>}/>
                       <Route exact path="/transactions" render={() => <TransactionPage/>}/>
                       <Route exact path="/transactions/new" render={() => <CreateTransactionPage/>}/>
                       <Route exact path="/transactions/edit/:transactionId" render={() => <EditTransactionPage/>}/>
