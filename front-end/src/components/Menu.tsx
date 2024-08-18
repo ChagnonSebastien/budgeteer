@@ -38,6 +38,11 @@ const appPages: AppPage[] = [
     iconName: "MdAccountBalance",
   },
   {
+    title: "Currencies",
+    url: "/currencies",
+    iconName: "BsCurrencyExchange",
+  },
+  {
     title: "Import",
     url: "/import",
     iconName: "BiSolidFileImport",

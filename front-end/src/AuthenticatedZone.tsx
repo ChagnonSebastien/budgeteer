@@ -17,6 +17,7 @@ import CategoryPage from "./pages/CategoryPage"
 import CreateAccountPage from "./pages/CreateAccountPage"
 import CreateCategoryPage from "./pages/CreateCategoryPage"
 import CreateTransactionPage from "./pages/CreateTransactionPage"
+import CurrenciesPage from "./pages/CurrenciesPage"
 import EditCategoryPage from "./pages/EditCategoryPage"
 import EditTransactionPage from "./pages/EditTransactionPage"
 import ImportSpreadsheet from "./pages/ImportSpreadsheet"
@@ -97,6 +98,7 @@ const AuthenticatedZone: FC<Props> = ({logout}) => {
 
                   <IonRouterOutlet id="main">
                     <Switch>
+                      <Route exact path="/currencies" render={() => <CurrenciesPage/>}/>
                       <Route exact path="/categories" render={() => <CategoryPage/>}/>
                       <Route exact path="/categories/new" render={() => <CreateCategoryPage/>}/>
                       <Route exact path="/categories/edit/:categoryId" render={() => <EditCategoryPage/>}/>

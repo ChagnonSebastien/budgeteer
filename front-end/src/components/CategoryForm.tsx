@@ -103,7 +103,7 @@ const CategoryForm: FC<Props> = (props) => {
 
           <IonInput type="text"
                     className={`${errors.categoryName && "ion-invalid"} ${isTouched && "ion-touched"}`}
-                    label="Category name"
+                    label="Account name"
                     labelPlacement="stacked"
                     placeholder="e.g., Groceries"
                     value={name}
