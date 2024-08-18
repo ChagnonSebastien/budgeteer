@@ -31,6 +31,8 @@ func (r *Repository) GetAllAccountsWithCurrencyIDs(ctx context.Context, userId s
 		return nil, err
 	}
 
+	println("amount of account currencies", len(accountsCurrenciesDao))
+
 	accounts := make([]model.Account, len(accountsDao))
 	for i, accountDao := range accountsDao {
 		balances := make([]model.Balance, 0)
@@ -82,7 +84,6 @@ func (r *Repository) CreateAccount(
 	}
 
 	for _, balance := range initialsAmounts {
-		println(accountId, balance.CurrencyId, balance.Value)
 		err := queries.InsertAccountCurrency(
 			ctx, dao.InsertAccountCurrencyParams{
 				AccountID:  accountId,

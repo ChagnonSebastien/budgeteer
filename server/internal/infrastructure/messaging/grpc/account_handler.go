@@ -54,7 +54,7 @@ func (s *AccountHandler) UpdateAccount(
 		return nil, fmt.Errorf("invalid claims")
 	}
 
-	balances := make([]model.Balance, len(req.Account.Balances))
+	balances := make([]model.Balance, 0, len(req.Account.Balances))
 	for _, balance := range req.Account.Balances {
 		balances = append(
 			balances, model.Balance{

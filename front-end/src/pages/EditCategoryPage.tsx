@@ -20,6 +20,8 @@ const EditCategoryPage: FC = () => {
   const selectedCategory = useMemo(() => categories.find(c => c.id === parseInt(categoryId)), [categories, categoryId])
 
   const onSubmit = useCallback(async (data: Omit<Category, "id">) => {
+    if (typeof selectedCategory === "undefined") return
+
     await updateCategory(selectedCategory!.id, data)
 
     if (router.canGoBack()) {
@@ -27,7 +29,7 @@ const EditCategoryPage: FC = () => {
     } else {
       router.push("/categories", "back", "replace")
     }
-  }, [])
+  }, [updateCategory, selectedCategory])
 
   if (typeof selectedCategory === "undefined") {
     router.push("/categories", "back", "replace")

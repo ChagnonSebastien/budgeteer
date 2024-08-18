@@ -16,6 +16,7 @@ export default class AccountRemoteStore {
 
   public async getAll(): Promise<Account[]> {
     const response = await this.client.getAllAccounts(GetAllAccountsRequest.create()).response
+    console.log(response.accounts)
     return await Promise.all(response.accounts.map<Promise<Account>>(dto => conv.toModel(dto)))
   }
 
@@ -33,6 +34,7 @@ export default class AccountRemoteStore {
   }
 
   public async update(id: number, data: Omit<Account, "id">): Promise<void> {
+    console.log(data)
     await this.client.updateAccount(UpdateAccountRequest.create({
       account: conv.toDTO({id, ...data}),
     })).response

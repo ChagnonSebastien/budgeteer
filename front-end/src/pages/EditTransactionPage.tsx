@@ -21,14 +21,16 @@ const EditTransactionPage: FC = () => {
   const selectedTransaction = useMemo(() => transactions.find(t => t.id === parseInt(transactionId)), [transactions, transactionId])
 
   const onSubmit = useCallback(async (data: Omit<Transaction, "id">) => {
-    await updateTransaction(selectedTransaction!.id, data)
+    if (typeof selectedTransaction === "undefined") return
+    
+    await updateTransaction(selectedTransaction.id, data)
 
     if (router.canGoBack()) {
       router.goBack()
     } else {
       router.push("/transactions", "back", "replace")
     }
-  }, [])
+  }, [updateTransaction, selectedTransaction])
 
   if (typeof selectedTransaction === "undefined") {
     router.push("/transactions", "back", "replace")
