@@ -22,7 +22,7 @@ const CreateCategoryPage: FC = () => {
       case "transfer":
         return "transfer"
       default:
-        return null
+        return undefined
     }
   }, [query])
 

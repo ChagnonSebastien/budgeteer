@@ -55,7 +55,6 @@ func (r *Repository) CreateTransaction(
 	date time.Time,
 	note string,
 ) (int, error) {
-	println(categoryId)
 	transactionId, err := r.queries.CreateTransaction(
 		ctx, dao.CreateTransactionParams{
 			UserID:   userId,

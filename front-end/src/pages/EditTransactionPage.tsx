@@ -22,7 +22,7 @@ const EditTransactionPage: FC = () => {
 
   const onSubmit = useCallback(async (data: Omit<Transaction, "id">) => {
     if (typeof selectedTransaction === "undefined") return
-    
+
     await updateTransaction(selectedTransaction.id, data)
 
     if (router.canGoBack()) {
@@ -46,7 +46,6 @@ const EditTransactionPage: FC = () => {
             onSubmit={onSubmit}
             submitText="Update"
             initialTransaction={selectedTransaction}
-            type={null}
           />
 
           <div style={{height: ".5rem"}}/>

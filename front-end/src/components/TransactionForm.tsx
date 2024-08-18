@@ -10,7 +10,7 @@ import Transaction from "../domain/model/transaction"
 import AccountPicker from "./AccountPicker"
 import { CategoryList } from "./CategoryList"
 import ContentWithHeader from "./ContentWithHeader"
-import { CategoryServiceContext, CurrencyServiceContext } from "../service/ServiceContext"
+import { AccountServiceContext, CategoryServiceContext, CurrencyServiceContext } from "../service/ServiceContext"
 import CurrencyPicker from "./CurrencyPicker"
 import IconCapsule from "./IconCapsule"
 
@@ -48,16 +48,21 @@ interface Props {
   initialTransaction?: Transaction,
   onSubmit: (data: Omit<Transaction, "id">) => Promise<void>,
   submitText: string,
-  type: "income" | "expense" | "transfer" | null
+  type?: "income" | "expense" | "transfer"
 }
 
 const TransactionForm: FC<Props> = (props) => {
-  const {initialTransaction, onSubmit, submitText, type} = props
-  useParams()
+  const {initialTransaction, onSubmit, submitText, type: rawType} = props
 
   const {state: categories, root: rootCategory} = useContext(CategoryServiceContext)
   const {state: currencies} = useContext(CurrencyServiceContext)
+  const {state: accounts} = useContext(AccountServiceContext)
 
+  const type: "income" | "expense" | "transfer" = useMemo(() => {
+    if (typeof rawType !== "undefined") return type
+    if (initialTransaction?.categoryId === null) return "transfer"
+    return (accounts.find(a => a.id === initialTransaction?.senderId)?.isMine ?? false) ? "expense" : "income"
+  }, [initialTransaction, rawType, accounts])
   const [amount, setAmount] = useState<string>(`${typeof initialTransaction === "undefined" ? "" : initialTransaction.amount / Math.pow(10, currencies.find(c => c.id === initialTransaction.currencyId)?.decimalPoints ?? 2)}`)
   const sanitizedAmount = useMemo(() => `0${amount.replace(",", ".")}`, [amount])
   const [currency, setCurrency] = useState<number>(currencies[0].id)
@@ -213,13 +218,17 @@ const TransactionForm: FC<Props> = (props) => {
         <AccountPicker labelText="From"
                        style={{className: classNameFromStatus(errors.sender)}}
                        errorText={errors.sender.errorText}
-                       setSelectedAccountId={setSender} selectedAccountId={sender}/>
+                       setSelectedAccountId={setSender} selectedAccountId={sender}
+                       myOwn={parent === null || type === "expense"}
+        />
 
         <AccountPicker labelText="To"
                        style={{className: classNameFromStatus(errors.receiver)}}
                        errorText={errors.receiver.errorText}
                        setSelectedAccountId={setReceiver}
-                       selectedAccountId={receiver}/>
+                       selectedAccountId={receiver}
+                       myOwn={parent === null || type === "income"}
+        />
 
         <IonInput type="text"
                   label="Note"
