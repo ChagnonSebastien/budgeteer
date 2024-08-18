@@ -34,6 +34,7 @@ const AccountForm: FC<Props> = (props) => {
   const Plus = useMemo(() => iconTypeFromName("BsPlusCircle"), [iconTypeFromName])
   const Minus = useMemo(() => iconTypeFromName("BsDashCircle"), [iconTypeFromName])
 
+  const [isMine] = useState(initialAccount?.isMine ?? true)
   const [name, setName] = useState(initialAccount?.name ?? "")
   const [initialAmounts, setInitialAmount] = useState<{
     uid: number,
@@ -123,7 +124,7 @@ const AccountForm: FC<Props> = (props) => {
         currencyId: ia.currencyId!,
         value: Math.floor(parseFloat(`0${ia.value.value.replace(",", ".")}`) * 100),
       })),
-      isMine: true,
+      isMine,
     }).catch(err => {
       setShowErrorToast("Unexpected error while creating the category")
       console.error(err)
