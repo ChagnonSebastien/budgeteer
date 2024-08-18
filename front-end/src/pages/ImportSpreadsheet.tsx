@@ -67,7 +67,7 @@ const ImportSpreadsheet: FC = () => {
             }
 
             let category = newCategories.find(c => c.name === line.Category)
-            if (typeof category === "undefined") {
+            if (typeof category === "undefined" && !(line.Category === "Transfer between accounts" || line.Category === "Credit card bill")) {
               category = await createCategory({
                 name: line.Category,
                 parentId: rootCategory.id,
@@ -118,14 +118,14 @@ const ImportSpreadsheet: FC = () => {
             transactionPromises.push(createTransaction({
               amount: Math.abs(amount),
               currencyId: currency.id,
-              categoryId: category.id,
+              categoryId: category?.id ?? null,
               date,
               senderId: sender?.id ?? null,
               receiverId: receiver?.id ?? null,
               note,
             }))
 
-            if (category.name === "Transfer between accounts" || category.name === "Credit card bill") {
+            if (typeof category === "undefined") {
               i++
             }
           }

@@ -37,6 +37,11 @@ func (s *TransactionHandler) CreateTransaction(
 		receiver = int(*req.Receiver)
 	}
 
+	var category int
+	if req.Category != nil {
+		category = int(*req.Category)
+	}
+
 	date, err := time.Parse(layout, req.Date)
 	if err != nil {
 		return nil, err
@@ -49,7 +54,7 @@ func (s *TransactionHandler) CreateTransaction(
 		int(req.Currency),
 		sender,
 		receiver,
-		int(req.Category),
+		category,
 		date,
 		req.Note,
 	)
@@ -81,6 +86,11 @@ func (s *TransactionHandler) UpdateTransaction(
 		receiver = int(*req.Transaction.Receiver)
 	}
 
+	var category int
+	if req.Transaction.Category != nil {
+		category = int(*req.Transaction.Category)
+	}
+
 	date, err := time.Parse(layout, req.Transaction.Date)
 	if err != nil {
 		return nil, err
@@ -94,7 +104,7 @@ func (s *TransactionHandler) UpdateTransaction(
 		int(req.Transaction.Currency),
 		sender,
 		receiver,
-		int(req.Transaction.Category),
+		category,
 		date,
 		req.Transaction.Note,
 	)
@@ -133,13 +143,19 @@ func (s *TransactionHandler) GetAllTransactions(
 			receiver = &id
 		}
 
+		var category *uint32
+		if transaction.Category != 0 {
+			id := uint32(transaction.Category)
+			category = &id
+		}
+
 		transactionsDto[i] = &dto.Transaction{
 			Id:       uint32(transaction.ID),
 			Amount:   uint32(transaction.Amount),
 			Currency: uint32(transaction.Currency),
 			Sender:   sender,
 			Receiver: receiver,
-			Category: uint32(transaction.Category),
+			Category: category,
 			Date:     transaction.Date.Format(layout),
 			Note:     transaction.Note,
 		}

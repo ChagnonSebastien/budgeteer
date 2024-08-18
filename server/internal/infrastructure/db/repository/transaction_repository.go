@@ -27,13 +27,18 @@ func (r *Repository) GetAllTransactions(ctx context.Context, userId string) ([]m
 			receiver = int(transactionDao.Receiver.Int32)
 		}
 
+		var category int
+		if transactionDao.Category.Valid {
+			category = int(transactionDao.Category.Int32)
+		}
+
 		transactions[i] = model.Transaction{
 			ID:       int(transactionDao.ID),
 			Amount:   int(transactionDao.Amount),
 			Currency: int(transactionDao.Currency),
 			Sender:   sender,
 			Receiver: receiver,
-			Category: int(transactionDao.Category),
+			Category: category,
 			Date:     transactionDao.Date,
 			Note:     transactionDao.Note,
 		}
@@ -50,6 +55,7 @@ func (r *Repository) CreateTransaction(
 	date time.Time,
 	note string,
 ) (int, error) {
+	println(categoryId)
 	transactionId, err := r.queries.CreateTransaction(
 		ctx, dao.CreateTransactionParams{
 			UserID:   userId,
@@ -63,9 +69,12 @@ func (r *Repository) CreateTransaction(
 				Int32: int32(receiverAccountId),
 				Valid: receiverAccountId != 0,
 			},
-			Category: int32(categoryId),
-			Date:     date,
-			Note:     note,
+			Category: sql.NullInt32{
+				Int32: int32(categoryId),
+				Valid: categoryId != 0,
+			},
+			Date: date,
+			Note: note,
 		},
 	)
 	if err != nil {
@@ -97,9 +106,12 @@ func (r *Repository) UpdateTransaction(
 				Int32: int32(receiverAccountId),
 				Valid: receiverAccountId != 0,
 			},
-			Category: int32(categoryId),
-			Date:     date,
-			Note:     note,
+			Category: sql.NullInt32{
+				Int32: int32(categoryId),
+				Valid: categoryId != 0,
+			},
+			Date: date,
+			Note: note,
 		},
 	)
 }

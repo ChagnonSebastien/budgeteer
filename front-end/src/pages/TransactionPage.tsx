@@ -28,7 +28,7 @@ const TransactionPage: FC = () => {
   const augmentedTransaction = useMemo<AugmentedTransaction[]>(() => {
     return transactions.map<AugmentedTransaction>(transaction => ({
       ...transaction,
-      category: categories.find(c => c.id === transaction.categoryId)!,
+      category: categories.find(c => c.id === transaction.categoryId),
       currency: currencies.find(c => c.id === transaction.currencyId)!,
       sender: accounts.find(c => c.id === transaction.senderId),
       receiver: accounts.find(c => c.id === transaction.receiverId),

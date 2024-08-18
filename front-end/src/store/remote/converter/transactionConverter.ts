@@ -24,7 +24,7 @@ export class TransactionConverter implements Converter<Transaction, TransactionD
       dto.id,
       dto.amount,
       dto.currency,
-      dto.category,
+      dto.category ?? null,
       new Date(dto.date),
       dto.sender ?? null,
       dto.receiver ?? null,
@@ -36,7 +36,7 @@ export class TransactionConverter implements Converter<Transaction, TransactionD
     return TransactionDto.create({
       id: model.id,
       amount: model.amount,
-      category: model.categoryId,
+      category: model.categoryId ?? undefined,
       currency: model.currencyId,
       date: `${formatDateTime(model.date)}`,
       note: model.note,

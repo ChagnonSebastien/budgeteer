@@ -22,7 +22,7 @@ export default class TransactionRemoteStore {
   public async create(data: Omit<Transaction, "id">): Promise<Transaction> {
     const response = await this.client.createTransaction(CreateTransactionRequest.create({
       amount: data.amount,
-      category: data.categoryId,
+      category: data.categoryId ?? undefined,
       date: formatDateTime(data.date),
       currency: data.currencyId,
       note: data.note,

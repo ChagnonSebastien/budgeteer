@@ -61,13 +61,13 @@ const TransactionForm: FC<Props> = (props) => {
   const [amount, setAmount] = useState<string>(`${typeof initialTransaction === "undefined" ? "" : initialTransaction.amount / Math.pow(10, currencies.find(c => c.id === initialTransaction.currencyId)?.decimalPoints ?? 2)}`)
   const sanitizedAmount = useMemo(() => `0${amount.replace(",", ".")}`, [amount])
   const [currency, setCurrency] = useState<number>(currencies[0].id)
-  const [parent, setParent] = useState<number | null>(initialTransaction?.categoryId ?? rootCategory.id)
+  const [parent, setParent] = useState<number | null>((initialTransaction?.categoryId === null || type === "transfer") ? null : (initialTransaction?.categoryId ?? rootCategory.id))
   const [sender, setSender] = useState<number | null>(initialTransaction?.senderId ?? null)
   const [receiver, setReceiver] = useState<number | null>(initialTransaction?.receiverId ?? null)
   const [note, setNote] = useState("")
 
   const category = useMemo(() => {
-    return categories.find(c => c.id === parent)!
+    return categories.find(c => c.id === parent)
   }, [categories, parent])
 
   const [showParentModal, setShowCategoryModal] = useState(false)
@@ -138,7 +138,7 @@ const TransactionForm: FC<Props> = (props) => {
 
     onSubmit({
       amount: Math.floor(parseFloat(sanitizedAmount) * Math.pow(10, currencies.find(c => c.id === currency)?.decimalPoints ?? 2)),
-      categoryId: parent!,
+      categoryId: parent,
       receiverId: receiver ?? null,
       senderId: sender ?? null,
       note,
@@ -182,29 +182,33 @@ const TransactionForm: FC<Props> = (props) => {
             style={{flexShrink: 2}} errorText={NoError}/>
         </div>
 
-        <div style={{display: "flex", alignItems: "center", cursor: "pointer"}}
-             onClick={() => setShowCategoryModal(true)}>
-          <IconCapsule flexShrink={0} iconName={category.iconName} size="2rem" color={category.iconColor}
-                       backgroundColor={category.iconBackground}/>
-          <div style={{width: "1rem", flexShrink: 0}}/>
-          <IonInput type="text"
-                    label="Category"
-                    labelPlacement="floating"
-                    placeholder={typeof rootCategory === "undefined" ? "Loading..." : undefined}
-                    value={categories?.find(c => c.id === parent)?.name}
-                    onFocus={() => setShowCategoryModal(true)}
-                    errorText="None"
-          />
-        </div>
-        <IonModal isOpen={showParentModal} onWillDismiss={() => setShowCategoryModal(false)}>
-          <ContentWithHeader title="Select Icon" button="return"
-                             onCancel={() => setShowCategoryModal(false)}>
-            <CategoryList categories={categories} onSelect={newParent => {
-              setParent(newParent)
-              setShowCategoryModal(false)
-            }}/>
-          </ContentWithHeader>
-        </IonModal>
+        {typeof category !== "undefined" && (
+          <>
+            <div style={{display: "flex", alignItems: "center", cursor: "pointer"}}
+                 onClick={() => setShowCategoryModal(true)}>
+              <IconCapsule flexShrink={0} iconName={category.iconName} size="2rem" color={category.iconColor}
+                           backgroundColor={category.iconBackground}/>
+              <div style={{width: "1rem", flexShrink: 0}}/>
+              <IonInput type="text"
+                        label="Category"
+                        labelPlacement="floating"
+                        placeholder={typeof rootCategory === "undefined" ? "Loading..." : undefined}
+                        value={categories?.find(c => c.id === parent)?.name}
+                        onFocus={() => setShowCategoryModal(true)}
+                        errorText="None"
+              />
+            </div>
+            <IonModal isOpen={showParentModal} onWillDismiss={() => setShowCategoryModal(false)}>
+              <ContentWithHeader title="Select Icon" button="return"
+                                 onCancel={() => setShowCategoryModal(false)}>
+                <CategoryList categories={categories} onSelect={newParent => {
+                  setParent(newParent)
+                  setShowCategoryModal(false)
+                }}/>
+              </ContentWithHeader>
+            </IonModal>
+          </>
+        )}
 
         <AccountPicker labelText="From"
                        style={{className: classNameFromStatus(errors.sender)}}

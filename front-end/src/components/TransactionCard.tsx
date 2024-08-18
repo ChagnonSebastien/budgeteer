@@ -39,7 +39,7 @@ const TransactionCard: FC<Props> = (props) => {
         fontSize: "small",
         textWrap: "nowrap",
         margin: ".3rem",
-        padding: ".3rem",
+        padding: ".3rem .5rem",
         alignItems: "center",
       }}>
       <div style={{
@@ -51,6 +51,7 @@ const TransactionCard: FC<Props> = (props) => {
         <IconCapsule iconName={categoryIconName} size="2.4rem" backgroundColor={categoryIconBackground}
                      color={categoryIconColor}/>
       </div>
+      <div style={{width: ".5rem", flexShrink: 0}}/>
       <div style={{
         display: "flex",
         flexDirection: "column",
@@ -60,7 +61,6 @@ const TransactionCard: FC<Props> = (props) => {
         overflow: "hidden",
         textOverflow: "ellipsis",
         whiteSpace: "nowrap",
-        marginLeft: ".3rem",
       }}>
         <div style={{display: "flex", flexDirection: "row", justifyContent: "space-between"}}>
           <div style={{fontWeight: "bold"}}>{amount} {currencySymbol}</div>

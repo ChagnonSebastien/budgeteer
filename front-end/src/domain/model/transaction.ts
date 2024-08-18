@@ -5,7 +5,7 @@ import Unique from "./Unique"
 
 export type AugmentedTransaction = Transaction & {
   readonly currency: Currency
-  readonly category: Category
+  readonly category?: Category
   readonly sender?: Account
   readonly receiver?: Account
 
@@ -17,7 +17,7 @@ export default class Transaction implements Unique {
   readonly currencyId: number
   readonly senderId: number | null
   readonly receiverId: number | null
-  readonly categoryId: number
+  readonly categoryId: number | null
   readonly date: Date
   readonly note: string
 
@@ -25,7 +25,7 @@ export default class Transaction implements Unique {
     id: number,
     amount: number,
     currencyId: number,
-    categoryId: number,
+    categoryId: number | null,
     date: Date,
     senderId: number | null,
     receiverId: number | null,

@@ -10,7 +10,7 @@ message Transaction {
   uint32 currency = 3;
   optional uint32 sender = 4;
   optional uint32 receiver = 5;
-  uint32 category = 6;
+  optional uint32 category = 6;
   string date = 7;
   string note = 8;
 }
@@ -27,7 +27,7 @@ message CreateTransactionRequest {
   uint32 currency = 2;
   optional uint32 sender = 3;
   optional uint32 receiver = 4;
-  uint32 category = 5;
+  optional uint32 category = 5;
   string date = 6;
   string note = 7;
 }

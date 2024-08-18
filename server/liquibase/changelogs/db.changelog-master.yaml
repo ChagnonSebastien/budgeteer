@@ -9,3 +9,5 @@ databaseChangeLog:
       file: ./changelogs/004-multiple-initial-amounts.sql
   - include:
       file: ./changelogs/005-currencies-decimal-points.sql
+  - include:
+      file: ./changelogs/006-null-category-for-transfers.sql
