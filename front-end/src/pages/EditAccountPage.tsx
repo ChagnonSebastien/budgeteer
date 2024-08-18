@@ -39,11 +39,13 @@ const EditAccountPage: FC = () => {
   return (
     <IonPage>
       <ContentWithHeader title="Edit account" button="return">
-        <AccountForm
-          onSubmit={onSubmit}
-          submitText="Save changes"
-          initialAccount={selectedAccount}
-        />
+        <div style={{padding: "1rem"}}>
+          <AccountForm
+            onSubmit={onSubmit}
+            submitText="Save changes"
+            initialAccount={selectedAccount}
+          />
+        </div>
       </ContentWithHeader>
     </IonPage>
 

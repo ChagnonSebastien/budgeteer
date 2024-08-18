@@ -13,7 +13,10 @@ export const CurrencyList = (props: Props) => {
     <>
       {currencies.map(currency => (
         <IonItem key={`account-list-${currency.id}`} onClick={() => onSelect(currency.id)}>
-          {currency.symbol} - {currency.name}
+          <div style={{display: "flex", justifyContent: "space-between", flexGrow: 1}}>
+            <div>{currency.name}</div>
+            <div>{currency.symbol}</div>
+          </div>
         </IonItem>
       ))}
     </>

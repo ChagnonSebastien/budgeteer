@@ -21,6 +21,7 @@ import CreateTransactionPage from "./pages/CreateTransactionPage"
 import CurrenciesPage from "./pages/CurrenciesPage"
 import EditAccountPage from "./pages/EditAccountPage"
 import EditCategoryPage from "./pages/EditCategoryPage"
+import EditCurrencyPage from "./pages/EditCurrencyPage"
 import EditTransactionPage from "./pages/EditTransactionPage"
 import ImportSpreadsheet from "./pages/ImportSpreadsheet"
 import TransactionPage from "./pages/TransactionPage"
@@ -102,6 +103,7 @@ const AuthenticatedZone: FC<Props> = ({logout}) => {
                     <Switch>
                       <Route exact path="/currencies" render={() => <CurrenciesPage/>}/>
                       <Route exact path="/currencies/new" render={() => <CreateCurrencyPage/>}/>
+                      <Route exact path="/currencies/edit/:currencyId" render={() => <EditCurrencyPage/>}/>
                       <Route exact path="/categories" render={() => <CategoryPage/>}/>
                       <Route exact path="/categories/new" render={() => <CreateCategoryPage/>}/>
                       <Route exact path="/categories/edit/:categoryId" render={() => <EditCategoryPage/>}/>
