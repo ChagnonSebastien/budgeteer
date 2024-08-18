@@ -8,8 +8,8 @@ import (
 
 type currencyRepository interface {
 	GetAllCurrencies(ctx context.Context, userId string) ([]model.Currency, error)
-	CreateCurrency(ctx context.Context, userId string, name, symbol string) (int, error)
-	UpdateCurrency(ctx context.Context, userId string, id int, name, symbol string) error
+	CreateCurrency(ctx context.Context, userId string, name, symbol string, decimalPoints int) (int, error)
+	UpdateCurrency(ctx context.Context, userId string, id int, name, symbol string, decimalPoints int) error
 }
 
 type CurrencyService struct {
@@ -24,10 +24,21 @@ func (a *CurrencyService) GetAllCurrencies(ctx context.Context, userId string) (
 	return a.currencyRepository.GetAllCurrencies(ctx, userId)
 }
 
-func (a *CurrencyService) CreateCurrency(ctx context.Context, userId string, name, symbol string) (int, error) {
-	return a.currencyRepository.CreateCurrency(ctx, userId, name, symbol)
+func (a *CurrencyService) CreateCurrency(
+	ctx context.Context,
+	userId string,
+	name, symbol string,
+	decimalPoints int,
+) (int, error) {
+	return a.currencyRepository.CreateCurrency(ctx, userId, name, symbol, decimalPoints)
 }
 
-func (a *CurrencyService) UpdateCurrency(ctx context.Context, userId string, id int, name, symbol string) error {
-	return a.currencyRepository.UpdateCurrency(ctx, userId, id, name, symbol)
+func (a *CurrencyService) UpdateCurrency(
+	ctx context.Context,
+	userId string,
+	id int,
+	name, symbol string,
+	decimalPoints int,
+) error {
+	return a.currencyRepository.UpdateCurrency(ctx, userId, id, name, symbol, decimalPoints)
 }

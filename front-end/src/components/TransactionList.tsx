@@ -24,7 +24,7 @@ export const TransactionList = (props: Props) => {
                          onClick={() => onClick(transaction.id)}
                          from={transaction.sender?.name ?? "-"}
                          to={transaction.receiver?.name ?? "-"}
-                         amount={(transaction.amount / 100)}
+                         amount={(transaction.amount / Math.pow(10, transaction.currency.decimalPoints))}
                          categoryIconName={transaction.category.iconName}
                          date={transaction.date}
                          currencySymbol={transaction.currency.symbol}

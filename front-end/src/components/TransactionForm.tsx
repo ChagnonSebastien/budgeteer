@@ -58,7 +58,7 @@ const TransactionForm: FC<Props> = (props) => {
   const {state: categories, root: rootCategory} = useContext(CategoryServiceContext)
   const {state: currencies} = useContext(CurrencyServiceContext)
 
-  const [amount, setAmount] = useState<string>(`${typeof initialTransaction === "undefined" ? "" : initialTransaction.amount / 100}`)
+  const [amount, setAmount] = useState<string>(`${typeof initialTransaction === "undefined" ? "" : initialTransaction.amount / Math.pow(10, currencies.find(c => c.id === initialTransaction.currencyId)?.decimalPoints ?? 2)}`)
   const sanitizedAmount = useMemo(() => `0${amount.replace(",", ".")}`, [amount])
   const [currency, setCurrency] = useState<number>(currencies[0].id)
   const [parent, setParent] = useState<number | null>(initialTransaction?.categoryId ?? rootCategory.id)
@@ -137,7 +137,7 @@ const TransactionForm: FC<Props> = (props) => {
     }
 
     onSubmit({
-      amount: Math.floor(parseFloat(sanitizedAmount) * 100),
+      amount: Math.floor(parseFloat(sanitizedAmount) * Math.pow(10, currencies.find(c => c.id === currency)?.decimalPoints ?? 2)),
       categoryId: parent!,
       receiverId: receiver ?? null,
       senderId: sender ?? null,
@@ -176,8 +176,10 @@ const TransactionForm: FC<Props> = (props) => {
                     }))}
           />
           <div style={{width: "3rem"}}/>
-          <CurrencyPicker selectedCurrencyId={currency} setSelectedCurrencyId={setCurrency} labelText="Currency"
-                          style={{flexShrink: 2}} errorText={NoError}/>
+          <CurrencyPicker
+            currencies={currencies} selectedCurrencyId={currency} setSelectedCurrencyId={setCurrency}
+            labelText="Currency"
+            style={{flexShrink: 2}} errorText={NoError}/>
         </div>
 
         <div style={{display: "flex", alignItems: "center", cursor: "pointer"}}

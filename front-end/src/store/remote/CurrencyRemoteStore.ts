@@ -23,7 +23,7 @@ export default class CurrencyRemoteStore {
     const response = await this.client.createCurrency(CreateCurrencyRequest.create({
       ...data,
     })).response
-    return new Currency(response.id, data.name, data.symbol)
+    return new Currency(response.id, data.name, data.symbol, data.decimalPoints)
   }
 
   public async update(id: number, data: Omit<Currency, "id">): Promise<void> {

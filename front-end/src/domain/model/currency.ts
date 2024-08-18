@@ -1,13 +1,11 @@
 import Unique from "./Unique"
 
 export default class Currency implements Unique {
-  readonly id: number
-  readonly name: string
-  readonly symbol: string
-
-  constructor(id: number, name: string, symbol: string) {
-    this.id = id
-    this.name = name
-    this.symbol = symbol
+  constructor(
+    public readonly id: number,
+    public readonly name: string,
+    public readonly symbol: string,
+    public readonly decimalPoints: number,
+  ) {
   }
 }

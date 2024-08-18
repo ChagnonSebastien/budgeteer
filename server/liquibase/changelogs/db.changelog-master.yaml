@@ -7,3 +7,5 @@ databaseChangeLog:
       file: ./changelogs/003-account_ownership.sql
   - include:
       file: ./changelogs/004-multiple-initial-amounts.sql
+  - include:
+      file: ./changelogs/005-currencies-decimal-points.sql

@@ -24,7 +24,7 @@ func (s *CurrencyHandler) CreateCurrency(
 		return nil, fmt.Errorf("invalid claims")
 	}
 
-	newId, err := s.currencyService.CreateCurrency(ctx, claims.Sub, req.Name, req.Symbol)
+	newId, err := s.currencyService.CreateCurrency(ctx, claims.Sub, req.Name, req.Symbol, int(req.DecimalPoints))
 	if err != nil {
 		return nil, err
 	}
@@ -49,6 +49,7 @@ func (s *CurrencyHandler) UpdateCurrency(
 		int(req.Currency.Id),
 		req.Currency.Name,
 		req.Currency.Symbol,
+		int(req.Currency.DecimalPoints),
 	)
 	if err != nil {
 		return nil, err
@@ -74,9 +75,10 @@ func (s *CurrencyHandler) GetAllCurrencies(
 	currenciesDto := make([]*dto.Currency, len(currencies))
 	for i, currency := range currencies {
 		currenciesDto[i] = &dto.Currency{
-			Id:     uint32(currency.ID),
-			Name:   currency.Name,
-			Symbol: currency.Symbol,
+			Id:            uint32(currency.ID),
+			Name:          currency.Name,
+			Symbol:        currency.Symbol,
+			DecimalPoints: uint32(currency.DecimalPoints),
 		}
 	}
 

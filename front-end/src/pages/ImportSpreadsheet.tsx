@@ -62,7 +62,7 @@ const ImportSpreadsheet: FC = () => {
 
             let currency = newCurrencies.find(c => c.symbol === line.Currency)
             if (typeof currency === "undefined") {
-              currency = await createCurrency({name: "Canadian Dollar", symbol: line.Currency})
+              currency = await createCurrency({name: "Canadian Dollar", symbol: line.Currency, decimalPoints: 2})
               newCurrencies.push(currency)
             }
 

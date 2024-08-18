@@ -16,21 +16,26 @@ func (r *Repository) GetAllCurrencies(ctx context.Context, userId string) ([]mod
 	currencies := make([]model.Currency, len(currenciesDao))
 	for i, currencyDao := range currenciesDao {
 		currencies[i] = model.Currency{
-			ID:     int(currencyDao.ID),
-			Name:   currencyDao.Name,
-			Symbol: currencyDao.Symbol,
+			ID:            int(currencyDao.ID),
+			Name:          currencyDao.Name,
+			Symbol:        currencyDao.Symbol,
+			DecimalPoints: int(currencyDao.DecimalPoints),
 		}
 	}
 
 	return currencies, nil
 }
 
-func (r *Repository) CreateCurrency(ctx context.Context, userId string, name, symbol string) (int, error) {
+func (r *Repository) CreateCurrency(ctx context.Context, userId string, name, symbol string, decimalPoints int) (
+	int,
+	error,
+) {
 	id, err := r.queries.CreateCurrency(
 		ctx, dao.CreateCurrencyParams{
-			UserID: userId,
-			Name:   name,
-			Symbol: symbol,
+			UserID:        userId,
+			Name:          name,
+			Symbol:        symbol,
+			DecimalPoints: int16(decimalPoints),
 		},
 	)
 	if err != nil {
@@ -40,13 +45,20 @@ func (r *Repository) CreateCurrency(ctx context.Context, userId string, name, sy
 	return int(id), nil
 }
 
-func (r *Repository) UpdateCurrency(ctx context.Context, userId string, id int, name, symbol string) error {
+func (r *Repository) UpdateCurrency(
+	ctx context.Context,
+	userId string,
+	id int,
+	name, symbol string,
+	decimalPoints int,
+) error {
 	return r.queries.UpdateCurrency(
 		ctx, dao.UpdateCurrencyParams{
-			UserID: userId,
-			ID:     int32(id),
-			Name:   name,
-			Symbol: symbol,
+			UserID:        userId,
+			ID:            int32(id),
+			Name:          name,
+			Symbol:        symbol,
+			DecimalPoints: int16(decimalPoints),
 		},
 	)
 }

@@ -16,20 +16,25 @@ export const AccountList = (props: Props) => {
 
   return (
     <>
-      {accounts.map(account => (
-        <IonItem key={`account-list-${account.id}`} onClick={() => onSelect(account.id)}>
-          <div style={{flexGrow: 1}}>
-            <div>
-              {account.name}
-            </div>
-            {[...(valuePerAccount?.get(account.id)?.entries() ?? [])].map((entry) => (
-              <div key={`currency-in-account-${entry[0]}`} style={{textAlign: "right"}}>
-                {entry[1] / 100} {currencies.find(c => c.id === entry[0])?.symbol ?? entry[0]}
+      {accounts.map(account => {
+        return (
+          <IonItem key={`account-list-${account.id}`} onClick={() => onSelect(account.id)}>
+            <div style={{flexGrow: 1}}>
+              <div>
+                {account.name}
               </div>
-            ))}
-          </div>
-        </IonItem>
-      ))}
+              {[...(valuePerAccount?.get(account.id)?.entries() ?? [])].map((entry) => {
+                const currency = currencies.find(c => c.id === entry[0])
+                return (
+                  <div key={`currency-in-account-${entry[0]}`} style={{textAlign: "right"}}>
+                    {entry[1] / Math.pow(10, currency?.decimalPoints ?? 2)} {currency?.symbol ?? entry[0]}
+                  </div>
+                )
+              })}
+            </div>
+          </IonItem>
+        )
+      })}
     </>
   )
 }
