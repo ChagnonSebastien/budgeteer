@@ -19,18 +19,26 @@ func (r *Repository) GetAllAccountsWithCurrencyIDs(ctx context.Context, userId s
 			ID:            int(accountDao.ID),
 			Name:          accountDao.Name,
 			InitialAmount: int(accountDao.InitialAmount),
+			IsMine:        accountDao.IsMine,
 		}
 	}
 
 	return accounts, nil
 }
 
-func (r *Repository) CreateAccount(ctx context.Context, userId string, name string, initialAmount int) (int, error) {
+func (r *Repository) CreateAccount(
+	ctx context.Context,
+	userId string,
+	name string,
+	initialAmount int,
+	isMine bool,
+) (int, error) {
 	accountId, err := r.queries.CreateAccount(
 		ctx, dao.CreateAccountParams{
 			UserID:        userId,
 			Name:          name,
 			InitialAmount: int32(initialAmount),
+			IsMine:        isMine,
 		},
 	)
 	if err != nil {
@@ -39,13 +47,21 @@ func (r *Repository) CreateAccount(ctx context.Context, userId string, name stri
 	return int(accountId), nil
 }
 
-func (r *Repository) UpdateAccount(ctx context.Context, userId string, id int, name string, initialAmount int) error {
+func (r *Repository) UpdateAccount(
+	ctx context.Context,
+	userId string,
+	id int,
+	name string,
+	initialAmount int,
+	isMine bool,
+) error {
 	return r.queries.UpdateAccount(
 		ctx, dao.UpdateAccountParams{
 			UserID:        userId,
 			ID:            int32(id),
 			Name:          name,
 			InitialAmount: int32(initialAmount),
+			IsMine:        isMine,
 		},
 	)
 }

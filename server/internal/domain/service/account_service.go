@@ -8,8 +8,8 @@ import (
 
 type accountRepository interface {
 	GetAllAccountsWithCurrencyIDs(ctx context.Context, userId string) ([]model.Account, error)
-	CreateAccount(ctx context.Context, userId string, name string, initialAmount int) (int, error)
-	UpdateAccount(ctx context.Context, userId string, id int, name string, initialAmount int) error
+	CreateAccount(ctx context.Context, userId string, name string, initialAmount int, isMine bool) (int, error)
+	UpdateAccount(ctx context.Context, userId string, id int, name string, initialAmount int, isMine bool) error
 }
 
 type AccountService struct {
@@ -24,11 +24,17 @@ func (a *AccountService) GetAllAccounts(ctx context.Context, userId string) ([]m
 	return a.accountRepository.GetAllAccountsWithCurrencyIDs(ctx, userId)
 }
 
-func (a *AccountService) CreateAccount(ctx context.Context, userId string, name string, initialAmount int) (
+func (a *AccountService) CreateAccount(
+	ctx context.Context,
+	userId string,
+	name string,
+	initialAmount int,
+	isMine bool,
+) (
 	int,
 	error,
 ) {
-	return a.accountRepository.CreateAccount(ctx, userId, name, initialAmount)
+	return a.accountRepository.CreateAccount(ctx, userId, name, initialAmount, isMine)
 }
 
 func (a *AccountService) UpdateAccount(
@@ -37,6 +43,7 @@ func (a *AccountService) UpdateAccount(
 	id int,
 	name string,
 	initialAmount int,
+	isMine bool,
 ) error {
-	return a.accountRepository.UpdateAccount(ctx, userId, id, name, initialAmount)
+	return a.accountRepository.UpdateAccount(ctx, userId, id, name, initialAmount, isMine)
 }

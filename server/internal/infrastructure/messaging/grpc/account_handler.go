@@ -24,7 +24,7 @@ func (s *AccountHandler) CreateAccount(ctx context.Context, req *dto.CreateAccou
 		return nil, fmt.Errorf("invalid claims")
 	}
 
-	newId, err := s.accountService.CreateAccount(ctx, claims.Sub, req.Name, int(req.InitialAmount))
+	newId, err := s.accountService.CreateAccount(ctx, claims.Sub, req.Name, int(req.InitialAmount), req.IsMine)
 	if err != nil {
 		return nil, err
 	}
@@ -49,6 +49,7 @@ func (s *AccountHandler) UpdateAccount(
 		int(req.Account.Id),
 		req.Account.Name,
 		int(req.Account.InitialAmount),
+		req.Account.IsMine,
 	)
 	if err != nil {
 		return nil, err
@@ -77,6 +78,7 @@ func (s *AccountHandler) GetAllAccounts(ctx context.Context, _ *dto.GetAllAccoun
 			Id:            uint32(category.ID),
 			Name:          category.Name,
 			InitialAmount: int32(category.InitialAmount),
+			IsMine:        category.IsMine,
 		}
 	}
 
