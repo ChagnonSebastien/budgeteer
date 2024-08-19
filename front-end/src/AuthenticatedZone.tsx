@@ -6,6 +6,7 @@ import {
 import { IonReactRouter } from "@ionic/react-router"
 import { GrpcWebFetchTransport } from "@protobuf-ts/grpcweb-transport"
 import { Redirect, Route, Switch } from "react-router"
+import ContentWithHeader from "./components/ContentWithHeader"
 import Account from "./domain/model/account"
 import Category from "./domain/model/category"
 import Currency from "./domain/model/currency"
@@ -51,9 +52,14 @@ const transactionRepository = new TransactionRemoteStore(transport)
 
 interface Props {
   logout(): void
+
+  user: string,
+  defaultCurrency?: number,
 }
 
-const AuthenticatedZone: FC<Props> = ({logout}) => {
+const AuthenticatedZone: FC<Props> = (props) => {
+  const {user, defaultCurrency, logout} = props
+
   const [currencies, setCurrencies] = useState<Currency[] | null>(null)
   const [categories, setCategories] = useState<Category[] | null>(null)
   const [accounts, setAccounts] = useState<Account[] | null>(null)
@@ -66,66 +72,65 @@ const AuthenticatedZone: FC<Props> = ({logout}) => {
     transactionRepository.getAll().then(setTransactions)
   }, [])
 
-  let contents = <IonLoading/>
-  if (!(currencies === null || categories === null || accounts === null || transactions === null)) {
-    contents = (
+  if (currencies === null || categories === null || accounts === null || transactions === null) {
+    return <IonLoading/>
+  }
+
+  return (
+    <BasicCrudServiceWithPersistence
+      initialState={currencies}
+      longTermStore={currencyStore}
+      context={CurrencyServiceContext}
+      Augmenter={NilPersistenceAugmenter}
+    >
       <BasicCrudServiceWithPersistence
-        initialState={currencies}
-        longTermStore={currencyStore}
-        context={CurrencyServiceContext}
-        Augmenter={NilPersistenceAugmenter}
+        initialState={categories}
+        longTermStore={categoryStore}
+        context={CategoryServiceContext}
+        Augmenter={CategoryPersistenceAugmenter}
       >
         <BasicCrudServiceWithPersistence
-          initialState={categories}
-          longTermStore={categoryStore}
-          context={CategoryServiceContext}
-          Augmenter={CategoryPersistenceAugmenter}
+          initialState={accounts}
+          longTermStore={accountRepository}
+          context={AccountServiceContext}
+          Augmenter={NilPersistenceAugmenter}
         >
           <BasicCrudServiceWithPersistence
-            initialState={accounts}
-            longTermStore={accountRepository}
-            context={AccountServiceContext}
+            initialState={transactions}
+            longTermStore={transactionRepository}
+            context={TransactionServiceContext}
             Augmenter={NilPersistenceAugmenter}
+            sorter={(a, b) => b.date.getTime() - a.date.getTime()}
           >
-            <BasicCrudServiceWithPersistence
-              initialState={transactions}
-              longTermStore={transactionRepository}
-              context={TransactionServiceContext}
-              Augmenter={NilPersistenceAugmenter}
-              sorter={(a, b) => b.date.getTime() - a.date.getTime()}
-            >
-              <IonReactRouter>
-                <IonSplitPane contentId="main">
-                  <Menu logout={logout}/>
+            <IonReactRouter>
+              <IonSplitPane contentId="main">
+                <Menu logout={logout} user={user}/>
 
-                  <IonRouterOutlet id="main">
-                    <Switch>
-                      <Route exact path="/currencies" render={() => <CurrenciesPage/>}/>
-                      <Route exact path="/currencies/new" render={() => <CreateCurrencyPage/>}/>
-                      <Route exact path="/currencies/edit/:currencyId" render={() => <EditCurrencyPage/>}/>
-                      <Route exact path="/categories" render={() => <CategoryPage/>}/>
-                      <Route exact path="/categories/new" render={() => <CreateCategoryPage/>}/>
-                      <Route exact path="/categories/edit/:categoryId" render={() => <EditCategoryPage/>}/>
-                      <Route exact path="/accounts" render={() => <AccountsPage/>}/>
-                      <Route exact path="/accounts/new" render={() => <CreateAccountPage/>}/>
-                      <Route exact path="/accounts/edit/:accountId" render={() => <EditAccountPage/>}/>
-                      <Route exact path="/transactions" render={() => <TransactionPage/>}/>
-                      <Route exact path="/transactions/new" render={() => <CreateTransactionPage/>}/>
-                      <Route exact path="/transactions/edit/:transactionId" render={() => <EditTransactionPage/>}/>
-                      <Route exact path="/import" render={() => <ImportSpreadsheet/>}/>
-                      <Route render={() => (<Redirect to="/transactions"/>)}/>
-                    </Switch>
-                  </IonRouterOutlet>
-                </IonSplitPane>
-              </IonReactRouter>
-            </BasicCrudServiceWithPersistence>
+                <IonRouterOutlet id="main">
+                  <Switch>
+                    <Route exact path="/currencies" render={() => <CurrenciesPage/>}/>
+                    <Route exact path="/currencies/new" render={() => <CreateCurrencyPage/>}/>
+                    <Route exact path="/currencies/edit/:currencyId" render={() => <EditCurrencyPage/>}/>
+                    <Route exact path="/categories" render={() => <CategoryPage/>}/>
+                    <Route exact path="/categories/new" render={() => <CreateCategoryPage/>}/>
+                    <Route exact path="/categories/edit/:categoryId" render={() => <EditCategoryPage/>}/>
+                    <Route exact path="/accounts" render={() => <AccountsPage/>}/>
+                    <Route exact path="/accounts/new" render={() => <CreateAccountPage/>}/>
+                    <Route exact path="/accounts/edit/:accountId" render={() => <EditAccountPage/>}/>
+                    <Route exact path="/transactions" render={() => <TransactionPage/>}/>
+                    <Route exact path="/transactions/new" render={() => <CreateTransactionPage/>}/>
+                    <Route exact path="/transactions/edit/:transactionId" render={() => <EditTransactionPage/>}/>
+                    <Route exact path="/import" render={() => <ImportSpreadsheet/>}/>
+                    <Route render={() => (<Redirect to="/transactions"/>)}/>
+                  </Switch>
+                </IonRouterOutlet>
+              </IonSplitPane>
+            </IonReactRouter>
           </BasicCrudServiceWithPersistence>
         </BasicCrudServiceWithPersistence>
       </BasicCrudServiceWithPersistence>
-    )
-  }
-
-  return contents
+    </BasicCrudServiceWithPersistence>
+  )
 }
 
 export default AuthenticatedZone

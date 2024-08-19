@@ -2,6 +2,8 @@ package repository
 
 import (
 	"context"
+	"database/sql"
+	"fmt"
 
 	"chagnon.dev/budget-server/internal/domain/model"
 	"chagnon.dev/budget-server/internal/infrastructure/db/dao"
@@ -61,4 +63,27 @@ func (r *Repository) UpdateCurrency(
 			DecimalPoints: int16(decimalPoints),
 		},
 	)
+}
+
+func (r *Repository) SetDefaultCurrency(
+	ctx context.Context,
+	userId string,
+	currencyId int,
+) error {
+	i, err := r.queries.SetDefaultCurrency(
+		ctx, dao.SetDefaultCurrencyParams{
+			UserID: userId,
+			DefaultCurrency: sql.NullInt32{
+				Int32: int32(currencyId),
+				Valid: true,
+			},
+		},
+	)
+	if err != nil {
+		return err
+	}
+	if i == 0 {
+		return fmt.Errorf("no row was changed")
+	}
+	return nil
 }

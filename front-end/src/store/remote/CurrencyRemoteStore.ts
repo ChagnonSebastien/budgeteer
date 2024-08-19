@@ -1,7 +1,12 @@
 import { RpcTransport } from "@protobuf-ts/runtime-rpc"
 import Currency from "../../domain/model/currency"
 import { CurrencyConverter } from "./converter/currencyConverter"
-import { CreateCurrencyRequest, GetAllCurrenciesRequest, UpdateCurrencyRequest } from "./dto/currency"
+import {
+  CreateCurrencyRequest,
+  GetAllCurrenciesRequest,
+  SetDefaultCurrencyRequest,
+  UpdateCurrencyRequest,
+} from "./dto/currency"
 import { CurrencyServiceClient } from "./dto/currency.client"
 
 const conv = new CurrencyConverter()
@@ -30,5 +35,9 @@ export default class CurrencyRemoteStore {
     await this.client.updateCurrency(UpdateCurrencyRequest.create({
       currency: conv.toDTO({id, ...data}),
     })).response
+  }
+
+  public async setDefault(id: number): Promise<void> {
+    await this.client.setDefaultCurrency(SetDefaultCurrencyRequest.create({currencyId: id})).response
   }
 }

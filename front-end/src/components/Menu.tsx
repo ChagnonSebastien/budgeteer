@@ -50,10 +50,12 @@ const appPages: AppPage[] = [
 ]
 
 interface Props {
-  logout(): void
+  logout(): void,
+
+  user: string
 }
 
-const Menu: FC<Props> = ({logout}) => {
+const Menu: FC<Props> = ({logout, user}) => {
   const location = useLocation()
   const router = useIonRouter()
 
@@ -66,7 +68,7 @@ const Menu: FC<Props> = ({logout}) => {
       <IonContent>
         <IonList id="inbox-list">
           <IonListHeader>Budget App</IonListHeader>
-          <IonNote>hi@ionicframework.com</IonNote>
+          <IonNote>user</IonNote>
           {appPages.map((appPage, index) => {
             const Icon = iconTypeFromName(appPage.iconName)
             return (

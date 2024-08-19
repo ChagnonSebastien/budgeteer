@@ -225,6 +225,16 @@ func (auth *Auth) userInfoHandler(resp http.ResponseWriter, req *http.Request) {
 		http.Error(resp, "parsing claims", http.StatusInternalServerError)
 	}
 
+	params, err := auth.UserService.UserParams(req.Context(), tokenClaims.Sub)
+	if err != nil {
+		http.Error(resp, "getting user from db", http.StatusInternalServerError)
+		return
+	}
+
+	if params.DefaultCurrency != 0 {
+		tokenClaims.DefaultCurrency = &params.DefaultCurrency
+	}
+
 	if prevTokenCookie == nil || prevTokenCookie.Value != rawToken.AccessToken {
 		http.SetCookie(
 			resp, &http.Cookie{

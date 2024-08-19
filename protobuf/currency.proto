@@ -36,8 +36,17 @@ message UpdateCurrencyResponse {
 
 }
 
+message SetDefaultCurrencyRequest {
+  uint32 currency_id = 1;
+}
+
+message SetDefaultCurrencyResponse {
+
+}
+
 service CurrencyService {
   rpc GetAllCurrencies (GetAllCurrenciesRequest) returns (GetAllCurrenciesResponse);
   rpc CreateCurrency (CreateCurrencyRequest) returns (CreateCurrencyResponse);
   rpc UpdateCurrency (UpdateCurrencyRequest) returns (UpdateCurrencyResponse);
+  rpc SetDefaultCurrency (SetDefaultCurrencyRequest) returns (SetDefaultCurrencyResponse);
 }

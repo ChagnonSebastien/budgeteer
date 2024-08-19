@@ -86,3 +86,20 @@ func (s *CurrencyHandler) GetAllCurrencies(
 		Currencies: currenciesDto,
 	}, nil
 }
+
+func (s *CurrencyHandler) SetDefaultCurrency(
+	ctx context.Context,
+	req *dto.SetDefaultCurrencyRequest,
+) (*dto.SetDefaultCurrencyResponse, error) {
+	claims, ok := ctx.Value(shared.ClaimsKey{}).(shared.Claims)
+	if !ok {
+		return nil, fmt.Errorf("invalid claims")
+	}
+
+	err := s.currencyService.SetDefaultCurrency(ctx, claims.Sub, int(req.CurrencyId))
+	if err != nil {
+		return nil, err
+	}
+
+	return &dto.SetDefaultCurrencyResponse{}, nil
+}
