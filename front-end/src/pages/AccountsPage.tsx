@@ -1,20 +1,23 @@
 import {
-  IonButton,
-  IonPage,
+  IonButton, IonLabel,
+  IonPage, IonSegment, IonSegmentButton,
   useIonRouter,
 } from "@ionic/react"
-import { FC, useContext, useMemo } from "react"
+import { FC, useContext, useMemo, useState } from "react"
 import { AccountList } from "../components/AccountList"
 import ContentWithHeader from "../components/ContentWithHeader"
 import Account from "../domain/model/account"
 import { AccountServiceContext, TransactionServiceContext } from "../service/ServiceContext"
 
+type tabs = "mine" | "others"
 
 const AccountsPage: FC = () => {
   const router = useIonRouter()
 
   const {state: accounts} = useContext(AccountServiceContext)
   const {state: transactions} = useContext(TransactionServiceContext)
+
+  const [activeTab, setActiveTab] = useState<tabs>("mine")
 
   const orderedAccounts = useMemo(() => {
     const visited = new Set<number>()
@@ -39,6 +42,18 @@ const AccountsPage: FC = () => {
 
     return ordered
   }, [accounts, transactions])
+
+  const myAccounts = useMemo(() => {
+    return orderedAccounts.filter(a => a.isMine)
+  }, [orderedAccounts])
+
+  const otherAccounts = useMemo(() => {
+    return orderedAccounts.filter(a => !a.isMine)
+  }, [orderedAccounts])
+
+  const filteredAccounts = useMemo(() => {
+    return activeTab === "mine" ? myAccounts : otherAccounts
+  }, [myAccounts, otherAccounts, activeTab])
 
   const valuePerAccount = useMemo(() => {
     const accountAmounts = new Map<number, Map<number, number>>()
@@ -77,13 +92,28 @@ const AccountsPage: FC = () => {
 
   return (
     <IonPage>
-      <ContentWithHeader title="Accounts" button="menu">
+      <ContentWithHeader title="Accounts" button="menu" segments={(
+        <IonSegment value={activeTab} onIonChange={ev => {
+          if (ev.detail.value === "mine") {
+            setActiveTab("mine")
+          } else if (ev.detail.value === "others") {
+            setActiveTab("others")
+          }
+        }}>
+          <IonSegmentButton value="mine">
+            <IonLabel>My accounts</IonLabel>
+          </IonSegmentButton>
+          <IonSegmentButton value="others">
+            <IonLabel>Second parties</IonLabel>
+          </IonSegmentButton>
+        </IonSegment>
+      )}>
         <div style={{margin: "1rem"}}>
           <IonButton expand="block" onClick={() => router.push("/accounts/new")}>
             New
           </IonButton>
           <div style={{height: "1rem"}}/>
-          <AccountList accounts={orderedAccounts}
+          <AccountList accounts={filteredAccounts}
                        valuePerAccount={valuePerAccount}
                        onSelect={id => router.push(`/accounts/edit/${id}`)}/>
         </div>

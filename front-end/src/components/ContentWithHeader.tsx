@@ -15,11 +15,12 @@ interface Props {
   title: string,
   button: "menu" | "return" | "none",
   onSearch?: (query: string) => void,
-  onCancel?: () => void
+  onCancel?: () => void,
+  segments?: JSX.Element
 }
 
 const ContentWithHeader: FC<Props> = (props) => {
-  const {title, children, button: buttonOption, onSearch, onCancel} = props
+  const {title, children, button: buttonOption, onSearch, onCancel, segments} = props
   let button = null
   switch (buttonOption) {
     case "return":
@@ -51,6 +52,11 @@ const ContentWithHeader: FC<Props> = (props) => {
         {typeof onSearch !== "undefined" && (
           <IonToolbar>
             <IonSearchbar onIonInput={(event) => onSearch(event.target.value ?? "")}/>
+          </IonToolbar>
+        )}
+        {typeof segments !== "undefined" && (
+          <IonToolbar>
+            {segments}
           </IonToolbar>
         )}
       </IonHeader>
