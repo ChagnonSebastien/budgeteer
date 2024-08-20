@@ -68,7 +68,7 @@ const Menu: FC<Props> = ({logout, user}) => {
       <IonContent>
         <IonList id="inbox-list">
           <IonListHeader>Budget App</IonListHeader>
-          <IonNote>user</IonNote>
+          <IonNote>{user}</IonNote>
           {appPages.map((appPage, index) => {
             const Icon = iconTypeFromName(appPage.iconName)
             return (

@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"fmt"
 
 	"chagnon.dev/budget-server/internal/domain/model"
 	"chagnon.dev/budget-server/internal/infrastructure/db/dao"
@@ -82,7 +83,7 @@ func (r *Repository) CreateAccount(
 	}
 
 	for _, balance := range initialsAmounts {
-		err := queries.InsertAccountCurrency(
+		changedRows, err := queries.InsertAccountCurrency(
 			ctx, dao.InsertAccountCurrencyParams{
 				AccountID:  accountId,
 				CurrencyID: int32(balance.CurrencyId),
@@ -91,6 +92,14 @@ func (r *Repository) CreateAccount(
 		)
 		if err != nil {
 			return 0, err
+		}
+		if changedRows == 0 {
+			return 0, fmt.Errorf(
+				"inserting new account(%d)-currency(%d) relationship for user %s",
+				accountId,
+				balance.CurrencyId,
+				userId,
+			)
 		}
 	}
 
@@ -140,7 +149,7 @@ func (r *Repository) UpdateAccount(
 	}
 
 	for _, balance := range initialsAmounts {
-		err := queries.InsertAccountCurrency(
+		changedRows, err := queries.InsertAccountCurrency(
 			ctx, dao.InsertAccountCurrencyParams{
 				AccountID:  int32(id),
 				CurrencyID: int32(balance.CurrencyId),
@@ -149,6 +158,14 @@ func (r *Repository) UpdateAccount(
 		)
 		if err != nil {
 			return err
+		}
+		if changedRows == 0 {
+			return fmt.Errorf(
+				"inserting new account(%d)-currency(%d) relationship for user %s",
+				id,
+				balance.CurrencyId,
+				userId,
+			)
 		}
 	}
 

@@ -91,7 +91,7 @@ func (r *Repository) UpdateTransaction(
 	date time.Time,
 	note string,
 ) error {
-	return r.queries.UpdateTransaction(
+	updatedRows, err := r.queries.UpdateTransaction(
 		ctx, dao.UpdateTransactionParams{
 			UserID:   userId,
 			ID:       int32(id),
@@ -113,4 +113,11 @@ func (r *Repository) UpdateTransaction(
 			Note: note,
 		},
 	)
+	if err != nil {
+		return err
+	}
+	if updatedRows == 0 {
+		return err
+	}
+	return nil
 }

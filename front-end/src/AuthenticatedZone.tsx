@@ -7,12 +7,13 @@ import { IonReactRouter } from "@ionic/react-router"
 import { GrpcWebFetchTransport } from "@protobuf-ts/grpcweb-transport"
 import { Redirect, Route, Switch } from "react-router"
 import ContentWithHeader from "./components/ContentWithHeader"
+import CurrencyForm from "./components/CurrencyForm"
 import Account from "./domain/model/account"
 import Category from "./domain/model/category"
 import Currency from "./domain/model/currency"
 import Transaction from "./domain/model/transaction"
 import Menu from "./components/Menu"
-import { FC, useEffect, useState } from "react"
+import { FC, useCallback, useEffect, useState } from "react"
 import AccountsPage from "./pages/AccountsPage"
 import CategoryPage from "./pages/CategoryPage"
 import CreateAccountPage from "./pages/CreateAccountPage"
@@ -54,11 +55,13 @@ interface Props {
   logout(): void
 
   user: string,
-  defaultCurrency?: number,
+  defaultCurrencyId: number | null,
+
+  setDefaultCurrency(id: number): void
 }
 
 const AuthenticatedZone: FC<Props> = (props) => {
-  const {user, defaultCurrency, logout} = props
+  const {user, logout, defaultCurrencyId, setDefaultCurrency} = props
 
   const [currencies, setCurrencies] = useState<Currency[] | null>(null)
   const [categories, setCategories] = useState<Category[] | null>(null)
@@ -72,8 +75,30 @@ const AuthenticatedZone: FC<Props> = (props) => {
     transactionRepository.getAll().then(setTransactions)
   }, [])
 
+  const onNewCurrency = useCallback(async (data: Omit<Currency, "id">) => {
+    if (currencies === null) return
+
+    const newCurrency = await currencyStore.create(data)
+    await currencyStore.setDefault(newCurrency.id)
+    setCurrencies([...currencies, newCurrency])
+    setDefaultCurrency(newCurrency.id)
+  }, [currencies])
+
   if (currencies === null || categories === null || accounts === null || transactions === null) {
     return <IonLoading/>
+  }
+
+  if (defaultCurrencyId === null) {
+    return (
+      <ContentWithHeader title="What's your main currency?" button="none">
+        <div style={{padding: "1rem"}}>
+          <CurrencyForm
+            onSubmit={onNewCurrency}
+            submitText="Create"
+          />
+        </div>
+      </ContentWithHeader>
+    )
   }
 
   return (

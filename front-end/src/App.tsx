@@ -45,13 +45,14 @@ setupIonicReact()
 const AuthenticatedZone = lazy(() => import("./AuthenticatedZone"))
 
 const App: FC = () => {
-  const {user, synced, hasInternet, authMethods, logout} = useAuthentication()
+  const {user, synced, hasInternet, authMethods, logout, setDefaultCurrency} = useAuthentication()
 
   if (user !== null) {
     if (!hasInternet || synced) {
       return (
         <IonApp>
-          <AuthenticatedZone logout={logout}/>
+          <AuthenticatedZone defaultCurrencyId={user.default_currency} logout={logout} user={user.email}
+                             setDefaultCurrency={setDefaultCurrency}/>
         </IonApp>
       )
     } else {

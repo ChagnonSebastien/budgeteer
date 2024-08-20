@@ -1,6 +1,7 @@
 import { Network } from "@capacitor/network"
 import { useCallback, useEffect, useMemo, useState } from "react"
-import UserStore, { User } from "./UserStore"
+import User from "./domain/model/user"
+import UserStore from "./UserStore"
 
 const serverUrl = import.meta.env.VITE_BACKEND_URL || window.location.origin
 
@@ -29,11 +30,17 @@ const userStore = new UserStore(localStorage)
 const useAuthentication = () => {
   const [loginMethods, setLoginMethods] = useState<AuthMethodStatuses | null>(null)
 
-  const [user, setUser] = useState<User | null>(userStore.getUser())
+  const [user, setUser] = useState<(User & {authMethod: AuthMethod}) | null>(userStore.getUser())
   const [synced, setSynced] = useState(false)
   const [hasInternet, setHasInternet] = useState(true)
 
-  const fetchUserInfo = useCallback(async (): Promise<Omit<User, "authMethod">> => {
+  const setDefaultCurrency = useCallback((id: number) => {
+    if (user === null) return
+    setUser({...user, default_currency: id})
+    userStore.upsertUser({...user, default_currency: id}, "oidc")
+  }, [])
+
+  const fetchUserInfo = useCallback(async (): Promise<User> => {
     const response = await fetch(`${serverUrl}/auth/userinfo`, {credentials: "include"})
 
     if (!response.ok) {
@@ -99,7 +106,7 @@ const useAuthentication = () => {
     return (user.authMethod === "oidc") ? oidcLogout : userPassLogout
   }, [user])
 
-  return {authMethods: loginMethods, user, synced, hasInternet, logout}
+  return {authMethods: loginMethods, user, synced, hasInternet, logout, setDefaultCurrency}
 }
 
 export default useAuthentication
