@@ -1,16 +1,17 @@
--- name: GetAllTransactions :many
-SELECT
-    id,
-    amount,
-    currency,
-    sender,
-    receiver,
-    category,
-    date,
-    note
-FROM
-    transactions
-WHERE user_id = sqlc.arg(user_id);
+    -- name: GetAllTransactions :many
+    SELECT
+        id,
+        amount,
+        currency,
+        sender,
+        receiver,
+        category,
+        date,
+        note
+    FROM
+        transactions
+    WHERE user_id = sqlc.arg(user_id)
+    ORDER BY date DESC;
 
 -- name: CreateTransaction :one
 INSERT INTO transactions (user_id, amount, currency, sender, receiver, category, date, note)
