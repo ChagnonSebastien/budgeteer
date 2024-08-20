@@ -13,3 +13,5 @@ databaseChangeLog:
       file: ./changelogs/006-null-category-for-transfers.sql
   - include:
       file: ./changelogs/007-default-currency.sql
+  - include:
+      file: ./changelogs/008-added-indices.sql
