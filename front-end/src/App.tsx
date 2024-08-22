@@ -3,9 +3,10 @@ import {
   IonButton,
   setupIonicReact,
 } from "@ionic/react"
-import { FC, lazy } from "react"
+import { createContext, FC, lazy } from "react"
 import { withItemTools } from "./components/IconTools"
 import LoadingScreen from "./components/LoadingScreen"
+import User from "./domain/model/user"
 import useAuthentication from "./useAuthentication"
 
 /* Core CSS required for Ionic components to work properly */
@@ -42,6 +43,14 @@ import "./App.css"
 
 setupIonicReact()
 
+export const UserContext = createContext<User>({
+  name: "name",
+  default_currency: null,
+  email: "email",
+  sub: "sub",
+  preferred_username: "username",
+})
+
 const AuthenticatedZone = lazy(() => import("./AuthenticatedZone"))
 
 const App: FC = () => {
@@ -51,8 +60,10 @@ const App: FC = () => {
     if (!hasInternet || synced) {
       return (
         <IonApp>
-          <AuthenticatedZone defaultCurrencyId={user.default_currency} logout={logout} user={user.email}
-                             setDefaultCurrency={setDefaultCurrency}/>
+          <UserContext.Provider value={user}>
+            <AuthenticatedZone logout={logout}
+                               setDefaultCurrency={setDefaultCurrency}/>
+          </UserContext.Provider>
         </IonApp>
       )
     } else {

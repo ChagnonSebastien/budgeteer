@@ -24,13 +24,32 @@ func (s *CurrencyHandler) CreateCurrency(
 		return nil, fmt.Errorf("invalid claims")
 	}
 
-	newId, err := s.currencyService.CreateCurrency(ctx, claims.Sub, req.Name, req.Symbol, int(req.DecimalPoints))
+	var initialExchangeRate *service.InitialExchangeRate
+	if req.InitialExchangeRate != nil {
+		initialExchangeRate = &service.InitialExchangeRate{
+			Other: int((*req.InitialExchangeRate).Other),
+			Rate:  (*req.InitialExchangeRate).Rate,
+			Date:  (*req.InitialExchangeRate).Date,
+		}
+	}
+
+	newCurrencyId, newExchangeRateId, err := s.currencyService.CreateCurrency(
+		ctx, claims.Sub, req.Name, req.Symbol, int(req.DecimalPoints),
+		initialExchangeRate,
+	)
 	if err != nil {
 		return nil, err
 	}
 
+	var newExchangeRateIdPointer *uint32
+	if newExchangeRateId != 0 {
+		convertedExchangeRateId := uint32(newExchangeRateId)
+		newExchangeRateIdPointer = &convertedExchangeRateId
+	}
+
 	return &dto.CreateCurrencyResponse{
-		Id: uint32(newId),
+		CurrencyId:     uint32(newCurrencyId),
+		ExchangeRateId: newExchangeRateIdPointer,
 	}, nil
 }
 
@@ -74,11 +93,27 @@ func (s *CurrencyHandler) GetAllCurrencies(
 
 	currenciesDto := make([]*dto.Currency, len(currencies))
 	for i, currency := range currencies {
+		exchangeRatesDtos := make(map[uint32]*dto.RatesList)
+		for otherCurrencyId, exchangeRates := range currency.ExchangeRates {
+			exchangeRatesDto := make([]*dto.ExchangeRate, 0, len(exchangeRates))
+			for _, exchangeRate := range exchangeRates {
+				exchangeRatesDto = append(
+					exchangeRatesDto, &dto.ExchangeRate{
+						Id:   uint32(exchangeRate.ID),
+						Rate: exchangeRate.Rate,
+						Date: exchangeRate.Date,
+					},
+				)
+			}
+			exchangeRatesDtos[uint32(otherCurrencyId)] = &dto.RatesList{Rates: exchangeRatesDto}
+		}
+
 		currenciesDto[i] = &dto.Currency{
 			Id:            uint32(currency.ID),
 			Name:          currency.Name,
 			Symbol:        currency.Symbol,
 			DecimalPoints: uint32(currency.DecimalPoints),
+			ExchangeRates: exchangeRatesDtos,
 		}
 	}
 

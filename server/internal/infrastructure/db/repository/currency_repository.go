@@ -10,29 +10,86 @@ import (
 )
 
 func (r *Repository) GetAllCurrencies(ctx context.Context, userId string) ([]model.Currency, error) {
-	currenciesDao, err := r.queries.GetAllCurrencies(ctx, userId)
+	tx, err := r.db.BeginTx(ctx, &sql.TxOptions{ReadOnly: true})
 	if err != nil {
+		return nil, err
+	}
+
+	queries := r.queries.WithTx(tx)
+
+	currenciesDao, err := queries.GetAllCurrencies(ctx, userId)
+	if err != nil {
+		return nil, err
+	}
+
+	exchangeRatesDaos := make([][]dao.GetAllExchangeRatesOfRow, len(currenciesDao))
+	for i, currency := range currenciesDao {
+		exchangeRatesDao, err := queries.GetAllExchangeRatesOf(ctx, currency.ID)
+		if err != nil {
+			return nil, err
+		}
+		exchangeRatesDaos[i] = exchangeRatesDao
+	}
+
+	if err := tx.Commit(); err != nil {
 		return nil, err
 	}
 
 	currencies := make([]model.Currency, len(currenciesDao))
 	for i, currencyDao := range currenciesDao {
+		exchangeRates := make(map[int][]model.ExchangeRate)
+		for _, exchangeRateDao := range exchangeRatesDaos[i] {
+			currencySpecificRates, ok := exchangeRates[int(exchangeRateDao.ComparedTo)]
+			if !ok {
+				currencySpecificRates = make([]model.ExchangeRate, 0)
+			}
+			currencySpecificRates = append(
+				currencySpecificRates, model.ExchangeRate{
+					ID:   int(exchangeRateDao.ID),
+					Rate: exchangeRateDao.AdjustedExchangeRate,
+					Date: exchangeRateDao.Date,
+				},
+			)
+			exchangeRates[int(exchangeRateDao.ComparedTo)] = currencySpecificRates
+		}
+
 		currencies[i] = model.Currency{
 			ID:            int(currencyDao.ID),
 			Name:          currencyDao.Name,
 			Symbol:        currencyDao.Symbol,
 			DecimalPoints: int(currencyDao.DecimalPoints),
+			ExchangeRates: exchangeRates,
 		}
 	}
 
 	return currencies, nil
 }
 
-func (r *Repository) CreateCurrency(ctx context.Context, userId string, name, symbol string, decimalPoints int) (
+type InitialExchangeRate struct {
+	Other int
+	Rate  float64
+	Date  string
+}
+
+func (r *Repository) CreateCurrency(
+	ctx context.Context,
+	userId string,
+	name, symbol string,
+	decimalPoints int,
+	initialExchangeRate *InitialExchangeRate,
+) (
+	int,
 	int,
 	error,
 ) {
-	id, err := r.queries.CreateCurrency(
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return 0, 0, err
+	}
+
+	queries := r.queries.WithTx(tx)
+
+	currencyId, err := queries.CreateCurrency(
 		ctx, dao.CreateCurrencyParams{
 			UserID:        userId,
 			Name:          name,
@@ -41,10 +98,30 @@ func (r *Repository) CreateCurrency(ctx context.Context, userId string, name, sy
 		},
 	)
 	if err != nil {
-		return 0, err
+		return 0, 0, err
 	}
 
-	return int(id), nil
+	var rateId int32
+	if initialExchangeRate != nil {
+		rateId, err = queries.CreateExchangeRate(
+			ctx, dao.CreateExchangeRateParams{
+				A:      currencyId,
+				B:      int32(initialExchangeRate.Other),
+				Rate:   initialExchangeRate.Rate,
+				Date:   initialExchangeRate.Date,
+				UserID: userId,
+			},
+		)
+		if err != nil {
+			return 0, 0, err
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		return 0, 0, err
+	}
+
+	return int(currencyId), int(rateId), nil
 }
 
 func (r *Repository) UpdateCurrency(

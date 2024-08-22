@@ -15,3 +15,5 @@ databaseChangeLog:
       file: ./changelogs/007-default-currency.sql
   - include:
       file: ./changelogs/008-added-indices.sql
+  - include:
+      file: ./changelogs/009-exchange-rates.sql

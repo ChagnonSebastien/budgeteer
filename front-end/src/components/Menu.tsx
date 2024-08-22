@@ -13,6 +13,7 @@ import {
 import { useLocation } from "react-router-dom"
 import "./Menu.css"
 import { FC, useContext } from "react"
+import { UserContext } from "../App"
 import { IconToolsContext } from "./IconTools"
 
 interface AppPage {
@@ -51,14 +52,14 @@ const appPages: AppPage[] = [
 
 interface Props {
   logout(): void,
-
-  user: string
 }
 
-const Menu: FC<Props> = ({logout, user}) => {
+const Menu: FC<Props> = ({logout}) => {
   const location = useLocation()
   const router = useIonRouter()
 
+
+  const {email} = useContext(UserContext)
   const {iconTypeFromName} = useContext(IconToolsContext)
 
   const iconStyle = {margin: "0.5rem"}
@@ -68,7 +69,7 @@ const Menu: FC<Props> = ({logout, user}) => {
       <IonContent>
         <IonList id="inbox-list">
           <IonListHeader>Budget App</IonListHeader>
-          <IonNote>{user}</IonNote>
+          <IonNote>{email}</IonNote>
           {appPages.map((appPage, index) => {
             const Icon = iconTypeFromName(appPage.iconName)
             return (

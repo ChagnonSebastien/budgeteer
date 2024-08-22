@@ -1,4 +1,4 @@
-import { Context, FC, ReactNode, useCallback, useState } from "react"
+import { Context, Dispatch, FC, ReactNode, SetStateAction, useCallback, useState } from "react"
 import Unique from "../domain/model/Unique"
 import { BasicCrudService } from "./BasicCrudService"
 
@@ -12,9 +12,10 @@ interface Store<T extends Unique> {
 
 export interface AugmenterProps<T extends Unique, A> {
   state: T[]
-  setState: (state: T[]) => void
+  setState: Dispatch<SetStateAction<T[]>>
   longTermStore: Store<T>
   augment: (b: A) => JSX.Element
+  sorter?: (a: T, b: T) => number
 }
 
 interface Props<T extends Unique, A> {
@@ -45,7 +46,7 @@ export const BasicCrudServiceWithPersistence = <T extends Unique, A>(props: Prop
 
   return (
     <Augmenter state={state} setState={setState} longTermStore={longTermStore} augment={(b) => (
-      <context.Provider value={{...b, state, create, update}}>
+      <context.Provider value={{state, create, update, ...b}}>
         {children}
       </context.Provider>
     )}/>

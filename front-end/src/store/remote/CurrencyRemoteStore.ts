@@ -1,9 +1,10 @@
 import { RpcTransport } from "@protobuf-ts/runtime-rpc"
-import Currency from "../../domain/model/currency"
+import Currency, { ExchangeRate } from "../../domain/model/currency"
 import { CurrencyConverter } from "./converter/currencyConverter"
 import {
   CreateCurrencyRequest,
   GetAllCurrenciesRequest,
+  InitialExchangeRate,
   SetDefaultCurrencyRequest,
   UpdateCurrencyRequest,
 } from "./dto/currency"
@@ -25,10 +26,31 @@ export default class CurrencyRemoteStore {
   }
 
   public async create(data: Omit<Currency, "id">): Promise<Currency> {
+    let initialExchangeRate: InitialExchangeRate | undefined = undefined
+    if (Object.keys(data.exchangeRates).length === 1) {
+      const other = Object.keys(data.exchangeRates).map(Number)[0] as keyof typeof data.exchangeRates
+      initialExchangeRate = InitialExchangeRate.create({
+        other,
+        rate: data.exchangeRates[other][0].rate,
+        date: data.exchangeRates[other][0].date,
+      })
+    }
+
     const response = await this.client.createCurrency(CreateCurrencyRequest.create({
       ...data,
+      initialExchangeRate,
     })).response
-    return new Currency(response.id, data.name, data.symbol, data.decimalPoints)
+
+    const exchangeRates: {[p: number]: ExchangeRate[]} = {}
+    if (typeof response.exchangeRateId !== "undefined") {
+      const other = Object.keys(data.exchangeRates).map(Number)[0] as keyof typeof data.exchangeRates
+      exchangeRates[other] = [{
+        ...data.exchangeRates[other][0],
+        id: response.exchangeRateId,
+      }]
+    }
+
+    return new Currency(response.currencyId, data.name, data.symbol, data.decimalPoints, exchangeRates)
   }
 
   public async update(id: number, data: Omit<Currency, "id">): Promise<void> {

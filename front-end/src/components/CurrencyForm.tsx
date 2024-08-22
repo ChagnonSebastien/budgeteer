@@ -1,14 +1,17 @@
 import {
-  IonButton,
-  IonInput, IonText,
+  IonButton, IonDatetime, IonDatetimeButton,
+  IonInput, IonModal, IonText,
   IonToast,
 } from "@ionic/react"
 import { FC, FormEvent, useCallback, useContext, useEffect, useMemo, useState } from "react"
 import { Omit } from "react-router"
-import Currency from "../domain/model/currency"
+import { UserContext } from "../App"
+import Currency, { ExchangeRate } from "../domain/model/currency"
 import { CurrencyServiceContext } from "../service/ServiceContext"
+import { formatDateTime } from "../store/remote/converter/transactionConverter"
 
 const validAmount = new RegExp(`^\\d+[.,]?$`)
+const validRate = new RegExp(`^\\d*[.,]?\\d*$`)
 
 interface Props {
   initialCurrency?: Currency,
@@ -28,13 +31,28 @@ const CurrencyForm: FC<Props> = (props) => {
   const {initialCurrency, onSubmit, submitText} = props
 
   const {state: currencies} = useContext(CurrencyServiceContext)
+  const {default_currency: defaultCurrencyId} = useContext(UserContext)
+  const defaultCurrency = useMemo(() => currencies.find(c => c.id === defaultCurrencyId), [currencies, defaultCurrencyId])
 
   const [name, setName] = useState(initialCurrency?.name ?? "")
   const [symbol, setSymbol] = useState(initialCurrency?.symbol ?? "")
   const [decimalPoints, setDecimalPoints] = useState(`${typeof initialCurrency === "undefined" ? "2" : initialCurrency.decimalPoints}`)
+  const [initialExchangeRate, setInitialExchangeRate] = useState(`${typeof initialCurrency !== "undefined" ? initialCurrency.exchangeRates : ""}`)
+  const [initialExchangeRateDate, setinitialExchangeRateDate] = useState(new Date())
+
+  const [showDateModal, setShowDateModal] = useState(false)
+
+  const showExchangeRate = useMemo(() => {
+    return typeof initialCurrency === "undefined" && typeof defaultCurrency !== "undefined"
+  }, [currencies])
 
   const [showErrorToast, setShowErrorToast] = useState("")
-  const [errors, setErrors] = useState<{accountName: FieldStatus, symbol: FieldStatus, decimalPoints: FieldStatus}>({
+  const [errors, setErrors] = useState<{
+    accountName: FieldStatus,
+    symbol: FieldStatus,
+    decimalPoints: FieldStatus,
+    exchangeRate: FieldStatus
+  }>({
     accountName: {
       hasVisited: false,
       isValid: false,
@@ -48,6 +66,11 @@ const CurrencyForm: FC<Props> = (props) => {
     decimalPoints: {
       hasVisited: false,
       isValid: false,
+      errorText: NoError,
+    },
+    exchangeRate: {
+      hasVisited: false,
+      isValid: !showExchangeRate,
       errorText: NoError,
     },
   })
@@ -99,6 +122,22 @@ const CurrencyForm: FC<Props> = (props) => {
     return NoError
   }, [])
 
+  const validateExchangeRate = useCallback((newName: string) => {
+    if (!newName) {
+      return "Required"
+    }
+
+    if (!validRate.test(newName)) {
+      return "Must be a valid rate"
+    }
+
+    if (parseFloat(newName) === 0) {
+      return "Rate must be above 0"
+    }
+
+    return NoError
+  }, [])
+
   useEffect(() => {
     const accountNameError = validateAccountName(name)
     setErrors(prevState => ({
@@ -135,10 +174,21 @@ const CurrencyForm: FC<Props> = (props) => {
     }))
   }, [validateDecimalPoints, decimalPoints])
 
+  useEffect(() => {
+    const exchangeRateError = validateExchangeRate(initialExchangeRate)
+    setErrors(prevState => ({
+      ...prevState,
+      exchangeRate: {
+        ...prevState.exchangeRate,
+        errorText: exchangeRateError,
+        isValid: exchangeRateError == NoError,
+      },
+    }))
+  }, [validateExchangeRate, initialExchangeRate])
+
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-
 
     if (Object.values(errors).some(value => !value.isValid)) {
       setErrors(prevState => ({
@@ -154,6 +204,10 @@ const CurrencyForm: FC<Props> = (props) => {
           ...prevState.decimalPoints,
           hasVisited: true,
         },
+        exchangeRate: {
+          ...prevState.exchangeRate,
+          hasVisited: true,
+        },
       }))
       return
     }
@@ -162,6 +216,13 @@ const CurrencyForm: FC<Props> = (props) => {
       name,
       decimalPoints: parseInt(decimalPoints),
       symbol: symbol,
+      exchangeRates: showExchangeRate
+        ? {
+          [defaultCurrency!.id]: [
+            new ExchangeRate(0, parseFloat(initialExchangeRate), formatDateTime(initialExchangeRateDate)),
+          ],
+        }
+        : {},
     }).catch(err => {
       setShowErrorToast("Unexpected error while creating the category")
       console.error(err)
@@ -253,6 +314,57 @@ const CurrencyForm: FC<Props> = (props) => {
         <div style={{padding: "1rem", border: "1px grey solid", borderTop: 0, textAlign: "center"}}>
           {formatExample} {symbol}
         </div>
+
+
+        {showExchangeRate && (
+          <>
+            <div style={{height: "1rem"}}/>
+            <div style={{color: "grey"}}>
+              Exchange Rates
+            </div>
+            <div style={{display: "flex", alignItems: "stretch"}}>
+              <div style={{display: "flex", alignItems: "center", flexShrink: 0}}>
+                {`1 ${symbol === "" ? "___" : symbol}`}
+              </div>
+              <div style={{margin: "0 1rem", display: "flex", alignItems: "center", flexShrink: 0}}>=</div>
+              <IonInput type="text"
+                        className={classNameFromStatus(errors.exchangeRate)}
+                        value={initialExchangeRate}
+                        onIonInput={ev => setInitialExchangeRate(ev.target.value as string)}
+                        errorText={errors.exchangeRate.errorText}
+                        onIonBlur={() => setErrors(prevState => ({
+                          ...prevState,
+                          exchangeRate: {
+                            ...prevState.exchangeRate,
+                            hasVisited: true,
+                          },
+                        }))}
+              />
+              <div style={{margin: "0 1rem", display: "flex", alignItems: "center", flexShrink: 0}}>
+                {defaultCurrency!.symbol} on
+              </div>
+              <div style={{
+                display: "flex",
+                alignItems: "center",
+                flexShrink: 0,
+                borderBottom: "1px rgba(0, 0, 0, 0.13) solid",
+                marginBottom: "5px",
+              }}>
+                <IonDatetimeButton onClick={() => setShowDateModal(true)} datetime="datetime"></IonDatetimeButton>
+
+                <IonModal keepContentsMounted={true} isOpen={showDateModal}>
+                  <IonDatetime id="datetime" presentation="date" onIonChange={ev => {
+                    const newDate = new Date(Date.parse(ev.detail.value as string))
+                    setinitialExchangeRateDate(newDate)
+                    if (newDate.getFullYear() === initialExchangeRateDate.getFullYear() && newDate.getMonth() === initialExchangeRateDate.getMonth()) {
+                      setShowDateModal(false)
+                    }
+                  }}/>
+                </IonModal>
+              </div>
+            </div>
+          </>
+        )}
 
       </div>
 

@@ -6,6 +6,7 @@ import {
 import { IonReactRouter } from "@ionic/react-router"
 import { GrpcWebFetchTransport } from "@protobuf-ts/grpcweb-transport"
 import { Redirect, Route, Switch } from "react-router"
+import { UserContext } from "./App"
 import ContentWithHeader from "./components/ContentWithHeader"
 import CurrencyForm from "./components/CurrencyForm"
 import Account from "./domain/model/account"
@@ -13,7 +14,7 @@ import Category from "./domain/model/category"
 import Currency from "./domain/model/currency"
 import Transaction from "./domain/model/transaction"
 import Menu from "./components/Menu"
-import { FC, useCallback, useEffect, useState } from "react"
+import { FC, useCallback, useContext, useEffect, useState } from "react"
 import AccountsPage from "./pages/AccountsPage"
 import CategoryPage from "./pages/CategoryPage"
 import CreateAccountPage from "./pages/CreateAccountPage"
@@ -27,6 +28,7 @@ import EditCurrencyPage from "./pages/EditCurrencyPage"
 import EditTransactionPage from "./pages/EditTransactionPage"
 import ImportSpreadsheet from "./pages/ImportSpreadsheet"
 import TransactionPage from "./pages/TransactionPage"
+import { CurrencyPersistenceAugmenter } from "./service/CurrencyServiceAugmenter"
 import AccountRemoteStore from "./store/remote/AccountRemoteStore"
 import { CategoryPersistenceAugmenter } from "./service/CategoryServiceAugmenter"
 import CategoryRemoteStore from "./store/remote/CategoryRemoteStore"
@@ -54,14 +56,13 @@ const transactionRepository = new TransactionRemoteStore(transport)
 interface Props {
   logout(): void
 
-  user: string,
-  defaultCurrencyId: number | null,
-
   setDefaultCurrency(id: number): void
 }
 
 const AuthenticatedZone: FC<Props> = (props) => {
-  const {user, logout, defaultCurrencyId, setDefaultCurrency} = props
+  const {logout, setDefaultCurrency} = props
+
+  const {default_currency} = useContext(UserContext)
 
   const [currencies, setCurrencies] = useState<Currency[] | null>(null)
   const [categories, setCategories] = useState<Category[] | null>(null)
@@ -88,7 +89,7 @@ const AuthenticatedZone: FC<Props> = (props) => {
     return <IonLoading/>
   }
 
-  if (defaultCurrencyId === null) {
+  if (default_currency === null) {
     return (
       <ContentWithHeader title="What's your main currency?" button="none">
         <div style={{padding: "1rem"}}>
@@ -106,7 +107,7 @@ const AuthenticatedZone: FC<Props> = (props) => {
       initialState={currencies}
       longTermStore={currencyStore}
       context={CurrencyServiceContext}
-      Augmenter={NilPersistenceAugmenter}
+      Augmenter={CurrencyPersistenceAugmenter}
     >
       <BasicCrudServiceWithPersistence
         initialState={categories}
@@ -129,7 +130,7 @@ const AuthenticatedZone: FC<Props> = (props) => {
           >
             <IonReactRouter>
               <IonSplitPane contentId="main">
-                <Menu logout={logout} user={user}/>
+                <Menu logout={logout}/>
 
                 <IonRouterOutlet id="main">
                   <Switch>
