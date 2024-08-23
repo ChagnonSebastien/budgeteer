@@ -5,12 +5,14 @@ import (
 )
 
 type Transaction struct {
-	ID       int
-	Amount   int
-	Currency int
-	Sender   int
-	Receiver int
-	Category int
-	Date     time.Time
-	Note     string
+	ID               int
+	Amount           int
+	Currency         int
+	Sender           int
+	Receiver         int
+	Category         int
+	Date             time.Time
+	Note             string
+	ReceiverCurrency int
+	ReceiverAmount   int
 }

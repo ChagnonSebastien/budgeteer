@@ -57,6 +57,8 @@ func (s *TransactionHandler) CreateTransaction(
 		category,
 		date,
 		req.Note,
+		int(req.ReceiverCurrency),
+		int(req.ReceiverAmount),
 	)
 	if err != nil {
 		return nil, err
@@ -107,6 +109,8 @@ func (s *TransactionHandler) UpdateTransaction(
 		category,
 		date,
 		req.Transaction.Note,
+		int(req.Transaction.ReceiverCurrency),
+		int(req.Transaction.ReceiverAmount),
 	)
 	if err != nil {
 		return nil, err
@@ -150,14 +154,16 @@ func (s *TransactionHandler) GetAllTransactions(
 		}
 
 		transactionsDto[i] = &dto.Transaction{
-			Id:       uint32(transaction.ID),
-			Amount:   uint32(transaction.Amount),
-			Currency: uint32(transaction.Currency),
-			Sender:   sender,
-			Receiver: receiver,
-			Category: category,
-			Date:     transaction.Date.Format(layout),
-			Note:     transaction.Note,
+			Id:               uint32(transaction.ID),
+			Amount:           uint32(transaction.Amount),
+			Currency:         uint32(transaction.Currency),
+			Sender:           sender,
+			Receiver:         receiver,
+			Category:         category,
+			Date:             transaction.Date.Format(layout),
+			Note:             transaction.Note,
+			ReceiverCurrency: uint32(transaction.ReceiverCurrency),
+			ReceiverAmount:   uint32(transaction.ReceiverAmount),
 		}
 	}
 

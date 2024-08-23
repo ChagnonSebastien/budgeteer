@@ -17,3 +17,5 @@ databaseChangeLog:
       file: ./changelogs/008-added-indices.sql
   - include:
       file: ./changelogs/009-exchange-rates.sql
+  - include:
+      file: ./changelogs/010-transaction-transfer-currencies.sql

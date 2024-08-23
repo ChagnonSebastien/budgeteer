@@ -16,6 +16,7 @@ type transactionRepository interface {
 		currencyId, senderAccountId, receiverAccountId, categoryId int,
 		date time.Time,
 		note string,
+		receiverCurrencyId, receiverAmount int,
 	) (int, error)
 	UpdateTransaction(
 		ctx context.Context,
@@ -24,6 +25,7 @@ type transactionRepository interface {
 		currencyId, senderAccountId, receiverAccountId, categoryId int,
 		date time.Time,
 		note string,
+		receiverCurrencyId, receiverAmount int,
 	) error
 }
 
@@ -46,6 +48,7 @@ func (a *TransactionService) CreateTransaction(
 	currencyId, senderAccountId, receiverAccountId, categoryId int,
 	date time.Time,
 	note string,
+	receiverCurrencyId, receiverAmount int,
 ) (int, error) {
 	return a.transactionRepository.CreateTransaction(
 		ctx,
@@ -57,6 +60,8 @@ func (a *TransactionService) CreateTransaction(
 		categoryId,
 		date,
 		note,
+		receiverCurrencyId,
+		receiverAmount,
 	)
 }
 
@@ -67,6 +72,7 @@ func (a *TransactionService) UpdateTransaction(
 	currencyId, senderAccountId, receiverAccountId, categoryId int,
 	date time.Time,
 	note string,
+	receiverCurrencyId, receiverAmount int,
 ) error {
 	return a.transactionRepository.UpdateTransaction(
 		ctx,
@@ -79,5 +85,7 @@ func (a *TransactionService) UpdateTransaction(
 		categoryId,
 		date,
 		note,
+		receiverCurrencyId,
+		receiverAmount,
 	)
 }

@@ -1,11 +1,12 @@
 import {
-  IonButton,
+  IonButton, IonCheckbox,
   IonInput,
   IonModal,
   IonToast,
 } from "@ionic/react"
 import { FC, FormEvent, useContext, useEffect, useMemo, useState } from "react"
 import { Omit, useParams } from "react-router"
+import { UserContext } from "../App"
 import Transaction from "../domain/model/transaction"
 import AccountPicker from "./AccountPicker"
 import { CategoryList } from "./CategoryList"
@@ -25,6 +26,10 @@ const validateAmount = (value: string) => {
 
   if (!validAmount.test(value)) {
     return "Invalid amount. Enter a number"
+  }
+
+  if (parseFloat(value) === 0) {
+    return "Amount is required"
   }
 
   return NoError
@@ -57,15 +62,26 @@ const TransactionForm: FC<Props> = (props) => {
   const {state: categories, root: rootCategory} = useContext(CategoryServiceContext)
   const {state: currencies} = useContext(CurrencyServiceContext)
   const {state: accounts} = useContext(AccountServiceContext)
+  const {default_currency} = useContext(UserContext)
 
   const type: "income" | "expense" | "transfer" = useMemo(() => {
     if (typeof rawType !== "undefined") return rawType
     if (initialTransaction?.categoryId === null) return "transfer"
     return (accounts.find(a => a.id === initialTransaction?.senderId)?.isMine ?? false) ? "expense" : "income"
   }, [initialTransaction, rawType, accounts])
+
   const [amount, setAmount] = useState<string>(`${typeof initialTransaction === "undefined" ? "" : initialTransaction.amount / Math.pow(10, currencies.find(c => c.id === initialTransaction.currencyId)?.decimalPoints ?? 2)}`)
   const sanitizedAmount = useMemo(() => `0${amount.replace(",", ".")}`, [amount])
-  const [currency, setCurrency] = useState<number>(currencies[0].id)
+  const [currency, setCurrency] = useState<number>(initialTransaction?.currencyId ?? default_currency!)
+
+  const [differentCurrency, setDifferentCurrency] = useState(() => {
+    if (typeof initialTransaction === "undefined") return false
+    return initialTransaction.receiverCurrencyId !== initialTransaction.currencyId
+  })
+  const [receiverAmount, setReceiverAmount] = useState<string>(`${typeof initialTransaction === "undefined" ? "" : initialTransaction.receiverAmount / Math.pow(10, currencies.find(c => c.id === initialTransaction.receiverCurrencyId)?.decimalPoints ?? 2)}`)
+  const sanitizedReceiverAmount = useMemo(() => `0${receiverAmount.replace(",", ".")}`, [receiverAmount])
+  const [receiverCurrency, setReceiverCurrency] = useState<number>(initialTransaction?.receiverCurrencyId ?? currencies[0].id)
+
   const [parent, setParent] = useState<number | null>((initialTransaction?.categoryId === null || type === "transfer") ? null : (initialTransaction?.categoryId ?? rootCategory.id))
   const [sender, setSender] = useState<number | null>(initialTransaction?.senderId ?? null)
   const [receiver, setReceiver] = useState<number | null>(initialTransaction?.receiverId ?? null)
@@ -78,7 +94,12 @@ const TransactionForm: FC<Props> = (props) => {
   const [showParentModal, setShowCategoryModal] = useState(false)
 
   const [showErrorToast, setShowErrorToast] = useState("")
-  const [errors, setErrors] = useState<{amount: FieldStatus, sender: FieldStatus, receiver: FieldStatus}>({
+  const [errors, setErrors] = useState<{
+    amount: FieldStatus,
+    sender: FieldStatus,
+    receiver: FieldStatus,
+    receiverAmount: FieldStatus
+  }>({
     amount: {
       hasVisited: false,
       isValid: false,
@@ -94,6 +115,11 @@ const TransactionForm: FC<Props> = (props) => {
       isValid: false,
       errorText: NoError,
     },
+    receiverAmount: {
+      hasVisited: false,
+      isValid: false,
+      errorText: NoError,
+    },
   })
 
   useEffect(() => {
@@ -101,6 +127,7 @@ const TransactionForm: FC<Props> = (props) => {
     const senderError = validateAccount(sender, type === "expense" || type === "transfer")
     const receiverError = validateAccount(receiver, type === "income" || type === "transfer")
     setErrors(prevState => ({
+      ...prevState,
       amount: {
         ...prevState.amount,
         isValid: amountError === NoError,
@@ -118,6 +145,18 @@ const TransactionForm: FC<Props> = (props) => {
       },
     }))
   }, [sanitizedAmount, sender, receiver])
+
+  useEffect(() => {
+    const receiverAmountError = validateAmount(sanitizedReceiverAmount)
+    setErrors(prevState => ({
+      ...prevState,
+      receiverAmount: {
+        ...prevState.receiverAmount,
+        isValid: (receiverAmountError === NoError) || !differentCurrency,
+        errorText: receiverAmountError,
+      },
+    }))
+  }, [sanitizedReceiverAmount, differentCurrency])
 
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
@@ -137,18 +176,30 @@ const TransactionForm: FC<Props> = (props) => {
           ...prevState.receiver,
           hasVisited: true,
         },
+        receiverAmount: {
+          ...prevState.receiverAmount,
+          hasVisited: true,
+        },
       }))
+      return
+    }
+
+    if (differentCurrency && (currency === receiverCurrency)) {
+      setShowErrorToast("A transfer of currency requires different currencies in both accounts")
       return
     }
 
     onSubmit({
       amount: Math.floor(parseFloat(sanitizedAmount) * Math.pow(10, currencies.find(c => c.id === currency)?.decimalPoints ?? 2)),
+      receiverAmount: Math.floor(parseFloat(differentCurrency ? sanitizedReceiverAmount : sanitizedAmount) * Math.pow(10, currencies.find(c => c.id === (differentCurrency ? receiverCurrency : currency))?.decimalPoints ?? 2)),
       categoryId: parent,
       receiverId: receiver ?? null,
+
       senderId: sender ?? null,
       note,
       date: initialTransaction?.date ?? new Date(),
-      currencyId: currencies[0].id,
+      currencyId: currency,
+      receiverCurrencyId: differentCurrency ? receiverCurrency : currency,
     }).catch(err => {
       setShowErrorToast("Unexpected error while creating the category")
       console.error(err)
@@ -182,9 +233,13 @@ const TransactionForm: FC<Props> = (props) => {
           />
           <div style={{width: "3rem"}}/>
           <CurrencyPicker
-            currencies={currencies} selectedCurrencyId={currency} setSelectedCurrencyId={setCurrency}
+            currencies={currencies}
+            selectedCurrencyId={currency}
+            setSelectedCurrencyId={setCurrency}
             labelText="Currency"
-            style={{flexShrink: 2}} errorText={NoError}/>
+            style={{flexShrink: 2}}
+            errorText={NoError}
+          />
         </div>
 
         {typeof category !== "undefined" && (
@@ -218,9 +273,46 @@ const TransactionForm: FC<Props> = (props) => {
         <AccountPicker labelText="From"
                        style={{className: classNameFromStatus(errors.sender)}}
                        errorText={errors.sender.errorText}
-                       setSelectedAccountId={setSender} selectedAccountId={sender}
+                       setSelectedAccountId={setSender}
+                       selectedAccountId={sender}
                        myOwn={parent === null || type === "expense"}
         />
+
+        {type === "transfer" && (
+          <IonCheckbox labelPlacement="end"
+                       onIonChange={(ev) => setDifferentCurrency(ev.detail.checked)}
+                       style={{marginTop: ".5rem"}}>
+            Transfer currencies
+          </IonCheckbox>
+        )}
+
+        {differentCurrency && (
+
+          <div style={{display: "flex"}}>
+            <IonInput type="text"
+                      className={classNameFromStatus(errors.receiverAmount)}
+                      label="Amount of transfered currency"
+                      labelPlacement="stacked"
+
+                      value={receiverAmount}
+                      onIonInput={ev => setReceiverAmount(ev.target.value as string)}
+                      errorText={errors.receiverAmount.errorText}
+                      onIonBlur={() => setErrors(prevState => ({
+                        ...prevState,
+                        receiverAmount: {...prevState.receiverAmount, hasVisited: true},
+                      }))}
+            />
+            <div style={{width: "3rem"}}/>
+            <CurrencyPicker
+              currencies={currencies}
+              selectedCurrencyId={receiverCurrency}
+              setSelectedCurrencyId={setReceiverCurrency}
+              labelText="Transfer to:"
+              style={{flexShrink: 2}}
+              errorText={NoError}
+            />
+          </div>
+        )}
 
         <AccountPicker labelText="To"
                        style={{className: classNameFromStatus(errors.receiver)}}

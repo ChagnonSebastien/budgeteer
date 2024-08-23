@@ -13,6 +13,8 @@ message Transaction {
   optional uint32 category = 6;
   string date = 7;
   string note = 8;
+  uint32 receiver_currency = 9;
+  uint32 receiver_amount = 10;
 }
 
 message GetAllTransactionsRequest {
@@ -30,6 +32,8 @@ message CreateTransactionRequest {
   optional uint32 category = 5;
   string date = 6;
   string note = 7;
+  uint32 receiver_currency = 8;
+  uint32 receiver_amount = 9;
 }
 
 message CreateTransactionResponse {

@@ -29,6 +29,8 @@ export class TransactionConverter implements Converter<Transaction, TransactionD
       dto.sender ?? null,
       dto.receiver ?? null,
       dto.note,
+      dto.receiverCurrency,
+      dto.receiverAmount,
     )
   }
 
@@ -42,6 +44,8 @@ export class TransactionConverter implements Converter<Transaction, TransactionD
       note: model.note,
       receiver: model.receiverId ?? undefined,
       sender: model.senderId ?? undefined,
+      receiverCurrency: model.receiverCurrencyId,
+      receiverAmount: model.receiverAmount,
     })
   }
 

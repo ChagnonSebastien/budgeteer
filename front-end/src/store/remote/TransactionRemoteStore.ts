@@ -28,6 +28,8 @@ export default class TransactionRemoteStore {
       note: data.note,
       sender: data.senderId ?? undefined,
       receiver: data.receiverId ?? undefined,
+      receiverCurrency: data.receiverCurrencyId,
+      receiverAmount: data.receiverAmount,
     })).response
     return new Transaction(
       response.id,
@@ -38,6 +40,8 @@ export default class TransactionRemoteStore {
       data.senderId,
       data.receiverId,
       data.note,
+      data.receiverCurrencyId,
+      data.receiverAmount,
     )
   }
 

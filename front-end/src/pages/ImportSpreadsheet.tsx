@@ -122,7 +122,9 @@ const ImportSpreadsheet: FC = () => {
 
             transactionPromises.push(createTransaction({
               amount: Math.abs(amount),
+              receiverAmount: Math.abs(amount),
               currencyId: currency.id,
+              receiverCurrencyId: currency.id,
               categoryId: category?.id ?? null,
               date,
               senderId: sender?.id ?? null,

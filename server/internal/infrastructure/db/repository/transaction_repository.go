@@ -33,14 +33,16 @@ func (r *Repository) GetAllTransactions(ctx context.Context, userId string) ([]m
 		}
 
 		transactions[i] = model.Transaction{
-			ID:       int(transactionDao.ID),
-			Amount:   int(transactionDao.Amount),
-			Currency: int(transactionDao.Currency),
-			Sender:   sender,
-			Receiver: receiver,
-			Category: category,
-			Date:     transactionDao.Date,
-			Note:     transactionDao.Note,
+			ID:               int(transactionDao.ID),
+			Amount:           int(transactionDao.Amount),
+			Currency:         int(transactionDao.Currency),
+			Sender:           sender,
+			Receiver:         receiver,
+			Category:         category,
+			Date:             transactionDao.Date,
+			Note:             transactionDao.Note,
+			ReceiverCurrency: int(transactionDao.ReceiverCurrency),
+			ReceiverAmount:   int(transactionDao.ReceiverAmount),
 		}
 	}
 
@@ -54,6 +56,7 @@ func (r *Repository) CreateTransaction(
 	currencyId, senderAccountId, receiverAccountId, categoryId int,
 	date time.Time,
 	note string,
+	receiverCurrencyId, receiverAmount int,
 ) (int, error) {
 	transactionId, err := r.queries.CreateTransaction(
 		ctx, dao.CreateTransactionParams{
@@ -72,8 +75,10 @@ func (r *Repository) CreateTransaction(
 				Int32: int32(categoryId),
 				Valid: categoryId != 0,
 			},
-			Date: date,
-			Note: note,
+			Date:             date,
+			Note:             note,
+			ReceiverCurrency: int32(receiverCurrencyId),
+			ReceiverAmount:   int32(receiverAmount),
 		},
 	)
 	if err != nil {
@@ -90,6 +95,7 @@ func (r *Repository) UpdateTransaction(
 	currencyId, senderAccountId, receiverAccountId, categoryId int,
 	date time.Time,
 	note string,
+	receiverCurrencyId, receiverAmount int,
 ) error {
 	updatedRows, err := r.queries.UpdateTransaction(
 		ctx, dao.UpdateTransactionParams{
@@ -109,8 +115,10 @@ func (r *Repository) UpdateTransaction(
 				Int32: int32(categoryId),
 				Valid: categoryId != 0,
 			},
-			Date: date,
-			Note: note,
+			Date:             date,
+			Note:             note,
+			ReceiverCurrency: int32(receiverCurrencyId),
+			ReceiverAmount:   int32(receiverAmount),
 		},
 	)
 	if err != nil {

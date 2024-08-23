@@ -7,14 +7,16 @@ SELECT
     receiver,
     category,
     date,
-    note
+    note,
+    receiver_currency,
+    receiver_amount
 FROM
     transactions
 WHERE user_id = sqlc.arg(user_id)
 ORDER BY date DESC;
 
 -- name: CreateTransaction :one
-INSERT INTO transactions (user_id, amount, currency, sender, receiver, category, date, note)
+INSERT INTO transactions (user_id, amount, currency, sender, receiver, category, date, note, receiver_currency, receiver_amount)
 VALUES (
            sqlc.arg(user_id),
            sqlc.arg(amount),
@@ -23,7 +25,9 @@ VALUES (
            sqlc.arg(receiver),
            sqlc.arg(category),
            sqlc.arg(date),
-           sqlc.arg(note)
+           sqlc.arg(note),
+           sqlc.arg(receiver_currency),
+           sqlc.arg(receiver_amount)
        )
 RETURNING id;
 
@@ -36,27 +40,8 @@ SET
     receiver = sqlc.arg(receiver),
     category = sqlc.arg(category),
     date = sqlc.arg(date),
-    note = sqlc.arg(note)
+    note = sqlc.arg(note),
+    receiver_currency = sqlc.arg(receiver_currency),
+    receiver_amount = sqlc.arg(receiver_amount)
 WHERE t.id = sqlc.arg(id)
-  AND t.user_id = sqlc.arg(user_id)
-  AND EXISTS (
-    SELECT 1
-    FROM accounts ra
-    WHERE ra.id = sqlc.arg(receiver)
-      AND ra.user_id = sqlc.arg(user_id)
-) AND EXISTS (
-    SELECT 1
-    FROM accounts sa
-    WHERE sa.id = sqlc.arg(sender)
-      AND sa.user_id = sqlc.arg(user_id)
-) AND EXISTS (
-    SELECT 1
-    FROM currencies cu
-    WHERE cu.id = sqlc.arg(currency)
-      AND cu.user_id = sqlc.arg(user_id)
-) AND EXISTS (
-    SELECT 1
-    FROM categories ca
-    WHERE ca.id = sqlc.arg(category)
-      AND ca.user_id = sqlc.arg(user_id)
-);
+  AND t.user_id = sqlc.arg(user_id);
