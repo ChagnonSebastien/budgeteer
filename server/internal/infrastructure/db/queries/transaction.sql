@@ -15,35 +15,16 @@ ORDER BY date DESC;
 
 -- name: CreateTransaction :one
 INSERT INTO transactions (user_id, amount, currency, sender, receiver, category, date, note)
-SELECT sqlc.arg(user_id),
-       sqlc.arg(amount),
-       sqlc.arg(currency),
-       sqlc.arg(sender),
-       sqlc.arg(receiver),
-       sqlc.arg(category),
-       sqlc.arg(date),
-       sqlc.arg(note)
-WHERE EXISTS (
-    SELECT 1
-    FROM accounts ra
-    WHERE ra.id = sqlc.arg(receiver)
-      AND ra.user_id = sqlc.arg(user_id)
-) AND EXISTS (
-    SELECT 1
-    FROM accounts sa
-    WHERE sa.id = sqlc.arg(sender)
-      AND sa.user_id = sqlc.arg(user_id)
-) AND EXISTS (
-    SELECT 1
-    FROM currencies cu
-    WHERE cu.id = sqlc.arg(currency)
-      AND cu.user_id = sqlc.arg(user_id)
-) AND EXISTS (
-    SELECT 1
-    FROM categories ca
-    WHERE ca.id = sqlc.arg(category)
-      AND ca.user_id = sqlc.arg(user_id)
-)
+VALUES (
+           sqlc.arg(user_id),
+           sqlc.arg(amount),
+           sqlc.arg(currency),
+           sqlc.arg(sender),
+           sqlc.arg(receiver),
+           sqlc.arg(category),
+           sqlc.arg(date),
+           sqlc.arg(note)
+       )
 RETURNING id;
 
 -- name: UpdateTransaction :execrows

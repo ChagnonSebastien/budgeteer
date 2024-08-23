@@ -37,7 +37,7 @@ const CurrencyForm: FC<Props> = (props) => {
   const [name, setName] = useState(initialCurrency?.name ?? "")
   const [symbol, setSymbol] = useState(initialCurrency?.symbol ?? "")
   const [decimalPoints, setDecimalPoints] = useState(`${typeof initialCurrency === "undefined" ? "2" : initialCurrency.decimalPoints}`)
-  const [initialExchangeRate, setInitialExchangeRate] = useState(`${typeof initialCurrency !== "undefined" ? initialCurrency.exchangeRates : ""}`)
+  const [initialExchangeRate, setInitialExchangeRate] = useState("1")
   const [initialExchangeRateDate, setinitialExchangeRateDate] = useState(new Date())
 
   const [showDateModal, setShowDateModal] = useState(false)

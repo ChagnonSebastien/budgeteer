@@ -59,7 +59,7 @@ const TransactionForm: FC<Props> = (props) => {
   const {state: accounts} = useContext(AccountServiceContext)
 
   const type: "income" | "expense" | "transfer" = useMemo(() => {
-    if (typeof rawType !== "undefined") return type
+    if (typeof rawType !== "undefined") return rawType
     if (initialTransaction?.categoryId === null) return "transfer"
     return (accounts.find(a => a.id === initialTransaction?.senderId)?.isMine ?? false) ? "expense" : "income"
   }, [initialTransaction, rawType, accounts])
