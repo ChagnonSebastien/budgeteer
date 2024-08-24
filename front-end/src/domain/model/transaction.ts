@@ -1,7 +1,7 @@
-import Account from "./account"
-import Category from "./category"
-import Currency from "./currency"
-import Unique from "./Unique"
+import Account from './account'
+import Category from './category'
+import Currency from './currency'
+import Unique from './Unique'
 
 export type AugmentedTransaction = Transaction & {
   readonly currency: Currency
@@ -23,6 +23,5 @@ export default class Transaction implements Unique {
     readonly note: string,
     readonly receiverCurrencyId: number,
     readonly receiverAmount: number,
-  ) {
-  }
+  ) {}
 }

@@ -1,13 +1,13 @@
-import { RpcTransport } from "@protobuf-ts/runtime-rpc"
-import Transaction from "../../domain/model/transaction"
-import { formatDateTime, TransactionConverter } from "./converter/transactionConverter"
-import { CreateTransactionRequest, GetAllTransactionsRequest, UpdateTransactionRequest } from "./dto/transaction"
-import { TransactionServiceClient } from "./dto/transaction.client"
+import { RpcTransport } from '@protobuf-ts/runtime-rpc'
+
+import { formatDateTime, TransactionConverter } from './converter/transactionConverter'
+import { CreateTransactionRequest, GetAllTransactionsRequest, UpdateTransactionRequest } from './dto/transaction'
+import { TransactionServiceClient } from './dto/transaction.client'
+import Transaction from '../../domain/model/transaction'
 
 const conv = new TransactionConverter()
 
 export default class TransactionRemoteStore {
-
   private client: TransactionServiceClient
 
   constructor(transport: RpcTransport) {
@@ -16,21 +16,23 @@ export default class TransactionRemoteStore {
 
   public async getAll(): Promise<Transaction[]> {
     const response = await this.client.getAllTransactions(GetAllTransactionsRequest.create()).response
-    return await Promise.all(response.transactions.map<Promise<Transaction>>(dto => conv.toModel(dto)))
+    return await Promise.all(response.transactions.map<Promise<Transaction>>((dto) => conv.toModel(dto)))
   }
 
-  public async create(data: Omit<Transaction, "id">): Promise<Transaction> {
-    const response = await this.client.createTransaction(CreateTransactionRequest.create({
-      amount: data.amount,
-      category: data.categoryId ?? undefined,
-      date: formatDateTime(data.date),
-      currency: data.currencyId,
-      note: data.note,
-      sender: data.senderId ?? undefined,
-      receiver: data.receiverId ?? undefined,
-      receiverCurrency: data.receiverCurrencyId,
-      receiverAmount: data.receiverAmount,
-    })).response
+  public async create(data: Omit<Transaction, 'id'>): Promise<Transaction> {
+    const response = await this.client.createTransaction(
+      CreateTransactionRequest.create({
+        amount: data.amount,
+        category: data.categoryId ?? undefined,
+        date: formatDateTime(data.date),
+        currency: data.currencyId,
+        note: data.note,
+        sender: data.senderId ?? undefined,
+        receiver: data.receiverId ?? undefined,
+        receiverCurrency: data.receiverCurrencyId,
+        receiverAmount: data.receiverAmount,
+      }),
+    ).response
     return new Transaction(
       response.id,
       data.amount,
@@ -45,10 +47,11 @@ export default class TransactionRemoteStore {
     )
   }
 
-  public async update(id: number, data: Omit<Transaction, "id">): Promise<void> {
-    const {date, senderId, receiverId, ...remainder} = data
-    await this.client.updateTransaction(UpdateTransactionRequest.create({
-      transaction: conv.toDTO({id, ...data}),
-    })).response
+  public async update(id: number, data: Omit<Transaction, 'id'>): Promise<void> {
+    await this.client.updateTransaction(
+      UpdateTransactionRequest.create({
+        transaction: conv.toDTO({ id, ...data }),
+      }),
+    ).response
   }
 }

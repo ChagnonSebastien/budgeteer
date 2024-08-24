@@ -1,31 +1,30 @@
-import {
-  IonButton,
-  IonPage,
-  useIonRouter,
-} from "@ionic/react"
-import { FC, useContext } from "react"
-import ContentWithHeader from "../components/ContentWithHeader"
-import { CurrencyList } from "../components/CurrencyList"
-import { CurrencyServiceContext } from "../service/ServiceContext"
+import { IonButton, IonPage, useIonRouter } from '@ionic/react'
+import { FC, useContext } from 'react'
+
+import ContentWithHeader from '../components/ContentWithHeader'
+import { CurrencyList } from '../components/CurrencyList'
+import { CurrencyServiceContext } from '../service/ServiceContext'
 
 const CurrenciesPage: FC = () => {
   const router = useIonRouter()
 
-  const {state: currencies} = useContext(CurrencyServiceContext)
+  const { state: currencies } = useContext(CurrencyServiceContext)
 
   return (
     <IonPage>
       <ContentWithHeader title="Currencies" button="menu">
-        <div style={{padding: "1rem"}}>
-          <IonButton expand="block" onClick={() => router.push("/currencies/new")}>
+        <div style={{ padding: '1rem' }}>
+          <IonButton expand="block" onClick={() => router.push('/currencies/new')}>
             New
           </IonButton>
-          <div style={{height: "1rem"}}/>
-          <CurrencyList currencies={currencies} onSelect={currencyId => router.push(`/currencies/edit/${currencyId}`)}/>
+          <div style={{ height: '1rem' }} />
+          <CurrencyList
+            currencies={currencies}
+            onSelect={(currencyId) => router.push(`/currencies/edit/${currencyId}`)}
+          />
         </div>
       </ContentWithHeader>
     </IonPage>
-
   )
 }
 

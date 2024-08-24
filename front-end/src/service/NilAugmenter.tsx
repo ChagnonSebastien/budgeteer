@@ -1,6 +1,6 @@
-import Unique from "../domain/model/Unique"
-import { AugmenterProps } from "./BasicCrudServiceWithPersistence"
+import { AugmenterProps } from './BasicCrudServiceWithPersistence'
+import Unique from '../domain/model/Unique'
 
-export function NilPersistenceAugmenter<T extends Unique>({augment}: AugmenterProps<T, {}>) {
+export function NilPersistenceAugmenter<T extends Unique>({ augment }: AugmenterProps<T, unknown>) {
   return augment({})
 }

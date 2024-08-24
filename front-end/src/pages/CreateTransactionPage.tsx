@@ -1,12 +1,11 @@
-import {
-  IonPage, useIonRouter,
-} from "@ionic/react"
-import { FC, useCallback, useContext, useMemo } from "react"
-import { useLocation } from "react-router-dom"
-import ContentWithHeader from "../components/ContentWithHeader"
-import TransactionForm from "../components/TransactionForm"
-import Transaction from "../domain/model/transaction"
-import { TransactionServiceContext } from "../service/ServiceContext"
+import { IonPage, useIonRouter } from '@ionic/react'
+import { FC, useCallback, useContext, useMemo } from 'react'
+import { useLocation } from 'react-router-dom'
+
+import ContentWithHeader from '../components/ContentWithHeader'
+import TransactionForm from '../components/TransactionForm'
+import Transaction from '../domain/model/transaction'
+import { TransactionServiceContext } from '../service/ServiceContext'
 
 const CreateCategoryPage: FC = () => {
   const router = useIonRouter()
@@ -14,40 +13,35 @@ const CreateCategoryPage: FC = () => {
 
   const query = useMemo(() => new URLSearchParams(location.search), [location.search])
   const type = useMemo(() => {
-    switch (query.get("type")) {
-      case "expense":
-        return "expense"
-      case "income":
-        return "income"
-      case "transfer":
-        return "transfer"
+    switch (query.get('type')) {
+      case 'expense':
+        return 'expense'
+      case 'income':
+        return 'income'
+      case 'transfer':
+        return 'transfer'
       default:
         return undefined
     }
   }, [query])
 
-  const {create: createTransaction} = useContext(TransactionServiceContext)
+  const { create: createTransaction } = useContext(TransactionServiceContext)
 
-  const onSubmit = useCallback(async (data: Omit<Transaction, "id">) => {
+  const onSubmit = useCallback(async (data: Omit<Transaction, 'id'>) => {
     await createTransaction(data)
     if (router.canGoBack()) {
       router.goBack()
     } else {
-      router.push("/transactions", "back", "replace")
+      router.push('/transactions', 'back', 'replace')
     }
   }, [])
 
   return (
     <IonPage>
-      <ContentWithHeader title={`Record new ${type ?? "transaction"}`} button="return">
-        <TransactionForm
-          onSubmit={onSubmit}
-          submitText="Record"
-          type={type}
-        />
+      <ContentWithHeader title={`Record new ${type ?? 'transaction'}`} button="return">
+        <TransactionForm onSubmit={onSubmit} submitText="Record" type={type} />
       </ContentWithHeader>
     </IonPage>
-
   )
 }
 

@@ -1,9 +1,9 @@
-import Transaction from "../../../domain/model/transaction"
-import { Transaction as TransactionDto } from "../dto/transaction"
-import { Converter } from "./converter"
+import { Converter } from './converter'
+import Transaction from '../../../domain/model/transaction'
+import { Transaction as TransactionDto } from '../dto/transaction'
 
 function padToTwoDigits(num: number) {
-  return num.toString().padStart(2, "0")
+  return num.toString().padStart(2, '0')
 }
 
 export const formatDateTime = (date: Date): string => {
@@ -18,7 +18,6 @@ export const formatDateTime = (date: Date): string => {
 }
 
 export class TransactionConverter implements Converter<Transaction, TransactionDto> {
-
   async toModel(dto: TransactionDto): Promise<Transaction> {
     return new Transaction(
       dto.id,
@@ -48,5 +47,4 @@ export class TransactionConverter implements Converter<Transaction, TransactionD
       receiverAmount: model.receiverAmount,
     })
   }
-
-}       
+}

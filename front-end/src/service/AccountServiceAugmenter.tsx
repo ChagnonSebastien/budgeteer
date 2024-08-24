@@ -1,6 +1,7 @@
-import { FC, useMemo } from "react"
-import Account from "../domain/model/account"
-import { AugmenterProps } from "./BasicCrudServiceWithPersistence"
+import { FC, useMemo } from 'react'
+
+import { AugmenterProps } from './BasicCrudServiceWithPersistence'
+import Account from '../domain/model/account'
 
 export interface AccountPersistenceAugmentation {
   readonly myOwnAccounts: Account[]
@@ -8,15 +9,15 @@ export interface AccountPersistenceAugmentation {
 }
 
 export const AccountPersistenceAugmenter: FC<AugmenterProps<Account, AccountPersistenceAugmentation>> = (props) => {
-  const {augment, state} = props
+  const { augment, state } = props
 
   const myOwnAccounts = useMemo(() => {
-    return state.filter(a => a.isMine)
+    return state.filter((a) => a.isMine)
   }, [state])
 
   const otherAccounts = useMemo(() => {
-    return state.filter(a => !a.isMine)
+    return state.filter((a) => !a.isMine)
   }, [state])
 
-  return augment({myOwnAccounts, otherAccounts})
+  return augment({ myOwnAccounts, otherAccounts })
 }

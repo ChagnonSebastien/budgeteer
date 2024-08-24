@@ -7,62 +7,62 @@ import {
   IonListHeader,
   IonMenu,
   IonMenuToggle,
-  IonNote, useIonRouter,
-} from "@ionic/react"
+  IonNote,
+  useIonRouter,
+} from '@ionic/react'
+import { FC, useContext } from 'react'
+import { useLocation } from 'react-router-dom'
+import './Menu.css'
 
-import { useLocation } from "react-router-dom"
-import "./Menu.css"
-import { FC, useContext } from "react"
-import { UserContext } from "../App"
-import { IconToolsContext } from "./IconTools"
+import { IconToolsContext } from './IconTools'
+import { UserContext } from '../App'
 
 interface AppPage {
-  title: string;
-  url: string;
-  iconName: string;
+  title: string
+  url: string
+  iconName: string
 }
 
 const appPages: AppPage[] = [
   {
-    title: "Transactions",
-    url: "/transactions",
-    iconName: "TbArrowsExchange",
+    title: 'Transactions',
+    url: '/transactions',
+    iconName: 'TbArrowsExchange',
   },
   {
-    title: "Categories",
-    url: "/categories",
-    iconName: "MdCategory",
+    title: 'Categories',
+    url: '/categories',
+    iconName: 'MdCategory',
   },
   {
-    title: "Accounts",
-    url: "/accounts",
-    iconName: "MdAccountBalance",
+    title: 'Accounts',
+    url: '/accounts',
+    iconName: 'MdAccountBalance',
   },
   {
-    title: "Currencies",
-    url: "/currencies",
-    iconName: "BsCurrencyExchange",
+    title: 'Currencies',
+    url: '/currencies',
+    iconName: 'BsCurrencyExchange',
   },
   {
-    title: "Import",
-    url: "/import",
-    iconName: "BiSolidFileImport",
+    title: 'Import',
+    url: '/import',
+    iconName: 'BiSolidFileImport',
   },
 ]
 
 interface Props {
-  logout(): void,
+  logout(): void
 }
 
-const Menu: FC<Props> = ({logout}) => {
+const Menu: FC<Props> = ({ logout }) => {
   const location = useLocation()
   const router = useIonRouter()
 
+  const { email } = useContext(UserContext)
+  const { iconTypeFromName } = useContext(IconToolsContext)
 
-  const {email} = useContext(UserContext)
-  const {iconTypeFromName} = useContext(IconToolsContext)
-
-  const iconStyle = {margin: "0.5rem"}
+  const iconStyle = { margin: '0.5rem' }
 
   return (
     <IonMenu contentId="main" type="overlay">
@@ -75,17 +75,19 @@ const Menu: FC<Props> = ({logout}) => {
             return (
               <IonMenuToggle key={index} autoHide={false}>
                 <IonItem
-                  className={location.pathname.includes(appPage.url) ? "selected" : ""}
-                  style={{cursor: "pointer"}}
+                  className={location.pathname.includes(appPage.url) ? 'selected' : ''}
+                  style={{ cursor: 'pointer' }}
                   onClick={() => router.push(appPage.url)}
                 >
-                  <Icon style={iconStyle}/>
+                  <Icon style={iconStyle} />
                   <IonLabel>{appPage.title}</IonLabel>
                 </IonItem>
               </IonMenuToggle>
             )
           })}
-          <IonButton expand="block" onClick={logout}>Logout</IonButton>
+          <IonButton expand="block" onClick={logout}>
+            Logout
+          </IonButton>
         </IonList>
       </IonContent>
     </IonMenu>

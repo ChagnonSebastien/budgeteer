@@ -1,47 +1,47 @@
-import { IonInput } from "@ionic/react"
-import { FC } from "react"
+import { IonInput } from '@ionic/react'
+import { FC } from 'react'
 
 const validAmount = new RegExp(`^\\d*[.,]?\\d*$`)
-const NoError = "nil"
+const NoError = 'nil'
 
 const validateNumber = (value: string) => {
   if (!value) {
-    return "Amount is required"
+    return 'Amount is required'
   }
 
   if (!validAmount.test(value)) {
-    return "Invalid amount. Enter a number"
+    return 'Invalid amount. Enter a number'
   }
 
   return NoError
 }
 
 export interface NumberInputFieldState {
-  value: string,
+  value: string
   isValid: boolean
   hasVisited: boolean
   errorText: string
 }
 
 interface Props {
-  value: NumberInputFieldState,
+  value: NumberInputFieldState
 
-  setValue(updater: (prevState: NumberInputFieldState) => NumberInputFieldState): void,
+  setValue(updater: (prevState: NumberInputFieldState) => NumberInputFieldState): void
 
   label: string
 }
 
 export const NumberInput: FC<Props> = (props) => {
-  const {value, setValue, label} = props
+  const { value, setValue, label } = props
 
   const classNameFromStatus = (status: NumberInputFieldState) => {
-    return `${!status.isValid && "ion-invalid"} ${status.hasVisited && "ion-touched"}`
+    return `${!status.isValid && 'ion-invalid'} ${status.hasVisited && 'ion-touched'}`
   }
 
   const onInput = (newValue: string) => {
-    const sanitizedInput = `0${newValue.replace(",", ".")}`
+    const sanitizedInput = `0${newValue.replace(',', '.')}`
     const textError = validateNumber(sanitizedInput)
-    setValue(prevState => ({
+    setValue((prevState) => ({
       ...prevState,
       isValid: textError === NoError,
       errorText: textError,
@@ -49,16 +49,21 @@ export const NumberInput: FC<Props> = (props) => {
     }))
   }
 
-  return <IonInput type="text"
-                   label={label}
-                   labelPlacement="stacked"
-                   value={value.value}
-                   className={classNameFromStatus(value)}
-                   onIonInput={ev => onInput(ev.target.value as string)}
-                   errorText={value.errorText}
-                   onIonBlur={() => setValue(prevState => ({
-                     ...prevState,
-                     hasVisited: true,
-                   }))}
-  />
+  return (
+    <IonInput
+      type="text"
+      label={label}
+      labelPlacement="stacked"
+      value={value.value}
+      className={classNameFromStatus(value)}
+      onIonInput={(ev) => onInput(ev.target.value as string)}
+      errorText={value.errorText}
+      onIonBlur={() =>
+        setValue((prevState) => ({
+          ...prevState,
+          hasVisited: true,
+        }))
+      }
+    />
+  )
 }

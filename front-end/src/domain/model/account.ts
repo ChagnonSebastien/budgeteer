@@ -1,11 +1,10 @@
-import Unique from "./Unique"
+import Unique from './Unique'
 
 export class Balance {
   constructor(
     public readonly currencyId: number,
     public readonly value: number,
-  ) {
-  }
+  ) {}
 }
 
 export default class Account implements Unique {
@@ -14,6 +13,5 @@ export default class Account implements Unique {
     public readonly name: string,
     public readonly initialAmounts: Balance[],
     public readonly isMine: boolean,
-  ) {
-  }
+  ) {}
 }

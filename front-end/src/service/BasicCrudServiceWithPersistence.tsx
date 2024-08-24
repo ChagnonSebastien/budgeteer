@@ -1,13 +1,14 @@
-import { Context, Dispatch, FC, ReactNode, SetStateAction, useCallback, useState } from "react"
-import Unique from "../domain/model/Unique"
-import { BasicCrudService } from "./BasicCrudService"
+import { Context, Dispatch, FC, ReactNode, SetStateAction, useCallback, useState } from 'react'
+
+import { BasicCrudService } from './BasicCrudService'
+import Unique from '../domain/model/Unique'
 
 interface Store<T extends Unique> {
   getAll(): Promise<T[]>
 
-  create(data: Omit<T, "id">): Promise<T>
+  create(data: Omit<T, 'id'>): Promise<T>
 
-  update(id: number, data: Partial<Omit<T, "id">>): Promise<void>
+  update(id: number, data: Partial<Omit<T, 'id'>>): Promise<void>
 }
 
 export interface AugmenterProps<T extends Unique, A> {
@@ -28,27 +29,30 @@ interface Props<T extends Unique, A> {
 }
 
 export const BasicCrudServiceWithPersistence = <T extends Unique, A>(props: Props<T, A>) => {
-  const {initialState, children, context, longTermStore, sorter, Augmenter} = props
+  const { initialState, children, context, longTermStore, sorter, Augmenter } = props
 
   const [state, setState] = useState<T[]>(initialState.sort(sorter ?? ((_a: T, _b: T) => 0)))
 
-  const create = useCallback(async (data: Omit<T, "id">): Promise<T> => {
+  const create = useCallback(async (data: Omit<T, 'id'>): Promise<T> => {
     const newItem = await longTermStore.create(data)
 
-    setState(prevState => ([...prevState, newItem].sort(sorter ?? ((_a: T, _b: T) => 0))))
+    setState((prevState) => [...prevState, newItem].sort(sorter ?? ((_a: T, _b: T) => 0)))
     return newItem
   }, [])
 
-  const update = useCallback(async (id: number, data: Partial<Omit<T, "id">>): Promise<void> => {
+  const update = useCallback(async (id: number, data: Partial<Omit<T, 'id'>>): Promise<void> => {
     await longTermStore.update(id, data)
-    setState(prevState => (prevState.map(c => c.id === id ? {...c, ...data} : c).sort(sorter ?? ((_a: T, _b: T) => 0))))
+    setState((prevState) =>
+      prevState.map((c) => (c.id === id ? { ...c, ...data } : c)).sort(sorter ?? ((_a: T, _b: T) => 0)),
+    )
   }, [])
 
   return (
-    <Augmenter state={state} setState={setState} longTermStore={longTermStore} augment={(b) => (
-      <context.Provider value={{state, create, update, ...b}}>
-        {children}
-      </context.Provider>
-    )}/>
+    <Augmenter
+      state={state}
+      setState={setState}
+      longTermStore={longTermStore}
+      augment={(b) => <context.Provider value={{ state, create, update, ...b }}>{children}</context.Provider>}
+    />
   )
 }

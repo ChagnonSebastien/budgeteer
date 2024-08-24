@@ -1,5 +1,6 @@
 import {
-  IonBackButton, IonButton,
+  IonBackButton,
+  IonButton,
   IonButtons,
   IonContent,
   IonHeader,
@@ -7,27 +8,27 @@ import {
   IonSearchbar,
   IonTitle,
   IonToolbar,
-} from "@ionic/react"
-import { FC, ReactNode } from "react"
+} from '@ionic/react'
+import { FC, ReactNode } from 'react'
 
 interface Props {
-  children: ReactNode | ReactNode[],
-  title: string,
-  button: "menu" | "return" | "none",
-  onSearch?: (query: string) => void,
-  onCancel?: () => void,
+  children: ReactNode | ReactNode[]
+  title: string
+  button: 'menu' | 'return' | 'none'
+  onSearch?: (query: string) => void
+  onCancel?: () => void
   segments?: JSX.Element
 }
 
 const ContentWithHeader: FC<Props> = (props) => {
-  const {title, children, button: buttonOption, onSearch, onCancel, segments} = props
+  const { title, children, button: buttonOption, onSearch, onCancel, segments } = props
   let button = null
   switch (buttonOption) {
-    case "return":
-      button = <IonBackButton/>
+    case 'return':
+      button = <IonBackButton />
       break
-    case "menu":
-      button = <IonMenuButton/>
+    case 'menu':
+      button = <IonMenuButton />
       break
   }
 
@@ -35,30 +36,24 @@ const ContentWithHeader: FC<Props> = (props) => {
     <>
       <IonHeader translucent>
         <IonToolbar>
-          {buttonOption !== "none" && (
+          {buttonOption !== 'none' && (
             <IonButtons collapse slot="start">
               {button}
             </IonButtons>
           )}
-          {typeof onCancel !== "undefined" && (
+          {typeof onCancel !== 'undefined' && (
             <IonButtons collapse slot="start">
-              <IonButton onClick={onCancel}>
-                Cancel
-              </IonButton>
+              <IonButton onClick={onCancel}>Cancel</IonButton>
             </IonButtons>
           )}
           <IonTitle>{title}</IonTitle>
         </IonToolbar>
-        {typeof onSearch !== "undefined" && (
+        {typeof onSearch !== 'undefined' && (
           <IonToolbar>
-            <IonSearchbar onIonInput={(event) => onSearch(event.target.value ?? "")}/>
+            <IonSearchbar onIonInput={(event) => onSearch(event.target.value ?? '')} />
           </IonToolbar>
         )}
-        {typeof segments !== "undefined" && (
-          <IonToolbar>
-            {segments}
-          </IonToolbar>
-        )}
+        {typeof segments !== 'undefined' && <IonToolbar>{segments}</IonToolbar>}
       </IonHeader>
 
       <IonContent fullscreen fixedSlotPlacement="before">
@@ -72,7 +67,6 @@ const ContentWithHeader: FC<Props> = (props) => {
         </IonHeader>
 
         {children}
-
       </IonContent>
     </>
   )

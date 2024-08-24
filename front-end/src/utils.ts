@@ -1,7 +1,5 @@
-export function doNothing(..._params: any) {
+export function doNothing(..._params: never) {}
 
-}
-
-export function notImplemented(..._params: any) {
-  throw new Error("Not implemented")
+export function notImplemented(..._params: never) {
+  throw new Error('Not implemented')
 }

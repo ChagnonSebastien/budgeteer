@@ -1,11 +1,12 @@
-import { createContext, FC, useContext, useMemo } from "react"
-import { AugmentedTransaction } from "../domain/model/transaction"
+import { createContext, FC, useContext, useMemo } from 'react'
+
 import {
   AccountServiceContext,
   CategoryServiceContext,
   CurrencyServiceContext,
   TransactionServiceContext,
-} from "./ServiceContext"
+} from './ServiceContext'
+import { AugmentedTransaction } from '../domain/model/transaction'
 
 type CurrencyAmounts = Map<number, number>
 type AccountBalances = Map<number, CurrencyAmounts>
@@ -24,12 +25,11 @@ export interface Props {
   children: JSX.Element
 }
 
-export const MixedAugmentationProvider: FC<Props> = ({children}) => {
-
-  const {state: transactions} = useContext(TransactionServiceContext)
-  const {state: currencies} = useContext(CurrencyServiceContext)
-  const {state: categories} = useContext(CategoryServiceContext)
-  const {state: accounts} = useContext(AccountServiceContext)
+export const MixedAugmentationProvider: FC<Props> = ({ children }) => {
+  const { state: transactions } = useContext(TransactionServiceContext)
+  const { state: currencies } = useContext(CurrencyServiceContext)
+  const { state: categories } = useContext(CategoryServiceContext)
+  const { state: accounts } = useContext(AccountServiceContext)
 
   const accountBalances = useMemo(() => {
     const accountAmounts = new Map<number, Map<number, number>>()
@@ -67,18 +67,18 @@ export const MixedAugmentationProvider: FC<Props> = ({children}) => {
   }, [accounts, transactions])
 
   const augmentedTransactions = useMemo<AugmentedTransaction[]>(() => {
-    return transactions.map<AugmentedTransaction>(transaction => ({
+    return transactions.map<AugmentedTransaction>((transaction) => ({
       ...transaction,
-      category: categories.find(c => c.id === transaction.categoryId),
-      currency: currencies.find(c => c.id === transaction.currencyId)!,
-      sender: accounts.find(c => c.id === transaction.senderId),
-      receiver: accounts.find(c => c.id === transaction.receiverId),
-      receiverCurrency: currencies.find(c => c.id === transaction.receiverCurrencyId)!,
+      category: categories.find((c) => c.id === transaction.categoryId),
+      currency: currencies.find((c) => c.id === transaction.currencyId)!,
+      sender: accounts.find((c) => c.id === transaction.senderId),
+      receiver: accounts.find((c) => c.id === transaction.receiverId),
+      receiverCurrency: currencies.find((c) => c.id === transaction.receiverCurrencyId)!,
     }))
   }, [transactions, currencies, categories, accounts])
 
   return (
-    <MixedAugmentation.Provider value={{accountBalances, augmentedTransactions}}>
+    <MixedAugmentation.Provider value={{ accountBalances, augmentedTransactions }}>
       {children}
     </MixedAugmentation.Provider>
   )

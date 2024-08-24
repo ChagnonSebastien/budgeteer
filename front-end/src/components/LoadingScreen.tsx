@@ -1,11 +1,9 @@
-import {
-  IonSpinner,
-} from "@ionic/react"
-import { FC } from "react"
+import { IonSpinner } from '@ionic/react'
+import { FC } from 'react'
 
 const LoadingScreen: FC = () => (
   <div className="centered">
-    <IonSpinner/>
+    <IonSpinner />
   </div>
 )
 

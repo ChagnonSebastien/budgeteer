@@ -1,26 +1,24 @@
-import {
-  IonButton,
-  IonPage,
-} from "@ionic/react"
-import { ChangeEventHandler, FC, useContext, useRef } from "react"
-import { parse as papaparse } from "papaparse"
-import ContentWithHeader from "../components/ContentWithHeader"
-import Account from "../domain/model/account"
-import Transaction from "../domain/model/transaction"
+import { IonButton, IonPage } from '@ionic/react'
+import { parse as papaparse } from 'papaparse'
+import { ChangeEventHandler, FC, useContext, useRef } from 'react'
+
+import ContentWithHeader from '../components/ContentWithHeader'
+import Account from '../domain/model/account'
+import Transaction from '../domain/model/transaction'
 import {
   AccountServiceContext,
   CategoryServiceContext,
   CurrencyServiceContext,
   TransactionServiceContext,
-} from "../service/ServiceContext"
+} from '../service/ServiceContext'
 
 const ImportSpreadsheet: FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const {state: categories, create: createCategory, root: rootCategory} = useContext(CategoryServiceContext)
-  const {state: currencies, create: createCurrency} = useContext(CurrencyServiceContext)
-  const {state: accounts, create: createAccount} = useContext(AccountServiceContext)
-  const {create: createTransaction} = useContext(TransactionServiceContext)
+  const { state: categories, create: createCategory, root: rootCategory } = useContext(CategoryServiceContext)
+  const { state: currencies, create: createCurrency } = useContext(CurrencyServiceContext)
+  const { state: accounts, create: createAccount } = useContext(AccountServiceContext)
+  const { create: createTransaction } = useContext(TransactionServiceContext)
 
   const handleButtonClick = () => {
     fileInputRef.current?.click()
@@ -39,16 +37,15 @@ const ImportSpreadsheet: FC = () => {
         header: true,
         complete: async (results: {
           data: {
-            Account: string,
-            Category: string,
-            Currency: string,
-            Date: string,
-            "From/To": string,
-            Notes: string,
-            Value: string,
+            Account: string
+            Category: string
+            Currency: string
+            Date: string
+            'From/To': string
+            Notes: string
+            Value: string
           }[]
         }) => {
-
           const newCurrencies = [...currencies]
           const newCategories = [...categories]
           const newAccounts = [...accounts]
@@ -60,10 +57,10 @@ const ImportSpreadsheet: FC = () => {
               break
             }
 
-            let currency = newCurrencies.find(c => c.symbol === line.Currency)
-            if (typeof currency === "undefined") {
+            let currency = newCurrencies.find((c) => c.symbol === line.Currency)
+            if (typeof currency === 'undefined') {
               currency = await createCurrency({
-                name: "Canadian Dollar",
+                name: 'Canadian Dollar',
                 symbol: line.Currency,
                 decimalPoints: 2,
                 exchangeRates: {},
@@ -71,20 +68,23 @@ const ImportSpreadsheet: FC = () => {
               newCurrencies.push(currency)
             }
 
-            let category = newCategories.find(c => c.name === line.Category)
-            if (typeof category === "undefined" && !(line.Category === "Transfer between accounts" || line.Category === "Credit card bill")) {
+            let category = newCategories.find((c) => c.name === line.Category)
+            if (
+              typeof category === 'undefined' &&
+              !(line.Category === 'Transfer between accounts' || line.Category === 'Credit card bill')
+            ) {
               category = await createCategory({
                 name: line.Category,
                 parentId: rootCategory.id,
-                iconName: "BsQuestionLg",
-                iconColor: "#2F4F4F",
-                iconBackground: "rgb(255, 165, 0)",
+                iconName: 'BsQuestionLg',
+                iconColor: '#2F4F4F',
+                iconBackground: 'rgb(255, 165, 0)',
               })
               newCategories.push(category)
             }
 
-            let account = newAccounts.find(a => a.name === line.Account)
-            if (typeof account === "undefined") {
+            let account = newAccounts.find((a) => a.name === line.Account)
+            if (typeof account === 'undefined') {
               account = await createAccount({
                 name: line.Account,
                 initialAmounts: [],
@@ -94,11 +94,11 @@ const ImportSpreadsheet: FC = () => {
             }
 
             let fromto: Account | undefined
-            if (line["From/To"] != "") {
-              fromto = newAccounts.find(a => a.name === line["From/To"])
-              if (typeof fromto === "undefined") {
+            if (line['From/To'] != '') {
+              fromto = newAccounts.find((a) => a.name === line['From/To'])
+              if (typeof fromto === 'undefined') {
                 fromto = await createAccount({
-                  name: line["From/To"],
+                  name: line['From/To'],
                   initialAmounts: [],
                   isMine: false,
                 })
@@ -106,9 +106,9 @@ const ImportSpreadsheet: FC = () => {
               }
             }
 
-            let amount = Number.parseInt(line.Value.replace(".", ""))
-            let date = new Date(line.Date)
-            let note = line.Notes
+            const amount = Number.parseInt(line.Value.replace('.', ''))
+            const date = new Date(line.Date)
+            const note = line.Notes
 
             let sender: Account | undefined
             let receiver: Account | undefined
@@ -120,25 +120,27 @@ const ImportSpreadsheet: FC = () => {
               receiver = account
             }
 
-            transactionPromises.push(createTransaction({
-              amount: Math.abs(amount),
-              receiverAmount: Math.abs(amount),
-              currencyId: currency.id,
-              receiverCurrencyId: currency.id,
-              categoryId: category?.id ?? null,
-              date,
-              senderId: sender?.id ?? null,
-              receiverId: receiver?.id ?? null,
-              note,
-            }))
+            transactionPromises.push(
+              createTransaction({
+                amount: Math.abs(amount),
+                receiverAmount: Math.abs(amount),
+                currencyId: currency.id,
+                receiverCurrencyId: currency.id,
+                categoryId: category?.id ?? null,
+                date,
+                senderId: sender?.id ?? null,
+                receiverId: receiver?.id ?? null,
+                note,
+              }),
+            )
 
-            if (typeof category === "undefined") {
+            if (typeof category === 'undefined') {
               i++
             }
           }
         },
         error: (error) => {
-          console.error("Error parsing CSV:", error)
+          console.error('Error parsing CSV:', error)
         },
       })
     }
@@ -147,14 +149,10 @@ const ImportSpreadsheet: FC = () => {
   return (
     <IonPage>
       <ContentWithHeader title="Import Spreadsheet" button="return">
-        <IonButton expand="block" onClick={handleButtonClick}>Upload CSV</IonButton>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept=".csv"
-          onChange={handleFileChange}
-          style={{display: "none"}}
-        />
+        <IonButton expand="block" onClick={handleButtonClick}>
+          Upload CSV
+        </IonButton>
+        <input ref={fileInputRef} type="file" accept=".csv" onChange={handleFileChange} style={{ display: 'none' }} />
       </ContentWithHeader>
     </IonPage>
   )

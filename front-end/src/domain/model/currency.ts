@@ -1,12 +1,11 @@
-import Unique from "./Unique"
+import Unique from './Unique'
 
 export class ExchangeRate implements Unique {
   constructor(
     public readonly id: number,
     public readonly rate: number,
     public readonly date: string,
-  ) {
-  }
+  ) {}
 }
 
 export default class Currency implements Unique {
@@ -15,7 +14,6 @@ export default class Currency implements Unique {
     public readonly name: string,
     public readonly symbol: string,
     public readonly decimalPoints: number,
-    public readonly exchangeRates: {[comparedTo: number]: ExchangeRate[]},
-  ) {
-  }
+    public readonly exchangeRates: { [comparedTo: number]: ExchangeRate[] },
+  ) {}
 }
