@@ -30,9 +30,8 @@ const NoError = "nil"
 const CurrencyForm: FC<Props> = (props) => {
   const {initialCurrency, onSubmit, submitText} = props
 
-  const {state: currencies} = useContext(CurrencyServiceContext)
+  const {state: currencies, defaultCurrency} = useContext(CurrencyServiceContext)
   const {default_currency: defaultCurrencyId} = useContext(UserContext)
-  const defaultCurrency = useMemo(() => currencies.find(c => c.id === defaultCurrencyId), [currencies, defaultCurrencyId])
 
   const [name, setName] = useState(initialCurrency?.name ?? "")
   const [symbol, setSymbol] = useState(initialCurrency?.symbol ?? "")

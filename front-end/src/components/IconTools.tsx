@@ -14,7 +14,7 @@ type IconTools = {
   iconTypeFromName(iconName: string): IconType,
 }
 
-const useIconTools = (): IconTools => {
+export const useIconTools = (): IconTools => {
   const [iconLibraries, setIconLibraries] = useState<IconLibraries>(new Map())
 
   useEffect(() => {
@@ -69,14 +69,3 @@ export const IconToolsContext = createContext<IconTools>({
     return () => <div/>
   },
 })
-
-export const withItemTools = (Component: FC): FC => {
-  return () => {
-    const iconTools = useIconTools()
-    return (
-      <IconToolsContext.Provider value={iconTools}>
-        <Component/>
-      </IconToolsContext.Provider>
-    )
-  }
-}

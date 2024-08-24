@@ -4,7 +4,7 @@ import {
   setupIonicReact,
 } from "@ionic/react"
 import { createContext, FC, lazy } from "react"
-import { withItemTools } from "./components/IconTools"
+import { IconToolsContext, useIconTools } from "./components/IconTools"
 import LoadingScreen from "./components/LoadingScreen"
 import User from "./domain/model/user"
 import useAuthentication from "./useAuthentication"
@@ -56,14 +56,18 @@ const AuthenticatedZone = lazy(() => import("./AuthenticatedZone"))
 const App: FC = () => {
   const {user, synced, hasInternet, authMethods, logout, setDefaultCurrency} = useAuthentication()
 
+  const iconTools = useIconTools()
+
   if (user !== null) {
     if (!hasInternet || synced) {
       return (
         <IonApp>
-          <UserContext.Provider value={user}>
-            <AuthenticatedZone logout={logout}
-                               setDefaultCurrency={setDefaultCurrency}/>
-          </UserContext.Provider>
+          <IconToolsContext.Provider value={iconTools}>
+            <UserContext.Provider value={user}>
+              <AuthenticatedZone logout={logout}
+                                 setDefaultCurrency={setDefaultCurrency}/>
+            </UserContext.Provider>
+          </IconToolsContext.Provider>
         </IonApp>
       )
     } else {
@@ -92,4 +96,4 @@ const App: FC = () => {
   )
 }
 
-export default withItemTools(App)
+export default App

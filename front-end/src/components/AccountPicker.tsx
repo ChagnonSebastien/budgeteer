@@ -16,10 +16,10 @@ interface Props {
 
 const AccountPicker: FC<Props> = (props) => {
   const {selectedAccountId, setSelectedAccountId, labelText, style, errorText, myOwn} = props
-  const {state: rawAccounts} = useContext(AccountServiceContext)
+  const {myOwnAccounts, otherAccounts} = useContext(AccountServiceContext)
   const accounts = useMemo(() => {
-    return rawAccounts.filter(a => a.isMine === myOwn)
-  }, [rawAccounts, myOwn])
+    return myOwn ? myOwnAccounts : otherAccounts
+  }, [myOwn, myOwnAccounts, otherAccounts])
   const selectedAccount = useMemo(() => accounts.find(a => a.id === selectedAccountId), [accounts, selectedAccountId])
 
   const [showModal, setShowModal] = useState(false)

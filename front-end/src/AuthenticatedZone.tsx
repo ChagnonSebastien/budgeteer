@@ -28,7 +28,9 @@ import EditCurrencyPage from "./pages/EditCurrencyPage"
 import EditTransactionPage from "./pages/EditTransactionPage"
 import ImportSpreadsheet from "./pages/ImportSpreadsheet"
 import TransactionPage from "./pages/TransactionPage"
+import { AccountPersistenceAugmenter } from "./service/AccountServiceAugmenter"
 import { CurrencyPersistenceAugmenter } from "./service/CurrencyServiceAugmenter"
+import { MixedAugmentationProvider } from "./service/MixedAugmentation"
 import AccountRemoteStore from "./store/remote/AccountRemoteStore"
 import { CategoryPersistenceAugmenter } from "./service/CategoryServiceAugmenter"
 import CategoryRemoteStore from "./store/remote/CategoryRemoteStore"
@@ -119,7 +121,7 @@ const AuthenticatedZone: FC<Props> = (props) => {
           initialState={accounts}
           longTermStore={accountRepository}
           context={AccountServiceContext}
-          Augmenter={NilPersistenceAugmenter}
+          Augmenter={AccountPersistenceAugmenter}
         >
           <BasicCrudServiceWithPersistence
             initialState={transactions}
@@ -128,30 +130,32 @@ const AuthenticatedZone: FC<Props> = (props) => {
             Augmenter={NilPersistenceAugmenter}
             sorter={(a, b) => b.date.getTime() - a.date.getTime()}
           >
-            <IonReactRouter>
-              <IonSplitPane contentId="main">
-                <Menu logout={logout}/>
+            <MixedAugmentationProvider>
+              <IonReactRouter>
+                <IonSplitPane contentId="main">
+                  <Menu logout={logout}/>
 
-                <IonRouterOutlet id="main">
-                  <Switch>
-                    <Route exact path="/currencies" render={() => <CurrenciesPage/>}/>
-                    <Route exact path="/currencies/new" render={() => <CreateCurrencyPage/>}/>
-                    <Route exact path="/currencies/edit/:currencyId" render={() => <EditCurrencyPage/>}/>
-                    <Route exact path="/categories" render={() => <CategoryPage/>}/>
-                    <Route exact path="/categories/new" render={() => <CreateCategoryPage/>}/>
-                    <Route exact path="/categories/edit/:categoryId" render={() => <EditCategoryPage/>}/>
-                    <Route exact path="/accounts" render={() => <AccountsPage/>}/>
-                    <Route exact path="/accounts/new" render={() => <CreateAccountPage/>}/>
-                    <Route exact path="/accounts/edit/:accountId" render={() => <EditAccountPage/>}/>
-                    <Route exact path="/transactions" render={() => <TransactionPage/>}/>
-                    <Route exact path="/transactions/new" render={() => <CreateTransactionPage/>}/>
-                    <Route exact path="/transactions/edit/:transactionId" render={() => <EditTransactionPage/>}/>
-                    <Route exact path="/import" render={() => <ImportSpreadsheet/>}/>
-                    <Route render={() => (<Redirect to="/transactions"/>)}/>
-                  </Switch>
-                </IonRouterOutlet>
-              </IonSplitPane>
-            </IonReactRouter>
+                  <IonRouterOutlet id="main">
+                    <Switch>
+                      <Route exact path="/currencies" render={() => <CurrenciesPage/>}/>
+                      <Route exact path="/currencies/new" render={() => <CreateCurrencyPage/>}/>
+                      <Route exact path="/currencies/edit/:currencyId" render={() => <EditCurrencyPage/>}/>
+                      <Route exact path="/categories" render={() => <CategoryPage/>}/>
+                      <Route exact path="/categories/new" render={() => <CreateCategoryPage/>}/>
+                      <Route exact path="/categories/edit/:categoryId" render={() => <EditCategoryPage/>}/>
+                      <Route exact path="/accounts" render={() => <AccountsPage/>}/>
+                      <Route exact path="/accounts/new" render={() => <CreateAccountPage/>}/>
+                      <Route exact path="/accounts/edit/:accountId" render={() => <EditAccountPage/>}/>
+                      <Route exact path="/transactions" render={() => <TransactionPage/>}/>
+                      <Route exact path="/transactions/new" render={() => <CreateTransactionPage/>}/>
+                      <Route exact path="/transactions/edit/:transactionId" render={() => <EditTransactionPage/>}/>
+                      <Route exact path="/import" render={() => <ImportSpreadsheet/>}/>
+                      <Route render={() => (<Redirect to="/transactions"/>)}/>
+                    </Switch>
+                  </IonRouterOutlet>
+                </IonSplitPane>
+              </IonReactRouter>
+            </MixedAugmentationProvider>
           </BasicCrudServiceWithPersistence>
         </BasicCrudServiceWithPersistence>
       </BasicCrudServiceWithPersistence>

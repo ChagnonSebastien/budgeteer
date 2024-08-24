@@ -4,8 +4,10 @@ import Category from "../domain/model/category"
 import Currency from "../domain/model/currency"
 import Transaction from "../domain/model/transaction"
 import Unique from "../domain/model/Unique"
+import { AccountPersistenceAugmentation } from "./AccountServiceAugmenter"
 import { BasicCrudService } from "./BasicCrudService"
 import { CategoryPersistenceAugmentation } from "./CategoryServiceAugmenter"
+import { CurrencyPersistenceAugmentation } from "./CurrencyServiceAugmenter"
 
 const nilPersistence = {
   state: [],
@@ -18,9 +20,21 @@ const nilPersistence = {
   get root(): Category {
     throw new Error("root is not implemented")
   },
+  get subCategories(): {[parent: number]: Category[]} {
+    throw new Error("subCategories is not implemented")
+  },
+  get myOwnAccounts(): Account[] {
+    throw new Error("myOwnAccounts is not implemented")
+  },
+  get otherAccounts(): Account[] {
+    throw new Error("otherAccounts is not implemented")
+  },
+  get defaultCurrency(): Currency {
+    throw new Error("defaultCurrency is not implemented")
+  },
 }
 
 export const CategoryServiceContext = createContext<BasicCrudService<Category> & CategoryPersistenceAugmentation>(nilPersistence)
-export const CurrencyServiceContext = createContext<BasicCrudService<Currency>>(nilPersistence)
-export const AccountServiceContext = createContext<BasicCrudService<Account>>(nilPersistence)
+export const CurrencyServiceContext = createContext<BasicCrudService<Currency> & CurrencyPersistenceAugmentation>(nilPersistence)
+export const AccountServiceContext = createContext<BasicCrudService<Account> & AccountPersistenceAugmentation>(nilPersistence)
 export const TransactionServiceContext = createContext<BasicCrudService<Transaction>>(nilPersistence)

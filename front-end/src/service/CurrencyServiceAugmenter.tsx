@@ -1,13 +1,17 @@
-import { FC, useCallback, useMemo } from "react"
+import { FC, useCallback, useContext, useMemo } from "react"
+import { UserContext } from "../App"
 import Currency, { ExchangeRate } from "../domain/model/currency"
 import { AugmenterProps } from "./BasicCrudServiceWithPersistence"
 
 export interface CurrencyPersistenceAugmentation {
   create(data: Omit<Currency, "id">): Promise<Currency>
+
+  defaultCurrency: Currency
 }
 
 export const CurrencyPersistenceAugmenter: FC<AugmenterProps<Currency, CurrencyPersistenceAugmentation>> = (props) => {
-  const {augment, setState, longTermStore, sorter} = props
+  const {augment, setState, longTermStore, sorter, state} = props
+  const {default_currency} = useContext(UserContext)
 
   const create = useCallback(async (data: Omit<Currency, "id">): Promise<Currency> => {
     const newItem = await longTermStore.create(data)
@@ -33,5 +37,7 @@ export const CurrencyPersistenceAugmenter: FC<AugmenterProps<Currency, CurrencyP
     return newItem
   }, [])
 
-  return augment({create})
+  const defaultCurrency = useMemo(() => state.find(c => c.id === default_currency)!, [state])
+
+  return augment({create, defaultCurrency})
 }

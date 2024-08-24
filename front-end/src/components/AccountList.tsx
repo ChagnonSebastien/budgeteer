@@ -1,16 +1,18 @@
 import { IonItem } from "@ionic/react"
 import { useContext } from "react"
 import Account from "../domain/model/account"
+import MixedAugmentation from "../service/MixedAugmentation"
 import { CurrencyServiceContext } from "../service/ServiceContext"
 
 interface Props {
   accounts: Account[],
   onSelect: (value: number) => void,
-  valuePerAccount?: Map<number, Map<number, number>>
+  showBalances?: boolean,
 }
 
 export const AccountList = (props: Props) => {
-  const {accounts, onSelect, valuePerAccount} = props
+  const {accounts, onSelect, showBalances = false} = props
+  const {accountBalances} = useContext(MixedAugmentation)
 
   const {state: currencies} = useContext(CurrencyServiceContext)
 
@@ -23,7 +25,7 @@ export const AccountList = (props: Props) => {
               <div>
                 {account.name}
               </div>
-              {[...(valuePerAccount?.get(account.id)?.entries() ?? [])].map((entry) => {
+              {showBalances && [...(accountBalances?.get(account.id)?.entries() ?? [])].map((entry) => {
                 const currency = currencies.find(c => c.id === entry[0])
                 return (
                   <div key={`currency-in-account-${entry[0]}`} style={{textAlign: "right"}}>

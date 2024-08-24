@@ -1,6 +1,8 @@
 import { IonItem, IonLoading } from "@ionic/react"
-import { Fragment, useMemo } from "react"
+import { Fragment, useContext, useMemo } from "react"
 import Category from "../domain/model/category"
+import { CategoryServiceContext } from "../service/ServiceContext"
+import { doNothing } from "../utils"
 import IconCapsule from "./IconCapsule"
 
 interface Props {
@@ -10,18 +12,7 @@ interface Props {
 
 export const CategoryList = (props: Props) => {
   const {categories, onSelect} = props
-
-  const roots = useMemo(() => (categories?.filter(c => c.parentId === null) ?? []), [categories])
-
-  const hierarchy = useMemo(() => {
-    return categories?.reduce<{[parent: number]: Category[]}>((tree, c) => {
-      if (c.parentId === null) return tree
-      return {
-        ...tree,
-        [c.parentId]: [...(tree[c.parentId] ?? []), c],
-      }
-    }, {}) ?? {}
-  }, [categories])
+  const {root, subCategories} = useContext(CategoryServiceContext)
 
   if (!categories) {
     return <IonLoading/>
@@ -44,18 +35,10 @@ export const CategoryList = (props: Props) => {
             <p>{category.name}</p>
           </div>
         </IonItem>
-        {hierarchy[category.id]?.map(c => renderCategory(c, onSelect, depth + 1))}
+        {subCategories[category.id]?.map(c => renderCategory(c, onSelect, depth + 1))}
       </Fragment>
     )
   }
 
-  return (
-    <>
-      {roots.map(category => renderCategory(
-        category,
-        onSelect ?? (_ => {
-        }),
-        0))}
-    </>
-  )
+  return renderCategory(root, onSelect ?? doNothing, 0)
 }

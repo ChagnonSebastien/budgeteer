@@ -4,6 +4,7 @@ import { AugmenterProps } from "./BasicCrudServiceWithPersistence"
 
 export interface CategoryPersistenceAugmentation {
   readonly root: Category
+  readonly subCategories: {[parent: number]: Category[]}
 }
 
 export const CategoryPersistenceAugmenter: FC<AugmenterProps<Category, CategoryPersistenceAugmentation>> = (props) => {
@@ -11,5 +12,15 @@ export const CategoryPersistenceAugmenter: FC<AugmenterProps<Category, CategoryP
 
   const root = useMemo(() => state.find(c => c.parentId === null)!, [state])
 
-  return augment({root})
+  const subCategories = useMemo(() => {
+    return state?.reduce<{[parent: number]: Category[]}>((tree, c) => {
+      if (c.parentId === null) return tree
+      return {
+        ...tree,
+        [c.parentId]: [...(tree[c.parentId] ?? []), c],
+      }
+    }, {}) ?? {}
+  }, [state])
+
+  return augment({root, subCategories})
 }
