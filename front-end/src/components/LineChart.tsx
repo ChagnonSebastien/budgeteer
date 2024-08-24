@@ -15,9 +15,11 @@ import {
   subWeeks,
   subYears,
 } from 'date-fns'
-import { FC, useMemo } from 'react'
+import { FC, useContext, useMemo } from 'react'
 
+import { formatAmount, formatFull } from '../domain/model/currency'
 import { AugmentedTransaction } from '../domain/model/transaction'
+import { CurrencyServiceContext } from '../service/ServiceContext'
 
 interface Props {
   augmentedTransactions: AugmentedTransaction[]
@@ -25,6 +27,8 @@ interface Props {
 
 const TransactionsLineChart: FC<Props> = (props) => {
   const { augmentedTransactions } = props
+
+  const { defaultCurrency } = useContext(CurrencyServiceContext)
 
   const stream = useMemo(() => {
     const today = new Date()
@@ -71,13 +75,10 @@ const TransactionsLineChart: FC<Props> = (props) => {
 
       while (i >= 0 && (isBefore(augmentedTransactions[i].date, upTo) || isSameDay(today, upTo))) {
         if (augmentedTransactions[i].sender?.isMine ?? false) {
-          data[data.length - 1].Total -=
-            augmentedTransactions[i].amount / Math.pow(10, augmentedTransactions[i].currency.decimalPoints)
+          data[data.length - 1].Total -= augmentedTransactions[i].amount
         }
         if (augmentedTransactions[i].receiver?.isMine ?? false) {
-          data[data.length - 1].Total +=
-            augmentedTransactions[i].receiverAmount /
-            Math.pow(10, augmentedTransactions[i].receiverCurrency.decimalPoints)
+          data[data.length - 1].Total += augmentedTransactions[i].receiverAmount
         }
         i -= 1
       }
@@ -88,11 +89,14 @@ const TransactionsLineChart: FC<Props> = (props) => {
         <ResponsiveStream
           data={data}
           keys={['Total']}
-          valueFormat=" >($.2f"
+          valueFormat={(value) => `${formatFull(defaultCurrency, value)}`}
           margin={{ top: 20, right: 20, bottom: 100, left: 80 }}
           axisBottom={{
             format: (i) => (i % showLabelEveryFactor === 0 ? formatDate(keys[i], 'MMM d, yyyy') : ''),
             tickRotation: -45,
+          }}
+          axisLeft={{
+            format: (i) => `${formatAmount(defaultCurrency, i)}`,
           }}
           curve="linear"
           offsetType="diverging"
@@ -123,7 +127,7 @@ const TransactionsLineChart: FC<Props> = (props) => {
         />
       </div>
     )
-  }, [augmentedTransactions])
+  }, [augmentedTransactions, defaultCurrency])
 
   return <>{stream}</>
 }

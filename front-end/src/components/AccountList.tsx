@@ -2,6 +2,7 @@ import { IonItem } from '@ionic/react'
 import { useContext } from 'react'
 
 import Account from '../domain/model/account'
+import { formatFull } from '../domain/model/currency'
 import MixedAugmentation from '../service/MixedAugmentation'
 import { CurrencyServiceContext } from '../service/ServiceContext'
 
@@ -27,9 +28,13 @@ export const AccountList = (props: Props) => {
               {showBalances &&
                 [...(accountBalances?.get(account.id)?.entries() ?? [])].map((entry) => {
                   const currency = currencies.find((c) => c.id === entry[0])
+                  if (typeof currency === 'undefined') {
+                    return null
+                  }
+
                   return (
                     <div key={`currency-in-account-${entry[0]}`} style={{ textAlign: 'right' }}>
-                      {entry[1] / Math.pow(10, currency?.decimalPoints ?? 2)} {currency?.symbol ?? entry[0]}
+                      {formatFull(currency, entry[1])}
                     </div>
                   )
                 })}

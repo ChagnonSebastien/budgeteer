@@ -17,3 +17,20 @@ export default class Currency implements Unique {
     public readonly exchangeRates: { [comparedTo: number]: ExchangeRate[] },
   ) {}
 }
+
+export function formatFull(currency: Currency, rawValue: number): string {
+  const formatted = `${Math.abs(formatAmount(currency, rawValue))} ${currency.symbol}`
+
+  if (rawValue < 0) {
+    return `(${formatted})`
+  }
+  return formatted
+}
+
+export function formatAmount(currency: Currency, rawValue: number): number {
+  return rawValue / Math.pow(10, currency.decimalPoints)
+}
+
+export function parseAmount(currency: Currency, rawValue: string): number {
+  return parseFloat(rawValue) * Math.pow(10, currency.decimalPoints)
+}

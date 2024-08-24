@@ -5,6 +5,7 @@ import { useParams } from 'react-router'
 import ContentWithHeader from '../components/ContentWithHeader'
 import TransactionForm from '../components/TransactionForm'
 import Transaction from '../domain/model/transaction'
+import MixedAugmentation from '../service/MixedAugmentation'
 import { TransactionServiceContext } from '../service/ServiceContext'
 
 interface Params {
@@ -15,10 +16,11 @@ const EditTransactionPage: FC = () => {
   const router = useIonRouter()
 
   const { transactionId } = useParams<Params>()
-  const { state: transactions, update: updateTransaction } = useContext(TransactionServiceContext)
+  const { update: updateTransaction } = useContext(TransactionServiceContext)
+  const { augmentedTransactions } = useContext(MixedAugmentation)
   const selectedTransaction = useMemo(
-    () => transactions.find((t) => t.id === parseInt(transactionId)),
-    [transactions, transactionId],
+    () => augmentedTransactions.find((t) => t.id === parseInt(transactionId)),
+    [augmentedTransactions, transactionId],
   )
 
   const onSubmit = useCallback(

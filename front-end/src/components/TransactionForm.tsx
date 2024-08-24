@@ -8,8 +8,9 @@ import ContentWithHeader from './ContentWithHeader'
 import CurrencyPicker from './CurrencyPicker'
 import IconCapsule from './IconCapsule'
 import { UserContext } from '../App'
-import Transaction from '../domain/model/transaction'
-import { AccountServiceContext, CategoryServiceContext, CurrencyServiceContext } from '../service/ServiceContext'
+import { formatAmount, parseAmount } from '../domain/model/currency'
+import Transaction, { AugmentedTransaction } from '../domain/model/transaction'
+import { CategoryServiceContext, CurrencyServiceContext } from '../service/ServiceContext'
 
 const NoError = 'nil'
 
@@ -46,7 +47,7 @@ interface FieldStatus {
 }
 
 interface Props {
-  initialTransaction?: Transaction
+  initialTransaction?: AugmentedTransaction
   onSubmit: (data: Omit<Transaction, 'id'>) => Promise<void>
   submitText: string
   type?: 'income' | 'expense' | 'transfer'
@@ -57,18 +58,18 @@ const TransactionForm: FC<Props> = (props) => {
 
   const { state: categories, root: rootCategory } = useContext(CategoryServiceContext)
   const { state: currencies } = useContext(CurrencyServiceContext)
-  const { state: accounts } = useContext(AccountServiceContext)
   const { default_currency } = useContext(UserContext)
 
   const type: 'income' | 'expense' | 'transfer' = useMemo(() => {
     if (typeof rawType !== 'undefined') return rawType
     if (initialTransaction?.categoryId === null) return 'transfer'
-    return (accounts.find((a) => a.id === initialTransaction?.senderId)?.isMine ?? false) ? 'expense' : 'income'
-  }, [initialTransaction, rawType, accounts])
+    return (initialTransaction?.sender?.isMine ?? false) ? 'expense' : 'income'
+  }, [initialTransaction, rawType])
 
-  const [amount, setAmount] = useState<string>(
-    `${typeof initialTransaction === 'undefined' ? '' : initialTransaction.amount / Math.pow(10, currencies.find((c) => c.id === initialTransaction.currencyId)?.decimalPoints ?? 2)}`,
-  )
+  const [amount, setAmount] = useState<string>(() => {
+    if (typeof initialTransaction === 'undefined') return ''
+    return `${formatAmount(initialTransaction.currency, initialTransaction.amount)}`
+  })
   const sanitizedAmount = useMemo(() => `0${amount.replace(',', '.')}`, [amount])
   const [currency, setCurrency] = useState<number>(initialTransaction?.currencyId ?? default_currency!)
 
@@ -77,7 +78,7 @@ const TransactionForm: FC<Props> = (props) => {
     return initialTransaction.receiverCurrencyId !== initialTransaction.currencyId
   })
   const [receiverAmount, setReceiverAmount] = useState<string>(
-    `${typeof initialTransaction === 'undefined' ? '' : initialTransaction.receiverAmount / Math.pow(10, currencies.find((c) => c.id === initialTransaction.receiverCurrencyId)?.decimalPoints ?? 2)}`,
+    `${typeof initialTransaction === 'undefined' ? '' : formatAmount(initialTransaction.receiverCurrency, initialTransaction.receiverAmount)}`,
   )
   const sanitizedReceiverAmount = useMemo(() => `0${receiverAmount.replace(',', '.')}`, [receiverAmount])
   const [receiverCurrency, setReceiverCurrency] = useState<number>(
@@ -89,8 +90,9 @@ const TransactionForm: FC<Props> = (props) => {
       ? null
       : (initialTransaction?.categoryId ?? rootCategory.id),
   )
-  const [sender, setSender] = useState<number | null>(initialTransaction?.senderId ?? null)
-  const [receiver, setReceiver] = useState<number | null>(initialTransaction?.receiverId ?? null)
+  const [senderAccountId, setSenderAccountId] = useState<number | null>(initialTransaction?.senderId ?? null)
+  const [receiverAccountId, setReceiverAccountId] = useState<number | null>(initialTransaction?.receiverId ?? null)
+
   const [note, setNote] = useState('')
 
   const category = useMemo(() => {
@@ -130,8 +132,8 @@ const TransactionForm: FC<Props> = (props) => {
 
   useEffect(() => {
     const amountError = validateAmount(sanitizedAmount)
-    const senderError = validateAccount(sender, type === 'expense' || type === 'transfer')
-    const receiverError = validateAccount(receiver, type === 'income' || type === 'transfer')
+    const senderError = validateAccount(senderAccountId, type === 'expense' || type === 'transfer')
+    const receiverError = validateAccount(receiverAccountId, type === 'income' || type === 'transfer')
     setErrors((prevState) => ({
       ...prevState,
       amount: {
@@ -150,7 +152,7 @@ const TransactionForm: FC<Props> = (props) => {
         errorText: receiverError,
       },
     }))
-  }, [sanitizedAmount, sender, receiver])
+  }, [sanitizedAmount, senderAccountId, receiverAccountId])
 
   useEffect(() => {
     const receiverAmountError = validateAmount(sanitizedReceiverAmount)
@@ -195,20 +197,14 @@ const TransactionForm: FC<Props> = (props) => {
     }
 
     onSubmit({
-      amount: Math.floor(
-        parseFloat(sanitizedAmount) * Math.pow(10, currencies.find((c) => c.id === currency)?.decimalPoints ?? 2),
-      ),
-      receiverAmount: Math.floor(
-        parseFloat(differentCurrency ? sanitizedReceiverAmount : sanitizedAmount) *
-          Math.pow(
-            10,
-            currencies.find((c) => c.id === (differentCurrency ? receiverCurrency : currency))?.decimalPoints ?? 2,
-          ),
+      amount: parseAmount(currencies.find((c) => c.id === currency)!, sanitizedAmount),
+      receiverAmount: parseAmount(
+        currencies.find((c) => c.id === currency)!,
+        differentCurrency ? sanitizedReceiverAmount : sanitizedAmount,
       ),
       categoryId: parent,
-      receiverId: receiver ?? null,
-
-      senderId: sender ?? null,
+      receiverId: receiverAccountId ?? null,
+      senderId: senderAccountId ?? null,
       note,
       date: initialTransaction?.date ?? new Date(),
       currencyId: currency,
@@ -299,8 +295,8 @@ const TransactionForm: FC<Props> = (props) => {
           labelText="From"
           className={classNameFromStatus(errors.sender)}
           errorText={errors.sender.errorText}
-          setSelectedAccountId={setSender}
-          selectedAccountId={sender}
+          setSelectedAccountId={setSenderAccountId}
+          selectedAccountId={senderAccountId}
           myOwn={parent === null || type === 'expense'}
         />
 
@@ -347,8 +343,8 @@ const TransactionForm: FC<Props> = (props) => {
           labelText="To"
           className={classNameFromStatus(errors.receiver)}
           errorText={errors.receiver.errorText}
-          setSelectedAccountId={setReceiver}
-          selectedAccountId={receiver}
+          setSelectedAccountId={setReceiverAccountId}
+          selectedAccountId={receiverAccountId}
           myOwn={parent === null || type === 'income'}
         />
 

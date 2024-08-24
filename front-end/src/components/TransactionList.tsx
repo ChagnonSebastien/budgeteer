@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react'
 
 import TransactionCard from './TransactionCard'
 import Category from '../domain/model/category'
+import { formatFull } from '../domain/model/currency'
 import { AugmentedTransaction } from '../domain/model/transaction'
 
 interface Props {
@@ -36,7 +37,7 @@ export const TransactionList = (props: Props) => {
           onClick={() => onClick(transaction.id)}
           from={transaction.sender?.name ?? '-'}
           to={transaction.receiver?.name ?? '-'}
-          amount={transaction.amount / Math.pow(10, transaction.currency.decimalPoints)}
+          amount={formatFull(transaction.currency, transaction.amount)}
           categoryIconName={transaction.category?.iconName ?? defaultCategory.iconName}
           date={transaction.date}
           currencySymbol={transaction.currency.symbol}

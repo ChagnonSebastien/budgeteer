@@ -3,7 +3,7 @@ import { FC } from 'react'
 import IconCapsule from './IconCapsule'
 
 interface Props {
-  amount: number
+  amount: string
   currencySymbol: string
   from: string
   to: string
@@ -73,9 +73,7 @@ const TransactionCard: FC<Props> = (props) => {
         }}
       >
         <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
-          <div style={{ fontWeight: 'bold' }}>
-            {amount} {currencySymbol}
-          </div>
+          <div style={{ fontWeight: 'bold' }}>{amount}</div>
           <div>{date.toDateString()}</div>
         </div>
         <div
