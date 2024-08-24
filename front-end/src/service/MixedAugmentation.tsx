@@ -73,6 +73,7 @@ export const MixedAugmentationProvider: FC<Props> = ({children}) => {
       currency: currencies.find(c => c.id === transaction.currencyId)!,
       sender: accounts.find(c => c.id === transaction.senderId),
       receiver: accounts.find(c => c.id === transaction.receiverId),
+      receiverCurrency: currencies.find(c => c.id === transaction.receiverCurrencyId)!,
     }))
   }, [transactions, currencies, categories, accounts])
 

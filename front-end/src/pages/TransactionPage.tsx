@@ -2,6 +2,7 @@ import { IonFab, IonFabButton, IonFabList, IonPage, useIonRouter } from "@ionic/
 import { FC, useContext, useMemo } from "react"
 import ContentWithHeader from "../components/ContentWithHeader"
 import { IconToolsContext } from "../components/IconTools"
+import TransactionsLineChart from "../components/LineChart"
 import TransactionsPieChart from "../components/PieChart"
 import { TransactionList } from "../components/TransactionList"
 import MixedAugmentation from "../service/MixedAugmentation"
@@ -36,8 +37,10 @@ const TransactionPage: FC = () => {
             </IonFabButton>
           </IonFabList>
         </IonFab>
-        
+
         <TransactionsPieChart augmentedTransactions={augmentedTransactions}/>
+
+        <TransactionsLineChart augmentedTransactions={augmentedTransactions}/>
 
         <TransactionList transactions={augmentedTransactions}
                          onClick={(transactionId) => {

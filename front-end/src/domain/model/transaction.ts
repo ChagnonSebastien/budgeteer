@@ -8,7 +8,7 @@ export type AugmentedTransaction = Transaction & {
   readonly category?: Category
   readonly sender?: Account
   readonly receiver?: Account
-  readonly receiverCurrency?: Currency
+  readonly receiverCurrency: Currency
 }
 
 export default class Transaction implements Unique {
