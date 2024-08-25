@@ -4,7 +4,6 @@ import { Omit } from 'react-router'
 
 import Currency, { ExchangeRate } from '../domain/model/currency'
 import { CurrencyServiceContext } from '../service/ServiceContext'
-import { formatDateTime } from '../store/remote/converter/transactionConverter'
 
 const validAmount = new RegExp(`^\\d+[.,]?$`)
 const validRate = new RegExp(`^\\d*[.,]?\\d*$`)
@@ -39,7 +38,7 @@ const CurrencyForm: FC<Props> = (props) => {
   const [showDateModal, setShowDateModal] = useState(false)
 
   const showExchangeRate = useMemo(() => {
-    return typeof initialCurrency === 'undefined' && typeof defaultCurrency !== 'undefined'
+    return typeof initialCurrency === 'undefined' && defaultCurrency !== null
   }, [currencies])
 
   const [showErrorToast, setShowErrorToast] = useState('')
@@ -219,9 +218,7 @@ const CurrencyForm: FC<Props> = (props) => {
       symbol: symbol,
       exchangeRates: showExchangeRate
         ? {
-            [defaultCurrency!.id]: [
-              new ExchangeRate(0, parseFloat(initialExchangeRate), formatDateTime(initialExchangeRateDate)),
-            ],
+            [defaultCurrency!.id]: [new ExchangeRate(0, parseFloat(initialExchangeRate), initialExchangeRateDate)],
           }
         : {},
     }).catch((err) => {

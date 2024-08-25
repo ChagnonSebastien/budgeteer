@@ -1,11 +1,11 @@
 import Account from './account'
-import Category from './category'
+import { AugmentedCategory } from './category'
 import Currency from './currency'
 import Unique from './Unique'
 
 export type AugmentedTransaction = Transaction & {
   readonly currency: Currency
-  readonly category?: Category
+  readonly category?: AugmentedCategory
   readonly sender?: Account
   readonly receiver?: Account
   readonly receiverCurrency: Currency

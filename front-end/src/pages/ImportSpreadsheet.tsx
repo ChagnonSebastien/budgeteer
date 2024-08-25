@@ -17,7 +17,7 @@ const ImportSpreadsheet: FC = () => {
 
   const { state: categories, create: createCategory, root: rootCategory } = useContext(CategoryServiceContext)
   const { state: currencies, create: createCurrency } = useContext(CurrencyServiceContext)
-  const { state: accounts, create: createAccount } = useContext(AccountServiceContext)
+  const { state: accounts, create: createAccount, update: updateAccount } = useContext(AccountServiceContext)
   const { create: createTransaction } = useContext(TransactionServiceContext)
 
   const handleButtonClick = () => {
@@ -44,11 +44,13 @@ const ImportSpreadsheet: FC = () => {
             'From/To': string
             Notes: string
             Value: string
+            Currency_rec: string
+            Value_rec: string
           }[]
         }) => {
           const newCurrencies = [...currencies]
           const newCategories = [...categories]
-          const newAccounts = [...accounts]
+          let newAccounts = [...accounts]
 
           for (let i = 0; i < results.data.length; i++) {
             const line = results.data[i]
@@ -60,12 +62,23 @@ const ImportSpreadsheet: FC = () => {
             let currency = newCurrencies.find((c) => c.symbol === line.Currency)
             if (typeof currency === 'undefined') {
               currency = await createCurrency({
-                name: 'Canadian Dollar',
+                name: line.Currency,
                 symbol: line.Currency,
-                decimalPoints: 2,
+                decimalPoints: line.Value.split('.')[1].length,
                 exchangeRates: {},
               })
               newCurrencies.push(currency)
+            }
+
+            let receiver_currency = newCurrencies.find((c) => c.symbol === line.Currency_rec)
+            if (typeof receiver_currency === 'undefined') {
+              receiver_currency = await createCurrency({
+                name: line.Currency_rec,
+                symbol: line.Currency_rec,
+                decimalPoints: line.Value_rec.split('.')[1].length,
+                exchangeRates: {},
+              })
+              newCurrencies.push(receiver_currency)
             }
 
             let category = newCategories.find((c) => c.name === line.Category)
@@ -88,9 +101,17 @@ const ImportSpreadsheet: FC = () => {
               account = await createAccount({
                 name: line.Account,
                 initialAmounts: [],
-                isMine: false,
+                isMine: true,
               })
               newAccounts.push(account)
+            } else if (!account.isMine) {
+              await updateAccount(account.id, {
+                ...account,
+                isMine: true,
+              })
+              newAccounts = newAccounts.map((a) =>
+                a.id === account!.id ? new Account(account!.id, account!.name, account!.initialAmounts, true) : a,
+              )
             }
 
             let fromto: Account | undefined
@@ -107,6 +128,7 @@ const ImportSpreadsheet: FC = () => {
             }
 
             const amount = Number.parseInt(line.Value.replace('.', ''))
+            const receiver_amount = Number.parseInt(line.Value_rec.replace('.', ''))
             const date = new Date(line.Date)
             const note = line.Notes
 
@@ -123,9 +145,9 @@ const ImportSpreadsheet: FC = () => {
             transactionPromises.push(
               createTransaction({
                 amount: Math.abs(amount),
-                receiverAmount: Math.abs(amount),
+                receiverAmount: Math.abs(receiver_amount),
                 currencyId: currency.id,
-                receiverCurrencyId: currency.id,
+                receiverCurrencyId: receiver_currency.id,
                 categoryId: category?.id ?? null,
                 date,
                 senderId: sender?.id ?? null,
@@ -133,10 +155,6 @@ const ImportSpreadsheet: FC = () => {
                 note,
               }),
             )
-
-            if (typeof category === 'undefined') {
-              i++
-            }
           }
         },
         error: (error) => {

@@ -4,7 +4,7 @@ export class ExchangeRate implements Unique {
   constructor(
     public readonly id: number,
     public readonly rate: number,
-    public readonly date: string,
+    public readonly date: Date,
   ) {}
 }
 

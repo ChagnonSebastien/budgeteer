@@ -5,9 +5,9 @@ import { UserContext } from '../App'
 import Currency, { ExchangeRate } from '../domain/model/currency'
 
 export interface CurrencyPersistenceAugmentation {
-  create(data: Omit<Currency, 'id'>): Promise<Currency>
+  defaultCurrency: Currency | null
 
-  defaultCurrency: Currency
+  create(data: Omit<Currency, 'id'>): Promise<Currency>
 }
 
 export const CurrencyPersistenceAugmenter: FC<AugmenterProps<Currency, CurrencyPersistenceAugmentation>> = (props) => {

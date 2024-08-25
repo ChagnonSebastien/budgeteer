@@ -26,6 +26,7 @@ export const useIconTools = (): IconTools => {
       loadLibrary('Tb', import('react-icons/tb')),
       loadLibrary('Gi', import('react-icons/gi')),
       loadLibrary('Gr', import('react-icons/gr')),
+      loadLibrary('Io', import('react-icons/io5')),
     ]
 
     Promise.all(loaders).then((loadedLibraries) => {

@@ -1,6 +1,7 @@
 import { RpcTransport } from '@protobuf-ts/runtime-rpc'
 
 import { CurrencyConverter } from './converter/currencyConverter'
+import { formatDateTime } from './converter/transactionConverter'
 import {
   CreateCurrencyRequest,
   GetAllCurrenciesRequest,
@@ -32,7 +33,7 @@ export default class CurrencyRemoteStore {
       initialExchangeRate = InitialExchangeRate.create({
         other,
         rate: data.exchangeRates[other][0].rate,
-        date: data.exchangeRates[other][0].date,
+        date: formatDateTime(data.exchangeRates[other][0].date),
       })
     }
 

@@ -5,7 +5,7 @@ import { BasicCrudService } from './BasicCrudService'
 import { CategoryPersistenceAugmentation } from './CategoryServiceAugmenter'
 import { CurrencyPersistenceAugmentation } from './CurrencyServiceAugmenter'
 import Account from '../domain/model/account'
-import Category from '../domain/model/category'
+import Category, { AugmentedCategory } from '../domain/model/category'
 import Currency from '../domain/model/currency'
 import Transaction from '../domain/model/transaction'
 import Unique from '../domain/model/Unique'
@@ -30,8 +30,11 @@ const nilPersistence = {
   get otherAccounts(): Account[] {
     throw new Error('otherAccounts is not implemented')
   },
-  get defaultCurrency(): Currency {
-    throw new Error('defaultCurrency is not implemented')
+  get defaultCurrency(): Currency | null {
+    return null
+  },
+  get augmentedCategories(): AugmentedCategory[] {
+    throw new Error('augmentedCategories is not implemented')
   },
 }
 

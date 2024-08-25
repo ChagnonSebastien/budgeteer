@@ -1,5 +1,9 @@
 import Unique from './Unique'
 
+export type AugmentedCategory = Category & {
+  readonly parent?: Category
+}
+
 export default class Category implements Unique {
   readonly id: number
   name: string

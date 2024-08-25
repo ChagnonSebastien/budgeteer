@@ -4,7 +4,8 @@ import { FC, useContext, useMemo, useState } from 'react'
 
 import Category from '../domain/model/category'
 import { AugmentedTransaction } from '../domain/model/transaction'
-import { CategoryServiceContext } from '../service/ServiceContext'
+import MixedAugmentation from '../service/MixedAugmentation'
+import { CategoryServiceContext, CurrencyServiceContext } from '../service/ServiceContext'
 
 type LocalTree = {
   name: string
@@ -19,20 +20,31 @@ interface Props {
 const TransactionsPieChart: FC<Props> = (props) => {
   const { augmentedTransactions } = props
   const { state: categories, root, subCategories } = useContext(CategoryServiceContext)
+  const { defaultCurrency } = useContext(CurrencyServiceContext)
+  const { exchangeRateOnDay } = useContext(MixedAugmentation)
 
   const [showIncomes, setShowIncomes] = useState(false)
   const [clickedCategory, setClickedCategory] = useState<Category | null>(null)
 
   const differences = useMemo(() => {
     const diffs = new Map<number, number>()
+    if (defaultCurrency === null) return diffs
 
     augmentedTransactions.forEach((transaction) => {
       if (transaction.categoryId === null) return
 
       if (transaction.sender?.isMine ?? false) {
-        diffs.set(transaction.categoryId, (diffs.get(transaction.categoryId) ?? 0) + -transaction.amount)
+        let convertedAmount = transaction.amount
+        if (transaction.currencyId !== defaultCurrency.id) {
+          convertedAmount *= exchangeRateOnDay(transaction.currencyId, defaultCurrency?.id, transaction.date)
+        }
+        diffs.set(transaction.categoryId, (diffs.get(transaction.categoryId) ?? 0) + -convertedAmount)
       } else {
-        diffs.set(transaction.categoryId, (diffs.get(transaction.categoryId) ?? 0) + transaction.receiverAmount)
+        let convertedAmount = transaction.receiverAmount
+        if (transaction.receiverCurrencyId !== defaultCurrency.id) {
+          convertedAmount *= exchangeRateOnDay(transaction.receiverCurrencyId, defaultCurrency?.id, transaction.date)
+        }
+        diffs.set(transaction.categoryId, (diffs.get(transaction.categoryId) ?? 0) + convertedAmount)
       }
     })
 
