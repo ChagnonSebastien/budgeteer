@@ -36,16 +36,4 @@ WHERE ac.account_id = sqlc.arg(account_id)
 
 -- name: InsertAccountCurrency :execrows
 INSERT INTO accountcurrencies (account_id, currency_id, value)
-SELECT sqlc.arg(account_id), sqlc.arg(currency_id), sqlc.arg(value)
-WHERE EXISTS (
-    SELECT 1
-    FROM accounts a
-    WHERE a.id = sqlc.arg(account_id)
-      AND a.user_id = sqlc.arg(user_id)
-)
-  AND EXISTS (
-    SELECT 1
-    FROM currencies c
-    WHERE c.id = sqlc.arg(currency_id)
-      AND c.user_id = sqlc.arg(user_id)
-);
+VALUES (sqlc.arg(account_id), sqlc.arg(currency_id), sqlc.arg(value));
