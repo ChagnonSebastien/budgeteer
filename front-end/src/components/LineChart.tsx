@@ -198,7 +198,10 @@ const TransactionsLineChart: FC<Props> = (props) => {
             tickRotation: -45,
           }}
           axisLeft={{
-            format: (i) => `${formatAmount(defaultCurrency, i)}`,
+            format: (i) =>
+              ((i as number) / Math.pow(10, defaultCurrency?.decimalPoints)).toLocaleString(undefined, {
+                notation: 'compact',
+              }),
           }}
           curve="linear"
           offsetType="diverging"

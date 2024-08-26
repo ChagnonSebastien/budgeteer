@@ -130,6 +130,15 @@ const TransactionPage: FC = () => {
           <div style={{ margin: '.25rem' }}>+ Filter</div>
         </div>
 
+        <TransactionList
+          transactions={filteredTransaction}
+          onClick={(transactionId) => {
+            router.push(`/transactions/edit/${transactionId}`)
+          }}
+          viewAsAccounts={accountFilter === null ? undefined : [accountFilter]}
+          includeInitialAmounts={categoryFilter === null}
+        />
+
         <IonAlert
           isOpen={showFilterSelection}
           onWillDismiss={() => setShowFilterSelection(false)}
@@ -180,13 +189,6 @@ const TransactionPage: FC = () => {
             />
           </ContentWithHeader>
         </IonModal>
-
-        <TransactionList
-          transactions={filteredTransaction}
-          onClick={(transactionId) => {
-            router.push(`/transactions/edit/${transactionId}`)
-          }}
-        />
       </ContentWithHeader>
     </IonPage>
   )

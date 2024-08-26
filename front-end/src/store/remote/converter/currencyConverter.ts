@@ -1,5 +1,6 @@
 import { Converter } from './converter'
-import Currency from '../../../domain/model/currency'
+import { formatDateTime } from './transactionConverter'
+import Currency, { ExchangeRate } from '../../../domain/model/currency'
 import { Currency as CurrencyDto, RatesList } from '../dto/currency'
 
 export class CurrencyConverter implements Converter<Currency, CurrencyDto> {
@@ -15,14 +16,12 @@ export class CurrencyConverter implements Converter<Currency, CurrencyDto> {
           .map((t) => t as keyof typeof model.exchangeRates)
           .map((key) => {
             return {
-              [key]: model.exchangeRates[key].rates.map((exchangeRate) => ({
-                id: exchangeRate.id,
-                rate: exchangeRate.rate,
-                date: exchangeRate.date,
-              })),
+              [key]: model.exchangeRates[key].rates.map(
+                (exchangeRate) => new ExchangeRate(exchangeRate.id, exchangeRate.rate, new Date(exchangeRate.date)),
+              ),
             }
           })
-          .reduce((acc, cur) => ({ ...acc, ...cur }), {}),
+          .reduce<{ [compareTo: number]: ExchangeRate[] }>((acc, cur) => ({ ...acc, ...cur }), {}),
       ),
     )
   }
@@ -42,7 +41,7 @@ export class CurrencyConverter implements Converter<Currency, CurrencyDto> {
               rates: dto.exchangeRates[key].map((exchangeRate) => ({
                 id: exchangeRate.id,
                 rate: exchangeRate.rate,
-                date: exchangeRate.date,
+                date: formatDateTime(exchangeRate.date),
               })),
             }),
           }

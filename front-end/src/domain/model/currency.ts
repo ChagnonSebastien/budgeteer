@@ -19,7 +19,7 @@ export default class Currency implements Unique {
 }
 
 export function formatFull(currency: Currency, rawValue: number): string {
-  const formatted = `${Math.abs(formatAmount(currency, rawValue))} ${currency.symbol}`
+  const formatted = `${formatAmount(currency, rawValue)} ${currency.symbol}`
 
   if (rawValue < 0) {
     return `(${formatted})`
@@ -27,8 +27,11 @@ export function formatFull(currency: Currency, rawValue: number): string {
   return formatted
 }
 
-export function formatAmount(currency: Currency, rawValue: number): number {
-  return rawValue / Math.pow(10, currency.decimalPoints)
+export function formatAmount(currency: Currency, rawValue: number): string {
+  return Math.abs(rawValue / Math.pow(10, currency.decimalPoints)).toLocaleString(undefined, {
+    minimumFractionDigits: currency.decimalPoints,
+    maximumFractionDigits: currency.decimalPoints,
+  })
 }
 
 export function parseAmount(currency: Currency, rawValue: string): number {

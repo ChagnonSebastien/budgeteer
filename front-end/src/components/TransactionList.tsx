@@ -1,17 +1,31 @@
 import { IonInfiniteScroll, IonInfiniteScrollContent } from '@ionic/react'
-import { useMemo, useState } from 'react'
+import {
+  addMonths,
+  differenceInMonths,
+  formatDate,
+  isAfter,
+  isSameDay,
+  isSameMonth,
+  subDays,
+  subMonths,
+} from 'date-fns'
+import { useContext, useMemo, useState } from 'react'
 
 import TransactionCard from './TransactionCard'
 import Category from '../domain/model/category'
-import { formatFull } from '../domain/model/currency'
+import { formatAmount, formatFull } from '../domain/model/currency'
 import { AugmentedTransaction } from '../domain/model/transaction'
+import MixedAugmentation from '../service/MixedAugmentation'
+import { AccountServiceContext, CurrencyServiceContext } from '../service/ServiceContext'
 
 interface Props {
   transactions: AugmentedTransaction[]
   onClick: (transactionId: number) => void
+  viewAsAccounts?: number[]
+  includeInitialAmounts?: boolean
 }
 
-const chunkSize = 50
+const chunkSize = 2000
 
 const defaultCategory = new Category(
   0,
@@ -23,15 +37,136 @@ const defaultCategory = new Category(
 )
 
 export const TransactionList = (props: Props) => {
-  const { transactions, onClick } = props
+  const { transactions, onClick, viewAsAccounts, includeInitialAmounts } = props
+
+  const { defaultCurrency } = useContext(CurrencyServiceContext)
+  const { state: accounts } = useContext(AccountServiceContext)
+  const { exchangeRateOnDay } = useContext(MixedAugmentation)
 
   const [displayedAmount, setDisplayedAmount] = useState<number>(chunkSize)
 
-  const displayedItems = useMemo(() => transactions.slice(0, displayedAmount), [transactions, displayedAmount])
+  const viewWithMonthLabels: JSX.Element[] = useMemo(() => {
+    if (defaultCurrency === null) return []
+    if (transactions.length === 0) return []
 
-  return (
-    <>
-      {displayedItems.map((transaction) => (
+    const today = new Date()
+    const firstTransaction = transactions[transactions.length - 1].date
+
+    const diffMonths = differenceInMonths(today, firstTransaction)
+
+    const startingFrom = subMonths(today, diffMonths + 1)
+    const incrementDate = (from: Date) => addMonths(from, 1)
+
+    let Total = 0
+    if (includeInitialAmounts) {
+      const iterator = viewAsAccounts?.map((aId) => accounts.find((a) => a.id === aId)!) ?? accounts
+      for (const account of iterator) {
+        for (const initialAmount of account.initialAmounts) {
+          if (initialAmount.currencyId === defaultCurrency.id) {
+            Total += initialAmount.value
+          } else {
+            Total += initialAmount.value * exchangeRateOnDay(initialAmount.currencyId, defaultCurrency.id, startingFrom)
+          }
+        }
+      }
+    }
+
+    let upTo = new Date(startingFrom.getFullYear(), startingFrom.getMonth())
+
+    const data = [
+      {
+        Total,
+        date: subDays(upTo, 1),
+        diff: 0,
+      },
+    ]
+
+    let i = transactions.length - 1
+
+    while (!isSameDay(upTo, today) && !isAfter(upTo, today)) {
+      upTo = incrementDate(upTo)
+      const lastDayOfPrevMonth = subDays(upTo, 1)
+      data.push({ ...data[data.length - 1], date: lastDayOfPrevMonth, diff: 0 })
+
+      while (i >= 0 && isSameMonth(transactions[i].date, lastDayOfPrevMonth)) {
+        const transaction = transactions[i]
+
+        if (
+          typeof viewAsAccounts === 'undefined'
+            ? (transaction.sender?.isMine ?? false)
+            : viewAsAccounts.includes(transaction.senderId ?? 0)
+        ) {
+          let convertedAmount = transaction.amount
+          if (transaction.currencyId !== defaultCurrency.id) {
+            convertedAmount *= exchangeRateOnDay(transaction.currencyId, defaultCurrency?.id, upTo)
+          }
+          data[data.length - 1].diff -= convertedAmount
+        }
+        if (
+          typeof viewAsAccounts === 'undefined'
+            ? (transaction.receiver?.isMine ?? false)
+            : viewAsAccounts.includes(transaction.receiverId ?? 0)
+        ) {
+          let convertedAmount = transaction.receiverAmount
+          if (transaction.receiverCurrencyId !== defaultCurrency.id) {
+            convertedAmount *= exchangeRateOnDay(transaction.receiverCurrencyId, defaultCurrency?.id, upTo)
+          }
+          data[data.length - 1].diff += convertedAmount
+        }
+
+        i -= 1
+      }
+
+      data[data.length - 1].Total = data[data.length - 1].Total + data[data.length - 1].diff
+    }
+
+    let j = data.length - 1
+
+    const view = []
+
+    const wrap = (data: { Total: number; date: Date; diff: number }) => {
+      const { Total, date, diff } = data
+      return (
+        <div
+          key={`monthly-label-${date.toDateString()}`}
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'end',
+            margin: '.5rem, 2rem',
+          }}
+        >
+          <div
+            style={{
+              alignSelf: 'center',
+              fontWeight: 'bolder',
+            }}
+          >
+            {formatDate(date, 'MMMM yyyy')}
+          </div>
+          <div>
+            <div>{formatFull(defaultCurrency, Total)}</div>
+            {diff !== 0 && (
+              <div
+                style={{ display: 'flex', color: diff > 0 ? 'var(--ion-color-success)' : 'var(--ion-color-danger)' }}
+              >
+                <div>{diff > 0 ? `+` : `-`}</div>
+                <div>{formatAmount(defaultCurrency, Math.abs(diff))}</div>
+              </div>
+            )}
+          </div>
+        </div>
+      )
+    }
+
+    let previousTransactionDate = addMonths(today, 1)
+    for (const transaction of transactions) {
+      while (j >= 0 && !isSameMonth(previousTransactionDate, transaction.date)) {
+        view.push(wrap(data[j]))
+        previousTransactionDate = data[j].date
+        j -= 1
+      }
+      view.push(
         <TransactionCard
           key={transaction.id}
           onClick={() => onClick(transaction.id)}
@@ -44,12 +179,27 @@ export const TransactionList = (props: Props) => {
           note={transaction.note ?? ''}
           categoryIconColor={transaction.category?.iconColor ?? defaultCategory.iconColor}
           categoryIconBackground={transaction.category?.iconBackground ?? defaultCategory.iconBackground}
-        />
-      ))}
+        />,
+      )
+    }
+
+    view.push(wrap(data[j]))
+
+    return view
+  }, [transactions, viewAsAccounts, includeInitialAmounts])
+
+  const displayedItems = useMemo(
+    () => viewWithMonthLabels.slice(0, displayedAmount),
+    [viewWithMonthLabels, displayedAmount],
+  )
+
+  return (
+    <>
+      {displayedItems}
       <IonInfiniteScroll
         onIonInfinite={(ev) => {
-          setDisplayedAmount((prevState) => prevState + chunkSize)
-          setTimeout(() => ev.target.complete(), 500)
+          setDisplayedAmount((prevState) => Math.min(prevState + chunkSize, viewWithMonthLabels.length))
+          ev.target.complete()
         }}
       >
         <IonInfiniteScrollContent></IonInfiniteScrollContent>
