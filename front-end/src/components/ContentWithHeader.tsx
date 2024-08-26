@@ -18,10 +18,11 @@ interface Props {
   onSearch?: (query: string) => void
   onCancel?: () => void
   segments?: JSX.Element
+  rightButton?: JSX.Element
 }
 
 const ContentWithHeader: FC<Props> = (props) => {
-  const { title, children, button: buttonOption, onSearch, onCancel, segments } = props
+  const { title, children, button: buttonOption, onSearch, onCancel, segments, rightButton } = props
   let button = null
   switch (buttonOption) {
     case 'return':
@@ -44,6 +45,11 @@ const ContentWithHeader: FC<Props> = (props) => {
           {typeof onCancel !== 'undefined' && (
             <IonButtons collapse slot="start">
               <IonButton onClick={onCancel}>Cancel</IonButton>
+            </IonButtons>
+          )}
+          {typeof rightButton !== 'undefined' && (
+            <IonButtons slot="primary">
+              <IonButton>{rightButton}</IonButton>
             </IonButtons>
           )}
           <IonTitle>{title}</IonTitle>

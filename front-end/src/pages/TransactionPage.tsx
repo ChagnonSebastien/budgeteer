@@ -1,5 +1,5 @@
 import { IonAlert, IonChip, IonFab, IonFabButton, IonFabList, IonModal, IonPage, useIonRouter } from '@ionic/react'
-import { FC, useContext, useMemo, useState } from 'react'
+import { FC, useContext, useEffect, useMemo, useState } from 'react'
 
 import { AccountList } from '../components/AccountList'
 import { CategoryList } from '../components/CategoryList'
@@ -17,13 +17,14 @@ const TransactionPage: FC = () => {
 
   const { augmentedTransactions } = useContext(MixedAugmentation)
 
+  const [graphType, setGraphType] = useState<'line' | 'pie'>('line')
   const [showFilterSelection, setShowFilterSelection] = useState(false)
 
   const { state: accounts } = useContext(AccountServiceContext)
   const [showAccountModal, setShowAccountModal] = useState(false)
   const [accountFilter, setAccountFilter] = useState<null | number>(null)
 
-  const { state: categories } = useContext(CategoryServiceContext)
+  const { state: categories, root: rootCategory } = useContext(CategoryServiceContext)
   const [showCategoryModal, setShowCategoryModal] = useState(false)
   const [categoryFilter, setCategoryFilter] = useState<number | null>(null)
 
@@ -33,6 +34,8 @@ const TransactionPage: FC = () => {
   const MdOutput = useMemo(() => iconTypeFromName('MdOutput'), [iconTypeFromName])
   const MdInput = useMemo(() => iconTypeFromName('MdInput'), [iconTypeFromName])
   const IoCloseCircle = useMemo(() => iconTypeFromName('IoCloseCircle'), [iconTypeFromName])
+  const BsGraphUp = useMemo(() => iconTypeFromName('BsGraphUp'), [iconTypeFromName])
+  const FaChartPie = useMemo(() => iconTypeFromName('FaChartPie'), [iconTypeFromName])
 
   const filteredTransaction = useMemo(() => {
     return augmentedTransactions
@@ -53,7 +56,17 @@ const TransactionPage: FC = () => {
 
   return (
     <IonPage>
-      <ContentWithHeader title="Transactions" button="menu">
+      <ContentWithHeader
+        title="Transactions"
+        button="menu"
+        rightButton={
+          graphType === 'line' ? (
+            <FaChartPie size="1.5rem" onClick={() => setGraphType('pie')} />
+          ) : (
+            <BsGraphUp size="1.5rem" onClick={() => setGraphType('line')} />
+          )
+        }
+      >
         <IonFab vertical="bottom" horizontal="end" slot="fixed">
           <IonFabButton>
             <FaPlus />
@@ -71,13 +84,20 @@ const TransactionPage: FC = () => {
           </IonFabList>
         </IonFab>
 
-        <TransactionsPieChart augmentedTransactions={filteredTransaction} />
-
-        <TransactionsLineChart
-          augmentedTransactions={filteredTransaction}
-          viewAsAccounts={accountFilter === null ? undefined : [accountFilter]}
-          includeInitialAmounts={categoryFilter === null}
-        />
+        <div style={{ height: '50%', width: '100%', position: 'relative', padding: '1rem' }}>
+          {graphType === 'line' ? (
+            <TransactionsLineChart
+              augmentedTransactions={filteredTransaction}
+              viewAsAccounts={accountFilter === null ? undefined : [accountFilter]}
+              includeInitialAmounts={categoryFilter === null}
+            />
+          ) : (
+            <TransactionsPieChart
+              rootCategory={categories.find((c) => c.id === categoryFilter) ?? rootCategory}
+              augmentedTransactions={filteredTransaction}
+            />
+          )}
+        </div>
 
         <div
           style={{

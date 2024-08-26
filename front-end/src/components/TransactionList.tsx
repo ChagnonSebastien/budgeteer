@@ -9,7 +9,7 @@ import {
   subDays,
   subMonths,
 } from 'date-fns'
-import { useContext, useMemo, useState } from 'react'
+import { useContext, useEffect, useMemo, useState } from 'react'
 
 import TransactionCard from './TransactionCard'
 import Category from '../domain/model/category'
@@ -25,7 +25,7 @@ interface Props {
   includeInitialAmounts?: boolean
 }
 
-const chunkSize = 2000
+const chunkSize = 100
 
 const defaultCategory = new Category(
   0,
@@ -44,6 +44,9 @@ export const TransactionList = (props: Props) => {
   const { exchangeRateOnDay } = useContext(MixedAugmentation)
 
   const [displayedAmount, setDisplayedAmount] = useState<number>(chunkSize)
+  useEffect(() => {
+    setDisplayedAmount(chunkSize)
+  }, [transactions])
 
   const viewWithMonthLabels: JSX.Element[] = useMemo(() => {
     if (defaultCurrency === null) return []
@@ -133,7 +136,7 @@ export const TransactionList = (props: Props) => {
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'end',
-            margin: '.5rem, 2rem',
+            margin: '1rem 1rem .5rem',
           }}
         >
           <div
@@ -170,12 +173,14 @@ export const TransactionList = (props: Props) => {
         <TransactionCard
           key={transaction.id}
           onClick={() => onClick(transaction.id)}
-          from={transaction.sender?.name ?? '-'}
-          to={transaction.receiver?.name ?? '-'}
-          amount={formatFull(transaction.currency, transaction.amount)}
+          from={transaction.sender}
+          to={transaction.receiver}
+          amount={transaction.amount}
+          currency={transaction.currency}
+          receiverAmount={transaction.receiverAmount}
+          receiverCurrency={transaction.receiverCurrency}
           categoryIconName={transaction.category?.iconName ?? defaultCategory.iconName}
           date={transaction.date}
-          currencySymbol={transaction.currency.symbol}
           note={transaction.note ?? ''}
           categoryIconColor={transaction.category?.iconColor ?? defaultCategory.iconColor}
           categoryIconBackground={transaction.category?.iconBackground ?? defaultCategory.iconBackground}
@@ -197,6 +202,7 @@ export const TransactionList = (props: Props) => {
     <>
       {displayedItems}
       <IonInfiniteScroll
+        threshold="200%"
         onIonInfinite={(ev) => {
           setDisplayedAmount((prevState) => Math.min(prevState + chunkSize, viewWithMonthLabels.length))
           ev.target.complete()

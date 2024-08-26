@@ -1,12 +1,16 @@
 import { FC } from 'react'
 
 import IconCapsule from './IconCapsule'
+import Account from '../domain/model/account'
+import Currency, { formatFull } from '../domain/model/currency'
 
 interface Props {
-  amount: string
-  currencySymbol: string
-  from: string
-  to: string
+  amount: number
+  currency: Currency
+  receiverAmount: number
+  receiverCurrency: Currency
+  from?: Account
+  to?: Account
   categoryIconName: string
   categoryIconColor: string
   categoryIconBackground: string
@@ -18,7 +22,9 @@ interface Props {
 const TransactionCard: FC<Props> = (props) => {
   const {
     amount,
-    currencySymbol,
+    currency,
+    receiverAmount,
+    receiverCurrency,
     from,
     to,
     categoryIconName,
@@ -73,7 +79,10 @@ const TransactionCard: FC<Props> = (props) => {
         }}
       >
         <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
-          <div style={{ fontWeight: 'bold' }}>{amount}</div>
+          <div style={{ fontWeight: 'bold' }}>
+            {formatFull(currency, amount)}
+            {currency.id === receiverCurrency.id ? `` : ` -> ${formatFull(receiverCurrency, receiverAmount)}`}
+          </div>
           <div>{date.toDateString()}</div>
         </div>
         <div
@@ -91,8 +100,18 @@ const TransactionCard: FC<Props> = (props) => {
               overflow: 'hidden',
             }}
           >
-            <div style={{ textOverflow: 'ellipsis', whiteSpace: 'nowrap', overflow: 'hidden' }}>From: {from}</div>
-            <div style={{ textOverflow: 'ellipsis', whiteSpace: 'nowrap', overflow: 'hidden' }}>To: {to}</div>
+            <div
+              style={{
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+              }}
+            >
+              From: {from?.name ?? '-'}
+            </div>
+            <div style={{ textOverflow: 'ellipsis', whiteSpace: 'nowrap', overflow: 'hidden' }}>
+              To: {to?.name ?? '-'}
+            </div>
           </div>
 
           <div

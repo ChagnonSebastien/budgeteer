@@ -1,8 +1,8 @@
 import { IonToggle } from '@ionic/react'
 import { ResponsiveSunburst } from '@nivo/sunburst'
-import { FC, useContext, useMemo, useState } from 'react'
+import { FC, useContext, useEffect, useMemo, useState } from 'react'
 
-import Category from '../domain/model/category'
+import Category, { AugmentedCategory } from '../domain/model/category'
 import { AugmentedTransaction } from '../domain/model/transaction'
 import MixedAugmentation from '../service/MixedAugmentation'
 import { CategoryServiceContext, CurrencyServiceContext } from '../service/ServiceContext'
@@ -15,11 +15,12 @@ type LocalTree = {
 
 interface Props {
   augmentedTransactions: AugmentedTransaction[]
+  rootCategory: AugmentedCategory
 }
 
 const TransactionsPieChart: FC<Props> = (props) => {
-  const { augmentedTransactions } = props
-  const { state: categories, root, subCategories } = useContext(CategoryServiceContext)
+  const { augmentedTransactions, rootCategory: root } = props
+  const { state: categories, subCategories } = useContext(CategoryServiceContext)
   const { defaultCurrency } = useContext(CurrencyServiceContext)
   const { exchangeRateOnDay } = useContext(MixedAugmentation)
 
@@ -51,27 +52,95 @@ const TransactionsPieChart: FC<Props> = (props) => {
     return diffs
   }, [categories, augmentedTransactions])
 
-  const buildGraph = (category: Category): { tree: LocalTree; total: number } => {
-    const sub = (subCategories[category.id] ?? []).map(buildGraph)
-    const childAmount = sub.map((s) => s.total).reduce((a, b) => a + b, 0)
-    let selfAmount = differences.get(category.id) ?? 0
-    if (!showIncomes) selfAmount *= -1
-    if (selfAmount < 0) selfAmount = 0
-    selfAmount /= 100
-    return {
-      total: childAmount + selfAmount,
-      tree: {
-        name: category.name,
-        loc: selfAmount,
-        children: sub.map((s) => s.tree),
-      },
+  const crunchedData = useMemo(() => {
+    const buildGraph = (
+      category: Category,
+    ): {
+      incomeTree?: LocalTree
+      expenseTree?: LocalTree
+      expenseTotal: number
+      incomeTotal: number
+    } => {
+      const sub = (subCategories[category.id] ?? []).map(buildGraph)
+      const childrenWithIncome = sub.filter((s) => typeof s.incomeTree !== 'undefined')
+      const childrenWithExpense = sub.filter((s) => typeof s.expenseTree !== 'undefined')
+      let incomeTotal = childrenWithIncome.map((s) => s.incomeTotal).reduce((a, b) => a + b, 0)
+      let expenseTotal = childrenWithExpense.map((s) => s.expenseTotal).reduce((a, b) => a + b, 0)
+
+      const selfAmount = differences.get(category.id) ?? 0
+      let incomeTree: LocalTree | undefined = undefined
+      let expenseTree: LocalTree | undefined = undefined
+
+      if (selfAmount > 0 || childrenWithIncome.length > 0) {
+        incomeTotal += selfAmount
+        incomeTree = {
+          name: category.name,
+          loc: selfAmount,
+          children: childrenWithIncome.map((s) => s.incomeTree!),
+        }
+      }
+
+      if (selfAmount < 0 || childrenWithExpense.length > 0) {
+        expenseTotal -= selfAmount
+        expenseTree = {
+          name: category.name,
+          loc: 0 - selfAmount,
+          children: childrenWithExpense.map((s) => s.expenseTree!),
+        }
+      }
+
+      return {
+        incomeTree,
+        expenseTree,
+        incomeTotal,
+        expenseTotal,
+      }
     }
-  }
+
+    return buildGraph(root)
+  }, [augmentedTransactions])
+
+  useEffect(() => {
+    if (
+      showIncomes &&
+      typeof crunchedData.incomeTree === 'undefined' &&
+      typeof crunchedData.expenseTree !== 'undefined'
+    ) {
+      setShowIncomes(false)
+    }
+    if (
+      !showIncomes &&
+      typeof crunchedData.incomeTree !== 'undefined' &&
+      typeof crunchedData.expenseTree === 'undefined'
+    ) {
+      setShowIncomes(true)
+    }
+  }, [showIncomes, crunchedData.incomeTotal, crunchedData.expenseTotal])
+
+  const data = useMemo(() => {
+    const current = showIncomes ? crunchedData.incomeTree : crunchedData.expenseTree
+    if ((current?.loc ?? 0) > 0) {
+      current?.children.push({
+        children: [],
+        loc: current!.loc,
+        name: current!.name,
+      })
+      current!.loc = 0
+    }
+    return current
+  }, [crunchedData, showIncomes])
 
   const sunburst = useMemo(() => {
-    const data = buildGraph(root).tree
+    if (typeof data === 'undefined') {
+      return (
+        <div style={{ height: '100%', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <h4>No transaction matches your filters</h4>
+        </div>
+      )
+    }
+
     return (
-      <div style={{ height: '30rem', width: '100%', position: 'relative' }}>
+      <>
         <div
           style={{
             position: 'absolute',
@@ -93,7 +162,10 @@ const TransactionsPieChart: FC<Props> = (props) => {
           cornerRadius={5}
           colors={{ scheme: 'set3' }}
           borderWidth={2}
-          borderColor={{ theme: 'background' }}
+          borderColor={{
+            from: 'color',
+            modifiers: [['darker', 0.5]],
+          }}
           childColor={{
             from: 'color',
             modifiers: [['brighter', 0.2]],
@@ -123,25 +195,27 @@ const TransactionsPieChart: FC<Props> = (props) => {
             </div>
           )}
         />
-      </div>
+      </>
     )
-  }, [augmentedTransactions, showIncomes, clickedCategory])
+  }, [data, clickedCategory])
 
   return (
     <>
-      <div style={{ display: 'flex', justifyContent: 'center', margin: '1rem', alignItems: 'center' }}>
-        <div>Expenses</div>
-        <IonToggle
-          style={{ margin: '0 1rem' }}
-          checked={showIncomes}
-          onIonChange={() => {
-            setClickedCategory(null)
-            setShowIncomes((prev) => !prev)
-          }}
-          aria-label="Enable Notifications"
-        ></IonToggle>
-        <div>Incomes</div>
-      </div>
+      {typeof crunchedData.expenseTree === typeof crunchedData.incomeTree && (
+        <div style={{ position: 'absolute', right: '1rem', top: '1rem', display: 'flex', alignItems: 'center' }}>
+          <div>Expenses</div>
+          <IonToggle
+            style={{ margin: '0 1rem' }}
+            checked={showIncomes}
+            onIonChange={() => {
+              setClickedCategory(null)
+              setShowIncomes((prev) => !prev)
+            }}
+            aria-label="Enable Notifications"
+          ></IonToggle>
+          <div>Incomes</div>
+        </div>
+      )}
 
       {sunburst}
     </>

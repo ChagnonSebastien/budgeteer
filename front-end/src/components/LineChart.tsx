@@ -17,7 +17,7 @@ import {
 } from 'date-fns'
 import { FC, useContext, useMemo } from 'react'
 
-import { formatAmount, formatFull } from '../domain/model/currency'
+import { formatFull } from '../domain/model/currency'
 import { AugmentedTransaction } from '../domain/model/transaction'
 import MixedAugmentation from '../service/MixedAugmentation'
 import { AccountServiceContext, CurrencyServiceContext } from '../service/ServiceContext'
@@ -187,50 +187,48 @@ const TransactionsLineChart: FC<Props> = (props) => {
     }
 
     return (
-      <div style={{ height: '30rem' }}>
-        <ResponsiveStream
-          data={data}
-          keys={['Total', 'Investments']}
-          valueFormat={(value) => `${formatFull(defaultCurrency, value)}`}
-          margin={{ top: 20, right: 20, bottom: 100, left: 80 }}
-          axisBottom={{
-            format: (i) => (i % showLabelEveryFactor === 0 ? keys[i] && formatDate(keys[i], 'MMM d, yyyy') : ''),
-            tickRotation: -45,
-          }}
-          axisLeft={{
-            format: (i) =>
-              ((i as number) / Math.pow(10, defaultCurrency?.decimalPoints)).toLocaleString(undefined, {
-                notation: 'compact',
-              }),
-          }}
-          curve="linear"
-          offsetType="diverging"
-          colors={{ scheme: 'set3' }}
-          borderColor={{ theme: 'background' }}
-          stackTooltip={(tooltipProps) => (
-            <IonCard style={{ padding: '0.5rem' }}>
-              <div>{formatDate(keys[tooltipProps.slice.index], 'MMM d, yyyy')}</div>
-              {tooltipProps.slice.stack.map((s) => (
+      <ResponsiveStream
+        data={data}
+        keys={['Total', 'Investments']}
+        valueFormat={(value) => `${formatFull(defaultCurrency, value)}`}
+        margin={{ top: 10, right: 20, bottom: 60, left: 60 }}
+        axisBottom={{
+          format: (i) => (i % showLabelEveryFactor === 0 ? keys[i] && formatDate(keys[i], 'MMM d, yyyy') : ''),
+          tickRotation: -45,
+        }}
+        axisLeft={{
+          format: (i) =>
+            ((i as number) / Math.pow(10, defaultCurrency?.decimalPoints)).toLocaleString(undefined, {
+              notation: 'compact',
+            }),
+        }}
+        curve="monotoneX"
+        offsetType="diverging"
+        colors={{ scheme: 'set3' }}
+        borderColor={{ theme: 'background' }}
+        stackTooltip={(tooltipProps) => (
+          <IonCard style={{ padding: '0.5rem' }}>
+            <div>{formatDate(keys[tooltipProps.slice.index], 'MMM d, yyyy')}</div>
+            {tooltipProps.slice.stack.map((s) => (
+              <div
+                key={`line-chart-overlay-${keys[tooltipProps.slice.index] && formatDate(keys[tooltipProps.slice.index], 'MMM d, yyyy')}-${s.layerLabel}`}
+                style={{ display: 'flex', alignItems: 'center' }}
+              >
                 <div
-                  key={`line-chart-overlay-${keys[tooltipProps.slice.index] && formatDate(keys[tooltipProps.slice.index], 'MMM d, yyyy')}-${s.layerLabel}`}
-                  style={{ display: 'flex', alignItems: 'center' }}
-                >
-                  <div
-                    style={{
-                      width: '1rem',
-                      height: '1rem',
-                      backgroundColor: s.color,
-                      borderRadius: '.25rem',
-                      marginRight: '.25rem',
-                    }}
-                  ></div>
-                  {s.layerLabel}: {s.formattedValue}
-                </div>
-              ))}
-            </IonCard>
-          )}
-        />
-      </div>
+                  style={{
+                    width: '1rem',
+                    height: '1rem',
+                    backgroundColor: s.color,
+                    borderRadius: '.25rem',
+                    marginRight: '.25rem',
+                  }}
+                ></div>
+                {s.layerLabel}: {s.formattedValue}
+              </div>
+            ))}
+          </IonCard>
+        )}
+      />
     )
   }, [augmentedTransactions, defaultCurrency])
 
