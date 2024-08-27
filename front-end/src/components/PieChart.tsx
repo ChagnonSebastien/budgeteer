@@ -3,6 +3,7 @@ import { ResponsiveSunburst } from '@nivo/sunburst'
 import { FC, useContext, useEffect, useMemo, useState } from 'react'
 
 import Category, { AugmentedCategory } from '../domain/model/category'
+import { formatFull } from '../domain/model/currency'
 import { AugmentedTransaction } from '../domain/model/transaction'
 import MixedAugmentation from '../service/MixedAugmentation'
 import { CategoryServiceContext, CurrencyServiceContext } from '../service/ServiceContext'
@@ -131,7 +132,7 @@ const TransactionsPieChart: FC<Props> = (props) => {
   }, [crunchedData, showIncomes])
 
   const sunburst = useMemo(() => {
-    if (typeof data === 'undefined') {
+    if (defaultCurrency === null || typeof data === 'undefined') {
       return (
         <div style={{ height: '100%', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <h4>No transaction matches your filters</h4>
@@ -161,7 +162,7 @@ const TransactionsPieChart: FC<Props> = (props) => {
           value="loc"
           cornerRadius={5}
           colors={{ scheme: 'set3' }}
-          borderWidth={2}
+          borderWidth={1}
           borderColor={{
             from: 'color',
             modifiers: [['darker', 0.5]],
@@ -173,7 +174,9 @@ const TransactionsPieChart: FC<Props> = (props) => {
           onClick={({ id }) => {
             setClickedCategory(categories.find((c) => c.name === id)!)
           }}
-          valueFormat=" >($.2f"
+          valueFormat={(data) => {
+            return formatFull(defaultCurrency, data)
+          }}
           enableArcLabels={true}
           arcLabel="id"
           arcLabelsSkipAngle={5}

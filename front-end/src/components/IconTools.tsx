@@ -4,12 +4,33 @@ import type { IconType } from 'react-icons'
 type IconLibrary = { [iconName: string]: IconType }
 type IconLibraries = Map<string, IconLibrary>
 
+enum PreparedIcon {
+  FaPlus = 'FaPlus',
+  GrTransaction = 'GrTransaction',
+  MdOutput = 'MdOutput',
+  MdInput = 'MdInput',
+  BsGraphUp = 'BsGraphUp',
+  FaChartPie = 'FaChartPie',
+  IoCloseCircle = 'IoCloseCircle',
+}
+
+type PreparedIconLib = {
+  [iconName in PreparedIcon]: IconType
+}
+
+function generatePreparedIcons(fetcher: (iconName: string) => IconType): PreparedIconLib {
+  return Object.values(PreparedIcon)
+    .map((name) => ({ [name]: fetcher(name as string) }))
+    .reduce((lib, icon) => ({ ...lib, ...icon }), {}) as unknown as PreparedIconLib
+}
+
 const loadLibrary = async (prefix: string, library: Promise<{ default: unknown } | IconLibrary>) => {
   const { default: d, ...icons } = await library
   return { prefix, icons }
 }
 
 type IconTools = {
+  IconLib: PreparedIconLib
   iconNameList: string[]
   iconTypeFromName(iconName: string): IconType
 }
@@ -66,7 +87,12 @@ export const useIconTools = (): IconTools => {
     [iconLibraries, iconTypeFromName],
   )
 
+  const IconLib = useMemo(() => {
+    return generatePreparedIcons(iconTypeFromNameWithFallback)
+  }, [iconTypeFromNameWithFallback])
+
   return {
+    IconLib,
     iconNameList,
     iconTypeFromName: iconTypeFromNameWithFallback,
   }
@@ -77,4 +103,5 @@ export const IconToolsContext = createContext<IconTools>({
   iconTypeFromName(_iconName: string) {
     return () => <div />
   },
+  IconLib: generatePreparedIcons((_iconName) => () => <div />),
 })

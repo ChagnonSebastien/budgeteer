@@ -11,7 +11,6 @@ import {
   formatDate,
   isBefore,
   isSameDay,
-  subDays,
   subWeeks,
   subYears,
 } from 'date-fns'
@@ -26,10 +25,12 @@ interface Props {
   augmentedTransactions: AugmentedTransaction[]
   viewAsAccounts?: number[]
   includeInitialAmounts?: boolean
+  fromDate: Date
+  toDate: Date
 }
 
 const TransactionsLineChart: FC<Props> = (props) => {
-  const { augmentedTransactions, viewAsAccounts, includeInitialAmounts = false } = props
+  const { augmentedTransactions, viewAsAccounts, includeInitialAmounts = false, fromDate, toDate } = props
 
   const { defaultCurrency } = useContext(CurrencyServiceContext)
   const { exchangeRateOnDay } = useContext(MixedAugmentation)
@@ -39,32 +40,33 @@ const TransactionsLineChart: FC<Props> = (props) => {
     if (defaultCurrency === null) return null
     if (augmentedTransactions.length === 0) return null
 
-    const today = new Date()
-    const firstTransaction = augmentedTransactions[augmentedTransactions.length - 1].date
+    const diffDays = differenceInDays(toDate, fromDate)
+    const diffWeeks = differenceInWeeks(toDate, fromDate)
+    const diffMonths = differenceInMonths(toDate, fromDate)
+    const diffYears = differenceInYears(toDate, fromDate)
 
-    const diffDays = differenceInDays(today, firstTransaction)
-    const diffWeeks = differenceInWeeks(today, firstTransaction)
-    const diffMonths = differenceInMonths(today, firstTransaction)
-    const diffYears = differenceInYears(today, firstTransaction)
-
-    let startingFrom = subDays(firstTransaction, 1)
+    let startingFrom = fromDate
     let incrementDate = (from: Date) => addDays(from, 1)
     let showLabelEveryFactor = 1
 
     if (diffMonths > 72) {
-      startingFrom = subYears(today, diffYears + 1)
+      startingFrom = subYears(toDate, diffYears + 1)
       incrementDate = (from: Date) => addMonths(from, 1)
       showLabelEveryFactor = 12
     } else if (diffMonths > 36) {
-      startingFrom = subYears(today, diffYears + 1)
+      startingFrom = subYears(toDate, diffYears + 1)
       incrementDate = (from: Date) => addMonths(from, 1)
       showLabelEveryFactor = 6
+    } else if (diffWeeks > 100) {
+      startingFrom = subWeeks(toDate, diffWeeks + 1)
+      incrementDate = (from: Date) => addWeeks(from, 1)
+      showLabelEveryFactor = 8
     } else if (diffWeeks > 50) {
-      startingFrom = subWeeks(today, diffWeeks + 1)
+      startingFrom = subWeeks(toDate, diffWeeks + 1)
       incrementDate = (from: Date) => addWeeks(from, 1)
       showLabelEveryFactor = 4
     } else if (diffDays > 50) {
-      startingFrom = subWeeks(today, diffWeeks + 1)
+      startingFrom = subWeeks(toDate, diffWeeks + 1)
       incrementDate = (from: Date) => addDays(from, 1)
       showLabelEveryFactor = 7
     }
@@ -98,12 +100,12 @@ const TransactionsLineChart: FC<Props> = (props) => {
     const investments = new Map<number, number>()
     let totalInvested = 0
 
-    while (!isSameDay(upTo, today)) {
+    while (!isSameDay(upTo, toDate)) {
       upTo = incrementDate(upTo)
       keys.push(upTo)
       data.push({ ...data[data.length - 1] })
 
-      while (i >= 0 && (isBefore(augmentedTransactions[i].date, upTo) || isSameDay(today, upTo))) {
+      while (i >= 0 && (isBefore(augmentedTransactions[i].date, upTo) || isSameDay(toDate, upTo))) {
         const transaction = augmentedTransactions[i]
 
         // Investments incomes (such as dividends) should be marked as Investments such and not as raw incomes
