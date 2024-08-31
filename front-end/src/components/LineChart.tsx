@@ -1,20 +1,15 @@
-import { IonCard } from '@ionic/react'
+import { IonCard, IonRadio, IonRadioGroup } from '@ionic/react'
 import { ResponsiveStream } from '@nivo/stream'
 import {
-  addDays,
-  addMonths,
-  addWeeks,
   differenceInDays,
   differenceInMonths,
   differenceInWeeks,
-  differenceInYears,
   formatDate,
-  isBefore,
-  isSameDay,
+  subDays,
+  subMonths,
   subWeeks,
-  subYears,
 } from 'date-fns'
-import { FC, useContext, useMemo } from 'react'
+import { FC, useContext, useMemo, useState } from 'react'
 
 import { formatFull } from '../domain/model/currency'
 import { AugmentedTransaction } from '../domain/model/transaction'
@@ -23,216 +18,158 @@ import { AccountServiceContext, CurrencyServiceContext } from '../service/Servic
 
 interface Props {
   augmentedTransactions: AugmentedTransaction[]
-  viewAsAccounts?: number[]
-  includeInitialAmounts?: boolean
+  filterByAccounts?: number[]
   fromDate: Date
   toDate: Date
 }
 
 const TransactionsLineChart: FC<Props> = (props) => {
-  const { augmentedTransactions, viewAsAccounts, includeInitialAmounts = false, fromDate, toDate } = props
+  const { fromDate, toDate, filterByAccounts } = props
 
   const { defaultCurrency } = useContext(CurrencyServiceContext)
-  const { exchangeRateOnDay } = useContext(MixedAugmentation)
-  const { state: acounts } = useContext(AccountServiceContext)
+  const { accountTotals } = useContext(MixedAugmentation)
+  const { myOwnAccounts } = useContext(AccountServiceContext)
+
+  const [groupBy, setGroupBy] = useState<'account' | 'none'>('account')
+
+  const filteredAccounts = useMemo(() => {
+    if (typeof filterByAccounts === 'undefined') return myOwnAccounts
+    return myOwnAccounts.filter((account) => filterByAccounts?.includes(account.id))
+  }, [myOwnAccounts])
+
+  console.log(filteredAccounts)
 
   const stream = useMemo(() => {
     if (defaultCurrency === null) return null
-    if (augmentedTransactions.length === 0) return null
 
     const diffDays = differenceInDays(toDate, fromDate)
     const diffWeeks = differenceInWeeks(toDate, fromDate)
     const diffMonths = differenceInMonths(toDate, fromDate)
-    const diffYears = differenceInYears(toDate, fromDate)
 
-    let startingFrom = fromDate
-    let incrementDate = (from: Date) => addDays(from, 1)
+    let subN = subDays
     let showLabelEveryFactor = 1
+    let i = diffDays + 1
 
     if (diffMonths > 72) {
-      startingFrom = subYears(toDate, diffYears + 1)
-      incrementDate = (from: Date) => addMonths(from, 1)
+      subN = subMonths
       showLabelEveryFactor = 12
+      i = diffMonths + 1
     } else if (diffMonths > 36) {
-      startingFrom = subYears(toDate, diffYears + 1)
-      incrementDate = (from: Date) => addMonths(from, 1)
+      subN = subMonths
       showLabelEveryFactor = 6
+      i = diffMonths + 1
     } else if (diffWeeks > 100) {
-      startingFrom = subWeeks(toDate, diffWeeks + 1)
-      incrementDate = (from: Date) => addWeeks(from, 1)
+      subN = subWeeks
       showLabelEveryFactor = 8
+      i = diffWeeks + 1
     } else if (diffWeeks > 50) {
-      startingFrom = subWeeks(toDate, diffWeeks + 1)
-      incrementDate = (from: Date) => addWeeks(from, 1)
+      subN = subWeeks
       showLabelEveryFactor = 4
+      i = diffWeeks + 1
     } else if (diffDays > 50) {
-      startingFrom = subWeeks(toDate, diffWeeks + 1)
-      incrementDate = (from: Date) => addDays(from, 1)
+      subN = subDays
       showLabelEveryFactor = 7
+      i = diffDays + 1
     }
 
-    let Total = 0
-    if (includeInitialAmounts) {
-      const iterator = viewAsAccounts?.map((aId) => acounts.find((a) => a.id === aId)!) ?? acounts
-      for (const account of iterator) {
-        for (const initialAmount of account.initialAmounts) {
-          if (initialAmount.currencyId === defaultCurrency.id) {
-            Total += initialAmount.value
-          } else {
-            Total += initialAmount.value * exchangeRateOnDay(initialAmount.currencyId, defaultCurrency.id, startingFrom)
-          }
+    const data: { [account: string]: number; Total: number }[] = []
+    const labels: Date[] = []
+
+    while (i >= 0) {
+      const upTo = subN(toDate, i)
+      let todaysData: { [account: string]: number } = {}
+      let bigTotal = 0
+
+      accountTotals?.forEach((account, accountId) => {
+        let total = 0
+        const day = account.years.get(upTo.getFullYear())?.months.get(upTo.getMonth())?.days.get(upTo.getDate())
+        if (typeof day !== 'undefined') {
+          total += day.total ?? 0
+          total += day.portfolio ?? 0
         }
-      }
+
+        bigTotal += total
+        todaysData = { ...todaysData, [filteredAccounts.find((a) => a.id === accountId)?.name ?? accountId]: total }
+      })
+
+      labels.push(upTo)
+      data.push({ ...todaysData, Total: bigTotal })
+      i -= 1
     }
 
-    const data = [
-      {
-        Total,
-        Investments: 0,
-      },
-    ]
-
-    const keys = [startingFrom]
-
-    let upTo = startingFrom
-    let i = augmentedTransactions.length - 1
-
-    const investments = new Map<number, number>()
-    let totalInvested = 0
-
-    while (!isSameDay(upTo, toDate)) {
-      upTo = incrementDate(upTo)
-      keys.push(upTo)
-      data.push({ ...data[data.length - 1] })
-
-      while (i >= 0 && (isBefore(augmentedTransactions[i].date, upTo) || isSameDay(toDate, upTo))) {
-        const transaction = augmentedTransactions[i]
-
-        // Investments incomes (such as dividends) should be marked as Investments such and not as raw incomes
-        // Same thing for investments costs
-        if (
-          (transaction.receiverCurrencyId === defaultCurrency?.id || (transaction.sender?.isMine ?? false)) &&
-          (transaction.currencyId === defaultCurrency?.id || (transaction.receiver?.isMine ?? false))
-        ) {
-          if (
-            typeof viewAsAccounts === 'undefined'
-              ? (transaction.sender?.isMine ?? false)
-              : viewAsAccounts.includes(transaction.senderId ?? 0)
-          ) {
-            let convertedAmount = transaction.amount
-            if (transaction.currencyId !== defaultCurrency.id) {
-              convertedAmount *= exchangeRateOnDay(transaction.currencyId, defaultCurrency?.id, upTo)
-            }
-            data[data.length - 1].Total -= convertedAmount
-          }
-          if (
-            typeof viewAsAccounts === 'undefined'
-              ? (transaction.receiver?.isMine ?? false)
-              : viewAsAccounts.includes(transaction.receiverId ?? 0)
-          ) {
-            let convertedAmount = transaction.receiverAmount
-            if (transaction.receiverCurrencyId !== defaultCurrency.id) {
-              convertedAmount *= exchangeRateOnDay(transaction.receiverCurrencyId, defaultCurrency?.id, upTo)
-            }
-            data[data.length - 1].Total += convertedAmount
-          }
-        }
-
-        if (
-          transaction.categoryId === null ||
-          (transaction.currencyId !== defaultCurrency?.id && (transaction.sender?.isMine ?? false)) ||
-          (transaction.receiverCurrencyId !== defaultCurrency.id && (transaction.receiver?.isMine ?? false))
-        ) {
-          // Transfer
-          if (transaction.currencyId === defaultCurrency?.id) {
-            if (
-              transaction.receiverCurrencyId !== defaultCurrency.id &&
-              (transaction.sender?.isMine ?? false) &&
-              (typeof viewAsAccounts === 'undefined' || viewAsAccounts.includes(transaction.receiverId ?? 0))
-            ) {
-              totalInvested += transaction.amount
-            }
-          } else if (
-            transaction.receiverCurrencyId === defaultCurrency?.id &&
-            (typeof viewAsAccounts === 'undefined' || viewAsAccounts.includes(transaction.senderId ?? 0))
-          ) {
-            investments.set(transaction.currencyId, (investments.get(transaction.currencyId) ?? 0) - transaction.amount)
-          }
-
-          if (transaction.receiverCurrencyId === defaultCurrency?.id) {
-            if (
-              transaction.currencyId !== defaultCurrency.id &&
-              (transaction.receiver?.isMine ?? false) &&
-              (typeof viewAsAccounts === 'undefined' || viewAsAccounts.includes(transaction.senderId ?? 0))
-            ) {
-              totalInvested -= transaction.receiverAmount
-            }
-          } else if (
-            transaction.currencyId === defaultCurrency?.id &&
-            (typeof viewAsAccounts === 'undefined' || viewAsAccounts.includes(transaction.receiverId ?? 0))
-          ) {
-            investments.set(
-              transaction.receiverCurrencyId,
-              (investments.get(transaction.receiverCurrencyId) ?? 0) + transaction.receiverAmount,
-            )
-          }
-        }
-        i -= 1
-      }
-
-      let portfolioValue = 0
-      for (const [currencyId, amountOfShares] of investments) {
-        portfolioValue += amountOfShares * exchangeRateOnDay(currencyId, defaultCurrency?.id, upTo)
-      }
-
-      data[data.length - 1].Investments = portfolioValue - totalInvested
+    let keys = ['Total']
+    if (groupBy === 'account') {
+      keys = filteredAccounts.map((a) => a.name).sort((a, b) => b.localeCompare(a))
     }
 
     return (
-      <ResponsiveStream
-        data={data}
-        keys={['Total', 'Investments']}
-        valueFormat={(value) => `${formatFull(defaultCurrency, value)}`}
-        margin={{ top: 10, right: 20, bottom: 60, left: 60 }}
-        axisBottom={{
-          format: (i) => (i % showLabelEveryFactor === 0 ? keys[i] && formatDate(keys[i], 'MMM d, yyyy') : ''),
-          tickRotation: -45,
-        }}
-        axisLeft={{
-          format: (i) =>
-            ((i as number) / Math.pow(10, defaultCurrency?.decimalPoints)).toLocaleString(undefined, {
-              notation: 'compact',
-            }),
-        }}
-        curve="monotoneX"
-        offsetType="diverging"
-        colors={{ scheme: 'set3' }}
-        borderColor={{ theme: 'background' }}
-        stackTooltip={(tooltipProps) => (
-          <IonCard style={{ padding: '0.5rem' }}>
-            <div>{formatDate(keys[tooltipProps.slice.index], 'MMM d, yyyy')}</div>
-            {tooltipProps.slice.stack.map((s) => (
-              <div
-                key={`line-chart-overlay-${keys[tooltipProps.slice.index] && formatDate(keys[tooltipProps.slice.index], 'MMM d, yyyy')}-${s.layerLabel}`}
-                style={{ display: 'flex', alignItems: 'center' }}
-              >
+      <>
+        <IonCard
+          style={{
+            position: 'absolute',
+            left: '6rem',
+            top: '1rem',
+            display: 'flex',
+            flexDirection: 'column',
+            zIndex: 1,
+            padding: '.5rem',
+          }}
+        >
+          <div style={{ fontWeight: 'bold' }}>Group by</div>
+          <IonRadioGroup
+            value={groupBy}
+            style={{ display: 'flex', flexDirection: 'column' }}
+            onIonChange={(ev) => setGroupBy(ev.detail.value)}
+          >
+            <IonRadio value="none">None</IonRadio>
+            <IonRadio value="account">Account</IonRadio>
+          </IonRadioGroup>
+        </IonCard>
+        <ResponsiveStream
+          data={data}
+          keys={keys}
+          valueFormat={(value) => `${formatFull(defaultCurrency, value)}`}
+          margin={{ top: 10, right: 20, bottom: 60, left: 60 }}
+          axisBottom={{
+            format: (i) => (i % showLabelEveryFactor === 0 ? labels[i] && formatDate(labels[i], 'MMM d, yyyy') : ''),
+            tickRotation: -45,
+          }}
+          axisLeft={{
+            format: (i) =>
+              ((i as number) / Math.pow(10, defaultCurrency?.decimalPoints)).toLocaleString(undefined, {
+                notation: 'compact',
+              }),
+          }}
+          curve="monotoneX"
+          offsetType="none"
+          colors={{ scheme: 'set3' }}
+          borderColor={{ theme: 'background' }}
+          stackTooltip={(tooltipProps) => (
+            <IonCard style={{ padding: '0.5rem' }}>
+              <div>{formatDate(labels[tooltipProps.slice.index], 'MMM d, yyyy')}</div>
+              {tooltipProps.slice.stack.map((s) => (
                 <div
-                  style={{
-                    width: '1rem',
-                    height: '1rem',
-                    backgroundColor: s.color,
-                    borderRadius: '.25rem',
-                    marginRight: '.25rem',
-                  }}
-                ></div>
-                {s.layerLabel}: {s.formattedValue}
-              </div>
-            ))}
-          </IonCard>
-        )}
-      />
+                  key={`line-chart-overlay-${labels[tooltipProps.slice.index] && formatDate(labels[tooltipProps.slice.index], 'MMM d, yyyy')}-${s.layerLabel}`}
+                  style={{ display: 'flex', alignItems: 'center' }}
+                >
+                  <div
+                    style={{
+                      width: '1rem',
+                      height: '1rem',
+                      backgroundColor: s.color,
+                      borderRadius: '.25rem',
+                      marginRight: '.25rem',
+                    }}
+                  ></div>
+                  {s.layerLabel}: {s.formattedValue}
+                </div>
+              ))}
+            </IonCard>
+          )}
+        />
+      </>
     )
-  }, [augmentedTransactions, defaultCurrency])
+  }, [defaultCurrency, filteredAccounts, groupBy, fromDate, toDate])
 
   return <>{stream}</>
 }

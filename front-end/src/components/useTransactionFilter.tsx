@@ -1,15 +1,17 @@
 import { IonChip, IonDatetime, IonModal } from '@ionic/react'
-import { addDays, subYears } from 'date-fns'
+import { addDays, subMonths, subYears } from 'date-fns'
 import { useContext, useMemo, useState } from 'react'
 
 import { AccountList } from './AccountList'
 import { CategoryList } from './CategoryList'
 import ContentWithHeader from './ContentWithHeader'
 import { IconToolsContext } from './IconTools'
-import { AccountServiceContext, CategoryServiceContext } from '../service/ServiceContext'
+import { AccountServiceContext, CategoryServiceContext, TransactionServiceContext } from '../service/ServiceContext'
 
 export default () => {
   const [showFilterSelection, setShowFilterSelection] = useState(false)
+
+  const { state: transactions } = useContext(TransactionServiceContext)
 
   const { state: accounts } = useContext(AccountServiceContext)
   const [showAccountModal, setShowAccountModal] = useState(false)
@@ -173,6 +175,63 @@ export default () => {
 
   const overview = (
     <>
+      <div style={{ display: 'flex', justifyContent: 'space-around' }}>
+        <div
+          style={{ padding: '.25rem 1rem', fontWeight: 'bolder', cursor: 'pointer' }}
+          onClick={() => {
+            if (transactions.length > 0) {
+              setFromDate(transactions[transactions.length - 1].date)
+              setToDate(new Date())
+            }
+          }}
+        >
+          Max
+        </div>
+        <div
+          style={{ padding: '.25rem 1rem', fontWeight: 'bolder', cursor: 'pointer' }}
+          onClick={() => {
+            if (transactions.length > 0) {
+              setFromDate(addDays(subYears(new Date(), 5), 1))
+              setToDate(new Date())
+            }
+          }}
+        >
+          5Y
+        </div>
+        <div
+          style={{ padding: '.25rem 1rem', fontWeight: 'bolder', cursor: 'pointer' }}
+          onClick={() => {
+            if (transactions.length > 0) {
+              setFromDate(addDays(subYears(new Date(), 3), 1))
+              setToDate(new Date())
+            }
+          }}
+        >
+          3Y
+        </div>
+        <div
+          style={{ padding: '.25rem 1rem', fontWeight: 'bolder', cursor: 'pointer' }}
+          onClick={() => {
+            if (transactions.length > 0) {
+              setFromDate(addDays(subYears(new Date(), 1), 1))
+              setToDate(new Date())
+            }
+          }}
+        >
+          1Y
+        </div>
+        <div
+          style={{ padding: '.25rem 1rem', fontWeight: 'bolder', cursor: 'pointer' }}
+          onClick={() => {
+            if (transactions.length > 0) {
+              setFromDate(addDays(subMonths(new Date(), 1), 1))
+              setToDate(new Date())
+            }
+          }}
+        >
+          1M
+        </div>
+      </div>
       <div
         style={{
           display: 'flex',

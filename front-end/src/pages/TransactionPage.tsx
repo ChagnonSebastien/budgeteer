@@ -76,7 +76,7 @@ const TransactionPage: FC = () => {
           {graphType === 'line' ? (
             <TransactionsLineChart
               augmentedTransactions={filteredTransaction}
-              viewAsAccounts={accountFilter === null ? undefined : [accountFilter]}
+              filterByAccounts={accountFilter === null ? undefined : [accountFilter]}
               toDate={toDate}
               fromDate={fromDate}
             />
