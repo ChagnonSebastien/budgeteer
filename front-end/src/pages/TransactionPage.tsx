@@ -2,9 +2,9 @@ import { IonFab, IonFabButton, IonFabList, IonPage, useIonRouter } from '@ionic/
 import { isAfter, isBefore } from 'date-fns'
 import { FC, useContext, useMemo, useState } from 'react'
 
+import AggregatedDiffChart from '../components/AggregatedDiffChart'
 import ContentWithHeader from '../components/ContentWithHeader'
 import { IconToolsContext } from '../components/IconTools'
-import TransactionsLineChart from '../components/LineChart'
 import TransactionsPieChart from '../components/PieChart'
 import { TransactionList } from '../components/TransactionList'
 import useTransactionFilter from '../components/useTransactionFilter'
@@ -74,12 +74,7 @@ const TransactionPage: FC = () => {
 
         <div style={{ height: '50%', width: '100%', position: 'relative', padding: '1rem' }}>
           {graphType === 'line' ? (
-            <TransactionsLineChart
-              augmentedTransactions={filteredTransaction}
-              filterByAccounts={accountFilter === null ? undefined : [accountFilter]}
-              toDate={toDate}
-              fromDate={fromDate}
-            />
+            <AggregatedDiffChart transactions={filteredTransaction} toDate={toDate} fromDate={fromDate} />
           ) : (
             <TransactionsPieChart
               rootCategory={categories.find((c) => c.id === categoryFilter) ?? rootCategory}

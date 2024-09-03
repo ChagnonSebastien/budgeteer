@@ -23,7 +23,7 @@ interface Props {
   toDate: Date
 }
 
-const TransactionsLineChart: FC<Props> = (props) => {
+const AccountsBalanceChart: FC<Props> = (props) => {
   const { fromDate, toDate, filterByAccounts } = props
 
   const { defaultCurrency } = useContext(CurrencyServiceContext)
@@ -35,9 +35,7 @@ const TransactionsLineChart: FC<Props> = (props) => {
   const filteredAccounts = useMemo(() => {
     if (typeof filterByAccounts === 'undefined') return myOwnAccounts
     return myOwnAccounts.filter((account) => filterByAccounts?.includes(account.id))
-  }, [myOwnAccounts])
-
-  console.log(filteredAccounts)
+  }, [myOwnAccounts, filterByAccounts])
 
   const stream = useMemo(() => {
     if (defaultCurrency === null) return null
@@ -58,10 +56,10 @@ const TransactionsLineChart: FC<Props> = (props) => {
       subN = subMonths
       showLabelEveryFactor = 6
       i = diffMonths + 1
-    } else if (diffWeeks > 100) {
-      subN = subWeeks
-      showLabelEveryFactor = 8
-      i = diffWeeks + 1
+    } else if (diffMonths > 24) {
+      subN = subMonths
+      showLabelEveryFactor = 2
+      i = diffMonths + 1
     } else if (diffWeeks > 50) {
       subN = subWeeks
       showLabelEveryFactor = 4
@@ -125,6 +123,7 @@ const TransactionsLineChart: FC<Props> = (props) => {
             <IonRadio value="account">Account</IonRadio>
           </IonRadioGroup>
         </IonCard>
+
         <ResponsiveStream
           data={data}
           keys={keys}
@@ -174,4 +173,4 @@ const TransactionsLineChart: FC<Props> = (props) => {
   return <>{stream}</>
 }
 
-export default TransactionsLineChart
+export default AccountsBalanceChart

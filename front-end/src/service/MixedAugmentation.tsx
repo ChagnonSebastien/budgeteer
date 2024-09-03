@@ -285,9 +285,6 @@ export const MixedAugmentationProvider: FC<Props> = ({ children }) => {
       }
     }
 
-    console.log(AccountTotals)
-    console.log(Investments)
-
     return AccountTotals
   }, [exchangeRateOnDay, myOwnAccounts, augmentedTransactions])
 
