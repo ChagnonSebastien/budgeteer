@@ -11,7 +11,7 @@ import {
 } from '@ionic/react'
 import { FC, ReactNode } from 'react'
 
-interface Props {
+export interface ContentWithHeaderProps {
   children: ReactNode | ReactNode[]
   title: string
   button: 'menu' | 'return' | 'none'
@@ -21,7 +21,7 @@ interface Props {
   rightButton?: JSX.Element
 }
 
-const ContentWithHeader: FC<Props> = (props) => {
+const ContentWithHeader: FC<ContentWithHeaderProps> = (props) => {
   const { title, children, button: buttonOption, onSearch, onCancel, segments, rightButton } = props
   let button = null
   switch (buttonOption) {

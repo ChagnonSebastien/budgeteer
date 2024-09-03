@@ -240,6 +240,7 @@ export default () => {
           padding: '.15rem 1rem',
           borderRadius: '1rem',
           alignItems: 'center',
+          cursor: 'pointer',
         }}
         onClick={() => setShowFilterSelection(true)}
       >
@@ -281,15 +282,16 @@ export default () => {
       </IonModal>
 
       <IonModal isOpen={showAccountModal} onWillDismiss={() => setShowAccountModal(false)}>
-        <ContentWithHeader title={`Filter by account`} button="return" onCancel={() => setShowAccountModal(false)}>
-          <AccountList
-            accounts={accounts}
-            onSelect={(accountId) => {
-              setAccountFilter(accountId)
-              setShowAccountModal(false)
-            }}
-          />
-        </ContentWithHeader>
+        <AccountList
+          title="Filter by Account"
+          button="none"
+          onCancel={() => setShowAccountModal(false)}
+          accounts={accounts}
+          onSelect={(accountId) => {
+            setAccountFilter(accountId)
+            setShowAccountModal(false)
+          }}
+        />
       </IonModal>
 
       <IonModal

@@ -53,7 +53,7 @@ const AggregatedDiffChart: FC<Props> = (props) => {
       subN = subMonths
       showLabelEveryFactor = 3
       i = diffMonths + 1
-    } else if (diffWeeks > 50) {
+    } else if (diffWeeks > 20) {
       subN = subWeeks
       showLabelEveryFactor = 4
       i = diffWeeks + 1

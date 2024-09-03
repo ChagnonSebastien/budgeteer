@@ -2,7 +2,6 @@ import { IonInput, IonModal } from '@ionic/react'
 import { CSSProperties, FC, useContext, useMemo, useState } from 'react'
 
 import { AccountList } from './AccountList'
-import ContentWithHeader from './ContentWithHeader'
 import { AccountServiceContext } from '../service/ServiceContext'
 
 interface Props {
@@ -42,15 +41,15 @@ const AccountPicker: FC<Props> = (props) => {
         }}
       />
       <IonModal isOpen={showModal} onWillDismiss={() => setShowModal(false)}>
-        <ContentWithHeader title={`Select ${labelText}`} button="return" onCancel={() => setShowModal(false)}>
-          <AccountList
-            accounts={accounts}
-            onSelect={(newParent) => {
-              setSelectedAccountId(newParent)
-              setShowModal(false)
-            }}
-          />
-        </ContentWithHeader>
+        <AccountList
+          title={`Select ${labelText}`}
+          accounts={accounts}
+          onSelect={(newParent) => {
+            setSelectedAccountId(newParent)
+            setShowModal(false)
+          }}
+          button="none"
+        />
       </IonModal>
     </>
   )
