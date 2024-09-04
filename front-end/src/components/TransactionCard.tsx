@@ -35,13 +35,23 @@ const TransactionCard: FC<Props> = (props) => {
     onClick,
   } = props
 
+  const fromMe = from?.isMine ?? false
+  const toMe = to?.isMine ?? false
+
+  let background = '#80808010'
+  if (fromMe && !toMe) {
+    background = '#F0808010'
+  } else if (!fromMe && toMe) {
+    background = '#80F08010'
+  }
+
   return (
     <div
       onClick={onClick}
       style={{
         display: 'flex',
         flexDirection: 'row',
-        background: '#80808010',
+        background,
         borderRadius: '.3rem',
         fontSize: 'small',
         textWrap: 'nowrap',

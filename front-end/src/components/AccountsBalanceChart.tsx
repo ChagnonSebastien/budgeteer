@@ -12,7 +12,6 @@ import {
 import { FC, useContext, useMemo, useState } from 'react'
 
 import { formatFull } from '../domain/model/currency'
-import { AugmentedTransaction } from '../domain/model/transaction'
 import MixedAugmentation from '../service/MixedAugmentation'
 import { AccountServiceContext, CurrencyServiceContext } from '../service/ServiceContext'
 
@@ -145,23 +144,25 @@ const AccountsBalanceChart: FC<Props> = (props) => {
           stackTooltip={(tooltipProps) => (
             <IonCard style={{ padding: '0.5rem' }}>
               <div>{formatDate(labels[tooltipProps.slice.index], 'MMM d, yyyy')}</div>
-              {tooltipProps.slice.stack.map((s) => (
-                <div
-                  key={`line-chart-overlay-${labels[tooltipProps.slice.index] && formatDate(labels[tooltipProps.slice.index], 'MMM d, yyyy')}-${s.layerLabel}`}
-                  style={{ display: 'flex', alignItems: 'center' }}
-                >
+              {tooltipProps.slice.stack
+                .filter((s) => s.value !== 0)
+                .map((s) => (
                   <div
-                    style={{
-                      width: '1rem',
-                      height: '1rem',
-                      backgroundColor: s.color,
-                      borderRadius: '.25rem',
-                      marginRight: '.25rem',
-                    }}
-                  ></div>
-                  {s.layerLabel}: {s.formattedValue}
-                </div>
-              ))}
+                    key={`line-chart-overlay-${labels[tooltipProps.slice.index] && formatDate(labels[tooltipProps.slice.index], 'MMM d, yyyy')}-${s.layerLabel}`}
+                    style={{ display: 'flex', alignItems: 'center' }}
+                  >
+                    <div
+                      style={{
+                        width: '1rem',
+                        height: '1rem',
+                        backgroundColor: s.color,
+                        borderRadius: '.25rem',
+                        marginRight: '.25rem',
+                      }}
+                    ></div>
+                    {s.layerLabel}: {s.formattedValue}
+                  </div>
+                ))}
             </IonCard>
           )}
         />

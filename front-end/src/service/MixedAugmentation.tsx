@@ -176,7 +176,7 @@ export const MixedAugmentationProvider: FC<Props> = ({ children }) => {
       const total = account.initialAmounts
         .map((initialAmount) => {
           if (initialAmount.currencyId === defaultCurrency.id) return initialAmount.value
-          return initialAmount.value * exchangeRateOnDay(initialAmount.currencyId, defaultCurrency.id, fromDate)
+          return 0
         })
         .reduce((a, b) => a + b, 0)
       const portfolio = 0

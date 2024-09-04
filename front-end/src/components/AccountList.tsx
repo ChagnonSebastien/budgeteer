@@ -115,18 +115,20 @@ export const AccountList = (props: Props) => {
             <div style={{ flexGrow: 1 }}>
               <div>{account.name}</div>
               {showBalances &&
-                [...(accountBalances?.get(account.id)?.entries() ?? [])].map((entry) => {
-                  const currency = currencies.find((c) => c.id === entry[0])
-                  if (typeof currency === 'undefined') {
-                    return null
-                  }
+                [...(accountBalances?.get(account.id)?.entries() ?? [])]
+                  .filter((entry) => entry[1] !== 0)
+                  .map((entry) => {
+                    const currency = currencies.find((c) => c.id === entry[0])
+                    if (typeof currency === 'undefined') {
+                      return null
+                    }
 
-                  return (
-                    <div key={`currency-in-account-${entry[0]}`} style={{ textAlign: 'right' }}>
-                      {formatFull(currency, entry[1])}
-                    </div>
-                  )
-                })}
+                    return (
+                      <div key={`currency-in-account-${entry[0]}`} style={{ textAlign: 'right' }}>
+                        {formatFull(currency, entry[1])}
+                      </div>
+                    )
+                  })}
             </div>
           </IonItem>
         )
