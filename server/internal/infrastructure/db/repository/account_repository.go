@@ -46,11 +46,23 @@ func (r *Repository) GetAllAccountsWithCurrencyIDs(ctx context.Context, userId s
 			}
 		}
 
+		accountType := ""
+		if accountDao.Type.Valid {
+			accountType = accountDao.Type.String
+		}
+
+		financialInstitution := ""
+		if accountDao.FinancialInstitution.Valid {
+			financialInstitution = accountDao.FinancialInstitution.String
+		}
+
 		accounts[i] = model.Account{
-			ID:              int(accountDao.ID),
-			Name:            accountDao.Name,
-			InitialBalances: balances,
-			IsMine:          accountDao.IsMine,
+			ID:                   int(accountDao.ID),
+			Name:                 accountDao.Name,
+			InitialBalances:      balances,
+			IsMine:               accountDao.IsMine,
+			Type:                 accountType,
+			FinancialInstitution: financialInstitution,
 		}
 	}
 
@@ -63,6 +75,7 @@ func (r *Repository) CreateAccount(
 	name string,
 	initialsAmounts []model.Balance,
 	isMine bool,
+	accountType, financialInstitution string,
 ) (int, error) {
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -73,9 +86,17 @@ func (r *Repository) CreateAccount(
 
 	accountId, err := queries.CreateAccount(
 		ctx, dao.CreateAccountParams{
-			UserID: userId,
 			Name:   name,
+			UserID: userId,
 			IsMine: isMine,
+			Type: sql.NullString{
+				String: accountType,
+				Valid:  accountType != "",
+			},
+			FinancialInstitution: sql.NullString{
+				String: financialInstitution,
+				Valid:  financialInstitution != "",
+			},
 		},
 	)
 	if err != nil {
@@ -118,6 +139,7 @@ func (r *Repository) UpdateAccount(
 	name string,
 	initialsAmounts []model.Balance,
 	isMine bool,
+	accountType, financialInstitution string,
 ) error {
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -132,6 +154,14 @@ func (r *Repository) UpdateAccount(
 			ID:     int32(id),
 			Name:   name,
 			IsMine: isMine,
+			Type: sql.NullString{
+				String: accountType,
+				Valid:  accountType != "",
+			},
+			FinancialInstitution: sql.NullString{
+				String: financialInstitution,
+				Valid:  financialInstitution != "",
+			},
 		},
 	)
 	if err != nil {

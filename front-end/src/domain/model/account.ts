@@ -13,5 +13,7 @@ export default class Account implements Unique {
     public readonly name: string,
     public readonly initialAmounts: Balance[],
     public readonly isMine: boolean,
+    public readonly type: string | null,
+    public readonly financialInstitution: string | null,
   ) {}
 }

@@ -1,18 +1,20 @@
 -- name: GetAllAccounts :many
-SELECT id, name, is_mine
+SELECT id, name, is_mine, type, financial_institution
 FROM accounts
 WHERE user_id = sqlc.arg(user_id);
 
 -- name: CreateAccount :one
-INSERT INTO accounts (name, user_id, is_mine)
-VALUES (sqlc.arg(name), sqlc.arg(user_id), sqlc.arg(is_mine))
+INSERT INTO accounts (name, user_id, is_mine, type, financial_institution)
+VALUES (sqlc.arg(name), sqlc.arg(user_id), sqlc.arg(is_mine), sqlc.arg(type), sqlc.arg(financial_institution))
 RETURNING id;
 
 -- name: UpdateAccount :exec
 UPDATE accounts
 SET
     name = sqlc.arg(name),
-    is_mine = sqlc.arg(is_mine)
+    is_mine = sqlc.arg(is_mine),
+    type = sqlc.arg(type),
+    financial_institution = sqlc.arg(financial_institution)
 WHERE id = sqlc.arg(id) AND user_id = sqlc.arg(user_id);
 
 -- name: GetAllAccountCurrencies :many

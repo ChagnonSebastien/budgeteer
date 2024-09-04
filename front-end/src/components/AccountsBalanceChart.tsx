@@ -9,8 +9,9 @@ import {
   subMonths,
   subWeeks,
 } from 'date-fns'
-import { FC, useContext, useMemo, useState } from 'react'
+import { FC, useCallback, useContext, useMemo, useState } from 'react'
 
+import Account from '../domain/model/account'
 import { formatFull } from '../domain/model/currency'
 import MixedAugmentation from '../service/MixedAugmentation'
 import { AccountServiceContext, CurrencyServiceContext } from '../service/ServiceContext'
@@ -28,12 +29,30 @@ const AccountsBalanceChart: FC<Props> = (props) => {
   const { accountTotals } = useContext(MixedAugmentation)
   const { myOwnAccounts } = useContext(AccountServiceContext)
 
-  const [groupBy, setGroupBy] = useState<'account' | 'none'>('account')
+  const [groupBy, setGroupBy] = useState<'financialInstitution' | 'type' | 'account' | 'none'>('account')
 
   const filteredAccounts = useMemo(() => {
     if (typeof filterByAccounts === 'undefined') return myOwnAccounts
     return myOwnAccounts.filter((account) => filterByAccounts?.includes(account.id))
   }, [myOwnAccounts, filterByAccounts])
+
+  const group = useCallback(
+    (account?: Account) => {
+      if (typeof account === 'undefined') return undefined
+
+      switch (groupBy) {
+        case 'account':
+          return account.name
+        case 'financialInstitution':
+          return account.financialInstitution ?? 'Other'
+        case 'type':
+          return account.type ?? 'Other'
+        case 'none':
+          return 'Total'
+      }
+    },
+    [groupBy],
+  )
 
   const stream = useMemo(() => {
     if (defaultCurrency === null) return null
@@ -68,13 +87,13 @@ const AccountsBalanceChart: FC<Props> = (props) => {
       i = diffDays + 1
     }
 
-    const data: { [account: string]: number; Total: number }[] = []
+    const data: { [account: string]: number }[] = []
     const labels: Date[] = []
+    const groups = new Set<string>()
 
     while (i >= 0) {
       const upTo = subN(toDate, i)
       let todaysData: { [account: string]: number } = {}
-      let bigTotal = 0
 
       accountTotals?.forEach((account, accountId) => {
         let total = 0
@@ -84,18 +103,15 @@ const AccountsBalanceChart: FC<Props> = (props) => {
           total += day.portfolio ?? 0
         }
 
-        bigTotal += total
-        todaysData = { ...todaysData, [filteredAccounts.find((a) => a.id === accountId)?.name ?? accountId]: total }
+        const groupLabel = group(filteredAccounts.find((a) => a.id === accountId)) ?? accountId.toString()
+        const bigTotal = (todaysData[groupLabel] ?? 0) + total
+        todaysData = { ...todaysData, [groupLabel]: bigTotal }
+        groups.add(groupLabel)
       })
 
       labels.push(upTo)
-      data.push({ ...todaysData, Total: bigTotal })
+      data.push({ ...todaysData })
       i -= 1
-    }
-
-    let keys = ['Total']
-    if (groupBy === 'account') {
-      keys = filteredAccounts.map((a) => a.name).sort((a, b) => b.localeCompare(a))
     }
 
     return (
@@ -119,12 +135,14 @@ const AccountsBalanceChart: FC<Props> = (props) => {
           >
             <IonRadio value="none">None</IonRadio>
             <IonRadio value="account">Account</IonRadio>
+            <IonRadio value="financialInstitution">Financial Institution</IonRadio>
+            <IonRadio value="type">Type</IonRadio>
           </IonRadioGroup>
         </IonCard>
 
         <ResponsiveStream
           data={data}
-          keys={keys}
+          keys={[...groups.keys()].sort((a, b) => a.localeCompare(b))}
           valueFormat={(value) => `${formatFull(defaultCurrency, value)}`}
           margin={{ top: 10, right: 20, bottom: 60, left: 60 }}
           axisBottom={{
@@ -170,7 +188,7 @@ const AccountsBalanceChart: FC<Props> = (props) => {
         />
       </>
     )
-  }, [defaultCurrency, filteredAccounts, groupBy, fromDate, toDate])
+  }, [defaultCurrency, filteredAccounts, groupBy, fromDate, toDate, group])
 
   return <>{stream}</>
 }

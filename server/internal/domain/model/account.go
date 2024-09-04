@@ -6,8 +6,10 @@ type Balance struct {
 }
 
 type Account struct {
-	ID              int
-	Name            string
-	InitialBalances []Balance
-	IsMine          bool
+	ID                   int
+	Name                 string
+	InitialBalances      []Balance
+	IsMine               bool
+	Type                 string
+	FinancialInstitution string
 }

@@ -102,6 +102,8 @@ const ImportSpreadsheet: FC = () => {
                 name: line.Account,
                 initialAmounts: [],
                 isMine: true,
+                type: null,
+                financialInstitution: null,
               })
               newAccounts.push(account)
             } else if (!account.isMine) {
@@ -110,7 +112,16 @@ const ImportSpreadsheet: FC = () => {
                 isMine: true,
               })
               newAccounts = newAccounts.map((a) =>
-                a.id === account!.id ? new Account(account!.id, account!.name, account!.initialAmounts, true) : a,
+                a.id === account!.id
+                  ? new Account(
+                      account!.id,
+                      account!.name,
+                      account!.initialAmounts,
+                      true,
+                      account!.type,
+                      account!.financialInstitution,
+                    )
+                  : a,
               )
             }
 
@@ -122,6 +133,8 @@ const ImportSpreadsheet: FC = () => {
                   name: line['From/To'],
                   initialAmounts: [],
                   isMine: false,
+                  type: null,
+                  financialInstitution: null,
                 })
                 newAccounts.push(fromto)
               }

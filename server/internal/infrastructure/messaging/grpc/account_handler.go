@@ -35,7 +35,25 @@ func (s *AccountHandler) CreateAccount(ctx context.Context, req *dto.CreateAccou
 		)
 	}
 
-	newId, err := s.accountService.CreateAccount(ctx, claims.Sub, req.Name, balances, req.IsMine)
+	accountType := ""
+	if req.Type != nil {
+		accountType = *req.Type
+	}
+
+	financialInstitution := ""
+	if req.FinancialInstitution != nil {
+		financialInstitution = *req.FinancialInstitution
+	}
+
+	newId, err := s.accountService.CreateAccount(
+		ctx,
+		claims.Sub,
+		req.Name,
+		balances,
+		req.IsMine,
+		accountType,
+		financialInstitution,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -64,6 +82,16 @@ func (s *AccountHandler) UpdateAccount(
 		)
 	}
 
+	accountType := ""
+	if req.Account.Type != nil {
+		accountType = *req.Account.Type
+	}
+
+	financialInstitution := ""
+	if req.Account.FinancialInstitution != nil {
+		financialInstitution = *req.Account.FinancialInstitution
+	}
+
 	err := s.accountService.UpdateAccount(
 		ctx,
 		claims.Sub,
@@ -71,6 +99,8 @@ func (s *AccountHandler) UpdateAccount(
 		req.Account.Name,
 		balances,
 		req.Account.IsMine,
+		accountType,
+		financialInstitution,
 	)
 	if err != nil {
 		return nil, err
@@ -105,11 +135,23 @@ func (s *AccountHandler) GetAllAccounts(ctx context.Context, _ *dto.GetAllAccoun
 			)
 		}
 
+		var accountType *string = nil
+		if account.Type != "" {
+			accountType = &account.Type
+		}
+
+		var financialInstitution *string = nil
+		if account.FinancialInstitution != "" {
+			financialInstitution = &account.FinancialInstitution
+		}
+
 		accountsDto[i] = &dto.Account{
-			Id:       uint32(account.ID),
-			Name:     account.Name,
-			Balances: balances,
-			IsMine:   account.IsMine,
+			Id:                   uint32(account.ID),
+			Name:                 account.Name,
+			Balances:             balances,
+			IsMine:               account.IsMine,
+			Type:                 accountType,
+			FinancialInstitution: financialInstitution,
 		}
 	}
 

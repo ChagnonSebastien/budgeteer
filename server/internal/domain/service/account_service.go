@@ -8,8 +8,23 @@ import (
 
 type accountRepository interface {
 	GetAllAccountsWithCurrencyIDs(ctx context.Context, userId string) ([]model.Account, error)
-	CreateAccount(ctx context.Context, userId string, name string, balances []model.Balance, isMine bool) (int, error)
-	UpdateAccount(ctx context.Context, userId string, id int, name string, balances []model.Balance, isMine bool) error
+	CreateAccount(
+		ctx context.Context,
+		userId string,
+		name string,
+		balances []model.Balance,
+		isMine bool,
+		accountType, financialInstitution string,
+	) (int, error)
+	UpdateAccount(
+		ctx context.Context,
+		userId string,
+		id int,
+		name string,
+		balances []model.Balance,
+		isMine bool,
+		accountType, financialInstitution string,
+	) error
 }
 
 type AccountService struct {
@@ -30,11 +45,13 @@ func (a *AccountService) CreateAccount(
 	name string,
 	balances []model.Balance,
 	isMine bool,
+	accountType string,
+	financialInstitution string,
 ) (
 	int,
 	error,
 ) {
-	return a.accountRepository.CreateAccount(ctx, userId, name, balances, isMine)
+	return a.accountRepository.CreateAccount(ctx, userId, name, balances, isMine, accountType, financialInstitution)
 }
 
 func (a *AccountService) UpdateAccount(
@@ -44,6 +61,8 @@ func (a *AccountService) UpdateAccount(
 	name string,
 	balances []model.Balance,
 	isMine bool,
+	accountType string,
+	financialInstitution string,
 ) error {
-	return a.accountRepository.UpdateAccount(ctx, userId, id, name, balances, isMine)
+	return a.accountRepository.UpdateAccount(ctx, userId, id, name, balances, isMine, accountType, financialInstitution)
 }

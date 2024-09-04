@@ -14,6 +14,8 @@ message Account {
   string name = 2;
   repeated CurrencyBalance balances = 3;
   bool is_mine = 4;
+  optional string type = 5;
+  optional string financial_institution = 6;
 }
 
 message GetAllAccountsRequest {
@@ -27,6 +29,8 @@ message CreateAccountRequest {
   string name = 1;
   repeated CurrencyBalance balances = 2;
   bool is_mine = 3;
+  optional string type = 4;
+  optional string financial_institution = 5;
 }
 
 message CreateAccountResponse {

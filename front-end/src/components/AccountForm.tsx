@@ -33,6 +33,8 @@ const AccountForm: FC<Props> = (props) => {
 
   const [isMine] = useState(initialAccount?.isMine ?? true)
   const [name, setName] = useState(initialAccount?.name ?? '')
+  const [type, setType] = useState(initialAccount?.type ?? '')
+  const [financialInstitution, setFinancialInstitution] = useState(initialAccount?.financialInstitution ?? '')
   const [initialAmounts, setInitialAmount] = useState<
     {
       uid: number
@@ -130,6 +132,8 @@ const AccountForm: FC<Props> = (props) => {
         value: Math.floor(parseFloat(`0${ia.value.value.replace(',', '.')}`) * 100),
       })),
       isMine,
+      type: type.trim() === '' ? null : type.trim(),
+      financialInstitution: financialInstitution.trim() === '' ? null : financialInstitution.trim(),
     }).catch((err) => {
       setShowErrorToast('Unexpected error while creating the category')
       console.error(err)
@@ -150,7 +154,7 @@ const AccountForm: FC<Props> = (props) => {
         <IonInput
           type="text"
           className={classNameFromStatus(errors.accountName)}
-          label="Category name"
+          label="Account name"
           labelPlacement="stacked"
           placeholder="e.g., Savings"
           value={name}
@@ -165,6 +169,26 @@ const AccountForm: FC<Props> = (props) => {
               },
             }))
           }
+        />
+
+        <IonInput
+          type="text"
+          label="Account Type"
+          labelPlacement="stacked"
+          placeholder="e.g., TFSA"
+          value={type}
+          errorText={NoError}
+          onIonInput={(ev) => setType(ev.target.value as string)}
+        />
+
+        <IonInput
+          type="text"
+          label="Financial Institution"
+          labelPlacement="stacked"
+          placeholder="e.g., National Bank of Canada"
+          value={financialInstitution}
+          errorText={NoError}
+          onIonInput={(ev) => setFinancialInstitution(ev.target.value as string)}
         />
 
         <div

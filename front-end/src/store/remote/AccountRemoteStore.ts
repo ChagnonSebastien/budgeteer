@@ -29,6 +29,8 @@ export default class AccountRemoteStore {
             amount: ia.value,
           }),
         ),
+        type: data.type ?? undefined,
+        financialInstitution: data.financialInstitution ?? undefined,
       }),
     ).response
     return new Account(
@@ -36,6 +38,8 @@ export default class AccountRemoteStore {
       data.name,
       data.initialAmounts.map((value) => new Balance(value.currencyId, value.value)),
       data.isMine,
+      data.type,
+      data.financialInstitution,
     )
   }
 

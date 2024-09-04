@@ -10,6 +10,8 @@ export class AccountConverter implements Converter<Account, AccountDto> {
         dto.name,
         dto.balances.map((value) => new Balance(value.currencyId, value.amount)),
         dto.isMine,
+        dto.type ?? null,
+        dto.financialInstitution ?? null,
       ),
     )
   }
@@ -25,6 +27,8 @@ export class AccountConverter implements Converter<Account, AccountDto> {
         }),
       ),
       isMine: model.isMine,
+      type: model.type ?? undefined,
+      financialInstitution: model.financialInstitution ?? undefined,
     })
   }
 }
