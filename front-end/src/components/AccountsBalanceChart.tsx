@@ -17,7 +17,6 @@ import MixedAugmentation from '../service/MixedAugmentation'
 import { AccountServiceContext, CurrencyServiceContext } from '../service/ServiceContext'
 
 interface Props {
-  augmentedTransactions: AugmentedTransaction[]
   filterByAccounts?: number[]
   fromDate: Date
   toDate: Date

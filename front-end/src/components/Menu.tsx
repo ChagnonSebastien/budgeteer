@@ -40,6 +40,11 @@ const appPages: AppPage[] = [
     iconName: 'MdAccountBalance',
   },
   {
+    title: 'Account Balances',
+    url: '/accounts/graph',
+    iconName: 'MdAccountBalance',
+  },
+  {
     title: 'Currencies',
     url: '/currencies',
     iconName: 'BsCurrencyExchange',

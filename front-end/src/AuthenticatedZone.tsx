@@ -5,6 +5,7 @@ import { FC, useCallback, useContext, useEffect, useState } from 'react'
 import { Redirect, Route, Switch } from 'react-router'
 
 import { UserContext } from './App'
+import AccountsBalanceChart from './components/AccountsBalanceChart'
 import ContentWithHeader from './components/ContentWithHeader'
 import CurrencyForm from './components/CurrencyForm'
 import Menu from './components/Menu'
@@ -12,6 +13,7 @@ import Account from './domain/model/account'
 import Category from './domain/model/category'
 import Currency from './domain/model/currency'
 import Transaction from './domain/model/transaction'
+import AccountsBalancePage from './pages/AccountsBalancePage'
 import AccountsPage from './pages/AccountsPage'
 import CategoryPage from './pages/CategoryPage'
 import CreateAccountPage from './pages/CreateAccountPage'
@@ -142,6 +144,7 @@ const AuthenticatedZone: FC<Props> = (props) => {
                       <Route exact path="/categories/edit/:categoryId" render={() => <EditCategoryPage />} />
                       <Route exact path="/accounts" render={() => <AccountsPage />} />
                       <Route exact path="/accounts/new" render={() => <CreateAccountPage />} />
+                      <Route exact path="/accounts/graph" render={() => <AccountsBalancePage />} />
                       <Route exact path="/accounts/edit/:accountId" render={() => <EditAccountPage />} />
                       <Route exact path="/transactions" render={() => <TransactionPage />} />
                       <Route exact path="/transactions/new" render={() => <CreateTransactionPage />} />
