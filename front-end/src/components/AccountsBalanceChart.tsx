@@ -159,8 +159,10 @@ const AccountsBalanceChart: FC<Props> = (props) => {
                         borderRadius: '.25rem',
                         marginRight: '.25rem',
                       }}
-                    ></div>
-                    {s.layerLabel}: {s.formattedValue}
+                    />
+                    <div>{s.layerLabel}:</div>
+                    <div style={{ minWidth: '1rem', flexGrow: 1 }} />
+                    <div>{s.formattedValue}</div>
                   </div>
                 ))}
             </IonCard>

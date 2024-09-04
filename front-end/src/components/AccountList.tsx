@@ -52,6 +52,12 @@ export const AccountList = (props: Props) => {
       }
     }
 
+    for (const account of myOwnAccounts) {
+      if (!visited.has(account.id)) {
+        ordered.push(account)
+      }
+    }
+
     return ordered
   }, [myOwnAccounts, transactions])
 
@@ -73,6 +79,12 @@ export const AccountList = (props: Props) => {
           ordered.push(account)
           visited.add(transaction.receiverId)
         }
+      }
+    }
+
+    for (const account of otherAccounts) {
+      if (!visited.has(account.id)) {
+        ordered.push(account)
       }
     }
 
