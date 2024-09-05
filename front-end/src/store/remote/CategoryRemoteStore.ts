@@ -27,7 +27,15 @@ export default class CategoryRemoteStore {
         ...remainder,
       }),
     ).response
-    return new Category(response.id, data.name, data.iconName, data.iconColor, data.iconBackground, data.parentId)
+    return new Category(
+      response.id,
+      data.name,
+      data.iconName,
+      data.iconColor,
+      data.iconBackground,
+      data.parentId,
+      data.fixedCosts,
+    )
   }
 
   public async update(id: number, data: Omit<Category, 'id'>): Promise<void> {

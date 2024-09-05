@@ -1,4 +1,4 @@
-import { IonButton, IonContent, IonInput, IonModal, IonToast } from '@ionic/react'
+import { IonButton, IonCheckbox, IonContent, IonInput, IonModal, IonToast } from '@ionic/react'
 import { FC, FormEvent, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { HexColorPicker } from 'react-colorful'
 import { Omit } from 'react-router'
@@ -30,6 +30,7 @@ const CategoryForm: FC<Props> = (props) => {
   const [selectedIcon, setSelectedIcon] = useState<string>(initialCategory?.iconName ?? 'FaQuestion')
   const [innerColor, setInnerColor] = useState(initialCategory?.iconColor ?? '#2F4F4F')
   const [outerColor, setOuterColor] = useState(initialCategory?.iconBackground ?? '#FFA500')
+  const [fixedCost, setFixedCost] = useState(initialCategory?.fixedCosts ?? false)
 
   const [filter, setFilter] = useState<string>('')
   const [showIconModal, setShowIconModal] = useState(false)
@@ -82,6 +83,7 @@ const CategoryForm: FC<Props> = (props) => {
       parentId: initialCategory?.id === rootCategory.id ? null : parent!,
       iconBackground: outerColor,
       iconColor: innerColor,
+      fixedCosts: fixedCost,
     }).catch((err) => {
       setShowErrorToast('Unexpected error while creating the category')
       console.error(err)
@@ -112,6 +114,15 @@ const CategoryForm: FC<Props> = (props) => {
           />
 
           {!editingRoot && <CategoryPicker categoryId={parent} setCategoryId={setParent} labelText="Parent Category" />}
+
+          <IonCheckbox
+            onIonChange={(ev) => setFixedCost(ev.detail.checked)}
+            checked={fixedCost}
+            labelPlacement="end"
+            style={{ margin: '.5rem 0 0 0' }}
+          >
+            Is a fixed cost
+          </IonCheckbox>
 
           <div style={{ display: 'flex', marginTop: '1rem', alignItems: 'center' }}>
             <div style={{ display: 'flex', flexDirection: 'column', flexGrow: 1 }}>

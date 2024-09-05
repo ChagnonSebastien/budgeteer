@@ -16,6 +16,7 @@ import Transaction from './domain/model/transaction'
 import AccountsBalancePage from './pages/AccountsBalancePage'
 import AccountsPage from './pages/AccountsPage'
 import CategoryPage from './pages/CategoryPage'
+import CostsAnalysisPage from './pages/CostsAnalysisPage'
 import CreateAccountPage from './pages/CreateAccountPage'
 import CreateCategoryPage from './pages/CreateCategoryPage'
 import CreateCurrencyPage from './pages/CreateCurrencyPage'
@@ -149,6 +150,7 @@ const AuthenticatedZone: FC<Props> = (props) => {
                       <Route exact path="/transactions" render={() => <TransactionPage />} />
                       <Route exact path="/transactions/new" render={() => <CreateTransactionPage />} />
                       <Route exact path="/transactions/edit/:transactionId" render={() => <EditTransactionPage />} />
+                      <Route exact path="/costs" render={() => <CostsAnalysisPage />} />
                       <Route exact path="/import" render={() => <ImportSpreadsheet />} />
                       <Route render={() => <Redirect to="/transactions" />} />
                     </Switch>

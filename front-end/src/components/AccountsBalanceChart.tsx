@@ -142,7 +142,7 @@ const AccountsBalanceChart: FC<Props> = (props) => {
 
         <ResponsiveStream
           data={data}
-          keys={[...groups.keys()].sort((a, b) => a.localeCompare(b))}
+          keys={[...groups.keys()].sort((a, b) => b.localeCompare(a))}
           valueFormat={(value) => `${formatFull(defaultCurrency, value)}`}
           margin={{ top: 10, right: 20, bottom: 60, left: 60 }}
           axisBottom={{

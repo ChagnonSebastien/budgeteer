@@ -21,3 +21,5 @@ databaseChangeLog:
       file: ./changelogs/010-transaction-transfer-currencies.sql
   - include:
       file: ./changelogs/011-account-type-and-institution.sql
+  - include:
+      file: ./changelogs/012-fixed-costs.sql

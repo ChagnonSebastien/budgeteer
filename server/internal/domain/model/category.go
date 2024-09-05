@@ -7,4 +7,5 @@ type Category struct {
 	IconName       string
 	IconColor      string
 	IconBackground string
+	FixedCost      bool
 }

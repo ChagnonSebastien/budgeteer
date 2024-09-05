@@ -92,6 +92,7 @@ const ImportSpreadsheet: FC = () => {
                 iconName: 'BsQuestionLg',
                 iconColor: '#2F4F4F',
                 iconBackground: 'rgb(255, 165, 0)',
+                fixedCosts: false,
               })
               newCategories.push(category)
             }

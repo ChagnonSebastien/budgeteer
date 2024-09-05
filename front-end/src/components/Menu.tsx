@@ -54,6 +54,11 @@ const appPages: AppPage[] = [
     url: '/import',
     iconName: 'BiSolidFileImport',
   },
+  {
+    title: 'Costs Analysis',
+    url: '/costs',
+    iconName: 'BiSolidFileImport',
+  },
 ]
 
 interface Props {

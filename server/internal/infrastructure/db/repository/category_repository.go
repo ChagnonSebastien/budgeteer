@@ -28,6 +28,7 @@ func (r *Repository) GetAllCategories(ctx context.Context, userId string) ([]mod
 			IconName:       categoryDao.IconName,
 			IconColor:      categoryDao.IconColor,
 			IconBackground: categoryDao.IconBackground,
+			FixedCost:      categoryDao.FixedCosts,
 		}
 	}
 
@@ -39,6 +40,7 @@ func (r *Repository) CreateCategory(
 	userId string,
 	name, iconName, iconColor, iconBackground string,
 	parentId int,
+	fixedCosts bool,
 ) (int, error) {
 	id, err := r.queries.CreateCategory(
 		ctx, dao.CreateCategoryParams{
@@ -51,6 +53,7 @@ func (r *Repository) CreateCategory(
 			IconName:       iconName,
 			IconColor:      iconColor,
 			IconBackground: iconBackground,
+			FixedCosts:     fixedCosts,
 		},
 	)
 	if err != nil {
@@ -66,6 +69,7 @@ func (r *Repository) UpdateCategory(
 	id int,
 	name, iconName, iconColor, iconBackground string,
 	parentId int,
+	fixedCosts bool,
 ) error {
 	return r.queries.UpdateCategory(
 		ctx, dao.UpdateCategoryParams{
@@ -79,6 +83,7 @@ func (r *Repository) UpdateCategory(
 			IconName:       iconName,
 			IconColor:      iconColor,
 			IconBackground: iconBackground,
+			FixedCosts:     fixedCosts,
 		},
 	)
 }

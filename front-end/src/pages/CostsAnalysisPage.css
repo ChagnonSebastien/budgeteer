@@ -1,0 +1,9 @@
+table {
+  width: 100%;
+}
+
+table > * > tr > * {
+  padding: 0.5rem;
+  border: #888 solid 1px;
+  text-align: center;
+}
