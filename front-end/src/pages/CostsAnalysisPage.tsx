@@ -42,38 +42,100 @@ const CostsAnalysisPage: FC = () => {
     [incomeCategory, transactions, exchangeRateOnDay, defaultCurrency],
   )
 
-  const fixedCosts = useMemo(
-    () =>
-      transactions
-        .filter((value) => differenceInYears(value.date, new Date()) === 0)
-        .filter((value) => value.category?.fixedCosts ?? false)
-        .filter((value) => value.sender?.isMine ?? false)
-        .reduce((previousValue, currentValue) => {
-          let value = currentValue.amount
-          if (currentValue.currencyId !== defaultCurrency?.id) {
-            value *= exchangeRateOnDay(currentValue.currencyId, defaultCurrency!.id, new Date())
-          }
-          return previousValue + value
-        }, 0),
-    [incomeCategory, transactions, exchangeRateOnDay, defaultCurrency],
-  )
+  const fixedCosts = useMemo(() => {
+    const fixedTransactions = transactions
+      .filter((value) => differenceInYears(value.date, new Date()) === 0)
+      .filter((value) => value.category?.fixedCosts ?? false)
 
-  const variableCosts = useMemo(
-    () =>
-      transactions
-        .filter((value) => differenceInYears(value.date, new Date()) === 0)
-        .filter((value) => typeof value.category !== 'undefined')
-        .filter((value) => !(value.category?.fixedCosts ?? false))
-        .filter((value) => value.sender?.isMine ?? false)
-        .reduce((previousValue, currentValue) => {
-          let value = currentValue.amount
-          if (currentValue.currencyId !== defaultCurrency?.id) {
-            value *= exchangeRateOnDay(currentValue.currencyId, defaultCurrency!.id, new Date())
-          }
-          return previousValue + value
-        }, 0),
-    [incomeCategory, transactions, exchangeRateOnDay, defaultCurrency],
-  )
+    const data = fixedTransactions
+      .filter((value) => value.sender?.isMine ?? false)
+      .reduce((previousValue, currentValue) => {
+        let value = currentValue.amount
+        if (currentValue.currencyId !== defaultCurrency?.id) {
+          value *= exchangeRateOnDay(currentValue.currencyId, defaultCurrency!.id, new Date())
+        }
+
+        let category = currentValue.category!
+        while (category.parentId !== root.id) {
+          category = category.parent!
+        }
+
+        previousValue.set(category.name, (previousValue.get(category.name) ?? 0) + value)
+        return previousValue
+      }, new Map<string, number>())
+
+    fixedTransactions
+      .filter((value) => value.receiver?.isMine ?? false)
+      .forEach((currentValue) => {
+        let value = currentValue.receiverAmount
+        if (currentValue.receiverCurrencyId !== defaultCurrency?.id) {
+          value *= exchangeRateOnDay(currentValue.receiverCurrencyId, defaultCurrency!.id, new Date())
+        }
+
+        let category = currentValue.category!
+        while (category.parentId !== root.id) {
+          category = category.parent!
+        }
+
+        if (data.has(category.name)) {
+          data.set(category.name, data.get(category.name)! - value)
+        }
+      })
+
+    return data
+  }, [incomeCategory, transactions, exchangeRateOnDay, defaultCurrency])
+
+  const fixedAmount = useMemo(() => {
+    return [...fixedCosts.values()].reduce((previousValue, currentValue) => previousValue + currentValue, 0)
+  }, [fixedCosts])
+
+  const variableCosts = useMemo(() => {
+    const fixedTransactions = transactions
+      .filter((value) => differenceInYears(value.date, new Date()) === 0)
+      .filter((value) => typeof value.category !== 'undefined')
+      .filter((value) => !(value.category?.fixedCosts ?? false))
+
+    const data = fixedTransactions
+      .filter((value) => value.sender?.isMine ?? false)
+      .reduce((previousValue, currentValue) => {
+        let value = currentValue.amount
+        if (currentValue.currencyId !== defaultCurrency?.id) {
+          value *= exchangeRateOnDay(currentValue.currencyId, defaultCurrency!.id, new Date())
+        }
+
+        let category = currentValue.category!
+        while (category.parentId !== root.id) {
+          category = category.parent!
+        }
+
+        previousValue.set(category.name, (previousValue.get(category.name) ?? 0) + value)
+        return previousValue
+      }, new Map<string, number>())
+
+    fixedTransactions
+      .filter((value) => value.receiver?.isMine ?? false)
+      .forEach((currentValue) => {
+        let value = currentValue.receiverAmount
+        if (currentValue.receiverCurrencyId !== defaultCurrency?.id) {
+          value *= exchangeRateOnDay(currentValue.receiverCurrencyId, defaultCurrency!.id, new Date())
+        }
+
+        let category = currentValue.category!
+        while (category.parentId !== root.id) {
+          category = category.parent!
+        }
+
+        if (data.has(category.name) && data.get(category.name)! >= value) {
+          data.set(category.name, data.get(category.name)! - value)
+        }
+      })
+
+    return data
+  }, [incomeCategory, transactions, exchangeRateOnDay, defaultCurrency])
+
+  const variableAmount = useMemo(() => {
+    return [...variableCosts.values()].reduce((previousValue, currentValue) => previousValue + currentValue, 0)
+  }, [variableCosts])
 
   if (defaultCurrency === null) {
     return null
@@ -126,23 +188,39 @@ const CostsAnalysisPage: FC = () => {
                 <td>{formatFull(defaultCurrency, income)}</td>
                 <td>{formatFull(defaultCurrency, income / 12)}</td>
               </tr>
-              <tr style={{ fontWeight: 'bold' }}>
-                <td>Fixed Costs</td>
-                <td colSpan={2}>{((100 * fixedCosts) / income).toFixed(0)}%</td>
+              <tr style={{ height: '1rem' }} />
+              <tr>
+                <th>Fixed Costs</th>
+                <th colSpan={2}>{((100 * fixedAmount) / income).toFixed(0)}%</th>
+              </tr>
+              {[...fixedCosts.entries()].map((entry) => (
+                <tr>
+                  <td>{entry[0]}</td>
+                  <td>{formatFull(defaultCurrency, entry[1])}</td>
+                  <td>{formatFull(defaultCurrency, entry[1] / 12)}</td>
+                </tr>
+              ))}
+              <tr style={{ height: '1rem' }} />
+              <tr>
+                <th>Variable Costs</th>
+                <th colSpan={2}>{((100 * variableAmount) / income).toFixed(0)}%</th>
+              </tr>
+              {[...variableCosts.entries()].map((entry) => (
+                <tr>
+                  <td>{entry[0]}</td>
+                  <td>{formatFull(defaultCurrency, entry[1])}</td>
+                  <td>{formatFull(defaultCurrency, entry[1] / 12)}</td>
+                </tr>
+              ))}
+              <tr style={{ height: '1rem' }} />
+              <tr>
+                <th>Investments</th>
+                <th colSpan={2}>{(100 - (100 * (variableAmount + fixedAmount)) / income).toFixed(0)}%</th>
               </tr>
               <tr>
                 <td>All</td>
-                <td>{formatFull(defaultCurrency, fixedCosts)}</td>
-                <td>{formatFull(defaultCurrency, fixedCosts / 12)}</td>
-              </tr>
-              <tr style={{ fontWeight: 'bold' }}>
-                <td>Variable Costs</td>
-                <td colSpan={2}>{((100 * variableCosts) / income).toFixed(0)}%</td>
-              </tr>
-              <tr>
-                <td>All</td>
-                <td>{formatFull(defaultCurrency, variableCosts)}</td>
-                <td>{formatFull(defaultCurrency, variableCosts / 12)}</td>
+                <td>{formatFull(defaultCurrency, income - variableAmount - fixedAmount)}</td>
+                <td>{formatFull(defaultCurrency, (income - variableAmount - fixedAmount) / 12)}</td>
               </tr>
             </tbody>
           </table>
