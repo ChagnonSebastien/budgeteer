@@ -1,4 +1,4 @@
-import { IonButton, IonCheckbox, IonInput, IonModal, IonToast } from '@ionic/react'
+import { IonButton, IonCheckbox, IonDatetime, IonInput, IonModal, IonToast } from '@ionic/react'
 import { FC, FormEvent, useContext, useEffect, useMemo, useState } from 'react'
 import { Omit } from 'react-router'
 
@@ -70,8 +70,10 @@ const TransactionForm: FC<Props> = (props) => {
     if (typeof initialTransaction === 'undefined') return ''
     return `${formatAmount(initialTransaction.currency, initialTransaction.amount)}`
   })
-  const sanitizedAmount = useMemo(() => `0${amount.replace(',', '.')}`, [amount])
+  const sanitizedAmount = useMemo(() => `0${amount.replace(',', '')}`, [amount])
   const [currency, setCurrency] = useState<number>(initialTransaction?.currencyId ?? default_currency!)
+  const [date, setDate] = useState(initialTransaction?.date ?? new Date())
+  const [showDateModal, setShowDateModal] = useState(false)
 
   const [differentCurrency, setDifferentCurrency] = useState(() => {
     if (typeof initialTransaction === 'undefined') return false
@@ -80,7 +82,7 @@ const TransactionForm: FC<Props> = (props) => {
   const [receiverAmount, setReceiverAmount] = useState<string>(
     `${typeof initialTransaction === 'undefined' ? '' : formatAmount(initialTransaction.receiverCurrency, initialTransaction.receiverAmount)}`,
   )
-  const sanitizedReceiverAmount = useMemo(() => `0${receiverAmount.replace(',', '.')}`, [receiverAmount])
+  const sanitizedReceiverAmount = useMemo(() => `0${receiverAmount.replace(',', '')}`, [receiverAmount])
   const [receiverCurrency, setReceiverCurrency] = useState<number>(
     initialTransaction?.receiverCurrencyId ?? currencies[0].id,
   )
@@ -191,22 +193,17 @@ const TransactionForm: FC<Props> = (props) => {
       return
     }
 
-    if (differentCurrency && currency === receiverCurrency) {
-      setShowErrorToast('A transfer of currency requires different currencies in both accounts')
-      return
-    }
-
     onSubmit({
       amount: parseAmount(currencies.find((c) => c.id === currency)!, sanitizedAmount),
       receiverAmount: parseAmount(
-        currencies.find((c) => c.id === currency)!,
+        currencies.find((c) => c.id === (differentCurrency ? receiverCurrency : currency))!,
         differentCurrency ? sanitizedReceiverAmount : sanitizedAmount,
       ),
       categoryId: parent,
       receiverId: receiverAccountId ?? null,
       senderId: senderAccountId ?? null,
       note,
-      date: initialTransaction?.date ?? new Date(),
+      date,
       currencyId: currency,
       receiverCurrencyId: differentCurrency ? receiverCurrency : currency,
     }).catch((err) => {
@@ -338,6 +335,38 @@ const TransactionForm: FC<Props> = (props) => {
             />
           </div>
         )}
+
+        <IonInput
+          type="text"
+          label="Date"
+          labelPlacement="stacked"
+          value={date.toLocaleDateString()}
+          onClick={() => setShowDateModal(true)}
+          errorText="_blank"
+        />
+
+        <IonModal
+          keepContentsMounted={true}
+          isOpen={showDateModal}
+          onWillDismiss={() => setShowDateModal(false)}
+          style={{
+            '--height': 'fit-content',
+            '--width': 'fit-content',
+            '--max-width': '50rem',
+          }}
+        >
+          <IonDatetime
+            id="datetime"
+            presentation="date"
+            onIonChange={(ev) => {
+              const newDate = new Date(Date.parse(ev.detail.value as string))
+              setDate(newDate)
+              if (newDate.getFullYear() === date.getFullYear() && newDate.getMonth() === date.getMonth()) {
+                setShowDateModal(false)
+              }
+            }}
+          />
+        </IonModal>
 
         <AccountPicker
           labelText="To"

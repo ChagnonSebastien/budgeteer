@@ -103,7 +103,11 @@ const AccountsBalanceChart: FC<Props> = (props) => {
           total += day.portfolio ?? 0
         }
 
-        const groupLabel = group(filteredAccounts.find((a) => a.id === accountId)) ?? accountId.toString()
+        const groupLabel = group(filteredAccounts.find((a) => a.id === accountId))
+        if (typeof groupLabel === 'undefined') {
+          return
+        }
+
         const bigTotal = (todaysData[groupLabel] ?? 0) + total
         todaysData = { ...todaysData, [groupLabel]: bigTotal }
         groups.add(groupLabel)
