@@ -1,6 +1,5 @@
-import { Button, Snackbar, TextField } from '@mui/material'
+import { Button, Snackbar, Stack, TextField, Typography } from '@mui/material'
 import { FC, FormEvent, useCallback, useContext, useEffect, useMemo, useState } from 'react'
-import { Omit } from 'react-router'
 
 import CurrencyPicker from './CurrencyPicker'
 import { IconToolsContext } from './IconTools'
@@ -146,7 +145,7 @@ const AccountForm: FC<Props> = (props) => {
         <div style={{ color: 'gray', margin: '0 1rem', transform: 'translate(0, 0.5rem)' }}>Form</div>
         <div style={{ borderBottom: '1px grey solid', flexGrow: 1 }} />
       </div>
-      <div style={{ padding: '1rem', border: '1px grey solid', borderTop: 0 }}>
+      <Stack spacing="1rem" style={{ padding: '2rem 1rem', border: '1px grey solid', borderTop: 0 }}>
         <TextField
           type="text"
           sx={{ width: '100%' }}
@@ -190,100 +189,105 @@ const AccountForm: FC<Props> = (props) => {
           onChange={(ev) => setFinancialInstitution(ev.target.value as string)}
         />
 
-        <div
-          style={{
-            transformOrigin: 'left center',
-            transform: 'translateY(50%) scale(0.75)',
-            maxWidth: 'calc(100% / 0.75)',
-          }}
-        >
-          Starting balances
-        </div>
+        <div>
+          <Typography
+            color="textSecondary"
+            sx={{
+              transformOrigin: 'left center',
+              transform: 'scale(0.75)',
+              maxWidth: 'calc(100% / 0.75)',
+            }}
+          >
+            Starting balances
+          </Typography>
 
-        <div style={{ height: '1rem' }} />
+          <div style={{ height: '1rem' }} />
 
-        {initialAmounts.map((i) => (
-          <div key={i.uid} style={{ display: 'flex', alignItems: 'start' }}>
-            <Minus
+          {initialAmounts.map((i) => (
+            <div key={i.uid} style={{ display: 'flex', alignItems: 'start' }}>
+              <Minus
+                style={{ margin: '1rem 0', flexShrink: 0 }}
+                size="1.5rem"
+                onClick={() => setInitialAmount((prevState) => prevState.filter((state) => state.uid !== i.uid))}
+              />
+
+              <div style={{ width: '1rem', flexShrink: 0 }} />
+
+              <CurrencyPicker
+                errorText={NoError}
+                style={{ width: '100%' }}
+                currencies={[
+                  ...(i.currencyId ? [currencies.find((c) => c.id === i.currencyId)!] : []),
+                  ...availableCurrencies,
+                ]}
+                selectedCurrencyId={i.currencyId}
+                setSelectedCurrencyId={(selected) => {
+                  setInitialAmount((prevState) => {
+                    return prevState.map((ia) => {
+                      if (ia.uid !== i.uid) return ia
+
+                      return {
+                        ...ia,
+                        currencyId: selected,
+                      }
+                    })
+                  })
+                }}
+                labelText="Currency"
+              />
+
+              <div style={{ width: '1rem', flexShrink: 0 }} />
+
+              <NumberInput
+                label="Initial balance"
+                key={i.uid}
+                value={i.value}
+                setValue={(updater) =>
+                  setInitialAmount((prevState) => {
+                    return prevState.map((ia) => {
+                      if (ia.uid !== i.uid) return ia
+
+                      return {
+                        ...ia,
+                        value: updater(ia.value),
+                      }
+                    })
+                  })
+                }
+              />
+            </div>
+          ))}
+
+          {initialAmounts.length < currencies.length && (
+            <Plus
               style={{ margin: '1rem 0', flexShrink: 0 }}
               size="1.5rem"
-              onClick={() => setInitialAmount((prevState) => prevState.filter((state) => state.uid !== i.uid))}
-            />
-
-            <div style={{ width: '1rem', flexShrink: 0 }} />
-
-            <CurrencyPicker
-              errorText={NoError}
-              style={{ width: '100%' }}
-              currencies={[
-                ...(i.currencyId ? [currencies.find((c) => c.id === i.currencyId)!] : []),
-                ...availableCurrencies,
-              ]}
-              selectedCurrencyId={i.currencyId}
-              setSelectedCurrencyId={(selected) => {
-                setInitialAmount((prevState) => {
-                  return prevState.map((ia) => {
-                    if (ia.uid !== i.uid) return ia
-
-                    return {
-                      ...ia,
-                      currencyId: selected,
-                    }
-                  })
-                })
-              }}
-              labelText="Currency"
-            />
-
-            <div style={{ width: '1rem', flexShrink: 0 }} />
-
-            <NumberInput
-              label="Initial balance"
-              key={i.uid}
-              value={i.value}
-              setValue={(updater) =>
-                setInitialAmount((prevState) => {
-                  return prevState.map((ia) => {
-                    if (ia.uid !== i.uid) return ia
-
-                    return {
-                      ...ia,
-                      value: updater(ia.value),
-                    }
-                  })
-                })
-              }
-            />
-          </div>
-        ))}
-
-        {initialAmounts.length < currencies.length && (
-          <Plus
-            style={{ margin: '1rem 0', flexShrink: 0 }}
-            size="1.5rem"
-            onClick={() =>
-              setInitialAmount((prevState) => [
-                ...prevState,
-                {
-                  uid: Math.random(),
-                  currencyId: availableCurrencies[0].id,
-                  value: {
-                    value: '',
-                    errorText: 'Amount is required',
-                    hasVisited: false,
-                    isValid: false,
+              onClick={() =>
+                setInitialAmount((prevState) => [
+                  ...prevState,
+                  {
+                    uid: Math.random(),
+                    currencyId: availableCurrencies[0].id,
+                    value: {
+                      value: '',
+                      errorText: 'Amount is required',
+                      hasVisited: false,
+                      isValid: false,
+                    },
                   },
-                },
-              ])
-            }
-          >
-            Add initial amount
-          </Plus>
-        )}
-      </div>
+                ])
+              }
+            >
+              Add initial amount
+            </Plus>
+          )}
+        </div>
+      </Stack>
 
       <div style={{ height: '1rem' }} />
-      <Button type="submit">{submitText}</Button>
+      <Button fullWidth variant="contained" type="submit">
+        {submitText}
+      </Button>
 
       <Snackbar
         open={showErrorToast !== ''}

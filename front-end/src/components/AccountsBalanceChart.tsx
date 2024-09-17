@@ -15,6 +15,7 @@ import Account from '../domain/model/account'
 import { formatFull } from '../domain/model/currency'
 import MixedAugmentation from '../service/MixedAugmentation'
 import { AccountServiceContext, CurrencyServiceContext } from '../service/ServiceContext'
+import { darkColors, darkTheme } from '../utils'
 
 type GroupType = 'financialInstitution' | 'type' | 'account' | 'none'
 
@@ -98,6 +99,9 @@ const AccountsBalanceChart: FC<Props> = (props) => {
       let todaysData: { [account: string]: number } = {}
 
       accountTotals?.forEach((account, accountId) => {
+        const item = filteredAccounts.find((a) => a.id === accountId)
+        if (item?.type === 'Credit Card') return
+
         let total = 0
         const day = account.years.get(upTo.getFullYear())?.months.get(upTo.getMonth())?.days.get(upTo.getDate())
         if (typeof day !== 'undefined') {
@@ -105,7 +109,7 @@ const AccountsBalanceChart: FC<Props> = (props) => {
           total += day.portfolio ?? 0
         }
 
-        const groupLabel = group(filteredAccounts.find((a) => a.id === accountId))
+        const groupLabel = group(item)
         if (typeof groupLabel === 'undefined') {
           return
         }
@@ -154,7 +158,7 @@ const AccountsBalanceChart: FC<Props> = (props) => {
 
         <ResponsiveStream
           data={data}
-          keys={[...groups.keys()].sort((a, b) => b.localeCompare(a))}
+          keys={[...groups.keys()].sort((a, b) => a.localeCompare(b))}
           valueFormat={(value) => `${formatFull(defaultCurrency, value)}`}
           margin={{ top: 10, right: 20, bottom: 60, left: 60 }}
           axisBottom={{
@@ -169,7 +173,9 @@ const AccountsBalanceChart: FC<Props> = (props) => {
           }}
           curve="monotoneX"
           offsetType="none"
-          colors={{ scheme: 'set3' }}
+          order="reverse"
+          theme={darkTheme}
+          colors={darkColors}
           borderColor={{ theme: 'background' }}
           stackTooltip={(tooltipProps) => (
             <Card style={{ padding: '0.5rem' }}>

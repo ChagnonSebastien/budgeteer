@@ -7,6 +7,7 @@ import { formatFull } from '../domain/model/currency'
 import { AugmentedTransaction } from '../domain/model/transaction'
 import MixedAugmentation from '../service/MixedAugmentation'
 import { CategoryServiceContext, CurrencyServiceContext } from '../service/ServiceContext'
+import { darkColors, darkTheme } from '../utils'
 
 type LocalTree = {
   name: string
@@ -157,16 +158,17 @@ const TransactionsPieChart: FC<Props> = (props) => {
         </div>
         <ResponsiveSunburst
           data={data}
-          margin={{ top: 10, right: 10, bottom: 10, left: 10 }}
+          margin={{ top: 20, right: 60, bottom: 20, left: 60 }}
           id="name"
           value="loc"
           cornerRadius={5}
-          colors={{ scheme: 'set3' }}
+          colors={darkColors}
           borderWidth={1}
           borderColor={{
             from: 'color',
             modifiers: [['darker', 0.5]],
           }}
+          theme={darkTheme}
           childColor={{
             from: 'color',
             modifiers: [['brighter', 0.2]],
@@ -180,10 +182,7 @@ const TransactionsPieChart: FC<Props> = (props) => {
           enableArcLabels={true}
           arcLabel="id"
           arcLabelsSkipAngle={5}
-          arcLabelsTextColor={{
-            from: 'color',
-            modifiers: [['darker', 2.5]],
-          }}
+          arcLabelsTextColor="white"
           tooltip={({ id, formattedValue }) => (
             <div
               style={{

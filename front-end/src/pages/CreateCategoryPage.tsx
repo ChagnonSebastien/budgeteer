@@ -1,5 +1,5 @@
-import { useIonRouter } from '@ionic/react'
 import { FC, useCallback, useContext } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 import CategoryForm from '../components/CategoryForm'
 import ContentWithHeader from '../components/ContentWithHeader'
@@ -7,17 +7,13 @@ import Category from '../domain/model/category'
 import { CategoryServiceContext } from '../service/ServiceContext'
 
 const CreateCategoryPage: FC = () => {
-  const router = useIonRouter()
+  const navigate = useNavigate()
 
   const { create: createCategory } = useContext(CategoryServiceContext)
 
   const onSubmit = useCallback(async (data: Omit<Category, 'id'>) => {
     await createCategory(data)
-    if (router.canGoBack()) {
-      router.goBack()
-    } else {
-      router.push('/categories', 'back', 'replace')
-    }
+    navigate('/categories')
   }, [])
 
   return (

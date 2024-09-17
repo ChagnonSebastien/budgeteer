@@ -38,11 +38,11 @@ const TransactionCard: FC<Props> = (props) => {
   const fromMe = from?.isMine ?? false
   const toMe = to?.isMine ?? false
 
-  let background = '#80808010'
+  let background = '#80808020'
   if (fromMe && !toMe) {
-    background = '#F0808010'
+    background = '#F0808020'
   } else if (!fromMe && toMe) {
-    background = '#80F08010'
+    background = '#80F08020'
   }
 
   return (

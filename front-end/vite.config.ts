@@ -1,10 +1,10 @@
-import legacy from "@vitejs/plugin-legacy"
-import react from "@vitejs/plugin-react"
-import { defineConfig } from "vite"
-import { VitePWA } from "vite-plugin-pwa"
+import legacy from '@vitejs/plugin-legacy'
+import react from '@vitejs/plugin-react'
+import { defineConfig } from 'vite'
+import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vitejs.dev/config/
-export default defineConfig(({mode}) => ({
+export default defineConfig(({ mode }) => ({
   server: {
     port: 8000,
   },
@@ -12,18 +12,13 @@ export default defineConfig(({mode}) => ({
     react(),
     legacy(),
     VitePWA({
-      registerType: "autoUpdate",
+      registerType: 'autoUpdate',
       workbox: {
         navigateFallbackDenylist: [/^\/auth/],
       },
     }),
   ],
-  test: {
-    globals: true,
-    environment: "jsdom",
-    setupFiles: "./src/setupTests.ts",
-  },
   build: {
-    sourcemap: mode === "development",
+    sourcemap: mode === 'development',
   },
 }))

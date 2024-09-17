@@ -1,7 +1,16 @@
-import { IonMenu, useIonRouter } from '@ionic/react'
-import { Button, List, ListItemButton, ListItemIcon, ListItemText, Typography } from '@mui/material'
-import { FC, useContext } from 'react'
-import { useLocation } from 'react-router-dom'
+import {
+  Box,
+  Button,
+  Drawer,
+  List,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  SwipeableDrawer,
+  Typography,
+} from '@mui/material'
+import { createContext, FC, ReactElement, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import './Menu.css'
 
 import { IconToolsContext } from './IconTools'
@@ -40,11 +49,6 @@ const appPages: AppPage[] = [
     iconName: 'BsCurrencyExchange',
   },
   {
-    title: 'Import',
-    url: '/import',
-    iconName: 'BiSolidFileImport',
-  },
-  {
     title: 'Costs Analysis',
     url: '/costs',
     iconName: 'BiSolidFileImport',
@@ -52,29 +56,54 @@ const appPages: AppPage[] = [
 ]
 
 interface Props {
+  children: ReactElement
+
   logout(): void
 }
 
-const Menu: FC<Props> = ({ logout }) => {
+type DrawerActions = { open?(): void }
+export const DrawerContext = createContext<DrawerActions>({})
+
+const DrawerWrapper: FC<Props> = ({ logout, children }) => {
   const location = useLocation()
-  const router = useIonRouter()
+  const navigate = useNavigate()
 
   const { email } = useContext(UserContext)
   const { iconTypeFromName } = useContext(IconToolsContext)
 
+  const [open, setOpen] = useState(false)
+
   const iconStyle = { margin: '0.5rem' }
 
-  return (
-    <IonMenu contentId="main" type="overlay">
-      <List>
+  const iOS = typeof navigator !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent)
+
+  const [drawerWidth, setDrawerWidth] = useState(240)
+  const [totalWidth, setTotalWidth] = useState(window.innerWidth)
+  const persistentDrawer = totalWidth - drawerWidth > 600
+
+  useEffect(() => {
+    const callback = () => setTotalWidth(window.innerWidth)
+    window.addEventListener('resize', callback)
+    return () => window.removeEventListener('resize', callback)
+  }, [])
+
+  const drawer = (
+    <div
+      ref={(ref) => {
+        if (ref) setDrawerWidth(ref.scrollWidth)
+      }}
+    >
+      <Box p="1rem">
         <Typography variant="h6">Budget App</Typography>
         <Typography color="grey">{email}</Typography>
+      </Box>
+      <List>
         {appPages.map((appPage, index) => {
           const Icon = iconTypeFromName(appPage.iconName)
           return (
             <ListItemButton
               key={index}
-              onClick={() => router.push(appPage.url)}
+              onClick={() => navigate(appPage.url)}
               selected={location.pathname === appPage.url}
             >
               <ListItemIcon>
@@ -84,10 +113,49 @@ const Menu: FC<Props> = ({ logout }) => {
             </ListItemButton>
           )
         })}
-        <Button onClick={logout}>Logout</Button>
       </List>
-    </IonMenu>
+      <Box p="1rem">
+        <Button fullWidth onClick={logout} variant="contained" disableElevation>
+          Logout
+        </Button>
+      </Box>
+    </div>
+  )
+
+  return (
+    <DrawerContext.Provider
+      value={{
+        open: persistentDrawer ? undefined : () => setOpen(true),
+      }}
+    >
+      {persistentDrawer ? (
+        <Drawer open variant="permanent">
+          {drawer}
+        </Drawer>
+      ) : (
+        <SwipeableDrawer
+          disableBackdropTransition={!iOS}
+          disableDiscovery={iOS}
+          open={open}
+          onClose={() => setOpen(false)}
+          onOpen={() => setOpen(true)}
+          variant="temporary"
+        >
+          {drawer}
+        </SwipeableDrawer>
+      )}
+
+      <div
+        style={{
+          width: persistentDrawer ? `${totalWidth - drawerWidth}px` : '100%',
+          height: '100%',
+          marginLeft: persistentDrawer ? `${drawerWidth}px` : 0,
+        }}
+      >
+        {children}
+      </div>
+    </DrawerContext.Provider>
   )
 }
 
-export default Menu
+export default DrawerWrapper

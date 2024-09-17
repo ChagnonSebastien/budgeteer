@@ -1,8 +1,9 @@
-import { IonSearchbar, IonMenuToggle } from '@ionic/react'
 import { AppBar, Box, Button, IconButton, TextField, Toolbar, Typography } from '@mui/material'
-import { FC, ReactNode, useContext } from 'react'
+import { FC, LegacyRef, ReactNode, useContext } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 import { IconToolsContext } from './IconTools'
+import { DrawerContext } from './Menu'
 
 export interface ContentWithHeaderProps {
   children: ReactNode | ReactNode[]
@@ -10,50 +11,58 @@ export interface ContentWithHeaderProps {
   button: 'menu' | 'return' | 'none'
   onSearch?: (query: string) => void
   onCancel?: () => void
-  rightButton?: JSX.Element
+  rightButton?: ReactNode
+  contentPadding?: string
+  contentMaxWidth?: string
+  contentOverflowY?: string
 }
 
 const ContentWithHeader: FC<ContentWithHeaderProps> = (props) => {
-  const { title, children, button: buttonOption, onSearch, onCancel, rightButton } = props
+  const {
+    title,
+    children,
+    button: buttonOption,
+    onSearch,
+    onCancel,
+    rightButton,
+    contentPadding = '1rem',
+    contentMaxWidth = '50rem',
+    contentOverflowY = 'scroll',
+  } = props
   const { IconLib } = useContext(IconToolsContext)
+  const { open } = useContext(DrawerContext)
+  const navigate = useNavigate()
 
   let button = null
   switch (buttonOption) {
     case 'return':
       button = (
-        <IonMenuToggle>
+        <IconButton onClick={() => navigate(-1)}>
           <IconLib.MdKeyboardBackspace />
-        </IonMenuToggle>
+        </IconButton>
       )
       break
     case 'menu':
-      button = (
-        <IonMenuToggle>
-          <IconLib.MdMenu />
-        </IonMenuToggle>
-      )
+      if (typeof open !== 'undefined')
+        button = (
+          <IconButton onClick={open}>
+            <IconLib.MdMenu />
+          </IconButton>
+        )
       break
   }
 
   return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ height: '100%', width: '100%', display: 'flex', flexDirection: 'column' }}>
       <Box>
         <AppBar position="static">
           <Toolbar>
-            {buttonOption !== 'none' && (
-              <IconButton size="large" edge="start" sx={{ mr: 2 }}>
-                {button}
-              </IconButton>
-            )}
-            {typeof onCancel !== 'undefined' && (
-              <IconButton size="large">
-                <Button onClick={onCancel}>Cancel</Button>
-              </IconButton>
-            )}
+            {button}
+            {typeof onCancel !== 'undefined' && <Button onClick={onCancel}>Cancel</Button>}
             <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
               {title}
             </Typography>
-            {typeof rightButton !== 'undefined' && <IconButton size="large">{rightButton}</IconButton>}
+            {typeof rightButton !== 'undefined' && rightButton}
           </Toolbar>
           {typeof onSearch !== 'undefined' && (
             <Toolbar>
@@ -69,7 +78,20 @@ const ContentWithHeader: FC<ContentWithHeaderProps> = (props) => {
         </AppBar>
       </Box>
 
-      <div style={{ flexGrow: 1, height: '100%', overflowY: 'scroll' }}>{children}</div>
+      <Box
+        sx={{
+          flexGrow: 1,
+          height: '100%',
+          width: '100%',
+          overflowY: contentOverflowY,
+          overflowX: 'hidden',
+          margin: 'auto',
+          padding: contentPadding,
+          maxWidth: contentMaxWidth,
+        }}
+      >
+        {children}
+      </Box>
     </div>
   )
 }

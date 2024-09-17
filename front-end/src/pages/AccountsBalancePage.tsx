@@ -8,7 +8,7 @@ const AccountsBalancePage: FC = () => {
   const { fromDate, toDate, accountFilter, overview: filterOverview } = useTransactionFilter()
 
   return (
-    <ContentWithHeader title="Transactions" button="menu">
+    <ContentWithHeader title="Transactions" button="menu" contentMaxWidth="100%">
       <div style={{ height: '50%', width: '100%', position: 'relative', padding: '1rem' }}>
         <AccountsBalanceChart
           fromDate={fromDate}

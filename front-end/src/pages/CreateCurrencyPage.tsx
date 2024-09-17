@@ -1,5 +1,5 @@
-import { useIonRouter } from '@ionic/react'
 import { FC, useCallback, useContext } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 import ContentWithHeader from '../components/ContentWithHeader'
 import CurrencyForm from '../components/CurrencyForm'
@@ -7,17 +7,13 @@ import Currency from '../domain/model/currency'
 import { CurrencyServiceContext } from '../service/ServiceContext'
 
 const CreateCurrencyPage: FC = () => {
-  const router = useIonRouter()
+  const navigate = useNavigate()
 
   const { create: createCurrency } = useContext(CurrencyServiceContext)
 
   const onSubmit = useCallback(async (data: Omit<Currency, 'id'>) => {
     await createCurrency(data)
-    if (router.canGoBack()) {
-      router.goBack()
-    } else {
-      router.push('/currency', 'back', 'replace')
-    }
+    navigate('/currency')
   }, [])
 
   return (

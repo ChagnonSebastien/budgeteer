@@ -17,6 +17,7 @@ import { formatFull } from '../domain/model/currency'
 import { AugmentedTransaction } from '../domain/model/transaction'
 import MixedAugmentation from '../service/MixedAugmentation'
 import { CurrencyServiceContext } from '../service/ServiceContext'
+import { darkColors, darkTheme } from '../utils'
 
 interface Props {
   transactions: AugmentedTransaction[]
@@ -109,7 +110,7 @@ const AggregatedDiffChart: FC<Props> = (props) => {
       <>
         <ResponsiveLine
           data={[{ id: 'Diff', data }]}
-          margin={{ top: 10, right: 10, bottom: 70, left: 60 }}
+          margin={{ top: 10, right: 60, bottom: 70, left: 60 }}
           axisBottom={{
             format: (i) => (i % showLabelEveryFactor === 0 ? labels[i] && formatDate(labels[i], 'MMM d, yyyy') : ''),
             tickRotation: -45,
@@ -140,7 +141,8 @@ const AggregatedDiffChart: FC<Props> = (props) => {
           isInteractive
           useMesh
           curve="monotoneX"
-          colors={{ scheme: 'set3' }}
+          theme={darkTheme}
+          colors={darkColors}
         />
       </>
     )

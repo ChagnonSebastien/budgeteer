@@ -1,7 +1,6 @@
-import { Button, Checkbox, Dialog, FormControlLabel, Snackbar, TextField } from '@mui/material'
+import { Button, Checkbox, Dialog, FormControlLabel, Snackbar, Stack, TextField } from '@mui/material'
 import { FC, FormEvent, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { HexColorPicker } from 'react-colorful'
-import { Omit } from 'react-router'
 
 import CategoryPicker from './CategoryPicker'
 import ContentWithHeader from './ContentWithHeader'
@@ -95,7 +94,7 @@ const CategoryForm: FC<Props> = (props) => {
           <div style={{ color: 'gray', margin: '0 1rem', transform: 'translate(0, 0.5rem)' }}>Form</div>
           <div style={{ borderBottom: '1px grey solid', flexGrow: 1 }} />
         </div>
-        <div style={{ padding: '1rem', border: '1px grey solid', borderTop: 0 }}>
+        <Stack spacing="1rem" style={{ padding: '2rem 1rem', border: '1px grey solid', borderTop: 0 }}>
           <TextField
             type="text"
             label="Account name"
@@ -120,9 +119,14 @@ const CategoryForm: FC<Props> = (props) => {
           />
 
           <div style={{ display: 'flex', marginTop: '1rem', alignItems: 'center' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
+            <Stack spacing=".25rem" style={{ display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
               <div style={{ display: 'flex', alignItems: 'center' }}>
-                <Button onClick={() => setShowIconModal(true)} style={{ flexGrow: 1 }} variant="outlined">
+                <Button
+                  onClick={() => setShowIconModal(true)}
+                  color="secondary"
+                  sx={{ flexGrow: 1 }}
+                  variant="outlined"
+                >
                   Select Icon
                 </Button>
                 <div style={{ width: '1rem', flexShrink: 0 }} />
@@ -135,19 +139,14 @@ const CategoryForm: FC<Props> = (props) => {
                   flexShrink={0}
                 />
               </div>
-              <Dialog open={showIconModal} onClose={() => setShowIconModal(false)}>
-                <ContentWithHeader
-                  title="Select Icon"
-                  button="return"
-                  onSearch={setFilter}
-                  onCancel={() => setShowIconModal(false)}
-                >
-                  <IconList filter={filter} onSelect={onIconSelect} />
-                </ContentWithHeader>
-              </Dialog>
 
               <div style={{ display: 'flex', alignItems: 'center' }}>
-                <Button onClick={() => setShowOuterColorModal(true)} style={{ flexGrow: 1 }} variant="outlined">
+                <Button
+                  onClick={() => setShowOuterColorModal(true)}
+                  style={{ flexGrow: 1 }}
+                  variant="outlined"
+                  color="secondary"
+                >
                   Select Outer Color
                 </Button>
                 <div style={{ width: '1rem', flexShrink: 0 }} />
@@ -160,16 +159,14 @@ const CategoryForm: FC<Props> = (props) => {
                   flexShrink={0}
                 />
               </div>
-              <Dialog onClose={() => setShowOuterColorModal(false)} open={showOuterColorModal}>
-                <HexColorPicker
-                  color={outerColor}
-                  onChange={setOuterColor}
-                  style={{ flexGrow: 1, overflow: 'hidden' }}
-                />
-              </Dialog>
 
               <div style={{ display: 'flex', alignItems: 'center' }}>
-                <Button onClick={() => setShowInnerColorModal(true)} style={{ flexGrow: 1 }} variant="outlined">
+                <Button
+                  onClick={() => setShowInnerColorModal(true)}
+                  style={{ flexGrow: 1 }}
+                  variant="outlined"
+                  color="secondary"
+                >
                   Select Inner Color
                 </Button>
                 <div style={{ width: '1rem', flexShrink: 0 }} />
@@ -182,14 +179,23 @@ const CategoryForm: FC<Props> = (props) => {
                   flexShrink={0}
                 />
               </div>
-              <Dialog onClose={() => setShowInnerColorModal(false)} open={showInnerColorModal}>
-                <HexColorPicker
-                  color={innerColor}
-                  onChange={setInnerColor}
-                  style={{ flexGrow: 1, overflow: 'hidden' }}
-                />
-              </Dialog>
-            </div>
+            </Stack>
+            <Dialog open={showIconModal} onClose={() => setShowIconModal(false)}>
+              <ContentWithHeader
+                title="Select Icon"
+                button="return"
+                onSearch={setFilter}
+                onCancel={() => setShowIconModal(false)}
+              >
+                <IconList filter={filter} onSelect={onIconSelect} />
+              </ContentWithHeader>
+            </Dialog>
+            <Dialog onClose={() => setShowOuterColorModal(false)} open={showOuterColorModal}>
+              <HexColorPicker color={outerColor} onChange={setOuterColor} style={{ flexGrow: 1, overflow: 'hidden' }} />
+            </Dialog>
+            <Dialog onClose={() => setShowInnerColorModal(false)} open={showInnerColorModal}>
+              <HexColorPicker color={innerColor} onChange={setInnerColor} style={{ flexGrow: 1, overflow: 'hidden' }} />
+            </Dialog>
             <div style={{ width: '1rem', flexShrink: 0 }} />
             <div
               style={{
@@ -203,9 +209,11 @@ const CategoryForm: FC<Props> = (props) => {
               <IconCapsule iconName={selectedIcon} size="5rem" color={innerColor} backgroundColor={outerColor} />
             </div>
           </div>
-        </div>
+        </Stack>
         <div style={{ height: '1rem' }} />
-        <Button type="submit">{submitText}</Button>
+        <Button fullWidth variant="contained" type="submit">
+          {submitText}
+        </Button>
       </div>
 
       <Snackbar

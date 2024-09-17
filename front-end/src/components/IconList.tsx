@@ -1,5 +1,4 @@
-import { IonInfiniteScroll, IonInfiniteScrollContent } from '@ionic/react'
-import { FC, useContext, useEffect, useMemo, useState } from 'react'
+import { FC, useContext, useEffect, useMemo, useRef, useState } from 'react'
 
 import { IconToolsContext } from './IconTools'
 
@@ -20,8 +19,28 @@ const IconList: FC<Props> = ({ filter, onSelect }) => {
     return iconNameList.filter((value) => value.toLowerCase().includes(filter.toLowerCase())).slice(0, amountItems)
   }, [filter, amountItems])
 
+  const loadMoreRef = useRef(null)
+
+  useEffect(() => {
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting) {
+        setAmountItems((prevState) => prevState + perfectMultiplier)
+      }
+    })
+
+    if (loadMoreRef.current) {
+      observer.observe(loadMoreRef.current)
+    }
+
+    return () => {
+      if (loadMoreRef.current) {
+        observer.unobserve(loadMoreRef.current)
+      }
+    }
+  }, [])
+
   return (
-    <>
+    <div style={{ position: 'relative' }}>
       <div
         style={{
           display: 'flex',
@@ -43,15 +62,17 @@ const IconList: FC<Props> = ({ filter, onSelect }) => {
           )
         })}
       </div>
-      <IonInfiniteScroll
-        onIonInfinite={(ev) => {
-          setAmountItems((prevState) => prevState + perfectMultiplier)
-          setTimeout(() => ev.target.complete(), 500)
+      <div
+        style={{
+          height: '100vh',
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          right: 0,
         }}
-      >
-        <IonInfiniteScrollContent></IonInfiniteScrollContent>
-      </IonInfiniteScroll>
-    </>
+        ref={loadMoreRef}
+      />
+    </div>
   )
 }
 

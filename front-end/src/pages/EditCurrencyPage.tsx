@@ -1,23 +1,22 @@
-import { useIonRouter } from '@ionic/react'
 import { FC, useCallback, useContext, useMemo } from 'react'
-import { useParams } from 'react-router'
+import { useNavigate, useParams } from 'react-router-dom'
 
 import ContentWithHeader from '../components/ContentWithHeader'
 import CurrencyForm from '../components/CurrencyForm'
 import Currency from '../domain/model/currency'
 import { CurrencyServiceContext } from '../service/ServiceContext'
 
-interface Params {
+type Params = {
   currencyId: string
 }
 
 const EditCurrency: FC = () => {
-  const router = useIonRouter()
+  const navigate = useNavigate()
 
   const { currencyId } = useParams<Params>()
   const { state: currencies, update: updateCurrencies } = useContext(CurrencyServiceContext)
   const selectedCurrency = useMemo(
-    () => currencies.find((c) => c.id === parseInt(currencyId)),
+    () => currencies.find((c) => c.id === parseInt(currencyId!)),
     [currencies, currencyId],
   )
 
@@ -27,17 +26,13 @@ const EditCurrency: FC = () => {
 
       await updateCurrencies(selectedCurrency!.id, data)
 
-      if (router.canGoBack()) {
-        router.goBack()
-      } else {
-        router.push('/currencies', 'back', 'replace')
-      }
+      navigate('/currencies')
     },
     [updateCurrencies, selectedCurrency],
   )
 
   if (typeof selectedCurrency === 'undefined') {
-    router.push('/currencies', 'back', 'replace')
+    navigate('/currencies')
     return null
   }
 

@@ -1,13 +1,12 @@
-import { IonRouterOutlet, IonSplitPane } from '@ionic/react'
-import { IonReactRouter } from '@ionic/react-router'
 import { CircularProgress } from '@mui/material'
 import { GrpcWebFetchTransport } from '@protobuf-ts/grpcweb-transport'
 import { FC, useCallback, useContext, useEffect, useState } from 'react'
-import { Redirect, Route, Switch } from 'react-router'
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 
 import { UserContext } from './App'
 import ContentWithHeader from './components/ContentWithHeader'
 import CurrencyForm from './components/CurrencyForm'
+import DrawerWrapper from './components/Menu'
 import Menu from './components/Menu'
 import Account from './domain/model/account'
 import Category from './domain/model/category'
@@ -26,7 +25,6 @@ import EditAccountPage from './pages/EditAccountPage'
 import EditCategoryPage from './pages/EditCategoryPage'
 import EditCurrencyPage from './pages/EditCurrencyPage'
 import EditTransactionPage from './pages/EditTransactionPage'
-import ImportSpreadsheet from './pages/ImportSpreadsheet'
 import TransactionPage from './pages/TransactionPage'
 import { AccountPersistenceAugmenter } from './service/AccountServiceAugmenter'
 import { BasicCrudServiceWithPersistence } from './service/BasicCrudServiceWithPersistence'
@@ -131,32 +129,27 @@ const AuthenticatedZone: FC<Props> = (props) => {
             sorter={(a, b) => b.date.getTime() - a.date.getTime()}
           >
             <MixedAugmentationProvider>
-              <IonReactRouter>
-                <IonSplitPane contentId="main">
-                  <Menu logout={logout} />
-
-                  <IonRouterOutlet id="main">
-                    <Switch>
-                      <Route exact path="/currencies" render={() => <CurrenciesPage />} />
-                      <Route exact path="/currencies/new" render={() => <CreateCurrencyPage />} />
-                      <Route exact path="/currencies/edit/:currencyId" render={() => <EditCurrencyPage />} />
-                      <Route exact path="/categories" render={() => <CategoryPage />} />
-                      <Route exact path="/categories/new" render={() => <CreateCategoryPage />} />
-                      <Route exact path="/categories/edit/:categoryId" render={() => <EditCategoryPage />} />
-                      <Route exact path="/accounts" render={() => <AccountsPage />} />
-                      <Route exact path="/accounts/new" render={() => <CreateAccountPage />} />
-                      <Route exact path="/accounts/graph" render={() => <AccountsBalancePage />} />
-                      <Route exact path="/accounts/edit/:accountId" render={() => <EditAccountPage />} />
-                      <Route exact path="/transactions" render={() => <TransactionPage />} />
-                      <Route exact path="/transactions/new" render={() => <CreateTransactionPage />} />
-                      <Route exact path="/transactions/edit/:transactionId" render={() => <EditTransactionPage />} />
-                      <Route exact path="/costs" render={() => <CostsAnalysisPage />} />
-                      <Route exact path="/import" render={() => <ImportSpreadsheet />} />
-                      <Route render={() => <Redirect to="/transactions" />} />
-                    </Switch>
-                  </IonRouterOutlet>
-                </IonSplitPane>
-              </IonReactRouter>
+              <BrowserRouter>
+                <DrawerWrapper logout={logout}>
+                  <Routes>
+                    <Route path="/currencies" element={<CurrenciesPage />} />
+                    <Route path="/currencies/new" element={<CreateCurrencyPage />} />
+                    <Route path="/currencies/edit/:currencyId" element={<EditCurrencyPage />} />
+                    <Route path="/categories" element={<CategoryPage />} />
+                    <Route path="/categories/new" element={<CreateCategoryPage />} />
+                    <Route path="/categories/edit/:categoryId" element={<EditCategoryPage />} />
+                    <Route path="/accounts" element={<AccountsPage />} />
+                    <Route path="/accounts/new" element={<CreateAccountPage />} />
+                    <Route path="/accounts/graph" element={<AccountsBalancePage />} />
+                    <Route path="/accounts/edit/:accountId" element={<EditAccountPage />} />
+                    <Route path="/transactions" element={<TransactionPage />} />
+                    <Route path="/transactions/new" element={<CreateTransactionPage />} />
+                    <Route path="/transactions/edit/:transactionId" element={<EditTransactionPage />} />
+                    <Route path="/costs" element={<CostsAnalysisPage />} />
+                    <Route path="*" element={<Navigate to="/transactions" />} />
+                  </Routes>
+                </DrawerWrapper>
+              </BrowserRouter>
             </MixedAugmentationProvider>
           </BasicCrudServiceWithPersistence>
         </BasicCrudServiceWithPersistence>

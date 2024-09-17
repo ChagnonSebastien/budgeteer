@@ -1,23 +1,21 @@
-import { useIonRouter } from '@ionic/react'
 import { FC, useCallback, useContext, useMemo } from 'react'
-import { useParams } from 'react-router'
+import { useNavigate, useParams } from 'react-router-dom'
 
 import CategoryForm from '../components/CategoryForm'
 import ContentWithHeader from '../components/ContentWithHeader'
 import Category from '../domain/model/category'
 import { CategoryServiceContext } from '../service/ServiceContext'
 
-interface Params {
+type Params = {
   categoryId: string
 }
 
 const EditCategoryPage: FC = () => {
-  const router = useIonRouter()
-
+  const navigate = useNavigate()
   const { categoryId } = useParams<Params>()
   const { state: categories, update: updateCategory } = useContext(CategoryServiceContext)
   const selectedCategory = useMemo(
-    () => categories.find((c) => c.id === parseInt(categoryId)),
+    () => categories.find((c) => c.id === parseInt(categoryId!)),
     [categories, categoryId],
   )
 
@@ -26,18 +24,13 @@ const EditCategoryPage: FC = () => {
       if (typeof selectedCategory === 'undefined') return
 
       await updateCategory(selectedCategory!.id, data)
-
-      if (router.canGoBack()) {
-        router.goBack()
-      } else {
-        router.push('/categories', 'back', 'replace')
-      }
+      navigate('/categories')
     },
     [updateCategory, selectedCategory],
   )
 
   if (typeof selectedCategory === 'undefined') {
-    router.push('/categories', 'back', 'replace')
+    navigate('/categories')
     return null
   }
 

@@ -1,4 +1,3 @@
-import { IonInfiniteScroll, IonInfiniteScrollContent } from '@ionic/react'
 import {
   addMonths,
   differenceInMonths,
@@ -9,7 +8,7 @@ import {
   subDays,
   subMonths,
 } from 'date-fns'
-import { useContext, useEffect, useMemo, useState } from 'react'
+import { useContext, useEffect, useMemo, useRef, useState } from 'react'
 
 import TransactionCard from './TransactionCard'
 import Category from '../domain/model/category'
@@ -199,18 +198,41 @@ export const TransactionList = (props: Props) => {
     [viewWithMonthLabels, displayedAmount],
   )
 
+  const loadMoreRef = useRef(null)
+
+  useEffect(() => {
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting) {
+        console.log(entries)
+        setDisplayedAmount((prevState) => Math.min(prevState + chunkSize, viewWithMonthLabels.length))
+      }
+    })
+
+    if (loadMoreRef.current) {
+      observer.observe(loadMoreRef.current)
+    }
+
+    return () => {
+      if (loadMoreRef.current) {
+        observer.unobserve(loadMoreRef.current)
+      }
+    }
+  }, [])
+
   return (
-    <>
+    <div style={{ position: 'relative', width: '35rem', margin: 'auto' }}>
       {displayedItems}
-      <IonInfiniteScroll
-        threshold="200%"
-        onIonInfinite={(ev) => {
-          setDisplayedAmount((prevState) => Math.min(prevState + chunkSize, viewWithMonthLabels.length))
-          ev.target.complete()
+      <div
+        style={{
+          height: '100vh',
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          zIndex: -1,
         }}
-      >
-        <IonInfiniteScrollContent></IonInfiniteScrollContent>
-      </IonInfiniteScroll>
-    </>
+        ref={loadMoreRef}
+      />
+    </div>
   )
 }

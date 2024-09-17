@@ -143,7 +143,7 @@ const CostsAnalysisPage: FC = () => {
 
   return (
     <ContentWithHeader title="Costs Analysis" button="menu">
-      <div style={{ padding: '2rem 1rem' }}>
+      <Stack spacing="1rem" style={{ padding: '2rem 1rem' }}>
         <TextField
           type="text"
           value={grossIncome}
@@ -165,8 +165,6 @@ const CostsAnalysisPage: FC = () => {
           setCategoryId={setIncomeCategory}
           labelText="Select your net income category"
         />
-
-        <div style={{ height: '1rem' }} />
 
         <table>
           <thead>
@@ -193,7 +191,7 @@ const CostsAnalysisPage: FC = () => {
               <th colSpan={2}>{((100 * fixedAmount) / income).toFixed(0)}%</th>
             </tr>
             {[...fixedCosts.entries()].map((entry) => (
-              <tr>
+              <tr key={`fixed-${entry[0]}`}>
                 <td>{entry[0]}</td>
                 <td>{formatFull(defaultCurrency, entry[1])}</td>
                 <td>{formatFull(defaultCurrency, entry[1] / 12)}</td>
@@ -205,7 +203,7 @@ const CostsAnalysisPage: FC = () => {
               <th colSpan={2}>{((100 * variableAmount) / income).toFixed(0)}%</th>
             </tr>
             {[...variableCosts.entries()].map((entry) => (
-              <tr>
+              <tr key={`variable-${entry[0]}`}>
                 <td>{entry[0]}</td>
                 <td>{formatFull(defaultCurrency, entry[1])}</td>
                 <td>{formatFull(defaultCurrency, entry[1] / 12)}</td>
@@ -223,7 +221,7 @@ const CostsAnalysisPage: FC = () => {
             </tr>
           </tbody>
         </table>
-      </div>
+      </Stack>
     </ContentWithHeader>
   )
 }

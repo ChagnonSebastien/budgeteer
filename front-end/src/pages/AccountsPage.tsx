@@ -1,6 +1,6 @@
-import { useIonRouter } from '@ionic/react'
 import { Button, Tab, Tabs } from '@mui/material'
 import { FC, useContext, useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 import { AccountList } from '../components/AccountList'
 import ContentWithHeader from '../components/ContentWithHeader'
@@ -11,7 +11,7 @@ import { AccountServiceContext } from '../service/ServiceContext'
 type tabs = 'mine' | 'others'
 
 const AccountsPage: FC = () => {
-  const router = useIonRouter()
+  const navigate = useNavigate()
 
   const { state: accounts } = useContext(AccountServiceContext)
   const { augmentedTransactions: transactions } = useContext(MixedAugmentation)
@@ -94,7 +94,6 @@ const AccountsPage: FC = () => {
 
     return (
       <Tabs
-        sx={{ backgroundColor: 'white', width: '100%' }}
         variant="fullWidth"
         value={activeTab}
         onChange={(_ev, value) => {
@@ -114,9 +113,11 @@ const AccountsPage: FC = () => {
   return (
     <ContentWithHeader title="Accounts" button="menu">
       {segments}
-      <AccountList accounts={filteredAccounts} onSelect={(id) => router.push(`/accounts/edit/${id}`)} showBalances />
+      <AccountList accounts={filteredAccounts} onSelect={(id) => navigate(`/accounts/edit/${id}`)} showBalances />
       <div style={{ height: '1rem' }} />
-      <Button onClick={() => router.push('/accounts/new')}>New</Button>
+      <Button fullWidth variant="contained" onClick={() => navigate('/accounts/new')}>
+        New
+      </Button>
     </ContentWithHeader>
   )
 }

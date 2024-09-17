@@ -1,25 +1,24 @@
-import { useIonRouter } from '@ionic/react'
 import { Button } from '@mui/material'
 import { FC, useContext } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 import { CategoryList } from '../components/CategoryList'
 import ContentWithHeader from '../components/ContentWithHeader'
 import { CategoryServiceContext } from '../service/ServiceContext'
 
 const CategoryPage: FC = () => {
-  const router = useIonRouter()
+  const navigate = useNavigate()
 
   const { state: categories } = useContext(CategoryServiceContext)
 
   return (
     <ContentWithHeader title="Categories" button="menu">
       <div style={{ margin: '1rem' }}>
-        <Button onClick={() => router.push('/categories/new')}>New</Button>
+        <Button fullWidth variant="contained" onClick={() => navigate('/categories/new')}>
+          New
+        </Button>
         <div style={{ height: '1rem' }} />
-        <CategoryList
-          categories={categories}
-          onSelect={(categoryId) => router.push(`/categories/edit/${categoryId}`)}
-        />
+        <CategoryList categories={categories} onSelect={(categoryId) => navigate(`/categories/edit/${categoryId}`)} />
       </div>
     </ContentWithHeader>
   )

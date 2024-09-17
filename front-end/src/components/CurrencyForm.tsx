@@ -1,8 +1,7 @@
-import { Button, Dialog, Snackbar, TextField, Typography } from '@mui/material'
+import { Button, Dialog, Snackbar, Stack, TextField, Typography } from '@mui/material'
 import { DateCalendar, DateField, DateView } from '@mui/x-date-pickers'
 import dayjs, { Dayjs } from 'dayjs'
 import { FC, FormEvent, useCallback, useContext, useEffect, useMemo, useState } from 'react'
-import { Omit } from 'react-router'
 
 import Currency, { ExchangeRate } from '../domain/model/currency'
 import { CurrencyServiceContext } from '../service/ServiceContext'
@@ -236,7 +235,7 @@ const CurrencyForm: FC<Props> = (props) => {
         <div style={{ color: 'gray', margin: '0 1rem', transform: 'translate(0, 0.5rem)' }}>Form</div>
         <div style={{ borderBottom: '1px grey solid', flexGrow: 1 }} />
       </div>
-      <div style={{ padding: '1rem', border: '1px grey solid', borderTop: 0 }}>
+      <Stack spacing="1rem" style={{ padding: '2rem 1rem', border: '1px grey solid', borderTop: 0 }}>
         <TextField
           type="text"
           label="Currency name"
@@ -280,7 +279,7 @@ const CurrencyForm: FC<Props> = (props) => {
         />
 
         {typeof initialCurrency === 'undefined' && (
-          <>
+          <div>
             <TextField
               type="text"
               label="Amount of decimal points"
@@ -310,34 +309,38 @@ const CurrencyForm: FC<Props> = (props) => {
             >
               <Typography color="warning">Warning: This value cannot be changed later</Typography>
             </div>
-          </>
-        )}
-        <div style={{ height: '1rem' }} />
-
-        <div style={{ display: 'flex' }}>
-          <div style={{ color: 'gray', margin: '0 1rem', transform: 'translate(0, 0.5rem)', fontSize: '.75rem' }}>
-            Formatting example
           </div>
-          <div style={{ borderBottom: '1px grey solid', flexGrow: 1 }} />
-        </div>
-        <div style={{ padding: '1rem', border: '1px grey solid', borderTop: 0, textAlign: 'center' }}>
-          {formatExample} {symbol}
+        )}
+
+        <div>
+          <div style={{ display: 'flex' }}>
+            <Typography
+              color="textSecondary"
+              style={{ margin: '0 1rem', transform: 'translate(0, 0.5rem)', fontSize: '.75rem' }}
+            >
+              Formatting example
+            </Typography>
+            <div style={{ borderBottom: '1px grey solid', flexGrow: 1 }} />
+          </div>
+          <Typography style={{ padding: '1rem', border: '1px grey solid', borderTop: 0, textAlign: 'center' }}>
+            {formatExample} {symbol}
+          </Typography>
         </div>
 
         {showExchangeRate && (
-          <>
+          <div>
             <div style={{ height: '1rem' }} />
             <div style={{ color: 'grey' }}>Exchange Rates</div>
-            <div style={{ display: 'flex', alignItems: 'stretch' }}>
+            <div style={{ display: 'flex', alignItems: 'end' }}>
               <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
                 {`1 ${symbol === '' ? '___' : symbol}`}
               </div>
               <div style={{ margin: '0 1rem', display: 'flex', alignItems: 'center', flexShrink: 0 }}>=</div>
               <TextField
                 type="text"
+                variant="standard"
                 value={initialExchangeRate}
                 onChange={(ev) => setInitialExchangeRate(ev.target.value as string)}
-                helperText={errors.exchangeRate.hasVisited ? errors.exchangeRate.errorText : ''}
                 error={errors.exchangeRate.hasVisited && !!errors.exchangeRate.errorText}
                 sx={{ width: '100%' }}
                 onBlur={() =>
@@ -359,17 +362,16 @@ const CurrencyForm: FC<Props> = (props) => {
                   alignItems: 'center',
                   flexShrink: 0,
                   borderBottom: '1px rgba(0, 0, 0, 0.13) solid',
-                  marginBottom: '5px',
                 }}
               >
                 <DateField
-                  label="Date"
-                  value={dayjs(initialExchangeRate)}
+                  value={dayjs(initialExchangeRateDate)}
                   onFocus={(ev) => {
                     setShowDateModal(true)
                     ev.preventDefault()
                     ev.target.blur()
                   }}
+                  tabIndex={-1}
                   variant="standard"
                   sx={{ width: '100%' }}
                 />
@@ -377,7 +379,7 @@ const CurrencyForm: FC<Props> = (props) => {
                 <Dialog open={showDateModal} onClose={() => setShowDateModal(false)}>
                   <DateCalendar
                     views={['year', 'month', 'day']}
-                    value={dayjs(initialExchangeRate)}
+                    value={dayjs(initialExchangeRateDate)}
                     onChange={(newDate: Dayjs) => {
                       setInitialExchangeRateDate(newDate.toDate())
                       if (dateView === 'day') setShowDateModal(false)
@@ -389,13 +391,15 @@ const CurrencyForm: FC<Props> = (props) => {
                 </Dialog>
               </div>
             </div>
-          </>
+          </div>
         )}
-      </div>
+      </Stack>
 
       <div style={{ height: '1rem' }} />
 
-      <Button type="submit">{submitText}</Button>
+      <Button type="submit" fullWidth variant="contained">
+        {submitText}
+      </Button>
 
       <Snackbar
         open={showErrorToast !== ''}

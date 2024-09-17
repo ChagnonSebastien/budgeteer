@@ -1,7 +1,7 @@
-import { IonFab, IonFabButton, IonFabList, useIonRouter } from '@ionic/react'
-import { SpeedDial, SpeedDialAction, SpeedDialIcon } from '@mui/material'
+import { IconButton, SpeedDial, SpeedDialAction, SpeedDialIcon } from '@mui/material'
 import { isAfter, isBefore } from 'date-fns'
 import { FC, useContext, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 import AggregatedDiffChart from '../components/AggregatedDiffChart'
 import ContentWithHeader from '../components/ContentWithHeader'
@@ -14,7 +14,7 @@ import MixedAugmentation from '../service/MixedAugmentation'
 import { CategoryServiceContext } from '../service/ServiceContext'
 
 const TransactionPage: FC = () => {
-  const router = useIonRouter()
+  const navigate = useNavigate()
 
   const { augmentedTransactions } = useContext(MixedAugmentation)
   const { state: categories, root: rootCategory } = useContext(CategoryServiceContext)
@@ -43,17 +43,28 @@ const TransactionPage: FC = () => {
       })
   }, [augmentedTransactions, categoryFilter, accountFilter, toDate, fromDate])
 
+  const [contentWidth, setContentWidth] = useState(600)
+  const [contentHeight, setContentHeight] = useState(600)
+  const splitHorizontal = contentWidth > 1200
+  const [filterHeight, setFilterHeight] = useState(50)
+
   return (
     <ContentWithHeader
       title="Transactions"
       button="menu"
       rightButton={
         graphType === 'line' ? (
-          <IconLib.FaChartPie size="1.5rem" onClick={() => setGraphType('pie')} />
+          <IconButton onClick={() => setGraphType('pie')}>
+            <IconLib.FaChartPie size="1.5rem" />
+          </IconButton>
         ) : (
-          <IconLib.BsGraphUp size="1.5rem" onClick={() => setGraphType('line')} />
+          <IconButton onClick={() => setGraphType('line')}>
+            <IconLib.BsGraphUp size="1.5rem" />
+          </IconButton>
         )
       }
+      contentMaxWidth="100%"
+      contentOverflowY="hidden"
     >
       <SpeedDial
         ariaLabel="Create new transaction"
@@ -62,41 +73,85 @@ const TransactionPage: FC = () => {
       >
         <SpeedDialAction
           sx={{ backgroundColor: 'green' }}
-          onClick={() => router.push('/transactions/new?type=income')}
+          onClick={() => navigate('/transactions/new?type=income')}
           icon={<IconLib.MdInput />}
         />
         <SpeedDialAction
           sx={{ backgroundColor: 'red' }}
-          onClick={() => router.push('/transactions/new?type=expense')}
+          onClick={() => navigate('/transactions/new?type=expense')}
           icon={<IconLib.MdOutput />}
         />
         <SpeedDialAction
           sx={{ backgroundColor: 'darkgrey' }}
-          onClick={() => router.push('/transactions/new?type=transfer')}
+          onClick={() => navigate('/transactions/new?type=transfer')}
           icon={<IconLib.GrTransaction />}
         />
       </SpeedDial>
 
-      <div style={{ height: '50%', width: '100%', position: 'relative', padding: '1rem' }}>
-        {graphType === 'line' ? (
-          <AggregatedDiffChart transactions={filteredTransaction} toDate={toDate} fromDate={fromDate} />
-        ) : (
-          <TransactionsPieChart
-            rootCategory={categories.find((c) => c.id === categoryFilter) ?? rootCategory}
-            augmentedTransactions={filteredTransaction}
-          />
-        )}
-      </div>
-
-      {filterOverview}
-
-      <TransactionList
-        transactions={filteredTransaction}
-        onClick={(transactionId) => {
-          router.push(`/transactions/edit/${transactionId}`)
+      <div
+        style={{
+          height: '100%',
+          width: '100%',
+          overflowY: splitHorizontal ? 'hidden' : 'scroll',
+          display: 'flex',
+          flexDirection: splitHorizontal ? 'row' : 'column',
         }}
-        viewAsAccounts={accountFilter === null ? undefined : [accountFilter]}
-      />
+        ref={(ref) => {
+          if (ref === null) return
+          setContentWidth(ref.clientWidth)
+          setContentHeight(ref.clientHeight)
+        }}
+      >
+        <div
+          style={{
+            height: splitHorizontal ? `${contentHeight}px` : '50vh',
+            width: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+          }}
+        >
+          <div
+            style={{
+              marginTop: splitHorizontal ? `${contentHeight / 12}px` : 0,
+              height: `calc( ${splitHorizontal ? `${contentHeight}px` : '50vh'} / 1.2 - ${filterHeight}px )`,
+              position: 'relative',
+            }}
+          >
+            {graphType === 'line' ? (
+              <AggregatedDiffChart transactions={filteredTransaction} toDate={toDate} fromDate={fromDate} />
+            ) : (
+              <TransactionsPieChart
+                rootCategory={categories.find((c) => c.id === categoryFilter) ?? rootCategory}
+                augmentedTransactions={filteredTransaction}
+              />
+            )}
+          </div>
+
+          <div
+            ref={(ref) => {
+              if (ref === null) return
+              setFilterHeight(ref.scrollHeight)
+            }}
+          >
+            {filterOverview}
+          </div>
+        </div>
+
+        <div
+          style={{
+            flexShrink: 0,
+            overflowY: splitHorizontal ? 'scroll' : 'clip',
+          }}
+        >
+          <TransactionList
+            transactions={filteredTransaction}
+            onClick={(transactionId) => {
+              navigate(`/transactions/edit/${transactionId}`)
+            }}
+            viewAsAccounts={accountFilter === null ? undefined : [accountFilter]}
+          />
+        </div>
+      </div>
     </ContentWithHeader>
   )
 }

@@ -1,6 +1,5 @@
-import { Chip, Dialog, useMediaQuery, useTheme } from '@mui/material'
-import { DateCalendar, DateView, LocalizationProvider } from '@mui/x-date-pickers'
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
+import { Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, useMediaQuery, useTheme } from '@mui/material'
+import { DateCalendar, DateView } from '@mui/x-date-pickers'
 import { addDays, subMonths, subYears } from 'date-fns'
 import dayjs, { Dayjs } from 'dayjs'
 import { useContext, useMemo, useState } from 'react'
@@ -93,8 +92,8 @@ export default () => {
   const form = useMemo(
     () => (
       <>
-        <div style={{ padding: '1rem' }}>
-          <h3 style={{ textAlign: 'center' }}>Edit filters</h3>
+        <DialogTitle>Edit filters</DialogTitle>
+        <DialogContent>
           <div
             style={{
               display: 'flex',
@@ -140,28 +139,18 @@ export default () => {
               {toPills}
             </div>
           </div>
-        </div>
-        <div
-          style={{
-            color: 'var(--ion-color-primary)',
-            borderTop: '1px #8888 solid',
-            textAlign: 'center',
-            padding: '1rem',
-            fontWeight: 'bold',
-            boxShadow: ' 0rem -.25rem .5rem #CCC',
-            cursor: 'pointer',
-          }}
-          onClick={() => setShowFilterSelection(false)}
-        >
-          Confirm
-        </div>
+        </DialogContent>
+
+        <DialogActions>
+          <Button onClick={() => setShowFilterSelection(false)}>Close</Button>
+        </DialogActions>
       </>
     ),
     [fromPills, categoryPills, accountPills],
   )
 
   const overview = (
-    <LocalizationProvider dateAdapter={AdapterDayjs}>
+    <>
       <div style={{ display: 'flex', justifyContent: 'space-around' }}>
         <div
           style={{ padding: '.25rem 1rem', fontWeight: 'bolder', cursor: 'pointer' }}
@@ -251,8 +240,8 @@ export default () => {
         {form}
       </Dialog>
 
-      <Dialog fullScreen={fullScreen} open={showCategoryModal} onClose={() => setShowFromDateModal(false)}>
-        <ContentWithHeader title="Filter by category" button="return" onCancel={() => setShowFromDateModal(false)}>
+      <Dialog fullScreen={fullScreen} open={showCategoryModal} onClose={() => setShowCategoryModal(false)}>
+        <ContentWithHeader title="Filter by category" button="return" onCancel={() => setShowCategoryModal(false)}>
           <CategoryList
             categories={categories}
             onSelect={(categoryId) => {
@@ -312,7 +301,7 @@ export default () => {
           />
         </div>
       </Dialog>
-    </LocalizationProvider>
+    </>
   )
 
   return {

@@ -1,7 +1,6 @@
-import { useIonRouter } from '@ionic/react'
 import { Button } from '@mui/material'
 import { FC, useCallback, useContext, useMemo } from 'react'
-import { useParams } from 'react-router'
+import { useNavigate, useParams } from 'react-router-dom'
 
 import ContentWithHeader from '../components/ContentWithHeader'
 import TransactionForm from '../components/TransactionForm'
@@ -9,18 +8,18 @@ import Transaction from '../domain/model/transaction'
 import MixedAugmentation from '../service/MixedAugmentation'
 import { TransactionServiceContext } from '../service/ServiceContext'
 
-interface Params {
+type Params = {
   transactionId: string
 }
 
 const EditTransactionPage: FC = () => {
-  const router = useIonRouter()
+  const navigate = useNavigate()
 
   const { transactionId } = useParams<Params>()
   const { update: updateTransaction } = useContext(TransactionServiceContext)
   const { augmentedTransactions } = useContext(MixedAugmentation)
   const selectedTransaction = useMemo(
-    () => augmentedTransactions.find((t) => t.id === parseInt(transactionId)),
+    () => augmentedTransactions.find((t) => t.id === parseInt(transactionId!)),
     [augmentedTransactions, transactionId],
   )
 
@@ -30,17 +29,13 @@ const EditTransactionPage: FC = () => {
 
       await updateTransaction(selectedTransaction.id, data)
 
-      if (router.canGoBack()) {
-        router.goBack()
-      } else {
-        router.push('/transactions', 'back', 'replace')
-      }
+      navigate('/transactions')
     },
     [updateTransaction, selectedTransaction],
   )
 
   if (typeof selectedTransaction === 'undefined') {
-    router.push('/transactions', 'back', 'replace')
+    navigate('/transactions')
     return null
   }
 

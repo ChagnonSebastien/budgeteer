@@ -1,4 +1,3 @@
-import { IonItem } from '@ionic/react'
 import { ListItemButton } from '@mui/material'
 
 import Currency from '../domain/model/currency'
