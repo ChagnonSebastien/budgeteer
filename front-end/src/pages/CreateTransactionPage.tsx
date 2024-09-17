@@ -1,4 +1,4 @@
-import { IonPage, useIonRouter } from '@ionic/react'
+import { useIonRouter } from '@ionic/react'
 import { FC, useCallback, useContext, useMemo } from 'react'
 import { useLocation } from 'react-router-dom'
 
@@ -37,13 +37,11 @@ const CreateCategoryPage: FC = () => {
   }, [])
 
   return (
-    <IonPage>
-      <ContentWithHeader title={`Record new ${type ?? 'transaction'}`} button="return">
-        <div style={{ padding: '1rem' }}>
-          <TransactionForm onSubmit={onSubmit} submitText="Record" type={type} />
-        </div>
-      </ContentWithHeader>
-    </IonPage>
+    <ContentWithHeader title={`Record new ${type ?? 'transaction'}`} button="return">
+      <div style={{ padding: '1rem' }}>
+        <TransactionForm onSubmit={onSubmit} submitText="Record" type={type} />
+      </div>
+    </ContentWithHeader>
   )
 }
 

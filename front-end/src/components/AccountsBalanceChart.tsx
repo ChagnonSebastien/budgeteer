@@ -1,4 +1,4 @@
-import { IonCard, IonRadio, IonRadioGroup } from '@ionic/react'
+import { Card, FormControlLabel, Radio, RadioGroup } from '@mui/material'
 import { ResponsiveStream } from '@nivo/stream'
 import {
   differenceInDays,
@@ -16,6 +16,8 @@ import { formatFull } from '../domain/model/currency'
 import MixedAugmentation from '../service/MixedAugmentation'
 import { AccountServiceContext, CurrencyServiceContext } from '../service/ServiceContext'
 
+type GroupType = 'financialInstitution' | 'type' | 'account' | 'none'
+
 interface Props {
   filterByAccounts?: number[]
   fromDate: Date
@@ -29,7 +31,7 @@ const AccountsBalanceChart: FC<Props> = (props) => {
   const { accountTotals } = useContext(MixedAugmentation)
   const { myOwnAccounts } = useContext(AccountServiceContext)
 
-  const [groupBy, setGroupBy] = useState<'financialInstitution' | 'type' | 'account' | 'none'>('account')
+  const [groupBy, setGroupBy] = useState<GroupType>('account')
 
   const filteredAccounts = useMemo(() => {
     if (typeof filterByAccounts === 'undefined') return myOwnAccounts
@@ -120,7 +122,7 @@ const AccountsBalanceChart: FC<Props> = (props) => {
 
     return (
       <>
-        <IonCard
+        <Card
           style={{
             position: 'absolute',
             left: '6rem',
@@ -132,17 +134,23 @@ const AccountsBalanceChart: FC<Props> = (props) => {
           }}
         >
           <div style={{ fontWeight: 'bold' }}>Group by</div>
-          <IonRadioGroup
-            value={groupBy}
-            style={{ display: 'flex', flexDirection: 'column' }}
-            onIonChange={(ev) => setGroupBy(ev.detail.value)}
-          >
-            <IonRadio value="none">None</IonRadio>
-            <IonRadio value="account">Account</IonRadio>
-            <IonRadio value="financialInstitution">Financial Institution</IonRadio>
-            <IonRadio value="type">Type</IonRadio>
-          </IonRadioGroup>
-        </IonCard>
+          <RadioGroup value={groupBy} onChange={(newValue) => setGroupBy(newValue.target.value as GroupType)}>
+            <FormControlLabel value="none" label="None" sx={{ margin: 0 }} control={<Radio sx={{ padding: '0' }} />} />
+            <FormControlLabel
+              value="account"
+              label="Account"
+              sx={{ margin: 0 }}
+              control={<Radio sx={{ padding: '0' }} />}
+            />
+            <FormControlLabel
+              value="financialInstitution"
+              label="Financial Institution"
+              sx={{ margin: 0 }}
+              control={<Radio sx={{ padding: '0' }} />}
+            />
+            <FormControlLabel value="type" label="Type" sx={{ margin: 0 }} control={<Radio sx={{ padding: '0' }} />} />
+          </RadioGroup>
+        </Card>
 
         <ResponsiveStream
           data={data}
@@ -164,7 +172,7 @@ const AccountsBalanceChart: FC<Props> = (props) => {
           colors={{ scheme: 'set3' }}
           borderColor={{ theme: 'background' }}
           stackTooltip={(tooltipProps) => (
-            <IonCard style={{ padding: '0.5rem' }}>
+            <Card style={{ padding: '0.5rem' }}>
               <div>{formatDate(labels[tooltipProps.slice.index], 'MMM d, yyyy')}</div>
               {tooltipProps.slice.stack
                 .filter((s) => s.value !== 0)
@@ -187,7 +195,7 @@ const AccountsBalanceChart: FC<Props> = (props) => {
                     <div>{s.formattedValue}</div>
                   </div>
                 ))}
-            </IonCard>
+            </Card>
           )}
         />
       </>

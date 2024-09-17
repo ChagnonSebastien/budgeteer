@@ -1,4 +1,4 @@
-import { IonCard } from '@ionic/react'
+import { Card } from '@mui/material'
 import { Datum, ResponsiveLine } from '@nivo/line'
 import {
   differenceInDays,
@@ -30,7 +30,7 @@ const AggregatedDiffChart: FC<Props> = (props) => {
   const { defaultCurrency } = useContext(CurrencyServiceContext)
   const { exchangeRateOnDay } = useContext(MixedAugmentation)
 
-  const chart = useMemo(() => {
+  return useMemo(() => {
     if (defaultCurrency === null) return null
 
     const diffDays = differenceInDays(toDate, fromDate)
@@ -109,7 +109,7 @@ const AggregatedDiffChart: FC<Props> = (props) => {
       <>
         <ResponsiveLine
           data={[{ id: 'Diff', data }]}
-          margin={{ top: 60, right: 10, bottom: 60, left: 50 }}
+          margin={{ top: 10, right: 10, bottom: 70, left: 60 }}
           axisBottom={{
             format: (i) => (i % showLabelEveryFactor === 0 ? labels[i] && formatDate(labels[i], 'MMM d, yyyy') : ''),
             tickRotation: -45,
@@ -129,12 +129,12 @@ const AggregatedDiffChart: FC<Props> = (props) => {
           }}
           tooltip={(props) => {
             return (
-              <IonCard>
+              <Card>
                 <div style={{ padding: '.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                   <div style={{ fontWeight: 'bolder' }}>{props.point.data.xFormatted}</div>
                   <div>{props.point.data.yFormatted}</div>
                 </div>
-              </IonCard>
+              </Card>
             )
           }}
           isInteractive
@@ -145,8 +145,6 @@ const AggregatedDiffChart: FC<Props> = (props) => {
       </>
     )
   }, [defaultCurrency, transactions, fromDate, toDate])
-
-  return chart
 }
 
 export default AggregatedDiffChart

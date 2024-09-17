@@ -1,14 +1,19 @@
-import { IonChip, IonDatetime, IonModal } from '@ionic/react'
+import { Chip, Dialog, useMediaQuery, useTheme } from '@mui/material'
+import { DateCalendar, DateView, LocalizationProvider } from '@mui/x-date-pickers'
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
 import { addDays, subMonths, subYears } from 'date-fns'
+import dayjs, { Dayjs } from 'dayjs'
 import { useContext, useMemo, useState } from 'react'
 
 import { AccountList } from './AccountList'
 import { CategoryList } from './CategoryList'
 import ContentWithHeader from './ContentWithHeader'
-import { IconToolsContext } from './IconTools'
 import { AccountServiceContext, CategoryServiceContext, TransactionServiceContext } from '../service/ServiceContext'
 
 export default () => {
+  const theme = useTheme()
+  const fullScreen = useMediaQuery(theme.breakpoints.down('md'))
+
   const [showFilterSelection, setShowFilterSelection] = useState(false)
 
   const { state: transactions } = useContext(TransactionServiceContext)
@@ -22,84 +27,66 @@ export default () => {
   const [categoryFilter, setCategoryFilter] = useState<number | null>(null)
 
   const [fromDate, setFromDate] = useState(addDays(subYears(new Date(), 1), 1))
+  const [fromView, setFromView] = useState<DateView>('day')
   const [showFromDateModal, setShowFromDateModal] = useState(false)
 
   const [toDate, setToDate] = useState(new Date())
+  const [toView, setToView] = useState<DateView>('day')
   const [showToDateModal, setShowToDateModal] = useState(false)
-
-  const { IconLib } = useContext(IconToolsContext)
 
   const accountPills = useMemo(() => {
     if (accountFilter === null) return null
     return (
-      <IonChip
-        style={{ flexShrink: 0 }}
+      <Chip
+        style={{ margin: '.25rem' }}
         onClick={(ev) => {
           ev.stopPropagation()
           setShowAccountModal(true)
         }}
-      >
-        {accounts.find((a) => a.id === accountFilter)?.name ?? accountFilter}
-        <div style={{ width: '.5rem' }} />
-        <IconLib.IoCloseCircle
-          onClick={(ev) => {
-            ev.stopPropagation()
-            setAccountFilter(null)
-          }}
-          size="1.28rem"
-        />
-      </IonChip>
+        onDelete={() => setAccountFilter(null)}
+        label={accounts.find((a) => a.id === accountFilter)?.name ?? accountFilter}
+      />
     )
   }, [accountFilter])
 
   const categoryPills = useMemo(() => {
     if (categoryFilter === null) return null
     return (
-      <IonChip
-        style={{ flexShrink: 0 }}
+      <Chip
+        style={{ margin: '.25rem' }}
         onClick={(ev) => {
           ev.stopPropagation()
           setShowCategoryModal(true)
         }}
-      >
-        {categories.find((c) => c.id === categoryFilter)?.name ?? categoryFilter}
-        <div style={{ width: '.5rem' }} />
-        <IconLib.IoCloseCircle
-          onClick={(ev) => {
-            ev.stopPropagation()
-            setCategoryFilter(null)
-          }}
-          size="1.28rem"
-        />
-      </IonChip>
+        onDelete={() => setCategoryFilter(null)}
+        label={categories.find((c) => c.id === categoryFilter)?.name ?? categoryFilter}
+      />
     )
   }, [categoryFilter])
 
   const fromPills = useMemo(() => {
     return (
-      <IonChip
-        style={{ flexShrink: 0 }}
+      <Chip
+        style={{ margin: '.25rem' }}
         onClick={(ev) => {
           ev.stopPropagation()
           setShowFromDateModal(true)
         }}
-      >
-        From: {fromDate.toDateString()}
-      </IonChip>
+        label={`From: ${fromDate.toDateString()}`}
+      />
     )
   }, [fromDate])
 
   const toPills = useMemo(() => {
     return (
-      <IonChip
-        style={{ flexShrink: 0 }}
+      <Chip
+        style={{ margin: '.25rem' }}
         onClick={(ev) => {
           ev.stopPropagation()
           setShowToDateModal(true)
         }}
-      >
-        To: {toDate.toDateString()}
-      </IonChip>
+        label={`To: ${toDate.toDateString()}`}
+      />
     )
   }, [toDate])
 
@@ -174,7 +161,7 @@ export default () => {
   )
 
   const overview = (
-    <>
+    <LocalizationProvider dateAdapter={AdapterDayjs}>
       <div style={{ display: 'flex', justifyContent: 'space-around' }}>
         <div
           style={{ padding: '.25rem 1rem', fontWeight: 'bolder', cursor: 'pointer' }}
@@ -254,22 +241,17 @@ export default () => {
         <div style={{ margin: '.25rem', width: 'intrinsic', flexShrink: 0 }}>+ Filter</div>
       </div>
 
-      <IonModal
-        id="filter-modal"
-        isOpen={showFilterSelection && !showFromDateModal && !showToDateModal}
-        onWillDismiss={() => {
+      <Dialog
+        fullScreen={fullScreen}
+        open={showFilterSelection && !showFromDateModal && !showToDateModal}
+        onClose={() => {
           if (!showFromDateModal) setShowFilterSelection(false)
-        }}
-        style={{
-          '--height': 'fit-content',
-          '--width': 'fit-content',
-          '--max-width': '50rem',
         }}
       >
         {form}
-      </IonModal>
+      </Dialog>
 
-      <IonModal isOpen={showCategoryModal} onWillDismiss={() => setShowFromDateModal(false)}>
+      <Dialog fullScreen={fullScreen} open={showCategoryModal} onClose={() => setShowFromDateModal(false)}>
         <ContentWithHeader title="Filter by category" button="return" onCancel={() => setShowFromDateModal(false)}>
           <CategoryList
             categories={categories}
@@ -279,69 +261,58 @@ export default () => {
             }}
           />
         </ContentWithHeader>
-      </IonModal>
+      </Dialog>
 
-      <IonModal isOpen={showAccountModal} onWillDismiss={() => setShowAccountModal(false)}>
+      <Dialog fullScreen={fullScreen} open={showAccountModal} onClose={() => setShowAccountModal(false)}>
         <AccountList
-          title="Filter by Account"
-          button="none"
-          onCancel={() => setShowAccountModal(false)}
           accounts={accounts}
           onSelect={(accountId) => {
             setAccountFilter(accountId)
             setShowAccountModal(false)
           }}
         />
-      </IonModal>
+      </Dialog>
 
-      <IonModal
-        isOpen={showFromDateModal}
-        onWillDismiss={() => {
+      <Dialog
+        fullScreen={fullScreen}
+        open={showFromDateModal}
+        onClose={() => {
           setShowFromDateModal(false)
         }}
-        style={{
-          '--height': 'fit-content',
-          '--width': 'fit-content',
-          '--max-width': '50rem',
-        }}
       >
         <div style={{ width: '20rem' }}>
-          <IonDatetime
-            value={fromDate.toISOString()}
-            showDefaultTitle
-            presentation="date"
-            showDefaultButtons
-            onIonChange={(ev) => {
-              setFromDate(new Date(ev.detail.value as string))
+          <DateCalendar
+            views={['year', 'month', 'day']}
+            value={dayjs(fromDate)}
+            onChange={(newDate: Dayjs) => {
+              setFromDate(newDate.toDate())
+              if (fromView === 'day') setShowFromDateModal(false)
             }}
+            onViewChange={(view) => setFromView(view)}
           />
         </div>
-      </IonModal>
+      </Dialog>
 
-      <IonModal
-        isOpen={showToDateModal}
-        onWillDismiss={() => {
+      <Dialog
+        fullScreen={fullScreen}
+        open={showToDateModal}
+        onClose={() => {
           setShowToDateModal(false)
         }}
-        style={{
-          '--height': 'fit-content',
-          '--width': 'fit-content',
-          '--max-width': '50rem',
-        }}
       >
         <div style={{ width: '20rem' }}>
-          <IonDatetime
-            value={toDate.toISOString()}
-            showDefaultTitle
-            presentation="date"
-            showDefaultButtons
-            onIonChange={(ev) => {
-              setToDate(new Date(ev.detail.value as string))
+          <DateCalendar
+            views={['year', 'month', 'day']}
+            value={dayjs(toDate)}
+            onChange={(newDate: Dayjs) => {
+              setToDate(newDate.toDate())
+              if (toView === 'day') setShowToDateModal(false)
             }}
+            onViewChange={(view) => setToView(view)}
           />
         </div>
-      </IonModal>
-    </>
+      </Dialog>
+    </LocalizationProvider>
   )
 
   return {

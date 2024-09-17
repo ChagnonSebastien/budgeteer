@@ -1,4 +1,4 @@
-import { IonToggle } from '@ionic/react'
+import { Switch } from '@mui/material'
 import { ResponsiveSunburst } from '@nivo/sunburst'
 import { FC, useContext, useEffect, useMemo, useState } from 'react'
 
@@ -205,17 +205,24 @@ const TransactionsPieChart: FC<Props> = (props) => {
   return (
     <>
       {typeof crunchedData.expenseTree === typeof crunchedData.incomeTree && (
-        <div style={{ position: 'absolute', right: '1rem', top: '1rem', display: 'flex', alignItems: 'center' }}>
+        <div
+          style={{
+            position: 'absolute',
+            right: '1rem',
+            top: '1rem',
+            display: 'flex',
+            alignItems: 'center',
+            zIndex: 1,
+          }}
+        >
           <div>Expenses</div>
-          <IonToggle
-            style={{ margin: '0 1rem' }}
+          <Switch
             checked={showIncomes}
-            onIonChange={() => {
+            onChange={(ev) => {
               setClickedCategory(null)
-              setShowIncomes((prev) => !prev)
+              setShowIncomes(ev.target.checked)
             }}
-            aria-label="Enable Notifications"
-          ></IonToggle>
+          />
           <div>Incomes</div>
         </div>
       )}

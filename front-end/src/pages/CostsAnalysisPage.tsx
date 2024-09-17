@@ -1,4 +1,4 @@
-import { IonInput, IonPage } from '@ionic/react'
+import { Stack, TextField } from '@mui/material'
 import { differenceInYears } from 'date-fns'
 import { FC, useContext, useMemo, useState } from 'react'
 
@@ -142,91 +142,89 @@ const CostsAnalysisPage: FC = () => {
   }
 
   return (
-    <IonPage>
-      <ContentWithHeader title="Costs Analysis" button="menu">
-        <div style={{ padding: '2rem 1rem' }}>
-          <IonInput
-            type="text"
-            value={grossIncome}
-            onIonInput={(ev) => {
-              const parsed = parseInt(ev.detail.value as string)
-              if (isNaN(parsed)) {
-                setGrossIncome(0)
-              } else {
-                setGrossIncome(parsed)
-              }
-            }}
-            labelPlacement="stacked"
-            errorText="No error"
-            label="Gross Income"
-          />
+    <ContentWithHeader title="Costs Analysis" button="menu">
+      <div style={{ padding: '2rem 1rem' }}>
+        <TextField
+          type="text"
+          value={grossIncome}
+          sx={{ width: '100%' }}
+          onChange={(ev) => {
+            const parsed = parseInt(ev.target.value as string)
+            if (isNaN(parsed)) {
+              setGrossIncome(0)
+            } else {
+              setGrossIncome(parsed)
+            }
+          }}
+          variant="standard"
+          label="Gross Income"
+        />
 
-          <CategoryPicker
-            categoryId={incomeCategory}
-            setCategoryId={setIncomeCategory}
-            labelText="Select your net income category"
-          />
+        <CategoryPicker
+          categoryId={incomeCategory}
+          setCategoryId={setIncomeCategory}
+          labelText="Select your net income category"
+        />
 
-          <div style={{ height: '1rem' }} />
+        <div style={{ height: '1rem' }} />
 
-          <table>
-            <thead>
+        <table>
+          <thead>
+            <tr>
+              <th />
+              <th>Yearly</th>
+              <th>Monthly</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Gross Income</td>
+              <td>{formatFull(defaultCurrency, grossIncome * Math.pow(10, defaultCurrency.decimalPoints))}</td>
+              <td>{formatFull(defaultCurrency, (grossIncome * Math.pow(10, defaultCurrency.decimalPoints)) / 12)}</td>
+            </tr>
+            <tr>
+              <td>Net Income</td>
+              <td>{formatFull(defaultCurrency, income)}</td>
+              <td>{formatFull(defaultCurrency, income / 12)}</td>
+            </tr>
+            <tr style={{ height: '1rem' }} />
+            <tr>
+              <th>Fixed Costs</th>
+              <th colSpan={2}>{((100 * fixedAmount) / income).toFixed(0)}%</th>
+            </tr>
+            {[...fixedCosts.entries()].map((entry) => (
               <tr>
-                <th />
-                <th>Yearly</th>
-                <th>Monthly</th>
+                <td>{entry[0]}</td>
+                <td>{formatFull(defaultCurrency, entry[1])}</td>
+                <td>{formatFull(defaultCurrency, entry[1] / 12)}</td>
               </tr>
-            </thead>
-            <tbody>
+            ))}
+            <tr style={{ height: '1rem' }} />
+            <tr>
+              <th>Variable Costs</th>
+              <th colSpan={2}>{((100 * variableAmount) / income).toFixed(0)}%</th>
+            </tr>
+            {[...variableCosts.entries()].map((entry) => (
               <tr>
-                <td>Gross Income</td>
-                <td>{formatFull(defaultCurrency, grossIncome * Math.pow(10, defaultCurrency.decimalPoints))}</td>
-                <td>{formatFull(defaultCurrency, (grossIncome * Math.pow(10, defaultCurrency.decimalPoints)) / 12)}</td>
+                <td>{entry[0]}</td>
+                <td>{formatFull(defaultCurrency, entry[1])}</td>
+                <td>{formatFull(defaultCurrency, entry[1] / 12)}</td>
               </tr>
-              <tr>
-                <td>Net Income</td>
-                <td>{formatFull(defaultCurrency, income)}</td>
-                <td>{formatFull(defaultCurrency, income / 12)}</td>
-              </tr>
-              <tr style={{ height: '1rem' }} />
-              <tr>
-                <th>Fixed Costs</th>
-                <th colSpan={2}>{((100 * fixedAmount) / income).toFixed(0)}%</th>
-              </tr>
-              {[...fixedCosts.entries()].map((entry) => (
-                <tr>
-                  <td>{entry[0]}</td>
-                  <td>{formatFull(defaultCurrency, entry[1])}</td>
-                  <td>{formatFull(defaultCurrency, entry[1] / 12)}</td>
-                </tr>
-              ))}
-              <tr style={{ height: '1rem' }} />
-              <tr>
-                <th>Variable Costs</th>
-                <th colSpan={2}>{((100 * variableAmount) / income).toFixed(0)}%</th>
-              </tr>
-              {[...variableCosts.entries()].map((entry) => (
-                <tr>
-                  <td>{entry[0]}</td>
-                  <td>{formatFull(defaultCurrency, entry[1])}</td>
-                  <td>{formatFull(defaultCurrency, entry[1] / 12)}</td>
-                </tr>
-              ))}
-              <tr style={{ height: '1rem' }} />
-              <tr>
-                <th>Investments</th>
-                <th colSpan={2}>{(100 - (100 * (variableAmount + fixedAmount)) / income).toFixed(0)}%</th>
-              </tr>
-              <tr>
-                <td>All</td>
-                <td>{formatFull(defaultCurrency, income - variableAmount - fixedAmount)}</td>
-                <td>{formatFull(defaultCurrency, (income - variableAmount - fixedAmount) / 12)}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </ContentWithHeader>
-    </IonPage>
+            ))}
+            <tr style={{ height: '1rem' }} />
+            <tr>
+              <th>Investments</th>
+              <th colSpan={2}>{(100 - (100 * (variableAmount + fixedAmount)) / income).toFixed(0)}%</th>
+            </tr>
+            <tr>
+              <td>All</td>
+              <td>{formatFull(defaultCurrency, income - variableAmount - fixedAmount)}</td>
+              <td>{formatFull(defaultCurrency, (income - variableAmount - fixedAmount) / 12)}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </ContentWithHeader>
   )
 }
 

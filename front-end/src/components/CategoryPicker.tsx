@@ -1,4 +1,4 @@
-import { IonInput, IonModal } from '@ionic/react'
+import { Dialog, TextField } from '@mui/material'
 import { FC, useContext, useMemo, useState } from 'react'
 
 import { CategoryList } from './CategoryList'
@@ -30,17 +30,22 @@ const CategoryPicker: FC<Props> = (props) => {
           backgroundColor={currentCategory.iconBackground}
         />
         <div style={{ width: '1rem', flexShrink: 0 }} />
-        <IonInput
+        <TextField
           type="text"
           label={labelText}
-          labelPlacement="stacked"
+          variant="standard"
+          sx={{ width: '100%' }}
           placeholder={typeof rootCategory === 'undefined' ? 'Loading...' : undefined}
           value={currentCategory.name}
-          onFocus={() => setShowModal(true)}
+          onFocus={(ev) => {
+            ev.preventDefault()
+            setShowModal(true)
+            ev.target.blur()
+          }}
           required
         />
       </div>
-      <IonModal isOpen={showModal} onWillDismiss={() => setShowModal(false)}>
+      <Dialog open={showModal} onClose={() => setShowModal(false)}>
         <ContentWithHeader title="Select Icon" button="return" onCancel={() => setShowModal(false)}>
           <CategoryList
             categories={categories}
@@ -50,7 +55,7 @@ const CategoryPicker: FC<Props> = (props) => {
             }}
           />
         </ContentWithHeader>
-      </IonModal>
+      </Dialog>
     </>
   )
 }

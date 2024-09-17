@@ -1,4 +1,5 @@
 import { IonItem } from '@ionic/react'
+import { ListItemButton } from '@mui/material'
 
 import Currency from '../domain/model/currency'
 
@@ -13,12 +14,12 @@ export const CurrencyList = (props: Props) => {
   return (
     <>
       {currencies.map((currency) => (
-        <IonItem key={`account-list-${currency.id}`} onClick={() => onSelect(currency.id)}>
+        <ListItemButton key={`account-list-${currency.id}`} onClick={() => onSelect(currency.id)}>
           <div style={{ display: 'flex', justifyContent: 'space-between', flexGrow: 1 }}>
             <div>{currency.name}</div>
             <div>{currency.symbol}</div>
           </div>
-        </IonItem>
+        </ListItemButton>
       ))}
     </>
   )

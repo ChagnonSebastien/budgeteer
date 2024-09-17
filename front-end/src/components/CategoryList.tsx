@@ -1,4 +1,5 @@
-import { IonItem, IonLoading } from '@ionic/react'
+import { IonLoading } from '@ionic/react'
+import { CircularProgress, ListItemButton } from '@mui/material'
 import { Fragment, useContext } from 'react'
 
 import IconCapsule from './IconCapsule'
@@ -16,13 +17,13 @@ export const CategoryList = (props: Props) => {
   const { root, subCategories } = useContext(CategoryServiceContext)
 
   if (!categories) {
-    return <IonLoading />
+    return <CircularProgress />
   }
 
   const renderCategory = (category: Category, onSelect: (value: number) => void, depth: number): JSX.Element => {
     return (
       <Fragment key={`category-list-id-${category.id}`}>
-        <IonItem onClick={() => onSelect(category.id)} style={{ marginLeft: `${depth * 2}rem` }}>
+        <ListItemButton onClick={() => onSelect(category.id)} style={{ paddingLeft: `${depth * 2 + 1}rem` }}>
           <div style={{ display: 'flex', alignItems: 'center' }}>
             <IconCapsule
               iconName={category.iconName}
@@ -31,9 +32,9 @@ export const CategoryList = (props: Props) => {
               backgroundColor={category.iconBackground}
             />
             <div style={{ width: '1rem' }} />
-            <p>{category.name}</p>
+            <div>{category.name}</div>
           </div>
-        </IonItem>
+        </ListItemButton>
         {subCategories[category.id]?.map((c) => renderCategory(c, onSelect, depth + 1))}
       </Fragment>
     )

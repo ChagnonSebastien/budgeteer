@@ -1,4 +1,5 @@
-import { IonButton, IonPage, useIonRouter } from '@ionic/react'
+import { useIonRouter } from '@ionic/react'
+import { Button } from '@mui/material'
 import { FC, useContext } from 'react'
 
 import ContentWithHeader from '../components/ContentWithHeader'
@@ -11,20 +12,16 @@ const CurrenciesPage: FC = () => {
   const { state: currencies } = useContext(CurrencyServiceContext)
 
   return (
-    <IonPage>
-      <ContentWithHeader title="Currencies" button="menu">
-        <div style={{ padding: '1rem' }}>
-          <IonButton expand="block" onClick={() => router.push('/currencies/new')}>
-            New
-          </IonButton>
-          <div style={{ height: '1rem' }} />
-          <CurrencyList
-            currencies={currencies}
-            onSelect={(currencyId) => router.push(`/currencies/edit/${currencyId}`)}
-          />
-        </div>
-      </ContentWithHeader>
-    </IonPage>
+    <ContentWithHeader title="Currencies" button="menu">
+      <div style={{ padding: '1rem' }}>
+        <Button onClick={() => router.push('/currencies/new')}>New</Button>
+        <div style={{ height: '1rem' }} />
+        <CurrencyList
+          currencies={currencies}
+          onSelect={(currencyId) => router.push(`/currencies/edit/${currencyId}`)}
+        />
+      </div>
+    </ContentWithHeader>
   )
 }
 

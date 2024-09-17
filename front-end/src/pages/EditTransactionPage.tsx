@@ -1,4 +1,5 @@
-import { IonButton, IonPage, useIonRouter } from '@ionic/react'
+import { useIonRouter } from '@ionic/react'
+import { Button } from '@mui/material'
 import { FC, useCallback, useContext, useMemo } from 'react'
 import { useParams } from 'react-router'
 
@@ -44,19 +45,17 @@ const EditTransactionPage: FC = () => {
   }
 
   return (
-    <IonPage>
-      <ContentWithHeader title="Edit Transaction" button="return">
-        <div style={{ margin: '1rem' }}>
-          <TransactionForm onSubmit={onSubmit} submitText="Update" initialTransaction={selectedTransaction} />
+    <ContentWithHeader title="Edit Transaction" button="return">
+      <div style={{ margin: '1rem' }}>
+        <TransactionForm onSubmit={onSubmit} submitText="Update" initialTransaction={selectedTransaction} />
 
-          <div style={{ height: '.5rem' }} />
+        <div style={{ height: '.5rem' }} />
 
-          <IonButton color="danger" expand="block" onClick={() => {}}>
-            Delete
-          </IonButton>
-        </div>
-      </ContentWithHeader>
-    </IonPage>
+        <Button color="error" onClick={() => {}}>
+          Delete
+        </Button>
+      </div>
+    </ContentWithHeader>
   )
 }
 

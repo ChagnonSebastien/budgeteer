@@ -1,4 +1,4 @@
-import { IonPage, useIonRouter } from '@ionic/react'
+import { useIonRouter } from '@ionic/react'
 import { FC, useCallback, useContext, useMemo } from 'react'
 import { useParams } from 'react-router'
 
@@ -42,11 +42,11 @@ const EditCategoryPage: FC = () => {
   }
 
   return (
-    <IonPage>
+    <div>
       <ContentWithHeader title="Edit category" button="return">
         <CategoryForm onSubmit={onSubmit} submitText="Save changes" initialCategory={selectedCategory} />
       </ContentWithHeader>
-    </IonPage>
+    </div>
   )
 }
 

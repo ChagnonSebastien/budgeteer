@@ -1,6 +1,8 @@
-import { IonApp, IonButton, setupIonicReact } from '@ionic/react'
-import { createContext, FC, lazy } from 'react'
+import { IonApp, setupIonicReact } from '@ionic/react'
+import { Button } from '@mui/material'
+import { createContext, FC } from 'react'
 
+import AuthenticatedZone from './AuthenticatedZone'
 import { IconToolsContext, useIconTools } from './components/IconTools'
 import LoadingScreen from './components/LoadingScreen'
 import User from './domain/model/user'
@@ -48,8 +50,6 @@ export const UserContext = createContext<User>({
   preferred_username: 'username',
 })
 
-const AuthenticatedZone = lazy(() => import('./AuthenticatedZone'))
-
 const App: FC = () => {
   const { user, synced, hasInternet, authMethods, logout, setDefaultCurrency } = useAuthentication()
 
@@ -85,7 +85,7 @@ const App: FC = () => {
 
   return (
     <div className="centered">
-      <IonButton onClick={authMethods.oidc!}>OIDC Login</IonButton>
+      <Button onClick={authMethods.oidc!}>OIDC Login</Button>
     </div>
   )
 }

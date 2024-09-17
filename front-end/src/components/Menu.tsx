@@ -1,15 +1,5 @@
-import {
-  IonButton,
-  IonContent,
-  IonItem,
-  IonLabel,
-  IonList,
-  IonListHeader,
-  IonMenu,
-  IonMenuToggle,
-  IonNote,
-  useIonRouter,
-} from '@ionic/react'
+import { IonMenu, useIonRouter } from '@ionic/react'
+import { Button, List, ListItemButton, ListItemIcon, ListItemText, Typography } from '@mui/material'
 import { FC, useContext } from 'react'
 import { useLocation } from 'react-router-dom'
 import './Menu.css'
@@ -76,30 +66,26 @@ const Menu: FC<Props> = ({ logout }) => {
 
   return (
     <IonMenu contentId="main" type="overlay">
-      <IonContent>
-        <IonList id="inbox-list">
-          <IonListHeader>Budget App</IonListHeader>
-          <IonNote>{email}</IonNote>
-          {appPages.map((appPage, index) => {
-            const Icon = iconTypeFromName(appPage.iconName)
-            return (
-              <IonMenuToggle key={index} autoHide={false}>
-                <IonItem
-                  className={location.pathname.includes(appPage.url) ? 'selected' : ''}
-                  style={{ cursor: 'pointer' }}
-                  onClick={() => router.push(appPage.url)}
-                >
-                  <Icon style={iconStyle} />
-                  <IonLabel>{appPage.title}</IonLabel>
-                </IonItem>
-              </IonMenuToggle>
-            )
-          })}
-          <IonButton expand="block" onClick={logout}>
-            Logout
-          </IonButton>
-        </IonList>
-      </IonContent>
+      <List>
+        <Typography variant="h6">Budget App</Typography>
+        <Typography color="grey">{email}</Typography>
+        {appPages.map((appPage, index) => {
+          const Icon = iconTypeFromName(appPage.iconName)
+          return (
+            <ListItemButton
+              key={index}
+              onClick={() => router.push(appPage.url)}
+              selected={location.pathname === appPage.url}
+            >
+              <ListItemIcon>
+                <Icon style={iconStyle} />
+              </ListItemIcon>
+              <ListItemText>{appPage.title}</ListItemText>
+            </ListItemButton>
+          )
+        })}
+        <Button onClick={logout}>Logout</Button>
+      </List>
     </IonMenu>
   )
 }

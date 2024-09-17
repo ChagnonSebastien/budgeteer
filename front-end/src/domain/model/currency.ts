@@ -35,5 +35,5 @@ export function formatAmount(currency: Currency, rawValue: number): string {
 }
 
 export function parseAmount(currency: Currency, rawValue: string): number {
-  return parseFloat(rawValue) * Math.pow(10, currency.decimalPoints)
+  return Math.round(parseFloat(rawValue) * Math.pow(10, currency.decimalPoints))
 }

@@ -1,8 +1,8 @@
-import { IonInput } from '@ionic/react'
+import { TextField } from '@mui/material'
 import { FC } from 'react'
 
 const validAmount = new RegExp(`^\\d*[.,]?\\d*$`)
-const NoError = 'nil'
+const NoError = ''
 
 const validateNumber = (value: string) => {
   if (!value) {
@@ -25,10 +25,9 @@ export interface NumberInputFieldState {
 
 interface Props {
   value: NumberInputFieldState
+  label: string
 
   setValue(updater: (prevState: NumberInputFieldState) => NumberInputFieldState): void
-
-  label: string
 }
 
 export const NumberInput: FC<Props> = (props) => {
@@ -50,15 +49,17 @@ export const NumberInput: FC<Props> = (props) => {
   }
 
   return (
-    <IonInput
+    <TextField
       type="text"
+      sx={{ width: '100%' }}
       label={label}
-      labelPlacement="stacked"
+      variant="standard"
       value={value.value}
       className={classNameFromStatus(value)}
-      onIonInput={(ev) => onInput(ev.target.value as string)}
-      errorText={value.errorText}
-      onIonBlur={() =>
+      onChange={(ev) => onInput(ev.target.value as string)}
+      helperText={value.hasVisited ? value.errorText : ''}
+      error={value.hasVisited && !!value.errorText}
+      onBlur={() =>
         setValue((prevState) => ({
           ...prevState,
           hasVisited: true,

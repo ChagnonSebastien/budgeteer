@@ -1,4 +1,4 @@
-import { IonButton, IonPage } from '@ionic/react'
+import { Button } from '@mui/material'
 import { parse as papaparse } from 'papaparse'
 import { ChangeEventHandler, FC, useContext, useRef } from 'react'
 
@@ -179,14 +179,12 @@ const ImportSpreadsheet: FC = () => {
   }
 
   return (
-    <IonPage>
-      <ContentWithHeader title="Import Spreadsheet" button="return">
-        <IonButton expand="block" onClick={handleButtonClick}>
-          Upload CSV
-        </IonButton>
-        <input ref={fileInputRef} type="file" accept=".csv" onChange={handleFileChange} style={{ display: 'none' }} />
-      </ContentWithHeader>
-    </IonPage>
+    <ContentWithHeader title="Import Spreadsheet" button="return">
+      <Button onClick={handleButtonClick} variant="contained">
+        Upload CSV
+      </Button>
+      <input ref={fileInputRef} type="file" accept=".csv" onChange={handleFileChange} style={{ display: 'none' }} />
+    </ContentWithHeader>
   )
 }
 

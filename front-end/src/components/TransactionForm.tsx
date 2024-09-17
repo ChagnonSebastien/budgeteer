@@ -1,4 +1,7 @@
-import { IonButton, IonCheckbox, IonDatetime, IonInput, IonModal, IonToast } from '@ionic/react'
+import { Button, Checkbox, Dialog, FormControlLabel, Snackbar, TextField } from '@mui/material'
+import { DateCalendar, DateField, DateView, LocalizationProvider } from '@mui/x-date-pickers'
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
+import dayjs, { Dayjs } from 'dayjs'
 import { FC, FormEvent, useContext, useEffect, useMemo, useState } from 'react'
 import { Omit } from 'react-router'
 
@@ -12,7 +15,7 @@ import { formatAmount, parseAmount } from '../domain/model/currency'
 import Transaction, { AugmentedTransaction } from '../domain/model/transaction'
 import { CategoryServiceContext, CurrencyServiceContext } from '../service/ServiceContext'
 
-const NoError = 'nil'
+const NoError = ''
 
 const validAmount = new RegExp(`^\\d*[.,]?\\d*$`)
 
@@ -73,6 +76,7 @@ const TransactionForm: FC<Props> = (props) => {
   const sanitizedAmount = useMemo(() => `0${amount.replace(',', '')}`, [amount])
   const [currency, setCurrency] = useState<number>(initialTransaction?.currencyId ?? default_currency!)
   const [date, setDate] = useState(initialTransaction?.date ?? new Date())
+  const [dateView, setDateView] = useState<DateView>('day')
   const [showDateModal, setShowDateModal] = useState(false)
 
   const [differentCurrency, setDifferentCurrency] = useState(() => {
@@ -207,198 +211,189 @@ const TransactionForm: FC<Props> = (props) => {
       currencyId: currency,
       receiverCurrencyId: differentCurrency ? receiverCurrency : currency,
     }).catch((err) => {
-      setShowErrorToast('Unexpected error while creating the category')
+      setShowErrorToast('Unexpected error while submitting the category')
       console.error(err)
     })
   }
 
-  const classNameFromStatus = (status: FieldStatus) => {
-    return `${!status.isValid && 'ion-invalid'} ${status.hasVisited && 'ion-touched'}`
-  }
-
   return (
-    <form noValidate onSubmit={handleSubmit}>
-      <div style={{ display: 'flex' }}>
-        <div style={{ color: 'gray', margin: '0 1rem', transform: 'translate(0, 0.5rem)' }}>Form</div>
-        <div style={{ borderBottom: '1px grey solid', flexGrow: 1 }} />
-      </div>
-      <div style={{ padding: '1rem', border: '1px grey solid', borderTop: 0 }}>
+    <LocalizationProvider dateAdapter={AdapterDayjs}>
+      <form noValidate onSubmit={handleSubmit}>
         <div style={{ display: 'flex' }}>
-          <IonInput
-            type="text"
-            className={classNameFromStatus(errors.amount)}
-            label="Amount"
-            labelPlacement="floating"
-            value={amount}
-            onIonInput={(ev) => setAmount(ev.target.value as string)}
-            errorText={errors.amount.errorText}
-            onIonBlur={() =>
-              setErrors((prevState) => ({
-                ...prevState,
-                amount: { ...prevState.amount, hasVisited: true },
-              }))
-            }
-          />
-          <div style={{ width: '3rem' }} />
-          <CurrencyPicker
-            currencies={currencies}
-            selectedCurrencyId={currency}
-            setSelectedCurrencyId={setCurrency}
-            labelText="Currency"
-            style={{ flexShrink: 2 }}
-            errorText={NoError}
-          />
+          <div style={{ color: 'gray', margin: '0 1rem', transform: 'translate(0, 0.5rem)' }}>Form</div>
+          <div style={{ borderBottom: '1px grey solid', flexGrow: 1 }} />
         </div>
-
-        {typeof category !== 'undefined' && (
-          <>
-            <div
-              style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}
-              onClick={() => setShowCategoryModal(true)}
-            >
-              <IconCapsule
-                flexShrink={0}
-                iconName={category.iconName}
-                size="2rem"
-                color={category.iconColor}
-                backgroundColor={category.iconBackground}
-              />
-              <div style={{ width: '1rem', flexShrink: 0 }} />
-              <IonInput
-                type="text"
-                label="Category"
-                labelPlacement="floating"
-                placeholder={typeof rootCategory === 'undefined' ? 'Loading...' : undefined}
-                value={categories?.find((c) => c.id === parent)?.name}
-                onFocus={() => setShowCategoryModal(true)}
-                errorText="None"
-              />
-            </div>
-            <IonModal isOpen={showParentModal} onWillDismiss={() => setShowCategoryModal(false)}>
-              <ContentWithHeader title="Select Icon" button="return" onCancel={() => setShowCategoryModal(false)}>
-                <CategoryList
-                  categories={categories}
-                  onSelect={(newParent) => {
-                    setParent(newParent)
-                    setShowCategoryModal(false)
-                  }}
-                />
-              </ContentWithHeader>
-            </IonModal>
-          </>
-        )}
-
-        <AccountPicker
-          labelText="From"
-          className={classNameFromStatus(errors.sender)}
-          errorText={errors.sender.errorText}
-          setSelectedAccountId={setSenderAccountId}
-          selectedAccountId={senderAccountId}
-          myOwn={parent === null || type === 'expense'}
-        />
-
-        {type === 'transfer' && (
-          <IonCheckbox
-            labelPlacement="end"
-            onIonChange={(ev) => setDifferentCurrency(ev.detail.checked)}
-            style={{ marginTop: '.5rem' }}
-          >
-            Transfer currencies
-          </IonCheckbox>
-        )}
-
-        {differentCurrency && (
+        <div style={{ padding: '1rem', border: '1px grey solid', borderTop: 0 }}>
           <div style={{ display: 'flex' }}>
-            <IonInput
+            <TextField
+              sx={{ width: '100%' }}
               type="text"
-              className={classNameFromStatus(errors.receiverAmount)}
-              label="Amount of transfered currency"
-              labelPlacement="stacked"
-              value={receiverAmount}
-              onIonInput={(ev) => setReceiverAmount(ev.target.value as string)}
-              errorText={errors.receiverAmount.errorText}
-              onIonBlur={() =>
+              label="Amount"
+              variant="standard"
+              autoFocus
+              value={amount}
+              onChange={(ev) => setAmount(ev.target.value as string)}
+              error={errors.amount.hasVisited && !!errors.amount.errorText}
+              helperText={errors.amount.hasVisited ? errors.amount.errorText : ''}
+              onBlur={() => {
                 setErrors((prevState) => ({
                   ...prevState,
-                  receiverAmount: { ...prevState.receiverAmount, hasVisited: true },
+                  amount: { ...prevState.amount, hasVisited: true },
                 }))
-              }
+              }}
             />
             <div style={{ width: '3rem' }} />
             <CurrencyPicker
+              style={{ width: '100%', flexShrink: 2 }}
               currencies={currencies}
-              selectedCurrencyId={receiverCurrency}
-              setSelectedCurrencyId={setReceiverCurrency}
-              labelText="Transfer to:"
-              style={{ flexShrink: 2 }}
+              selectedCurrencyId={currency}
+              setSelectedCurrencyId={setCurrency}
+              labelText="Currency"
               errorText={NoError}
             />
           </div>
-        )}
 
-        <IonInput
-          type="text"
-          label="Date"
-          labelPlacement="stacked"
-          value={date.toLocaleDateString()}
-          onClick={() => setShowDateModal(true)}
-          errorText="_blank"
-        />
+          {typeof category !== 'undefined' && (
+            <>
+              <div
+                style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}
+                onClick={() => setShowCategoryModal(true)}
+              >
+                <IconCapsule
+                  flexShrink={0}
+                  iconName={category.iconName}
+                  size="2rem"
+                  color={category.iconColor}
+                  backgroundColor={category.iconBackground}
+                />
+                <div style={{ width: '1rem', flexShrink: 0 }} />
+                <TextField
+                  sx={{ width: '100%' }}
+                  type="text"
+                  label="Category"
+                  variant="standard"
+                  placeholder={typeof rootCategory === 'undefined' ? 'Loading...' : undefined}
+                  value={categories?.find((c) => c.id === parent)?.name}
+                  onFocus={(ev) => {
+                    setShowCategoryModal(true)
+                    ev.target.blur()
+                  }}
+                />
+              </div>
+              <Dialog open={showParentModal} onClose={() => setShowCategoryModal(false)}>
+                <ContentWithHeader title="Select Icon" button="return" onCancel={() => setShowCategoryModal(false)}>
+                  <CategoryList
+                    categories={categories}
+                    onSelect={(newParent) => {
+                      setParent(newParent)
+                      setShowCategoryModal(false)
+                    }}
+                  />
+                </ContentWithHeader>
+              </Dialog>
+            </>
+          )}
 
-        <IonModal
-          keepContentsMounted={true}
-          isOpen={showDateModal}
-          onWillDismiss={() => setShowDateModal(false)}
-          style={{
-            '--height': 'fit-content',
-            '--width': 'fit-content',
-            '--max-width': '50rem',
-          }}
-        >
-          <IonDatetime
-            id="datetime"
-            presentation="date"
-            onIonChange={(ev) => {
-              const newDate = new Date(Date.parse(ev.detail.value as string))
-              setDate(newDate)
-              if (newDate.getFullYear() === date.getFullYear() && newDate.getMonth() === date.getMonth()) {
-                setShowDateModal(false)
-              }
-            }}
+          <AccountPicker
+            labelText="From"
+            errorText={errors.sender.hasVisited ? errors.sender.errorText : ''}
+            setSelectedAccountId={setSenderAccountId}
+            selectedAccountId={senderAccountId}
+            myOwn={parent === null || type === 'expense'}
           />
-        </IonModal>
 
-        <AccountPicker
-          labelText="To"
-          className={classNameFromStatus(errors.receiver)}
-          errorText={errors.receiver.errorText}
-          setSelectedAccountId={setReceiverAccountId}
-          selectedAccountId={receiverAccountId}
-          myOwn={parent === null || type === 'income'}
+          {type === 'transfer' && (
+            <FormControlLabel
+              control={<Checkbox onChange={(ev) => setDifferentCurrency(ev.target.checked)} />}
+              label="TransferCurrencies"
+            />
+          )}
+
+          {differentCurrency && (
+            <div style={{ display: 'flex' }}>
+              <TextField
+                type="text"
+                label="Amount of transfered currency"
+                variant="standard"
+                value={receiverAmount}
+                onChange={(ev) => setReceiverAmount(ev.target.value as string)}
+                helperText={errors.receiverAmount.hasVisited ? errors.receiverAmount.errorText : ''}
+                error={errors.receiverAmount.hasVisited && !!errors.receiverAmount.errorText}
+                onBlur={() =>
+                  setErrors((prevState) => ({
+                    ...prevState,
+                    receiverAmount: { ...prevState.receiverAmount, hasVisited: true },
+                  }))
+                }
+              />
+              <div style={{ width: '3rem' }} />
+              <CurrencyPicker
+                currencies={currencies}
+                selectedCurrencyId={receiverCurrency}
+                setSelectedCurrencyId={setReceiverCurrency}
+                labelText="Transfer to:"
+                style={{ flexShrink: 2 }}
+                errorText={NoError}
+              />
+            </div>
+          )}
+
+          <DateField
+            label="Date"
+            value={dayjs(date)}
+            onFocus={(ev) => {
+              setShowDateModal(true)
+              ev.preventDefault()
+              ev.target.blur()
+            }}
+            variant="standard"
+            sx={{ width: '100%' }}
+          />
+
+          <Dialog open={showDateModal} onClose={() => setShowDateModal(false)}>
+            <DateCalendar
+              views={['year', 'month', 'day']}
+              value={dayjs(date)}
+              onChange={(newDate: Dayjs) => {
+                setDate(newDate.toDate())
+                if (dateView === 'day') setShowDateModal(false)
+              }}
+              onViewChange={(view) => {
+                setDateView(view)
+                console.log(view)
+              }}
+            />
+          </Dialog>
+
+          <AccountPicker
+            labelText="To"
+            errorText={errors.receiver.hasVisited ? errors.receiver.errorText : ''}
+            setSelectedAccountId={setReceiverAccountId}
+            selectedAccountId={receiverAccountId}
+            myOwn={parent === null || type === 'income'}
+          />
+
+          <TextField
+            type="text"
+            label="Note"
+            variant="standard"
+            sx={{ width: '100%' }}
+            placeholder="Optional details"
+            value={note}
+            onChange={(ev) => setNote(ev.target.value as string)}
+          />
+        </div>
+        <div style={{ height: '1rem' }} />
+        <Button type="submit">{submitText}</Button>
+
+        <Snackbar
+          open={showErrorToast !== ''}
+          message={showErrorToast}
+          autoHideDuration={5000}
+          onClose={() => setShowErrorToast('')}
         />
-
-        <IonInput
-          type="text"
-          label="Note"
-          labelPlacement="stacked"
-          placeholder="Optional details"
-          value={note}
-          onIonInput={(ev) => setNote(ev.target.value as string)}
-          errorText="_blank"
-        />
-      </div>
-      <div style={{ height: '1rem' }} />
-      <IonButton type="submit" expand="block">
-        {submitText}
-      </IonButton>
-
-      <IonToast
-        isOpen={showErrorToast !== ''}
-        message={showErrorToast}
-        duration={5000}
-        onDidDismiss={() => setShowErrorToast('')}
-      />
-    </form>
+      </form>
+    </LocalizationProvider>
   )
 }
 

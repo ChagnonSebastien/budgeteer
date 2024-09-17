@@ -1,4 +1,4 @@
-import { IonPage, useIonRouter } from '@ionic/react'
+import { useIonRouter } from '@ionic/react'
 import { FC, useCallback, useContext } from 'react'
 
 import AccountForm from '../components/AccountForm'
@@ -21,13 +21,11 @@ const CreateAccountPage: FC = () => {
   }, [])
 
   return (
-    <IonPage>
-      <ContentWithHeader title="Create new account" button="return">
-        <div style={{ padding: '1rem' }}>
-          <AccountForm onSubmit={onSubmit} submitText="Create" />
-        </div>
-      </ContentWithHeader>
-    </IonPage>
+    <ContentWithHeader title="Create new account" button="return">
+      <div style={{ padding: '1rem' }}>
+        <AccountForm onSubmit={onSubmit} submitText="Create" />
+      </div>
+    </ContentWithHeader>
   )
 }
 

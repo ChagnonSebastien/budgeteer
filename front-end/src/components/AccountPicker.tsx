@@ -1,5 +1,5 @@
-import { IonInput, IonModal } from '@ionic/react'
-import { CSSProperties, FC, useContext, useMemo, useState } from 'react'
+import { Dialog, TextField } from '@mui/material'
+import { FC, useContext, useMemo, useState } from 'react'
 
 import { AccountList } from './AccountList'
 import { AccountServiceContext } from '../service/ServiceContext'
@@ -8,14 +8,12 @@ interface Props {
   selectedAccountId: number | null
   setSelectedAccountId: (id: number) => void
   labelText: string
-  style?: CSSProperties
-  className?: string
   errorText?: string
   myOwn: boolean
 }
 
 const AccountPicker: FC<Props> = (props) => {
-  const { selectedAccountId, setSelectedAccountId, labelText, style, className, errorText, myOwn } = props
+  const { selectedAccountId, setSelectedAccountId, labelText, errorText, myOwn } = props
   const { myOwnAccounts, otherAccounts } = useContext(AccountServiceContext)
   const accounts = useMemo(() => {
     return myOwn ? myOwnAccounts : otherAccounts
@@ -26,13 +24,12 @@ const AccountPicker: FC<Props> = (props) => {
 
   return (
     <>
-      <IonInput
-        className={className}
-        style={style}
-        errorText={errorText}
+      <TextField
+        sx={{ width: '100%' }}
+        variant="standard"
+        helperText={errorText}
         type="text"
         label={labelText}
-        labelPlacement="stacked"
         placeholder={'None'}
         value={selectedAccount?.name}
         onFocus={(e) => {
@@ -40,17 +37,15 @@ const AccountPicker: FC<Props> = (props) => {
           setShowModal(true)
         }}
       />
-      <IonModal isOpen={showModal} onWillDismiss={() => setShowModal(false)}>
+      <Dialog open={showModal} onClose={() => setShowModal(false)}>
         <AccountList
-          title={`Select ${labelText}`}
           accounts={accounts}
           onSelect={(newParent) => {
             setSelectedAccountId(newParent)
             setShowModal(false)
           }}
-          button="none"
         />
-      </IonModal>
+      </Dialog>
     </>
   )
 }

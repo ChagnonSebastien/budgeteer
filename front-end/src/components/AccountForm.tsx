@@ -1,4 +1,4 @@
-import { IonButton, IonInput, IonToast } from '@ionic/react'
+import { Button, Snackbar, TextField } from '@mui/material'
 import { FC, FormEvent, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { Omit } from 'react-router'
 
@@ -20,7 +20,7 @@ interface FieldStatus {
   errorText: string
 }
 
-const NoError = 'nil'
+const NoError = ''
 
 const AccountForm: FC<Props> = (props) => {
   const { initialAccount, onSubmit, submitText } = props
@@ -135,13 +135,9 @@ const AccountForm: FC<Props> = (props) => {
       type: type.trim() === '' ? null : type.trim(),
       financialInstitution: financialInstitution.trim() === '' ? null : financialInstitution.trim(),
     }).catch((err) => {
-      setShowErrorToast('Unexpected error while creating the category')
+      setShowErrorToast('Unexpected error while submitting')
       console.error(err)
     })
-  }
-
-  const classNameFromStatus = (status: FieldStatus) => {
-    return `${!status.isValid && 'ion-invalid'} ${status.hasVisited && 'ion-touched'}`
   }
 
   return (
@@ -151,16 +147,17 @@ const AccountForm: FC<Props> = (props) => {
         <div style={{ borderBottom: '1px grey solid', flexGrow: 1 }} />
       </div>
       <div style={{ padding: '1rem', border: '1px grey solid', borderTop: 0 }}>
-        <IonInput
+        <TextField
           type="text"
-          className={classNameFromStatus(errors.accountName)}
+          sx={{ width: '100%' }}
           label="Account name"
-          labelPlacement="stacked"
+          variant="standard"
           placeholder="e.g., Savings"
           value={name}
-          onIonInput={(ev) => setName(ev.target.value as string)}
-          errorText={errors.accountName.errorText}
-          onIonBlur={() =>
+          onChange={(ev) => setName(ev.target.value as string)}
+          helperText={errors.accountName.hasVisited ? errors.accountName.errorText : ''}
+          error={errors.accountName.hasVisited && !!errors.accountName.errorText}
+          onBlur={() =>
             setErrors((prevState) => ({
               ...prevState,
               accountName: {
@@ -171,24 +168,26 @@ const AccountForm: FC<Props> = (props) => {
           }
         />
 
-        <IonInput
+        <TextField
           type="text"
+          sx={{ width: '100%' }}
           label="Account Type"
-          labelPlacement="stacked"
+          variant="standard"
           placeholder="e.g., TFSA"
           value={type}
-          errorText={NoError}
-          onIonInput={(ev) => setType(ev.target.value as string)}
+          helperText={NoError}
+          onChange={(ev) => setType(ev.target.value as string)}
         />
 
-        <IonInput
+        <TextField
           type="text"
+          sx={{ width: '100%' }}
           label="Financial Institution"
-          labelPlacement="stacked"
+          variant="standard"
           placeholder="e.g., National Bank of Canada"
           value={financialInstitution}
-          errorText={NoError}
-          onIonInput={(ev) => setFinancialInstitution(ev.target.value as string)}
+          helperText={NoError}
+          onChange={(ev) => setFinancialInstitution(ev.target.value as string)}
         />
 
         <div
@@ -215,6 +214,7 @@ const AccountForm: FC<Props> = (props) => {
 
             <CurrencyPicker
               errorText={NoError}
+              style={{ width: '100%' }}
               currencies={[
                 ...(i.currencyId ? [currencies.find((c) => c.id === i.currencyId)!] : []),
                 ...availableCurrencies,
@@ -283,15 +283,13 @@ const AccountForm: FC<Props> = (props) => {
       </div>
 
       <div style={{ height: '1rem' }} />
-      <IonButton type="submit" expand="block">
-        {submitText}
-      </IonButton>
+      <Button type="submit">{submitText}</Button>
 
-      <IonToast
-        isOpen={showErrorToast !== ''}
+      <Snackbar
+        open={showErrorToast !== ''}
         message={showErrorToast}
-        duration={5000}
-        onDidDismiss={() => setShowErrorToast('')}
+        autoHideDuration={5000}
+        onClose={() => setShowErrorToast('')}
       />
     </form>
   )

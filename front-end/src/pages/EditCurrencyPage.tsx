@@ -1,4 +1,4 @@
-import { IonPage, useIonRouter } from '@ionic/react'
+import { useIonRouter } from '@ionic/react'
 import { FC, useCallback, useContext, useMemo } from 'react'
 import { useParams } from 'react-router'
 
@@ -42,13 +42,11 @@ const EditCurrency: FC = () => {
   }
 
   return (
-    <IonPage>
-      <ContentWithHeader title="Edit currency" button="return">
-        <div style={{ padding: '1rem' }}>
-          <CurrencyForm onSubmit={onSubmit} submitText="Save changes" initialCurrency={selectedCurrency} />
-        </div>
-      </ContentWithHeader>
-    </IonPage>
+    <ContentWithHeader title="Edit currency" button="return">
+      <div style={{ padding: '1rem' }}>
+        <CurrencyForm onSubmit={onSubmit} submitText="Save changes" initialCurrency={selectedCurrency} />
+      </div>
+    </ContentWithHeader>
   )
 }
 

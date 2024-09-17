@@ -1,4 +1,6 @@
-import { IonButton, IonDatetime, IonDatetimeButton, IonInput, IonModal, IonText, IonToast } from '@ionic/react'
+import { Button, Dialog, Snackbar, TextField, Typography } from '@mui/material'
+import { DateCalendar, DateField, DateView } from '@mui/x-date-pickers'
+import dayjs, { Dayjs } from 'dayjs'
 import { FC, FormEvent, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { Omit } from 'react-router'
 
@@ -20,7 +22,7 @@ interface FieldStatus {
   errorText: string
 }
 
-const NoError = 'nil'
+const NoError = ''
 
 const CurrencyForm: FC<Props> = (props) => {
   const { initialCurrency, onSubmit, submitText } = props
@@ -34,6 +36,7 @@ const CurrencyForm: FC<Props> = (props) => {
   )
   const [initialExchangeRate, setInitialExchangeRate] = useState('1')
   const [initialExchangeRateDate, setInitialExchangeRateDate] = useState(new Date())
+  const [dateView, setDateView] = useState<DateView>('day')
 
   const [showDateModal, setShowDateModal] = useState(false)
 
@@ -222,13 +225,9 @@ const CurrencyForm: FC<Props> = (props) => {
           }
         : {},
     }).catch((err) => {
-      setShowErrorToast('Unexpected error while creating the category')
+      setShowErrorToast('Unexpected error while submitting the currency')
       console.error(err)
     })
-  }
-
-  const classNameFromStatus = (status: FieldStatus) => {
-    return `${!status.isValid && 'ion-invalid'} ${status.hasVisited && 'ion-touched'}`
   }
 
   return (
@@ -238,16 +237,17 @@ const CurrencyForm: FC<Props> = (props) => {
         <div style={{ borderBottom: '1px grey solid', flexGrow: 1 }} />
       </div>
       <div style={{ padding: '1rem', border: '1px grey solid', borderTop: 0 }}>
-        <IonInput
+        <TextField
           type="text"
-          className={classNameFromStatus(errors.accountName)}
           label="Currency name"
-          labelPlacement="stacked"
+          variant="standard"
           placeholder="e.g., Canadian dollars"
           value={name}
-          onIonInput={(ev) => setName(ev.target.value as string)}
-          errorText={errors.accountName.errorText}
-          onIonBlur={() =>
+          onChange={(ev) => setName(ev.target.value as string)}
+          helperText={errors.accountName.hasVisited ? errors.accountName.errorText : ''}
+          error={errors.accountName.hasVisited && !!errors.accountName.errorText}
+          sx={{ width: '100%' }}
+          onBlur={() =>
             setErrors((prevState) => ({
               ...prevState,
               accountName: {
@@ -258,16 +258,17 @@ const CurrencyForm: FC<Props> = (props) => {
           }
         />
 
-        <IonInput
+        <TextField
           type="text"
-          className={classNameFromStatus(errors.symbol)}
           label="Symbol"
-          labelPlacement="stacked"
+          variant="standard"
           placeholder="e.g., CAD"
+          sx={{ width: '100%' }}
           value={symbol}
-          onIonInput={(ev) => setSymbol(ev.target.value as string)}
-          errorText={errors.symbol.errorText}
-          onIonBlur={() =>
+          onChange={(ev) => setSymbol(ev.target.value as string)}
+          helperText={errors.symbol.hasVisited ? errors.symbol.errorText : ''}
+          error={errors.symbol.hasVisited && !!errors.symbol.errorText}
+          onBlur={() =>
             setErrors((prevState) => ({
               ...prevState,
               symbol: {
@@ -280,15 +281,16 @@ const CurrencyForm: FC<Props> = (props) => {
 
         {typeof initialCurrency === 'undefined' && (
           <>
-            <IonInput
+            <TextField
               type="text"
-              className={classNameFromStatus(errors.decimalPoints)}
               label="Amount of decimal points"
-              labelPlacement="stacked"
+              variant="standard"
               value={decimalPoints}
-              onIonInput={(ev) => setDecimalPoints(ev.target.value as string)}
-              errorText={errors.decimalPoints.errorText}
-              onIonBlur={() =>
+              sx={{ width: '100%' }}
+              onChange={(ev) => setDecimalPoints(ev.target.value as string)}
+              helperText={errors.decimalPoints.hasVisited ? errors.decimalPoints.errorText : ''}
+              error={errors.decimalPoints.hasVisited && !!errors.decimalPoints.errorText}
+              onBlur={() =>
                 setErrors((prevState) => ({
                   ...prevState,
                   decimalPoints: {
@@ -299,17 +301,15 @@ const CurrencyForm: FC<Props> = (props) => {
               }
             />
 
-            <IonText color="warning">
-              <div
-                style={{
-                  transformOrigin: 'left center',
-                  transform: 'scale(0.75)',
-                  maxWidth: 'calc(100% / 0.75)',
-                }}
-              >
-                Warning: This value cannot be changed later
-              </div>
-            </IonText>
+            <div
+              style={{
+                transformOrigin: 'left center',
+                transform: 'scale(0.75)',
+                maxWidth: 'calc(100% / 0.75)',
+              }}
+            >
+              <Typography color="warning">Warning: This value cannot be changed later</Typography>
+            </div>
           </>
         )}
         <div style={{ height: '1rem' }} />
@@ -333,13 +333,14 @@ const CurrencyForm: FC<Props> = (props) => {
                 {`1 ${symbol === '' ? '___' : symbol}`}
               </div>
               <div style={{ margin: '0 1rem', display: 'flex', alignItems: 'center', flexShrink: 0 }}>=</div>
-              <IonInput
+              <TextField
                 type="text"
-                className={classNameFromStatus(errors.exchangeRate)}
                 value={initialExchangeRate}
-                onIonInput={(ev) => setInitialExchangeRate(ev.target.value as string)}
-                errorText={errors.exchangeRate.errorText}
-                onIonBlur={() =>
+                onChange={(ev) => setInitialExchangeRate(ev.target.value as string)}
+                helperText={errors.exchangeRate.hasVisited ? errors.exchangeRate.errorText : ''}
+                error={errors.exchangeRate.hasVisited && !!errors.exchangeRate.errorText}
+                sx={{ width: '100%' }}
+                onBlur={() =>
                   setErrors((prevState) => ({
                     ...prevState,
                     exchangeRate: {
@@ -361,24 +362,31 @@ const CurrencyForm: FC<Props> = (props) => {
                   marginBottom: '5px',
                 }}
               >
-                <IonDatetimeButton onClick={() => setShowDateModal(true)} datetime="datetime"></IonDatetimeButton>
+                <DateField
+                  label="Date"
+                  value={dayjs(initialExchangeRate)}
+                  onFocus={(ev) => {
+                    setShowDateModal(true)
+                    ev.preventDefault()
+                    ev.target.blur()
+                  }}
+                  variant="standard"
+                  sx={{ width: '100%' }}
+                />
 
-                <IonModal keepContentsMounted={true} isOpen={showDateModal}>
-                  <IonDatetime
-                    id="datetime"
-                    presentation="date"
-                    onIonChange={(ev) => {
-                      const newDate = new Date(Date.parse(ev.detail.value as string))
-                      setInitialExchangeRateDate(newDate)
-                      if (
-                        newDate.getFullYear() === initialExchangeRateDate.getFullYear() &&
-                        newDate.getMonth() === initialExchangeRateDate.getMonth()
-                      ) {
-                        setShowDateModal(false)
-                      }
+                <Dialog open={showDateModal} onClose={() => setShowDateModal(false)}>
+                  <DateCalendar
+                    views={['year', 'month', 'day']}
+                    value={dayjs(initialExchangeRate)}
+                    onChange={(newDate: Dayjs) => {
+                      setInitialExchangeRateDate(newDate.toDate())
+                      if (dateView === 'day') setShowDateModal(false)
+                    }}
+                    onViewChange={(view) => {
+                      setDateView(view)
                     }}
                   />
-                </IonModal>
+                </Dialog>
               </div>
             </div>
           </>
@@ -387,15 +395,13 @@ const CurrencyForm: FC<Props> = (props) => {
 
       <div style={{ height: '1rem' }} />
 
-      <IonButton type="submit" expand="block">
-        {submitText}
-      </IonButton>
+      <Button type="submit">{submitText}</Button>
 
-      <IonToast
-        isOpen={showErrorToast !== ''}
+      <Snackbar
+        open={showErrorToast !== ''}
         message={showErrorToast}
-        duration={5000}
-        onDidDismiss={() => setShowErrorToast('')}
+        autoHideDuration={5000}
+        onClose={() => setShowErrorToast('')}
       />
     </form>
   )

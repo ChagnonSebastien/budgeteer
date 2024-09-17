@@ -1,4 +1,4 @@
-import { IonPage, useIonRouter } from '@ionic/react'
+import { useIonRouter } from '@ionic/react'
 import { FC, useCallback, useContext, useMemo } from 'react'
 import { useParams } from 'react-router'
 
@@ -39,13 +39,11 @@ const EditAccountPage: FC = () => {
   }
 
   return (
-    <IonPage>
-      <ContentWithHeader title="Edit account" button="return">
-        <div style={{ padding: '1rem' }}>
-          <AccountForm onSubmit={onSubmit} submitText="Save changes" initialAccount={selectedAccount} />
-        </div>
-      </ContentWithHeader>
-    </IonPage>
+    <ContentWithHeader title="Edit account" button="return">
+      <div style={{ padding: '1rem' }}>
+        <AccountForm onSubmit={onSubmit} submitText="Save changes" initialAccount={selectedAccount} />
+      </div>
+    </ContentWithHeader>
   )
 }
 

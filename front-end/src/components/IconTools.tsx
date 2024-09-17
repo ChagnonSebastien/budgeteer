@@ -12,6 +12,8 @@ enum PreparedIcon {
   BsGraphUp = 'BsGraphUp',
   FaChartPie = 'FaChartPie',
   IoCloseCircle = 'IoCloseCircle',
+  MdKeyboardBackspace = 'MdKeyboardBackspace',
+  MdMenu = 'MdMenu',
 }
 
 type PreparedIconLib = {

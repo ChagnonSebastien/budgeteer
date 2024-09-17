@@ -1,4 +1,5 @@
-import { IonInput, IonModal } from '@ionic/react'
+import { IonModal } from '@ionic/react'
+import { Dialog, TextField } from '@mui/material'
 import { CSSProperties, FC, useMemo, useState } from 'react'
 
 import ContentWithHeader from './ContentWithHeader'
@@ -25,20 +26,19 @@ const CurrencyPicker: FC<Props> = (props) => {
 
   return (
     <>
-      <IonInput
-        style={style}
-        errorText={errorText}
-        type="text"
+      <TextField
+        sx={style}
+        error={!!errorText}
+        variant="standard"
         label={labelText}
-        labelPlacement="stacked"
         placeholder={'None'}
         value={selectedCurrency?.symbol}
         onFocus={(e) => {
-          e.target.blur()
           setShowModal(true)
+          e.target.blur()
         }}
       />
-      <IonModal isOpen={showModal} onWillDismiss={() => setShowModal(false)}>
+      <Dialog open={showModal} onClose={() => setShowModal(false)}>
         <ContentWithHeader title={`Select ${labelText}`} button="return" onCancel={() => setShowModal(false)}>
           <CurrencyList
             currencies={currencies}
@@ -48,7 +48,7 @@ const CurrencyPicker: FC<Props> = (props) => {
             }}
           />
         </ContentWithHeader>
-      </IonModal>
+      </Dialog>
     </>
   )
 }

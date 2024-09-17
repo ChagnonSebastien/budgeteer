@@ -1,11 +1,11 @@
-import { IonLoading, IonRouterOutlet, IonSplitPane } from '@ionic/react'
+import { IonRouterOutlet, IonSplitPane } from '@ionic/react'
 import { IonReactRouter } from '@ionic/react-router'
+import { CircularProgress } from '@mui/material'
 import { GrpcWebFetchTransport } from '@protobuf-ts/grpcweb-transport'
 import { FC, useCallback, useContext, useEffect, useState } from 'react'
 import { Redirect, Route, Switch } from 'react-router'
 
 import { UserContext } from './App'
-import AccountsBalanceChart from './components/AccountsBalanceChart'
 import ContentWithHeader from './components/ContentWithHeader'
 import CurrencyForm from './components/CurrencyForm'
 import Menu from './components/Menu'
@@ -91,7 +91,7 @@ const AuthenticatedZone: FC<Props> = (props) => {
   )
 
   if (currencies === null || categories === null || accounts === null || transactions === null) {
-    return <IonLoading />
+    return <CircularProgress />
   }
 
   if (default_currency === null) {

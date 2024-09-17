@@ -1,4 +1,4 @@
-import { IonPage, useIonRouter } from '@ionic/react'
+import { useIonRouter } from '@ionic/react'
 import { FC, useCallback, useContext } from 'react'
 
 import CategoryForm from '../components/CategoryForm'
@@ -21,11 +21,9 @@ const CreateCategoryPage: FC = () => {
   }, [])
 
   return (
-    <IonPage>
-      <ContentWithHeader title="Create new category" button="return">
-        <CategoryForm onSubmit={onSubmit} submitText="Create" />
-      </ContentWithHeader>
-    </IonPage>
+    <ContentWithHeader title="Create new category" button="return">
+      <CategoryForm onSubmit={onSubmit} submitText="Create" />
+    </ContentWithHeader>
   )
 }
 

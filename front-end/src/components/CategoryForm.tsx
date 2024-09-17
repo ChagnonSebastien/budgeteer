@@ -1,4 +1,4 @@
-import { IonButton, IonCheckbox, IonContent, IonInput, IonModal, IonToast } from '@ionic/react'
+import { Button, Checkbox, Dialog, FormControlLabel, Snackbar, TextField } from '@mui/material'
 import { FC, FormEvent, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { HexColorPicker } from 'react-colorful'
 import { Omit } from 'react-router'
@@ -9,8 +9,6 @@ import IconCapsule from './IconCapsule'
 import IconList from './IconList'
 import Category from '../domain/model/category'
 import { CategoryServiceContext } from '../service/ServiceContext'
-
-const contentHeight = window.innerHeight / 3
 
 interface Props {
   initialCategory?: Category
@@ -85,7 +83,7 @@ const CategoryForm: FC<Props> = (props) => {
       iconColor: innerColor,
       fixedCosts: fixedCost,
     }).catch((err) => {
-      setShowErrorToast('Unexpected error while creating the category')
+      setShowErrorToast('Unexpected error while submitting the category')
       console.error(err)
     })
   }
@@ -98,38 +96,35 @@ const CategoryForm: FC<Props> = (props) => {
           <div style={{ borderBottom: '1px grey solid', flexGrow: 1 }} />
         </div>
         <div style={{ padding: '1rem', border: '1px grey solid', borderTop: 0 }}>
-          <IonInput
+          <TextField
             type="text"
-            className={`${errors.categoryName && 'ion-invalid'} ${isTouched && 'ion-touched'}`}
             label="Account name"
-            labelPlacement="stacked"
+            variant="standard"
             placeholder="e.g., Groceries"
             value={name}
-            onIonInput={(ev) => {
+            style={{ width: '100%' }}
+            onChange={(ev) => {
               setName(ev.target.value as string)
               setErrors({ categoryName: validateCategoryName(ev.target.value as string) })
             }}
-            errorText={errors.categoryName}
-            onIonBlur={() => setIsTouched(true)}
+            helperText={isTouched ? errors.categoryName : ''}
+            error={isTouched && !!errors.categoryName}
+            onBlur={() => setIsTouched(true)}
           />
 
           {!editingRoot && <CategoryPicker categoryId={parent} setCategoryId={setParent} labelText="Parent Category" />}
 
-          <IonCheckbox
-            onIonChange={(ev) => setFixedCost(ev.detail.checked)}
-            checked={fixedCost}
-            labelPlacement="end"
-            style={{ margin: '.5rem 0 0 0' }}
-          >
-            Is a fixed cost
-          </IonCheckbox>
+          <FormControlLabel
+            control={<Checkbox onChange={(ev) => setFixedCost(ev.target.checked)} />}
+            label="Is a fixed cost"
+          />
 
           <div style={{ display: 'flex', marginTop: '1rem', alignItems: 'center' }}>
             <div style={{ display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
               <div style={{ display: 'flex', alignItems: 'center' }}>
-                <IonButton onClick={() => setShowIconModal(true)} expand="block" style={{ flexGrow: 1 }} fill="outline">
+                <Button onClick={() => setShowIconModal(true)} style={{ flexGrow: 1 }} variant="outlined">
                   Select Icon
-                </IonButton>
+                </Button>
                 <div style={{ width: '1rem', flexShrink: 0 }} />
                 <IconCapsule
                   iconName={selectedIcon}
@@ -140,7 +135,7 @@ const CategoryForm: FC<Props> = (props) => {
                   flexShrink={0}
                 />
               </div>
-              <IonModal isOpen={showIconModal} onWillDismiss={() => setShowIconModal(false)}>
+              <Dialog open={showIconModal} onClose={() => setShowIconModal(false)}>
                 <ContentWithHeader
                   title="Select Icon"
                   button="return"
@@ -149,17 +144,12 @@ const CategoryForm: FC<Props> = (props) => {
                 >
                   <IconList filter={filter} onSelect={onIconSelect} />
                 </ContentWithHeader>
-              </IonModal>
+              </Dialog>
 
               <div style={{ display: 'flex', alignItems: 'center' }}>
-                <IonButton
-                  onClick={() => setShowOuterColorModal(true)}
-                  expand="block"
-                  style={{ flexGrow: 1 }}
-                  fill="outline"
-                >
+                <Button onClick={() => setShowOuterColorModal(true)} style={{ flexGrow: 1 }} variant="outlined">
                   Select Outer Color
-                </IonButton>
+                </Button>
                 <div style={{ width: '1rem', flexShrink: 0 }} />
                 <IconCapsule
                   iconName="GrX"
@@ -170,30 +160,18 @@ const CategoryForm: FC<Props> = (props) => {
                   flexShrink={0}
                 />
               </div>
-              <IonModal
-                onWillDismiss={() => setShowOuterColorModal(false)}
-                initialBreakpoint={contentHeight / window.innerHeight}
-                breakpoints={[0, contentHeight / window.innerHeight]}
-                isOpen={showOuterColorModal}
-              >
-                <IonContent>
-                  <HexColorPicker
-                    color={outerColor}
-                    onChange={setOuterColor}
-                    style={{ width: '100%', flexGrow: 1, height: contentHeight }}
-                  />
-                </IonContent>
-              </IonModal>
+              <Dialog onClose={() => setShowOuterColorModal(false)} open={showOuterColorModal}>
+                <HexColorPicker
+                  color={outerColor}
+                  onChange={setOuterColor}
+                  style={{ flexGrow: 1, overflow: 'hidden' }}
+                />
+              </Dialog>
 
               <div style={{ display: 'flex', alignItems: 'center' }}>
-                <IonButton
-                  onClick={() => setShowInnerColorModal(true)}
-                  expand="block"
-                  style={{ flexGrow: 1 }}
-                  fill="outline"
-                >
+                <Button onClick={() => setShowInnerColorModal(true)} style={{ flexGrow: 1 }} variant="outlined">
                   Select Inner Color
-                </IonButton>
+                </Button>
                 <div style={{ width: '1rem', flexShrink: 0 }} />
                 <IconCapsule
                   iconName="GrX"
@@ -204,20 +182,13 @@ const CategoryForm: FC<Props> = (props) => {
                   flexShrink={0}
                 />
               </div>
-              <IonModal
-                onWillDismiss={() => setShowInnerColorModal(false)}
-                initialBreakpoint={contentHeight / window.innerHeight}
-                breakpoints={[0, contentHeight / window.innerHeight]}
-                isOpen={showInnerColorModal}
-              >
-                <IonContent>
-                  <HexColorPicker
-                    color={innerColor}
-                    onChange={setInnerColor}
-                    style={{ width: '100%', flexGrow: 1, height: contentHeight }}
-                  />
-                </IonContent>
-              </IonModal>
+              <Dialog onClose={() => setShowInnerColorModal(false)} open={showInnerColorModal}>
+                <HexColorPicker
+                  color={innerColor}
+                  onChange={setInnerColor}
+                  style={{ flexGrow: 1, overflow: 'hidden' }}
+                />
+              </Dialog>
             </div>
             <div style={{ width: '1rem', flexShrink: 0 }} />
             <div
@@ -234,16 +205,14 @@ const CategoryForm: FC<Props> = (props) => {
           </div>
         </div>
         <div style={{ height: '1rem' }} />
-        <IonButton type="submit" expand="block">
-          {submitText}
-        </IonButton>
+        <Button type="submit">{submitText}</Button>
       </div>
 
-      <IonToast
-        isOpen={showErrorToast !== ''}
+      <Snackbar
+        open={showErrorToast !== ''}
         message={showErrorToast}
-        duration={5000}
-        onDidDismiss={() => setShowErrorToast('')}
+        autoHideDuration={5000}
+        onClose={() => setShowErrorToast('')}
       />
     </form>
   )

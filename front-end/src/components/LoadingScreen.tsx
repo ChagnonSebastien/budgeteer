@@ -1,9 +1,9 @@
-import { IonSpinner } from '@ionic/react'
+import { CircularProgress } from '@mui/material'
 import { FC } from 'react'
 
 const LoadingScreen: FC = () => (
   <div className="centered">
-    <IonSpinner />
+    <CircularProgress />
   </div>
 )
 

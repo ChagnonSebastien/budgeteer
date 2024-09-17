@@ -1,4 +1,3 @@
-import { IonPage } from '@ionic/react'
 import { FC } from 'react'
 
 import AccountsBalanceChart from '../components/AccountsBalanceChart'
@@ -9,19 +8,17 @@ const AccountsBalancePage: FC = () => {
   const { fromDate, toDate, accountFilter, overview: filterOverview } = useTransactionFilter()
 
   return (
-    <IonPage>
-      <ContentWithHeader title="Transactions" button="menu">
-        <div style={{ height: '50%', width: '100%', position: 'relative', padding: '1rem' }}>
-          <AccountsBalanceChart
-            fromDate={fromDate}
-            toDate={toDate}
-            filterByAccounts={accountFilter === null ? undefined : [accountFilter]}
-          />
-        </div>
+    <ContentWithHeader title="Transactions" button="menu">
+      <div style={{ height: '50%', width: '100%', position: 'relative', padding: '1rem' }}>
+        <AccountsBalanceChart
+          fromDate={fromDate}
+          toDate={toDate}
+          filterByAccounts={accountFilter === null ? undefined : [accountFilter]}
+        />
+      </div>
 
-        {filterOverview}
-      </ContentWithHeader>
-    </IonPage>
+      {filterOverview}
+    </ContentWithHeader>
   )
 }
 
