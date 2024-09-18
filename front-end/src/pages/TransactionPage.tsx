@@ -65,6 +65,7 @@ const TransactionPage: FC = () => {
       }
       contentMaxWidth="100%"
       contentOverflowY="hidden"
+      contentPadding="1rem 0 0 0"
     >
       <SpeedDial
         ariaLabel="Create new transaction"
@@ -104,7 +105,7 @@ const TransactionPage: FC = () => {
       >
         <div
           style={{
-            height: splitHorizontal ? `${contentHeight}px` : '50vh',
+            height: splitHorizontal ? `${contentHeight}px` : '75vh',
             width: '100%',
             display: 'flex',
             flexDirection: 'column',
@@ -113,7 +114,7 @@ const TransactionPage: FC = () => {
           <div
             style={{
               marginTop: splitHorizontal ? `${contentHeight / 12}px` : 0,
-              height: `calc( ${splitHorizontal ? `${contentHeight}px` : '50vh'} / 1.2 - ${filterHeight}px )`,
+              height: `calc( ${splitHorizontal ? `${contentHeight}px` : '75vh'} / 1.2 - ${filterHeight}px )`,
               position: 'relative',
             }}
           >
@@ -141,6 +142,8 @@ const TransactionPage: FC = () => {
           style={{
             flexShrink: 0,
             overflowY: splitHorizontal ? 'scroll' : 'clip',
+            padding: '0 1rem',
+            width: splitHorizontal ? '35rem' : undefined,
           }}
         >
           <TransactionList

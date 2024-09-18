@@ -9,7 +9,7 @@ const AccountsBalancePage: FC = () => {
 
   return (
     <ContentWithHeader title="Transactions" button="menu" contentMaxWidth="100%">
-      <div style={{ height: '50%', width: '100%', position: 'relative', padding: '1rem' }}>
+      <div style={{ height: '50%', width: '100%', position: 'relative', padding: '1rem 0' }}>
         <AccountsBalanceChart
           fromDate={fromDate}
           toDate={toDate}

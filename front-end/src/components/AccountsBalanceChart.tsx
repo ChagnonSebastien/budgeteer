@@ -130,7 +130,7 @@ const AccountsBalanceChart: FC<Props> = (props) => {
           style={{
             position: 'absolute',
             left: '6rem',
-            top: '1rem',
+            top: '0rem',
             display: 'flex',
             flexDirection: 'column',
             zIndex: 1,
@@ -160,7 +160,7 @@ const AccountsBalanceChart: FC<Props> = (props) => {
           data={data}
           keys={[...groups.keys()].sort((a, b) => a.localeCompare(b))}
           valueFormat={(value) => `${formatFull(defaultCurrency, value)}`}
-          margin={{ top: 10, right: 20, bottom: 60, left: 60 }}
+          margin={{ top: 10, right: 50, bottom: 70, left: 60 }}
           axisBottom={{
             format: (i) => (i % showLabelEveryFactor === 0 ? labels[i] && formatDate(labels[i], 'MMM d, yyyy') : ''),
             tickRotation: -45,

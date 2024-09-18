@@ -220,7 +220,7 @@ export const TransactionList = (props: Props) => {
   }, [])
 
   return (
-    <div style={{ position: 'relative', width: '35rem', margin: 'auto' }}>
+    <div style={{ position: 'relative', margin: 'auto' }}>
       {displayedItems}
       <div
         style={{

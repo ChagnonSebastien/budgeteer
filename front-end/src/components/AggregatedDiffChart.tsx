@@ -110,7 +110,7 @@ const AggregatedDiffChart: FC<Props> = (props) => {
       <>
         <ResponsiveLine
           data={[{ id: 'Diff', data }]}
-          margin={{ top: 10, right: 60, bottom: 70, left: 60 }}
+          margin={{ top: 10, right: 50, bottom: 70, left: 60 }}
           axisBottom={{
             format: (i) => (i % showLabelEveryFactor === 0 ? labels[i] && formatDate(labels[i], 'MMM d, yyyy') : ''),
             tickRotation: -45,

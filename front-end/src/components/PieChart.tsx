@@ -158,7 +158,7 @@ const TransactionsPieChart: FC<Props> = (props) => {
         </div>
         <ResponsiveSunburst
           data={data}
-          margin={{ top: 20, right: 60, bottom: 20, left: 60 }}
+          margin={{ top: 20, right: 40, bottom: 20, left: 40 }}
           id="name"
           value="loc"
           cornerRadius={5}
@@ -208,7 +208,7 @@ const TransactionsPieChart: FC<Props> = (props) => {
           style={{
             position: 'absolute',
             right: '1rem',
-            top: '1rem',
+            top: '0',
             display: 'flex',
             alignItems: 'center',
             zIndex: 1,

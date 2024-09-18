@@ -1,5 +1,5 @@
 import { AppBar, Box, Button, IconButton, TextField, Toolbar, Typography } from '@mui/material'
-import { FC, LegacyRef, ReactNode, useContext } from 'react'
+import { FC, ReactNode, useContext } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import { IconToolsContext } from './IconTools'
