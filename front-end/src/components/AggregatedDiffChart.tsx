@@ -13,6 +13,7 @@ import {
 } from 'date-fns'
 import { FC, useContext, useMemo } from 'react'
 
+import { DrawerContext } from './Menu'
 import { formatFull } from '../domain/model/currency'
 import { AugmentedTransaction } from '../domain/model/transaction'
 import MixedAugmentation from '../service/MixedAugmentation'
@@ -30,6 +31,7 @@ const AggregatedDiffChart: FC<Props> = (props) => {
 
   const { defaultCurrency } = useContext(CurrencyServiceContext)
   const { exchangeRateOnDay } = useContext(MixedAugmentation)
+  const { anonymity } = useContext(DrawerContext)
 
   return useMemo(() => {
     if (defaultCurrency === null) return null
@@ -118,11 +120,13 @@ const AggregatedDiffChart: FC<Props> = (props) => {
           xFormat={(i) => labels[i as number] && formatDate(labels[i as number], 'MMM d, yyyy')}
           axisLeft={{
             format: (i) =>
-              ((i as number) / Math.pow(10, defaultCurrency?.decimalPoints)).toLocaleString(undefined, {
-                notation: 'compact',
-              }),
+              anonymity
+                ? 'XX'
+                : ((i as number) / Math.pow(10, defaultCurrency?.decimalPoints)).toLocaleString(undefined, {
+                    notation: 'compact',
+                  }),
           }}
-          yFormat={(n) => formatFull(defaultCurrency, n as number)}
+          yFormat={(n) => formatFull(defaultCurrency, n as number, anonymity)}
           yScale={{
             type: 'linear',
             min: 'auto',
@@ -146,7 +150,7 @@ const AggregatedDiffChart: FC<Props> = (props) => {
         />
       </>
     )
-  }, [defaultCurrency, transactions, fromDate, toDate])
+  }, [defaultCurrency, transactions, fromDate, toDate, anonymity])
 }
 
 export default AggregatedDiffChart

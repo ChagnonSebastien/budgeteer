@@ -2,6 +2,7 @@ import { Switch } from '@mui/material'
 import { ResponsiveSunburst } from '@nivo/sunburst'
 import { FC, useContext, useEffect, useMemo, useState } from 'react'
 
+import { DrawerContext } from './Menu'
 import Category, { AugmentedCategory } from '../domain/model/category'
 import { formatFull } from '../domain/model/currency'
 import { AugmentedTransaction } from '../domain/model/transaction'
@@ -25,6 +26,7 @@ const TransactionsPieChart: FC<Props> = (props) => {
   const { state: categories, subCategories } = useContext(CategoryServiceContext)
   const { defaultCurrency } = useContext(CurrencyServiceContext)
   const { exchangeRateOnDay } = useContext(MixedAugmentation)
+  const { anonymity } = useContext(DrawerContext)
 
   const [showIncomes, setShowIncomes] = useState(false)
   const [clickedCategory, setClickedCategory] = useState<Category | null>(null)
@@ -177,7 +179,7 @@ const TransactionsPieChart: FC<Props> = (props) => {
             setClickedCategory(categories.find((c) => c.name === id)!)
           }}
           valueFormat={(data) => {
-            return formatFull(defaultCurrency, data)
+            return formatFull(defaultCurrency, data, anonymity)
           }}
           enableArcLabels={true}
           arcLabel="id"
@@ -199,7 +201,7 @@ const TransactionsPieChart: FC<Props> = (props) => {
         />
       </>
     )
-  }, [data, clickedCategory])
+  }, [data, clickedCategory, anonymity])
 
   return (
     <>

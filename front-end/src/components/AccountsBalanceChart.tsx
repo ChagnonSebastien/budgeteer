@@ -11,6 +11,7 @@ import {
 } from 'date-fns'
 import { FC, useCallback, useContext, useMemo, useState } from 'react'
 
+import { DrawerContext } from './Menu'
 import Account from '../domain/model/account'
 import { formatFull } from '../domain/model/currency'
 import MixedAugmentation from '../service/MixedAugmentation'
@@ -31,6 +32,7 @@ const AccountsBalanceChart: FC<Props> = (props) => {
   const { defaultCurrency } = useContext(CurrencyServiceContext)
   const { accountTotals } = useContext(MixedAugmentation)
   const { myOwnAccounts } = useContext(AccountServiceContext)
+  const { anonymity } = useContext(DrawerContext)
 
   const [groupBy, setGroupBy] = useState<GroupType>('account')
 
@@ -162,7 +164,7 @@ const AccountsBalanceChart: FC<Props> = (props) => {
         <ResponsiveStream
           data={data}
           keys={[...groups.keys()].sort((a, b) => a.localeCompare(b))}
-          valueFormat={(value) => `${formatFull(defaultCurrency, value)}`}
+          valueFormat={(value) => `${formatFull(defaultCurrency, value, anonymity)}`}
           margin={{ top: 10, right: 50, bottom: 70, left: 60 }}
           axisBottom={{
             format: (i) => (i % showLabelEveryFactor === 0 ? labels[i] && formatDate(labels[i], 'MMM d, yyyy') : ''),
@@ -170,9 +172,11 @@ const AccountsBalanceChart: FC<Props> = (props) => {
           }}
           axisLeft={{
             format: (i) =>
-              ((i as number) / Math.pow(10, defaultCurrency?.decimalPoints)).toLocaleString(undefined, {
-                notation: 'compact',
-              }),
+              anonymity
+                ? 'XX'
+                : ((i as number) / Math.pow(10, defaultCurrency?.decimalPoints)).toLocaleString(undefined, {
+                    notation: 'compact',
+                  }),
           }}
           curve="monotoneX"
           offsetType="none"
@@ -209,7 +213,7 @@ const AccountsBalanceChart: FC<Props> = (props) => {
         />
       </>
     )
-  }, [defaultCurrency, filteredAccounts, groupBy, fromDate, toDate, group])
+  }, [defaultCurrency, filteredAccounts, groupBy, fromDate, toDate, group, anonymity])
 }
 
 export default AccountsBalanceChart

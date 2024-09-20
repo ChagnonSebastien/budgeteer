@@ -1,6 +1,7 @@
 import { ListItemButton, Tab, Tabs, TextField } from '@mui/material'
 import { useContext, useEffect, useMemo, useState } from 'react'
 
+import { DrawerContext } from './Menu'
 import Account from '../domain/model/account'
 import { formatFull } from '../domain/model/currency'
 import MixedAugmentation from '../service/MixedAugmentation'
@@ -18,6 +19,7 @@ type tabs = 'mine' | 'others'
 export const AccountList = (props: Props) => {
   const { accounts, onSelect, showBalances = false, filterable = false } = props
   const { accountBalances } = useContext(MixedAugmentation)
+  const { anonymity } = useContext(DrawerContext)
 
   const { state: currencies } = useContext(CurrencyServiceContext)
 
@@ -130,7 +132,7 @@ export const AccountList = (props: Props) => {
   }, [myOwnAccounts, otherAccounts, activeTab])
 
   return (
-    <div style={{ minWidth: '25rem' }}>
+    <div style={{ minWidth: '25rem', height: '100%' }}>
       {filterable && (
         <TextField
           autoFocus
@@ -142,7 +144,7 @@ export const AccountList = (props: Props) => {
         />
       )}
       {segments}
-      <div style={{ overflowY: 'scroll' }}>
+      <div style={{ overflowY: 'scroll', height: '100%' }}>
         {displayedAccount.map((account) => {
           return (
             <ListItemButton key={`account-list-${account.id}`} onClick={() => onSelect(account.id)}>
@@ -159,7 +161,7 @@ export const AccountList = (props: Props) => {
 
                       return (
                         <div key={`currency-in-account-${entry[0]}`} style={{ textAlign: 'right' }}>
-                          {formatFull(currency, entry[1])}
+                          {formatFull(currency, entry[1], anonymity)}
                         </div>
                       )
                     })}

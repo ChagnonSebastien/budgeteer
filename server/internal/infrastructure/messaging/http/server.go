@@ -34,6 +34,7 @@ func NewServer(grpcServer *grpc.Server, auth *Auth) *GrpcWebServer {
 
 func (s *GrpcWebServer) Serve() {
 	mux := http.NewServeMux()
+
 	mux.Handle("/auth/", http.StripPrefix("/auth", s.auth.ServeMux()))
 	mux.Handle("/api/", http.StripPrefix("/api", s.wrappedGrpc))
 	mux.HandleFunc("/", s.catchAllHandler)

@@ -4,6 +4,7 @@ import { FC, useContext, useMemo, useState } from 'react'
 
 import CategoryPicker from '../components/CategoryPicker'
 import ContentWithHeader from '../components/ContentWithHeader'
+import { DrawerContext } from '../components/Menu'
 import { formatFull } from '../domain/model/currency'
 import MixedAugmentation from '../service/MixedAugmentation'
 import { CategoryServiceContext, CurrencyServiceContext } from '../service/ServiceContext'
@@ -14,6 +15,7 @@ const CostsAnalysisPage: FC = () => {
   const { augmentedTransactions: transactions, exchangeRateOnDay } = useContext(MixedAugmentation)
   const { defaultCurrency } = useContext(CurrencyServiceContext)
   const { root } = useContext(CategoryServiceContext)
+  const { anonymity } = useContext(DrawerContext)
 
   const [incomeCategory, setIncomeCategory] = useState<number>(root.id)
   const [grossIncome, setGrossIncome] = useState<number>(0)
@@ -177,18 +179,26 @@ const CostsAnalysisPage: FC = () => {
           <tbody>
             <tr>
               <td>Gross Income</td>
-              <td>{formatFull(defaultCurrency, grossIncome * Math.pow(10, defaultCurrency.decimalPoints))}</td>
-              <td>{formatFull(defaultCurrency, (grossIncome * Math.pow(10, defaultCurrency.decimalPoints)) / 12)}</td>
+              <td>
+                {formatFull(defaultCurrency, grossIncome * Math.pow(10, defaultCurrency.decimalPoints), anonymity)}
+              </td>
+              <td>
+                {formatFull(
+                  defaultCurrency,
+                  (grossIncome * Math.pow(10, defaultCurrency.decimalPoints)) / 12,
+                  anonymity,
+                )}
+              </td>
             </tr>
             <tr>
               <td>Net Income</td>
-              <td>{formatFull(defaultCurrency, income)}</td>
-              <td>{formatFull(defaultCurrency, income / 12)}</td>
+              <td>{formatFull(defaultCurrency, income, anonymity)}</td>
+              <td>{formatFull(defaultCurrency, income / 12, anonymity)}</td>
             </tr>
             <tr style={{ height: '1rem' }} />
             <tr>
               <th>Fixed Costs</th>
-              <th colSpan={2}>{((100 * fixedAmount) / income).toFixed(0)}%</th>
+              <th colSpan={2}>{anonymity ? 'XX' : ((100 * fixedAmount) / income).toFixed(0)}%</th>
             </tr>
             {[...fixedCosts.entries()].map((entry) => (
               <tr key={`fixed-${entry[0]}`}>
@@ -200,7 +210,7 @@ const CostsAnalysisPage: FC = () => {
             <tr style={{ height: '1rem' }} />
             <tr>
               <th>Variable Costs</th>
-              <th colSpan={2}>{((100 * variableAmount) / income).toFixed(0)}%</th>
+              <th colSpan={2}>{anonymity ? 'XX' : ((100 * variableAmount) / income).toFixed(0)}%</th>
             </tr>
             {[...variableCosts.entries()].map((entry) => (
               <tr key={`variable-${entry[0]}`}>
@@ -212,12 +222,14 @@ const CostsAnalysisPage: FC = () => {
             <tr style={{ height: '1rem' }} />
             <tr>
               <th>Investments</th>
-              <th colSpan={2}>{(100 - (100 * (variableAmount + fixedAmount)) / income).toFixed(0)}%</th>
+              <th colSpan={2}>
+                {anonymity ? 'XX' : (100 - (100 * (variableAmount + fixedAmount)) / income).toFixed(0)}%
+              </th>
             </tr>
             <tr>
               <td>All</td>
-              <td>{formatFull(defaultCurrency, income - variableAmount - fixedAmount)}</td>
-              <td>{formatFull(defaultCurrency, (income - variableAmount - fixedAmount) / 12)}</td>
+              <td>{formatFull(defaultCurrency, income - variableAmount - fixedAmount, anonymity)}</td>
+              <td>{formatFull(defaultCurrency, (income - variableAmount - fixedAmount) / 12, anonymity)}</td>
             </tr>
           </tbody>
         </table>

@@ -2,14 +2,16 @@ import {
   Box,
   Button,
   Drawer,
+  FormControlLabel,
   List,
   ListItemButton,
   ListItemIcon,
   ListItemText,
   SwipeableDrawer,
+  Switch,
   Typography,
 } from '@mui/material'
-import { createContext, FC, ReactElement, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { createContext, FC, ReactElement, useContext, useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import './Menu.css'
 
@@ -61,8 +63,10 @@ interface Props {
   logout(): void
 }
 
-type DrawerActions = { open?(): void }
-export const DrawerContext = createContext<DrawerActions>({})
+type DrawerActions = { open?(): void; anonymity: boolean }
+export const DrawerContext = createContext<DrawerActions>({
+  anonymity: false,
+})
 
 const DrawerWrapper: FC<Props> = ({ logout, children }) => {
   const location = useLocation()
@@ -79,6 +83,7 @@ const DrawerWrapper: FC<Props> = ({ logout, children }) => {
 
   const [drawerWidth, setDrawerWidth] = useState(240)
   const [totalWidth, setTotalWidth] = useState(window.innerWidth)
+  const [anonymity, setAnonymity] = useState(false)
   const persistentDrawer = totalWidth - drawerWidth > 600
 
   useEffect(() => {
@@ -119,6 +124,12 @@ const DrawerWrapper: FC<Props> = ({ logout, children }) => {
           Logout
         </Button>
       </Box>
+      <Box p="1rem">
+        <FormControlLabel
+          control={<Switch onChange={(ev) => setAnonymity(ev.target.checked)} />}
+          label="Anonymous Mode"
+        />
+      </Box>
     </div>
   )
 
@@ -126,6 +137,7 @@ const DrawerWrapper: FC<Props> = ({ logout, children }) => {
     <DrawerContext.Provider
       value={{
         open: persistentDrawer ? undefined : () => setOpen(true),
+        anonymity,
       }}
     >
       {persistentDrawer ? (

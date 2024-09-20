@@ -1,6 +1,7 @@
-import { FC } from 'react'
+import { FC, useContext } from 'react'
 
 import IconCapsule from './IconCapsule'
+import { DrawerContext } from './Menu'
 import Account from '../domain/model/account'
 import Currency, { formatFull } from '../domain/model/currency'
 
@@ -34,6 +35,8 @@ const TransactionCard: FC<Props> = (props) => {
     categoryIconBackground,
     onClick,
   } = props
+
+  const { anonymity } = useContext(DrawerContext)
 
   const fromMe = from?.isMine ?? false
   const toMe = to?.isMine ?? false
@@ -90,8 +93,10 @@ const TransactionCard: FC<Props> = (props) => {
       >
         <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
           <div style={{ fontWeight: 'bold' }}>
-            {formatFull(currency, amount)}
-            {currency.id === receiverCurrency.id ? `` : ` -> ${formatFull(receiverCurrency, receiverAmount)}`}
+            {formatFull(currency, amount, anonymity)}
+            {currency.id === receiverCurrency.id
+              ? ``
+              : ` -> ${formatFull(receiverCurrency, receiverAmount, anonymity)}`}
           </div>
           <div>{date.toDateString()}</div>
         </div>

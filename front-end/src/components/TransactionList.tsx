@@ -10,6 +10,7 @@ import {
 } from 'date-fns'
 import { useContext, useEffect, useMemo, useRef, useState } from 'react'
 
+import { DrawerContext } from './Menu'
 import TransactionCard from './TransactionCard'
 import Category from '../domain/model/category'
 import { formatAmount, formatFull } from '../domain/model/currency'
@@ -42,6 +43,7 @@ export const TransactionList = (props: Props) => {
   const { defaultCurrency } = useContext(CurrencyServiceContext)
   const { state: accounts } = useContext(AccountServiceContext)
   const { exchangeRateOnDay } = useContext(MixedAugmentation)
+  const { anonymity } = useContext(DrawerContext)
 
   const [displayedAmount, setDisplayedAmount] = useState<number>(chunkSize)
   useEffect(() => {
@@ -148,13 +150,13 @@ export const TransactionList = (props: Props) => {
             {formatDate(date, 'MMMM yyyy')}
           </div>
           <div>
-            <div>{formatFull(defaultCurrency, Total)}</div>
+            <div>{formatFull(defaultCurrency, Total, anonymity)}</div>
             {diff !== 0 && (
               <div
                 style={{ display: 'flex', color: diff > 0 ? 'var(--ion-color-success)' : 'var(--ion-color-danger)' }}
               >
                 <div>{diff > 0 ? `+` : `-`}</div>
-                <div>{formatAmount(defaultCurrency, Math.abs(diff))}</div>
+                <div>{formatAmount(defaultCurrency, Math.abs(diff), anonymity)}</div>
               </div>
             )}
           </div>
@@ -191,7 +193,7 @@ export const TransactionList = (props: Props) => {
     view.push(wrap(data[j]))
 
     return view
-  }, [transactions, viewAsAccounts, includeInitialAmounts])
+  }, [transactions, viewAsAccounts, includeInitialAmounts, anonymity])
 
   const displayedItems = useMemo(
     () => viewWithMonthLabels.slice(0, displayedAmount),
