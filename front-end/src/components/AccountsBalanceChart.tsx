@@ -57,7 +57,7 @@ const AccountsBalanceChart: FC<Props> = (props) => {
     [groupBy],
   )
 
-  const stream = useMemo(() => {
+  return useMemo(() => {
     if (defaultCurrency === null) return null
 
     const diffDays = differenceInDays(toDate, fromDate)
@@ -94,30 +94,33 @@ const AccountsBalanceChart: FC<Props> = (props) => {
     const labels: Date[] = []
     const groups = new Set<string>()
 
-    while (i >= 0) {
+    outerLoop: while (i >= 0) {
       const upTo = subN(toDate, i)
       let todaysData: { [account: string]: number } = {}
 
-      accountTotals?.forEach((account, accountId) => {
+      for (const [accountId, accountData] of accountTotals ?? []) {
         const item = filteredAccounts.find((a) => a.id === accountId)
-        if (item?.type === 'Credit Card') return
+        if (item?.type === 'Credit Card') continue
 
         let total = 0
-        const day = account.years.get(upTo.getFullYear())?.months.get(upTo.getMonth())?.days.get(upTo.getDate())
+        const day = accountData.years.get(upTo.getFullYear())?.months.get(upTo.getMonth())?.days.get(upTo.getDate())
         if (typeof day !== 'undefined') {
           total += day.total ?? 0
           total += day.portfolio ?? 0
+        } else {
+          i -= 1
+          continue outerLoop
         }
 
         const groupLabel = group(item)
         if (typeof groupLabel === 'undefined') {
-          return
+          continue
         }
 
         const bigTotal = (todaysData[groupLabel] ?? 0) + total
         todaysData = { ...todaysData, [groupLabel]: bigTotal }
         groups.add(groupLabel)
-      })
+      }
 
       labels.push(upTo)
       data.push({ ...todaysData })
@@ -207,8 +210,6 @@ const AccountsBalanceChart: FC<Props> = (props) => {
       </>
     )
   }, [defaultCurrency, filteredAccounts, groupBy, fromDate, toDate, group])
-
-  return <>{stream}</>
 }
 
 export default AccountsBalanceChart
