@@ -253,13 +253,20 @@ export default () => {
       </Dialog>
 
       <Dialog fullScreen={fullScreen} open={showAccountModal} onClose={() => setShowAccountModal(false)}>
-        <AccountList
-          accounts={accounts}
-          onSelect={(accountId) => {
-            setAccountFilter(accountId)
-            setShowAccountModal(false)
-          }}
-        />
+        <DialogTitle>Pick Account</DialogTitle>
+        <DialogContent>
+          <AccountList
+            accounts={accounts}
+            filterable
+            onSelect={(accountId) => {
+              setAccountFilter(accountId)
+              setShowAccountModal(false)
+            }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowAccountModal(false)}>Close</Button>
+        </DialogActions>
       </Dialog>
 
       <Dialog

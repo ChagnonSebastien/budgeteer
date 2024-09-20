@@ -1,4 +1,4 @@
-import { Dialog, TextField } from '@mui/material'
+import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, TextField } from '@mui/material'
 import { FC, useContext, useMemo, useState } from 'react'
 
 import { AccountList } from './AccountList'
@@ -38,13 +38,20 @@ const AccountPicker: FC<Props> = (props) => {
         }}
       />
       <Dialog open={showModal} onClose={() => setShowModal(false)}>
-        <AccountList
-          accounts={accounts}
-          onSelect={(newParent) => {
-            setSelectedAccountId(newParent)
-            setShowModal(false)
-          }}
-        />
+        <DialogTitle>Select Account</DialogTitle>
+        <DialogContent>
+          <AccountList
+            filterable
+            accounts={accounts}
+            onSelect={(newParent) => {
+              setSelectedAccountId(newParent)
+              setShowModal(false)
+            }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowModal(false)}>Close</Button>
+        </DialogActions>
       </Dialog>
     </>
   )

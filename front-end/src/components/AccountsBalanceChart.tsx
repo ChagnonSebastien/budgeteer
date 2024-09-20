@@ -130,7 +130,7 @@ const AccountsBalanceChart: FC<Props> = (props) => {
           style={{
             position: 'absolute',
             left: '6rem',
-            top: '0rem',
+            top: '0 rem',
             display: 'flex',
             flexDirection: 'column',
             zIndex: 1,
