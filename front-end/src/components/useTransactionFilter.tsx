@@ -33,6 +33,8 @@ export default () => {
   const [toView, setToView] = useState<DateView>('day')
   const [showToDateModal, setShowToDateModal] = useState(false)
 
+  const [filter, setFilter] = useState('')
+
   const accountPills = useMemo(() => {
     if (accountFilter === null) return null
     return (
@@ -257,9 +259,9 @@ export default () => {
         <DialogContent>
           <AccountList
             accounts={accounts}
-            filterable
-            onSelect={(accountId) => {
-              setAccountFilter(accountId)
+            filterable={{ filter, setFilter }}
+            onSelect={(account) => {
+              setAccountFilter(account.id)
               setShowAccountModal(false)
             }}
           />

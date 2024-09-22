@@ -31,7 +31,7 @@ const CurrencyPicker: FC<Props> = (props) => {
         variant="standard"
         label={labelText}
         placeholder={'None'}
-        value={selectedCurrency?.symbol}
+        value={selectedCurrency?.symbol ?? ''}
         onFocus={(e) => {
           setShowModal(true)
           e.target.blur()

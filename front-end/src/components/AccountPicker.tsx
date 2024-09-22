@@ -1,26 +1,27 @@
-import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, TextField } from '@mui/material'
+import { Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField } from '@mui/material'
 import { FC, useContext, useMemo, useState } from 'react'
 
 import { AccountList } from './AccountList'
 import { AccountServiceContext } from '../service/ServiceContext'
 
 interface Props {
-  selectedAccountId: number | null
-  setSelectedAccountId: (id: number) => void
+  selectedAccountName: string
+  setSelectedAccount: (newAccount: { existing: boolean; id: number | null; name: string }) => void
   labelText: string
   errorText?: string
   myOwn: boolean
+  allowNew?: boolean
 }
 
 const AccountPicker: FC<Props> = (props) => {
-  const { selectedAccountId, setSelectedAccountId, labelText, errorText, myOwn } = props
+  const { selectedAccountName, setSelectedAccount, labelText, errorText, myOwn, allowNew = false } = props
   const { myOwnAccounts, otherAccounts } = useContext(AccountServiceContext)
   const accounts = useMemo(() => {
     return myOwn ? myOwnAccounts : otherAccounts
   }, [myOwn, myOwnAccounts, otherAccounts])
-  const selectedAccount = useMemo(() => accounts.find((a) => a.id === selectedAccountId), [accounts, selectedAccountId])
 
   const [showModal, setShowModal] = useState(false)
+  const [filter, setFilter] = useState('')
 
   return (
     <>
@@ -31,7 +32,7 @@ const AccountPicker: FC<Props> = (props) => {
         type="text"
         label={labelText}
         placeholder={'None'}
-        value={selectedAccount?.name}
+        value={selectedAccountName}
         onFocus={(e) => {
           e.target.blur()
           setShowModal(true)
@@ -41,16 +42,36 @@ const AccountPicker: FC<Props> = (props) => {
         <DialogTitle>Select Account</DialogTitle>
         <DialogContent>
           <AccountList
-            filterable
+            filterable={{ filter, setFilter }}
             accounts={accounts}
-            onSelect={(newParent) => {
-              setSelectedAccountId(newParent)
+            onSelect={(selected) => {
+              setSelectedAccount({ existing: true, id: selected.id, name: selected.name })
               setShowModal(false)
             }}
           />
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setShowModal(false)}>Close</Button>
+          {allowNew && (
+            <Button
+              onClick={() => {
+                const filterRefAccount = accounts.find((a) => a.name.toLowerCase() === filter.toLowerCase())
+                console.log(filterRefAccount, {
+                  existing: typeof filterRefAccount !== 'undefined',
+                  id: filterRefAccount?.id ?? null,
+                  name: filterRefAccount?.name ?? filter,
+                })
+                setSelectedAccount({
+                  existing: typeof filterRefAccount !== 'undefined',
+                  id: filterRefAccount?.id ?? null,
+                  name: filterRefAccount?.name ?? filter,
+                })
+                setShowModal(false)
+              }}
+            >
+              Confirm
+            </Button>
+          )}
         </DialogActions>
       </Dialog>
     </>

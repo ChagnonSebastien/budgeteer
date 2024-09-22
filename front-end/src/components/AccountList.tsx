@@ -1,5 +1,5 @@
 import { ListItemButton, Tab, Tabs, TextField } from '@mui/material'
-import { useContext, useEffect, useMemo, useState } from 'react'
+import { Dispatch, SetStateAction, useContext, useEffect, useMemo, useState } from 'react'
 
 import { DrawerContext } from './Menu'
 import Account from '../domain/model/account'
@@ -9,15 +9,15 @@ import { CurrencyServiceContext } from '../service/ServiceContext'
 
 type Props = {
   accounts: Account[]
-  onSelect: (value: number) => void
+  onSelect: (value: Account) => void
   showBalances?: boolean
-  filterable?: boolean
+  filterable?: { filter: string; setFilter: Dispatch<SetStateAction<string>> }
 }
 
 type tabs = 'mine' | 'others'
 
 export const AccountList = (props: Props) => {
-  const { accounts, onSelect, showBalances = false, filterable = false } = props
+  const { accounts, onSelect, showBalances = false, filterable } = props
   const { accountBalances } = useContext(MixedAugmentation)
   const { anonymity } = useContext(DrawerContext)
 
@@ -28,8 +28,6 @@ export const AccountList = (props: Props) => {
   const [activeTab, setActiveTab] = useState<tabs>('mine')
   const myOwnAccounts = useMemo(() => accounts.filter((account) => account.isMine), [accounts])
   const otherAccounts = useMemo(() => accounts.filter((account) => !account.isMine), [accounts])
-
-  const [filter, setFilter] = useState<string>('')
 
   const myOwnOrderedAccounts = useMemo(() => {
     const visited = new Set<number>()
@@ -92,12 +90,18 @@ export const AccountList = (props: Props) => {
   }, [otherAccounts, transactions])
 
   const myOwnFilteredAccounts = useMemo(() => {
-    return myOwnOrderedAccounts.filter((account) => account.name.toLowerCase().includes(filter.toLowerCase()))
-  }, [myOwnOrderedAccounts, filter])
+    if (typeof filterable === 'undefined') return myOwnOrderedAccounts
+    return myOwnOrderedAccounts.filter((account) =>
+      account.name.toLowerCase().includes(filterable.filter.toLowerCase()),
+    )
+  }, [myOwnOrderedAccounts, filterable?.filter])
 
   const otherFilteredAccounts = useMemo(() => {
-    return otherOrderedAccounts.filter((account) => account.name.toLowerCase().includes(filter.toLowerCase()))
-  }, [otherOrderedAccounts, filter])
+    if (typeof filterable === 'undefined') return otherOrderedAccounts
+    return otherOrderedAccounts.filter((account) =>
+      account.name.toLowerCase().includes(filterable.filter.toLowerCase()),
+    )
+  }, [otherOrderedAccounts, filterable?.filter])
 
   useEffect(() => {
     if (activeTab === 'mine' && myOwnFilteredAccounts.length === 0 && otherFilteredAccounts.length > 0)
@@ -108,7 +112,7 @@ export const AccountList = (props: Props) => {
 
   const displayedAccount = useMemo(() => {
     return activeTab === 'mine' ? myOwnFilteredAccounts : otherFilteredAccounts
-  }, [myOwnFilteredAccounts, otherFilteredAccounts, activeTab, filter])
+  }, [myOwnFilteredAccounts, otherFilteredAccounts, activeTab])
 
   const segments = useMemo(() => {
     if (myOwnAccounts.length === 0 || otherAccounts.length === 0) return undefined
@@ -139,15 +143,15 @@ export const AccountList = (props: Props) => {
           label="Filter"
           variant="standard"
           fullWidth
-          value={filter}
-          onChange={(ev) => setFilter(ev.target.value)}
+          value={filterable.filter}
+          onChange={(ev) => filterable.setFilter(ev.target.value)}
         />
       )}
       {segments}
       <div style={{ overflowY: 'scroll', height: '100%' }}>
         {displayedAccount.map((account) => {
           return (
-            <ListItemButton key={`account-list-${account.id}`} onClick={() => onSelect(account.id)}>
+            <ListItemButton key={`account-list-${account.id}`} onClick={() => onSelect(account)}>
               <div style={{ flexGrow: 1 }}>
                 <div>{account.name}</div>
                 {showBalances &&
