@@ -7,9 +7,10 @@ import { useContext, useMemo, useState } from 'react'
 import { AccountList } from './AccountList'
 import { CategoryList } from './CategoryList'
 import ContentWithHeader from './ContentWithHeader'
+import Account from '../domain/model/account'
 import { AccountServiceContext, CategoryServiceContext, TransactionServiceContext } from '../service/ServiceContext'
 
-export default () => {
+export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilterByCategory = true) => {
   const theme = useTheme()
   const fullScreen = useMediaQuery(theme.breakpoints.down('md'))
 
@@ -17,7 +18,9 @@ export default () => {
 
   const { state: transactions } = useContext(TransactionServiceContext)
 
-  const { state: accounts } = useContext(AccountServiceContext)
+  const { state: rawAccounts } = useContext(AccountServiceContext)
+  const accounts = useMemo(() => rawAccounts.filter(accountPreFilter), [rawAccounts, accountPreFilter])
+
   const [showAccountModal, setShowAccountModal] = useState(false)
   const [accountFilter, setAccountFilter] = useState<null | number>(null)
 
@@ -110,20 +113,22 @@ export default () => {
             <div style={{ width: '.5rem' }} />
             <div style={{ flexGrow: 1, minWidth: '20rem', flexWrap: 'wrap' }}>{accountPills}</div>
           </div>
-          <div
-            style={{
-              display: 'flex',
-              borderBottom: '1px #8885 solid',
-              marginBottom: '1rem',
-              padding: '.5rem',
-              alignItems: 'center',
-            }}
-            onClick={() => setShowCategoryModal(true)}
-          >
-            <div>Category:</div>
-            <div style={{ width: '.5rem' }} />
-            <div style={{ flexGrow: 1, minWidth: '10rem' }}>{categoryPills}</div>
-          </div>
+          {canFilterByCategory && (
+            <div
+              style={{
+                display: 'flex',
+                borderBottom: '1px #8885 solid',
+                marginBottom: '1rem',
+                padding: '.5rem',
+                alignItems: 'center',
+              }}
+              onClick={() => setShowCategoryModal(true)}
+            >
+              <div>Category:</div>
+              <div style={{ width: '.5rem' }} />
+              <div style={{ flexGrow: 1, minWidth: '10rem' }}>{categoryPills}</div>
+            </div>
+          )}
           <div
             style={{
               display: 'flex',

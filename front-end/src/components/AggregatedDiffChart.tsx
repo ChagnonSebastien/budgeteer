@@ -147,6 +147,7 @@ const AggregatedDiffChart: FC<Props> = (props) => {
           curve="monotoneX"
           theme={darkTheme}
           colors={darkColors}
+          animate={false}
         />
       </>
     )

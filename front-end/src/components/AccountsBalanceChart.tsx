@@ -9,7 +9,7 @@ import {
   subMonths,
   subWeeks,
 } from 'date-fns'
-import { FC, useCallback, useContext, useMemo, useState } from 'react'
+import { FC, useCallback, useContext, useMemo } from 'react'
 
 import { DrawerContext } from './Menu'
 import Account from '../domain/model/account'
@@ -18,23 +18,22 @@ import MixedAugmentation from '../service/MixedAugmentation'
 import { AccountServiceContext, CurrencyServiceContext } from '../service/ServiceContext'
 import { darkColors, darkTheme } from '../utils'
 
-type GroupType = 'financialInstitution' | 'type' | 'account' | 'none'
+export type GroupType = 'financialInstitution' | 'type' | 'account' | 'none'
 
 interface Props {
   filterByAccounts?: number[]
   fromDate: Date
   toDate: Date
+  groupBy: GroupType
 }
 
 const AccountsBalanceChart: FC<Props> = (props) => {
-  const { fromDate, toDate, filterByAccounts } = props
+  const { fromDate, toDate, filterByAccounts, groupBy } = props
 
   const { defaultCurrency } = useContext(CurrencyServiceContext)
   const { accountTotals } = useContext(MixedAugmentation)
   const { myOwnAccounts } = useContext(AccountServiceContext)
   const { anonymity } = useContext(DrawerContext)
-
-  const [groupBy, setGroupBy] = useState<GroupType>('account')
 
   const filteredAccounts = useMemo(() => {
     if (typeof filterByAccounts === 'undefined') return myOwnAccounts
@@ -131,36 +130,6 @@ const AccountsBalanceChart: FC<Props> = (props) => {
 
     return (
       <>
-        <Card
-          style={{
-            position: 'absolute',
-            left: '6rem',
-            top: '0 rem',
-            display: 'flex',
-            flexDirection: 'column',
-            zIndex: 1,
-            padding: '.5rem',
-          }}
-        >
-          <div style={{ fontWeight: 'bold' }}>Group by</div>
-          <RadioGroup value={groupBy} onChange={(newValue) => setGroupBy(newValue.target.value as GroupType)}>
-            <FormControlLabel value="none" label="None" sx={{ margin: 0 }} control={<Radio sx={{ padding: '0' }} />} />
-            <FormControlLabel
-              value="account"
-              label="Account"
-              sx={{ margin: 0 }}
-              control={<Radio sx={{ padding: '0' }} />}
-            />
-            <FormControlLabel
-              value="financialInstitution"
-              label="Financial Institution"
-              sx={{ margin: 0 }}
-              control={<Radio sx={{ padding: '0' }} />}
-            />
-            <FormControlLabel value="type" label="Type" sx={{ margin: 0 }} control={<Radio sx={{ padding: '0' }} />} />
-          </RadioGroup>
-        </Card>
-
         <ResponsiveStream
           data={data}
           keys={[...groups.keys()].sort((a, b) => a.localeCompare(b))}
@@ -210,6 +179,7 @@ const AccountsBalanceChart: FC<Props> = (props) => {
                 ))}
             </Card>
           )}
+          animate={false}
         />
       </>
     )

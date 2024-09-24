@@ -205,7 +205,6 @@ export const TransactionList = (props: Props) => {
   useEffect(() => {
     const observer = new IntersectionObserver((entries) => {
       if (entries[0].isIntersecting) {
-        console.log(entries)
         setDisplayedAmount((prevState) => Math.min(prevState + chunkSize, viewWithMonthLabels.length))
       }
     })

@@ -95,7 +95,7 @@ const DrawerWrapper: FC<Props> = ({ logout, children }) => {
   const drawer = (
     <div
       ref={(ref) => {
-        if (ref) setDrawerWidth(ref.scrollWidth)
+        if (ref != null) setDrawerWidth(ref.scrollWidth)
       }}
     >
       <Box p="1rem">

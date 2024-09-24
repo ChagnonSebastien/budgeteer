@@ -56,11 +56,6 @@ const AccountPicker: FC<Props> = (props) => {
             <Button
               onClick={() => {
                 const filterRefAccount = accounts.find((a) => a.name.toLowerCase() === filter.toLowerCase())
-                console.log(filterRefAccount, {
-                  existing: typeof filterRefAccount !== 'undefined',
-                  id: filterRefAccount?.id ?? null,
-                  name: filterRefAccount?.name ?? filter,
-                })
                 setSelectedAccount({
                   existing: typeof filterRefAccount !== 'undefined',
                   id: filterRefAccount?.id ?? null,

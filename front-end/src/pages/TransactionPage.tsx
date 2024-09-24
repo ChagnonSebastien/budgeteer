@@ -1,6 +1,6 @@
 import { IconButton, SpeedDial, SpeedDialAction, SpeedDialIcon } from '@mui/material'
 import { isAfter, isBefore } from 'date-fns'
-import { FC, useContext, useMemo, useState } from 'react'
+import { FC, useContext, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import AggregatedDiffChart from '../components/AggregatedDiffChart'
@@ -43,10 +43,39 @@ const TransactionPage: FC = () => {
       })
   }, [augmentedTransactions, categoryFilter, accountFilter, toDate, fromDate])
 
+  const [contentRef, setContentRef] = useState<HTMLDivElement | null>(null)
   const [contentWidth, setContentWidth] = useState(600)
   const [contentHeight, setContentHeight] = useState(600)
-  const splitHorizontal = contentWidth > 1200
+  useEffect(() => {
+    if (contentRef === null) return
+    const ref = contentRef
+
+    const callback = () => {
+      setContentWidth(ref.clientWidth)
+      setContentHeight(ref.clientHeight)
+    }
+    callback()
+
+    window.addEventListener('resize', callback)
+    return () => window.removeEventListener('resize', callback)
+  }, [contentRef])
+
+  const [filterRef, setFilterRef] = useState<HTMLDivElement | null>(null)
   const [filterHeight, setFilterHeight] = useState(50)
+  useEffect(() => {
+    if (filterRef === null) return
+    const ref = filterRef
+
+    const callback = () => {
+      setFilterHeight(ref.scrollHeight)
+    }
+    callback()
+
+    window.addEventListener('resize', callback)
+    return () => window.removeEventListener('resize', callback)
+  }, [filterRef])
+
+  const splitHorizontal = useMemo(() => contentWidth > 1200, [contentWidth])
 
   return (
     <ContentWithHeader
@@ -94,14 +123,11 @@ const TransactionPage: FC = () => {
           height: '100%',
           width: '100%',
           overflowY: splitHorizontal ? 'hidden' : 'scroll',
+          overflowX: 'hidden',
           display: 'flex',
           flexDirection: splitHorizontal ? 'row' : 'column',
         }}
-        ref={(ref) => {
-          if (ref === null) return
-          setContentWidth(ref.clientWidth)
-          setContentHeight(ref.clientHeight)
-        }}
+        ref={setContentRef}
       >
         <div
           style={{
@@ -115,6 +141,7 @@ const TransactionPage: FC = () => {
             style={{
               marginTop: splitHorizontal ? `${contentHeight / 12}px` : 0,
               height: `calc( ${splitHorizontal ? `${contentHeight}px` : '75vh'} / 1.2 - ${filterHeight}px )`,
+              width: splitHorizontal ? `calc( ${contentWidth}px - 35rem )` : `${contentWidth}px`,
               position: 'relative',
             }}
           >
@@ -128,14 +155,7 @@ const TransactionPage: FC = () => {
             )}
           </div>
 
-          <div
-            ref={(ref) => {
-              if (ref === null) return
-              setFilterHeight(ref.scrollHeight)
-            }}
-          >
-            {filterOverview}
-          </div>
+          <div ref={setFilterRef}>{filterOverview}</div>
         </div>
 
         <div

@@ -396,7 +396,6 @@ const TransactionForm: FC<Props> = (props) => {
             }}
             onViewChange={(view) => {
               setDateView(view)
-              console.log(view)
             }}
           />
         </Dialog>
