@@ -88,7 +88,7 @@ export const TransactionList = (props: Props) => {
 
     let i = transactions.length - 1
 
-    while (!isSameDay(upTo, today) && !isAfter(upTo, today)) {
+    while (!isAfter(upTo, today)) {
       upTo = incrementDate(upTo)
       const lastDayOfPrevMonth = subDays(upTo, 1)
       data.push({ ...data[data.length - 1], date: lastDayOfPrevMonth, diff: 0 })
@@ -168,6 +168,7 @@ export const TransactionList = (props: Props) => {
     for (const transaction of transactions) {
       while (j >= 0 && !isSameMonth(previousTransactionDate, transaction.date)) {
         view.push(wrap(data[j]))
+
         previousTransactionDate = data[j].date
         j -= 1
       }
