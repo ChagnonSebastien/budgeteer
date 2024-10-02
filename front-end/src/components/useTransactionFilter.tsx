@@ -308,7 +308,7 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
             views={['year', 'month', 'day']}
             value={dayjs(fromDate)}
             onChange={(newDate: Dayjs) => {
-              query.set('from', String(newDate.unix()))
+              query.set('from', String(newDate.toDate().getTime()))
               navigate(`${location.pathname}?${query.toString()}`)
               if (fromView === 'day') setShowFromDateModal(false)
             }}
@@ -329,7 +329,7 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
             views={['year', 'month', 'day']}
             value={dayjs(toDate)}
             onChange={(newDate: Dayjs) => {
-              query.set('to', String(newDate.unix()))
+              query.set('to', String(newDate.toDate().getTime()))
               navigate(`${location.pathname}?${query.toString()}`)
               if (toView === 'day') setShowToDateModal(false)
             }}
