@@ -13,7 +13,7 @@ const CreateCurrencyPage: FC = () => {
 
   const onSubmit = useCallback(async (data: Omit<Currency, 'id'>) => {
     await createCurrency(data)
-    navigate('/currency')
+    navigate('/currency', { replace: true })
   }, [])
 
   return (

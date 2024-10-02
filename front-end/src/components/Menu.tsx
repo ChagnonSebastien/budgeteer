@@ -22,6 +22,7 @@ interface AppPage {
   title: string
   url: string
   iconName: string
+  keepQuery: string[]
 }
 
 const appPages: AppPage[] = [
@@ -29,31 +30,37 @@ const appPages: AppPage[] = [
     title: 'Transactions',
     url: '/transactions',
     iconName: 'TbArrowsExchange',
+    keepQuery: ['from', 'to', 'account', 'category'],
   },
   {
     title: 'Categories',
     url: '/categories',
     iconName: 'MdCategory',
+    keepQuery: [],
   },
   {
     title: 'Accounts',
     url: '/accounts',
     iconName: 'MdAccountBalance',
+    keepQuery: [],
   },
   {
     title: 'Account Balances',
     url: '/accounts/graph',
     iconName: 'MdAccountBalance',
+    keepQuery: ['from', 'to', 'account', 'groupBy'],
   },
   {
     title: 'Currencies',
     url: '/currencies',
     iconName: 'BsCurrencyExchange',
+    keepQuery: [],
   },
   {
     title: 'Costs Analysis',
     url: '/costs',
     iconName: 'BiSolidFileImport',
+    keepQuery: [],
   },
 ]
 
@@ -70,6 +77,7 @@ export const DrawerContext = createContext<DrawerActions>({
 
 const DrawerWrapper: FC<Props> = ({ logout, children }) => {
   const location = useLocation()
+  const query = new URLSearchParams(location.search)
   const navigate = useNavigate()
 
   const { email } = useContext(UserContext)
@@ -108,7 +116,13 @@ const DrawerWrapper: FC<Props> = ({ logout, children }) => {
           return (
             <ListItemButton
               key={index}
-              onClick={() => navigate(appPage.url)}
+              onClick={() => {
+                for (const key of [...query.keys()]) {
+                  if (!appPage.keepQuery.includes(key)) query.delete(key)
+                }
+
+                navigate(`${appPage.url}?${query.toString()}`)
+              }}
               selected={location.pathname === appPage.url}
             >
               <ListItemIcon>

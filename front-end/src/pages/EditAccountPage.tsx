@@ -23,13 +23,13 @@ const EditAccountPage: FC = () => {
 
       await updateAccount(selectedAccount!.id, data)
 
-      navigate('/accounts')
+      navigate(-1)
     },
     [updateAccount, selectedAccount],
   )
 
   if (typeof selectedAccount === 'undefined') {
-    navigate('/accounts')
+    navigate('/accounts', { replace: true })
     return null
   }
 

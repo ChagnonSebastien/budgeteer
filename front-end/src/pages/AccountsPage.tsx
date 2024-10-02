@@ -14,7 +14,11 @@ const AccountsPage: FC = () => {
   return (
     <ContentWithHeader title="Accounts" button="menu">
       <div style={{ overflow: 'hidden', height: '100%', display: 'flex', flexDirection: 'column' }}>
-        <AccountList accounts={accounts} onSelect={(id) => navigate(`/accounts/edit/${id}`)} showBalances />
+        <AccountList
+          accounts={accounts}
+          onSelect={(account) => navigate(`/accounts/edit/${account.id}`)}
+          showBalances
+        />
         <div style={{ height: '1rem' }} />
         <Button fullWidth variant="contained" onClick={() => navigate('/accounts/new')}>
           New

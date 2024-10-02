@@ -1,4 +1,4 @@
-import { Card, FormControlLabel, Radio, RadioGroup } from '@mui/material'
+import { Card } from '@mui/material'
 import { ResponsiveStream } from '@nivo/stream'
 import {
   differenceInDays,
@@ -37,7 +37,10 @@ const AccountsBalanceChart: FC<Props> = (props) => {
 
   const filteredAccounts = useMemo(() => {
     if (typeof filterByAccounts === 'undefined') return myOwnAccounts
-    return myOwnAccounts.filter((account) => filterByAccounts?.includes(account.id))
+    const filtered = myOwnAccounts
+      .filter((account) => account?.type !== 'Credit Card')
+      .filter((account) => filterByAccounts?.includes(account.id))
+    return filtered.length === 0 ? myOwnAccounts : filtered
   }, [myOwnAccounts, filterByAccounts])
 
   const group = useCallback(

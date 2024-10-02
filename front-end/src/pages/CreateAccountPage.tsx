@@ -13,7 +13,7 @@ const CreateAccountPage: FC = () => {
 
   const onSubmit = useCallback(async (data: Omit<Account, 'id'>) => {
     await createAccount(data)
-    navigate('/accounts')
+    navigate('/accounts', { replace: true })
   }, [])
 
   return (

@@ -1,5 +1,6 @@
 import { Box, FormControlLabel, Radio, RadioGroup } from '@mui/material'
 import { FC, useEffect, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 
 import AccountsBalanceChart, { GroupType } from '../components/AccountsBalanceChart'
 import ContentWithHeader from '../components/ContentWithHeader'
@@ -14,7 +15,12 @@ const AccountsBalancePage: FC = () => {
     overview: filterOverview,
   } = useTransactionFilter((account: Account) => account.isMine, false)
 
-  const [groupBy, setGroupBy] = useState<GroupType>('account')
+  const location = useLocation()
+  const query = new URLSearchParams(location.search)
+  const navigate = useNavigate()
+
+  const groupBy: GroupType = (query.get('groupBy') ?? 'account') as GroupType
+
   const [optionsHeight, setOptionsHeight] = useState(240)
 
   const [contentRef, setContentRef] = useState<HTMLDivElement | null>(null)
@@ -73,7 +79,13 @@ const AccountsBalancePage: FC = () => {
               }}
             >
               <div style={{ fontWeight: 'bold' }}>Group by</div>
-              <RadioGroup value={groupBy} onChange={(newValue) => setGroupBy(newValue.target.value as GroupType)}>
+              <RadioGroup
+                value={groupBy}
+                onChange={(newValue) => {
+                  query.set('groupBy', newValue.target.value)
+                  navigate(`${location.pathname}?${query.toString()}`)
+                }}
+              >
                 <FormControlLabel
                   value="none"
                   label="None"

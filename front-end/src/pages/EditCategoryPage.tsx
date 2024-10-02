@@ -24,13 +24,14 @@ const EditCategoryPage: FC = () => {
       if (typeof selectedCategory === 'undefined') return
 
       await updateCategory(selectedCategory!.id, data)
-      navigate('/categories')
+
+      navigate(-1)
     },
     [updateCategory, selectedCategory],
   )
 
   if (typeof selectedCategory === 'undefined') {
-    navigate('/categories')
+    navigate('/categories', { replace: true })
     return null
   }
 

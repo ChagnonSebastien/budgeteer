@@ -26,10 +26,13 @@ const CreateCategoryPage: FC = () => {
 
   const { create: createTransaction } = useContext(TransactionServiceContext)
 
-  const onSubmit = useCallback(async (data: Omit<Transaction, 'id'>) => {
-    await createTransaction(data)
-    navigate('/transactions')
-  }, [])
+  const onSubmit = useCallback(
+    async (data: Omit<Transaction, 'id'>) => {
+      await createTransaction(data)
+      navigate(`/transactions?${query.toString()}`, { replace: true })
+    },
+    [navigate, query],
+  )
 
   return (
     <ContentWithHeader title={`Record new ${type ?? 'transaction'}`} button="return">

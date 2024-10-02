@@ -3,6 +3,7 @@ import { DateCalendar, DateView } from '@mui/x-date-pickers'
 import { addDays, subMonths, subYears } from 'date-fns'
 import dayjs, { Dayjs } from 'dayjs'
 import { useContext, useMemo, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 
 import { AccountList } from './AccountList'
 import { CategoryList } from './CategoryList'
@@ -11,6 +12,16 @@ import Account from '../domain/model/account'
 import { AccountServiceContext, CategoryServiceContext, TransactionServiceContext } from '../service/ServiceContext'
 
 export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilterByCategory = true) => {
+  const location = useLocation()
+  const query = new URLSearchParams(location.search)
+  const navigate = useNavigate()
+  const accountFilter = query.get('account') ? Number.parseInt(query.get('account')!) : null
+  const categoryFilter = query.get('category') ? Number.parseInt(query.get('category')!) : null
+  const fromDate = query.get('from')
+    ? new Date(Number.parseInt(query.get('from')!))
+    : addDays(subYears(new Date(), 1), 1)
+  const toDate = query.get('to') ? new Date(Number.parseInt(query.get('to')!)) : new Date()
+
   const theme = useTheme()
   const fullScreen = useMediaQuery(theme.breakpoints.down('md'))
 
@@ -22,17 +33,13 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
   const accounts = useMemo(() => rawAccounts.filter(accountPreFilter), [rawAccounts, accountPreFilter])
 
   const [showAccountModal, setShowAccountModal] = useState(false)
-  const [accountFilter, setAccountFilter] = useState<null | number>(null)
 
   const { state: categories } = useContext(CategoryServiceContext)
   const [showCategoryModal, setShowCategoryModal] = useState(false)
-  const [categoryFilter, setCategoryFilter] = useState<number | null>(null)
 
-  const [fromDate, setFromDate] = useState(addDays(subYears(new Date(), 1), 1))
   const [fromView, setFromView] = useState<DateView>('day')
   const [showFromDateModal, setShowFromDateModal] = useState(false)
 
-  const [toDate, setToDate] = useState(new Date())
   const [toView, setToView] = useState<DateView>('day')
   const [showToDateModal, setShowToDateModal] = useState(false)
 
@@ -47,11 +54,14 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
           ev.stopPropagation()
           setShowAccountModal(true)
         }}
-        onDelete={() => setAccountFilter(null)}
+        onDelete={() => {
+          query.delete('account')
+          navigate(`${location.pathname}?${query.toString()}`)
+        }}
         label={accounts.find((a) => a.id === accountFilter)?.name ?? accountFilter}
       />
     )
-  }, [accountFilter])
+  }, [accountFilter, query])
 
   const categoryPills = useMemo(() => {
     if (categoryFilter === null) return null
@@ -62,11 +72,14 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
           ev.stopPropagation()
           setShowCategoryModal(true)
         }}
-        onDelete={() => setCategoryFilter(null)}
+        onDelete={() => {
+          query.delete('category')
+          navigate(`${location.pathname}?${query.toString()}`)
+        }}
         label={categories.find((c) => c.id === categoryFilter)?.name ?? categoryFilter}
       />
     )
-  }, [categoryFilter])
+  }, [categoryFilter, query])
 
   const fromPills = useMemo(() => {
     return (
@@ -163,8 +176,9 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
           style={{ padding: '.25rem 1rem', fontWeight: 'bolder', cursor: 'pointer' }}
           onClick={() => {
             if (transactions.length > 0) {
-              setFromDate(transactions[transactions.length - 1].date)
-              setToDate(new Date())
+              query.set('from', String(transactions[transactions.length - 1].date.getTime()))
+              query.set('to', String(Date.now()))
+              navigate(`${location.pathname}?${query.toString()}`)
             }
           }}
         >
@@ -174,8 +188,9 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
           style={{ padding: '.25rem 1rem', fontWeight: 'bolder', cursor: 'pointer' }}
           onClick={() => {
             if (transactions.length > 0) {
-              setFromDate(addDays(subYears(new Date(), 5), 1))
-              setToDate(new Date())
+              query.set('from', String(addDays(subYears(new Date(), 5), 1).getTime()))
+              query.set('to', String(Date.now()))
+              navigate(`${location.pathname}?${query.toString()}`)
             }
           }}
         >
@@ -185,8 +200,9 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
           style={{ padding: '.25rem 1rem', fontWeight: 'bolder', cursor: 'pointer' }}
           onClick={() => {
             if (transactions.length > 0) {
-              setFromDate(addDays(subYears(new Date(), 3), 1))
-              setToDate(new Date())
+              query.set('from', String(addDays(subYears(new Date(), 3), 1).getTime()))
+              query.set('to', String(Date.now()))
+              navigate(`${location.pathname}?${query.toString()}`)
             }
           }}
         >
@@ -196,8 +212,9 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
           style={{ padding: '.25rem 1rem', fontWeight: 'bolder', cursor: 'pointer' }}
           onClick={() => {
             if (transactions.length > 0) {
-              setFromDate(addDays(subYears(new Date(), 1), 1))
-              setToDate(new Date())
+              query.set('from', String(addDays(subYears(new Date(), 1), 1).getTime()))
+              query.set('to', String(Date.now()))
+              navigate(`${location.pathname}?${query.toString()}`)
             }
           }}
         >
@@ -207,8 +224,9 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
           style={{ padding: '.25rem 1rem', fontWeight: 'bolder', cursor: 'pointer' }}
           onClick={() => {
             if (transactions.length > 0) {
-              setFromDate(addDays(subMonths(new Date(), 1), 1))
-              setToDate(new Date())
+              query.set('from', String(addDays(subMonths(new Date(), 1), 1).getTime()))
+              query.set('to', String(Date.now()))
+              navigate(`${location.pathname}?${query.toString()}`)
             }
           }}
         >
@@ -248,11 +266,12 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
       </Dialog>
 
       <Dialog fullScreen={fullScreen} open={showCategoryModal} onClose={() => setShowCategoryModal(false)}>
-        <ContentWithHeader title="Filter by category" button="return" onCancel={() => setShowCategoryModal(false)}>
+        <ContentWithHeader title="Filter by category" button="none" onCancel={() => setShowCategoryModal(false)}>
           <CategoryList
             categories={categories}
             onSelect={(categoryId) => {
-              setCategoryFilter(categoryId)
+              query.set('category', String(categoryId))
+              navigate(`${location.pathname}?${query.toString()}`)
               setShowCategoryModal(false)
             }}
           />
@@ -266,7 +285,8 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
             accounts={accounts}
             filterable={{ filter, setFilter }}
             onSelect={(account) => {
-              setAccountFilter(account.id)
+              query.set('account', String(account.id))
+              navigate(`${location.pathname}?${query.toString()}`)
               setShowAccountModal(false)
             }}
           />
@@ -288,7 +308,8 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
             views={['year', 'month', 'day']}
             value={dayjs(fromDate)}
             onChange={(newDate: Dayjs) => {
-              setFromDate(newDate.toDate())
+              query.set('from', String(newDate.unix()))
+              navigate(`${location.pathname}?${query.toString()}`)
               if (fromView === 'day') setShowFromDateModal(false)
             }}
             onViewChange={(view) => setFromView(view)}
@@ -308,7 +329,8 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
             views={['year', 'month', 'day']}
             value={dayjs(toDate)}
             onChange={(newDate: Dayjs) => {
-              setToDate(newDate.toDate())
+              query.set('to', String(newDate.unix()))
+              navigate(`${location.pathname}?${query.toString()}`)
               if (toView === 'day') setShowToDateModal(false)
             }}
             onViewChange={(view) => setToView(view)}

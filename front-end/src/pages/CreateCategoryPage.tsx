@@ -13,7 +13,7 @@ const CreateCategoryPage: FC = () => {
 
   const onSubmit = useCallback(async (data: Omit<Category, 'id'>) => {
     await createCategory(data)
-    navigate('/categories')
+    navigate('/categories', { replace: true })
   }, [])
 
   return (

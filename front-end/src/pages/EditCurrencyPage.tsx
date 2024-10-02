@@ -26,13 +26,13 @@ const EditCurrency: FC = () => {
 
       await updateCurrencies(selectedCurrency!.id, data)
 
-      navigate('/currencies')
+      navigate(-1)
     },
     [updateCurrencies, selectedCurrency],
   )
 
   if (typeof selectedCurrency === 'undefined') {
-    navigate('/currencies')
+    navigate('/currencies', { replace: true })
     return null
   }
 

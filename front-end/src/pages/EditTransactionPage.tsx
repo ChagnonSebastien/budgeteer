@@ -29,13 +29,13 @@ const EditTransactionPage: FC = () => {
 
       await updateTransaction(selectedTransaction.id, data)
 
-      navigate('/transactions')
+      navigate(-1)
     },
     [updateTransaction, selectedTransaction],
   )
 
   if (typeof selectedTransaction === 'undefined') {
-    navigate('/transactions')
+    navigate('/transactions', { replace: true })
     return null
   }
 
