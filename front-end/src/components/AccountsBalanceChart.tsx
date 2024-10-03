@@ -139,7 +139,10 @@ const AccountsBalanceChart: FC<Props> = (props) => {
           valueFormat={(value) => `${formatFull(defaultCurrency, value, anonymity)}`}
           margin={{ top: 10, right: 50, bottom: 70, left: 60 }}
           axisBottom={{
-            format: (i) => (i % showLabelEveryFactor === 0 ? labels[i] && formatDate(labels[i], 'MMM d, yyyy') : ''),
+            format: (i) =>
+              (data.length - i - 1) % showLabelEveryFactor === 0
+                ? labels[i] && formatDate(labels[i], 'MMM d, yyyy')
+                : '',
             tickRotation: -45,
           }}
           axisLeft={{
