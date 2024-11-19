@@ -25,10 +25,11 @@ interface Props {
   fromDate: Date
   toDate: Date
   groupBy: GroupType
+  splitInvestements?: boolean
 }
 
 const AccountsBalanceChart: FC<Props> = (props) => {
-  const { fromDate, toDate, filterByAccounts, groupBy } = props
+  const { fromDate, toDate, filterByAccounts, groupBy, splitInvestements = false } = props
 
   const { defaultCurrency } = useContext(CurrencyServiceContext)
   const { accountTotals } = useContext(MixedAugmentation)
@@ -38,7 +39,7 @@ const AccountsBalanceChart: FC<Props> = (props) => {
   const filteredAccounts = useMemo(() => {
     if (typeof filterByAccounts === 'undefined') return myOwnAccounts
     const filtered = myOwnAccounts
-      .filter((account) => account?.type !== 'Credit Card')
+      // .filter((account) => account?.type !== 'Credit Card')
       .filter((account) => filterByAccounts?.includes(account.id))
     return filtered.length === 0 ? myOwnAccounts : filtered
   }, [myOwnAccounts, filterByAccounts])
@@ -97,23 +98,29 @@ const AccountsBalanceChart: FC<Props> = (props) => {
     const data: { [account: string]: number }[] = []
     const labels: Date[] = []
     const groups = new Set<string>()
+    let interestsDiff = 0
 
     outerLoop: while (i >= 0) {
       const upTo = subN(toDate, i)
       let todaysData: { [account: string]: number } = {}
+      let rawTotal = 0
 
       for (const [accountId, accountData] of accountTotals ?? []) {
         const item = filteredAccounts.find((a) => a.id === accountId)
-        if (item?.type === 'Credit Card') continue
-
-        let total = 0
         const day = accountData.years.get(upTo.getFullYear())?.months.get(upTo.getMonth())?.days.get(upTo.getDate())
         if (typeof day !== 'undefined') {
-          total += day.total ?? 0
-          total += day.portfolio ?? 0
+          rawTotal += day.raw ?? 0
         } else {
           i -= 1
           continue outerLoop
+        }
+
+        if (item?.type === 'Credit Card') continue
+
+        let total = 0
+        if (typeof day !== 'undefined') {
+          total += day.total ?? 0
+          total += day.portfolio ?? 0
         }
 
         const groupLabel = group(item)
@@ -123,7 +130,27 @@ const AccountsBalanceChart: FC<Props> = (props) => {
 
         const bigTotal = (todaysData[groupLabel] ?? 0) + total
         todaysData = { ...todaysData, [groupLabel]: bigTotal }
+
         groups.add(groupLabel)
+      }
+
+      if (splitInvestements && groupBy === 'none') {
+        let total = rawTotal;
+        let interests = todaysData['Total'] - rawTotal
+        
+        if (interestsDiff == 0) {
+          interestsDiff = interests
+        }
+
+        total += interestsDiff
+        interests -= interestsDiff
+
+        //if (interests < 0) {
+        //  total -= interests
+        //  interests = 0
+        //}
+        todaysData = {...todaysData, ['Total']: total, ['Interests']: interests }
+        groups.add('Interests')
       }
 
       labels.push(upTo)

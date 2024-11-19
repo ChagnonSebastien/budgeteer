@@ -10,7 +10,7 @@ import {
 import { ExchangeRate } from '../domain/model/currency'
 import { AugmentedTransaction } from '../domain/model/transaction'
 
-type DayData = { total: number; portfolio: number }
+type DayData = { total: number; portfolio: number; raw: number }
 type MonthData = DayData & { days: Map<number, DayData> }
 type YearData = DayData & { months: Map<number, MonthData> }
 type AccountData = DayData & { years: Map<number, YearData> }
@@ -179,14 +179,20 @@ export const MixedAugmentationProvider: FC<Props> = ({ children }) => {
           return 0
         })
         .reduce((a, b) => a + b, 0)
+      const raw = account.initialAmounts
+        .map((initialAmount) => {
+          if (initialAmount.currencyId === defaultCurrency.id) return initialAmount.value
+          return exchangeRateOnDay(initialAmount.currencyId, defaultCurrency.id, fromDate) * initialAmount.value
+        })
+        .reduce((a, b) => a + b, 0)
       const portfolio = 0
       const days = new Map<number, DayData>()
       const months = new Map<number, MonthData>()
       const years = new Map<number, YearData>()
-      days.set(fromDate.getDate(), { total, portfolio })
-      months.set(fromDate.getMonth(), { total, days, portfolio })
-      years.set(fromDate.getFullYear(), { total, months, portfolio })
-      totals.set(account.id, { total, years, portfolio })
+      days.set(fromDate.getDate(), { total, portfolio, raw })
+      months.set(fromDate.getMonth(), { total, days, portfolio, raw })
+      years.set(fromDate.getFullYear(), { total, months, portfolio, raw })
+      totals.set(account.id, { total, years, portfolio, raw })
       return totals
     }, new Map())
 
@@ -200,25 +206,25 @@ export const MixedAugmentationProvider: FC<Props> = ({ children }) => {
       for (const totalData of AccountTotals.values()) {
         let year = totalData.years.get(upTo.getFullYear())
         if (typeof year === 'undefined') {
-          const { total, portfolio } = totalData.years.get(yesterday.getFullYear())!
-          year = { total, portfolio, months: new Map<number, MonthData>() }
+          const { total, portfolio, raw } = totalData.years.get(yesterday.getFullYear())!
+          year = { total, portfolio, raw, months: new Map<number, MonthData>() }
           totalData.years.set(upTo.getFullYear(), year)
         }
 
         let month = year.months.get(upTo.getMonth())
         if (typeof month === 'undefined') {
-          const { total, portfolio } = totalData.years.get(yesterday.getFullYear())!.months.get(yesterday.getMonth())!
-          month = { total, portfolio, days: new Map<number, DayData>() }
+          const { total, portfolio, raw } = totalData.years.get(yesterday.getFullYear())!.months.get(yesterday.getMonth())!
+          month = { total, portfolio, raw, days: new Map<number, DayData>() }
           year.months.set(upTo.getMonth(), month)
         }
 
         let day = month.days.get(upTo.getDate())
         if (typeof day === 'undefined') {
-          const { total, portfolio } = totalData.years
+          const { total, portfolio, raw } = totalData.years
             .get(yesterday.getFullYear())!
             .months.get(yesterday.getMonth())!
             .days.get(yesterday.getDate())!
-          day = { total, portfolio }
+          day = { total, portfolio, raw }
           month.days.set(upTo.getDate(), day)
         }
       }
@@ -239,6 +245,14 @@ export const MixedAugmentationProvider: FC<Props> = ({ children }) => {
             year.total += transaction.receiverAmount
             month.total += transaction.receiverAmount
             day.total += transaction.receiverAmount
+
+            if (!(transaction.sender?.isMine ?? false)) {
+              account.raw += transaction.receiverAmount
+              year.raw += transaction.receiverAmount
+              month.raw += transaction.receiverAmount
+              day.raw += transaction.receiverAmount
+            }
+
           } else {
             const receiver = Investments.get(transaction.receiverId!)!
             receiver.set(
@@ -258,6 +272,14 @@ export const MixedAugmentationProvider: FC<Props> = ({ children }) => {
             year.total -= transaction.amount
             month.total -= transaction.amount
             day.total -= transaction.amount
+
+            if (!(transaction.receiver?.isMine ?? false)) {
+              account.raw -= transaction.receiverAmount
+              year.raw -= transaction.receiverAmount
+              month.raw -= transaction.receiverAmount
+              day.raw -= transaction.receiverAmount
+            }
+
           } else {
             const sender = Investments.get(transaction.senderId!)!
             sender.set(transaction.currencyId, (sender.get(transaction.currencyId) ?? 0) - transaction.amount)
