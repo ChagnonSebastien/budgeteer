@@ -105,9 +105,12 @@ const CostsAnalysisPage: FC = () => {
           value *= exchangeRateOnDay(currentValue.currencyId, defaultCurrency!.id, new Date())
         }
 
+        console.log(currentValue)
         let category = currentValue.category!
-        while (category.parentId !== root.id) {
-          category = category.parent!
+        if (category.id !== root.id) {
+          while (category.parentId !== root.id) {
+            category = category.parent!
+          }
         }
 
         previousValue.set(category.name, (previousValue.get(category.name) ?? 0) + value)
