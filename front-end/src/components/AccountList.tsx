@@ -136,7 +136,7 @@ export const AccountList = (props: Props) => {
   }, [myOwnAccounts, otherAccounts, activeTab])
 
   return (
-    <div style={{ minWidth: '25rem', height: '100%' }}>
+    <div style={{ minWidth: '25rem', height: '100%', display: 'flex', flexDirection: 'column' }}>
       {filterable && (
         <TextField
           autoFocus
@@ -148,7 +148,7 @@ export const AccountList = (props: Props) => {
         />
       )}
       {segments}
-      <div style={{ overflowY: 'scroll', height: '100%' }}>
+      <div style={{ overflowY: 'scroll', flexGrow: 1 }}>
         {displayedAccount.map((account) => {
           return (
             <ListItemButton key={`account-list-${account.id}`} onClick={() => onSelect(account)}>

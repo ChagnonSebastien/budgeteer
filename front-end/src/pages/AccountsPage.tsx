@@ -1,5 +1,5 @@
 import { Button } from '@mui/material'
-import { FC, useContext } from 'react'
+import { FC, useContext, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import { AccountList } from '../components/AccountList'
@@ -11,18 +11,51 @@ const AccountsPage: FC = () => {
 
   const { state: accounts } = useContext(AccountServiceContext)
 
+  const [optionsHeight, setOptionsHeight] = useState(240)
+  const [contentRef, setContentRef] = useState<HTMLDivElement | null>(null)
+  const [contentHeight, setContentHeight] = useState(600)
+  useEffect(() => {
+    if (contentRef === null) return
+    const ref = contentRef
+
+    const callback = () => {
+      setContentHeight(ref.clientHeight)
+    }
+    callback()
+
+    window.addEventListener('resize', callback)
+    return () => window.removeEventListener('resize', callback)
+  }, [contentRef])
+
   return (
-    <ContentWithHeader title="Accounts" button="menu">
-      <div style={{ overflow: 'hidden', height: '100%', display: 'flex', flexDirection: 'column' }}>
-        <AccountList
-          accounts={accounts}
-          onSelect={(account) => navigate(`/accounts/edit/${account.id}`)}
-          showBalances
-        />
-        <div style={{ height: '1rem' }} />
-        <Button fullWidth variant="contained" onClick={() => navigate('/accounts/new')}>
-          New
-        </Button>
+    <ContentWithHeader title="Accounts" button="menu" contentMaxWidth="100%" contentOverflowY="hidden">
+      <div style={{ height: '100%', width: '100%' }} ref={setContentRef}>
+        <div
+          style={{
+            width: '100%',
+            position: 'relative',
+            height: `${contentHeight - optionsHeight}px`,
+            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column',
+          }}
+        >
+          <AccountList
+            accounts={accounts}
+            onSelect={(account) => navigate(`/accounts/edit/${account.id}`)}
+            showBalances
+          />
+        </div>
+        <div
+          ref={(ref) => {
+            if (ref !== null) setOptionsHeight(ref.scrollHeight)
+          }}
+        >
+          <div style={{ height: '1rem' }} />
+          <Button fullWidth variant="contained" onClick={() => navigate('/accounts/new')}>
+            New
+          </Button>
+        </div>
       </div>
     </ContentWithHeader>
   )
