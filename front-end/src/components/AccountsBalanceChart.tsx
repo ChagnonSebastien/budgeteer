@@ -135,9 +135,9 @@ const AccountsBalanceChart: FC<Props> = (props) => {
       }
 
       if (splitInvestements && groupBy === 'none') {
-        let total = rawTotal;
+        let total = rawTotal
         let interests = todaysData['Total'] - rawTotal
-        
+
         if (interestsDiff == 0) {
           interestsDiff = interests
         }
@@ -149,7 +149,7 @@ const AccountsBalanceChart: FC<Props> = (props) => {
         //  total -= interests
         //  interests = 0
         //}
-        todaysData = {...todaysData, ['Total']: total, ['Interests']: interests }
+        todaysData = { ...todaysData, ['Total']: total, ['Interests']: interests }
         groups.add('Interests')
       }
 

@@ -57,6 +57,12 @@ const appPages: AppPage[] = [
     keepQuery: [],
   },
   {
+    title: 'Trends',
+    url: '/trends',
+    iconName: 'BiSolidFileImport',
+    keepQuery: [],
+  },
+  {
     title: 'Costs Analysis',
     url: '/costs',
     iconName: 'BiSolidFileImport',

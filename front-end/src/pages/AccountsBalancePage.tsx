@@ -79,7 +79,7 @@ const AccountsBalancePage: FC = () => {
                 padding: '1rem',
                 borderRadius: '1rem',
                 display: 'flex',
-                justifyContent: 'space-around'
+                justifyContent: 'space-around',
               }}
             >
               <div>
@@ -124,7 +124,7 @@ const AccountsBalancePage: FC = () => {
                     value="type"
                     label="Interests"
                     sx={{ margin: 0 }}
-                    control={(
+                    control={
                       <Checkbox
                         sx={{ padding: '0' }}
                         checked={splitInvestments}
@@ -133,7 +133,7 @@ const AccountsBalancePage: FC = () => {
                           navigate(`${location.pathname}?${query.toString()}`)
                         }}
                       />
-                    )}
+                    }
                   />
                 </Box>
               </div>

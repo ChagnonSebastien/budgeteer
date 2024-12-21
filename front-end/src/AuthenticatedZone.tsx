@@ -7,7 +7,6 @@ import { UserContext } from './App'
 import ContentWithHeader from './components/ContentWithHeader'
 import CurrencyForm from './components/CurrencyForm'
 import DrawerWrapper from './components/Menu'
-import Menu from './components/Menu'
 import Account from './domain/model/account'
 import Category from './domain/model/category'
 import Currency from './domain/model/currency'
@@ -26,6 +25,7 @@ import EditCategoryPage from './pages/EditCategoryPage'
 import EditCurrencyPage from './pages/EditCurrencyPage'
 import EditTransactionPage from './pages/EditTransactionPage'
 import TransactionPage from './pages/TransactionPage'
+import TrendsPage from './pages/TrendsPage'
 import { AccountPersistenceAugmenter } from './service/AccountServiceAugmenter'
 import { BasicCrudServiceWithPersistence } from './service/BasicCrudServiceWithPersistence'
 import { CategoryPersistenceAugmenter } from './service/CategoryServiceAugmenter'
@@ -146,6 +146,7 @@ const AuthenticatedZone: FC<Props> = (props) => {
                     <Route path="/transactions/new" element={<CreateTransactionPage />} />
                     <Route path="/transactions/edit/:transactionId" element={<EditTransactionPage />} />
                     <Route path="/costs" element={<CostsAnalysisPage />} />
+                    <Route path="/trends" element={<TrendsPage />} />
                     <Route path="*" element={<Navigate to="/transactions" />} />
                   </Routes>
                 </DrawerWrapper>
