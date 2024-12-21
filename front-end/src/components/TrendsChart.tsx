@@ -1,7 +1,6 @@
 import { Card } from '@mui/material'
 import { ResponsiveBar } from '@nivo/bar'
 import {
-  addDays,
   addMonths,
   differenceInMonths,
   differenceInQuarters,

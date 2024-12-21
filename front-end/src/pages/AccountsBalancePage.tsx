@@ -21,6 +21,7 @@ const AccountsBalancePage: FC = () => {
 
   const groupBy: GroupType = (query.get('groupBy') ?? 'account') as GroupType
   const splitInvestments: boolean = Number.parseInt(query.get('splitInvestments') ?? '0') > 0
+  const spread: boolean = Number.parseInt(query.get('spread') ?? '0') > 0
 
   const [optionsHeight, setOptionsHeight] = useState(240)
 
@@ -62,6 +63,7 @@ const AccountsBalancePage: FC = () => {
             filterByAccounts={accountFilter === null ? undefined : [accountFilter]}
             groupBy={groupBy}
             splitInvestements={splitInvestments}
+            spread={spread}
           />
         </div>
 
@@ -119,17 +121,36 @@ const AccountsBalancePage: FC = () => {
               </div>
               <div>
                 <div style={{ fontWeight: 'bold' }}>Show</div>
+                {groupBy === 'none' && (
+                  <Box>
+                    <FormControlLabel
+                      value="type"
+                      label="Interests"
+                      sx={{ margin: 0 }}
+                      control={
+                        <Checkbox
+                          sx={{ padding: '0' }}
+                          checked={splitInvestments}
+                          onChange={(newValue) => {
+                            query.set('splitInvestments', newValue.target.checked ? '1' : '0')
+                            navigate(`${location.pathname}?${query.toString()}`)
+                          }}
+                        />
+                      }
+                    />
+                  </Box>
+                )}
                 <Box>
                   <FormControlLabel
                     value="type"
-                    label="Interests"
+                    label="Spread"
                     sx={{ margin: 0 }}
                     control={
                       <Checkbox
                         sx={{ padding: '0' }}
-                        checked={splitInvestments}
+                        checked={spread}
                         onChange={(newValue) => {
-                          query.set('splitInvestments', newValue.target.checked ? '1' : '0')
+                          query.set('spread', newValue.target.checked ? '1' : '0')
                           navigate(`${location.pathname}?${query.toString()}`)
                         }}
                       />

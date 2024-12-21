@@ -26,10 +26,11 @@ interface Props {
   toDate: Date
   groupBy: GroupType
   splitInvestements?: boolean
+  spread?: boolean
 }
 
 const AccountsBalanceChart: FC<Props> = (props) => {
-  const { fromDate, toDate, filterByAccounts, groupBy, splitInvestements = false } = props
+  const { fromDate, toDate, filterByAccounts, groupBy, splitInvestements = false, spread = false } = props
 
   const { defaultCurrency } = useContext(CurrencyServiceContext)
   const { accountTotals } = useContext(MixedAugmentation)
@@ -173,15 +174,19 @@ const AccountsBalanceChart: FC<Props> = (props) => {
             tickRotation: -45,
           }}
           axisLeft={{
-            format: (i) =>
-              anonymity
+            format: (i) => {
+              if (spread) {
+                return `${i * 100}%`
+              }
+              return anonymity
                 ? 'XX'
                 : ((i as number) / Math.pow(10, defaultCurrency?.decimalPoints)).toLocaleString(undefined, {
                     notation: 'compact',
-                  }),
+                  })
+            },
           }}
           curve="monotoneX"
-          offsetType="none"
+          offsetType={spread ? 'expand' : 'none'}
           order="reverse"
           theme={darkTheme}
           colors={darkColors}
