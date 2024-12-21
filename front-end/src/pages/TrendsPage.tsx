@@ -71,6 +71,7 @@ const TrendsPage: FC = () => {
 
           <Tabs centered value={grouping} onChange={(_event, value) => setGrouping(value as grouping)}>
             <Tab label="Months" value="months" />
+            <Tab label="Quarters" value="quarters" />
             <Tab label="Years" value="years" />
           </Tabs>
         </div>

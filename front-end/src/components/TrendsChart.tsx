@@ -2,22 +2,27 @@ import { Card } from '@mui/material'
 import { ResponsiveBar } from '@nivo/bar'
 import {
   addDays,
+  addMonths,
   differenceInMonths,
+  differenceInQuarters,
   differenceInYears,
   formatDate,
   isBefore,
   isSameDay,
+  subDays,
   subMonths,
+  subQuarters,
   subYears,
 } from 'date-fns'
-import { FC, useContext, useMemo } from 'react'
+import { FC, useCallback, useContext, useMemo } from 'react'
 
-import { formatAmount } from '../domain/model/currency'
+import { DrawerContext } from './Menu'
+import { formatAmount, formatFull } from '../domain/model/currency'
 import MixedAugmentation from '../service/MixedAugmentation'
 import { CategoryServiceContext, CurrencyServiceContext } from '../service/ServiceContext'
 import { darkTheme } from '../utils'
 
-export type grouping = 'years' | 'months'
+export type grouping = 'years' | 'quarters' | 'months'
 
 interface Props {
   categoryId: number
@@ -30,6 +35,7 @@ const TrendsChart: FC<Props> = (props) => {
   const { defaultCurrency } = useContext(CurrencyServiceContext)
   const { augmentedTransactions, exchangeRateOnDay } = useContext(MixedAugmentation)
   const { root } = useContext(CategoryServiceContext)
+  const { anonymity } = useContext(DrawerContext)
 
   const filteredTransactions = useMemo(() => {
     return augmentedTransactions.filter((t) => {
@@ -48,19 +54,43 @@ const TrendsChart: FC<Props> = (props) => {
   const data = useMemo(() => {
     if (defaultCurrency === null || filteredTransactions.length === 0) return null
     const today = new Date()
+    let toDate = addMonths(today, 1)
+    toDate.setDate(1)
+
+    if (grouping === 'quarters') {
+      while (toDate.getMonth() % 3 !== 0) {
+        toDate = addMonths(toDate, 1)
+      }
+    }
+
+    if (grouping === 'years') {
+      while (toDate.getMonth() !== 0) {
+        toDate = addMonths(toDate, 1)
+      }
+    }
+
     const fromDate = filteredTransactions[filteredTransactions.length - 1].date
 
-    const diffMonths = differenceInMonths(today, fromDate)
-    const diffYears = differenceInYears(today, fromDate)
+    const diffMonths = differenceInMonths(toDate, fromDate)
+    const diffQuarters = differenceInQuarters(toDate, fromDate)
+    const diffYears = differenceInYears(toDate, fromDate)
 
-    const subN = grouping === 'months' ? subMonths : subYears
-    let i = grouping === 'months' ? diffMonths + 1 : diffYears + 1
+    let subN = subMonths
+    let i = diffMonths
+
+    if (grouping === 'quarters') {
+      subN = subQuarters
+      i = diffQuarters
+    } else if (grouping === 'years') {
+      subN = subYears
+      i = diffYears
+    }
 
     let transactionIndex = filteredTransactions.length - 1
     const data: { date: string; total: number }[] = []
 
     while (i >= 0) {
-      const upTo = subN(today, i)
+      const upTo = subDays(subN(toDate, i), 1)
       let bucket = 0
 
       while (
@@ -102,23 +132,39 @@ const TrendsChart: FC<Props> = (props) => {
     return data
   }, [filteredTransactions, defaultCurrency, grouping])
 
+  const label = useCallback(
+    (d: Date): string => {
+      switch (grouping) {
+        case 'months':
+          return formatDate(d, 'MMM yyyy')
+        case 'quarters':
+          return `Q${Math.ceil(d.getMonth() / 3)} ${d.getFullYear()}`
+        case 'years':
+          return d.getFullYear().toString()
+      }
+    },
+    [grouping],
+  )
+
   return data && defaultCurrency ? (
     <ResponsiveBar
       margin={{ top: 10, right: 50, bottom: 70, left: 60 }}
-      data={data.slice(data.length - Math.min(data.length, years * (grouping === 'months' ? 12 : 1)))}
+      data={data.slice(
+        data.length - Math.min(data.length, years * (grouping === 'months' ? 12 : grouping === 'quarters' ? 4 : 1)),
+      )}
       axisBottom={{
         tickRotation: -45,
-        format: (props) => formatDate(props, 'MMM d, yyyy'),
+        format: (props) => label(new Date(props)),
       }}
       axisLeft={{
-        format: (i) => formatAmount(defaultCurrency, i),
+        format: (i) =>
+          formatAmount(defaultCurrency, i, anonymity).slice(0, -((defaultCurrency?.decimalPoints ?? 2) + 1)),
       }}
       tooltip={(props) => (
         <Card style={{ padding: '.5rem' }}>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <div>From {formatDate(addDays(subMonths(props.indexValue, 1), 1), 'MMM d, yyyy')}</div>
-            <div>To {formatDate(props.indexValue, 'MMM d, yyyy')}</div>
-            <div>{props.value}</div>
+            <div>{label(new Date(props.indexValue))}</div>
+            <div>{formatFull(defaultCurrency, props.value, anonymity)}</div>
           </div>
         </Card>
       )}
