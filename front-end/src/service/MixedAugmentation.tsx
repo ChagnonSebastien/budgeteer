@@ -213,7 +213,9 @@ export const MixedAugmentationProvider: FC<Props> = ({ children }) => {
 
         let month = year.months.get(upTo.getMonth())
         if (typeof month === 'undefined') {
-          const { total, portfolio, raw } = totalData.years.get(yesterday.getFullYear())!.months.get(yesterday.getMonth())!
+          const { total, portfolio, raw } = totalData.years
+            .get(yesterday.getFullYear())!
+            .months.get(yesterday.getMonth())!
           month = { total, portfolio, raw, days: new Map<number, DayData>() }
           year.months.set(upTo.getMonth(), month)
         }
@@ -229,7 +231,7 @@ export const MixedAugmentationProvider: FC<Props> = ({ children }) => {
         }
       }
 
-      while (i >= 0 && (isBefore(augmentedTransactions[i].date, upTo) || isSameDay(toDate, upTo))) {
+      while (i >= 0 && isSameDay(augmentedTransactions[i].date, upTo)) {
         const transaction = augmentedTransactions[i]
 
         // Investments incomes (such as dividends) should be marked as Investments such and not as raw incomes
@@ -252,7 +254,6 @@ export const MixedAugmentationProvider: FC<Props> = ({ children }) => {
               month.raw += transaction.receiverAmount
               day.raw += transaction.receiverAmount
             }
-
           } else {
             const receiver = Investments.get(transaction.receiverId!)!
             receiver.set(
@@ -279,7 +280,6 @@ export const MixedAugmentationProvider: FC<Props> = ({ children }) => {
               month.raw -= transaction.receiverAmount
               day.raw -= transaction.receiverAmount
             }
-
           } else {
             const sender = Investments.get(transaction.senderId!)!
             sender.set(transaction.currencyId, (sender.get(transaction.currencyId) ?? 0) - transaction.amount)

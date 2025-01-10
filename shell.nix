@@ -12,8 +12,11 @@ pkgs.mkShell {
     if [ -f .env ]; then
       export $(grep -v '^#' .env | xargs)
     fi
-    
+
+    export GOROOT=${pkgs.go}/share/go
     export GOBIN=$PWD/bin
+    export GOPROXY=https://proxy.golang.org,direct
+    export GOSUMDB=sum.golang.org
     mkdir -p $GOBIN
 
     export CPATH="${pkgs.postgresql.dev}/include/server:$CPATH"
