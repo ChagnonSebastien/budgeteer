@@ -1,6 +1,6 @@
 import { Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, useMediaQuery, useTheme } from '@mui/material'
 import { DateCalendar, DateView } from '@mui/x-date-pickers'
-import { addDays, subMonths, subYears } from 'date-fns'
+import { addDays, differenceInDays, formatDate, subMonths, subYears } from 'date-fns'
 import dayjs, { Dayjs } from 'dayjs'
 import { ReactNode, useContext, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
@@ -10,6 +10,7 @@ import { CategoryList } from './CategoryList'
 import ContentWithHeader from './ContentWithHeader'
 import Account from '../domain/model/account'
 import { AccountServiceContext, CategoryServiceContext, TransactionServiceContext } from '../service/ServiceContext'
+import TimeRange from '../slider/TimeRange'
 
 type Filters = {
   overview: ReactNode
@@ -244,6 +245,24 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
         >
           1M
         </div>
+      </div>
+      <div>
+        <TimeRange
+          ticksNumber={10}
+          disabledIntervals={[]}
+          selectedInterval={[fromDate, toDate]}
+          timelineInterval={[transactions[transactions.length - 1].date, transactions[0].date]}
+          step={20}
+          formatTick={(a) => formatDate(new Date(a), 'MMM yyyy')}
+          onUpdateCallback={(_data: { error: boolean; time: Date[] }) => {
+            /** Ignore */
+          }}
+          onChangeCallback={(data: Date[]) => {
+            query.set('from', String(data[0].getTime()))
+            query.set('to', String(data[1].getTime()))
+            navigate(`${location.pathname}?${query.toString()}`)
+          }}
+        />
       </div>
       <div
         style={{
