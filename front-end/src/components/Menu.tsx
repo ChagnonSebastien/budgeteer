@@ -30,7 +30,7 @@ const appPages: AppPage[] = [
     title: 'Transactions',
     url: '/transactions',
     iconName: 'TbArrowsExchange',
-    keepQuery: ['from', 'to', 'account', 'category'],
+    keepQuery: ['from', 'to', 'accounts', 'category'],
   },
   {
     title: 'Categories',
@@ -48,7 +48,7 @@ const appPages: AppPage[] = [
     title: 'Account Balances',
     url: '/accounts/graph',
     iconName: 'MdAccountBalance',
-    keepQuery: ['from', 'to', 'account', 'groupBy'],
+    keepQuery: ['from', 'to', 'accounts', 'groupBy'],
   },
   {
     title: 'Currencies',

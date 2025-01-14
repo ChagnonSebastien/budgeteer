@@ -14,6 +14,8 @@ enum PreparedIcon {
   IoCloseCircle = 'IoCloseCircle',
   MdKeyboardBackspace = 'MdKeyboardBackspace',
   MdMenu = 'MdMenu',
+  FaRegSquare = 'FaRegSquare',
+  FaRegSquareCheck = 'FaRegSquareCheck',
 }
 
 type PreparedIconLib = {

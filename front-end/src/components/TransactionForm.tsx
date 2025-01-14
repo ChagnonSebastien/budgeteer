@@ -332,8 +332,8 @@ const TransactionForm: FC<Props> = (props) => {
         <AccountPicker
           labelText="From"
           errorText={errors.sender.hasVisited ? errors.sender.errorText : ''}
-          setSelectedAccount={setSenderAccount}
-          selectedAccountName={senderAccount.name}
+          onAccountSelected={setSenderAccount}
+          valueText={senderAccount.name}
           myOwn={type !== 'income'}
           allowNew={type === 'income'}
         />
@@ -403,8 +403,8 @@ const TransactionForm: FC<Props> = (props) => {
         <AccountPicker
           labelText="To"
           errorText={errors.receiver.hasVisited ? errors.receiver.errorText : ''}
-          setSelectedAccount={setReceiverAccount}
-          selectedAccountName={receiverAccount.name}
+          onAccountSelected={setReceiverAccount}
+          valueText={receiverAccount.name}
           myOwn={type !== 'expense'}
           allowNew={type === 'expense'}
         />

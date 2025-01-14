@@ -5,8 +5,10 @@ import { AccountList } from './AccountList'
 import { AccountServiceContext } from '../service/ServiceContext'
 
 interface Props {
-  selectedAccountName: string
-  setSelectedAccount: (newAccount: { existing: boolean; id: number | null; name: string }) => void
+  valueText: string
+  onAccountSelected?: (newAccount: { existing: boolean; id: number | null; name: string }) => void
+  selected?: number[]
+  onMultiSelect?: (newAccounts: number[]) => void
   labelText: string
   errorText?: string
   myOwn: boolean
@@ -14,7 +16,7 @@ interface Props {
 }
 
 const AccountPicker: FC<Props> = (props) => {
-  const { selectedAccountName, setSelectedAccount, labelText, errorText, myOwn, allowNew = false } = props
+  const { valueText, onAccountSelected, labelText, errorText, myOwn, allowNew = false, onMultiSelect, selected } = props
   const { myOwnAccounts, otherAccounts } = useContext(AccountServiceContext)
   const accounts = useMemo(() => {
     return myOwn ? myOwnAccounts : otherAccounts
@@ -32,7 +34,7 @@ const AccountPicker: FC<Props> = (props) => {
         type="text"
         label={labelText}
         placeholder={'None'}
-        value={selectedAccountName}
+        value={valueText}
         onFocus={(e) => {
           e.target.blur()
           setShowModal(true)
@@ -44,19 +46,31 @@ const AccountPicker: FC<Props> = (props) => {
           <AccountList
             filterable={{ filter, setFilter }}
             accounts={accounts}
-            onSelect={(selected) => {
-              setSelectedAccount({ existing: true, id: selected.id, name: selected.name })
-              setShowModal(false)
-            }}
+            onSelect={
+              typeof onAccountSelected !== 'undefined'
+                ? (selected) => {
+                    onAccountSelected({ existing: true, id: selected.id, name: selected.name })
+                    setShowModal(false)
+                  }
+                : undefined
+            }
+            onMultiSelect={
+              typeof onMultiSelect !== 'undefined'
+                ? (selected) => {
+                    onMultiSelect(selected)
+                  }
+                : undefined
+            }
+            selected={selected}
           />
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setShowModal(false)}>Close</Button>
-          {allowNew && (
+          {allowNew && typeof onAccountSelected !== 'undefined' && (
             <Button
               onClick={() => {
                 const filterRefAccount = accounts.find((a) => a.name.toLowerCase() === filter.toLowerCase())
-                setSelectedAccount({
+                onAccountSelected({
                   existing: typeof filterRefAccount !== 'undefined',
                   id: filterRefAccount?.id ?? null,
                   name: filterRefAccount?.name ?? filter,

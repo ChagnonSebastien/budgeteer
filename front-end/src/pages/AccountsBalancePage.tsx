@@ -60,7 +60,7 @@ const AccountsBalancePage: FC = () => {
           <AccountsBalanceChart
             fromDate={fromDate}
             toDate={toDate}
-            filterByAccounts={accountFilter === null ? undefined : [accountFilter]}
+            filterByAccounts={accountFilter === null ? undefined : accountFilter}
             groupBy={groupBy}
             splitInvestements={splitInvestments}
             spread={spread}

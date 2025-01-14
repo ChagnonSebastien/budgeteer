@@ -1,6 +1,7 @@
 import { ListItemButton, Tab, Tabs, TextField } from '@mui/material'
 import { Dispatch, SetStateAction, useContext, useEffect, useMemo, useState } from 'react'
 
+import { IconToolsContext } from './IconTools'
 import { DrawerContext } from './Menu'
 import Account from '../domain/model/account'
 import { formatFull } from '../domain/model/currency'
@@ -9,7 +10,9 @@ import { CurrencyServiceContext } from '../service/ServiceContext'
 
 type Props = {
   accounts: Account[]
-  onSelect: (value: Account) => void
+  onSelect?: (value: Account) => void
+  selected?: number[]
+  onMultiSelect?: (value: number[]) => void
   showBalances?: boolean
   filterable?: { filter: string; setFilter: Dispatch<SetStateAction<string>> }
 }
@@ -17,9 +20,10 @@ type Props = {
 type tabs = 'mine' | 'others'
 
 export const AccountList = (props: Props) => {
-  const { accounts, onSelect, showBalances = false, filterable } = props
+  const { accounts, onSelect, showBalances = false, filterable, onMultiSelect, selected } = props
   const { accountBalances } = useContext(MixedAugmentation)
   const { anonymity } = useContext(DrawerContext)
+  const { IconLib } = useContext(IconToolsContext)
 
   const { state: currencies } = useContext(CurrencyServiceContext)
 
@@ -151,9 +155,33 @@ export const AccountList = (props: Props) => {
       <div style={{ overflowY: 'scroll', flexGrow: 1 }}>
         {displayedAccount.map((account) => {
           return (
-            <ListItemButton key={`account-list-${account.id}`} onClick={() => onSelect(account)}>
+            <ListItemButton
+              key={`account-list-${account.id}`}
+              onClick={() => {
+                if (typeof onSelect !== 'undefined') {
+                  onSelect(account)
+                } else if (typeof onMultiSelect !== 'undefined') {
+                  if (typeof selected !== 'undefined' && selected.includes(account.id)) {
+                    onMultiSelect(selected?.filter((a) => a !== account.id) ?? [account.id])
+                  } else if (typeof selected !== 'undefined') {
+                    onMultiSelect([...selected, account.id])
+                  } else {
+                    onMultiSelect([account.id])
+                  }
+                }
+              }}
+            >
               <div style={{ flexGrow: 1 }}>
-                <div>{account.name}</div>
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  {typeof selected !== 'undefined' ? (
+                    selected.includes(account.id) ? (
+                      <IconLib.FaRegSquareCheck size="1.5rem" style={{ marginRight: '.5rem' }} />
+                    ) : (
+                      <IconLib.FaRegSquare size="1.5rem" style={{ marginRight: '.5rem' }} />
+                    )
+                  ) : null}
+                  {account.name}
+                </div>
                 {showBalances &&
                   [...(accountBalances?.get(account.id)?.entries() ?? [])]
                     .filter((entry) => entry[1] !== 0)

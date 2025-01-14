@@ -2,7 +2,7 @@ import { Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, useMed
 import { DateCalendar, DateView } from '@mui/x-date-pickers'
 import { addDays, subMonths, subYears } from 'date-fns'
 import dayjs, { Dayjs } from 'dayjs'
-import { useContext, useMemo, useState } from 'react'
+import { ReactNode, useContext, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 
 import { AccountList } from './AccountList'
@@ -11,11 +11,19 @@ import ContentWithHeader from './ContentWithHeader'
 import Account from '../domain/model/account'
 import { AccountServiceContext, CategoryServiceContext, TransactionServiceContext } from '../service/ServiceContext'
 
-export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilterByCategory = true) => {
+type Filters = {
+  overview: ReactNode
+  accountFilter: number[] | null
+  categoryFilter: number | null
+  fromDate: Date
+  toDate: Date
+}
+
+export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilterByCategory = true): Filters => {
   const location = useLocation()
   const query = new URLSearchParams(location.search)
   const navigate = useNavigate()
-  const accountFilter = query.get('account') ? Number.parseInt(query.get('account')!) : null
+  const accountFilter: number[] = query.get('accounts') ? JSON.parse(query.get('accounts')!) : null
   const categoryFilter = query.get('category') ? Number.parseInt(query.get('category')!) : null
   const fromDate = query.get('from')
     ? new Date(Number.parseInt(query.get('from')!))
@@ -47,7 +55,7 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
 
   const accountPills = useMemo(() => {
     if (accountFilter === null) return null
-    return (
+    return accountFilter.map((accountId) => (
       <Chip
         style={{ margin: '.25rem' }}
         onClick={(ev) => {
@@ -55,12 +63,16 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
           setShowAccountModal(true)
         }}
         onDelete={() => {
-          query.delete('account')
+          if (accountFilter.length === 1) {
+            query.delete('accounts')
+          } else {
+            query.set('accounts', JSON.stringify(accountFilter.filter((a) => a != accountId)))
+          }
           navigate(`${location.pathname}?${query.toString()}`)
         }}
-        label={accounts.find((a) => a.id === accountFilter)?.name ?? accountFilter}
+        label={accounts.find((a) => a.id === accountId)?.name ?? accountId}
       />
-    )
+    ))
   }, [accountFilter, query])
 
   const categoryPills = useMemo(() => {
@@ -284,10 +296,10 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
           <AccountList
             accounts={accounts}
             filterable={{ filter, setFilter }}
-            onSelect={(account) => {
-              query.set('account', String(account.id))
+            selected={accountFilter ?? undefined}
+            onMultiSelect={(accountIds) => {
+              query.set('accounts', JSON.stringify(accountIds))
               navigate(`${location.pathname}?${query.toString()}`)
-              setShowAccountModal(false)
             }}
           />
         </DialogContent>
