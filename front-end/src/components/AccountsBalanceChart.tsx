@@ -5,6 +5,8 @@ import {
   differenceInMonths,
   differenceInWeeks,
   formatDate,
+  isBefore,
+  isSameDay,
   subDays,
   subMonths,
   subWeeks,
@@ -33,16 +35,19 @@ const AccountsBalanceChart: FC<Props> = (props) => {
   const { fromDate, toDate, filterByAccounts, groupBy, splitInvestements = false, spread = false } = props
 
   const { defaultCurrency } = useContext(CurrencyServiceContext)
-  const { accountTotals } = useContext(MixedAugmentation)
+  const { augmentedTransactions, exchangeRateOnDay } = useContext(MixedAugmentation)
   const { myOwnAccounts } = useContext(AccountServiceContext)
   const { anonymity } = useContext(DrawerContext)
 
   const filteredAccounts = useMemo(() => {
-    if (typeof filterByAccounts === 'undefined') return myOwnAccounts
-    const filtered = myOwnAccounts
-      // .filter((account) => account?.type !== 'Credit Card')
-      .filter((account) => filterByAccounts?.includes(account.id))
-    return filtered.length === 0 ? myOwnAccounts : filtered
+    const prefilter = myOwnAccounts.filter((account) => account?.type !== 'Credit Card')
+
+    if (typeof filterByAccounts === 'undefined') {
+      return prefilter
+    }
+
+    const filtered = prefilter.filter((account) => filterByAccounts?.includes(account.id))
+    return filtered.length === 0 ? prefilter : filtered
   }, [myOwnAccounts, filterByAccounts])
 
   const group = useCallback(
@@ -77,81 +82,185 @@ const AccountsBalanceChart: FC<Props> = (props) => {
     if (diffMonths > 72) {
       subN = subMonths
       showLabelEveryFactor = 12
-      i = diffMonths + 1
+      i = diffMonths
     } else if (diffMonths > 36) {
       subN = subMonths
       showLabelEveryFactor = 6
-      i = diffMonths + 1
+      i = diffMonths
     } else if (diffMonths > 24) {
       subN = subMonths
       showLabelEveryFactor = 2
-      i = diffMonths + 1
+      i = diffMonths
     } else if (diffWeeks > 50) {
       subN = subWeeks
       showLabelEveryFactor = 4
-      i = diffWeeks + 1
+      i = diffWeeks
     } else if (diffDays > 50) {
       subN = subDays
       showLabelEveryFactor = 7
-      i = diffDays + 1
+      i = diffDays
+    }
+
+    const Investments = filteredAccounts.reduce((totals, account) => {
+      const groupLabel = group(account)!
+      const groupData = totals.get(groupLabel) ?? { bookValue: 0, assets: new Map() }
+      for (const initialAmount of account.initialAmounts) {
+        groupData.assets.set(
+          initialAmount.currencyId,
+          (groupData.assets.get(initialAmount.currencyId) ?? 0) + initialAmount.value,
+        )
+      }
+      totals.set(groupLabel, groupData)
+      return totals
+    }, new Map<string, { bookValue: number; assets: Map<number, number> }>())
+
+    let upTo = subN(toDate, i + 1)
+    let t = augmentedTransactions.length - 1
+    while (
+      t >= 0 &&
+      (isBefore(augmentedTransactions[t].date, upTo) || isSameDay(augmentedTransactions[t].date, upTo))
+    ) {
+      const transaction = augmentedTransactions[t]
+
+      if (
+        typeof transaction.receiver !== 'undefined' && // Has a Receiver
+        transaction.receiver.isMine && // I am the receiver
+        filteredAccounts.findIndex((a) => a.id === transaction.receiver?.id) >= 0 // The account respects filters
+      ) {
+        const groupLabel = group(transaction.receiver)!
+        const data = Investments.get(groupLabel) ?? { bookValue: 0, assets: new Map() }
+        data.assets.set(
+          transaction.receiverCurrencyId,
+          (data.assets.get(transaction.receiverCurrencyId) ?? 0) + transaction.receiverAmount,
+        )
+        Investments.set(groupLabel, data)
+      }
+      if (
+        typeof transaction.sender !== 'undefined' &&
+        transaction.sender.isMine &&
+        filteredAccounts.findIndex((a) => a.id === transaction.sender?.id) >= 0
+      ) {
+        const groupLabel = group(transaction.sender)!
+        const data = Investments.get(groupLabel) ?? { bookValue: 0, assets: new Map() }
+        data.assets.set(transaction.currencyId, (data.assets.get(transaction.currencyId) ?? 0) - transaction.amount)
+        Investments.set(groupLabel, data)
+      }
+
+      t -= 1
+    }
+
+    for (const groupData of Investments.values()) {
+      let marketValue = 0
+      for (const [currencyId, amount] of groupData.assets) {
+        let factor = 1
+        if (currencyId !== defaultCurrency.id) {
+          factor = exchangeRateOnDay(currencyId, defaultCurrency.id, upTo)
+        }
+        marketValue += amount * factor
+      }
+      groupData.bookValue = marketValue
     }
 
     const data: { [account: string]: number }[] = []
     const labels: Date[] = []
     const groups = new Set<string>()
-    let interestsDiff = 0
 
-    outerLoop: while (i >= 0) {
-      const upTo = subN(toDate, i)
-      let todaysData: { [account: string]: number } = {}
-      let rawTotal = 0
+    while (i >= 0) {
+      upTo = subN(toDate, i)
 
-      for (const [accountId, accountData] of accountTotals ?? []) {
-        const item = filteredAccounts.find((a) => a.id === accountId)
-        const day = accountData.years.get(upTo.getFullYear())?.months.get(upTo.getMonth())?.days.get(upTo.getDate())
-        if (typeof day !== 'undefined') {
-          rawTotal += day.raw ?? 0
-        } else {
-          i -= 1
-          continue outerLoop
+      while (
+        t >= 0 &&
+        (isBefore(augmentedTransactions[t].date, upTo) || isSameDay(augmentedTransactions[t].date, upTo))
+      ) {
+        const transaction = augmentedTransactions[t]
+
+        if (
+          typeof transaction.receiver !== 'undefined' && // Has a Receiver
+          transaction.receiver.isMine && // I am the receiver
+          filteredAccounts.findIndex((a) => a.id === transaction.receiver?.id) >= 0 // The account respects filters
+        ) {
+          const groupLabel = group(transaction.receiver)!
+          const data = Investments.get(groupLabel) ?? { bookValue: 0, assets: new Map() }
+          data.assets.set(
+            transaction.receiverCurrencyId,
+            (data.assets.get(transaction.receiverCurrencyId) ?? 0) + transaction.receiverAmount,
+          )
+
+          if (
+            !(
+              (typeof transaction.sender !== 'undefined' &&
+                transaction.sender.isMine &&
+                filteredAccounts.findIndex((a) => a.id === transaction.sender?.id) >= 0 &&
+                group(transaction.sender) === groupLabel) ||
+              transaction.category?.name === 'Financial income'
+            )
+          ) {
+            if (transaction.receiverCurrencyId === defaultCurrency.id) {
+              data.bookValue += transaction.receiverAmount
+            } else if (transaction.currencyId === defaultCurrency.id) {
+              data.bookValue += transaction.amount
+            } else {
+              const factor = exchangeRateOnDay(transaction.receiverCurrencyId, defaultCurrency.id, upTo)
+              data.bookValue += transaction.receiverAmount * factor
+            }
+          }
+
+          Investments.set(groupLabel, data)
+        }
+        if (
+          typeof transaction.sender !== 'undefined' &&
+          transaction.sender.isMine &&
+          filteredAccounts.findIndex((a) => a.id === transaction.sender?.id) >= 0
+        ) {
+          const groupLabel = group(transaction.sender)!
+          const data = Investments.get(groupLabel) ?? { bookValue: 0, assets: new Map() }
+          data.assets.set(transaction.currencyId, (data.assets.get(transaction.currencyId) ?? 0) - transaction.amount)
+
+          if (
+            !(
+              (typeof transaction.receiver !== 'undefined' &&
+                transaction.receiver.isMine &&
+                filteredAccounts.findIndex((a) => a.id === transaction.receiver?.id) >= 0 &&
+                group(transaction.receiver) === groupLabel) ||
+              transaction.category?.name === 'Financial income'
+            )
+          ) {
+            if (transaction.receiverCurrencyId === defaultCurrency.id) {
+              data.bookValue -= transaction.receiverAmount
+            } else if (transaction.currencyId === defaultCurrency.id) {
+              data.bookValue -= transaction.amount
+            } else {
+              const factor = exchangeRateOnDay(transaction.currencyId, defaultCurrency.id, upTo)
+              data.bookValue -= transaction.amount * factor
+            }
+          }
+
+          Investments.set(groupLabel, data)
         }
 
-        if (item?.type === 'Credit Card') continue
-
-        let total = 0
-        if (typeof day !== 'undefined') {
-          total += day.total ?? 0
-          total += day.portfolio ?? 0
-        }
-
-        const groupLabel = group(item)
-        if (typeof groupLabel === 'undefined') {
-          continue
-        }
-
-        const bigTotal = (todaysData[groupLabel] ?? 0) + total
-        todaysData = { ...todaysData, [groupLabel]: bigTotal }
-
-        groups.add(groupLabel)
+        t -= 1
       }
 
-      if (splitInvestements && groupBy === 'none') {
-        let total = rawTotal
-        let interests = todaysData['Total'] - rawTotal
-
-        if (interestsDiff == 0) {
-          interestsDiff = interests
+      const todaysData: { [account: string]: number } = { test: 100 }
+      for (const [groupLabel, groupData] of Investments.entries()) {
+        let marketValue = 0
+        for (const [currencyId, amount] of groupData.assets) {
+          let factor = 1
+          if (currencyId !== defaultCurrency.id) {
+            factor = exchangeRateOnDay(currencyId, defaultCurrency.id, upTo)
+          }
+          marketValue += amount * factor
         }
 
-        total += interestsDiff
-        interests -= interestsDiff
-
-        //if (interests < 0) {
-        //  total -= interests
-        //  interests = 0
-        //}
-        todaysData = { ...todaysData, ['Total']: total, ['Interests']: interests }
-        groups.add('Interests')
+        if (splitInvestements) {
+          todaysData[`${groupLabel} Gained`] = marketValue === 0 ? 0 : marketValue - groupData.bookValue
+          todaysData[`${groupLabel} Invested`] = marketValue === 0 ? 0 : groupData.bookValue
+          groups.add(`${groupLabel} Gained`)
+          groups.add(`${groupLabel} Invested`)
+        } else {
+          todaysData[groupLabel] = marketValue
+          groups.add(groupLabel)
+        }
       }
 
       labels.push(upTo)
@@ -221,7 +330,7 @@ const AccountsBalanceChart: FC<Props> = (props) => {
         />
       </>
     )
-  }, [defaultCurrency, filteredAccounts, groupBy, fromDate, toDate, group, anonymity])
+  }, [defaultCurrency, filteredAccounts, groupBy, fromDate, toDate, group, anonymity, exchangeRateOnDay])
 }
 
 export default AccountsBalanceChart

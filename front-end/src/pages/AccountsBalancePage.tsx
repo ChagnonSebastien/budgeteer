@@ -121,25 +121,23 @@ const AccountsBalancePage: FC = () => {
               </div>
               <div>
                 <div style={{ fontWeight: 'bold' }}>Show</div>
-                {groupBy === 'none' && (
-                  <Box>
-                    <FormControlLabel
-                      value="type"
-                      label="Interests"
-                      sx={{ margin: 0 }}
-                      control={
-                        <Checkbox
-                          sx={{ padding: '0' }}
-                          checked={splitInvestments}
-                          onChange={(newValue) => {
-                            query.set('splitInvestments', newValue.target.checked ? '1' : '0')
-                            navigate(`${location.pathname}?${query.toString()}`)
-                          }}
-                        />
-                      }
-                    />
-                  </Box>
-                )}
+                <Box>
+                  <FormControlLabel
+                    value="type"
+                    label="Interests"
+                    sx={{ margin: 0 }}
+                    control={
+                      <Checkbox
+                        sx={{ padding: '0' }}
+                        checked={splitInvestments}
+                        onChange={(newValue) => {
+                          query.set('splitInvestments', newValue.target.checked ? '1' : '0')
+                          navigate(`${location.pathname}?${query.toString()}`)
+                        }}
+                      />
+                    }
+                  />
+                </Box>
                 <Box>
                   <FormControlLabel
                     value="type"
