@@ -251,13 +251,14 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
           ticksNumber={10}
           disabledIntervals={[]}
           selectedInterval={[fromDate, toDate]}
-          timelineInterval={[transactions[transactions.length - 1].date, transactions[0].date]}
+          timelineInterval={[transactions[transactions.length - 1].date, new Date()]}
           step={20}
           formatTick={(a) => formatDate(new Date(a), 'MMM yyyy')}
           onUpdateCallback={(_data: { error: boolean; time: Date[] }) => {
             /** Ignore */
           }}
           onChangeCallback={(data: Date[]) => {
+            console.log(data)
             query.set('from', String(data[0].getTime()))
             query.set('to', String(data[1].getTime()))
             navigate(`${location.pathname}?${query.toString()}`)
