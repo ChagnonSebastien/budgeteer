@@ -30,7 +30,10 @@ const TransactionPage: FC = () => {
       .filter((transaction) => isBefore(transaction.date, toDate))
       .filter((transaction) => {
         if (accountFilter === null) return true
-        return transaction.senderId === accountFilter || transaction.receiverId === accountFilter
+        return (
+          (transaction.senderId !== null && accountFilter.includes(transaction.senderId)) ||
+          (transaction.receiverId !== null && accountFilter.includes(transaction.receiverId))
+        )
       })
       .filter((transaction) => {
         if (categoryFilter === null) return true
@@ -171,7 +174,7 @@ const TransactionPage: FC = () => {
             onClick={(transactionId) => {
               navigate(`/transactions/edit/${transactionId}`)
             }}
-            viewAsAccounts={accountFilter === null ? undefined : [accountFilter]}
+            viewAsAccounts={accountFilter === null ? undefined : accountFilter}
           />
         </div>
       </div>
