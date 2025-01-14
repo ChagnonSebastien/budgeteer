@@ -23,7 +23,7 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
   const toDate = query.get('to') ? new Date(Number.parseInt(query.get('to')!)) : new Date()
 
   const theme = useTheme()
-  const fullScreen = useMediaQuery(theme.breakpoints.down('md'))
+  const fullScreen = useMediaQuery(theme.breakpoints.down('xs'))
 
   const [showFilterSelection, setShowFilterSelection] = useState(false)
 
@@ -303,7 +303,8 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
           setShowFromDateModal(false)
         }}
       >
-        <div style={{ width: '20rem' }}>
+        <DialogTitle>From Date</DialogTitle>
+        <DialogContent>
           <DateCalendar
             views={['year', 'month', 'day']}
             value={dayjs(fromDate)}
@@ -314,7 +315,10 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
             }}
             onViewChange={(view) => setFromView(view)}
           />
-        </div>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowAccountModal(false)}>Close</Button>
+        </DialogActions>
       </Dialog>
 
       <Dialog
@@ -324,7 +328,8 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
           setShowToDateModal(false)
         }}
       >
-        <div style={{ width: '20rem' }}>
+        <DialogTitle>To Date</DialogTitle>
+        <DialogContent>
           <DateCalendar
             views={['year', 'month', 'day']}
             value={dayjs(toDate)}
@@ -335,7 +340,10 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
             }}
             onViewChange={(view) => setToView(view)}
           />
-        </div>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowAccountModal(false)}>Close</Button>
+        </DialogActions>
       </Dialog>
     </>
   )
