@@ -11,6 +11,8 @@ const AccountsPage: FC = () => {
 
   const { state: accounts } = useContext(AccountServiceContext)
 
+  const [filter, setFilter] = useState('')
+
   const [optionsHeight, setOptionsHeight] = useState(240)
   const [contentRef, setContentRef] = useState<HTMLDivElement | null>(null)
   const [contentHeight, setContentHeight] = useState(600)
@@ -44,6 +46,7 @@ const AccountsPage: FC = () => {
             accounts={accounts}
             onSelect={(account) => navigate(`/accounts/edit/${account.id}`)}
             showBalances
+            filterable={{ filter, setFilter }}
           />
         </div>
         <div
