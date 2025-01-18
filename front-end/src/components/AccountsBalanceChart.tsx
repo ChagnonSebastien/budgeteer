@@ -79,23 +79,38 @@ const AccountsBalanceChart: FC<Props> = (props) => {
     let showLabelEveryFactor = 1
     let i = diffDays + 1
 
-    if (diffMonths > 72) {
-      subN = subMonths
-      showLabelEveryFactor = 12
-      i = diffMonths
-    } else if (diffMonths > 36) {
+    if (diffMonths > 5 * 12) {
+      // above 5 years
       subN = subMonths
       showLabelEveryFactor = 6
       i = diffMonths
-    } else if (diffMonths > 24) {
+    } else if (diffMonths > 4 * 12) {
+      // between 4 year and 5 years
       subN = subMonths
-      showLabelEveryFactor = 2
+      showLabelEveryFactor = 3
       i = diffMonths
-    } else if (diffWeeks > 50) {
+    } else if (diffMonths > 3 * 12) {
+      // between 3 year and 4 years
+      subN = (date, i) => subWeeks(date, i * 2)
+      showLabelEveryFactor = 8
+      i = Math.floor(diffWeeks / 2) + 1
+    } else if (diffMonths > 2 * 12) {
+      // between 2 year and 3 years
+      subN = (date, i) => subWeeks(date, i * 2)
+      showLabelEveryFactor = 4
+      i = Math.floor(diffWeeks / 2) + 1
+    } else if (diffMonths > 12) {
+      // between 1 year and 2 years
       subN = subWeeks
       showLabelEveryFactor = 4
       i = diffWeeks
-    } else if (diffDays > 50) {
+    } else if (diffWeeks > 6 * 4) {
+      // between 6 months and 1 year
+      subN = subWeeks
+      showLabelEveryFactor = 2
+      i = diffWeeks
+    } else if (diffDays > 60) {
+      // between 2 months and 6 months
       subN = subDays
       showLabelEveryFactor = 7
       i = diffDays

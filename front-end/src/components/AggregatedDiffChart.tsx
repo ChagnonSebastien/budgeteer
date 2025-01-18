@@ -45,22 +45,27 @@ const AggregatedDiffChart: FC<Props> = (props) => {
     let i = diffDays + 1
 
     if (diffMonths > 72) {
+      // Tick every 2 months, label every year
       subN = (date, i) => subMonths(date, i * 2)
       showLabelEveryFactor = 6
       i = Math.floor(diffMonths / 2) + 1
     } else if (diffMonths > 36) {
+      // Tick every month, label every 6 months
       subN = subMonths
       showLabelEveryFactor = 6
       i = diffMonths + 1
     } else if (diffMonths > 24) {
+      // Tick every month, label every 3 months
       subN = subMonths
       showLabelEveryFactor = 3
       i = diffMonths + 1
     } else if (diffWeeks > 20) {
+      // Tick every week, label every 4 weeks
       subN = subWeeks
       showLabelEveryFactor = 4
       i = diffWeeks + 1
     } else if (diffDays > 50) {
+      // Tick every day, label every week
       subN = subDays
       showLabelEveryFactor = 7
       i = diffDays + 1
