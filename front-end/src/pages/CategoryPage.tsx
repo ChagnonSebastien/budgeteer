@@ -18,7 +18,11 @@ const CategoryPage: FC = () => {
           New
         </Button>
         <div style={{ height: '1rem' }} />
-        <CategoryList categories={categories} onSelect={(categoryId) => navigate(`/categories/edit/${categoryId}`)} />
+        <CategoryList
+          buttonText="Edit"
+          categories={categories}
+          onSelect={(categoryId) => navigate(`/categories/edit/${categoryId}`)}
+        />
       </div>
     </ContentWithHeader>
   )

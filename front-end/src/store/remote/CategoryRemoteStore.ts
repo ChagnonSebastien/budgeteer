@@ -35,6 +35,7 @@ export default class CategoryRemoteStore {
       data.iconBackground,
       data.parentId,
       data.fixedCosts,
+      data.ordering,
     )
   }
 

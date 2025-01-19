@@ -8,4 +8,5 @@ type Category struct {
 	IconColor      string
 	IconBackground string
 	FixedCost      bool
+	Ordering       float64
 }

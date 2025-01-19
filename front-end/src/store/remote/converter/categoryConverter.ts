@@ -13,6 +13,7 @@ export class CategoryConverter implements Converter<Category, CategoryDto> {
         model.iconBackground,
         model.parentId === 0 ? null : model.parentId,
         model.fixedCosts,
+        model.ordering,
       ),
     )
   }
@@ -26,6 +27,7 @@ export class CategoryConverter implements Converter<Category, CategoryDto> {
       iconBackground: dto.iconBackground,
       parentId: dto.parentId ?? undefined,
       fixedCosts: dto.fixedCosts,
+      ordering: dto.ordering,
     })
   }
 }

@@ -1,5 +1,4 @@
 import { FC, useMemo } from 'react'
-import { c } from 'vite/dist/node/types.d-aGj9QkWt'
 
 import { AugmenterProps } from './BasicCrudServiceWithPersistence'
 import Category, { AugmentedCategory } from '../domain/model/category'

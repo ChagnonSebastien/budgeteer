@@ -1,0 +1,20 @@
+/* Rotatable icon */
+.rotatable {
+    transition: transform 0.2s ease-in-out;
+}
+
+.rotatable.open {
+    transform: rotate(90deg);
+}
+
+/* Collapsible content */
+.collapsible {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-in-out;
+}
+
+.collapsible.open {
+    max-height: 1000px; /* Adjust to a large enough value to fit content */
+    overflow: visible;
+}

@@ -24,6 +24,7 @@ export enum PreparedIcon {
   BsCurrencyExchange = 'BsCurrencyExchange',
   BiSolidFileImport = 'BiSolidFileImport',
   BsFileEarmarkSpreadsheet = 'BsFileEarmarkSpreadsheet',
+  MdArrowForwardIos = 'MdArrowForwardIos',
 }
 
 type PreparedIconLib = {

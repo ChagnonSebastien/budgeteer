@@ -33,6 +33,7 @@ func (s *CategoryHandler) CreateCategory(
 		req.IconBackground,
 		int(req.ParentId),
 		req.FixedCosts,
+		req.Ordering,
 	)
 	if err != nil {
 		return nil, err
@@ -62,6 +63,7 @@ func (s *CategoryHandler) UpdateCategory(
 		req.Category.IconBackground,
 		int(req.Category.ParentId),
 		req.Category.FixedCosts,
+		req.Category.Ordering,
 	)
 	if err != nil {
 		return nil, err
@@ -94,6 +96,7 @@ func (s *CategoryHandler) GetAllCategories(
 			IconColor:      category.IconColor,
 			IconBackground: category.IconBackground,
 			FixedCosts:     category.FixedCost,
+			Ordering:       category.Ordering,
 		}
 	}
 

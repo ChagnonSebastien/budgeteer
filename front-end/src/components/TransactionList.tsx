@@ -26,6 +26,7 @@ const defaultCategory = new Category(
   'var(--ion-color-dark)',
   null,
   false,
+  0,
 )
 
 export const TransactionList = (props: Props) => {

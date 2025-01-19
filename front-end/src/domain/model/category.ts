@@ -12,6 +12,7 @@ export default class Category implements Unique {
   iconBackground: string
   parentId: number | null
   fixedCosts: boolean
+  ordering: number
 
   constructor(
     id: number,
@@ -21,6 +22,7 @@ export default class Category implements Unique {
     iconBackground: string,
     parentId: number | null,
     fixedCosts: boolean,
+    ordering: number,
   ) {
     this.id = id
     this.name = name
@@ -29,5 +31,6 @@ export default class Category implements Unique {
     this.iconColor = iconColor
     this.iconBackground = iconBackground
     this.fixedCosts = fixedCosts
+    this.ordering = ordering
   }
 }

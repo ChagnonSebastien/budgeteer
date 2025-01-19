@@ -114,6 +114,7 @@ const AuthenticatedZone: FC<Props> = (props) => {
         longTermStore={categoryStore}
         context={CategoryServiceContext}
         Augmenter={CategoryPersistenceAugmenter}
+        sorter={(a, b) => b.ordering - a.ordering}
       >
         <BasicCrudServiceWithPersistence
           initialState={accounts}

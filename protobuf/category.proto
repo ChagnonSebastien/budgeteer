@@ -12,6 +12,7 @@ message Category {
   string icon_color = 5;
   string icon_background = 6;
   bool fixed_costs = 7;
+  double ordering = 8;
 }
 
 message GetAllCategoriesRequest {
@@ -28,6 +29,7 @@ message CreateCategoryRequest {
   string icon_color = 4;
   string icon_background = 5;
   bool fixed_costs = 6;
+  double ordering = 8;
 }
 
 message CreateCategoryResponse {

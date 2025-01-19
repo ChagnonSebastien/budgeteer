@@ -81,6 +81,7 @@ const CategoryForm: FC<Props> = (props) => {
       iconBackground: outerColor,
       iconColor: innerColor,
       fixedCosts: fixedCost,
+      ordering: initialCategory?.ordering ?? 0,
     }).catch((err) => {
       setShowErrorToast('Unexpected error while submitting the category')
       console.error(err)

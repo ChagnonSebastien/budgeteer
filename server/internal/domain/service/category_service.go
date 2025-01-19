@@ -15,6 +15,7 @@ type categoryRepository interface {
 		name, iconName, iconColor, iconBackground string,
 		parentId int,
 		fixedCosts bool,
+		ordering float64,
 	) (int, error)
 	UpdateCategory(
 		ctx context.Context,
@@ -23,6 +24,7 @@ type categoryRepository interface {
 		name, iconName, iconColor, iconBackground string,
 		parentId int,
 		fixedCosts bool,
+		ordering float64,
 	) error
 }
 
@@ -54,6 +56,7 @@ func (a *CategoryService) GetAllCategories(ctx context.Context, userId string) (
 			rootIconBackground,
 			0,
 			false,
+			0,
 		)
 		if err != nil {
 			return nil, err
@@ -66,6 +69,7 @@ func (a *CategoryService) GetAllCategories(ctx context.Context, userId string) (
 				IconName:       rootIconName,
 				IconColor:      rootIconColor,
 				IconBackground: rootIconBackground,
+				Ordering:       0,
 			},
 		)
 	}
@@ -79,6 +83,7 @@ func (a *CategoryService) CreateCategory(
 	name, iconName, iconColor, iconBackground string,
 	parentId int,
 	fixedCosts bool,
+	ordering float64,
 ) (int, error) {
 	if parentId == 0 {
 		return 0, fmt.Errorf("cannot create root category from request (parentId=0)")
@@ -93,6 +98,7 @@ func (a *CategoryService) CreateCategory(
 		iconBackground,
 		parentId,
 		fixedCosts,
+		ordering,
 	)
 }
 
@@ -103,6 +109,7 @@ func (a *CategoryService) UpdateCategory(
 	name, iconName, iconColor, iconBackground string,
 	parentId int,
 	fixedCosts bool,
+	ordering float64,
 ) error {
 	return a.categoryRepository.UpdateCategory(
 		ctx,
@@ -114,5 +121,6 @@ func (a *CategoryService) UpdateCategory(
 		iconBackground,
 		parentId,
 		fixedCosts,
+		ordering,
 	)
 }
