@@ -4,7 +4,7 @@ import type { IconType } from 'react-icons'
 type IconLibrary = { [iconName: string]: IconType }
 type IconLibraries = Map<string, IconLibrary>
 
-enum PreparedIcon {
+export enum PreparedIcon {
   FaPlus = 'FaPlus',
   GrTransaction = 'GrTransaction',
   MdOutput = 'MdOutput',
@@ -16,6 +16,14 @@ enum PreparedIcon {
   MdMenu = 'MdMenu',
   FaRegSquare = 'FaRegSquare',
   FaRegSquareCheck = 'FaRegSquareCheck',
+  BiSolidBarChartAlt2 = 'BiSolidBarChartAlt2',
+  FaScaleUnbalanced = 'FaScaleUnbalanced',
+  TbArrowsExchange = 'TbArrowsExchange',
+  MdCategory = 'MdCategory',
+  MdAccountBalance = 'MdAccountBalance',
+  BsCurrencyExchange = 'BsCurrencyExchange',
+  BiSolidFileImport = 'BiSolidFileImport',
+  BsFileEarmarkSpreadsheet = 'BsFileEarmarkSpreadsheet',
 }
 
 type PreparedIconLib = {

@@ -15,7 +15,7 @@ import { createContext, FC, ReactElement, useContext, useEffect, useState } from
 import { useLocation, useNavigate } from 'react-router-dom'
 import './Menu.css'
 
-import { IconToolsContext } from './IconTools'
+import { IconToolsContext, PreparedIcon } from './IconTools'
 import { UserContext } from '../App'
 
 interface AppPage {
@@ -29,43 +29,43 @@ const appPages: AppPage[] = [
   {
     title: 'Transactions',
     url: '/transactions',
-    iconName: 'TbArrowsExchange',
+    iconName: PreparedIcon.TbArrowsExchange,
     keepQuery: ['from', 'to', 'accounts', 'category'],
   },
   {
     title: 'Categories',
     url: '/categories',
-    iconName: 'MdCategory',
+    iconName: PreparedIcon.MdCategory,
     keepQuery: [],
   },
   {
     title: 'Accounts',
     url: '/accounts',
-    iconName: 'MdAccountBalance',
+    iconName: PreparedIcon.MdAccountBalance,
+    keepQuery: [],
+  },
+  {
+    title: 'Currencies',
+    url: '/currencies',
+    iconName: PreparedIcon.BsCurrencyExchange,
     keepQuery: [],
   },
   {
     title: 'Account Balances',
     url: '/accounts/graph',
-    iconName: 'MdAccountBalance',
+    iconName: PreparedIcon.FaScaleUnbalanced,
     keepQuery: ['from', 'to', 'accounts', 'groupBy'],
-  },
-  {
-    title: 'Currencies',
-    url: '/currencies',
-    iconName: 'BsCurrencyExchange',
-    keepQuery: [],
   },
   {
     title: 'Trends',
     url: '/trends',
-    iconName: 'BiSolidFileImport',
+    iconName: PreparedIcon.BiSolidBarChartAlt2,
     keepQuery: [],
   },
   {
     title: 'Costs Analysis',
     url: '/costs',
-    iconName: 'BiSolidFileImport',
+    iconName: PreparedIcon.BsFileEarmarkSpreadsheet,
     keepQuery: [],
   },
 ]

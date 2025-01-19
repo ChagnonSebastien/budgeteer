@@ -258,7 +258,12 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
             /** Ignore */
           }}
           onChangeCallback={(data: Date[]) => {
-            console.log(data)
+            if (
+              Math.abs(data[0].getTime() - fromDate.getTime()) < 10 &&
+              Math.abs(data[1].getTime() - toDate.getTime()) < 10
+            ) {
+              return
+            }
             query.set('from', String(data[0].getTime()))
             query.set('to', String(data[1].getTime()))
             navigate(`${location.pathname}?${query.toString()}`)
