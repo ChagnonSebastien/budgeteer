@@ -297,13 +297,15 @@ const AccountsBalanceChart: FC<Props> = (props) => {
                 : '',
             tickRotation: -45,
           }}
+          enableGridY={!privacyMode}
           axisLeft={{
+            tickSize: privacyMode ? 0 : 5,
             format: (i) => {
               if (spread) {
                 return `${i * 100}%`
               }
               return privacyMode
-                ? 'XX'
+                ? ''
                 : ((i as number) / Math.pow(10, defaultCurrency?.decimalPoints)).toLocaleString(undefined, {
                     notation: 'compact',
                   })

@@ -125,11 +125,13 @@ const AggregatedDiffChart: FC<Props> = (props) => {
                 : '',
             tickRotation: -45,
           }}
+          enableGridY={!privacyMode}
           xFormat={(i) => labels[i as number] && formatDate(labels[i as number], 'MMM d, yyyy')}
           axisLeft={{
+            tickSize: privacyMode ? 0 : 5,
             format: (i) =>
               privacyMode
-                ? 'XX'
+                ? ''
                 : ((i as number) / Math.pow(10, defaultCurrency?.decimalPoints)).toLocaleString(undefined, {
                     notation: 'compact',
                   }),

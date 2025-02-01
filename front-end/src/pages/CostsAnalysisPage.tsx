@@ -8,7 +8,6 @@ import { DrawerContext } from '../components/Menu'
 import { formatFull } from '../domain/model/currency'
 import MixedAugmentation from '../service/MixedAugmentation'
 import { CategoryServiceContext, CurrencyServiceContext } from '../service/ServiceContext'
-
 import './CostsAnalysisPage.css'
 import UserStore from '../UserStore'
 
@@ -176,9 +175,11 @@ const CostsAnalysisPage: FC = () => {
       <Stack spacing="1rem" style={{ padding: '2rem 1rem' }}>
         <TextField
           type="text"
-          value={grossIncome}
+          value={privacyMode ? '<redacted>' : grossIncome}
           sx={{ width: '100%' }}
           onChange={(ev) => {
+            if (privacyMode) return
+
             const parsed = parseInt(ev.target.value as string)
             if (isNaN(parsed)) {
               setGrossIncome(0)

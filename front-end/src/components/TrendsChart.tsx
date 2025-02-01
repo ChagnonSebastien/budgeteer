@@ -155,9 +155,13 @@ const TrendsChart: FC<Props> = (props) => {
         tickRotation: -45,
         format: (props) => label(new Date(props)),
       }}
+      enableGridY={!privacyMode}
       axisLeft={{
+        tickSize: privacyMode ? 0 : 5,
         format: (i) =>
-          formatAmount(defaultCurrency, i, privacyMode).slice(0, -((defaultCurrency?.decimalPoints ?? 2) + 1)),
+          privacyMode
+            ? ''
+            : formatAmount(defaultCurrency, i, privacyMode).slice(0, -((defaultCurrency?.decimalPoints ?? 2) + 1)),
       }}
       tooltip={(props) => (
         <Card style={{ padding: '.5rem' }}>

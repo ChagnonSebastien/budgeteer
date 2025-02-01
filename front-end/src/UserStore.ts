@@ -3,6 +3,7 @@ import User from './domain/model/user'
 const KEY_USER = 'user'
 const KEY_GROSS_INCOME = 'gross_income'
 const KEY_INCOME_CATEGORY = 'incomeCategory'
+const KEY_PRIVACY_MODE = 'privacyMode'
 
 export type AuthMethod = 'oidc' | 'userPass'
 
@@ -48,7 +49,23 @@ export default class UserStore {
     this.storage.setItem(KEY_INCOME_CATEGORY, categoryId.toString())
   }
 
+  public getPrivacyMode() {
+    const privacyMode = this.storage.getItem(KEY_PRIVACY_MODE)
+    if (privacyMode == null) {
+      return false
+    }
+
+    return JSON.parse(privacyMode) as boolean
+  }
+
+  public upsertPrivacyMode(privacyMode: boolean) {
+    this.storage.setItem(KEY_PRIVACY_MODE, JSON.stringify(privacyMode))
+  }
+
   public clear() {
     this.storage.removeItem(KEY_USER)
+    this.storage.removeItem(KEY_GROSS_INCOME)
+    this.storage.removeItem(KEY_INCOME_CATEGORY)
+    this.storage.removeItem(KEY_PRIVACY_MODE)
   }
 }

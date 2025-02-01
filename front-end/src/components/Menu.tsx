@@ -17,6 +17,7 @@ import './Menu.css'
 
 import { IconToolsContext, PreparedIcon } from './IconTools'
 import { UserContext } from '../App'
+import UserStore from '../UserStore'
 
 interface AppPage {
   title: string
@@ -70,6 +71,8 @@ const appPages: AppPage[] = [
   },
 ]
 
+const userStore = new UserStore(localStorage)
+
 interface Props {
   children: ReactElement
 
@@ -97,7 +100,7 @@ const DrawerWrapper: FC<Props> = ({ logout, children }) => {
 
   const [drawerWidth, setDrawerWidth] = useState(240)
   const [totalWidth, setTotalWidth] = useState(window.innerWidth)
-  const [privacyMode, setPrivacyMode] = useState(false)
+  const [privacyMode, setPrivacyMode] = useState(userStore.getPrivacyMode())
   const persistentDrawer = totalWidth - drawerWidth > 600
 
   useEffect(() => {
@@ -146,7 +149,15 @@ const DrawerWrapper: FC<Props> = ({ logout, children }) => {
       </Box>
       <Box p="1rem">
         <FormControlLabel
-          control={<Switch onChange={(ev) => setPrivacyMode(ev.target.checked)} />}
+          control={
+            <Switch
+              checked={privacyMode}
+              onChange={(ev) => {
+                setPrivacyMode(ev.target.checked)
+                userStore.upsertPrivacyMode(ev.target.checked)
+              }}
+            />
+          }
           label="Privacy Mode"
         />
       </Box>
