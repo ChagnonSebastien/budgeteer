@@ -115,7 +115,7 @@ const CategoryForm: FC<Props> = (props) => {
           {!editingRoot && <CategoryPicker categoryId={parent} setCategoryId={setParent} labelText="Parent Category" />}
 
           <FormControlLabel
-            control={<Checkbox onChange={(ev) => setFixedCost(ev.target.checked)} />}
+            control={<Checkbox checked={fixedCost} onChange={(ev) => setFixedCost(ev.target.checked)} />}
             label="Is a fixed cost"
           />
 
