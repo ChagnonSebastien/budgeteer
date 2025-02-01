@@ -1,4 +1,4 @@
-FROM golang:1.22-alpine as sqlc
+FROM golang:1.22-alpine AS sqlc
 WORKDIR /app
 RUN go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
 COPY server/internal/infrastructure/db/queries internal/infrastructure/db/queries
