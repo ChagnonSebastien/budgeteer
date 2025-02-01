@@ -15,7 +15,7 @@ const CostsAnalysisPage: FC = () => {
   const { augmentedTransactions: transactions, exchangeRateOnDay } = useContext(MixedAugmentation)
   const { defaultCurrency } = useContext(CurrencyServiceContext)
   const { root } = useContext(CategoryServiceContext)
-  const { anonymity } = useContext(DrawerContext)
+  const { privacyMode } = useContext(DrawerContext)
 
   const [incomeCategory, setIncomeCategory] = useState<number>(root.id)
   const [grossIncome, setGrossIncome] = useState<number>(0)
@@ -183,25 +183,25 @@ const CostsAnalysisPage: FC = () => {
             <tr>
               <td>Gross Income</td>
               <td>
-                {formatFull(defaultCurrency, grossIncome * Math.pow(10, defaultCurrency.decimalPoints), anonymity)}
+                {formatFull(defaultCurrency, grossIncome * Math.pow(10, defaultCurrency.decimalPoints), privacyMode)}
               </td>
               <td>
                 {formatFull(
                   defaultCurrency,
                   (grossIncome * Math.pow(10, defaultCurrency.decimalPoints)) / 12,
-                  anonymity,
+                  privacyMode,
                 )}
               </td>
             </tr>
             <tr>
               <td>Net Income</td>
-              <td>{formatFull(defaultCurrency, income, anonymity)}</td>
-              <td>{formatFull(defaultCurrency, income / 12, anonymity)}</td>
+              <td>{formatFull(defaultCurrency, income, privacyMode)}</td>
+              <td>{formatFull(defaultCurrency, income / 12, privacyMode)}</td>
             </tr>
             <tr style={{ height: '1rem' }} />
             <tr>
               <th>Fixed Costs</th>
-              <th colSpan={2}>{anonymity ? 'XX' : ((100 * fixedAmount) / income).toFixed(0)}%</th>
+              <th colSpan={2}>{privacyMode ? 'XX' : ((100 * fixedAmount) / income).toFixed(0)}%</th>
             </tr>
             {[...fixedCosts.entries()].map((entry) => (
               <tr key={`fixed-${entry[0]}`}>
@@ -213,7 +213,7 @@ const CostsAnalysisPage: FC = () => {
             <tr style={{ height: '1rem' }} />
             <tr>
               <th>Variable Costs</th>
-              <th colSpan={2}>{anonymity ? 'XX' : ((100 * variableAmount) / income).toFixed(0)}%</th>
+              <th colSpan={2}>{privacyMode ? 'XX' : ((100 * variableAmount) / income).toFixed(0)}%</th>
             </tr>
             {[...variableCosts.entries()].map((entry) => (
               <tr key={`variable-${entry[0]}`}>
@@ -226,13 +226,13 @@ const CostsAnalysisPage: FC = () => {
             <tr>
               <th>Investments</th>
               <th colSpan={2}>
-                {anonymity ? 'XX' : (100 - (100 * (variableAmount + fixedAmount)) / income).toFixed(0)}%
+                {privacyMode ? 'XX' : (100 - (100 * (variableAmount + fixedAmount)) / income).toFixed(0)}%
               </th>
             </tr>
             <tr>
               <td>All</td>
-              <td>{formatFull(defaultCurrency, income - variableAmount - fixedAmount, anonymity)}</td>
-              <td>{formatFull(defaultCurrency, (income - variableAmount - fixedAmount) / 12, anonymity)}</td>
+              <td>{formatFull(defaultCurrency, income - variableAmount - fixedAmount, privacyMode)}</td>
+              <td>{formatFull(defaultCurrency, (income - variableAmount - fixedAmount) / 12, privacyMode)}</td>
             </tr>
           </tbody>
         </table>

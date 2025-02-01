@@ -22,7 +22,7 @@ type tabs = 'mine' | 'others'
 export const AccountList = (props: Props) => {
   const { accounts, onSelect, showBalances = false, filterable, onMultiSelect, selected } = props
   const { accountBalances } = useContext(MixedAugmentation)
-  const { anonymity } = useContext(DrawerContext)
+  const { privacyMode } = useContext(DrawerContext)
   const { IconLib } = useContext(IconToolsContext)
 
   const { state: currencies } = useContext(CurrencyServiceContext)
@@ -193,7 +193,7 @@ export const AccountList = (props: Props) => {
 
                       return (
                         <div key={`currency-in-account-${entry[0]}`} style={{ textAlign: 'right' }}>
-                          {formatFull(currency, entry[1], anonymity)}
+                          {formatFull(currency, entry[1], privacyMode)}
                         </div>
                       )
                     })}

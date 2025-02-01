@@ -76,9 +76,9 @@ interface Props {
   logout(): void
 }
 
-type DrawerActions = { open?(): void; anonymity: boolean }
+type DrawerActions = { open?(): void; privacyMode: boolean }
 export const DrawerContext = createContext<DrawerActions>({
-  anonymity: false,
+  privacyMode: false,
 })
 
 const DrawerWrapper: FC<Props> = ({ logout, children }) => {
@@ -97,7 +97,7 @@ const DrawerWrapper: FC<Props> = ({ logout, children }) => {
 
   const [drawerWidth, setDrawerWidth] = useState(240)
   const [totalWidth, setTotalWidth] = useState(window.innerWidth)
-  const [anonymity, setAnonymity] = useState(false)
+  const [privacyMode, setPrivacyMode] = useState(false)
   const persistentDrawer = totalWidth - drawerWidth > 600
 
   useEffect(() => {
@@ -146,8 +146,8 @@ const DrawerWrapper: FC<Props> = ({ logout, children }) => {
       </Box>
       <Box p="1rem">
         <FormControlLabel
-          control={<Switch onChange={(ev) => setAnonymity(ev.target.checked)} />}
-          label="Anonymous Mode"
+          control={<Switch onChange={(ev) => setPrivacyMode(ev.target.checked)} />}
+          label="Privacy Mode"
         />
       </Box>
     </div>
@@ -157,7 +157,7 @@ const DrawerWrapper: FC<Props> = ({ logout, children }) => {
     <DrawerContext.Provider
       value={{
         open: persistentDrawer ? undefined : () => setOpen(true),
-        anonymity,
+        privacyMode: privacyMode,
       }}
     >
       {persistentDrawer ? (

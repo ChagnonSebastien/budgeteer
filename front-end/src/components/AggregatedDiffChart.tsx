@@ -31,7 +31,7 @@ const AggregatedDiffChart: FC<Props> = (props) => {
 
   const { defaultCurrency } = useContext(CurrencyServiceContext)
   const { exchangeRateOnDay } = useContext(MixedAugmentation)
-  const { anonymity } = useContext(DrawerContext)
+  const { privacyMode } = useContext(DrawerContext)
 
   return useMemo(() => {
     if (defaultCurrency === null) return null
@@ -128,13 +128,13 @@ const AggregatedDiffChart: FC<Props> = (props) => {
           xFormat={(i) => labels[i as number] && formatDate(labels[i as number], 'MMM d, yyyy')}
           axisLeft={{
             format: (i) =>
-              anonymity
+              privacyMode
                 ? 'XX'
                 : ((i as number) / Math.pow(10, defaultCurrency?.decimalPoints)).toLocaleString(undefined, {
                     notation: 'compact',
                   }),
           }}
-          yFormat={(n) => formatFull(defaultCurrency, n as number, anonymity)}
+          yFormat={(n) => formatFull(defaultCurrency, n as number, privacyMode)}
           yScale={{
             type: 'linear',
             min: 'auto',
@@ -159,7 +159,7 @@ const AggregatedDiffChart: FC<Props> = (props) => {
         />
       </>
     )
-  }, [defaultCurrency, transactions, fromDate, toDate, anonymity])
+  }, [defaultCurrency, transactions, fromDate, toDate, privacyMode])
 }
 
 export default AggregatedDiffChart

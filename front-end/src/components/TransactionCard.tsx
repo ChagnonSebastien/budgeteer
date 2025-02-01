@@ -36,7 +36,7 @@ const TransactionCard: FC<Props> = (props) => {
     onClick,
   } = props
 
-  const { anonymity } = useContext(DrawerContext)
+  const { privacyMode } = useContext(DrawerContext)
 
   const fromMe = from?.isMine ?? false
   const toMe = to?.isMine ?? false
@@ -93,10 +93,10 @@ const TransactionCard: FC<Props> = (props) => {
       >
         <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
           <div style={{ fontWeight: 'bold' }}>
-            {formatFull(currency, amount, anonymity)}
+            {formatFull(currency, amount, privacyMode)}
             {currency.id === receiverCurrency.id
               ? ``
-              : ` -> ${formatFull(receiverCurrency, receiverAmount, anonymity)}`}
+              : ` -> ${formatFull(receiverCurrency, receiverAmount, privacyMode)}`}
           </div>
           <div>{date.toDateString()}</div>
         </div>

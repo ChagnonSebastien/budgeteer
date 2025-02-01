@@ -34,7 +34,7 @@ const TrendsChart: FC<Props> = (props) => {
   const { defaultCurrency } = useContext(CurrencyServiceContext)
   const { augmentedTransactions, exchangeRateOnDay } = useContext(MixedAugmentation)
   const { root } = useContext(CategoryServiceContext)
-  const { anonymity } = useContext(DrawerContext)
+  const { privacyMode } = useContext(DrawerContext)
 
   const filteredTransactions = useMemo(() => {
     return augmentedTransactions.filter((t) => {
@@ -157,13 +157,13 @@ const TrendsChart: FC<Props> = (props) => {
       }}
       axisLeft={{
         format: (i) =>
-          formatAmount(defaultCurrency, i, anonymity).slice(0, -((defaultCurrency?.decimalPoints ?? 2) + 1)),
+          formatAmount(defaultCurrency, i, privacyMode).slice(0, -((defaultCurrency?.decimalPoints ?? 2) + 1)),
       }}
       tooltip={(props) => (
         <Card style={{ padding: '.5rem' }}>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <div>{label(new Date(props.indexValue))}</div>
-            <div>{formatFull(defaultCurrency, props.value, anonymity)}</div>
+            <div>{formatFull(defaultCurrency, props.value, privacyMode)}</div>
           </div>
         </Card>
       )}

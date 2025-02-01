@@ -37,7 +37,7 @@ const AccountsBalanceChart: FC<Props> = (props) => {
   const { defaultCurrency } = useContext(CurrencyServiceContext)
   const { augmentedTransactions, exchangeRateOnDay } = useContext(MixedAugmentation)
   const { myOwnAccounts } = useContext(AccountServiceContext)
-  const { anonymity } = useContext(DrawerContext)
+  const { privacyMode } = useContext(DrawerContext)
 
   const filteredAccounts = useMemo(() => {
     const prefilter = myOwnAccounts.filter((account) => account?.type !== 'Credit Card')
@@ -288,7 +288,7 @@ const AccountsBalanceChart: FC<Props> = (props) => {
         <ResponsiveStream
           data={data}
           keys={[...groups.keys()].sort((a, b) => a.localeCompare(b))}
-          valueFormat={(value) => `${formatFull(defaultCurrency, value, anonymity)}`}
+          valueFormat={(value) => `${formatFull(defaultCurrency, value, privacyMode)}`}
           margin={{ top: 10, right: 50, bottom: 70, left: 60 }}
           axisBottom={{
             format: (i) =>
@@ -302,7 +302,7 @@ const AccountsBalanceChart: FC<Props> = (props) => {
               if (spread) {
                 return `${i * 100}%`
               }
-              return anonymity
+              return privacyMode
                 ? 'XX'
                 : ((i as number) / Math.pow(10, defaultCurrency?.decimalPoints)).toLocaleString(undefined, {
                     notation: 'compact',
@@ -345,7 +345,7 @@ const AccountsBalanceChart: FC<Props> = (props) => {
         />
       </>
     )
-  }, [defaultCurrency, filteredAccounts, groupBy, fromDate, toDate, group, anonymity, exchangeRateOnDay])
+  }, [defaultCurrency, filteredAccounts, groupBy, fromDate, toDate, group, privacyMode, exchangeRateOnDay])
 }
 
 export default AccountsBalanceChart
