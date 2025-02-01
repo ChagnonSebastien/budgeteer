@@ -1,5 +1,6 @@
 import { Button, Dialog, Snackbar, Stack, TextField, Typography } from '@mui/material'
 import { DateCalendar, DateField, DateView } from '@mui/x-date-pickers'
+import { startOfDay } from 'date-fns'
 import dayjs, { Dayjs } from 'dayjs'
 import { FC, FormEvent, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 
@@ -34,7 +35,7 @@ const CurrencyForm: FC<Props> = (props) => {
     `${typeof initialCurrency === 'undefined' ? '2' : initialCurrency.decimalPoints}`,
   )
   const [initialExchangeRate, setInitialExchangeRate] = useState('1')
-  const [initialExchangeRateDate, setInitialExchangeRateDate] = useState(new Date())
+  const [initialExchangeRateDate, setInitialExchangeRateDate] = useState(startOfDay(new Date()))
   const [dateView, setDateView] = useState<DateView>('day')
 
   const [showDateModal, setShowDateModal] = useState(false)

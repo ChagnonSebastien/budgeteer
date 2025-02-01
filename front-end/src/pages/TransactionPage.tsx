@@ -1,5 +1,5 @@
 import { IconButton, SpeedDial, SpeedDialAction, SpeedDialIcon } from '@mui/material'
-import { isAfter, isBefore } from 'date-fns'
+import { isAfter, isBefore, isSameDay } from 'date-fns'
 import { FC, useContext, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
@@ -26,8 +26,8 @@ const TransactionPage: FC = () => {
 
   const filteredTransaction = useMemo(() => {
     return augmentedTransactions
-      .filter((transaction) => isAfter(transaction.date, fromDate))
-      .filter((transaction) => isBefore(transaction.date, toDate))
+      .filter((transaction) => isAfter(transaction.date, fromDate) || isSameDay(transaction.date, fromDate))
+      .filter((transaction) => isBefore(transaction.date, toDate) || isSameDay(transaction.date, toDate))
       .filter((transaction) => {
         if (accountFilter === null) return true
         return (

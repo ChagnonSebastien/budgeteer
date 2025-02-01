@@ -1,5 +1,5 @@
 import { Stack, TextField } from '@mui/material'
-import { differenceInYears } from 'date-fns'
+import { differenceInYears, startOfDay } from 'date-fns'
 import { FC, useContext, useMemo, useState } from 'react'
 
 import CategoryPicker from '../components/CategoryPicker'
@@ -25,7 +25,7 @@ const CostsAnalysisPage: FC = () => {
   const income = useMemo(
     () =>
       transactions
-        .filter((value) => differenceInYears(value.date, new Date()) === 0)
+        .filter((value) => differenceInYears(value.date, startOfDay(new Date())) === 0)
         .filter((value) => value.categoryId !== null)
         .filter((value) => {
           let category = value.category
@@ -39,7 +39,7 @@ const CostsAnalysisPage: FC = () => {
         .reduce((previousValue, currentValue) => {
           let value = currentValue.receiverAmount
           if (currentValue.receiverCurrencyId !== defaultCurrency?.id) {
-            value *= exchangeRateOnDay(currentValue.receiverCurrencyId, defaultCurrency!.id, new Date())
+            value *= exchangeRateOnDay(currentValue.receiverCurrencyId, defaultCurrency!.id, startOfDay(new Date()))
           }
           return previousValue + value
         }, 0),
@@ -48,7 +48,7 @@ const CostsAnalysisPage: FC = () => {
 
   const fixedCosts = useMemo(() => {
     const fixedTransactions = transactions
-      .filter((value) => differenceInYears(value.date, new Date()) === 0)
+      .filter((value) => differenceInYears(value.date, startOfDay(new Date())) === 0)
       .filter((value) => value.category?.fixedCosts ?? false)
 
     const data = fixedTransactions
@@ -56,7 +56,7 @@ const CostsAnalysisPage: FC = () => {
       .reduce((previousValue, currentValue) => {
         let value = currentValue.amount
         if (currentValue.currencyId !== defaultCurrency?.id) {
-          value *= exchangeRateOnDay(currentValue.currencyId, defaultCurrency!.id, new Date())
+          value *= exchangeRateOnDay(currentValue.currencyId, defaultCurrency!.id, startOfDay(new Date()))
         }
 
         let category = currentValue.category!
@@ -73,7 +73,7 @@ const CostsAnalysisPage: FC = () => {
       .forEach((currentValue) => {
         let value = currentValue.receiverAmount
         if (currentValue.receiverCurrencyId !== defaultCurrency?.id) {
-          value *= exchangeRateOnDay(currentValue.receiverCurrencyId, defaultCurrency!.id, new Date())
+          value *= exchangeRateOnDay(currentValue.receiverCurrencyId, defaultCurrency!.id, startOfDay(new Date()))
         }
 
         let category = currentValue.category!
@@ -95,7 +95,7 @@ const CostsAnalysisPage: FC = () => {
 
   const variableCosts = useMemo(() => {
     const fixedTransactions = transactions
-      .filter((value) => differenceInYears(value.date, new Date()) === 0)
+      .filter((value) => differenceInYears(value.date, startOfDay(new Date())) === 0)
       .filter((value) => typeof value.category !== 'undefined')
       .filter((value) => !(value.category?.fixedCosts ?? false))
 
@@ -123,7 +123,7 @@ const CostsAnalysisPage: FC = () => {
       .forEach((currentValue) => {
         let value = currentValue.receiverAmount
         if (currentValue.receiverCurrencyId !== defaultCurrency?.id) {
-          value *= exchangeRateOnDay(currentValue.receiverCurrencyId, defaultCurrency!.id, new Date())
+          value *= exchangeRateOnDay(currentValue.receiverCurrencyId, defaultCurrency!.id, startOfDay(new Date()))
         }
 
         let category = currentValue.category!

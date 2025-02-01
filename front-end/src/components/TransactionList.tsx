@@ -1,4 +1,13 @@
-import { addMonths, differenceInMonths, formatDate, isAfter, isSameMonth, subDays, subMonths } from 'date-fns'
+import {
+  addMonths,
+  differenceInMonths,
+  formatDate,
+  isAfter,
+  isSameMonth,
+  startOfDay,
+  subDays,
+  subMonths,
+} from 'date-fns'
 import { useContext, useEffect, useMemo, useRef, useState } from 'react'
 
 import { DrawerContext } from './Menu'
@@ -46,8 +55,8 @@ export const TransactionList = (props: Props) => {
     if (defaultCurrency === null) return []
     if (transactions.length === 0) return []
 
-    const today = new Date()
-    const firstTransaction = transactions[transactions.length - 1].date
+    const today = startOfDay(new Date())
+    const firstTransaction = startOfDay(transactions[transactions.length - 1].date)
 
     const diffMonths = differenceInMonths(today, firstTransaction)
 

@@ -1,6 +1,6 @@
 import { Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, useMediaQuery, useTheme } from '@mui/material'
 import { DateCalendar, DateView } from '@mui/x-date-pickers'
-import { addDays, formatDate, subMonths, subYears } from 'date-fns'
+import { addDays, formatDate, isSameDay, startOfDay, subMonths, subYears } from 'date-fns'
 import dayjs, { Dayjs } from 'dayjs'
 import { ReactNode, useContext, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
@@ -26,10 +26,10 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
   const navigate = useNavigate()
   const accountFilter: number[] = query.get('accounts') ? JSON.parse(query.get('accounts')!) : null
   const categoryFilter = query.get('category') ? Number.parseInt(query.get('category')!) : null
-  const fromDate = query.get('from')
-    ? new Date(Number.parseInt(query.get('from')!))
-    : addDays(subYears(new Date(), 1), 1)
-  const toDate = query.get('to') ? new Date(Number.parseInt(query.get('to')!)) : new Date()
+  const fromDate = startOfDay(
+    query.get('from') ? new Date(Number.parseInt(query.get('from')!)) : addDays(subYears(new Date(), 1), 1),
+  )
+  const toDate = startOfDay(query.get('to') ? new Date(Number.parseInt(query.get('to')!)) : new Date())
 
   const theme = useTheme()
   const fullScreen = useMediaQuery(theme.breakpoints.down('xs'))
@@ -189,8 +189,8 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
           style={{ padding: '.25rem 1rem', fontWeight: 'bolder', cursor: 'pointer' }}
           onClick={() => {
             if (transactions.length > 0) {
-              query.set('from', String(transactions[transactions.length - 1].date.getTime()))
-              query.set('to', String(Date.now()))
+              query.set('from', String(startOfDay(transactions[transactions.length - 1].date).getTime()))
+              query.set('to', String(startOfDay(new Date()).getTime()))
               navigate(`${location.pathname}?${query.toString()}`)
             }
           }}
@@ -201,8 +201,8 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
           style={{ padding: '.25rem 1rem', fontWeight: 'bolder', cursor: 'pointer' }}
           onClick={() => {
             if (transactions.length > 0) {
-              query.set('from', String(addDays(subYears(new Date(), 5), 1).getTime()))
-              query.set('to', String(Date.now()))
+              query.set('from', String(startOfDay(addDays(subYears(new Date(), 5), 1)).getTime()))
+              query.set('to', String(startOfDay(new Date()).getTime()))
               navigate(`${location.pathname}?${query.toString()}`)
             }
           }}
@@ -213,8 +213,8 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
           style={{ padding: '.25rem 1rem', fontWeight: 'bolder', cursor: 'pointer' }}
           onClick={() => {
             if (transactions.length > 0) {
-              query.set('from', String(addDays(subYears(new Date(), 3), 1).getTime()))
-              query.set('to', String(Date.now()))
+              query.set('from', String(startOfDay(addDays(subYears(new Date(), 3), 1)).getTime()))
+              query.set('to', String(startOfDay(new Date()).getTime()))
               navigate(`${location.pathname}?${query.toString()}`)
             }
           }}
@@ -225,8 +225,8 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
           style={{ padding: '.25rem 1rem', fontWeight: 'bolder', cursor: 'pointer' }}
           onClick={() => {
             if (transactions.length > 0) {
-              query.set('from', String(addDays(subYears(new Date(), 1), 1).getTime()))
-              query.set('to', String(Date.now()))
+              query.set('from', String(startOfDay(addDays(subYears(new Date(), 1), 1)).getTime()))
+              query.set('to', String(startOfDay(new Date()).getTime()))
               navigate(`${location.pathname}?${query.toString()}`)
             }
           }}
@@ -237,8 +237,8 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
           style={{ padding: '.25rem 1rem', fontWeight: 'bolder', cursor: 'pointer' }}
           onClick={() => {
             if (transactions.length > 0) {
-              query.set('from', String(addDays(subMonths(new Date(), 1), 1).getTime()))
-              query.set('to', String(Date.now()))
+              query.set('from', String(startOfDay(addDays(subMonths(new Date(), 1), 1)).getTime()))
+              query.set('to', String(startOfDay(new Date()).getTime()))
               navigate(`${location.pathname}?${query.toString()}`)
             }
           }}
@@ -251,21 +251,19 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
           ticksNumber={10}
           disabledIntervals={[]}
           selectedInterval={[fromDate, toDate]}
-          timelineInterval={[transactions[transactions.length - 1].date, new Date()]}
+          timelineInterval={[startOfDay(transactions[transactions.length - 1].date), startOfDay(new Date())]}
           step={20}
           formatTick={(a) => formatDate(new Date(a), 'MMM yyyy')}
           onUpdateCallback={(_data: { error: boolean; time: Date[] }) => {
             /** Ignore */
           }}
           onChangeCallback={(data: Date[]) => {
-            if (
-              Math.abs(data[0].getTime() - fromDate.getTime()) < 10 &&
-              Math.abs(data[1].getTime() - toDate.getTime()) < 10
-            ) {
+            if (isSameDay(data[0], fromDate) && isSameDay(data[1], toDate)) {
               return
             }
-            query.set('from', String(data[0].getTime()))
-            query.set('to', String(data[1].getTime()))
+
+            query.set('from', String(startOfDay(data[0]).getTime()))
+            query.set('to', String(startOfDay(data[1]).getTime()))
             navigate(`${location.pathname}?${query.toString()}`)
           }}
         />
