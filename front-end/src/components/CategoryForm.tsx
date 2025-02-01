@@ -11,7 +11,7 @@ import { CategoryServiceContext } from '../service/ServiceContext'
 
 interface Props {
   initialCategory?: Category
-  onSubmit: (data: Omit<Category, 'id'>) => Promise<void>
+  onSubmit: (data: Partial<Omit<Category, 'id'>>) => Promise<void>
   submitText: string
 }
 

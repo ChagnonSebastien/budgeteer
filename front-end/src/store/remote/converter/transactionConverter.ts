@@ -1,6 +1,6 @@
 import { Converter } from './converter'
 import Transaction from '../../../domain/model/transaction'
-import { Transaction as TransactionDto } from '../dto/transaction'
+import { Transaction as TransactionDto, UpdateTransactionFields } from '../dto/transaction'
 
 function padToTwoDigits(num: number) {
   return num.toString().padStart(2, '0')
@@ -43,6 +43,23 @@ export class TransactionConverter implements Converter<Transaction, TransactionD
       note: model.note,
       receiver: model.receiverId ?? undefined,
       sender: model.senderId ?? undefined,
+      receiverCurrency: model.receiverCurrencyId,
+      receiverAmount: model.receiverAmount,
+    })
+  }
+
+  toUpdateDTO(model: Partial<Omit<Transaction, 'id'>>): UpdateTransactionFields {
+    return UpdateTransactionFields.create({
+      amount: model.amount,
+      updateCategory: typeof model.categoryId !== 'undefined',
+      category: model.categoryId ?? undefined,
+      currency: model.currencyId,
+      date: typeof model.date !== 'undefined' ? `${formatDateTime(model.date)}` : undefined,
+      note: model.note,
+      updateSender: typeof model.senderId !== 'undefined',
+      sender: model.senderId ?? undefined,
+      updateReceiver: typeof model.receiverId !== 'undefined',
+      receiver: model.receiverId ?? undefined,
       receiverCurrency: model.receiverCurrencyId,
       receiverAmount: model.receiverAmount,
     })

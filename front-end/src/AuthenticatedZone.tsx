@@ -77,10 +77,20 @@ const AuthenticatedZone: FC<Props> = (props) => {
   }, [])
 
   const onNewCurrency = useCallback(
-    async (data: Omit<Currency, 'id'>) => {
+    async (data: Partial<Omit<Currency, 'id'>>) => {
       if (currencies === null) return
 
-      const newCurrency = await currencyStore.create(data)
+      if (typeof data.name === 'undefined') return
+      if (typeof data.symbol === 'undefined') return
+      if (typeof data.decimalPoints === 'undefined') return
+      if (typeof data.exchangeRates === 'undefined') return
+
+      const newCurrency = await currencyStore.create({
+        name: data.name,
+        symbol: data.symbol,
+        exchangeRates: data.exchangeRates,
+        decimalPoints: data.decimalPoints,
+      })
       await currencyStore.setDefault(newCurrency.id)
       setCurrencies([...currencies, newCurrency])
       setDefaultCurrency(newCurrency.id)

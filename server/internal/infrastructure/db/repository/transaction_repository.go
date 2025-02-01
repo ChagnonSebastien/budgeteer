@@ -59,7 +59,7 @@ func (r *Repository) CreateTransaction(
 	receiverCurrencyId, receiverAmount int,
 ) (int, error) {
 	transactionId, err := r.queries.CreateTransaction(
-		ctx, dao.CreateTransactionParams{
+		ctx, &dao.CreateTransactionParams{
 			UserID:   userId,
 			Amount:   int32(amount),
 			Currency: int32(currencyId),
@@ -87,38 +87,136 @@ func (r *Repository) CreateTransaction(
 	return int(transactionId), nil
 }
 
+type UpdateTransactionFields struct {
+	Amount                             *int
+	CurrencyId, SenderAccountId        *int
+	ReceiverAccountId, CategoryId      *int
+	Date                               *time.Time
+	Note                               *string
+	ReceiverCurrencyId, ReceiverAmount *int
+}
+
+func (u *UpdateTransactionFields) nullNote() sql.NullString {
+	if u.Note == nil {
+		return sql.NullString{Valid: false}
+	}
+
+	return sql.NullString{
+		String: *u.Note,
+		Valid:  true,
+	}
+}
+
+func (u *UpdateTransactionFields) nullDate() sql.NullTime {
+	if u.Date == nil {
+		return sql.NullTime{Valid: false}
+	}
+
+	return sql.NullTime{
+		Time:  *u.Date,
+		Valid: true,
+	}
+}
+
+func (u *UpdateTransactionFields) nullAmount() sql.NullInt32 {
+	if u.Amount == nil {
+		return sql.NullInt32{Valid: false}
+	}
+
+	return sql.NullInt32{
+		Int32: int32(*u.Amount),
+		Valid: true,
+	}
+}
+
+func (u *UpdateTransactionFields) nullReceiverAmount() sql.NullInt32 {
+	if u.ReceiverAmount == nil {
+		return sql.NullInt32{Valid: false}
+	}
+
+	return sql.NullInt32{
+		Int32: int32(*u.ReceiverAmount),
+		Valid: true,
+	}
+}
+
+func (u *UpdateTransactionFields) nullSenderAccountId() sql.NullInt32 {
+	if u.SenderAccountId == nil || *u.SenderAccountId == 0 {
+		return sql.NullInt32{Valid: false}
+	}
+
+	return sql.NullInt32{
+		Int32: int32(*u.SenderAccountId),
+		Valid: true,
+	}
+}
+
+func (u *UpdateTransactionFields) nullReceiverAccountId() sql.NullInt32 {
+	if u.ReceiverAccountId == nil || *u.ReceiverAccountId == 0 {
+		return sql.NullInt32{Valid: false}
+	}
+
+	return sql.NullInt32{
+		Int32: int32(*u.ReceiverAccountId),
+		Valid: true,
+	}
+}
+
+func (u *UpdateTransactionFields) nullCurrencyId() sql.NullInt32 {
+	if u.CurrencyId == nil {
+		return sql.NullInt32{Valid: false}
+	}
+
+	return sql.NullInt32{
+		Int32: int32(*u.CurrencyId),
+		Valid: true,
+	}
+}
+
+func (u *UpdateTransactionFields) nullReceiverCurrencyId() sql.NullInt32 {
+	if u.ReceiverCurrencyId == nil {
+		return sql.NullInt32{Valid: false}
+	}
+
+	return sql.NullInt32{
+		Int32: int32(*u.ReceiverCurrencyId),
+		Valid: true,
+	}
+}
+
+func (u *UpdateTransactionFields) nullCategoryId() sql.NullInt32 {
+	if u.CategoryId == nil || *u.CategoryId == 0 {
+		return sql.NullInt32{Valid: false}
+	}
+
+	return sql.NullInt32{
+		Int32: int32(*u.CategoryId),
+		Valid: true,
+	}
+}
+
 func (r *Repository) UpdateTransaction(
 	ctx context.Context,
 	userId string,
-	id,
-	amount int,
-	currencyId, senderAccountId, receiverAccountId, categoryId int,
-	date time.Time,
-	note string,
-	receiverCurrencyId, receiverAmount int,
+	id int,
+	field UpdateTransactionFields,
 ) error {
 	updatedRows, err := r.queries.UpdateTransaction(
-		ctx, dao.UpdateTransactionParams{
-			UserID:   userId,
-			ID:       int32(id),
-			Amount:   int32(amount),
-			Currency: int32(currencyId),
-			Sender: sql.NullInt32{
-				Int32: int32(senderAccountId),
-				Valid: senderAccountId != 0,
-			},
-			Receiver: sql.NullInt32{
-				Int32: int32(receiverAccountId),
-				Valid: receiverAccountId != 0,
-			},
-			Category: sql.NullInt32{
-				Int32: int32(categoryId),
-				Valid: categoryId != 0,
-			},
-			Date:             date,
-			Note:             note,
-			ReceiverCurrency: int32(receiverCurrencyId),
-			ReceiverAmount:   int32(receiverAmount),
+		ctx, &dao.UpdateTransactionParams{
+			UserID:           userId,
+			ID:               int32(id),
+			Amount:           field.nullAmount(),
+			Currency:         field.nullCurrencyId(),
+			UpdateSender:     field.SenderAccountId != nil,
+			Sender:           field.nullSenderAccountId(),
+			UpdateReceiver:   field.ReceiverAccountId != nil,
+			Receiver:         field.nullReceiverAccountId(),
+			UpdateCategory:   field.CategoryId != nil,
+			Category:         field.nullCategoryId(),
+			Date:             field.nullDate(),
+			Note:             field.nullNote(),
+			ReceiverCurrency: field.nullReceiverCurrencyId(),
+			ReceiverAmount:   field.nullReceiverAmount(),
 		},
 	)
 	if err != nil {

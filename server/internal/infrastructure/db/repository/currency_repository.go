@@ -90,7 +90,7 @@ func (r *Repository) CreateCurrency(
 	queries := r.queries.WithTx(tx)
 
 	currencyId, err := queries.CreateCurrency(
-		ctx, dao.CreateCurrencyParams{
+		ctx, &dao.CreateCurrencyParams{
 			UserID:        userId,
 			Name:          name,
 			Symbol:        symbol,
@@ -104,7 +104,7 @@ func (r *Repository) CreateCurrency(
 	var rateId int32
 	if initialExchangeRate != nil {
 		rateId, err = queries.CreateExchangeRate(
-			ctx, dao.CreateExchangeRateParams{
+			ctx, &dao.CreateExchangeRateParams{
 				A:      currencyId,
 				B:      int32(initialExchangeRate.Other),
 				Rate:   initialExchangeRate.Rate,
@@ -124,20 +124,57 @@ func (r *Repository) CreateCurrency(
 	return int(currencyId), int(rateId), nil
 }
 
+type UpdateCurrencyFields struct {
+	Name, Symbol  *string
+	DecimalPoints *int
+}
+
+func (u *UpdateCurrencyFields) nullName() sql.NullString {
+	if u.Name == nil {
+		return sql.NullString{Valid: false}
+	}
+
+	return sql.NullString{
+		String: *u.Name,
+		Valid:  true,
+	}
+}
+
+func (u *UpdateCurrencyFields) nullSymbol() sql.NullString {
+	if u.Symbol == nil {
+		return sql.NullString{Valid: false}
+	}
+
+	return sql.NullString{
+		String: *u.Symbol,
+		Valid:  true,
+	}
+}
+
+func (u *UpdateCurrencyFields) nullDecimalPoint() sql.NullInt16 {
+	if u.DecimalPoints == nil {
+		return sql.NullInt16{Valid: false}
+	}
+
+	return sql.NullInt16{
+		Int16: int16(*u.DecimalPoints),
+		Valid: true,
+	}
+}
+
 func (r *Repository) UpdateCurrency(
 	ctx context.Context,
 	userId string,
 	id int,
-	name, symbol string,
-	decimalPoints int,
+	fields UpdateCurrencyFields,
 ) error {
 	return r.queries.UpdateCurrency(
-		ctx, dao.UpdateCurrencyParams{
+		ctx, &dao.UpdateCurrencyParams{
 			UserID:        userId,
 			ID:            int32(id),
-			Name:          name,
-			Symbol:        symbol,
-			DecimalPoints: int16(decimalPoints),
+			Name:          fields.nullName(),
+			Symbol:        fields.nullSymbol(),
+			DecimalPoints: fields.nullDecimalPoint(),
 		},
 	)
 }
@@ -148,7 +185,7 @@ func (r *Repository) SetDefaultCurrency(
 	currencyId int,
 ) error {
 	i, err := r.queries.SetDefaultCurrency(
-		ctx, dao.SetDefaultCurrencyParams{
+		ctx, &dao.SetDefaultCurrencyParams{
 			UserID: userId,
 			DefaultCurrency: sql.NullInt32{
 				Int32: int32(currencyId),

@@ -1,6 +1,6 @@
 import { Converter } from './converter'
 import Category from '../../../domain/model/category'
-import { Category as CategoryDto } from '../dto/category'
+import { Category as CategoryDto, UpdateCategoryFields } from '../dto/category'
 
 export class CategoryConverter implements Converter<Category, CategoryDto> {
   toModel(model: CategoryDto): Promise<Category> {
@@ -28,6 +28,19 @@ export class CategoryConverter implements Converter<Category, CategoryDto> {
       parentId: dto.parentId ?? undefined,
       fixedCosts: dto.fixedCosts,
       ordering: dto.ordering,
+    })
+  }
+
+  toUpdateDTO(data: Partial<Omit<Category, 'id'>>): UpdateCategoryFields {
+    return UpdateCategoryFields.create({
+      name: data.name,
+      iconName: data.iconName,
+      iconColor: data.iconColor,
+      iconBackground: data.iconBackground,
+      updateParentId: typeof data.parentId !== 'undefined',
+      parentId: data.parentId ?? undefined,
+      fixedCosts: data.fixedCosts,
+      ordering: data.ordering,
     })
   }
 }

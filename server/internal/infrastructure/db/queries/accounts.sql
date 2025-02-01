@@ -11,10 +11,16 @@ RETURNING id;
 -- name: UpdateAccount :exec
 UPDATE accounts
 SET
-    name = sqlc.arg(name),
-    is_mine = sqlc.arg(is_mine),
-    type = sqlc.arg(type),
-    financial_institution = sqlc.arg(financial_institution)
+    name = COALESCE(sqlc.narg(name), name),
+    is_mine = COALESCE(sqlc.narg(is_mine), is_mine),
+    type = CASE
+        WHEN sqlc.arg(update_type)::boolean THEN sqlc.narg(type)
+        ELSE type
+    END,
+    financial_institution = CASE
+        WHEN sqlc.arg(update_financial_institution)::boolean THEN sqlc.narg(financial_institution)
+        ELSE financial_institution
+    END
 WHERE id = sqlc.arg(id) AND user_id = sqlc.arg(user_id);
 
 -- name: GetAllAccountCurrencies :many

@@ -11,8 +11,20 @@ const CreateAccountPage: FC = () => {
 
   const { create: createAccount } = useContext(AccountServiceContext)
 
-  const onSubmit = useCallback(async (data: Omit<Account, 'id'>) => {
-    await createAccount(data)
+  const onSubmit = useCallback(async (data: Partial<Omit<Account, 'id'>>) => {
+    if (typeof data.name === 'undefined') throw new Error('Name cannot be undefined')
+    if (typeof data.initialAmounts === 'undefined') throw new Error('initialAmounts cannot be undefined')
+    if (typeof data.isMine === 'undefined') throw new Error('isMine cannot be undefined')
+    if (typeof data.type === 'undefined') throw new Error('type cannot be undefined')
+    if (typeof data.financialInstitution === 'undefined') throw new Error('financialInstitution cannot be undefined')
+
+    await createAccount({
+      name: data.name,
+      initialAmounts: data.initialAmounts,
+      isMine: data.isMine,
+      type: data.type,
+      financialInstitution: data.financialInstitution,
+    })
     navigate('/accounts', { replace: true })
   }, [])
 

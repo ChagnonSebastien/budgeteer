@@ -11,8 +11,24 @@ const CreateCategoryPage: FC = () => {
 
   const { create: createCategory } = useContext(CategoryServiceContext)
 
-  const onSubmit = useCallback(async (data: Omit<Category, 'id'>) => {
-    await createCategory(data)
+  const onSubmit = useCallback(async (data: Partial<Omit<Category, 'id'>>) => {
+    if (typeof data.name === 'undefined') throw new Error('Name cannot be undefined')
+    if (typeof data.iconName === 'undefined') throw new Error('iconName cannot be undefined')
+    if (typeof data.iconColor === 'undefined') throw new Error('iconColor cannot be undefined')
+    if (typeof data.iconBackground === 'undefined') throw new Error('iconBackground cannot be undefined')
+    if (typeof data.parentId === 'undefined') throw new Error('parentId cannot be undefined')
+    if (typeof data.fixedCosts === 'undefined') throw new Error('fixedCosts cannot be undefined')
+    if (typeof data.ordering === 'undefined') throw new Error('ordering cannot be undefined')
+
+    await createCategory({
+      name: data.name,
+      iconName: data.iconName,
+      iconColor: data.iconColor,
+      iconBackground: data.iconBackground,
+      parentId: data.parentId,
+      fixedCosts: data.fixedCosts,
+      ordering: data.ordering,
+    })
     navigate('/categories', { replace: true })
   }, [])
 

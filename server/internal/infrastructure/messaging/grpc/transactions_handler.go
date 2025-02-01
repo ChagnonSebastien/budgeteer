@@ -1,6 +1,7 @@
 package grpc
 
 import (
+	"chagnon.dev/budget-server/internal/infrastructure/db/repository"
 	"context"
 	"fmt"
 	"time"
@@ -78,39 +79,87 @@ func (s *TransactionHandler) UpdateTransaction(
 		return nil, fmt.Errorf("invalid claims")
 	}
 
-	var sender int
-	if req.Transaction.Sender != nil {
-		sender = int(*req.Transaction.Sender)
+	var sender *int
+	if req.Fields.UpdateSender {
+		if req.Fields.Sender != nil {
+			id := int(*req.Fields.Sender)
+			sender = &id
+		} else {
+			id := 0
+			sender = &id
+		}
 	}
 
-	var receiver int
-	if req.Transaction.Receiver != nil {
-		receiver = int(*req.Transaction.Receiver)
+	var receiver *int
+	if req.Fields.UpdateReceiver {
+		if req.Fields.Receiver != nil {
+			id := int(*req.Fields.Receiver)
+			sender = &id
+		} else {
+			id := 0
+			sender = &id
+		}
 	}
 
-	var category int
-	if req.Transaction.Category != nil {
-		category = int(*req.Transaction.Category)
+	var category *int
+	if req.Fields.UpdateCategory {
+		if req.Fields.Category != nil {
+			id := int(*req.Fields.Category)
+			sender = &id
+		} else {
+			id := 0
+			sender = &id
+		}
 	}
 
-	date, err := time.Parse(layout, req.Transaction.Date)
-	if err != nil {
-		return nil, err
+	var amount *int
+	if req.Fields.Amount != nil {
+		value := int(*req.Fields.Amount)
+		amount = &value
 	}
 
-	err = s.transactionService.UpdateTransaction(
+	var currencyId *int
+	if req.Fields.Currency != nil {
+		id := int(*req.Fields.Currency)
+		currencyId = &id
+	}
+
+	var receiverAmount *int
+	if req.Fields.ReceiverAmount != nil {
+		value := int(*req.Fields.ReceiverAmount)
+		receiverAmount = &value
+	}
+
+	var receiverCurrencyId *int
+	if req.Fields.ReceiverCurrency != nil {
+		id := int(*req.Fields.ReceiverCurrency)
+		receiverCurrencyId = &id
+	}
+
+	var date *time.Time
+	if req.Fields.Date != nil {
+		computedDate, err := time.Parse(layout, *req.Fields.Date)
+		if err != nil {
+			return nil, err
+		}
+		date = &computedDate
+	}
+
+	err := s.transactionService.UpdateTransaction(
 		ctx,
 		claims.Sub,
-		int(req.Transaction.Id),
-		int(req.Transaction.Amount),
-		int(req.Transaction.Currency),
-		sender,
-		receiver,
-		category,
-		date,
-		req.Transaction.Note,
-		int(req.Transaction.ReceiverCurrency),
-		int(req.Transaction.ReceiverAmount),
+		int(req.Id),
+		repository.UpdateTransactionFields{
+			Amount:             amount,
+			CurrencyId:         currencyId,
+			SenderAccountId:    sender,
+			ReceiverAccountId:  receiver,
+			CategoryId:         category,
+			Date:               date,
+			Note:               req.Fields.Note,
+			ReceiverCurrencyId: receiverCurrencyId,
+			ReceiverAmount:     receiverAmount,
+		},
 	)
 	if err != nil {
 		return nil, err

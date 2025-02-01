@@ -1,6 +1,7 @@
 package service
 
 import (
+	"chagnon.dev/budget-server/internal/infrastructure/db/repository"
 	"context"
 
 	"chagnon.dev/budget-server/internal/domain/model"
@@ -20,10 +21,7 @@ type accountRepository interface {
 		ctx context.Context,
 		userId string,
 		id int,
-		name string,
-		balances []model.Balance,
-		isMine bool,
-		accountType, financialInstitution string,
+		fields repository.UpdateAccountFields,
 	) error
 }
 
@@ -58,11 +56,7 @@ func (a *AccountService) UpdateAccount(
 	ctx context.Context,
 	userId string,
 	id int,
-	name string,
-	balances []model.Balance,
-	isMine bool,
-	accountType string,
-	financialInstitution string,
+	fields repository.UpdateAccountFields,
 ) error {
-	return a.accountRepository.UpdateAccount(ctx, userId, id, name, balances, isMine, accountType, financialInstitution)
+	return a.accountRepository.UpdateAccount(ctx, userId, id, fields)
 }

@@ -47,8 +47,15 @@ message CreateCurrencyResponse {
   optional uint32 exchangeRateId = 2;
 }
 
+message UpdateCurrencyFields {
+  optional string name = 1;
+  optional string symbol = 2;
+  optional uint32 decimal_points = 3;
+}
+
 message UpdateCurrencyRequest {
-  Currency currency = 1;
+  uint32 id = 1;
+  UpdateCurrencyFields fields = 2;
 }
 
 message UpdateCurrencyResponse {

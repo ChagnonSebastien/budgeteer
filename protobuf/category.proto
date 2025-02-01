@@ -36,8 +36,20 @@ message CreateCategoryResponse {
   uint32 id = 1;
 }
 
+message UpdateCategoryFields {
+  optional string name = 1;
+  bool update_parent_id = 2;
+  optional uint32 parent_id = 3;
+  optional string icon_name = 4;
+  optional string icon_color = 5;
+  optional string icon_background = 6;
+  optional bool fixed_costs = 7;
+  optional double ordering = 8;
+}
+
 message UpdateCategoryRequest {
-  Category category = 1;
+  uint32 id = 1;
+  UpdateCategoryFields fields = 2;
 }
 
 message UpdateCategoryResponse {

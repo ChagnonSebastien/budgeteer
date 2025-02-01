@@ -11,9 +11,9 @@ WHERE user_id = sqlc.arg(user_id);
 -- name: UpdateCurrency :exec
 UPDATE currencies
 SET
-    name = sqlc.arg(name),
-    symbol = sqlc.arg(symbol),
-    decimal_points = sqlc.arg(decimal_points)
+    name = COALESCE(sqlc.narg(name), name),
+    symbol = COALESCE(sqlc.narg(symbol), symbol),
+    decimal_points = COALESCE(sqlc.narg(decimal_points), decimal_points)
 WHERE id = sqlc.arg(id) AND user_id = sqlc.arg(user_id);
 
 -- name: GetAllExchangeRatesOf :many

@@ -39,10 +39,11 @@ export default class CategoryRemoteStore {
     )
   }
 
-  public async update(id: number, data: Omit<Category, 'id'>): Promise<void> {
+  public async update(id: number, data: Partial<Omit<Category, 'id'>>): Promise<void> {
     await this.client.updateCategory(
       UpdateCategoryRequest.create({
-        category: conv.toDTO({ id, ...data }),
+        id,
+        fields: conv.toUpdateDTO(data),
       }),
     ).response
   }

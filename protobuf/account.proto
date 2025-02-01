@@ -14,8 +14,8 @@ message Account {
   string name = 2;
   repeated CurrencyBalance balances = 3;
   bool is_mine = 4;
-  optional string type = 5;
-  optional string financial_institution = 6;
+  string type = 5;
+  string financial_institution = 6;
 }
 
 message GetAllAccountsRequest {
@@ -29,16 +29,26 @@ message CreateAccountRequest {
   string name = 1;
   repeated CurrencyBalance balances = 2;
   bool is_mine = 3;
-  optional string type = 4;
-  optional string financial_institution = 5;
+  string type = 4;
+  string financial_institution = 5;
 }
 
 message CreateAccountResponse {
   uint32 id = 1;
 }
 
+message EditableAccountFields {
+  optional string name = 1;
+  bool update_balances = 2;
+  repeated CurrencyBalance balances = 3;
+  optional bool is_mine = 4;
+  optional string type = 5;
+  optional string financial_institution = 6;
+}
+
 message UpdateAccountRequest {
-  Account account = 1;
+  uint32 id = 1;
+  EditableAccountFields fields = 2;
 }
 
 message UpdateAccountResponse {

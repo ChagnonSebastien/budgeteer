@@ -47,10 +47,11 @@ export default class TransactionRemoteStore {
     )
   }
 
-  public async update(id: number, data: Omit<Transaction, 'id'>): Promise<void> {
+  public async update(id: number, data: Partial<Omit<Transaction, 'id'>>): Promise<void> {
     await this.client.updateTransaction(
       UpdateTransactionRequest.create({
-        transaction: conv.toDTO({ id, ...data }),
+        id,
+        fields: conv.toUpdateDTO(data),
       }),
     ).response
   }

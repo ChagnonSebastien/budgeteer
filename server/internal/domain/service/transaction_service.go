@@ -1,6 +1,7 @@
 package service
 
 import (
+	"chagnon.dev/budget-server/internal/infrastructure/db/repository"
 	"context"
 	"time"
 
@@ -21,11 +22,8 @@ type transactionRepository interface {
 	UpdateTransaction(
 		ctx context.Context,
 		userId string,
-		id, amount int,
-		currencyId, senderAccountId, receiverAccountId, categoryId int,
-		date time.Time,
-		note string,
-		receiverCurrencyId, receiverAmount int,
+		id int,
+		fields repository.UpdateTransactionFields,
 	) error
 }
 
@@ -68,24 +66,13 @@ func (a *TransactionService) CreateTransaction(
 func (a *TransactionService) UpdateTransaction(
 	ctx context.Context,
 	userId string,
-	id, amount int,
-	currencyId, senderAccountId, receiverAccountId, categoryId int,
-	date time.Time,
-	note string,
-	receiverCurrencyId, receiverAmount int,
+	id int,
+	fields repository.UpdateTransactionFields,
 ) error {
 	return a.transactionRepository.UpdateTransaction(
 		ctx,
 		userId,
 		id,
-		amount,
-		currencyId,
-		senderAccountId,
-		receiverAccountId,
-		categoryId,
-		date,
-		note,
-		receiverCurrencyId,
-		receiverAmount,
+		fields,
 	)
 }

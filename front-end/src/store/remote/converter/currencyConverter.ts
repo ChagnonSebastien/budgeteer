@@ -1,7 +1,7 @@
 import { Converter } from './converter'
 import { formatDateTime } from './transactionConverter'
 import Currency, { ExchangeRate } from '../../../domain/model/currency'
-import { Currency as CurrencyDto, RatesList } from '../dto/currency'
+import { Currency as CurrencyDto, RatesList, UpdateCurrencyFields } from '../dto/currency'
 
 export class CurrencyConverter implements Converter<Currency, CurrencyDto> {
   toModel(model: CurrencyDto): Promise<Currency> {
@@ -47,6 +47,14 @@ export class CurrencyConverter implements Converter<Currency, CurrencyDto> {
           }
         })
         .reduce((acc, cur) => ({ ...acc, ...cur }), {}),
+    })
+  }
+
+  toUpdateDTO(dto: Partial<Omit<Currency, 'id'>>): UpdateCurrencyFields {
+    return UpdateCurrencyFields.create({
+      name: dto.name,
+      symbol: dto.symbol,
+      decimalPoints: dto.decimalPoints,
     })
   }
 }

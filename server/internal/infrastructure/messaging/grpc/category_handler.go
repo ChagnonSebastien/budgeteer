@@ -1,6 +1,7 @@
 package grpc
 
 import (
+	"chagnon.dev/budget-server/internal/infrastructure/db/repository"
 	"context"
 	"fmt"
 
@@ -53,17 +54,30 @@ func (s *CategoryHandler) UpdateCategory(
 		return nil, fmt.Errorf("invalid claims")
 	}
 
+	var parentId *int
+	if req.Fields.UpdateParentId {
+		if req.Fields.ParentId != nil {
+			id := int(*req.Fields.ParentId)
+			parentId = &id
+		} else {
+			id := 0
+			parentId = &id
+		}
+	}
+
 	err := s.categoryService.UpdateCategory(
 		ctx,
 		claims.Sub,
-		int(req.Category.Id),
-		req.Category.Name,
-		req.Category.IconName,
-		req.Category.IconColor,
-		req.Category.IconBackground,
-		int(req.Category.ParentId),
-		req.Category.FixedCosts,
-		req.Category.Ordering,
+		int(req.Id),
+		repository.UpdateCategoryFields{
+			Name:           req.Fields.Name,
+			IconName:       req.Fields.IconName,
+			IconColor:      req.Fields.IconColor,
+			IconBackground: req.Fields.IconBackground,
+			ParentId:       parentId,
+			FixedCosts:     req.Fields.FixedCosts,
+			Ordering:       req.Fields.Ordering,
+		},
 	)
 	if err != nil {
 		return nil, err

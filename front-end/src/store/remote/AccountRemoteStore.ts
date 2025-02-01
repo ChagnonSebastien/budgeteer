@@ -43,10 +43,11 @@ export default class AccountRemoteStore {
     )
   }
 
-  public async update(id: number, data: Omit<Account, 'id'>): Promise<void> {
+  public async update(id: number, data: Partial<Omit<Account, 'id'>>): Promise<void> {
     await this.client.updateAccount(
       UpdateAccountRequest.create({
-        account: conv.toDTO({ id, ...data }),
+        id,
+        fields: conv.toUpdateDTO(data),
       }),
     ).response
   }

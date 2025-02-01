@@ -1,6 +1,7 @@
 package service
 
 import (
+	"chagnon.dev/budget-server/internal/infrastructure/db/repository"
 	"context"
 	"fmt"
 
@@ -21,10 +22,7 @@ type categoryRepository interface {
 		ctx context.Context,
 		userId string,
 		id int,
-		name, iconName, iconColor, iconBackground string,
-		parentId int,
-		fixedCosts bool,
-		ordering float64,
+		fields repository.UpdateCategoryFields,
 	) error
 }
 
@@ -106,21 +104,12 @@ func (a *CategoryService) UpdateCategory(
 	ctx context.Context,
 	userId string,
 	id int,
-	name, iconName, iconColor, iconBackground string,
-	parentId int,
-	fixedCosts bool,
-	ordering float64,
+	fields repository.UpdateCategoryFields,
 ) error {
 	return a.categoryRepository.UpdateCategory(
 		ctx,
 		userId,
 		id,
-		name,
-		iconName,
-		iconColor,
-		iconBackground,
-		parentId,
-		fixedCosts,
-		ordering,
+		fields,
 	)
 }

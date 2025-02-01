@@ -1,83 +1,82 @@
 package service
 
 import (
-    "context"
+	"context"
 
-    "chagnon.dev/budget-server/internal/domain/model"
-    "chagnon.dev/budget-server/internal/infrastructure/db/repository"
+	"chagnon.dev/budget-server/internal/domain/model"
+	"chagnon.dev/budget-server/internal/infrastructure/db/repository"
 )
 
 type currencyRepository interface {
-    GetAllCurrencies(ctx context.Context, userId string) ([]model.Currency, error)
-    CreateCurrency(
-        ctx context.Context,
-        userId string,
-        name, symbol string,
-        decimalPoints int,
-        initialExchangeRate *repository.InitialExchangeRate,
-    ) (
-        int,
-        int,
-        error,
-    )
-    UpdateCurrency(ctx context.Context, userId string, id int, name, symbol string, decimalPoints int) error
-    SetDefaultCurrency(ctx context.Context, userId string, currencyId int) error
+	GetAllCurrencies(ctx context.Context, userId string) ([]model.Currency, error)
+	CreateCurrency(
+		ctx context.Context,
+		userId string,
+		name, symbol string,
+		decimalPoints int,
+		initialExchangeRate *repository.InitialExchangeRate,
+	) (
+		int,
+		int,
+		error,
+	)
+	UpdateCurrency(ctx context.Context, userId string, id int, fields repository.UpdateCurrencyFields) error
+	SetDefaultCurrency(ctx context.Context, userId string, currencyId int) error
 }
 
 type CurrencyService struct {
-    currencyRepository currencyRepository
+	currencyRepository currencyRepository
 }
 
 func NewCurrencyService(currencyRepository currencyRepository) *CurrencyService {
-    return &CurrencyService{currencyRepository}
+	return &CurrencyService{currencyRepository}
 }
 
 func (a *CurrencyService) GetAllCurrencies(ctx context.Context, userId string) ([]model.Currency, error) {
-    return a.currencyRepository.GetAllCurrencies(ctx, userId)
+	return a.currencyRepository.GetAllCurrencies(ctx, userId)
 }
 
 type InitialExchangeRate struct {
-    Other int
-    Rate  float64
-    Date  string
+	Other int
+	Rate  float64
+	Date  string
 }
 
 func (a *CurrencyService) CreateCurrency(
-    ctx context.Context,
-    userId string,
-    name, symbol string,
-    decimalPoints int,
-    initialExchangeRate *InitialExchangeRate,
+	ctx context.Context,
+	userId string,
+	name, symbol string,
+	decimalPoints int,
+	initialExchangeRate *InitialExchangeRate,
 ) (int, int, error) {
-    var t *repository.InitialExchangeRate
-    if initialExchangeRate != nil {
-        t = &repository.InitialExchangeRate{
-            Other: initialExchangeRate.Other,
-            Rate:  initialExchangeRate.Rate,
-            Date:  initialExchangeRate.Date,
-        }
-    }
+	var t *repository.InitialExchangeRate
+	if initialExchangeRate != nil {
+		t = &repository.InitialExchangeRate{
+			Other: initialExchangeRate.Other,
+			Rate:  initialExchangeRate.Rate,
+			Date:  initialExchangeRate.Date,
+		}
+	}
 
-    return a.currencyRepository.CreateCurrency(
-        ctx,
-        userId,
-        name,
-        symbol,
-        decimalPoints,
-        t,
-    )
+	return a.currencyRepository.CreateCurrency(
+		ctx,
+		userId,
+		name,
+		symbol,
+		decimalPoints,
+		t,
+	)
 }
 
 func (a *CurrencyService) UpdateCurrency(
-    ctx context.Context,
-    userId string,
-    id int,
-    name, symbol string,
-    decimalPoints int,
+	ctx context.Context,
+	userId string,
+	id int,
+	fields repository.UpdateCurrencyFields,
 ) error {
-    return a.currencyRepository.UpdateCurrency(ctx, userId, id, name, symbol, decimalPoints)
+	return a.currencyRepository.UpdateCurrency(ctx, userId, id, fields)
 }
 
 func (a *CurrencyService) SetDefaultCurrency(ctx context.Context, userid string, currencyId int) error {
-    return a.currencyRepository.SetDefaultCurrency(ctx, userid, currencyId)
+	return a.currencyRepository.SetDefaultCurrency(ctx, userid, currencyId)
 }

@@ -9,7 +9,7 @@ import (
 
 func (r *Repository) UpsertUser(ctx context.Context, id, username, email string) error {
 	return r.queries.UpsertUser(
-		ctx, dao.UpsertUserParams{
+		ctx, &dao.UpsertUserParams{
 			ID:       id,
 			Username: username,
 			Email:    email,

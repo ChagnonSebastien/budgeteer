@@ -11,7 +11,7 @@ const validRate = new RegExp(`^\\d*[.,]?\\d*$`)
 
 interface Props {
   initialCurrency?: Currency
-  onSubmit: (data: Omit<Currency, 'id'>) => Promise<void>
+  onSubmit: (data: Partial<Omit<Currency, 'id'>>) => Promise<void>
   submitText: string
 }
 

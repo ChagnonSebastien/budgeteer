@@ -9,7 +9,7 @@ import { AccountServiceContext, CurrencyServiceContext } from '../service/Servic
 
 interface Props {
   initialAccount?: Account
-  onSubmit: (data: Omit<Account, 'id'>) => Promise<void>
+  onSubmit: (data: Partial<Omit<Account, 'id'>>) => Promise<void>
   submitText: string
 }
 
@@ -131,8 +131,8 @@ const AccountForm: FC<Props> = (props) => {
         value: Math.floor(parseFloat(`0${ia.value.value.replace(',', '.')}`) * 100),
       })),
       isMine,
-      type: type.trim() === '' ? null : type.trim(),
-      financialInstitution: financialInstitution.trim() === '' ? null : financialInstitution.trim(),
+      type: type.trim(),
+      financialInstitution: financialInstitution.trim(),
     }).catch((err) => {
       setShowErrorToast('Unexpected error while submitting')
       console.error(err)

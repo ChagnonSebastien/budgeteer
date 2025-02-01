@@ -11,11 +11,14 @@ WHERE user_id = sqlc.arg(user_id);
 -- name: UpdateCategory :exec
 UPDATE categories
 SET
-    name = sqlc.arg(name),
-    parent = sqlc.arg(parent),
-    icon_name = sqlc.arg(icon_name),
-    icon_color = sqlc.arg(icon_color),
-    icon_background = sqlc.arg(icon_background),
-    fixed_costs = sqlc.arg(fixed_costs),
-    ordering = sqlc.arg(ordering)
+    name = COALESCE(sqlc.narg(name), name),
+    parent = CASE
+        WHEN sqlc.arg(update_parent)::boolean THEN sqlc.narg(parent)
+        ELSE parent
+    END,
+    icon_name = COALESCE(sqlc.narg(icon_name), icon_name),
+    icon_color = COALESCE(sqlc.narg(icon_color), icon_color),
+    icon_background = COALESCE(sqlc.narg(icon_background), icon_background),
+    fixed_costs = COALESCE(sqlc.narg(fixed_costs), fixed_costs),
+    ordering = COALESCE(sqlc.narg(ordering), ordering)
 WHERE id = sqlc.arg(id) AND user_id = sqlc.arg(user_id);

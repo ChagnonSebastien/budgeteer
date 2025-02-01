@@ -50,7 +50,7 @@ interface FieldStatus {
 
 interface Props {
   initialTransaction?: AugmentedTransaction
-  onSubmit: (data: Omit<Transaction, 'id'>) => Promise<void>
+  onSubmit: (data: Partial<Omit<Transaction, 'id'>>) => Promise<void>
   submitText: string
   type?: 'income' | 'expense' | 'transfer'
 }
@@ -213,9 +213,9 @@ const TransactionForm: FC<Props> = (props) => {
       if (senderAccount.name !== '') {
         accountCreations = createAccount({
           name: senderAccount.name,
-          type: null,
+          type: '',
           isMine: false,
-          financialInstitution: null,
+          financialInstitution: '',
           initialAmounts: [],
         })
       }
@@ -223,9 +223,9 @@ const TransactionForm: FC<Props> = (props) => {
       if (receiverAccount.name !== '') {
         accountCreations = createAccount({
           name: receiverAccount.name,
-          type: null,
+          type: '',
           isMine: false,
-          financialInstitution: null,
+          financialInstitution: '',
           initialAmounts: [],
         })
       }

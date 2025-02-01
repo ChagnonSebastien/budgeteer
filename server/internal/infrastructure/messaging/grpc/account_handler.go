@@ -1,6 +1,7 @@
 package grpc
 
 import (
+	"chagnon.dev/budget-server/internal/infrastructure/db/repository"
 	"context"
 	"fmt"
 
@@ -35,24 +36,14 @@ func (s *AccountHandler) CreateAccount(ctx context.Context, req *dto.CreateAccou
 		)
 	}
 
-	accountType := ""
-	if req.Type != nil {
-		accountType = *req.Type
-	}
-
-	financialInstitution := ""
-	if req.FinancialInstitution != nil {
-		financialInstitution = *req.FinancialInstitution
-	}
-
 	newId, err := s.accountService.CreateAccount(
 		ctx,
 		claims.Sub,
 		req.Name,
 		balances,
 		req.IsMine,
-		accountType,
-		financialInstitution,
+		req.Type,
+		req.FinancialInstitution,
 	)
 	if err != nil {
 		return nil, err
@@ -72,35 +63,31 @@ func (s *AccountHandler) UpdateAccount(
 		return nil, fmt.Errorf("invalid claims")
 	}
 
-	balances := make([]model.Balance, 0, len(req.Account.Balances))
-	for _, balance := range req.Account.Balances {
-		balances = append(
-			balances, model.Balance{
-				CurrencyId: int(balance.CurrencyId),
-				Value:      int(balance.Amount),
-			},
-		)
-	}
-
-	accountType := ""
-	if req.Account.Type != nil {
-		accountType = *req.Account.Type
-	}
-
-	financialInstitution := ""
-	if req.Account.FinancialInstitution != nil {
-		financialInstitution = *req.Account.FinancialInstitution
+	var initialAmounts *[]model.Balance
+	if req.Fields.UpdateBalances {
+		balances := make([]model.Balance, 0, len(req.Fields.Balances))
+		for _, balance := range req.Fields.Balances {
+			balances = append(
+				balances, model.Balance{
+					CurrencyId: int(balance.CurrencyId),
+					Value:      int(balance.Amount),
+				},
+			)
+		}
+		initialAmounts = &balances
 	}
 
 	err := s.accountService.UpdateAccount(
 		ctx,
 		claims.Sub,
-		int(req.Account.Id),
-		req.Account.Name,
-		balances,
-		req.Account.IsMine,
-		accountType,
-		financialInstitution,
+		int(req.Id),
+		repository.UpdateAccountFields{
+			Name:                 req.Fields.Name,
+			InitialsAmounts:      initialAmounts,
+			IsMine:               req.Fields.IsMine,
+			AccountType:          req.Fields.Type,
+			FinancialInstitution: req.Fields.FinancialInstitution,
+		},
 	)
 	if err != nil {
 		return nil, err
@@ -135,23 +122,13 @@ func (s *AccountHandler) GetAllAccounts(ctx context.Context, _ *dto.GetAllAccoun
 			)
 		}
 
-		var accountType *string = nil
-		if account.Type != "" {
-			accountType = &account.Type
-		}
-
-		var financialInstitution *string = nil
-		if account.FinancialInstitution != "" {
-			financialInstitution = &account.FinancialInstitution
-		}
-
 		accountsDto[i] = &dto.Account{
 			Id:                   uint32(account.ID),
 			Name:                 account.Name,
 			Balances:             balances,
 			IsMine:               account.IsMine,
-			Type:                 accountType,
-			FinancialInstitution: financialInstitution,
+			Type:                 account.Type,
+			FinancialInstitution: account.FinancialInstitution,
 		}
 	}
 

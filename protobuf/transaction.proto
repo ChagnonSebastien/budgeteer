@@ -40,8 +40,24 @@ message CreateTransactionResponse {
   uint32 id = 1;
 }
 
+message UpdateTransactionFields {
+  optional uint32 amount = 1;
+  optional uint32 currency = 2;
+  bool update_sender = 3;
+  optional uint32 sender = 4;
+  bool update_receiver = 5;
+  optional uint32 receiver = 6;
+  bool update_category = 7;
+  optional uint32 category = 8;
+  optional string date = 9;
+  optional string note = 10;
+  optional uint32 receiver_currency = 11;
+  optional uint32 receiver_amount = 12;
+}
+
 message UpdateTransactionRequest {
-  Transaction transaction = 1;
+  uint32 id = 1;
+  UpdateTransactionFields fields = 2;
 }
 
 message UpdateTransactionResponse {

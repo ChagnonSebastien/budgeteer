@@ -1,6 +1,7 @@
 package grpc
 
 import (
+	"chagnon.dev/budget-server/internal/infrastructure/db/repository"
 	"context"
 	"fmt"
 
@@ -62,13 +63,21 @@ func (s *CurrencyHandler) UpdateCurrency(
 		return nil, fmt.Errorf("invalid claims")
 	}
 
+	var decimalPoints *int
+	if req.Fields.DecimalPoints != nil {
+		id := int(*req.Fields.DecimalPoints)
+		decimalPoints = &id
+	}
+
 	err := s.currencyService.UpdateCurrency(
 		ctx,
 		claims.Sub,
-		int(req.Currency.Id),
-		req.Currency.Name,
-		req.Currency.Symbol,
-		int(req.Currency.DecimalPoints),
+		int(req.Id),
+		repository.UpdateCurrencyFields{
+			Name:          req.Fields.Name,
+			Symbol:        req.Fields.Symbol,
+			DecimalPoints: decimalPoints,
+		},
 	)
 	if err != nil {
 		return nil, err

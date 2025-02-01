@@ -45,7 +45,7 @@ func (r *Repository) CreateCategory(
 	ordering float64,
 ) (int, error) {
 	id, err := r.queries.CreateCategory(
-		ctx, dao.CreateCategoryParams{
+		ctx, &dao.CreateCategoryParams{
 			UserID: userId,
 			Name:   name,
 			Parent: sql.NullInt32{
@@ -66,29 +66,108 @@ func (r *Repository) CreateCategory(
 	return int(id), nil
 }
 
+type UpdateCategoryFields struct {
+	Name, IconName, IconColor, IconBackground *string
+	ParentId                                  *int
+	FixedCosts                                *bool
+	Ordering                                  *float64
+}
+
+func (u *UpdateCategoryFields) nullName() sql.NullString {
+	if u.Name == nil {
+		return sql.NullString{Valid: false}
+	}
+
+	return sql.NullString{
+		String: *u.Name,
+		Valid:  true,
+	}
+}
+
+func (u *UpdateCategoryFields) nullIconName() sql.NullString {
+	if u.IconName == nil {
+		return sql.NullString{Valid: false}
+	}
+
+	return sql.NullString{
+		String: *u.IconName,
+		Valid:  true,
+	}
+}
+
+func (u *UpdateCategoryFields) nullIconColor() sql.NullString {
+	if u.IconColor == nil {
+		return sql.NullString{Valid: false}
+	}
+
+	return sql.NullString{
+		String: *u.IconColor,
+		Valid:  true,
+	}
+}
+
+func (u *UpdateCategoryFields) nullIconBackground() sql.NullString {
+	if u.IconBackground == nil {
+		return sql.NullString{Valid: false}
+	}
+
+	return sql.NullString{
+		String: *u.IconBackground,
+		Valid:  true,
+	}
+}
+
+func (u *UpdateCategoryFields) nullParentId() sql.NullInt32 {
+	if u.ParentId == nil || *u.ParentId == 0 {
+		return sql.NullInt32{Valid: false}
+	}
+
+	return sql.NullInt32{
+		Int32: int32(*u.ParentId),
+		Valid: true,
+	}
+}
+
+func (u *UpdateCategoryFields) nullFixedCosts() sql.NullBool {
+	if u.FixedCosts == nil {
+		return sql.NullBool{Valid: false}
+	}
+
+	return sql.NullBool{
+		Bool:  *u.FixedCosts,
+		Valid: true,
+	}
+}
+
+func (u *UpdateCategoryFields) nullOrdering() sql.NullFloat64 {
+	if u.Ordering == nil {
+		return sql.NullFloat64{Valid: false}
+	}
+
+	return sql.NullFloat64{
+		Float64: *u.Ordering,
+		Valid:   true,
+	}
+}
+
 func (r *Repository) UpdateCategory(
 	ctx context.Context,
 	userId string,
 	id int,
-	name, iconName, iconColor, iconBackground string,
-	parentId int,
-	fixedCosts bool,
-	ordering float64,
+	fields UpdateCategoryFields,
 ) error {
 	return r.queries.UpdateCategory(
-		ctx, dao.UpdateCategoryParams{
-			UserID: userId,
-			ID:     int32(id),
-			Name:   name,
-			Parent: sql.NullInt32{
-				Int32: int32(parentId),
-				Valid: parentId != 0,
-			},
-			IconName:       iconName,
-			IconColor:      iconColor,
-			IconBackground: iconBackground,
-			FixedCosts:     fixedCosts,
-			Ordering:       ordering,
+		ctx, &dao.UpdateCategoryParams{
+			UserID:         userId,
+			ID:             int32(id),
+			Name:           fields.nullName(),
+			UpdateParent:   fields.ParentId != nil,
+			Parent:         fields.nullParentId(),
+			IconName:       fields.nullIconName(),
+			IconColor:      fields.nullIconColor(),
+			IconBackground: fields.nullIconBackground(),
+			FixedCosts:     fields.nullFixedCosts(),
+			Ordering:       fields.nullOrdering(),
 		},
 	)
 }

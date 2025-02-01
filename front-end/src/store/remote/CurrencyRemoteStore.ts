@@ -58,10 +58,11 @@ export default class CurrencyRemoteStore {
     return new Currency(response.currencyId, data.name, data.symbol, data.decimalPoints, exchangeRates)
   }
 
-  public async update(id: number, data: Omit<Currency, 'id'>): Promise<void> {
+  public async update(id: number, data: Partial<Omit<Currency, 'id'>>): Promise<void> {
     await this.client.updateCurrency(
       UpdateCurrencyRequest.create({
-        currency: conv.toDTO({ id, ...data }),
+        id,
+        fields: conv.toUpdateDTO(data),
       }),
     ).response
   }

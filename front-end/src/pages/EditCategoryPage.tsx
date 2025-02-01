@@ -20,7 +20,7 @@ const EditCategoryPage: FC = () => {
   )
 
   const onSubmit = useCallback(
-    async (data: Omit<Category, 'id'>) => {
+    async (data: Partial<Omit<Category, 'id'>>) => {
       if (typeof selectedCategory === 'undefined') return
 
       await updateCategory(selectedCategory!.id, data)

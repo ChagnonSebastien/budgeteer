@@ -85,7 +85,7 @@ func (r *Repository) CreateAccount(
 	queries := r.queries.WithTx(tx)
 
 	accountId, err := queries.CreateAccount(
-		ctx, dao.CreateAccountParams{
+		ctx, &dao.CreateAccountParams{
 			Name:   name,
 			UserID: userId,
 			IsMine: isMine,
@@ -105,7 +105,7 @@ func (r *Repository) CreateAccount(
 
 	for _, balance := range initialsAmounts {
 		changedRows, err := queries.InsertAccountCurrency(
-			ctx, dao.InsertAccountCurrencyParams{
+			ctx, &dao.InsertAccountCurrencyParams{
 				AccountID:  accountId,
 				CurrencyID: int32(balance.CurrencyId),
 				Value:      int32(balance.Value),
@@ -132,14 +132,62 @@ func (r *Repository) CreateAccount(
 	return int(accountId), nil
 }
 
+type UpdateAccountFields struct {
+	Name                              *string
+	InitialsAmounts                   *[]model.Balance
+	IsMine                            *bool
+	AccountType, FinancialInstitution *string
+}
+
+func (u *UpdateAccountFields) nullName() sql.NullString {
+	if u.Name == nil {
+		return sql.NullString{Valid: false}
+	}
+
+	return sql.NullString{
+		String: *u.Name,
+		Valid:  true,
+	}
+}
+
+func (u *UpdateAccountFields) nullIsMine() sql.NullBool {
+	if u.IsMine == nil {
+		return sql.NullBool{Valid: false}
+	}
+
+	return sql.NullBool{
+		Bool:  *u.IsMine,
+		Valid: true,
+	}
+}
+
+func (u *UpdateAccountFields) nullAccountType() sql.NullString {
+	if u.AccountType == nil || *u.AccountType == "" {
+		return sql.NullString{Valid: false}
+	}
+
+	return sql.NullString{
+		String: *u.AccountType,
+		Valid:  true,
+	}
+}
+
+func (u *UpdateAccountFields) nullFinancialInstitution() sql.NullString {
+	if u.FinancialInstitution == nil || *u.FinancialInstitution == "" {
+		return sql.NullString{Valid: false}
+	}
+
+	return sql.NullString{
+		String: *u.FinancialInstitution,
+		Valid:  true,
+	}
+}
+
 func (r *Repository) UpdateAccount(
 	ctx context.Context,
 	userId string,
 	id int,
-	name string,
-	initialsAmounts []model.Balance,
-	isMine bool,
-	accountType, financialInstitution string,
+	fields UpdateAccountFields,
 ) error {
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -149,53 +197,51 @@ func (r *Repository) UpdateAccount(
 	queries := r.queries.WithTx(tx)
 
 	err = queries.UpdateAccount(
-		ctx, dao.UpdateAccountParams{
-			UserID: userId,
-			ID:     int32(id),
-			Name:   name,
-			IsMine: isMine,
-			Type: sql.NullString{
-				String: accountType,
-				Valid:  accountType != "",
-			},
-			FinancialInstitution: sql.NullString{
-				String: financialInstitution,
-				Valid:  financialInstitution != "",
-			},
+		ctx, &dao.UpdateAccountParams{
+			UserID:                     userId,
+			ID:                         int32(id),
+			Name:                       fields.nullName(),
+			IsMine:                     fields.nullIsMine(),
+			UpdateType:                 fields.AccountType != nil,
+			Type:                       fields.nullAccountType(),
+			UpdateFinancialInstitution: fields.FinancialInstitution != nil,
+			FinancialInstitution:       fields.nullFinancialInstitution(),
 		},
 	)
 	if err != nil {
 		return err
 	}
 
-	err = queries.DeleteAccountCurrencies(
-		ctx, dao.DeleteAccountCurrenciesParams{
-			AccountID: int32(id),
-			UserID:    userId,
-		},
-	)
-	if err != nil {
-		return err
-	}
-
-	for _, balance := range initialsAmounts {
-		changedRows, err := queries.InsertAccountCurrency(
-			ctx, dao.InsertAccountCurrencyParams{
-				AccountID:  int32(id),
-				CurrencyID: int32(balance.CurrencyId),
-				Value:      int32(balance.Value),
+	if fields.InitialsAmounts != nil {
+		err = queries.DeleteAccountCurrencies(
+			ctx, &dao.DeleteAccountCurrenciesParams{
+				AccountID: int32(id),
+				UserID:    userId,
 			},
 		)
 		if err != nil {
 			return err
 		}
-		if changedRows == 0 {
-			return fmt.Errorf(
-				"inserting new account(%d)-currency(%d) relationship for user %s",
-				id,
-				balance.CurrencyId,
-				userId,
+
+		for _, balance := range *fields.InitialsAmounts {
+			changedRows, err := queries.InsertAccountCurrency(
+				ctx, &dao.InsertAccountCurrencyParams{
+					AccountID:  int32(id),
+					CurrencyID: int32(balance.CurrencyId),
+					Value:      int32(balance.Value),
+				},
 			)
+			if err != nil {
+				return err
+			}
+			if changedRows == 0 {
+				return fmt.Errorf(
+					"inserting new account(%d)-currency(%d) relationship for user %s",
+					id,
+					balance.CurrencyId,
+					userId,
+				)
+			}
 		}
 	}
 

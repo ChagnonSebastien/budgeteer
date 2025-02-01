@@ -1,6 +1,6 @@
 import { Converter } from './converter'
 import Account, { Balance } from '../../../domain/model/account'
-import { Account as AccountDto, CurrencyBalance } from '../dto/account'
+import { Account as AccountDto, CurrencyBalance, EditableAccountFields } from '../dto/account'
 
 export class AccountConverter implements Converter<Account, AccountDto> {
   toModel(dto: AccountDto): Promise<Account> {
@@ -10,8 +10,8 @@ export class AccountConverter implements Converter<Account, AccountDto> {
         dto.name,
         dto.balances.map((value) => new Balance(value.currencyId, value.amount)),
         dto.isMine,
-        dto.type ?? null,
-        dto.financialInstitution ?? null,
+        dto.type,
+        dto.financialInstitution,
       ),
     )
   }
@@ -27,8 +27,24 @@ export class AccountConverter implements Converter<Account, AccountDto> {
         }),
       ),
       isMine: model.isMine,
-      type: model.type ?? undefined,
-      financialInstitution: model.financialInstitution ?? undefined,
+      type: model.type,
+      financialInstitution: model.financialInstitution,
+    })
+  }
+
+  toUpdateDTO(data: Partial<Omit<Account, 'id'>>): EditableAccountFields {
+    return EditableAccountFields.create({
+      name: data.name,
+      updateBalances: typeof data.initialAmounts !== 'undefined',
+      balances: data.initialAmounts?.map((value) =>
+        CurrencyBalance.create({
+          currencyId: value.currencyId,
+          amount: value.value,
+        }),
+      ),
+      isMine: data.isMine,
+      type: data.type,
+      financialInstitution: data.financialInstitution,
     })
   }
 }

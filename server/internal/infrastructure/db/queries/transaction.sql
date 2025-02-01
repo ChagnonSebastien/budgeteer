@@ -34,14 +34,23 @@ RETURNING id;
 -- name: UpdateTransaction :execrows
 UPDATE transactions t
 SET
-    amount = sqlc.arg(amount),
-    currency = sqlc.arg(currency),
-    sender = sqlc.arg(sender),
-    receiver = sqlc.arg(receiver),
-    category = sqlc.arg(category),
-    date = sqlc.arg(date),
-    note = sqlc.arg(note),
-    receiver_currency = sqlc.arg(receiver_currency),
-    receiver_amount = sqlc.arg(receiver_amount)
+    amount = COALESCE(sqlc.narg(amount), amount),
+    currency = COALESCE(sqlc.narg(currency), currency),
+    sender = CASE
+        WHEN sqlc.arg(update_sender)::boolean THEN sqlc.narg(sender)
+        ELSE sender
+    END,
+    receiver = CASE
+        WHEN sqlc.arg(update_receiver)::boolean THEN sqlc.narg(receiver)
+        ELSE receiver
+    END,
+    category = CASE
+        WHEN sqlc.arg(update_category)::boolean THEN sqlc.narg(category)
+        ELSE category
+    END,
+    date = COALESCE(sqlc.narg(date), date),
+    note = COALESCE(sqlc.narg(note), note),
+    receiver_currency = COALESCE(sqlc.narg(receiver_currency), receiver_currency),
+    receiver_amount = COALESCE(sqlc.narg(receiver_amount), receiver_amount)
 WHERE t.id = sqlc.arg(id)
   AND t.user_id = sqlc.arg(user_id);
