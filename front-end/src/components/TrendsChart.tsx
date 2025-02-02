@@ -167,7 +167,7 @@ const TrendsChart: FC<Props> = (props) => {
         <Card style={{ padding: '.5rem' }}>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <div>{label(new Date(props.indexValue))}</div>
-            <div>{formatFull(defaultCurrency, props.value, privacyMode)}</div>
+            {!privacyMode && <div>{formatFull(defaultCurrency, props.value, privacyMode)}</div>}
           </div>
         </Card>
       )}

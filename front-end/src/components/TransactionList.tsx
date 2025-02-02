@@ -150,17 +150,19 @@ export const TransactionList = (props: Props) => {
           >
             {formatDate(date, 'MMMM yyyy')}
           </div>
-          <div>
-            <div>{formatFull(defaultCurrency, Total, privacyMode)}</div>
-            {diff !== 0 && (
-              <div
-                style={{ display: 'flex', color: diff > 0 ? 'var(--ion-color-success)' : 'var(--ion-color-danger)' }}
-              >
-                <div>{diff > 0 ? `+` : `-`}</div>
-                <div>{formatAmount(defaultCurrency, Math.abs(diff), privacyMode)}</div>
-              </div>
-            )}
-          </div>
+          {!privacyMode && (
+            <div>
+              <div>{formatFull(defaultCurrency, Total, privacyMode)}</div>
+              {diff !== 0 && (
+                <div
+                  style={{ display: 'flex', color: diff > 0 ? 'var(--ion-color-success)' : 'var(--ion-color-danger)' }}
+                >
+                  <div>{diff > 0 ? `+` : `-`}</div>
+                  <div>{formatAmount(defaultCurrency, Math.abs(diff), privacyMode)}</div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )
     }

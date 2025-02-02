@@ -336,9 +336,14 @@ const AccountsBalanceChart: FC<Props> = (props) => {
                         marginRight: '.25rem',
                       }}
                     />
-                    <div>{s.layerLabel}:</div>
-                    <div style={{ minWidth: '1rem', flexGrow: 1 }} />
-                    <div>{s.formattedValue}</div>
+                    <div>{s.layerLabel}</div>
+                    {!privacyMode && (
+                      <>
+                        <div>:</div>
+                        <div style={{ minWidth: '1rem', flexGrow: 1 }} />
+                        <div>{s.formattedValue}</div>
+                      </>
+                    )}
                   </div>
                 ))}
             </Card>

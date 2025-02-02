@@ -147,7 +147,7 @@ const AggregatedDiffChart: FC<Props> = (props) => {
               <Card>
                 <div style={{ padding: '.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                   <div style={{ fontWeight: 'bolder' }}>{props.point.data.xFormatted}</div>
-                  <div>{props.point.data.yFormatted}</div>
+                  {!privacyMode && <div>{props.point.data.yFormatted}</div>}
                 </div>
               </Card>
             )
