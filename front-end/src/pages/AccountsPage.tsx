@@ -31,33 +31,35 @@ const AccountsPage: FC = () => {
 
   return (
     <ContentWithHeader title="Accounts" button="menu" contentMaxWidth="100%" contentOverflowY="hidden">
-      <div style={{ height: '100%', width: '100%' }} ref={setContentRef}>
-        <div
-          style={{
-            width: '100%',
-            position: 'relative',
-            height: `${contentHeight - optionsHeight}px`,
-            overflow: 'hidden',
-            display: 'flex',
-            flexDirection: 'column',
-          }}
-        >
-          <AccountList
-            accounts={accounts}
-            onSelect={(account) => navigate(`/accounts/edit/${account.id}`)}
-            showBalances
-            filterable={{ filter, setFilter }}
-          />
-        </div>
-        <div
-          ref={(ref) => {
-            if (ref !== null) setOptionsHeight(ref.scrollHeight)
-          }}
-        >
-          <div style={{ height: '1rem' }} />
-          <Button fullWidth variant="contained" onClick={() => navigate('/accounts/new')}>
-            New
-          </Button>
+      <div style={{ height: '100%', maxWidth: '100%', display: 'flex', justifyContent: 'center' }} ref={setContentRef}>
+        <div style={{ maxWidth: '50rem', flexGrow: 1 }}>
+          <div
+            style={{
+              width: '100%',
+              position: 'relative',
+              height: `${contentHeight - optionsHeight}px`,
+              overflow: 'hidden',
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+          >
+            <AccountList
+              accounts={accounts}
+              onSelect={(account) => navigate(`/accounts/edit/${account.id}`)}
+              showBalances
+              filterable={{ filter, setFilter }}
+            />
+          </div>
+          <div
+            ref={(ref) => {
+              if (ref !== null) setOptionsHeight(ref.scrollHeight)
+            }}
+          >
+            <div style={{ height: '1rem' }} />
+            <Button fullWidth variant="contained" onClick={() => navigate('/accounts/new')}>
+              New
+            </Button>
+          </div>
         </div>
       </div>
     </ContentWithHeader>
