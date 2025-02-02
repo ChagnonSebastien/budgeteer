@@ -94,10 +94,10 @@ func (s *TransactionHandler) UpdateTransaction(
 	if req.Fields.UpdateReceiver {
 		if req.Fields.Receiver != nil {
 			id := int(*req.Fields.Receiver)
-			sender = &id
+			receiver = &id
 		} else {
 			id := 0
-			sender = &id
+			receiver = &id
 		}
 	}
 
@@ -105,10 +105,10 @@ func (s *TransactionHandler) UpdateTransaction(
 	if req.Fields.UpdateCategory {
 		if req.Fields.Category != nil {
 			id := int(*req.Fields.Category)
-			sender = &id
+			category = &id
 		} else {
 			id := 0
-			sender = &id
+			category = &id
 		}
 	}
 
