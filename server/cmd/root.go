@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -13,7 +14,10 @@ var rootCmd = &cobra.Command{
 	// TODO: Long description
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) == 0 {
-			cmd.Help()
+			err := cmd.Help()
+			if err != nil {
+				log.Fatal("Error printing help: ", err)
+			}
 		}
 	},
 }

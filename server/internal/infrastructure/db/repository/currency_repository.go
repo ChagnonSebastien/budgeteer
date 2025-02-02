@@ -22,13 +22,13 @@ func (r *Repository) GetAllCurrencies(ctx context.Context, userId string) ([]mod
 		return nil, err
 	}
 
-	exchangeRatesDaos := make([][]dao.GetAllExchangeRatesOfRow, len(currenciesDao))
+	exchangeRatesDAOs := make([][]dao.GetAllExchangeRatesOfRow, len(currenciesDao))
 	for i, currency := range currenciesDao {
 		exchangeRatesDao, err := queries.GetAllExchangeRatesOf(ctx, currency.ID)
 		if err != nil {
 			return nil, err
 		}
-		exchangeRatesDaos[i] = exchangeRatesDao
+		exchangeRatesDAOs[i] = exchangeRatesDao
 	}
 
 	if err := tx.Commit(); err != nil {
@@ -38,7 +38,7 @@ func (r *Repository) GetAllCurrencies(ctx context.Context, userId string) ([]mod
 	currencies := make([]model.Currency, len(currenciesDao))
 	for i, currencyDao := range currenciesDao {
 		exchangeRates := make(map[int][]model.ExchangeRate)
-		for _, exchangeRateDao := range exchangeRatesDaos[i] {
+		for _, exchangeRateDao := range exchangeRatesDAOs[i] {
 			currencySpecificRates, ok := exchangeRates[int(exchangeRateDao.ComparedTo)]
 			if !ok {
 				currencySpecificRates = make([]model.ExchangeRate, 0)

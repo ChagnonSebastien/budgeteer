@@ -102,7 +102,7 @@ func (s *CurrencyHandler) GetAllCurrencies(
 
 	currenciesDto := make([]*dto.Currency, len(currencies))
 	for i, currency := range currencies {
-		exchangeRatesDtos := make(map[uint32]*dto.RatesList)
+		exchangeRatesDTOs := make(map[uint32]*dto.RatesList)
 		for otherCurrencyId, exchangeRates := range currency.ExchangeRates {
 			exchangeRatesDto := make([]*dto.ExchangeRate, 0, len(exchangeRates))
 			for _, exchangeRate := range exchangeRates {
@@ -114,7 +114,7 @@ func (s *CurrencyHandler) GetAllCurrencies(
 					},
 				)
 			}
-			exchangeRatesDtos[uint32(otherCurrencyId)] = &dto.RatesList{Rates: exchangeRatesDto}
+			exchangeRatesDTOs[uint32(otherCurrencyId)] = &dto.RatesList{Rates: exchangeRatesDto}
 		}
 
 		currenciesDto[i] = &dto.Currency{
@@ -122,7 +122,7 @@ func (s *CurrencyHandler) GetAllCurrencies(
 			Name:          currency.Name,
 			Symbol:        currency.Symbol,
 			DecimalPoints: uint32(currency.DecimalPoints),
-			ExchangeRates: exchangeRatesDtos,
+			ExchangeRates: exchangeRatesDTOs,
 		}
 	}
 
