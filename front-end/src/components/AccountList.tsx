@@ -1,7 +1,8 @@
-import { Tab, Tabs, TextField } from '@mui/material'
-import { Dispatch, SetStateAction, useContext, useEffect, useMemo, useState } from 'react'
+import { Fab, Tab, Tabs, TextField } from '@mui/material'
+import { Dispatch, Fragment, SetStateAction, useContext, useEffect, useMemo, useRef, useState } from 'react'
 
 import { AccountCard } from './AccountCard'
+import { IconToolsContext } from './IconTools'
 import Account from '../domain/model/account'
 import MixedAugmentation from '../service/MixedAugmentation'
 
@@ -12,6 +13,7 @@ type Props = {
   onMultiSelect?: (value: number[]) => void
   showBalances?: boolean
   filterable?: { filter: string; setFilter: Dispatch<SetStateAction<string>> }
+  onScrollProgress?: (progress: number) => void
 }
 
 type tabs = 'mine' | 'others'
@@ -20,6 +22,8 @@ export const AccountList = (props: Props) => {
   const { accounts, onSelect, showBalances = false, filterable, onMultiSelect, selected } = props
 
   const { augmentedTransactions: transactions } = useContext(MixedAugmentation)
+  const { IconLib } = useContext(IconToolsContext)
+  const [showSearch, setShowSearch] = useState(false)
 
   const [activeTab, setActiveTab] = useState<tabs>('mine')
   const myOwnAccounts = useMemo(() => accounts.filter((account) => account.isMine), [accounts])
@@ -125,37 +129,242 @@ export const AccountList = (props: Props) => {
           }
         }}
       >
-        <Tab label="My Accounts" value="mine" />
-        <Tab label="Third Parties" value="others" />
+        <Tab
+          label={
+            <div style={{ display: 'inline-flex', alignItems: 'center', position: 'relative' }}>
+              My Accounts
+              {filterable?.filter && (
+                <div
+                  style={{
+                    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                    borderRadius: '12px',
+                    padding: '0 8px',
+                    fontSize: '0.75rem',
+                    marginLeft: '0.5rem',
+                    marginTop: '-0.5rem',
+                    minWidth: '20px',
+                    height: '20px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  {myOwnFilteredAccounts.length}
+                </div>
+              )}
+            </div>
+          }
+          value="mine"
+        />
+        <Tab
+          label={
+            <div style={{ display: 'inline-flex', alignItems: 'center', position: 'relative' }}>
+              Third Parties
+              {filterable?.filter && (
+                <div
+                  style={{
+                    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                    borderRadius: '12px',
+                    padding: '0 8px',
+                    fontSize: '0.75rem',
+                    marginLeft: '0.5rem',
+                    marginTop: '-0.5rem',
+                    minWidth: '20px',
+                    height: '20px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  {otherFilteredAccounts.length}
+                </div>
+              )}
+            </div>
+          }
+          value="others"
+        />
       </Tabs>
     )
-  }, [myOwnAccounts, otherAccounts, activeTab])
+  }, [myOwnAccounts, otherAccounts, activeTab, myOwnFilteredAccounts, otherFilteredAccounts, filterable?.filter])
+
+  useEffect(() => {
+    const handleEscape = (ev: KeyboardEvent) => {
+      if ((ev.key === 'Escape' || ev.key === 'Enter') && showSearch) {
+        setShowSearch(false)
+      }
+    }
+    document.addEventListener('keydown', handleEscape)
+    return () => document.removeEventListener('keydown', handleEscape)
+  }, [showSearch])
+
+  const contentRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!props.onScrollProgress || !contentRef.current) return
+
+    const handleScroll = () => {
+      const element = contentRef.current
+      if (element) {
+        const maxScroll = element.scrollHeight - element.clientHeight
+        const bufferZone = 64 // 4rem
+        if (maxScroll <= 0) {
+          props.onScrollProgress?.(0)
+        } else {
+          const remainingScroll = maxScroll - element.scrollTop
+          if (remainingScroll > bufferZone) {
+            props.onScrollProgress?.(1)
+          } else {
+            const progress = remainingScroll / bufferZone
+            props.onScrollProgress?.(Math.max(0, Math.min(1, progress)))
+          }
+        }
+      }
+    }
+
+    handleScroll()
+    contentRef.current.addEventListener('scroll', handleScroll)
+    const observer = new ResizeObserver(handleScroll)
+    observer.observe(contentRef.current)
+
+    return () => {
+      if (contentRef.current) {
+        contentRef.current.removeEventListener('scroll', handleScroll)
+      }
+      observer.disconnect()
+    }
+  }, [props.onScrollProgress, displayedAccount])
 
   return (
-    <div style={{ minWidth: '25rem', height: '100%', display: 'flex', flexDirection: 'column' }}>
-      {filterable && (
-        <TextField
-          autoFocus
-          label="Filter"
-          variant="standard"
-          fullWidth
-          value={filterable.filter}
-          onChange={(ev) => filterable.setFilter(ev.target.value)}
-        />
-      )}
-      {segments}
-      <div style={{ overflowY: 'scroll', flexGrow: 1 }}>
-        {displayedAccount.map((account) => (
-          <AccountCard
-            key={`account-list-${account.id}`}
-            account={account}
-            onSelect={onSelect}
-            selected={selected}
-            onMultiSelect={onMultiSelect}
-            showBalances={showBalances}
-          />
+    <div
+      style={{
+        minWidth: '25rem',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '2rem',
+        position: 'relative',
+      }}
+    >
+      <div style={{ padding: '0 1rem' }}>{segments}</div>
+      <div
+        ref={contentRef}
+        style={{ overflowY: 'auto', flexGrow: 1, padding: '0 1rem', paddingBottom: '4rem', position: 'relative' }}
+      >
+        {Object.entries(
+          displayedAccount.reduce(
+            (groups, account) => {
+              const type = account.type || ''
+              return { ...groups, [type]: [...(groups[type] || []), account] }
+            },
+            {} as Record<string, Account[]>,
+          ),
+        ).map(([type, accounts]) => (
+          <Fragment key={`account-group-${type}`}>
+            <div style={{ marginBottom: '2rem' }}>
+              <div
+                style={{
+                  color: 'rgba(255, 255, 255, 0.5)',
+                  fontSize: '0.75rem',
+                  letterSpacing: '0.15em',
+                  textTransform: 'uppercase',
+                  marginBottom: '1.5rem',
+                  marginTop: '1rem',
+                  fontWeight: 600,
+                }}
+              >
+                {type}
+              </div>
+              <div
+                style={{
+                  display: showBalances ? 'grid' : 'flex',
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))',
+                  flexDirection: 'column',
+                  gap: showBalances ? '1.5rem' : '0.25rem',
+                }}
+              >
+                {accounts.map((account) => (
+                  <AccountCard
+                    key={`account-list-${account.id}`}
+                    account={account}
+                    onSelect={onSelect}
+                    selected={selected}
+                    onMultiSelect={onMultiSelect}
+                    showBalances={showBalances}
+                  />
+                ))}
+              </div>
+            </div>
+          </Fragment>
         ))}
       </div>
+      {filterable && !showSearch && (
+        <Fab
+          color="primary"
+          size="medium"
+          style={{
+            position: 'absolute',
+            bottom: '1rem',
+            right: '2rem',
+            zIndex: 1000,
+          }}
+          onClick={() => setShowSearch(true)}
+        >
+          <IconLib.BiSearch style={{ fontSize: '1.5rem' }} />
+        </Fab>
+      )}
+      {filterable && showSearch && (
+        <div
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            display: 'flex',
+            alignItems: 'flex-start',
+            justifyContent: 'center',
+            padding: '1rem',
+            zIndex: 1000,
+            cursor: 'pointer',
+          }}
+          onClick={() => setShowSearch(false)}
+        >
+          <div
+            style={{
+              width: '100%',
+              maxWidth: '600px',
+              backgroundColor: '#424242',
+              borderRadius: '8px',
+              padding: '1rem',
+              cursor: 'default',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <TextField
+              autoFocus
+              fullWidth
+              size="medium"
+              placeholder="Search accounts..."
+              value={filterable.filter}
+              onChange={(ev) => filterable.setFilter(ev.target.value)}
+              slotProps={{
+                input: {
+                  endAdornment: (
+                    <IconLib.IoCloseCircle
+                      style={{ cursor: 'pointer', opacity: 0.7 }}
+                      onClick={() => {
+                        filterable.setFilter('')
+                        setShowSearch(false)
+                      }}
+                    />
+                  ),
+                },
+              }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   )
 }

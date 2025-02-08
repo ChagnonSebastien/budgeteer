@@ -315,7 +315,7 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
 
       <Dialog fullScreen={fullScreen} open={showAccountModal} onClose={() => setShowAccountModal(false)}>
         <DialogTitle>Pick Account</DialogTitle>
-        <DialogContent>
+        <DialogContent style={{ height: '70vh', overflow: 'hidden' }}>
           <AccountList
             accounts={accounts}
             filterable={{ filter, setFilter }}

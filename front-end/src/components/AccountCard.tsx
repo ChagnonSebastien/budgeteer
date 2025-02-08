@@ -21,12 +21,11 @@ export const AccountCard = (props: Props) => {
   const { accountBalances, exchangeRateOnDay } = useContext(MixedAugmentation)
   const { privacyMode } = useContext(DrawerContext)
   const { IconLib } = useContext(IconToolsContext)
+  const [showBreakdown, setShowBreakdown] = useState(false)
 
   const { state: currencies, defaultCurrency } = useContext(CurrencyServiceContext)
 
-  const [showBreakdown, setShowBreakdown] = useState(false)
-
-  const totalValue = [...(accountBalances?.get(account.id)?.entries() ?? [])].reduce((prev, entry) => {
+  const totalValue = [...(accountBalances?.get(account.id)?.entries() ?? [])].reduce((prev: number, entry) => {
     const currency = currencies.find((c) => c.id === entry[0])
     if (typeof currency === 'undefined' || defaultCurrency === null) return prev
 
@@ -40,11 +39,22 @@ export const AccountCard = (props: Props) => {
 
   return (
     <div
-      style={
-        showBalances
-          ? { background: '#FFF1', padding: '.5rem 1rem', margin: '.5rem', borderRadius: '.5rem' }
-          : { margin: '0.25rem', cursor: 'pointer' }
-      }
+      style={{
+        padding: showBalances ? '1.25rem' : '0.5rem',
+        cursor: 'pointer',
+        backgroundColor: 'transparent',
+        borderRadius: showBalances ? '12px' : '4px',
+        border: showBalances ? '1px solid rgba(255, 255, 255, 0.1)' : 'none',
+        transition: 'all 0.1s ease-out',
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.08)'
+        e.currentTarget.style.transform = 'translateY(-1px)'
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.backgroundColor = 'transparent'
+        e.currentTarget.style.transform = 'translateY(0)'
+      }}
       onClick={() => {
         if (typeof onSelect !== 'undefined') {
           onSelect(account)
@@ -59,19 +69,39 @@ export const AccountCard = (props: Props) => {
         }
       }}
     >
-      <div style={{ flexGrow: 1 }}>
-        <div style={{ display: 'flex', alignItems: 'center' }}>
+      <div
+        style={{
+          flexGrow: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: showBalances ? '0.75rem' : '0',
+        }}
+      >
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            fontSize: showBalances ? '1.1rem' : '1rem',
+            opacity: showBalances ? 0.9 : 0.8,
+          }}
+        >
           {typeof selected !== 'undefined' ? (
             selected.includes(account.id) ? (
-              <IconLib.FaRegSquareCheck size="1.5rem" style={{ marginRight: '.5rem' }} />
+              <IconLib.FaRegSquareCheck
+                size={showBalances ? '1.5rem' : '1.25rem'}
+                style={{ marginRight: showBalances ? '0.75rem' : '0.5rem', opacity: 0.8 }}
+              />
             ) : (
-              <IconLib.FaRegSquare size="1.5rem" style={{ marginRight: '.5rem' }} />
+              <IconLib.FaRegSquare
+                size={showBalances ? '1.5rem' : '1.25rem'}
+                style={{ marginRight: showBalances ? '0.75rem' : '0.5rem', opacity: 0.5 }}
+              />
             )
           ) : null}
-          {account.name}
+          <span>{account.name}</span>
         </div>
         {showBalances && defaultCurrency !== null && totalValue !== 0 && (
-          <div style={{ display: 'flex', justifyContent: 'end' }}>
+          <div style={{ display: 'flex', justifyContent: 'end', opacity: 0.8 }}>
             <div
               style={{ display: 'flex', flexDirection: 'column', cursor: 'pointer' }}
               onClick={(ev) => {
@@ -86,7 +116,7 @@ export const AccountCard = (props: Props) => {
                 <IconLib.MdArrowForwardIos
                   style={{
                     transform: `rotate(${90 + (showBreakdown ? 180 : 0)}deg)`,
-                    transition: 'transform 0.2s ease-in-out',
+                    transition: 'transform 0.1s ease-out',
                   }}
                 />
               </div>
@@ -100,7 +130,7 @@ export const AccountCard = (props: Props) => {
                     }
 
                     return (
-                      <div key={`currency-in-account-${entry[0]}`} style={{ textAlign: 'right' }}>
+                      <div key={`currency-in-account-${entry[0]}`} style={{ textAlign: 'right', marginTop: '0.25rem' }}>
                         {formatFull(currency, entry[1], privacyMode)}
                       </div>
                     )

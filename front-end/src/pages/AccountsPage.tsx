@@ -12,6 +12,7 @@ const AccountsPage: FC = () => {
   const { state: accounts } = useContext(AccountServiceContext)
 
   const [filter, setFilter] = useState('')
+  const [scrollProgress, setScrollProgress] = useState(1)
 
   const [optionsHeight, setOptionsHeight] = useState(240)
   const [contentRef, setContentRef] = useState<HTMLDivElement | null>(null)
@@ -48,14 +49,24 @@ const AccountsPage: FC = () => {
               onSelect={(account) => navigate(`/accounts/edit/${account.id}`)}
               showBalances
               filterable={{ filter, setFilter }}
+              onScrollProgress={setScrollProgress}
             />
           </div>
           <div
             ref={(ref) => {
               if (ref !== null) setOptionsHeight(ref.scrollHeight)
             }}
+            style={{ overflow: 'hidden' }}
           >
-            <div style={{ height: '1rem' }} />
+            <div
+              style={{
+                height: '1rem',
+                borderTop: '1px solid transparent',
+                borderImage: 'linear-gradient(to right, transparent, #fff4 20%, #fff4 80%, transparent) 1',
+                background: 'radial-gradient(ellipse 100% 100% at 50% 0%, #fff2 0%, #fff0 50%, transparent 100%)',
+                opacity: scrollProgress,
+              }}
+            />
             <Button fullWidth variant="contained" onClick={() => navigate('/accounts/new')}>
               New
             </Button>

@@ -25,6 +25,7 @@ export enum PreparedIcon {
   BiSolidFileImport = 'BiSolidFileImport',
   BsFileEarmarkSpreadsheet = 'BsFileEarmarkSpreadsheet',
   MdArrowForwardIos = 'MdArrowForwardIos',
+  BiSearch = 'BiSearch',
 }
 
 type PreparedIconLib = {
