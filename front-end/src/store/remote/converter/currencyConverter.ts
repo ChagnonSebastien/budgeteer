@@ -1,7 +1,14 @@
 import { Converter } from './converter'
 import { formatDateTime } from './transactionConverter'
-import Currency, { ExchangeRate } from '../../../domain/model/currency'
-import { Currency as CurrencyDto, RatesList, UpdateCurrencyFields } from '../dto/currency'
+import Currency, { ComponentRatio, Composition, CompositionType, ExchangeRate } from '../../../domain/model/currency'
+import {
+  ComponentRatio as ComponentRatioDto,
+  Composition as CompositionDto,
+  Currency as CurrencyDto,
+  InnerComposition,
+  RatesList,
+  UpdateCurrencyFields,
+} from '../dto/currency'
 
 export class CurrencyConverter implements Converter<Currency, CurrencyDto> {
   toModel(model: CurrencyDto): Promise<Currency> {
@@ -11,6 +18,7 @@ export class CurrencyConverter implements Converter<Currency, CurrencyDto> {
         model.name,
         model.symbol,
         model.decimalPoints,
+        model.type,
         Object.keys(model.exchangeRates)
           .map(Number)
           .map((t) => t as keyof typeof model.exchangeRates)
@@ -22,6 +30,26 @@ export class CurrencyConverter implements Converter<Currency, CurrencyDto> {
             }
           })
           .reduce<{ [compareTo: number]: ExchangeRate[] }>((acc, cur) => ({ ...acc, ...cur }), {}),
+        model.compositions.map((dayComposition) => {
+          return new Composition(
+            new Date(dayComposition.date),
+            Object.keys(dayComposition.compositions)
+              .map((k) => k as CompositionType)
+              .reduce<{
+                [key in CompositionType]?: {
+                  [name: string]: ComponentRatio
+                }
+              }>((compositions, key) => {
+                compositions[key] = Object.keys(dayComposition.compositions[key].ratios).reduce<{
+                  [name: string]: ComponentRatio
+                }>((ratios, name) => {
+                  ratios[name] = new ComponentRatio(dayComposition.compositions[key].ratios[name].ratio)
+                  return ratios
+                }, {})
+                return compositions
+              }, {}),
+          )
+        }),
       ),
     )
   }
@@ -47,6 +75,27 @@ export class CurrencyConverter implements Converter<Currency, CurrencyDto> {
           }
         })
         .reduce((acc, cur) => ({ ...acc, ...cur }), {}),
+      type: dto.type,
+      compositions: dto.compositions.map((composition) => {
+        return CompositionDto.create({
+          date: composition.date.toISOString(),
+          compositions: Object.keys(composition.compositions)
+            .map((t) => t as keyof typeof composition.compositions)
+            .reduce<{ [key: string]: InnerComposition }>((prev, key) => {
+              prev[key] = InnerComposition.create({
+                ratios: Object.keys(composition.compositions[key]!.ratios).reduce<{
+                  [name: string]: ComponentRatioDto
+                }>((subRatios, name) => {
+                  subRatios[name] = ComponentRatioDto.create({
+                    ratio: composition.compositions[key]![name].ratio,
+                  })
+                  return subRatios
+                }, {}),
+              })
+              return prev
+            }, {}),
+        })
+      }),
     })
   }
 

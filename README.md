@@ -75,7 +75,7 @@ A sophisticated personal finance management application that helps you track exp
 
 ### Generate Protocol Buffers
 ```bash
-make proto-gen
+make generate-proto
 ```
 
 ### Local Development

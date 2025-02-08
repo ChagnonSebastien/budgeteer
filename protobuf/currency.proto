@@ -10,6 +10,19 @@ message ExchangeRate {
   string date = 4;
 }
 
+message ComponentRatio {
+  double ratio = 1;
+}
+
+message InnerComposition {
+  map<string, ComponentRatio> ratios = 1;
+}
+
+message Composition {
+  string date = 1;
+  map<string, InnerComposition> compositions = 2;
+}
+
 message RatesList {
   repeated ExchangeRate rates = 1;
 }
@@ -20,6 +33,8 @@ message Currency {
   string symbol = 3;
   uint32 decimal_points = 4;
   map<uint32, RatesList> exchange_rates = 5;
+  string type = 6;
+  repeated Composition compositions = 7;
 }
 
 message GetAllCurrenciesRequest {
@@ -40,6 +55,8 @@ message CreateCurrencyRequest {
   string symbol = 2;
   uint32 decimal_points = 3;
   optional InitialExchangeRate initial_exchange_rate = 4;
+  string type = 5;
+  optional Composition initial_composition = 6;
 }
 
 message CreateCurrencyResponse {
@@ -51,6 +68,7 @@ message UpdateCurrencyFields {
   optional string name = 1;
   optional string symbol = 2;
   optional uint32 decimal_points = 3;
+  optional string type = 4;
 }
 
 message UpdateCurrencyRequest {
@@ -70,9 +88,18 @@ message SetDefaultCurrencyResponse {
 
 }
 
+message UpdateCompositionRequest {
+  uint32 currency_id = 1;
+  Composition composition = 2;
+}
+
+message UpdateCompositionResponse {
+}
+
 service CurrencyService {
   rpc GetAllCurrencies (GetAllCurrenciesRequest) returns (GetAllCurrenciesResponse);
   rpc CreateCurrency (CreateCurrencyRequest) returns (CreateCurrencyResponse);
   rpc UpdateCurrency (UpdateCurrencyRequest) returns (UpdateCurrencyResponse);
   rpc SetDefaultCurrency (SetDefaultCurrencyRequest) returns (SetDefaultCurrencyResponse);
+  rpc UpdateComposition (UpdateCompositionRequest) returns (UpdateCompositionResponse);
 }

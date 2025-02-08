@@ -1,4 +1,4 @@
-import { ListItemButton } from '@mui/material'
+import { ListItemButton, Typography } from '@mui/material'
 
 import Currency from '../domain/model/currency'
 
@@ -13,12 +13,19 @@ export const CurrencyList = (props: Props) => {
   return (
     <>
       {currencies.map((currency) => (
-        <ListItemButton key={`account-list-${currency.id}`} onClick={() => onSelect(currency.id)}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', flexGrow: 1 }}>
-            <div>{currency.name}</div>
-            <div>{currency.symbol}</div>
-          </div>
-        </ListItemButton>
+        <div key={`account-list-${currency.id}`}>
+          <ListItemButton onClick={() => onSelect(currency.id)}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', flexGrow: 1 }}>
+              <div>
+                <div>{currency.name}</div>
+                <Typography variant="caption" color="textSecondary">
+                  {currency.type}
+                </Typography>
+              </div>
+              <div>{currency.symbol}</div>
+            </div>
+          </ListItemButton>
+        </div>
       ))}
     </>
   )

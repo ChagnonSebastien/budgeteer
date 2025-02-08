@@ -1,9 +1,11 @@
 package grpc
 
 import (
+	"chagnon.dev/budget-server/internal/domain/model"
 	"chagnon.dev/budget-server/internal/infrastructure/db/repository"
 	"context"
 	"fmt"
+	"time"
 
 	"chagnon.dev/budget-server/internal/domain/service"
 	"chagnon.dev/budget-server/internal/infrastructure/messaging/dto"
@@ -129,6 +131,49 @@ func (s *CurrencyHandler) GetAllCurrencies(
 	return &dto.GetAllCurrenciesResponse{
 		Currencies: currenciesDto,
 	}, nil
+}
+
+func (s *CurrencyHandler) UpdateComposition(
+	ctx context.Context,
+	req *dto.UpdateCompositionRequest,
+) (*dto.UpdateCompositionResponse, error) {
+	claims, ok := ctx.Value(shared.ClaimsKey{}).(shared.Claims)
+	if !ok {
+		return nil, fmt.Errorf("invalid claims")
+	}
+
+	compositions := make(map[model.CompositionType]map[string]float64)
+	for componentType, typeCompositions := range req.Composition.Compositions {
+		modelType := model.AssetComposition
+		if componentType == "region" {
+			modelType = model.RegionComposition
+		} else if componentType == "sector" {
+			modelType = model.SectorComposition
+		}
+
+		compositions[modelType] = make(map[string]float64)
+		for componentName, ratio := range typeCompositions.Ratios {
+			compositions[modelType][componentName] = ratio.Ratio
+		}
+	}
+
+	date, err := time.Parse(layout, req.Composition.Date)
+	if err != nil {
+		return nil, err
+	}
+
+	err = s.currencyService.UpdateComposition(
+		ctx,
+		claims.Sub,
+		int(req.CurrencyId),
+		date,
+		compositions,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &dto.UpdateCompositionResponse{}, nil
 }
 
 func (s *CurrencyHandler) SetDefaultCurrency(

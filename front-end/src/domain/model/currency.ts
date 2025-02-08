@@ -1,5 +1,26 @@
 import Unique from './Unique'
 
+export enum CompositionType {
+  Asset = 'asset',
+  Region = 'region',
+  Sector = 'sector',
+}
+
+export class ComponentRatio {
+  constructor(public readonly ratio: number) {}
+}
+
+export class Composition {
+  constructor(
+    public readonly date: Date,
+    public readonly compositions: {
+      [key in CompositionType]?: {
+        [name: string]: ComponentRatio
+      }
+    },
+  ) {}
+}
+
 export class ExchangeRate implements Unique {
   constructor(
     public readonly id: number,
@@ -14,7 +35,9 @@ export default class Currency implements Unique {
     public readonly name: string,
     public readonly symbol: string,
     public readonly decimalPoints: number,
+    public readonly type: string,
     public readonly exchangeRates: { [comparedTo: number]: ExchangeRate[] },
+    public readonly compositions: Composition[],
   ) {}
 }
 

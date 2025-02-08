@@ -55,7 +55,7 @@ export default class CurrencyRemoteStore {
       ]
     }
 
-    return new Currency(response.currencyId, data.name, data.symbol, data.decimalPoints, exchangeRates)
+    return new Currency(response.currencyId, data.name, data.symbol, data.decimalPoints, data.type, exchangeRates, [])
   }
 
   public async update(id: number, data: Partial<Omit<Currency, 'id'>>): Promise<void> {

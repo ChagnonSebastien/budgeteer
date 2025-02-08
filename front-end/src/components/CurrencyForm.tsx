@@ -1,10 +1,10 @@
-import { Button, Dialog, Snackbar, Stack, TextField, Typography } from '@mui/material'
+import { Button, Dialog, FormControl, InputLabel, MenuItem, Select, Snackbar, Stack, Tab, Tabs, TextField, Typography } from '@mui/material'
 import { DateCalendar, DateField, DateView } from '@mui/x-date-pickers'
 import { startOfDay } from 'date-fns'
 import dayjs, { Dayjs } from 'dayjs'
 import { FC, FormEvent, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 
-import Currency, { ExchangeRate } from '../domain/model/currency'
+import Currency, { CompositionType, ComponentRatio, ExchangeRate } from '../domain/model/currency'
 import { CurrencyServiceContext } from '../service/ServiceContext'
 
 const validAmount = new RegExp(`^\\d+[.,]?$`)
@@ -31,12 +31,21 @@ const CurrencyForm: FC<Props> = (props) => {
 
   const [name, setName] = useState(initialCurrency?.name ?? '')
   const [symbol, setSymbol] = useState(initialCurrency?.symbol ?? '')
+  const [type, setType] = useState(initialCurrency?.type ?? 'Liquid')
   const [decimalPoints, setDecimalPoints] = useState(
     `${typeof initialCurrency === 'undefined' ? '2' : initialCurrency.decimalPoints}`,
   )
   const [initialExchangeRate, setInitialExchangeRate] = useState('1')
   const [initialExchangeRateDate, setInitialExchangeRateDate] = useState(startOfDay(new Date()))
   const [dateView, setDateView] = useState<DateView>('day')
+  const [currentTab, setCurrentTab] = useState<CompositionType>(CompositionType.Asset)
+  const [compositions, setCompositions] = useState<{
+    [key in CompositionType]: { [name: string]: ComponentRatio };
+  }>({
+    [CompositionType.Asset]: {},
+    [CompositionType.Region]: {},
+    [CompositionType.Sector]: {}
+  })
 
   const [showDateModal, setShowDateModal] = useState(false)
 
@@ -50,6 +59,7 @@ const CurrencyForm: FC<Props> = (props) => {
     symbol: FieldStatus
     decimalPoints: FieldStatus
     exchangeRate: FieldStatus
+    type: FieldStatus
   }>({
     accountName: {
       hasVisited: false,
@@ -71,6 +81,11 @@ const CurrencyForm: FC<Props> = (props) => {
       isValid: !showExchangeRate,
       errorText: NoError,
     },
+    type: {
+      hasVisited: false,
+      isValid: true,
+      errorText: NoError,
+    }
   })
 
   const formatExample = useMemo(() => {
@@ -211,14 +226,26 @@ const CurrencyForm: FC<Props> = (props) => {
           ...prevState.exchangeRate,
           hasVisited: true,
         },
+        type: {
+          ...prevState.type,
+          hasVisited: true,
+        }
       }))
       return
     }
+
+    const today = new Date()
+    const initialComposition = type !== 'Liquid' ? {
+      date: today,
+      compositions: compositions
+    } : undefined
 
     onSubmit({
       name,
       decimalPoints: parseInt(decimalPoints),
       symbol: symbol,
+      type: type,
+      compositions: initialComposition ? [initialComposition] : [],
       exchangeRates: showExchangeRate
         ? {
             [defaultCurrency!.id]: [new ExchangeRate(0, parseFloat(initialExchangeRate), initialExchangeRateDate)],
@@ -278,6 +305,21 @@ const CurrencyForm: FC<Props> = (props) => {
             }))
           }
         />
+
+        <FormControl variant="standard" fullWidth>
+          <InputLabel>Type</InputLabel>
+          <Select
+            value={type}
+            onChange={(e) => setType(e.target.value)}
+            label="Type"
+          >
+            <MenuItem value="Liquid">Liquid</MenuItem>
+            <MenuItem value="ETF">ETF</MenuItem>
+            <MenuItem value="Stock">Stock</MenuItem>
+            <MenuItem value="Fund">Fund</MenuItem>
+            <MenuItem value="Fixed_Revenue">Fixed Revenue</MenuItem>
+          </Select>
+        </FormControl>
 
         {typeof initialCurrency === 'undefined' && (
           <div>
@@ -395,6 +437,177 @@ const CurrencyForm: FC<Props> = (props) => {
           </div>
         )}
       </Stack>
+
+      {type !== 'Liquid' && (
+        <>
+          <div style={{ height: '1rem' }} />
+          <div style={{ border: '1px grey solid' }}>
+            <Tabs value={currentTab} onChange={(_, newTab) => setCurrentTab(newTab)}>
+              <Tab label="Asset Types" value={CompositionType.Asset} />
+              <Tab label="Regions" value={CompositionType.Region} />
+              <Tab label="Sectors" value={CompositionType.Sector} />
+            </Tabs>
+            <div style={{ padding: '1rem' }}>
+              {currentTab === CompositionType.Asset && (
+                <Stack spacing={2}>
+                  <TextField
+                    label="Other"
+                    type="number"
+                    value={compositions[CompositionType.Asset]['Other']?.ratio ?? 0}
+                    onChange={(e) => setCompositions(prev => ({
+                      ...prev,
+                      [CompositionType.Asset]: {
+                        ...prev[CompositionType.Asset],
+                        'Other': { ratio: parseFloat(e.target.value) }
+                      }
+                    }))}
+                  />
+                  <TextField
+                    label="Liquid"
+                    type="number"
+                    value={compositions[CompositionType.Asset]['Liquid']?.ratio ?? 0}
+                    onChange={(e) => setCompositions(prev => ({
+                      ...prev,
+                      [CompositionType.Asset]: {
+                        ...prev[CompositionType.Asset],
+                        'Liquid': { ratio: parseFloat(e.target.value) }
+                      }
+                    }))}
+                  />
+                  <TextField
+                    label="Stock"
+                    type="number"
+                    value={compositions[CompositionType.Asset]['Stock']?.ratio ?? 0}
+                    onChange={(e) => setCompositions(prev => ({
+                      ...prev,
+                      [CompositionType.Asset]: {
+                        ...prev[CompositionType.Asset],
+                        'Stock': { ratio: parseFloat(e.target.value) }
+                      }
+                    }))}
+                  />
+                  <TextField
+                    label="Fixed Revenue"
+                    type="number"
+                    value={compositions[CompositionType.Asset]['Fixed_Revenue']?.ratio ?? 0}
+                    onChange={(e) => setCompositions(prev => ({
+                      ...prev,
+                      [CompositionType.Asset]: {
+                        ...prev[CompositionType.Asset],
+                        'Fixed_Revenue': { ratio: parseFloat(e.target.value) }
+                      }
+                    }))}
+                  />
+                </Stack>
+              )}
+              {currentTab === CompositionType.Region && (
+                <Stack spacing={2}>
+                  <TextField
+                    label="Canada"
+                    type="number"
+                    value={compositions[CompositionType.Region]['Canada']?.ratio ?? 0}
+                    onChange={(e) => setCompositions(prev => ({
+                      ...prev,
+                      [CompositionType.Region]: {
+                        ...prev[CompositionType.Region],
+                        'Canada': { ratio: parseFloat(e.target.value) }
+                      }
+                    }))}
+                  />
+                  <TextField
+                    label="USA"
+                    type="number"
+                    value={compositions[CompositionType.Region]['USA']?.ratio ?? 0}
+                    onChange={(e) => setCompositions(prev => ({
+                      ...prev,
+                      [CompositionType.Region]: {
+                        ...prev[CompositionType.Region],
+                        'USA': { ratio: parseFloat(e.target.value) }
+                      }
+                    }))}
+                  />
+                  <TextField
+                    label="Developed Markets"
+                    type="number"
+                    value={compositions[CompositionType.Region]['Developed_Markets']?.ratio ?? 0}
+                    onChange={(e) => setCompositions(prev => ({
+                      ...prev,
+                      [CompositionType.Region]: {
+                        ...prev[CompositionType.Region],
+                        'Developed_Markets': { ratio: parseFloat(e.target.value) }
+                      }
+                    }))}
+                  />
+                  <TextField
+                    label="Developing Markets"
+                    type="number"
+                    value={compositions[CompositionType.Region]['Developing_Markets']?.ratio ?? 0}
+                    onChange={(e) => setCompositions(prev => ({
+                      ...prev,
+                      [CompositionType.Region]: {
+                        ...prev[CompositionType.Region],
+                        'Developing_Markets': { ratio: parseFloat(e.target.value) }
+                      }
+                    }))}
+                  />
+                </Stack>
+              )}
+              {currentTab === CompositionType.Sector && (
+                <Stack spacing={2}>
+                  <TextField
+                    label="Energy"
+                    type="number"
+                    value={compositions[CompositionType.Sector]['Energy']?.ratio ?? 0}
+                    onChange={(e) => setCompositions(prev => ({
+                      ...prev,
+                      [CompositionType.Sector]: {
+                        ...prev[CompositionType.Sector],
+                        'Energy': { ratio: parseFloat(e.target.value) }
+                      }
+                    }))}
+                  />
+                  <TextField
+                    label="Financial"
+                    type="number"
+                    value={compositions[CompositionType.Sector]['Financial']?.ratio ?? 0}
+                    onChange={(e) => setCompositions(prev => ({
+                      ...prev,
+                      [CompositionType.Sector]: {
+                        ...prev[CompositionType.Sector],
+                        'Financial': { ratio: parseFloat(e.target.value) }
+                      }
+                    }))}
+                  />
+                  <TextField
+                    label="Technology"
+                    type="number"
+                    value={compositions[CompositionType.Sector]['Technology']?.ratio ?? 0}
+                    onChange={(e) => setCompositions(prev => ({
+                      ...prev,
+                      [CompositionType.Sector]: {
+                        ...prev[CompositionType.Sector],
+                        'Technology': { ratio: parseFloat(e.target.value) }
+                      }
+                    }))}
+                  />
+                  <TextField
+                    label="Other"
+                    type="number"
+                    value={compositions[CompositionType.Sector]['Other']?.ratio ?? 0}
+                    onChange={(e) => setCompositions(prev => ({
+                      ...prev,
+                      [CompositionType.Sector]: {
+                        ...prev[CompositionType.Sector],
+                        'Other': { ratio: parseFloat(e.target.value) }
+                      }
+                    }))}
+                  />
+                </Stack>
+              )}
+            </div>
+          </div>
+        </>
+      )}
 
       <div style={{ height: '1rem' }} />
 

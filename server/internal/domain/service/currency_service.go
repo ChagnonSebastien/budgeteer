@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"time"
 
 	"chagnon.dev/budget-server/internal/domain/model"
 	"chagnon.dev/budget-server/internal/infrastructure/db/repository"
@@ -22,6 +23,7 @@ type currencyRepository interface {
 	)
 	UpdateCurrency(ctx context.Context, userId string, id int, fields repository.UpdateCurrencyFields) error
 	SetDefaultCurrency(ctx context.Context, userId string, currencyId int) error
+	UpdateComposition(ctx context.Context, userId string, currencyId int, date time.Time, compositions map[model.CompositionType]map[string]float64) error
 }
 
 type CurrencyService struct {
@@ -79,4 +81,8 @@ func (a *CurrencyService) UpdateCurrency(
 
 func (a *CurrencyService) SetDefaultCurrency(ctx context.Context, userid string, currencyId int) error {
 	return a.currencyRepository.SetDefaultCurrency(ctx, userid, currencyId)
+}
+
+func (a *CurrencyService) UpdateComposition(ctx context.Context, userId string, currencyId int, date time.Time, compositions map[model.CompositionType]map[string]float64) error {
+	return a.currencyRepository.UpdateComposition(ctx, userId, currencyId, date, compositions)
 }

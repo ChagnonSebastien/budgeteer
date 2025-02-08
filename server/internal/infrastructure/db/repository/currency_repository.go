@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"time"
 
 	"chagnon.dev/budget-server/internal/domain/model"
 	"chagnon.dev/budget-server/internal/infrastructure/db/dao"
@@ -63,6 +64,62 @@ func (r *Repository) GetAllCurrencies(ctx context.Context, userId string) ([]mod
 	}
 
 	return currencies, nil
+}
+
+func (r *Repository) UpdateComposition(ctx context.Context, userId string, currencyId int, date time.Time, compositions map[model.CompositionType]map[string]float64) error {
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+
+	queries := r.queries.WithTx(tx)
+
+	currencies, err := queries.GetAllCurrencies(ctx, userId)
+	if err != nil {
+		return err
+	}
+	found := false
+	for _, c := range currencies {
+		if int(c.ID) == currencyId {
+			found = true
+			break
+		}
+	}
+	if !found {
+		return fmt.Errorf("currency not found or not owned by user")
+	}
+
+	err = queries.DeleteCompositions(ctx, &dao.DeleteCompositionsParams{
+		CurrencyID: int32(currencyId),
+		Date:       date,
+	})
+	if err != nil {
+		return err
+	}
+
+	for componentType, components := range compositions {
+		daoType := dao.CompositionTypeAsset
+		if componentType == model.RegionComposition {
+			daoType = dao.CompositionTypeRegion
+		} else if componentType == model.SectorComposition {
+			daoType = dao.CompositionTypeSector
+		}
+
+		for componentName, ratio := range components {
+			err = queries.CreateComposition(ctx, &dao.CreateCompositionParams{
+				CurrencyID:    int32(currencyId),
+				ComponentType: daoType,
+				ComponentName: componentName,
+				Ratio:         ratio,
+				Date:          date,
+			})
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return tx.Commit()
 }
 
 type InitialExchangeRate struct {
