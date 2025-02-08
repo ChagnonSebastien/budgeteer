@@ -27,12 +27,12 @@ interface Props {
   fromDate: Date
   toDate: Date
   groupBy: GroupType
-  splitInvestements?: boolean
+  splitInvestements?: 'both' | 'split' | 'bookValue' | 'interests'
   spread?: boolean
 }
 
 const AccountsBalanceChart: FC<Props> = (props) => {
-  const { fromDate, toDate, filterByAccounts, groupBy, splitInvestements = false, spread = false } = props
+  const { fromDate, toDate, filterByAccounts, groupBy, splitInvestements = 'both', spread = false } = props
 
   const { defaultCurrency } = useContext(CurrencyServiceContext)
   const { augmentedTransactions, exchangeRateOnDay } = useContext(MixedAugmentation)
@@ -267,11 +267,17 @@ const AccountsBalanceChart: FC<Props> = (props) => {
           marketValue += amount * factor
         }
 
-        if (splitInvestements) {
+        if (splitInvestements === 'split') {
           todaysData[`${groupLabel} Gained`] = marketValue === 0 ? 0 : marketValue - groupData.bookValue
           todaysData[`${groupLabel} Invested`] = marketValue === 0 ? 0 : groupData.bookValue
           groups.add(`${groupLabel} Gained`)
           groups.add(`${groupLabel} Invested`)
+        } else if (splitInvestements === 'bookValue') {
+          todaysData[groupLabel] = marketValue === 0 ? 0 : groupData.bookValue
+          groups.add(groupLabel)
+        } else if (splitInvestements === 'interests') {
+          todaysData[groupLabel] = marketValue === 0 ? 0 : marketValue - groupData.bookValue
+          groups.add(groupLabel)
         } else {
           todaysData[groupLabel] = marketValue
           groups.add(groupLabel)

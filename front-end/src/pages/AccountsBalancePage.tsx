@@ -1,4 +1,4 @@
-import { Box, Checkbox, FormControlLabel, Radio, RadioGroup } from '@mui/material'
+import { Box, MenuItem, TextField } from '@mui/material'
 import { FC, useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 
@@ -20,10 +20,14 @@ const AccountsBalancePage: FC = () => {
   const navigate = useNavigate()
 
   const groupBy: GroupType = (query.get('groupBy') ?? 'account') as GroupType
-  const splitInvestments: boolean = Number.parseInt(query.get('splitInvestments') ?? '0') > 0
-  const spread: boolean = Number.parseInt(query.get('spread') ?? '0') > 0
+  const splitInvestments: 'both' | 'split' | 'bookValue' | 'interests' = (query.get('splitInvestments') ?? 'both') as
+    | 'both'
+    | 'split'
+    | 'bookValue'
+    | 'interests'
+  const scale: 'absolute' | 'relative' = (query.get('scale') ?? 'absolute') as 'absolute' | 'relative'
 
-  const [optionsHeight, setOptionsHeight] = useState(240)
+  const [optionsHeight, setOptionsHeight] = useState(140)
 
   const [contentRef, setContentRef] = useState<HTMLDivElement | null>(null)
   const [contentHeight, setContentHeight] = useState(600)
@@ -63,7 +67,7 @@ const AccountsBalancePage: FC = () => {
             filterByAccounts={accountFilter === null ? undefined : accountFilter}
             groupBy={groupBy}
             splitInvestements={splitInvestments}
-            spread={spread}
+            spread={scale === 'relative'}
           />
         </div>
 
@@ -74,90 +78,72 @@ const AccountsBalancePage: FC = () => {
         >
           {filterOverview}
 
-          <Box sx={{ padding: '.5rem 2rem 1rem 2rem' }}>
-            <Box
-              sx={{
-                backgroundColor: '#8882',
-                padding: '1rem',
-                borderRadius: '1rem',
-                display: 'flex',
-                justifyContent: 'space-around',
-              }}
-            >
-              <div>
-                <div style={{ fontWeight: 'bold' }}>Group by</div>
-                <RadioGroup
-                  value={groupBy}
-                  onChange={(newValue) => {
-                    query.set('groupBy', newValue.target.value)
-                    navigate(`${location.pathname}?${query.toString()}`)
-                  }}
-                >
-                  <FormControlLabel
-                    value="none"
-                    label="None"
-                    sx={{ margin: 0 }}
-                    control={<Radio sx={{ padding: '0' }} />}
-                  />
-                  <FormControlLabel
-                    value="account"
-                    label="Account"
-                    sx={{ margin: 0 }}
-                    control={<Radio sx={{ padding: '0' }} />}
-                  />
-                  <FormControlLabel
-                    value="financialInstitution"
-                    label="Financial Institution"
-                    sx={{ margin: 0 }}
-                    control={<Radio sx={{ padding: '0' }} />}
-                  />
-                  <FormControlLabel
-                    value="type"
-                    label="Type"
-                    sx={{ margin: 0 }}
-                    control={<Radio sx={{ padding: '0' }} />}
-                  />
-                </RadioGroup>
-              </div>
-              <div>
-                <div style={{ fontWeight: 'bold' }}>Show</div>
-                <Box>
-                  <FormControlLabel
-                    value="type"
-                    label="Interests"
-                    sx={{ margin: 0 }}
-                    control={
-                      <Checkbox
-                        sx={{ padding: '0' }}
-                        checked={splitInvestments}
-                        onChange={(newValue) => {
-                          query.set('splitInvestments', newValue.target.checked ? '1' : '0')
-                          navigate(`${location.pathname}?${query.toString()}`)
-                        }}
-                      />
-                    }
-                  />
-                </Box>
-                <Box>
-                  <FormControlLabel
-                    value="type"
-                    label="Spread"
-                    sx={{ margin: 0 }}
-                    control={
-                      <Checkbox
-                        sx={{ padding: '0' }}
-                        checked={spread}
-                        onChange={(newValue) => {
-                          query.set('spread', newValue.target.checked ? '1' : '0')
-                          navigate(`${location.pathname}?${query.toString()}`)
-                        }}
-                      />
-                    }
-                  />
-                </Box>
-              </div>
-            </Box>
+          <Box
+            sx={{
+              backgroundColor: '#8882',
+              padding: '.5rem',
+              borderRadius: '.5rem',
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: '.75rem',
+              margin: '1rem 1rem 0 1rem',
+            }}
+          >
+            <div style={{ minWidth: '140px', flex: 1 }}>
+              <TextField
+                label="Group by"
+                select
+                value={groupBy}
+                onChange={(event) => {
+                  query.set('groupBy', event.target.value)
+                  navigate(`${location.pathname}?${query.toString()}`)
+                }}
+                variant="standard"
+                fullWidth
+              >
+                <MenuItem value="none">None</MenuItem>
+                <MenuItem value="account">Account</MenuItem>
+                <MenuItem value="financialInstitution">Financial Institution</MenuItem>
+                <MenuItem value="type">Type</MenuItem>
+              </TextField>
+            </div>
+            <div style={{ minWidth: '140px', flex: 1 }}>
+              <TextField
+                label="Interests View"
+                select
+                value={splitInvestments}
+                onChange={(event) => {
+                  query.set('splitInvestments', event.target.value)
+                  navigate(`${location.pathname}?${query.toString()}`)
+                }}
+                variant="standard"
+                fullWidth
+                sx={{ width: '100%' }}
+              >
+                <MenuItem value="both">Merge</MenuItem>
+                <MenuItem value="split">Split Interests</MenuItem>
+                <MenuItem value="bookValue">Only Book Value</MenuItem>
+                <MenuItem value="interests">Only Interests</MenuItem>
+              </TextField>
+            </div>
+            <div style={{ minWidth: '140px', flex: 1 }}>
+              <TextField
+                label="Scale"
+                select
+                value={scale}
+                onChange={(event) => {
+                  query.set('scale', event.target.value)
+                  navigate(`${location.pathname}?${query.toString()}`)
+                }}
+                variant="standard"
+                fullWidth
+              >
+                <MenuItem value="absolute">Absolute</MenuItem>
+                <MenuItem value="relative">Relative (%)</MenuItem>
+              </TextField>
+            </div>
           </Box>
+          <Box sx={{ height: '.5rem' }} />
         </div>
       </div>
     </ContentWithHeader>

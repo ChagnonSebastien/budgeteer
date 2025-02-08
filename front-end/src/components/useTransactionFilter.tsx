@@ -1,4 +1,14 @@
-import { Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, useMediaQuery, useTheme } from '@mui/material'
+import {
+  Button,
+  Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  IconButton,
+  useMediaQuery,
+  useTheme,
+} from '@mui/material'
 import { DateCalendar, DateView } from '@mui/x-date-pickers'
 import { addDays, formatDate, isSameDay, startOfDay, subMonths, subYears } from 'date-fns'
 import dayjs, { Dayjs } from 'dayjs'
@@ -8,6 +18,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { AccountList } from './AccountList'
 import { CategoryList } from './CategoryList'
 import ContentWithHeader from './ContentWithHeader'
+import { IconToolsContext } from './IconTools'
 import Account from '../domain/model/account'
 import { AccountServiceContext, CategoryServiceContext, TransactionServiceContext } from '../service/ServiceContext'
 import TimeRange from '../slider/TimeRange'
@@ -18,6 +29,7 @@ type Filters = {
   categoryFilter: number | null
   fromDate: Date
   toDate: Date
+  showSlider: boolean
 }
 
 export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilterByCategory = true): Filters => {
@@ -26,6 +38,7 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
   const navigate = useNavigate()
   const accountFilter: number[] = query.get('accounts') ? JSON.parse(query.get('accounts')!) : null
   const categoryFilter = query.get('category') ? Number.parseInt(query.get('category')!) : null
+  const [showSlider, setShowSlider] = useState(false)
   const fromDate = startOfDay(
     query.get('from') ? new Date(Number.parseInt(query.get('from')!)) : addDays(subYears(new Date(), 1), 1),
   )
@@ -53,6 +66,7 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
   const [showToDateModal, setShowToDateModal] = useState(false)
 
   const [filter, setFilter] = useState('')
+  const { IconLib } = useContext(IconToolsContext)
 
   const accountPills = useMemo(() => {
     if (accountFilter === null) return null
@@ -182,9 +196,21 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
     [fromPills, categoryPills, accountPills],
   )
 
-  const overview = (
-    <>
-      <div style={{ display: 'flex', justifyContent: 'space-around' }}>
+  const quickDates = (
+    <div
+      style={{
+        backgroundColor: '#8882',
+        margin: '0 1rem 1rem 1rem',
+        padding: '.75rem 0',
+        borderRadius: '.5rem',
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-around',
+        }}
+      >
         <div
           style={{ padding: '.25rem 1rem', fontWeight: 'bolder', cursor: 'pointer' }}
           onClick={() => {
@@ -246,50 +272,54 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
           1M
         </div>
       </div>
-      <div>
-        <TimeRange
-          ticksNumber={10}
-          disabledIntervals={[]}
-          selectedInterval={[fromDate, toDate]}
-          timelineInterval={[startOfDay(transactions[transactions.length - 1].date), startOfDay(new Date())]}
-          step={20}
-          formatTick={(a) => formatDate(new Date(a), 'MMM yyyy')}
-          onUpdateCallback={(_data: { error: boolean; time: Date[] }) => {
-            /** Ignore */
-          }}
-          onChangeCallback={(data: Date[]) => {
-            if (isSameDay(data[0], fromDate) && isSameDay(data[1], toDate)) {
-              return
-            }
+      {showSlider && (
+        <>
+          <TimeRange
+            ticksNumber={10}
+            disabledIntervals={[]}
+            selectedInterval={[fromDate, toDate]}
+            timelineInterval={[startOfDay(transactions[transactions.length - 1].date), startOfDay(new Date())]}
+            step={20}
+            formatTick={(a) => formatDate(new Date(a), 'MMM yyyy')}
+            onUpdateCallback={(_data: { error: boolean; time: Date[] }) => {
+              /** Ignore */
+            }}
+            onChangeCallback={(data: Date[]) => {
+              if (isSameDay(data[0], fromDate) && isSameDay(data[1], toDate)) {
+                return
+              }
 
-            query.set('from', String(startOfDay(data[0]).getTime()))
-            query.set('to', String(startOfDay(data[1]).getTime()))
-            navigate(`${location.pathname}?${query.toString()}`)
-          }}
-        />
-      </div>
-      <div
-        style={{
-          display: 'flex',
-          backgroundColor: '#8882',
-          margin: '.5rem 2rem',
-          padding: '.15rem 1rem',
-          borderRadius: '1rem',
-          alignItems: 'center',
-          cursor: 'pointer',
-        }}
-        onClick={() => setShowFilterSelection(true)}
-      >
-        <div>
-          {fromPills}
-          {toPills}
-          {categoryPills}
-          {accountPills}
-        </div>
-        <div style={{ flexGrow: 1 }} />
-        <div style={{ margin: '.25rem', width: 'intrinsic', flexShrink: 0 }}>+ Filter</div>
-      </div>
+              query.set('from', String(startOfDay(data[0]).getTime()))
+              query.set('to', String(startOfDay(data[1]).getTime()))
+              navigate(`${location.pathname}?${query.toString()}`)
+            }}
+          />
+          <div style={{ marginTop: '.75rem', padding: '0 1.5rem' }}>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                cursor: 'pointer',
+              }}
+              onClick={() => setShowFilterSelection(true)}
+            >
+              <div>
+                {fromPills}
+                {toPills}
+                {categoryPills}
+                {accountPills}
+              </div>
+              <div style={{ flexGrow: 1 }} />
+              <div style={{ margin: '.25rem', width: 'intrinsic', flexShrink: 0 }}>+ Filter</div>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  )
 
+  const overview = showSlider ? (
+    <>
       <Dialog
         fullScreen={fullScreen}
         open={showFilterSelection && !showFromDateModal && !showToDateModal}
@@ -381,13 +411,39 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
         </DialogActions>
       </Dialog>
     </>
+  ) : null
+
+  const toggleSlider = () => setShowSlider(!showSlider)
+
+  const overviewWithToggle = (
+    <div style={{ position: 'relative' }}>
+      {quickDates}
+      {overview}
+      <IconButton
+        onClick={toggleSlider}
+        size="small"
+        sx={{
+          position: 'absolute',
+          top: '-2.2rem',
+          right: '1rem',
+          backgroundColor: '#8882',
+          '&:hover': { backgroundColor: '#8883' },
+          zIndex: 1,
+        }}
+      >
+        <IconLib.MdArrowForwardIos
+          style={{ transform: `rotate(${showSlider ? '-' : ''}90deg)`, transition: 'transform 0.2s ease-in-out' }}
+        />
+      </IconButton>
+    </div>
   )
 
   return {
-    overview,
+    overview: overviewWithToggle,
     accountFilter,
     categoryFilter,
     fromDate,
     toDate,
+    showSlider,
   }
 }
