@@ -56,6 +56,12 @@ const TransactionsPieChart: FC<Props> = (props) => {
     return diffs
   }, [categories, augmentedTransactions])
 
+  const getCategoryTotal = (category: Category): number => {
+    const selfAmount = differences.get(category.id) ?? 0
+    const childrenAmount = (subCategories[category.id] ?? []).map(getCategoryTotal).reduce((a, b) => a + b, 0)
+    return selfAmount + childrenAmount
+  }
+
   const crunchedData = useMemo(() => {
     const buildGraph = (
       category: Category,
@@ -156,7 +162,33 @@ const TransactionsPieChart: FC<Props> = (props) => {
             alignItems: 'center',
           }}
         >
-          <div style={{ fontWeight: 'bold' }}>{clickedCategory?.name}</div>
+          {clickedCategory ? (
+            <>
+              <div style={{ fontWeight: 'bold' }}>{clickedCategory.name}</div>
+              {!privacyMode && <div>{formatFull(defaultCurrency, getCategoryTotal(clickedCategory), privacyMode)}</div>}
+              <div>
+                {Math.abs(
+                  (getCategoryTotal(clickedCategory) /
+                    (showIncomes ? crunchedData.incomeTotal : crunchedData.expenseTotal)) *
+                    100,
+                ).toFixed(1)}
+                %
+              </div>
+            </>
+          ) : (
+            <>
+              <div style={{ fontWeight: 'bold' }}>Total {showIncomes ? 'Income' : 'Expenses'}</div>
+              {!privacyMode && (
+                <div>
+                  {formatFull(
+                    defaultCurrency,
+                    showIncomes ? crunchedData.incomeTotal : crunchedData.expenseTotal,
+                    privacyMode,
+                  )}
+                </div>
+              )}
+            </>
+          )}
         </div>
         <ResponsiveSunburst
           data={data}
@@ -185,7 +217,7 @@ const TransactionsPieChart: FC<Props> = (props) => {
           arcLabel="id"
           arcLabelsSkipAngle={5}
           arcLabelsTextColor="white"
-          tooltip={({ id, formattedValue }) => (
+          tooltip={({ id, value }) => (
             <div
               style={{
                 backgroundColor: '#fff',
@@ -195,7 +227,7 @@ const TransactionsPieChart: FC<Props> = (props) => {
               }}
             >
               <div style={{ fontWeight: 'bold' }}>{id}</div>
-              <div>{formattedValue}</div>
+              {!privacyMode && <div>{formatFull(defaultCurrency, value, privacyMode)}</div>}
             </div>
           )}
         />

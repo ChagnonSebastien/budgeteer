@@ -1,7 +1,7 @@
 import { IconButton, SpeedDial, SpeedDialAction, SpeedDialIcon } from '@mui/material'
 import { isAfter, isBefore, isSameDay } from 'date-fns'
 import { FC, useContext, useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 
 import AggregatedDiffChart from '../components/AggregatedDiffChart'
 import ContentWithHeader from '../components/ContentWithHeader'
@@ -19,7 +19,8 @@ const TransactionPage: FC = () => {
   const { augmentedTransactions } = useContext(MixedAugmentation)
   const { state: categories, root: rootCategory } = useContext(CategoryServiceContext)
 
-  const [graphType, setGraphType] = useState<'line' | 'pie'>('line')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [graphType, setGraphType] = useState<'line' | 'pie'>((searchParams.get('chart') as 'line' | 'pie') || 'line')
   const { fromDate, toDate, accountFilter, categoryFilter, overview: filterOverview } = useTransactionFilter()
 
   const { IconLib } = useContext(IconToolsContext)
@@ -86,11 +87,21 @@ const TransactionPage: FC = () => {
       button="menu"
       rightButton={
         graphType === 'line' ? (
-          <IconButton onClick={() => setGraphType('pie')}>
+          <IconButton
+            onClick={() => {
+              setGraphType('pie')
+              setSearchParams({ ...Object.fromEntries(searchParams), chart: 'pie' })
+            }}
+          >
             <IconLib.FaChartPie size="1.5rem" />
           </IconButton>
         ) : (
-          <IconButton onClick={() => setGraphType('line')}>
+          <IconButton
+            onClick={() => {
+              setGraphType('line')
+              setSearchParams({ ...Object.fromEntries(searchParams), chart: 'line' })
+            }}
+          >
             <IconLib.BsGraphUp size="1.5rem" />
           </IconButton>
         )
