@@ -42,7 +42,7 @@ const AccountPicker: FC<Props> = (props) => {
       />
       <Dialog open={showModal} onClose={() => setShowModal(false)}>
         <DialogTitle>Select Account</DialogTitle>
-        <DialogContent>
+        <DialogContent style={{ height: '70vh', overflow: 'hidden', padding: '20px' }}>
           <AccountList
             filterable={{ filter, setFilter }}
             accounts={accounts}

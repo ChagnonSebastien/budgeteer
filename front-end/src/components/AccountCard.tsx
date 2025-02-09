@@ -83,6 +83,8 @@ export const AccountCard = (props: Props) => {
             alignItems: 'center',
             fontSize: showBalances ? '1.1rem' : '1rem',
             opacity: showBalances ? 0.9 : 0.8,
+            width: '100%',
+            minWidth: 0,
           }}
         >
           {typeof selected !== 'undefined' ? (
@@ -98,7 +100,16 @@ export const AccountCard = (props: Props) => {
               />
             )
           ) : null}
-          <span>{account.name}</span>
+          <span
+            style={{
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              maxWidth: '100%',
+            }}
+          >
+            {account.name}
+          </span>
         </div>
         {showBalances && defaultCurrency !== null && totalValue !== 0 && (
           <div style={{ display: 'flex', justifyContent: 'end', opacity: 0.8 }}>

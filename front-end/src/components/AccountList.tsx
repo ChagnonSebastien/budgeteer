@@ -237,7 +237,8 @@ export const AccountList = (props: Props) => {
   return (
     <div
       style={{
-        minWidth: '25rem',
+        minWidth: '20rem',
+        maxWidth: '100%',
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
@@ -245,10 +246,10 @@ export const AccountList = (props: Props) => {
         position: 'relative',
       }}
     >
-      <div style={{ padding: '0 1rem' }}>{segments}</div>
+      <div>{segments}</div>
       <div
         ref={contentRef}
-        style={{ overflowY: 'auto', flexGrow: 1, padding: '0 1rem', paddingBottom: '4rem', position: 'relative' }}
+        style={{ overflowY: 'auto', flexGrow: 1, paddingBottom: '4rem', position: 'relative' }}
       >
         {Object.entries(
           displayedAccount.reduce(
