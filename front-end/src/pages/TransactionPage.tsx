@@ -1,4 +1,4 @@
-import { Box, IconButton, SpeedDial, SpeedDialAction, SpeedDialIcon } from '@mui/material'
+import { Box, IconButton, Menu, MenuItem, Checkbox, SpeedDial, SpeedDialAction, SpeedDialIcon } from '@mui/material'
 import { isAfter, isBefore, isSameDay } from 'date-fns'
 import { FC, useContext, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
@@ -22,6 +22,9 @@ const TransactionPage: FC = () => {
 
   const [searchParams, setSearchParams] = useSearchParams()
   const [graphType, setGraphType] = useState<'line' | 'pie'>((searchParams.get('chart') as 'line' | 'pie') || 'line')
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
+  const hideFinancialIncome = searchParams.get('hideFinancialIncome') === 'true'
+  const open = Boolean(anchorEl)
   const { fromDate, toDate, accountFilter, categoryFilter, overview: filterOverview } = useTransactionFilter()
 
   const { IconLib } = useContext(IconToolsContext)
@@ -77,7 +80,12 @@ const TransactionPage: FC = () => {
     >
       <div style={{ height: `60vh`, position: 'relative' }}>
         {graphType === 'line' ? (
-          <AggregatedDiffChart transactions={filteredTransaction} toDate={toDate} fromDate={fromDate} />
+          <AggregatedDiffChart 
+            transactions={filteredTransaction} 
+            toDate={toDate} 
+            fromDate={fromDate}
+            hideFinancialIncome={hideFinancialIncome}
+          />
         ) : (
           <TransactionsPieChart
             rootCategory={categories.find((c) => c.id === categoryFilter) ?? rootCategory}
@@ -113,25 +121,42 @@ const TransactionPage: FC = () => {
       title="Transactions"
       button="menu"
       rightButton={
-        graphType === 'line' ? (
-          <IconButton
-            onClick={() => {
-              setGraphType('pie')
-              setSearchParams({ ...Object.fromEntries(searchParams), chart: 'pie' })
-            }}
-          >
-            <IconLib.FaChartPie size="1.5rem" />
+        <>
+          {graphType === 'line' ? (
+            <IconButton
+              onClick={() => {
+                setGraphType('pie')
+                setSearchParams({ ...Object.fromEntries(searchParams), chart: 'pie' })
+              }}
+            >
+              <IconLib.FaChartPie size="1.5rem" />
+            </IconButton>
+          ) : (
+            <IconButton
+              onClick={() => {
+                setGraphType('line')
+                setSearchParams({ ...Object.fromEntries(searchParams), chart: 'line' })
+              }}
+            >
+              <IconLib.BsGraphUp size="1.5rem" />
+            </IconButton>
+          )}
+          <IconButton onClick={(e) => setAnchorEl(e.currentTarget)}>
+            <IconLib.BiSearch size="1.5rem" />
           </IconButton>
-        ) : (
-          <IconButton
-            onClick={() => {
-              setGraphType('line')
-              setSearchParams({ ...Object.fromEntries(searchParams), chart: 'line' })
-            }}
-          >
-            <IconLib.BsGraphUp size="1.5rem" />
-          </IconButton>
-        )
+          <Menu anchorEl={anchorEl} open={open} onClose={() => setAnchorEl(null)}>
+            <MenuItem
+              onClick={() => {
+                setSearchParams({ ...Object.fromEntries(searchParams), hideFinancialIncome: (!hideFinancialIncome).toString() })
+                setAnchorEl(null)
+              }}
+              sx={{ gap: 1 }}
+            >
+              <Checkbox checked={hideFinancialIncome} size="small" />
+              Hide Financial Income
+            </MenuItem>
+          </Menu>
+        </>
       }
       contentMaxWidth="100%"
       contentOverflowY="hidden"

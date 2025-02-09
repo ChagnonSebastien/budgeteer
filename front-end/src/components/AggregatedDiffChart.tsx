@@ -24,6 +24,7 @@ interface Props {
   transactions: AugmentedTransaction[]
   fromDate: Date
   toDate: Date
+  hideFinancialIncome?: boolean
 }
 
 const AggregatedDiffChart: FC<Props> = (props) => {
@@ -89,6 +90,11 @@ const AggregatedDiffChart: FC<Props> = (props) => {
           transactionIndex -= 1
           continue
         } else if (typeof t.category === 'undefined') {
+          transactionIndex -= 1
+          continue
+        }
+
+        if (props.hideFinancialIncome && t.category.name === 'Financial income') {
           transactionIndex -= 1
           continue
         }
