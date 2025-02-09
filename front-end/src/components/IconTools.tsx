@@ -27,6 +27,8 @@ export enum PreparedIcon {
   BsFileEarmarkSpreadsheet = 'BsFileEarmarkSpreadsheet',
   MdArrowForwardIos = 'MdArrowForwardIos',
   BiSearch = 'BiSearch',
+  MdVisibility = 'MdVisibility',
+  MdVisibilityOff = 'MdVisibilityOff',
 }
 
 type PreparedIconLib = {
