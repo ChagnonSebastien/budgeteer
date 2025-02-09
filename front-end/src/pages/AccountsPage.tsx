@@ -92,6 +92,7 @@ const AccountsPage: FC = () => {
               onSelect={(account) => navigate(`/accounts/edit/${account.id}`)}
               showBalances
               showZeroBalances={showZeroBalances}
+              showGroupTotals={true}
               groupBy={groupBy}
               filterable={{ filter, setFilter }}
               onScrollProgress={setScrollProgress}

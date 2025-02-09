@@ -16,6 +16,7 @@ type Props = {
   onMultiSelect?: (value: number[]) => void
   showBalances?: boolean
   showZeroBalances?: boolean
+  showGroupTotals?: boolean
   groupBy?: 'institution' | 'type'
   filterable?: { filter: string; setFilter: Dispatch<SetStateAction<string>> }
   onScrollProgress?: (progress: number) => void
@@ -316,7 +317,7 @@ export const AccountList = (props: Props) => {
                     }}
                   >
                     {(() => {
-                      if (!defaultCurrency || privacyMode) return null
+                      if (!defaultCurrency || privacyMode || !props.showGroupTotals) return null
                       const now = new Date()
                       const total = accounts.reduce((sum, account) => {
                         const balances = accountBalances?.get(account.id)
