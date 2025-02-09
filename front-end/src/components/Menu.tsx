@@ -1,4 +1,5 @@
 import {
+  alpha,
   Box,
   Button,
   Divider,
@@ -10,7 +11,6 @@ import {
   SwipeableDrawer,
   Switch,
   Typography,
-  alpha,
 } from '@mui/material'
 import { createContext, FC, ReactElement, useContext, useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
@@ -31,7 +31,7 @@ const appPages: AppPage[] = [
     title: 'Transactions',
     url: '/transactions',
     iconName: PreparedIcon.TbArrowsExchange,
-    keepQuery: ['from', 'to', 'accounts', 'category'],
+    keepQuery: ['from', 'to', 'accounts', 'categories'],
   },
   {
     title: 'Categories',
@@ -61,7 +61,7 @@ const appPages: AppPage[] = [
     title: 'Trends',
     url: '/trends',
     iconName: PreparedIcon.BiSolidBarChartAlt2,
-    keepQuery: [],
+    keepQuery: ['categories'],
   },
   {
     title: 'Costs Analysis',
@@ -115,26 +115,26 @@ const DrawerWrapper: FC<Props> = ({ logout, children }) => {
         if (ref != null) setDrawerWidth(ref.scrollWidth)
       }}
     >
-      <Box 
+      <Box
         p="1.5rem"
         sx={{
           background: (theme) => `linear-gradient(${alpha(theme.palette.primary.main, 0.05)}, transparent)`,
         }}
       >
-        <Typography 
-          variant="h6" 
-          sx={{ 
+        <Typography
+          variant="h6"
+          sx={{
             fontWeight: 600,
             letterSpacing: '0.5px',
-            mb: 1
+            mb: 1,
           }}
         >
           Budget App
         </Typography>
-        <Typography 
-          sx={{ 
+        <Typography
+          sx={{
             color: (theme) => alpha(theme.palette.common.white, 0.6),
-            fontSize: '0.9rem'
+            fontSize: '0.9rem',
           }}
         >
           {email}
@@ -180,13 +180,13 @@ const DrawerWrapper: FC<Props> = ({ logout, children }) => {
               <ListItemIcon
                 sx={{
                   minWidth: '42px',
-                  color: (theme) => selected ? theme.palette.primary.main : alpha(theme.palette.common.white, 0.7),
+                  color: (theme) => (selected ? theme.palette.primary.main : alpha(theme.palette.common.white, 0.7)),
                   transition: 'color 0.2s',
                 }}
               >
                 <Icon style={iconStyle} />
               </ListItemIcon>
-              <ListItemText 
+              <ListItemText
                 primary={appPage.title}
                 sx={{
                   '& .MuiTypography-root': {
@@ -199,10 +199,10 @@ const DrawerWrapper: FC<Props> = ({ logout, children }) => {
         })}
       </List>
       <Box p="1rem">
-        <Button 
-          fullWidth 
-          onClick={logout} 
-          variant="contained" 
+        <Button
+          fullWidth
+          onClick={logout}
+          variant="contained"
           disableElevation
           sx={{
             py: '0.8rem',
@@ -223,9 +223,9 @@ const DrawerWrapper: FC<Props> = ({ logout, children }) => {
       <List sx={{ px: '0.5rem' }}>
         <ListItemButton
           onClick={() => {
-            const newValue = !privacyMode;
-            setPrivacyMode(newValue);
-            userStore.upsertPrivacyMode(newValue);
+            const newValue = !privacyMode
+            setPrivacyMode(newValue)
+            userStore.upsertPrivacyMode(newValue)
           }}
           sx={{
             borderRadius: '8px',
@@ -239,21 +239,18 @@ const DrawerWrapper: FC<Props> = ({ logout, children }) => {
           <ListItemIcon
             sx={{
               minWidth: '42px',
-              color: (theme) => privacyMode ? theme.palette.primary.main : alpha(theme.palette.common.white, 0.7),
+              color: (theme) => (privacyMode ? theme.palette.primary.main : alpha(theme.palette.common.white, 0.7)),
               transition: 'color 0.2s',
             }}
           >
-            {privacyMode ? 
-              <IconLib.MdVisibilityOff style={iconStyle} /> :
-              <IconLib.MdVisibility style={iconStyle} />
-            }
+            {privacyMode ? <IconLib.MdVisibilityOff style={iconStyle} /> : <IconLib.MdVisibility style={iconStyle} />}
           </ListItemIcon>
-          <ListItemText 
+          <ListItemText
             primary="Privacy Mode"
             sx={{
               '& .MuiTypography-root': {
                 fontWeight: 500,
-                color: (theme) => privacyMode ? theme.palette.primary.main : 'inherit',
+                color: (theme) => (privacyMode ? theme.palette.primary.main : 'inherit'),
                 transition: 'color 0.2s',
               },
             }}

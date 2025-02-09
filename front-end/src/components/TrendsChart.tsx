@@ -24,13 +24,13 @@ import { darkTheme } from '../utils'
 export type grouping = 'years' | 'quarters' | 'months'
 
 interface Props {
-  categoryId: number
+  categories: number[]
   years: number
   grouping: grouping
 }
 
 const TrendsChart: FC<Props> = (props) => {
-  const { categoryId, years = 1, grouping = 'months' } = props
+  const { categories, years = 1, grouping = 'months' } = props
   const { defaultCurrency } = useContext(CurrencyServiceContext)
   const { augmentedTransactions, exchangeRateOnDay } = useContext(MixedAugmentation)
   const { root } = useContext(CategoryServiceContext)
@@ -39,16 +39,16 @@ const TrendsChart: FC<Props> = (props) => {
   const filteredTransactions = useMemo(() => {
     return augmentedTransactions.filter((t) => {
       if (typeof t.category === 'undefined') return false
-      if (categoryId === root.id || categoryId === t.categoryId) return true
+      if (categories.length === 0 || categories[0] === root.id) return true
 
       let current = t.category!
-      while (typeof current?.parent !== 'undefined') {
-        current = current.parent
-        if (current.id === categoryId) return true
-      }
+      do {
+        if (categories.includes(current.id)) return true
+        current = current.parent!
+      } while (typeof current?.parent !== 'undefined')
       return false
     })
-  }, [augmentedTransactions, categoryId, root])
+  }, [augmentedTransactions, categories, root])
 
   const data = useMemo(() => {
     if (defaultCurrency === null || filteredTransactions.length === 0) return null

@@ -134,7 +134,7 @@ export const TransactionList = (props: Props) => {
       const { Total, date, diff } = data
       return (
         <div
-          key={`monthly-label-${date.toDateString()}`}
+          key={`monthly-label-${date.getTime()}`}
           style={{
             display: 'flex',
             flexDirection: 'column',

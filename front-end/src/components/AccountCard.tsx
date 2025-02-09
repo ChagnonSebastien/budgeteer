@@ -87,8 +87,8 @@ export const AccountCard = (props: Props) => {
             minWidth: 0,
           }}
         >
-          {typeof selected !== 'undefined' ? (
-            selected.includes(account.id) ? (
+          {onMultiSelect &&
+            (selected?.includes(account.id) ? (
               <IconLib.FaRegSquareCheck
                 size={showBalances ? '1.5rem' : '1.25rem'}
                 style={{ marginRight: showBalances ? '0.75rem' : '0.5rem', opacity: 0.8 }}
@@ -98,8 +98,7 @@ export const AccountCard = (props: Props) => {
                 size={showBalances ? '1.5rem' : '1.25rem'}
                 style={{ marginRight: showBalances ? '0.75rem' : '0.5rem', opacity: 0.5 }}
               />
-            )
-          ) : null}
+            ))}
           <span
             style={{
               overflow: 'hidden',

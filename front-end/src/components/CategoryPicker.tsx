@@ -3,56 +3,65 @@ import { FC, useContext, useMemo, useState } from 'react'
 
 import { CategoryList } from './CategoryList'
 import ContentWithHeader from './ContentWithHeader'
-import IconCapsule from './IconCapsule'
 import { CategoryServiceContext } from '../service/ServiceContext'
 
 interface Props {
-  categoryId: number
-  setCategoryId: (categoryId: number) => void
+  categoryId?: number
+  setCategoryId?: (categoryId: number) => void
+  selected?: number[]
+  onMultiSelect?: (selected: number[]) => void
   labelText: string
+  valueText?: string
 }
 
 const CategoryPicker: FC<Props> = (props) => {
-  const { categoryId, setCategoryId, labelText } = props
-  const { state: categories, root: rootCategory } = useContext(CategoryServiceContext)
-  const currentCategory = useMemo(() => categories.find((c) => c.id === categoryId)!, [categories, categoryId])
+  const { categoryId, setCategoryId, selected = [], onMultiSelect, labelText, valueText } = props
+  const { state: categories } = useContext(CategoryServiceContext)
+  const currentCategory = useMemo(
+    () => (categoryId ? categories.find((c) => c.id === categoryId)! : undefined),
+    [categories, categoryId],
+  )
+  const selectedCategories = useMemo(
+    () => selected.map((id) => categories.find((c) => c.id === id)!).filter((c) => c),
+    [categories, selected],
+  )
 
   const [showModal, setShowModal] = useState(false)
 
+  const displayValue =
+    valueText ??
+    (onMultiSelect ? selectedCategories.map((c) => c.name).join(', ') || 'None' : (currentCategory?.name ?? 'None'))
+
   return (
     <>
-      <div style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }} onClick={() => setShowModal(true)}>
-        <IconCapsule
-          flexShrink={0}
-          iconName={currentCategory.iconName}
-          size="2rem"
-          color={currentCategory.iconColor}
-          backgroundColor={currentCategory.iconBackground}
-        />
-        <div style={{ width: '1rem', flexShrink: 0 }} />
-        <TextField
-          type="text"
-          label={labelText}
-          variant="standard"
-          sx={{ width: '100%' }}
-          placeholder={typeof rootCategory === 'undefined' ? 'Loading...' : undefined}
-          value={currentCategory.name}
-          onFocus={(ev) => {
-            ev.preventDefault()
-            setShowModal(true)
-            ev.target.blur()
-          }}
-          required
-        />
-      </div>
+      <TextField
+        sx={{ width: '100%' }}
+        variant="standard"
+        type="text"
+        label={labelText}
+        placeholder={'None'}
+        value={displayValue}
+        onFocus={(ev) => {
+          ev.preventDefault()
+          setShowModal(true)
+          ev.target.blur()
+        }}
+        required={!onMultiSelect}
+      />
       <Dialog open={showModal} onClose={() => setShowModal(false)}>
-        <ContentWithHeader title="Select Icon" button="return" onCancel={() => setShowModal(false)}>
+        <ContentWithHeader title="Select Category" button="return" onCancel={() => setShowModal(false)}>
           <CategoryList
             categories={categories}
-            onSelect={(newParent) => {
-              setCategoryId(newParent)
-              setShowModal(false)
-            }}
+            onSelect={
+              setCategoryId
+                ? (newParent) => {
+                    setCategoryId(newParent)
+                    setShowModal(false)
+                  }
+                : undefined
+            }
+            onMultiSelect={onMultiSelect}
+            selected={selected}
           />
         </ContentWithHeader>
       </Dialog>

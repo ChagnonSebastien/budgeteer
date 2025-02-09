@@ -1,19 +1,41 @@
 import { Box, Button, Tab, Tabs } from '@mui/material'
-import { FC, useContext, useEffect, useState } from 'react'
+import { FC, useEffect, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 
 import CategoryPicker from '../components/CategoryPicker'
 import ContentWithHeader from '../components/ContentWithHeader'
 import TrendsChart, { grouping } from '../components/TrendsChart'
-import { CategoryServiceContext } from '../service/ServiceContext'
 
 const TrendsPage: FC = () => {
   const [optionsHeight, setOptionsHeight] = useState(240)
 
-  const { root } = useContext(CategoryServiceContext)
+  const navigate = useNavigate()
+  const location = useLocation()
+  const query = new URLSearchParams(location.search)
 
-  const [grouping, setGrouping] = useState<grouping>('months')
-  const [years, setYears] = useState(1)
-  const [categoryId, setCategoryId] = useState(root.id)
+  const grouping = (query.get('grouping') as grouping) || 'months'
+  const years = parseInt(query.get('years') || '1')
+  const selectedCategories: number[] = query.get('categories') ? JSON.parse(query.get('categories')!) : []
+
+  const updateQuery = (updates: { grouping?: grouping; years?: number; categories?: number[] }) => {
+    const newQuery = new URLSearchParams(query)
+
+    if (updates.grouping) {
+      newQuery.set('grouping', updates.grouping)
+    }
+    if (updates.years !== undefined) {
+      newQuery.set('years', updates.years.toString())
+    }
+    if (updates.categories !== undefined) {
+      if (updates.categories.length === 0) {
+        newQuery.delete('categories')
+      } else {
+        newQuery.set('categories', JSON.stringify(updates.categories))
+      }
+    }
+
+    navigate(`${location.pathname}?${newQuery.toString()}`)
+  }
 
   const [contentRef, setContentRef] = useState<HTMLDivElement | null>(null)
   const [contentHeight, setContentHeight] = useState(600)
@@ -47,7 +69,7 @@ const TrendsPage: FC = () => {
             padding: '1rem 0',
           }}
         >
-          <TrendsChart categoryId={categoryId} grouping={grouping} years={years} />
+          <TrendsChart categories={selectedCategories} grouping={grouping} years={years} />
         </div>
 
         <div
@@ -56,20 +78,25 @@ const TrendsPage: FC = () => {
           }}
         >
           <Box sx={{ padding: '1rem 2rem' }}>
-            <CategoryPicker categoryId={categoryId} setCategoryId={setCategoryId} labelText="Filter by category" />
+            <CategoryPicker
+              selected={selectedCategories}
+              onMultiSelect={(categories) => updateQuery({ categories })}
+              labelText="Filter by categories"
+              valueText={selectedCategories.length === 0 ? 'All Categories' : undefined}
+            />
 
             <div style={{ display: 'flex', padding: '.5rem', alignItems: 'center' }}>
-              <Button variant="outlined" disabled={years === 1} onClick={() => setYears((y) => y - 1)}>
+              <Button variant="outlined" disabled={years === 1} onClick={() => updateQuery({ years: years - 1 })}>
                 -1
               </Button>
               <div style={{ flexGrow: 1, textAlign: 'center' }}>{years} years</div>
-              <Button variant="outlined" onClick={() => setYears((y) => y + 1)}>
+              <Button variant="outlined" onClick={() => updateQuery({ years: years + 1 })}>
                 +1
               </Button>
             </div>
           </Box>
 
-          <Tabs centered value={grouping} onChange={(_event, value) => setGrouping(value as grouping)}>
+          <Tabs centered value={grouping} onChange={(_event, value) => updateQuery({ grouping: value as grouping })}>
             <Tab label="Months" value="months" />
             <Tab label="Quarters" value="quarters" />
             <Tab label="Years" value="years" />

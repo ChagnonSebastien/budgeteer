@@ -15,7 +15,7 @@ import TimeRange from '../slider/TimeRange'
 type Filters = {
   overview: ReactNode
   accountFilter: number[] | null
-  categoryFilter: number | null
+  categoryFilter: number[] | null
   fromDate: Date
   toDate: Date
   showSlider: boolean
@@ -26,7 +26,7 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
   const query = new URLSearchParams(location.search)
   const navigate = useNavigate()
   const accountFilter: number[] = query.get('accounts') ? JSON.parse(query.get('accounts')!) : null
-  const categoryFilter = query.get('category') ? Number.parseInt(query.get('category')!) : null
+  const categoryFilter: number[] = query.get('categories') ? JSON.parse(query.get('categories')!) : null
   const [showSlider, setShowSlider] = useState(false)
   const fromDate = startOfDay(
     query.get('from') ? new Date(Number.parseInt(query.get('from')!)) : addDays(subYears(new Date(), 1), 1),
@@ -60,16 +60,18 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
     if (accountFilter === null) return null
     return accountFilter.map((accountId) => (
       <Chip
+        key={accountId}
         style={{ margin: '.25rem' }}
         onClick={(ev) => {
           ev.stopPropagation()
           setShowAccountModal(true)
         }}
         onDelete={() => {
-          if (accountFilter.length === 1) {
+          const newFilter = accountFilter.filter((a) => a != accountId)
+          if (newFilter.length === 0) {
             query.delete('accounts')
           } else {
-            query.set('accounts', JSON.stringify(accountFilter.filter((a) => a != accountId)))
+            query.set('accounts', JSON.stringify(newFilter))
           }
           navigate(`${location.pathname}?${query.toString()}`)
         }}
@@ -80,20 +82,26 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
 
   const categoryPills = useMemo(() => {
     if (categoryFilter === null) return null
-    return (
+    return categoryFilter.map((categoryId) => (
       <Chip
+        key={categoryId}
         style={{ margin: '.25rem' }}
         onClick={(ev) => {
           ev.stopPropagation()
           setShowCategoryModal(true)
         }}
         onDelete={() => {
-          query.delete('category')
+          const newFilter = categoryFilter.filter((c) => c != categoryId)
+          if (newFilter.length === 0) {
+            query.delete('categories')
+          } else {
+            query.set('categories', JSON.stringify(newFilter))
+          }
           navigate(`${location.pathname}?${query.toString()}`)
         }}
-        label={categories.find((c) => c.id === categoryFilter)?.name ?? categoryFilter}
+        label={categories.find((c) => c.id === categoryId)?.name ?? categoryId}
       />
-    )
+    ))
   }, [categoryFilter, query])
 
   const fromPills = useMemo(() => {
@@ -336,10 +344,14 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
         <ContentWithHeader title="Filter by category" button="none" onCancel={() => setShowCategoryModal(false)}>
           <CategoryList
             categories={categories}
-            onSelect={(categoryId) => {
-              query.set('category', String(categoryId))
+            selected={categoryFilter ?? undefined}
+            onMultiSelect={(categoryIds) => {
+              if (categoryIds.length === 0) {
+                query.delete('categories')
+              } else {
+                query.set('categories', JSON.stringify(categoryIds))
+              }
               navigate(`${location.pathname}?${query.toString()}`)
-              setShowCategoryModal(false)
             }}
           />
         </ContentWithHeader>
@@ -354,7 +366,11 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
             selected={accountFilter ?? undefined}
             showZeroBalances={true}
             onMultiSelect={(accountIds) => {
-              query.set('accounts', JSON.stringify(accountIds))
+              if (accountIds.length === 0) {
+                query.delete('accounts')
+              } else {
+                query.set('accounts', JSON.stringify(accountIds))
+              }
               navigate(`${location.pathname}?${query.toString()}`)
             }}
           />

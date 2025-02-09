@@ -1,4 +1,4 @@
-import { Box, IconButton, Menu, MenuItem, Checkbox, SpeedDial, SpeedDialAction, SpeedDialIcon } from '@mui/material'
+import { Box, Checkbox, IconButton, Menu, MenuItem, SpeedDial, SpeedDialAction, SpeedDialIcon } from '@mui/material'
 import { isAfter, isBefore, isSameDay } from 'date-fns'
 import { FC, useContext, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
@@ -44,7 +44,7 @@ const TransactionPage: FC = () => {
         if (categoryFilter === null) return true
         let category: AugmentedCategory | undefined = transaction.category
         while (typeof category !== 'undefined') {
-          if (category.id === categoryFilter) return true
+          if (categoryFilter.includes(category.id)) return true
           category = category.parent
         }
         return false
@@ -80,15 +80,19 @@ const TransactionPage: FC = () => {
     >
       <div style={{ height: `60vh`, position: 'relative' }}>
         {graphType === 'line' ? (
-          <AggregatedDiffChart 
-            transactions={filteredTransaction} 
-            toDate={toDate} 
+          <AggregatedDiffChart
+            transactions={filteredTransaction}
+            toDate={toDate}
             fromDate={fromDate}
             hideFinancialIncome={hideFinancialIncome}
           />
         ) : (
           <TransactionsPieChart
-            rootCategory={categories.find((c) => c.id === categoryFilter) ?? rootCategory}
+            rootCategory={
+              categoryFilter && categoryFilter.length === 1
+                ? (categories.find((c) => c.id === categoryFilter[0]) ?? rootCategory)
+                : rootCategory
+            }
             augmentedTransactions={filteredTransaction}
           />
         )}
@@ -147,7 +151,10 @@ const TransactionPage: FC = () => {
           <Menu anchorEl={anchorEl} open={open} onClose={() => setAnchorEl(null)}>
             <MenuItem
               onClick={() => {
-                setSearchParams({ ...Object.fromEntries(searchParams), hideFinancialIncome: (!hideFinancialIncome).toString() })
+                setSearchParams({
+                  ...Object.fromEntries(searchParams),
+                  hideFinancialIncome: (!hideFinancialIncome).toString(),
+                })
                 setAnchorEl(null)
               }}
               sx={{ gap: 1 }}
