@@ -182,7 +182,7 @@ const TransactionsPieChart: FC<Props> = (props) => {
                 <div>
                   {formatFull(
                     defaultCurrency,
-                    showIncomes ? crunchedData.incomeTotal : crunchedData.expenseTotal,
+                    showIncomes ? crunchedData.incomeTotal : -crunchedData.expenseTotal,
                     privacyMode,
                   )}
                 </div>

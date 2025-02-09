@@ -1,4 +1,4 @@
-import { Box, Button, Paper, Tab, Tabs } from '@mui/material'
+import { Box, Button, Tab, Tabs } from '@mui/material'
 import { FC, useContext, useEffect, useState } from 'react'
 
 import CategoryPicker from '../components/CategoryPicker'

@@ -1,14 +1,4 @@
-import {
-  Button,
-  Chip,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  IconButton,
-  useMediaQuery,
-  useTheme,
-} from '@mui/material'
+import { Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, useMediaQuery, useTheme } from '@mui/material'
 import { DateCalendar, DateView } from '@mui/x-date-pickers'
 import { addDays, formatDate, isSameDay, startOfDay, subMonths, subYears } from 'date-fns'
 import dayjs, { Dayjs } from 'dayjs'
@@ -18,7 +8,6 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { AccountList } from './AccountList'
 import { CategoryList } from './CategoryList'
 import ContentWithHeader from './ContentWithHeader'
-import { IconToolsContext } from './IconTools'
 import Account from '../domain/model/account'
 import { AccountServiceContext, CategoryServiceContext, TransactionServiceContext } from '../service/ServiceContext'
 import TimeRange from '../slider/TimeRange'
@@ -66,7 +55,6 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
   const [showToDateModal, setShowToDateModal] = useState(false)
 
   const [filter, setFilter] = useState('')
-  const { IconLib } = useContext(IconToolsContext)
 
   const accountPills = useMemo(() => {
     if (accountFilter === null) return null
@@ -200,121 +188,135 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
     <div
       style={{
         backgroundColor: '#8882',
-        margin: '0 1rem 1rem 1rem',
-        padding: '.75rem 0',
         borderRadius: '.5rem',
+        display: 'flex',
+        overflow: 'hidden',
       }}
     >
       <div
         style={{
-          display: 'flex',
-          justifyContent: 'space-around',
+          padding: '.75rem 0',
+          flexGrow: 1,
         }}
       >
         <div
-          style={{ padding: '.25rem 1rem', fontWeight: 'bolder', cursor: 'pointer' }}
-          onClick={() => {
-            if (transactions.length > 0) {
-              query.set('from', String(startOfDay(transactions[transactions.length - 1].date).getTime()))
-              query.set('to', String(startOfDay(new Date()).getTime()))
-              navigate(`${location.pathname}?${query.toString()}`)
-            }
+          style={{
+            flexGrow: 1,
+            display: 'flex',
+            justifyContent: 'space-around',
           }}
         >
-          Max
-        </div>
-        <div
-          style={{ padding: '.25rem 1rem', fontWeight: 'bolder', cursor: 'pointer' }}
-          onClick={() => {
-            if (transactions.length > 0) {
-              query.set('from', String(startOfDay(addDays(subYears(new Date(), 5), 1)).getTime()))
-              query.set('to', String(startOfDay(new Date()).getTime()))
-              navigate(`${location.pathname}?${query.toString()}`)
-            }
-          }}
-        >
-          5Y
-        </div>
-        <div
-          style={{ padding: '.25rem 1rem', fontWeight: 'bolder', cursor: 'pointer' }}
-          onClick={() => {
-            if (transactions.length > 0) {
-              query.set('from', String(startOfDay(addDays(subYears(new Date(), 3), 1)).getTime()))
-              query.set('to', String(startOfDay(new Date()).getTime()))
-              navigate(`${location.pathname}?${query.toString()}`)
-            }
-          }}
-        >
-          3Y
-        </div>
-        <div
-          style={{ padding: '.25rem 1rem', fontWeight: 'bolder', cursor: 'pointer' }}
-          onClick={() => {
-            if (transactions.length > 0) {
-              query.set('from', String(startOfDay(addDays(subYears(new Date(), 1), 1)).getTime()))
-              query.set('to', String(startOfDay(new Date()).getTime()))
-              navigate(`${location.pathname}?${query.toString()}`)
-            }
-          }}
-        >
-          1Y
-        </div>
-        <div
-          style={{ padding: '.25rem 1rem', fontWeight: 'bolder', cursor: 'pointer' }}
-          onClick={() => {
-            if (transactions.length > 0) {
-              query.set('from', String(startOfDay(addDays(subMonths(new Date(), 1), 1)).getTime()))
-              query.set('to', String(startOfDay(new Date()).getTime()))
-              navigate(`${location.pathname}?${query.toString()}`)
-            }
-          }}
-        >
-          1M
-        </div>
-      </div>
-      {showSlider && (
-        <>
-          <TimeRange
-            ticksNumber={10}
-            disabledIntervals={[]}
-            selectedInterval={[fromDate, toDate]}
-            timelineInterval={[startOfDay(transactions[transactions.length - 1].date), startOfDay(new Date())]}
-            step={20}
-            formatTick={(a) => formatDate(new Date(a), 'MMM yyyy')}
-            onUpdateCallback={(_data: { error: boolean; time: Date[] }) => {
-              /** Ignore */
-            }}
-            onChangeCallback={(data: Date[]) => {
-              if (isSameDay(data[0], fromDate) && isSameDay(data[1], toDate)) {
-                return
+          <div
+            style={{ padding: '.25rem 1rem', fontWeight: 'bolder', cursor: 'pointer' }}
+            onClick={() => {
+              if (transactions.length > 0) {
+                query.set('from', String(startOfDay(transactions[transactions.length - 1].date).getTime()))
+                query.set('to', String(startOfDay(new Date()).getTime()))
+                navigate(`${location.pathname}?${query.toString()}`)
               }
-
-              query.set('from', String(startOfDay(data[0]).getTime()))
-              query.set('to', String(startOfDay(data[1]).getTime()))
-              navigate(`${location.pathname}?${query.toString()}`)
             }}
-          />
-          <div style={{ marginTop: '.75rem', padding: '0 1.5rem' }}>
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                cursor: 'pointer',
-              }}
-              onClick={() => setShowFilterSelection(true)}
-            >
-              <div>
-                {fromPills}
-                {toPills}
-                {categoryPills}
-                {accountPills}
-              </div>
-              <div style={{ flexGrow: 1 }} />
-              <div style={{ margin: '.25rem', width: 'intrinsic', flexShrink: 0 }}>+ Filter</div>
-            </div>
+          >
+            Max
           </div>
-        </>
-      )}
+          <div
+            style={{ padding: '.25rem 1rem', fontWeight: 'bolder', cursor: 'pointer' }}
+            onClick={() => {
+              if (transactions.length > 0) {
+                query.set('from', String(startOfDay(addDays(subYears(new Date(), 5), 1)).getTime()))
+                query.set('to', String(startOfDay(new Date()).getTime()))
+                navigate(`${location.pathname}?${query.toString()}`)
+              }
+            }}
+          >
+            5Y
+          </div>
+          <div
+            style={{ padding: '.25rem 1rem', fontWeight: 'bolder', cursor: 'pointer' }}
+            onClick={() => {
+              if (transactions.length > 0) {
+                query.set('from', String(startOfDay(addDays(subYears(new Date(), 3), 1)).getTime()))
+                query.set('to', String(startOfDay(new Date()).getTime()))
+                navigate(`${location.pathname}?${query.toString()}`)
+              }
+            }}
+          >
+            3Y
+          </div>
+          <div
+            style={{ padding: '.25rem 1rem', fontWeight: 'bolder', cursor: 'pointer' }}
+            onClick={() => {
+              if (transactions.length > 0) {
+                query.set('from', String(startOfDay(addDays(subYears(new Date(), 1), 1)).getTime()))
+                query.set('to', String(startOfDay(new Date()).getTime()))
+                navigate(`${location.pathname}?${query.toString()}`)
+              }
+            }}
+          >
+            1Y
+          </div>
+          <div
+            style={{ padding: '.25rem 1rem', fontWeight: 'bolder', cursor: 'pointer' }}
+            onClick={() => {
+              if (transactions.length > 0) {
+                query.set('from', String(startOfDay(addDays(subMonths(new Date(), 1), 1)).getTime()))
+                query.set('to', String(startOfDay(new Date()).getTime()))
+                navigate(`${location.pathname}?${query.toString()}`)
+              }
+            }}
+          >
+            1M
+          </div>
+        </div>
+        {showSlider && (
+          <>
+            <TimeRange
+              ticksNumber={10}
+              disabledIntervals={[]}
+              selectedInterval={[fromDate, toDate]}
+              timelineInterval={[startOfDay(transactions[transactions.length - 1].date), startOfDay(new Date())]}
+              step={20}
+              formatTick={(a) => formatDate(new Date(a), 'MMM yyyy')}
+              onUpdateCallback={(_data: { error: boolean; time: Date[] }) => {
+                /** Ignore */
+              }}
+              onChangeCallback={(data: Date[]) => {
+                if (isSameDay(data[0], fromDate) && isSameDay(data[1], toDate)) {
+                  return
+                }
+
+                query.set('from', String(startOfDay(data[0]).getTime()))
+                query.set('to', String(startOfDay(data[1]).getTime()))
+                navigate(`${location.pathname}?${query.toString()}`)
+              }}
+            />
+            <div style={{ marginTop: '.75rem', padding: '0 1.5rem' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  cursor: 'pointer',
+                }}
+                onClick={() => setShowFilterSelection(true)}
+              >
+                <div>
+                  {fromPills}
+                  {toPills}
+                  {categoryPills}
+                  {accountPills}
+                </div>
+                <div style={{ flexGrow: 1 }} />
+                <div style={{ margin: '.25rem', width: 'intrinsic', flexShrink: 0 }}>+ Filter</div>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+      <div
+        style={{ backgroundColor: '#0003', padding: '1rem', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+        onClick={() => setShowSlider((prev) => !prev)}
+      >
+        {showSlider ? '-' : '+'}
+      </div>
     </div>
   )
 
@@ -413,28 +415,10 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
     </>
   ) : null
 
-  const toggleSlider = () => setShowSlider(!showSlider)
-
   const overviewWithToggle = (
     <div style={{ position: 'relative' }}>
       {quickDates}
       {overview}
-      <IconButton
-        onClick={toggleSlider}
-        size="small"
-        sx={{
-          position: 'absolute',
-          bottom: '0rem',
-          right: '1rem',
-          backgroundColor: '#8882',
-          '&:hover': { backgroundColor: '#8883' },
-          zIndex: 1,
-        }}
-      >
-        <IconLib.MdArrowForwardIos
-          style={{ transform: `rotate(${showSlider ? '-' : ''}90deg)`, transition: 'transform 0.2s ease-in-out' }}
-        />
-      </IconButton>
     </div>
   )
 

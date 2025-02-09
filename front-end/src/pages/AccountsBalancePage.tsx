@@ -76,74 +76,76 @@ const AccountsBalancePage: FC = () => {
             if (ref !== null) setOptionsHeight(ref.scrollHeight)
           }}
         >
-          {filterOverview}
+          <Box sx={{ padding: '0 1rem', paddingBottom: '.5rem' }}>
+            {filterOverview}
 
-          <Box
-            sx={{
-              backgroundColor: '#8882',
-              padding: '.5rem',
-              borderRadius: '.5rem',
-              display: 'flex',
-              flexWrap: 'wrap',
-              gap: '.75rem',
-              margin: '1rem 1rem 0 1rem',
-            }}
-          >
-            <div style={{ minWidth: '140px', flex: 1 }}>
-              <TextField
-                label="Group by"
-                select
-                value={groupBy}
-                onChange={(event) => {
-                  query.set('groupBy', event.target.value)
-                  navigate(`${location.pathname}?${query.toString()}`)
-                }}
-                variant="standard"
-                fullWidth
-              >
-                <MenuItem value="none">None</MenuItem>
-                <MenuItem value="account">Account</MenuItem>
-                <MenuItem value="financialInstitution">Financial Institution</MenuItem>
-                <MenuItem value="type">Type</MenuItem>
-              </TextField>
-            </div>
-            <div style={{ minWidth: '140px', flex: 1 }}>
-              <TextField
-                label="Interests View"
-                select
-                value={splitInvestments}
-                onChange={(event) => {
-                  query.set('splitInvestments', event.target.value)
-                  navigate(`${location.pathname}?${query.toString()}`)
-                }}
-                variant="standard"
-                fullWidth
-                sx={{ width: '100%' }}
-              >
-                <MenuItem value="both">Merge</MenuItem>
-                <MenuItem value="split">Split Interests</MenuItem>
-                <MenuItem value="bookValue">Only Book Value</MenuItem>
-                <MenuItem value="interests">Only Interests</MenuItem>
-              </TextField>
-            </div>
-            <div style={{ minWidth: '140px', flex: 1 }}>
-              <TextField
-                label="Scale"
-                select
-                value={scale}
-                onChange={(event) => {
-                  query.set('scale', event.target.value)
-                  navigate(`${location.pathname}?${query.toString()}`)
-                }}
-                variant="standard"
-                fullWidth
-              >
-                <MenuItem value="absolute">Absolute</MenuItem>
-                <MenuItem value="relative">Relative (%)</MenuItem>
-              </TextField>
-            </div>
+            <Box height="1rem" />
+
+            <Box
+              sx={{
+                backgroundColor: '#8882',
+                padding: '.5rem',
+                borderRadius: '.5rem',
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: '.75rem',
+              }}
+            >
+              <div style={{ minWidth: '140px', flex: 1 }}>
+                <TextField
+                  label="Group by"
+                  select
+                  value={groupBy}
+                  onChange={(event) => {
+                    query.set('groupBy', event.target.value)
+                    navigate(`${location.pathname}?${query.toString()}`)
+                  }}
+                  variant="standard"
+                  fullWidth
+                >
+                  <MenuItem value="none">None</MenuItem>
+                  <MenuItem value="account">Account</MenuItem>
+                  <MenuItem value="financialInstitution">Financial Institution</MenuItem>
+                  <MenuItem value="type">Type</MenuItem>
+                </TextField>
+              </div>
+              <div style={{ minWidth: '140px', flex: 1 }}>
+                <TextField
+                  label="Interests View"
+                  select
+                  value={splitInvestments}
+                  onChange={(event) => {
+                    query.set('splitInvestments', event.target.value)
+                    navigate(`${location.pathname}?${query.toString()}`)
+                  }}
+                  variant="standard"
+                  fullWidth
+                  sx={{ width: '100%' }}
+                >
+                  <MenuItem value="both">Merge</MenuItem>
+                  <MenuItem value="split">Split Interests</MenuItem>
+                  <MenuItem value="bookValue">Only Book Value</MenuItem>
+                  <MenuItem value="interests">Only Interests</MenuItem>
+                </TextField>
+              </div>
+              <div style={{ minWidth: '140px', flex: 1 }}>
+                <TextField
+                  label="Scale"
+                  select
+                  value={scale}
+                  onChange={(event) => {
+                    query.set('scale', event.target.value)
+                    navigate(`${location.pathname}?${query.toString()}`)
+                  }}
+                  variant="standard"
+                  fullWidth
+                >
+                  <MenuItem value="absolute">Absolute</MenuItem>
+                  <MenuItem value="relative">Relative (%)</MenuItem>
+                </TextField>
+              </div>
+            </Box>
           </Box>
-          <Box sx={{ height: '.5rem' }} />
         </div>
       </div>
     </ContentWithHeader>

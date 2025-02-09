@@ -40,7 +40,7 @@ export const AccountCard = (props: Props) => {
   return (
     <div
       style={{
-        padding: showBalances ? '1.25rem' : '0.5rem',
+        padding: showBalances ? '1.25rem' : '0.25rem .5rem',
         cursor: 'pointer',
         backgroundColor: 'transparent',
         borderRadius: showBalances ? '12px' : '4px',

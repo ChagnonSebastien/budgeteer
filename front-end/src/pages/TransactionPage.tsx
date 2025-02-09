@@ -1,4 +1,4 @@
-import { IconButton, SpeedDial, SpeedDialAction, SpeedDialIcon } from '@mui/material'
+import { Box, IconButton, SpeedDial, SpeedDialAction, SpeedDialIcon } from '@mui/material'
 import { isAfter, isBefore, isSameDay } from 'date-fns'
 import { FC, useContext, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
@@ -86,7 +86,7 @@ const TransactionPage: FC = () => {
         )}
       </div>
 
-      {filterOverview}
+      <Box sx={{ padding: '0 1rem' }}>{filterOverview}</Box>
     </div>
   )
 

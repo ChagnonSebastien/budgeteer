@@ -1,15 +1,21 @@
-import { Button } from '@mui/material'
+import { Button, Checkbox, IconButton, Menu, MenuItem } from '@mui/material'
 import { FC, useContext, useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 
 import { AccountList } from '../components/AccountList'
 import ContentWithHeader from '../components/ContentWithHeader'
+import { IconToolsContext } from '../components/IconTools'
 import { AccountServiceContext } from '../service/ServiceContext'
 
 const AccountsPage: FC = () => {
   const navigate = useNavigate()
-
+  const { IconLib } = useContext(IconToolsContext)
   const { state: accounts } = useContext(AccountServiceContext)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const showZeroBalances = searchParams.get('showZero') === 'true'
+  const groupBy = (searchParams.get('groupBy') || 'institution') as 'institution' | 'type'
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
+  const open = Boolean(anchorEl)
 
   const [filter, setFilter] = useState('')
   const [scrollProgress, setScrollProgress] = useState(1)
@@ -31,7 +37,44 @@ const AccountsPage: FC = () => {
   }, [contentRef])
 
   return (
-    <ContentWithHeader title="Accounts" button="menu" contentMaxWidth="100%" contentOverflowY="hidden">
+    <ContentWithHeader
+      title="Accounts"
+      button="menu"
+      contentMaxWidth="100%"
+      contentOverflowY="hidden"
+      rightButton={
+        <>
+          <IconButton onClick={(e) => setAnchorEl(e.currentTarget)}>
+            <IconLib.BiSearch size="1.5rem" />
+          </IconButton>
+          <Menu anchorEl={anchorEl} open={open} onClose={() => setAnchorEl(null)}>
+            <MenuItem
+              onClick={() => {
+                setSearchParams({ ...Object.fromEntries(searchParams), showZero: (!showZeroBalances).toString() })
+                setAnchorEl(null)
+              }}
+              sx={{ gap: 1 }}
+            >
+              <Checkbox checked={showZeroBalances} size="small" />
+              Show unused accounts
+            </MenuItem>
+            <MenuItem
+              onClick={() => {
+                setSearchParams({
+                  ...Object.fromEntries(searchParams),
+                  groupBy: groupBy === 'institution' ? 'type' : 'institution',
+                })
+                setAnchorEl(null)
+              }}
+              sx={{ gap: 1 }}
+            >
+              <Checkbox checked={groupBy === 'type'} size="small" />
+              Group by type
+            </MenuItem>
+          </Menu>
+        </>
+      }
+    >
       <div style={{ height: '100%', maxWidth: '100%', display: 'flex', justifyContent: 'center' }} ref={setContentRef}>
         <div style={{ maxWidth: '50rem', flexGrow: 1 }}>
           <div
@@ -48,6 +91,8 @@ const AccountsPage: FC = () => {
               accounts={accounts}
               onSelect={(account) => navigate(`/accounts/edit/${account.id}`)}
               showBalances
+              showZeroBalances={showZeroBalances}
+              groupBy={groupBy}
               filterable={{ filter, setFilter }}
               onScrollProgress={setScrollProgress}
             />

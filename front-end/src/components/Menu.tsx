@@ -13,7 +13,6 @@ import {
 } from '@mui/material'
 import { createContext, FC, ReactElement, useContext, useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import './Menu.css'
 
 import { IconToolsContext, PreparedIcon } from './IconTools'
 import { UserContext } from '../App'

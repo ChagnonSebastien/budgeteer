@@ -3,8 +3,11 @@ import { Dispatch, Fragment, SetStateAction, useContext, useEffect, useMemo, use
 
 import { AccountCard } from './AccountCard'
 import { IconToolsContext } from './IconTools'
+import { DrawerContext } from './Menu'
 import Account from '../domain/model/account'
+import { formatFull } from '../domain/model/currency'
 import MixedAugmentation from '../service/MixedAugmentation'
+import { CurrencyServiceContext } from '../service/ServiceContext'
 
 type Props = {
   accounts: Account[]
@@ -12,6 +15,8 @@ type Props = {
   selected?: number[]
   onMultiSelect?: (value: number[]) => void
   showBalances?: boolean
+  showZeroBalances?: boolean
+  groupBy?: 'institution' | 'type'
   filterable?: { filter: string; setFilter: Dispatch<SetStateAction<string>> }
   onScrollProgress?: (progress: number) => void
 }
@@ -21,8 +26,11 @@ type tabs = 'mine' | 'others'
 export const AccountList = (props: Props) => {
   const { accounts, onSelect, showBalances = false, filterable, onMultiSelect, selected } = props
 
-  const { augmentedTransactions: transactions } = useContext(MixedAugmentation)
+  const { augmentedTransactions: transactions, accountBalances, exchangeRateOnDay } = useContext(MixedAugmentation)
+  const currencyContext = useContext(CurrencyServiceContext)
+  const defaultCurrency = currencyContext.defaultCurrency
   const { IconLib } = useContext(IconToolsContext)
+  const { privacyMode } = useContext(DrawerContext)
   const [showSearch, setShowSearch] = useState(false)
 
   const [activeTab, setActiveTab] = useState<tabs>('mine')
@@ -90,18 +98,40 @@ export const AccountList = (props: Props) => {
   }, [otherAccounts, transactions])
 
   const myOwnFilteredAccounts = useMemo(() => {
-    if (typeof filterable === 'undefined') return myOwnOrderedAccounts
-    return myOwnOrderedAccounts.filter((account) =>
-      account.name.toLowerCase().includes(filterable.filter.toLowerCase()),
-    )
-  }, [myOwnOrderedAccounts, filterable?.filter])
+    let filtered = myOwnOrderedAccounts
+
+    if (typeof filterable !== 'undefined') {
+      filtered = filtered.filter((account) => account.name.toLowerCase().includes(filterable.filter.toLowerCase()))
+    }
+
+    if (!props.showZeroBalances) {
+      filtered = filtered.filter((account) => {
+        const balances = accountBalances?.get(account.id)
+        if (!balances) return false
+        return Array.from(balances.values()).some((balance) => balance !== 0)
+      })
+    }
+
+    return filtered
+  }, [myOwnOrderedAccounts, filterable?.filter, props.showZeroBalances, accountBalances])
 
   const otherFilteredAccounts = useMemo(() => {
-    if (typeof filterable === 'undefined') return otherOrderedAccounts
-    return otherOrderedAccounts.filter((account) =>
-      account.name.toLowerCase().includes(filterable.filter.toLowerCase()),
-    )
-  }, [otherOrderedAccounts, filterable?.filter])
+    let filtered = otherOrderedAccounts
+
+    if (typeof filterable !== 'undefined') {
+      filtered = filtered.filter((account) => account.name.toLowerCase().includes(filterable.filter.toLowerCase()))
+    }
+
+    if (!props.showZeroBalances) {
+      filtered = filtered.filter((account) => {
+        const balances = accountBalances?.get(account.id)
+        if (!balances) return false
+        return Array.from(balances.values()).some((balance) => balance !== 0)
+      })
+    }
+
+    return filtered
+  }, [otherOrderedAccounts, filterable?.filter, props.showZeroBalances, accountBalances])
 
   useEffect(() => {
     if (activeTab === 'mine' && myOwnFilteredAccounts.length === 0 && otherFilteredAccounts.length > 0)
@@ -242,45 +272,73 @@ export const AccountList = (props: Props) => {
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
-        gap: '2rem',
         position: 'relative',
       }}
     >
       <div>{segments}</div>
-      <div
-        ref={contentRef}
-        style={{ overflowY: 'auto', flexGrow: 1, paddingBottom: '4rem', position: 'relative' }}
-      >
+      <div ref={contentRef} style={{ overflowY: 'auto', flexGrow: 1, paddingBottom: '4rem', position: 'relative' }}>
         {Object.entries(
           displayedAccount.reduce(
             (groups, account) => {
-              const type = account.type || ''
-              return { ...groups, [type]: [...(groups[type] || []), account] }
+              const groupKey =
+                props.groupBy === 'type' ? account.type || 'Other' : account.financialInstitution || 'Other'
+              return { ...groups, [groupKey]: [...(groups[groupKey] || []), account] }
             },
             {} as Record<string, Account[]>,
           ),
         ).map(([type, accounts]) => (
           <Fragment key={`account-group-${type}`}>
             <div style={{ marginBottom: '2rem' }}>
-              <div
-                style={{
-                  color: 'rgba(255, 255, 255, 0.5)',
-                  fontSize: '0.75rem',
-                  letterSpacing: '0.15em',
-                  textTransform: 'uppercase',
-                  marginBottom: '1.5rem',
-                  marginTop: '1rem',
-                  fontWeight: 600,
-                }}
-              >
-                {type}
-              </div>
+              {type !== 'Other' && (
+                <div
+                  style={{
+                    color: 'rgba(255, 255, 255, 0.5)',
+                    fontSize: '0.75rem',
+                    letterSpacing: '0.15em',
+                    textTransform: 'uppercase',
+                    marginBottom: '1.5rem',
+                    marginTop: '1rem',
+                    fontWeight: 600,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.75rem',
+                  }}
+                >
+                  <div style={{ fontSize: '0.85rem' }}>{type}</div>
+                  <div
+                    style={{
+                      opacity: 0.8,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '0.25rem',
+                      paddingLeft: '0.5rem',
+                      borderLeft: '2px solid rgba(255, 255, 255, 0.1)',
+                    }}
+                  >
+                    {(() => {
+                      if (!defaultCurrency || privacyMode) return null
+                      const now = new Date()
+                      const total = accounts.reduce((sum, account) => {
+                        const balances = accountBalances?.get(account.id)
+                        if (!balances) return sum
+                        return Array.from(balances.entries()).reduce((acc, [currencyId, amount]) => {
+                          if (currencyId === defaultCurrency.id) return acc + amount
+                          return acc + amount * exchangeRateOnDay(currencyId, defaultCurrency.id, now)
+                        }, sum)
+                      }, 0)
+                      if (total === 0) return null
+                      return <div style={{ fontSize: '0.8rem' }}>{formatFull(defaultCurrency, Math.round(total))}</div>
+                    })()}
+                  </div>
+                </div>
+              )}
               <div
                 style={{
                   display: showBalances ? 'grid' : 'flex',
                   gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))',
                   flexDirection: 'column',
                   gap: showBalances ? '1.5rem' : '0.25rem',
+                  marginTop: type === 'Other' ? '1rem' : 0,
                 }}
               >
                 {accounts.map((account) => (
@@ -325,8 +383,6 @@ export const AccountList = (props: Props) => {
             display: 'flex',
             alignItems: 'flex-start',
             justifyContent: 'center',
-            padding: '1rem',
-            zIndex: 1000,
             cursor: 'pointer',
           }}
           onClick={() => setShowSearch(false)}
