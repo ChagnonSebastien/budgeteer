@@ -52,7 +52,7 @@ const AccountsBalancePage: FC = () => {
       contentOverflowY="hidden"
       contentPadding="1rem 0 0 0"
     >
-      <div style={{ height: '100%', width: '100%' }} ref={setContentRef}>
+      <div style={{ height: '100%', width: '100%', maxWidth: '100vh', margin: 'auto' }} ref={setContentRef}>
         <div
           style={{
             height: `${contentHeight - optionsHeight}px`,

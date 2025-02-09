@@ -50,14 +50,12 @@ const TransactionPage: FC = () => {
 
   const [contentRef, setContentRef] = useState<HTMLDivElement | null>(null)
   const [contentWidth, setContentWidth] = useState(600)
-  const [contentHeight, setContentHeight] = useState(600)
   useEffect(() => {
     if (contentRef === null) return
     const ref = contentRef
 
     const callback = () => {
       setContentWidth(ref.clientWidth)
-      setContentHeight(ref.clientHeight)
     }
     callback()
 
