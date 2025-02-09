@@ -424,7 +424,7 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
         size="small"
         sx={{
           position: 'absolute',
-          top: '-2.2rem',
+          bottom: '0rem',
           right: '1rem',
           backgroundColor: '#8882',
           '&:hover': { backgroundColor: '#8883' },
