@@ -29,6 +29,7 @@ export enum PreparedIcon {
   BiSearch = 'BiSearch',
   MdVisibility = 'MdVisibility',
   MdVisibilityOff = 'MdVisibilityOff',
+  MdSettings = 'MdSettings',
 }
 
 type PreparedIconLib = {

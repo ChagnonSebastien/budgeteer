@@ -1,10 +1,105 @@
+.costs-analysis-container {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+}
+
+.costs-analysis-container:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
 table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
+  margin-top: 1rem;
 }
 
 table > * > tr > * {
-  padding: 0.5rem;
-  border: #888 solid 1px;
-  text-align: center;
+  padding: 0.75rem 1rem;
+  text-align: left;
+  border: none;
+  position: relative;
+}
+
+table > * > tr {
+  transition: background-color 0.2s ease;
+}
+
+table > * > tr:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.header-row {
+  background: rgba(255, 255, 255, 0.08);
+  font-weight: 600;
+  border-radius: 8px;
+}
+
+.header-row th {
+  padding: 1rem;
+  color: #90caf9;
+}
+
+.section-header {
+  background: rgba(255, 255, 255, 0.05);
+  font-weight: 600;
+  color: #90caf9;
+}
+
+.spacer-row {
+  height: 1.5rem !important;
+}
+
+.amount-cell {
+  font-family: 'Roboto Mono', monospace;
+  text-align: right;
+}
+
+.percentage-bar {
+  height: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+  margin-top: 0.5rem;
+  overflow: hidden;
+}
+
+.percentage-fill {
+  height: 100%;
+  background: #90caf9;
+  transition: width 0.3s ease;
+}
+
+.fixed-costs .percentage-fill {
+  background: #ff9800;
+}
+
+.variable-costs .percentage-fill {
+  background: #f44336;
+}
+
+.investments .percentage-fill {
+  background: #4caf50;
+}
+
+.input-field {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.category-picker {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.header-label {
+  text-align: center !important;
 }
