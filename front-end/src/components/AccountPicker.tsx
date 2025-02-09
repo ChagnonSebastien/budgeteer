@@ -62,6 +62,7 @@ const AccountPicker: FC<Props> = (props) => {
                 : undefined
             }
             selected={selected}
+            showZeroBalances={true}
           />
         </DialogContent>
         <DialogActions>

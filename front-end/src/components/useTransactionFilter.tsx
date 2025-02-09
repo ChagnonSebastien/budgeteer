@@ -352,6 +352,7 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
             accounts={accounts}
             filterable={{ filter, setFilter }}
             selected={accountFilter ?? undefined}
+            showZeroBalances={true}
             onMultiSelect={(accountIds) => {
               query.set('accounts', JSON.stringify(accountIds))
               navigate(`${location.pathname}?${query.toString()}`)
