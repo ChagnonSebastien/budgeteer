@@ -1,10 +1,12 @@
-import { Box, Button, Tab, Tabs } from '@mui/material'
+import { Button, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material'
 import { FC, useEffect, useState } from 'react'
+import '../styles/graphs.css'
 import { useLocation, useNavigate } from 'react-router-dom'
 
 import CategoryPicker from '../components/CategoryPicker'
 import ContentWithHeader from '../components/ContentWithHeader'
 import TrendsChart, { grouping } from '../components/TrendsChart'
+import './TrendsPage.css'
 
 const TrendsPage: FC = () => {
   const [optionsHeight, setOptionsHeight] = useState(240)
@@ -60,24 +62,23 @@ const TrendsPage: FC = () => {
       contentOverflowY="hidden"
       contentPadding="1rem 0 0 0"
     >
-      <div style={{ height: '100%', width: '100%' }} ref={setContentRef}>
+      <div className="graph-page" ref={setContentRef}>
         <div
+          className="graph-container"
           style={{
             height: `${contentHeight - optionsHeight}px`,
-            width: '100%',
-            position: 'relative',
-            padding: '1rem 0',
           }}
         >
           <TrendsChart categories={selectedCategories} grouping={grouping} years={years} />
         </div>
 
         <div
-          ref={(ref) => {
-            if (ref !== null) setOptionsHeight(ref.scrollHeight)
+          className="graph-controls"
+          ref={(element: HTMLDivElement | null) => {
+            if (element) setOptionsHeight(element.scrollHeight)
           }}
         >
-          <Box sx={{ padding: '1rem 2rem' }}>
+          <div className="graph-controls-group">
             <CategoryPicker
               selected={selectedCategories}
               onMultiSelect={(categories) => updateQuery({ categories })}
@@ -85,22 +86,55 @@ const TrendsPage: FC = () => {
               valueText={selectedCategories.length === 0 ? 'All Categories' : undefined}
             />
 
-            <div style={{ display: 'flex', padding: '.5rem', alignItems: 'center' }}>
-              <Button variant="outlined" disabled={years === 1} onClick={() => updateQuery({ years: years - 1 })}>
-                -1
-              </Button>
-              <div style={{ flexGrow: 1, textAlign: 'center' }}>{years} years</div>
-              <Button variant="outlined" onClick={() => updateQuery({ years: years + 1 })}>
-                +1
-              </Button>
-            </div>
-          </Box>
+            <div className="graph-time-controls">
+              <Typography className="graph-time-controls-label">Time Range</Typography>
 
-          <Tabs centered value={grouping} onChange={(_event, value) => updateQuery({ grouping: value as grouping })}>
-            <Tab label="Months" value="months" />
-            <Tab label="Quarters" value="quarters" />
-            <Tab label="Years" value="years" />
-          </Tabs>
+              <div className="graph-time-range graph-year-input">
+                <Button
+                  variant="outlined"
+                  size="small"
+                  onClick={() => years > 1 && updateQuery({ years: years - 1 })}
+                  disabled={years <= 1}
+                >
+                  -
+                </Button>
+                <div className="year-input-container">
+                  <span className="year-display">
+                    <input
+                      type="number"
+                      min="1"
+                      value={years}
+                      onChange={(e) => {
+                        const value = parseInt(e.target.value)
+                        if (value >= 1) {
+                          updateQuery({ years: value })
+                        }
+                      }}
+                      onFocus={(e) => e.target.select()}
+                      className="year-input"
+                    />
+                    <span className="year-text">{years === 1 ? 'Year' : 'Years'}</span>
+                  </span>
+                </div>
+                <Button variant="outlined" size="small" onClick={() => updateQuery({ years: years + 1 })}>
+                  +
+                </Button>
+              </div>
+
+              <div className="graph-time-range">
+                <ToggleButtonGroup
+                  value={grouping}
+                  exclusive
+                  onChange={(_event, value) => value && updateQuery({ grouping: value as grouping })}
+                  size="small"
+                >
+                  <ToggleButton value="months">Monthly</ToggleButton>
+                  <ToggleButton value="quarters">Quarterly</ToggleButton>
+                  <ToggleButton value="years">Yearly</ToggleButton>
+                </ToggleButtonGroup>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </ContentWithHeader>

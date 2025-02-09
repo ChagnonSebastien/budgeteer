@@ -139,7 +139,7 @@ export const TransactionList = (props: Props) => {
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'end',
-            margin: '1rem 1rem .5rem',
+            padding: '1rem 1rem .5rem',
           }}
         >
           <div

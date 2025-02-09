@@ -1,4 +1,3 @@
-import { Switch } from '@mui/material'
 import { ResponsiveSunburst } from '@nivo/sunburst'
 import { FC, useContext, useEffect, useMemo, useState } from 'react'
 
@@ -19,16 +18,17 @@ type LocalTree = {
 interface Props {
   augmentedTransactions: AugmentedTransaction[]
   rootCategory: AugmentedCategory
+  showIncomes: boolean
+  onShowIncomesChange: (show: boolean) => void
 }
 
 const TransactionsPieChart: FC<Props> = (props) => {
-  const { augmentedTransactions, rootCategory: root } = props
+  const { augmentedTransactions, rootCategory: root, showIncomes, onShowIncomesChange } = props
   const { state: categories, subCategories } = useContext(CategoryServiceContext)
   const { defaultCurrency } = useContext(CurrencyServiceContext)
   const { exchangeRateOnDay } = useContext(MixedAugmentation)
   const { privacyMode } = useContext(DrawerContext)
 
-  const [showIncomes, setShowIncomes] = useState(false)
   const [clickedCategory, setClickedCategory] = useState<Category | null>(null)
 
   const differences = useMemo(() => {
@@ -116,14 +116,14 @@ const TransactionsPieChart: FC<Props> = (props) => {
       typeof crunchedData.incomeTree === 'undefined' &&
       typeof crunchedData.expenseTree !== 'undefined'
     ) {
-      setShowIncomes(false)
+      onShowIncomesChange(false)
     }
     if (
       !showIncomes &&
       typeof crunchedData.incomeTree !== 'undefined' &&
       typeof crunchedData.expenseTree === 'undefined'
     ) {
-      setShowIncomes(true)
+      onShowIncomesChange(true)
     }
   }, [showIncomes, crunchedData.incomeTotal, crunchedData.expenseTotal])
 
@@ -235,34 +235,7 @@ const TransactionsPieChart: FC<Props> = (props) => {
     )
   }, [data, clickedCategory, privacyMode])
 
-  return (
-    <>
-      {typeof crunchedData.expenseTree === typeof crunchedData.incomeTree && (
-        <div
-          style={{
-            position: 'absolute',
-            right: '1rem',
-            top: '0',
-            display: 'flex',
-            alignItems: 'center',
-            zIndex: 1,
-          }}
-        >
-          <div>Expenses</div>
-          <Switch
-            checked={showIncomes}
-            onChange={(ev) => {
-              setClickedCategory(null)
-              setShowIncomes(ev.target.checked)
-            }}
-          />
-          <div>Incomes</div>
-        </div>
-      )}
-
-      {sunburst}
-    </>
-  )
+  return <>{sunburst}</>
 }
 
 export default TransactionsPieChart

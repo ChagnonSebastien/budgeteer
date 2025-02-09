@@ -45,7 +45,7 @@ const AccountsPage: FC = () => {
       rightButton={
         <>
           <IconButton onClick={(e) => setAnchorEl(e.currentTarget)}>
-            <IconLib.BiSearch size="1.5rem" />
+            <IconLib.MdSettings size="1.5rem" />
           </IconButton>
           <Menu anchorEl={anchorEl} open={open} onClose={() => setAnchorEl(null)}>
             <MenuItem

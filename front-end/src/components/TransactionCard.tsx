@@ -41,11 +41,11 @@ const TransactionCard: FC<Props> = (props) => {
   const fromMe = from?.isMine ?? false
   const toMe = to?.isMine ?? false
 
-  let background = '#80808020'
+  let gradientColors = ['rgba(128, 128, 128, 0.05)', 'rgba(128, 128, 128, 0.02)']
   if (fromMe && !toMe) {
-    background = '#F0808020'
+    gradientColors = ['rgba(240, 128, 128, 0.05)', 'rgba(240, 128, 128, 0.02)']
   } else if (!fromMe && toMe) {
-    background = '#80F08020'
+    gradientColors = ['rgba(128, 240, 128, 0.05)', 'rgba(128, 240, 128, 0.02)']
   }
 
   return (
@@ -54,13 +54,28 @@ const TransactionCard: FC<Props> = (props) => {
       style={{
         display: 'flex',
         flexDirection: 'row',
-        background,
-        borderRadius: '.3rem',
+        background: `linear-gradient(145deg, ${gradientColors[0]} 0%, ${gradientColors[1]} 100%)`,
+        borderRadius: '12px',
         fontSize: 'small',
         textWrap: 'nowrap',
         margin: '.3rem',
-        padding: '.3rem .5rem',
+        padding: '.5rem .75rem',
         alignItems: 'center',
+        border: '1px solid rgba(255, 255, 255, 0.08)',
+        backdropFilter: 'blur(10px)',
+        boxShadow: '0 2px 12px -4px rgba(0, 0, 0, 0.15)',
+        transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+        cursor: 'pointer',
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.transform = 'translateY(-1px) scale(1.005)'
+        e.currentTarget.style.boxShadow = '0 4px 16px -4px rgba(0, 0, 0, 0.2)'
+        e.currentTarget.style.border = '1px solid rgba(255, 255, 255, 0.12)'
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = 'translateY(0) scale(1)'
+        e.currentTarget.style.boxShadow = '0 2px 12px -4px rgba(0, 0, 0, 0.15)'
+        e.currentTarget.style.border = '1px solid rgba(255, 255, 255, 0.08)'
       }}
     >
       <div
@@ -92,13 +107,26 @@ const TransactionCard: FC<Props> = (props) => {
         }}
       >
         <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
-          <div style={{ fontWeight: 'bold' }}>
+          <div
+            style={{
+              fontWeight: '600',
+              letterSpacing: '0.01em',
+              fontSize: '0.95rem',
+            }}
+          >
             {formatFull(currency, amount, privacyMode)}
             {currency.id === receiverCurrency.id
               ? ``
               : ` -> ${formatFull(receiverCurrency, receiverAmount, privacyMode)}`}
           </div>
-          <div>{date.toDateString()}</div>
+          <div
+            style={{
+              color: 'rgba(255, 255, 255, 0.7)',
+              fontSize: '0.85rem',
+            }}
+          >
+            {date.toDateString()}
+          </div>
         </div>
         <div
           style={{
@@ -122,10 +150,12 @@ const TransactionCard: FC<Props> = (props) => {
                 overflow: 'hidden',
               }}
             >
-              From: {from?.name ?? '-'}
+              <span style={{ color: 'rgba(255, 255, 255, 0.6)' }}>From:</span>{' '}
+              <span style={{ fontWeight: '500' }}>{from?.name ?? '-'}</span>
             </div>
             <div style={{ textOverflow: 'ellipsis', whiteSpace: 'nowrap', overflow: 'hidden' }}>
-              To: {to?.name ?? '-'}
+              <span style={{ color: 'rgba(255, 255, 255, 0.6)' }}>To:</span>{' '}
+              <span style={{ fontWeight: '500' }}>{to?.name ?? '-'}</span>
             </div>
           </div>
 
@@ -133,7 +163,9 @@ const TransactionCard: FC<Props> = (props) => {
             style={{
               whiteSpace: 'wrap',
               textOverflow: 'ellipsis',
-              fontWeight: 'lighter',
+              fontWeight: '300',
+              color: 'rgba(255, 255, 255, 0.7)',
+              fontSize: '0.85rem',
               textWrap: 'wrap',
               textAlign: 'end',
             }}

@@ -1,9 +1,9 @@
-import { Fab, Tab, Tabs, TextField } from '@mui/material'
+import { Tab, Tabs } from '@mui/material'
 import { Dispatch, Fragment, SetStateAction, useContext, useEffect, useMemo, useRef, useState } from 'react'
 
 import { AccountCard } from './AccountCard'
-import { IconToolsContext } from './IconTools'
 import { DrawerContext } from './Menu'
+import { SearchOverlay } from './SearchOverlay'
 import Account from '../domain/model/account'
 import { formatFull } from '../domain/model/currency'
 import MixedAugmentation from '../service/MixedAugmentation'
@@ -30,10 +30,7 @@ export const AccountList = (props: Props) => {
   const { augmentedTransactions: transactions, accountBalances, exchangeRateOnDay } = useContext(MixedAugmentation)
   const currencyContext = useContext(CurrencyServiceContext)
   const defaultCurrency = currencyContext.defaultCurrency
-  const { IconLib } = useContext(IconToolsContext)
   const { privacyMode } = useContext(DrawerContext)
-  const [showSearch, setShowSearch] = useState(false)
-
   const [activeTab, setActiveTab] = useState<tabs>('mine')
   const myOwnAccounts = useMemo(() => accounts.filter((account) => account.isMine), [accounts])
   const otherAccounts = useMemo(() => accounts.filter((account) => !account.isMine), [accounts])
@@ -218,16 +215,6 @@ export const AccountList = (props: Props) => {
     )
   }, [myOwnAccounts, otherAccounts, activeTab, myOwnFilteredAccounts, otherFilteredAccounts, filterable?.filter])
 
-  useEffect(() => {
-    const handleEscape = (ev: KeyboardEvent) => {
-      if ((ev.key === 'Escape' || ev.key === 'Enter') && showSearch) {
-        setShowSearch(false)
-      }
-    }
-    document.addEventListener('keydown', handleEscape)
-    return () => document.removeEventListener('keydown', handleEscape)
-  }, [showSearch])
-
   const contentRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -340,6 +327,7 @@ export const AccountList = (props: Props) => {
                   flexDirection: 'column',
                   gap: showBalances ? '1.5rem' : '0.25rem',
                   marginTop: type === 'Other' ? '1rem' : 0,
+                  padding: showBalances ? '0.25rem' : 0,
                 }}
               >
                 {accounts.map((account) => (
@@ -357,71 +345,8 @@ export const AccountList = (props: Props) => {
           </Fragment>
         ))}
       </div>
-      {filterable && !showSearch && (
-        <Fab
-          color="primary"
-          size="medium"
-          style={{
-            position: 'absolute',
-            bottom: '1rem',
-            right: '2rem',
-            zIndex: 1000,
-          }}
-          onClick={() => setShowSearch(true)}
-        >
-          <IconLib.BiSearch style={{ fontSize: '1.5rem' }} />
-        </Fab>
-      )}
-      {filterable && showSearch && (
-        <div
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.8)',
-            display: 'flex',
-            alignItems: 'flex-start',
-            justifyContent: 'center',
-            cursor: 'pointer',
-          }}
-          onClick={() => setShowSearch(false)}
-        >
-          <div
-            style={{
-              width: '100%',
-              maxWidth: '600px',
-              backgroundColor: '#424242',
-              borderRadius: '8px',
-              padding: '1rem',
-              cursor: 'default',
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <TextField
-              autoFocus
-              fullWidth
-              size="medium"
-              placeholder="Search accounts..."
-              value={filterable.filter}
-              onChange={(ev) => filterable.setFilter(ev.target.value)}
-              slotProps={{
-                input: {
-                  endAdornment: (
-                    <IconLib.IoCloseCircle
-                      style={{ cursor: 'pointer', opacity: 0.7 }}
-                      onClick={() => {
-                        filterable.setFilter('')
-                        setShowSearch(false)
-                      }}
-                    />
-                  ),
-                },
-              }}
-            />
-          </div>
-        </div>
+      {filterable && (
+        <SearchOverlay filter={filterable.filter} setFilter={filterable.setFilter} placeholder="Search accounts..." />
       )}
     </div>
   )

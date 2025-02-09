@@ -1,5 +1,5 @@
-import { Button, CircularProgress, IconButton, ListItemButton } from '@mui/material'
-import { ElementType, Fragment, useContext, useState } from 'react'
+import { Button, CircularProgress } from '@mui/material'
+import { Fragment, useContext, useState } from 'react'
 
 import IconCapsule from './IconCapsule'
 import { IconToolsContext } from './IconTools'
@@ -29,27 +29,18 @@ export const CategoryList = (props: Props) => {
     return <CircularProgress />
   }
 
-  const ListItem: ElementType = buttonText ? 'div' : ListItemButton
-
   const renderCategory = (category: Category, onSelect: (value: number) => void, depth: number): JSX.Element => {
     return (
       <Fragment key={`category-list-id-${category.id}`}>
-        <ListItem
-          style={{
-            paddingLeft: `${Math.max(depth - (typeof subCategories[category.id] !== 'undefined' ? 1 : 0), 0) * 2 + 1}rem`,
-            paddingTop: '.3rem',
-            paddingBottom: '.3rem',
-          }}
-          onMouseEnter={() => {
-            setHoveringOver(category.id)
-          }}
-          onTouchStart={() => {
-            setHoveringOver(category.id)
-          }}
+        <div
+          className={`category-list-item ${selected.includes(category.id) ? 'selected' : ''}`}
+          onMouseEnter={() => setHoveringOver(category.id)}
+          onTouchStart={() => setHoveringOver(category.id)}
         >
-          <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
-            {depth > 0 && typeof subCategories[category.id] !== 'undefined' && (
+          <div className="category-content">
+            {typeof subCategories[category.id] !== 'undefined' ? (
               <div
+                className="expand-button"
                 onClick={() => {
                   if (!open.includes(category.id)) {
                     setOpen((prev) => [...prev, category.id])
@@ -57,21 +48,14 @@ export const CategoryList = (props: Props) => {
                     setOpen((prev) => prev.filter((c) => c !== category.id))
                   }
                 }}
-                style={{ paddingRight: '0.25rem' }}
               >
-                <IconButton size="small">
-                  <IconLib.MdArrowForwardIos className={`rotatable ${open.includes(category.id) ? 'open' : ''}`} />
-                </IconButton>
+                <IconLib.MdArrowForwardIos className={`rotatable ${open.includes(category.id) ? 'open' : ''}`} />
               </div>
+            ) : (
+              <div className="expand-button" /> /* Placeholder for alignment */
             )}
             <div
-              style={{
-                flexGrow: 1,
-                display: 'flex',
-                alignItems: 'center',
-                backgroundColor: selected.includes(category.id) ? 'rgba(0, 0, 0, 0.04)' : undefined,
-                cursor: category.id === root.id ? 'default' : 'pointer',
-              }}
+              className="category-main"
               onClick={() => {
                 if (typeof buttonText !== 'undefined' || category.id === root.id) return
                 if (onMultiSelect) {
@@ -83,15 +67,9 @@ export const CategoryList = (props: Props) => {
                   onSelect(category.id)
                 }
               }}
+              style={{ cursor: category.id === root.id ? 'default' : 'pointer' }}
             >
-              <div style={{ display: 'flex', alignItems: 'center' }}>
-                {onMultiSelect &&
-                  category.id !== root.id &&
-                  (selected.includes(category.id) ? (
-                    <IconLib.FaRegSquareCheck size="1.25rem" style={{ marginRight: '0.5rem', opacity: 0.8 }} />
-                  ) : (
-                    <IconLib.FaRegSquare size="1.25rem" style={{ marginRight: '0.5rem', opacity: 0.5 }} />
-                  ))}
+              <div className="category-icon-container">
                 <IconCapsule
                   iconName={category.iconName}
                   size={'2rem'}
@@ -99,23 +77,43 @@ export const CategoryList = (props: Props) => {
                   backgroundColor={category.iconBackground}
                 />
               </div>
-              <div style={{ width: '1rem' }} />
-              <div>{category.name}</div>
-              <div style={{ flexGrow: 1 }} />
+              <div className="category-name">{category.name}</div>
+              {hoveringOver === category.id && typeof buttonText !== 'undefined' && (
+                <Button
+                  variant="contained"
+                  size="small"
+                  onClick={() => onSelect(category.id)}
+                  className="category-edit-button"
+                >
+                  {buttonText}
+                </Button>
+              )}
             </div>
-            {hoveringOver === category.id && typeof buttonText !== 'undefined' && (
-              <Button variant="contained" size="small" onClick={() => onSelect(category.id)}>
-                {buttonText}
-              </Button>
-            )}
           </div>
-        </ListItem>
+        </div>
         <div className={`collapsible ${open.includes(category.id) ? 'open' : ''}`}>
-          {subCategories[category.id]?.map((item) => renderCategory(item, onSelect, depth + 1))}
+          <div className="nested-category">
+            {subCategories[category.id]?.map((item) => renderCategory(item, onSelect, depth + 1))}
+          </div>
         </div>
       </Fragment>
     )
   }
 
-  return renderCategory(root, onSelect ?? doNothing, 0)
+  return (
+    <div
+      style={{
+        minWidth: '20rem',
+        maxWidth: '100%',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        position: 'relative',
+      }}
+    >
+      <div style={{ overflowY: 'auto', flexGrow: 1, paddingBottom: '4rem', position: 'relative' }}>
+        {renderCategory(root, onSelect ?? doNothing, 0)}
+      </div>
+    </div>
+  )
 }

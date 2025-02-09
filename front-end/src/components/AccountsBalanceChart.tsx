@@ -1,4 +1,3 @@
-import { Card } from '@mui/material'
 import { ResponsiveStream } from '@nivo/stream'
 import {
   differenceInDays,
@@ -295,17 +294,20 @@ const AccountsBalanceChart: FC<Props> = (props) => {
           data={data}
           keys={[...groups.keys()].sort((a, b) => a.localeCompare(b))}
           valueFormat={(value) => `${formatFull(defaultCurrency, value, privacyMode)}`}
-          margin={{ top: 10, right: 50, bottom: 70, left: 60 }}
+          margin={{ top: 20, right: 60, bottom: 80, left: 70 }}
           axisBottom={{
             format: (i) =>
               (data.length - i - 1) % showLabelEveryFactor === 0
                 ? labels[i] && formatDate(labels[i], 'MMM d, yyyy')
                 : '',
             tickRotation: -45,
+            tickSize: 8,
+            tickPadding: 5,
           }}
           enableGridY={!privacyMode}
           axisLeft={{
-            tickSize: privacyMode ? 0 : 5,
+            tickSize: privacyMode ? 0 : 8,
+            tickPadding: 5,
             format: (i) => {
               if (spread) {
                 return `${i * 100}%`
@@ -320,39 +322,53 @@ const AccountsBalanceChart: FC<Props> = (props) => {
           curve="monotoneX"
           offsetType={spread ? 'expand' : 'none'}
           order="reverse"
-          theme={darkTheme}
+          theme={{
+            ...darkTheme,
+            axis: {
+              ...darkTheme.axis,
+              ticks: {
+                ...darkTheme.axis?.ticks,
+                text: {
+                  ...darkTheme.axis?.ticks?.text,
+                  fontSize: 12,
+                  fill: 'rgba(255, 255, 255, 0.7)',
+                },
+              },
+            },
+            grid: {
+              ...darkTheme.grid,
+              line: {
+                ...darkTheme.grid?.line,
+                stroke: 'rgba(255, 255, 255, 0.1)',
+                strokeWidth: 1,
+              },
+            },
+            background: 'transparent',
+          }}
           colors={darkColors}
           borderColor={{ theme: 'background' }}
           stackTooltip={(tooltipProps) => (
-            <Card style={{ padding: '0.5rem' }}>
-              <div>{formatDate(labels[tooltipProps.slice.index], 'MMM d, yyyy')}</div>
+            <div className="graph-tooltip">
+              <div className="graph-tooltip-date">{formatDate(labels[tooltipProps.slice.index], 'MMM d, yyyy')}</div>
               {tooltipProps.slice.stack
                 .filter((s) => s.value !== 0)
                 .map((s) => (
                   <div
                     key={`line-chart-overlay-${labels[tooltipProps.slice.index] && formatDate(labels[tooltipProps.slice.index], 'MMM d, yyyy')}-${s.layerLabel}`}
-                    style={{ display: 'flex', alignItems: 'center' }}
+                    className="graph-tooltip-row"
                   >
-                    <div
-                      style={{
-                        width: '1rem',
-                        height: '1rem',
-                        backgroundColor: s.color,
-                        borderRadius: '.25rem',
-                        marginRight: '.25rem',
-                      }}
-                    />
-                    <div>{s.layerLabel}</div>
+                    <div className="graph-tooltip-color" style={{ backgroundColor: s.color }} />
+                    <div className="graph-tooltip-label">{s.layerLabel}</div>
                     {!privacyMode && (
                       <>
                         <div>:</div>
                         <div style={{ minWidth: '1rem', flexGrow: 1 }} />
-                        <div>{s.formattedValue}</div>
+                        <div className="graph-tooltip-value">{s.formattedValue}</div>
                       </>
                     )}
                   </div>
                 ))}
-            </Card>
+            </div>
           )}
           animate={false}
         />

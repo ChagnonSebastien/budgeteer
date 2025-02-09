@@ -1,5 +1,6 @@
-import { Box, MenuItem, TextField } from '@mui/material'
-import { FC, useEffect, useState } from 'react'
+import { alpha, Box, MenuItem, TextField, Typography } from '@mui/material'
+import '../styles/graphs.css'
+import { FC, Suspense, useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 
 import AccountsBalanceChart, { GroupType } from '../components/AccountsBalanceChart'
@@ -52,48 +53,66 @@ const AccountsBalancePage: FC = () => {
       contentOverflowY="hidden"
       contentPadding="1rem 0 0 0"
     >
-      <div style={{ height: '100%', width: '100%', maxWidth: '100vh', margin: 'auto' }} ref={setContentRef}>
+      <div className="graph-page" ref={setContentRef}>
         <div
+          className="graph-container"
           style={{
             height: `${contentHeight - optionsHeight}px`,
-            width: '100%',
-            position: 'relative',
-            padding: '1rem 0',
           }}
         >
-          <AccountsBalanceChart
-            fromDate={fromDate}
-            toDate={toDate}
-            filterByAccounts={accountFilter === null ? undefined : accountFilter}
-            groupBy={groupBy}
-            splitInvestements={splitInvestments}
-            spread={scale === 'relative'}
-          />
+          <Suspense
+            fallback={
+              <Box
+                sx={{
+                  height: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Typography variant="body1" color="text.secondary">
+                  Loading chart data...
+                </Typography>
+              </Box>
+            }
+          >
+            <AccountsBalanceChart
+              fromDate={fromDate}
+              toDate={toDate}
+              filterByAccounts={accountFilter === null ? undefined : accountFilter}
+              groupBy={groupBy}
+              splitInvestements={splitInvestments}
+              spread={scale === 'relative'}
+            />
+          </Suspense>
         </div>
 
         <div
-          ref={(ref) => {
-            if (ref !== null) setOptionsHeight(ref.scrollHeight)
+          className="graph-controls"
+          ref={(element: HTMLDivElement | null) => {
+            if (element) setOptionsHeight(element.scrollHeight)
           }}
         >
-          <Box sx={{ padding: '0 1rem', paddingBottom: '.5rem' }}>
-            {filterOverview}
-
-            <Box height="1rem" />
+          <div className="graph-controls-group">
+            <Box sx={{ mb: 2 }}>{filterOverview}</Box>
 
             <Box
               sx={{
-                backgroundColor: '#8882',
-                padding: '.5rem',
-                borderRadius: '.5rem',
-                display: 'flex',
-                flexWrap: 'wrap',
-                gap: '.75rem',
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                gap: 2,
+                width: '100%',
               }}
             >
-              <div style={{ minWidth: '140px', flex: 1 }}>
+              <Box>
                 <TextField
+                  className="graph-select-field"
                   label="Group by"
+                  sx={{
+                    '& .MuiInput-underline:before': {
+                      borderBottomColor: (theme) => alpha(theme.palette.primary.main, 0.1),
+                    },
+                  }}
                   select
                   value={groupBy}
                   onChange={(event) => {
@@ -108,10 +127,17 @@ const AccountsBalancePage: FC = () => {
                   <MenuItem value="financialInstitution">Financial Institution</MenuItem>
                   <MenuItem value="type">Type</MenuItem>
                 </TextField>
-              </div>
-              <div style={{ minWidth: '140px', flex: 1 }}>
+              </Box>
+              <Box>
                 <TextField
+                  className="select-field"
                   label="Interests View"
+                  sx={{
+                    width: '100%',
+                    '& .MuiInput-underline:before': {
+                      borderBottomColor: (theme) => alpha(theme.palette.primary.main, 0.1),
+                    },
+                  }}
                   select
                   value={splitInvestments}
                   onChange={(event) => {
@@ -120,17 +146,22 @@ const AccountsBalancePage: FC = () => {
                   }}
                   variant="standard"
                   fullWidth
-                  sx={{ width: '100%' }}
                 >
                   <MenuItem value="both">Merge</MenuItem>
                   <MenuItem value="split">Split Interests</MenuItem>
                   <MenuItem value="bookValue">Only Book Value</MenuItem>
                   <MenuItem value="interests">Only Interests</MenuItem>
                 </TextField>
-              </div>
-              <div style={{ minWidth: '140px', flex: 1 }}>
+              </Box>
+              <Box>
                 <TextField
+                  className="select-field"
                   label="Scale"
+                  sx={{
+                    '& .MuiInput-underline:before': {
+                      borderBottomColor: (theme) => alpha(theme.palette.primary.main, 0.1),
+                    },
+                  }}
                   select
                   value={scale}
                   onChange={(event) => {
@@ -143,9 +174,9 @@ const AccountsBalancePage: FC = () => {
                   <MenuItem value="absolute">Absolute</MenuItem>
                   <MenuItem value="relative">Relative (%)</MenuItem>
                 </TextField>
-              </div>
+              </Box>
             </Box>
-          </Box>
+          </div>
         </div>
       </div>
     </ContentWithHeader>

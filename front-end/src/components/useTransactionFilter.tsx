@@ -7,7 +7,6 @@ import { useLocation, useNavigate } from 'react-router-dom'
 
 import { AccountList } from './AccountList'
 import { CategoryList } from './CategoryList'
-import ContentWithHeader from './ContentWithHeader'
 import Account from '../domain/model/account'
 import { AccountServiceContext, CategoryServiceContext, TransactionServiceContext } from '../service/ServiceContext'
 import TimeRange from '../slider/TimeRange'
@@ -341,7 +340,8 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
       </Dialog>
 
       <Dialog fullScreen={fullScreen} open={showCategoryModal} onClose={() => setShowCategoryModal(false)}>
-        <ContentWithHeader title="Filter by category" button="none" onCancel={() => setShowCategoryModal(false)}>
+        <DialogTitle>Filter by category</DialogTitle>
+        <DialogContent style={{ height: '70vh', overflow: 'hidden', padding: '0 20px' }}>
           <CategoryList
             categories={categories}
             selected={categoryFilter ?? undefined}
@@ -354,7 +354,10 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
               navigate(`${location.pathname}?${query.toString()}`)
             }}
           />
-        </ContentWithHeader>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowCategoryModal(false)}>Close</Button>
+        </DialogActions>
       </Dialog>
 
       <Dialog fullScreen={fullScreen} open={showAccountModal} onClose={() => setShowAccountModal(false)}>

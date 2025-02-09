@@ -1,4 +1,4 @@
-import { IconButton, Stack } from '@mui/material'
+import { IconButton } from '@mui/material'
 import { differenceInYears, startOfDay } from 'date-fns'
 import { FC, useContext, useEffect, useMemo, useState } from 'react'
 
@@ -190,144 +190,142 @@ const CostsAnalysisPage: FC = () => {
         </IconButton>
       }
     >
-      <Stack spacing="1rem" style={{ padding: '1rem' }}>
-        <div className="costs-analysis-container">
-          <CostsAnalysisSetup
-            open={showSetup || showOptions}
-            grossIncome={grossIncome}
-            setGrossIncome={(value) => {
-              setGrossIncome(value)
-              userStore.upsertGrossIncome(value)
-            }}
-            incomeCategory={incomeCategory}
-            setIncomeCategory={(value) => {
-              setIncomeCategory(value)
-              userStore.upsertIncomeCategoryId(value)
-            }}
-            onComplete={() => {
-              setShowSetup(false)
-              setShowOptions(false)
-            }}
-          />
+      <div style={{ padding: '1rem' }}>
+        <CostsAnalysisSetup
+          open={showSetup || showOptions}
+          grossIncome={grossIncome}
+          setGrossIncome={(value) => {
+            setGrossIncome(value)
+            userStore.upsertGrossIncome(value)
+          }}
+          incomeCategory={incomeCategory}
+          setIncomeCategory={(value) => {
+            setIncomeCategory(value)
+            userStore.upsertIncomeCategoryId(value)
+          }}
+          onComplete={() => {
+            setShowSetup(false)
+            setShowOptions(false)
+          }}
+        />
 
-          <table>
-            <tbody>
-              {!privacyMode && (
+        <table>
+          <tbody>
+            {!privacyMode && (
+              <>
+                <tr className="header-row">
+                  <th />
+                  <th className="header-label">Yearly</th>
+                  <th className="header-label">Monthly</th>
+                </tr>
+                <tr>
+                  <td>Gross Income</td>
+                  <td className="amount-cell">
+                    {formatFull(
+                      defaultCurrency,
+                      grossIncome * Math.pow(10, defaultCurrency.decimalPoints),
+                      privacyMode,
+                    )}
+                  </td>
+                  <td className="amount-cell">
+                    {formatFull(
+                      defaultCurrency,
+                      (grossIncome * Math.pow(10, defaultCurrency.decimalPoints)) / 12,
+                      privacyMode,
+                    )}
+                  </td>
+                </tr>
+                <tr>
+                  <td>Net Income</td>
+                  <td className="amount-cell">{formatFull(defaultCurrency, income, privacyMode)}</td>
+                  <td className="amount-cell">{formatFull(defaultCurrency, income / 12, privacyMode)}</td>
+                </tr>
+              </>
+            )}
+            <tr style={{ height: '1rem' }} />
+            <tr className="section-header fixed-costs">
+              <th>Fixed Costs</th>
+              {privacyMode ? (
                 <>
-                  <tr className="header-row">
-                    <th />
-                    <th className="header-label">Yearly</th>
-                    <th className="header-label">Monthly</th>
-                  </tr>
-                  <tr>
-                    <td>Gross Income</td>
-                    <td className="amount-cell">
-                      {formatFull(
-                        defaultCurrency,
-                        grossIncome * Math.pow(10, defaultCurrency.decimalPoints),
-                        privacyMode,
-                      )}
-                    </td>
-                    <td className="amount-cell">
-                      {formatFull(
-                        defaultCurrency,
-                        (grossIncome * Math.pow(10, defaultCurrency.decimalPoints)) / 12,
-                        privacyMode,
-                      )}
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>Net Income</td>
-                    <td className="amount-cell">{formatFull(defaultCurrency, income, privacyMode)}</td>
-                    <td className="amount-cell">{formatFull(defaultCurrency, income / 12, privacyMode)}</td>
-                  </tr>
+                  <th className="header-label">Yearly</th>
+                  <th className="header-label">Monthly</th>
                 </>
+              ) : (
+                <th colSpan={2}>
+                  {!privacyMode && `${privacyMode ? 'XX' : percentages[0]}%`}
+                  <div className="percentage-bar">
+                    <div className="percentage-fill" style={{ width: `${percentages[0]}%` }} />
+                  </div>
+                </th>
               )}
-              <tr style={{ height: '1rem' }} />
-              <tr className="section-header fixed-costs">
-                <th>Fixed Costs</th>
-                {privacyMode ? (
-                  <>
-                    <th className="header-label">Yearly</th>
-                    <th className="header-label">Monthly</th>
-                  </>
-                ) : (
+            </tr>
+            <tr className="section-header">
+              <th>Totals</th>
+              <td className="amount-cell">{formatFull(defaultCurrency, fixedAmount)}</td>
+              <td className="amount-cell">{formatFull(defaultCurrency, fixedAmount / 12)}</td>
+            </tr>
+            {[...fixedCosts.entries()].map((entry) => (
+              <tr key={`fixed-${entry[0]}`}>
+                <td>{entry[0]}</td>
+                <td className="amount-cell">{formatFull(defaultCurrency, entry[1])}</td>
+                <td className="amount-cell">{formatFull(defaultCurrency, entry[1] / 12)}</td>
+              </tr>
+            ))}
+            <tr style={{ height: '1rem' }} />
+            <tr className="section-header variable-costs">
+              <th>Variable Costs</th>
+              {privacyMode ? (
+                <>
+                  <th className="header-label">Yearly</th>
+                  <th className="header-label">Monthly</th>
+                </>
+              ) : (
+                <th colSpan={2}>
+                  {!privacyMode && `${privacyMode ? 'XX' : percentages[1]}%`}
+                  <div className="percentage-bar">
+                    <div className="percentage-fill" style={{ width: `${percentages[1]}%` }} />
+                  </div>
+                </th>
+              )}
+            </tr>
+            <tr className="section-header">
+              <th>Totals</th>
+              <td className="amount-cell">{formatFull(defaultCurrency, variableAmount)}</td>
+              <td className="amount-cell">{formatFull(defaultCurrency, variableAmount / 12)}</td>
+            </tr>
+            {[...variableCosts.entries()].map((entry) => (
+              <tr key={`variable-${entry[0]}`}>
+                <td>{entry[0]}</td>
+                <td className="amount-cell">{formatFull(defaultCurrency, entry[1])}</td>
+                <td className="amount-cell">{formatFull(defaultCurrency, entry[1] / 12)}</td>
+              </tr>
+            ))}
+            {!privacyMode && (
+              <>
+                <tr style={{ height: '1rem' }} />
+                <tr className="section-header investments">
+                  <th>Investments</th>
                   <th colSpan={2}>
-                    {!privacyMode && `${privacyMode ? 'XX' : percentages[0]}%`}
+                    {privacyMode ? 'XX' : percentages[2]}%
                     <div className="percentage-bar">
-                      <div className="percentage-fill" style={{ width: `${percentages[0]}%` }} />
+                      <div className="percentage-fill" style={{ width: `${percentages[2]}%` }} />
                     </div>
                   </th>
-                )}
-              </tr>
-              <tr className="section-header">
-                <th>Totals</th>
-                <td className="amount-cell">{formatFull(defaultCurrency, fixedAmount)}</td>
-                <td className="amount-cell">{formatFull(defaultCurrency, fixedAmount / 12)}</td>
-              </tr>
-              {[...fixedCosts.entries()].map((entry) => (
-                <tr key={`fixed-${entry[0]}`}>
-                  <td>{entry[0]}</td>
-                  <td className="amount-cell">{formatFull(defaultCurrency, entry[1])}</td>
-                  <td className="amount-cell">{formatFull(defaultCurrency, entry[1] / 12)}</td>
                 </tr>
-              ))}
-              <tr style={{ height: '1rem' }} />
-              <tr className="section-header variable-costs">
-                <th>Variable Costs</th>
-                {privacyMode ? (
-                  <>
-                    <th className="header-label">Yearly</th>
-                    <th className="header-label">Monthly</th>
-                  </>
-                ) : (
-                  <th colSpan={2}>
-                    {!privacyMode && `${privacyMode ? 'XX' : percentages[1]}%`}
-                    <div className="percentage-bar">
-                      <div className="percentage-fill" style={{ width: `${percentages[1]}%` }} />
-                    </div>
-                  </th>
-                )}
-              </tr>
-              <tr className="section-header">
-                <th>Totals</th>
-                <td className="amount-cell">{formatFull(defaultCurrency, variableAmount)}</td>
-                <td className="amount-cell">{formatFull(defaultCurrency, variableAmount / 12)}</td>
-              </tr>
-              {[...variableCosts.entries()].map((entry) => (
-                <tr key={`variable-${entry[0]}`}>
-                  <td>{entry[0]}</td>
-                  <td className="amount-cell">{formatFull(defaultCurrency, entry[1])}</td>
-                  <td className="amount-cell">{formatFull(defaultCurrency, entry[1] / 12)}</td>
+                <tr>
+                  <td>All</td>
+                  <td className="amount-cell">
+                    {formatFull(defaultCurrency, income - variableAmount - fixedAmount, privacyMode)}
+                  </td>
+                  <td className="amount-cell">
+                    {formatFull(defaultCurrency, (income - variableAmount - fixedAmount) / 12, privacyMode)}
+                  </td>
                 </tr>
-              ))}
-              {!privacyMode && (
-                <>
-                  <tr style={{ height: '1rem' }} />
-                  <tr className="section-header investments">
-                    <th>Investments</th>
-                    <th colSpan={2}>
-                      {privacyMode ? 'XX' : percentages[2]}%
-                      <div className="percentage-bar">
-                        <div className="percentage-fill" style={{ width: `${percentages[2]}%` }} />
-                      </div>
-                    </th>
-                  </tr>
-                  <tr>
-                    <td>All</td>
-                    <td className="amount-cell">
-                      {formatFull(defaultCurrency, income - variableAmount - fixedAmount, privacyMode)}
-                    </td>
-                    <td className="amount-cell">
-                      {formatFull(defaultCurrency, (income - variableAmount - fixedAmount) / 12, privacyMode)}
-                    </td>
-                  </tr>
-                </>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </Stack>
+              </>
+            )}
+          </tbody>
+        </table>
+      </div>
     </ContentWithHeader>
   )
 }

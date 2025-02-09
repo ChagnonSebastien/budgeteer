@@ -1,4 +1,15 @@
-import { Box, Checkbox, IconButton, Menu, MenuItem, SpeedDial, SpeedDialAction, SpeedDialIcon } from '@mui/material'
+import {
+  Box,
+  Checkbox,
+  IconButton,
+  Menu,
+  MenuItem,
+  SpeedDial,
+  SpeedDialAction,
+  SpeedDialIcon,
+  ToggleButton,
+  ToggleButtonGroup,
+} from '@mui/material'
 import { isAfter, isBefore, isSameDay } from 'date-fns'
 import { FC, useContext, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
@@ -24,6 +35,7 @@ const TransactionPage: FC = () => {
   const [graphType, setGraphType] = useState<'line' | 'pie'>((searchParams.get('chart') as 'line' | 'pie') || 'line')
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
   const hideFinancialIncome = searchParams.get('hideFinancialIncome') === 'true'
+  const showIncomes = searchParams.get('showIncomes') === 'true'
   const open = Boolean(anchorEl)
   const { fromDate, toDate, accountFilter, categoryFilter, overview: filterOverview } = useTransactionFilter()
 
@@ -76,6 +88,7 @@ const TransactionPage: FC = () => {
         display: 'flex',
         flexDirection: 'column',
         margin: 'auto',
+        paddingBottom: '1rem',
       }}
     >
       <div style={{ height: `60vh`, position: 'relative' }}>
@@ -94,6 +107,13 @@ const TransactionPage: FC = () => {
                 : rootCategory
             }
             augmentedTransactions={filteredTransaction}
+            showIncomes={showIncomes}
+            onShowIncomesChange={(show) => {
+              setSearchParams({
+                ...Object.fromEntries(searchParams),
+                showIncomes: show.toString(),
+              })
+            }}
           />
         )}
       </div>
@@ -105,18 +125,25 @@ const TransactionPage: FC = () => {
   const listSection = (
     <div
       style={{
-        padding: '0 1rem',
-        width: 'calc(min(35rem, 100vw))',
-        margin: 'auto',
+        width: '100%',
+        background: 'rgba(255, 255, 255, 0.02)',
       }}
     >
-      <TransactionList
-        transactions={filteredTransaction}
-        onClick={(transactionId) => {
-          navigate(`/transactions/edit/${transactionId}`)
+      <div
+        style={{
+          padding: '0 1rem',
+          width: 'calc(min(35rem, 100vw))',
+          margin: 'auto',
         }}
-        viewAsAccounts={accountFilter === null ? undefined : accountFilter}
-      />
+      >
+        <TransactionList
+          transactions={filteredTransaction}
+          onClick={(transactionId) => {
+            navigate(`/transactions/edit/${transactionId}`)
+          }}
+          viewAsAccounts={accountFilter === null ? undefined : accountFilter}
+        />
+      </div>
     </div>
   )
 
@@ -146,28 +173,50 @@ const TransactionPage: FC = () => {
             </IconButton>
           )}
           <IconButton onClick={(e) => setAnchorEl(e.currentTarget)}>
-            <IconLib.BiSearch size="1.5rem" />
+            <IconLib.MdSettings size="1.5rem" />
           </IconButton>
           <Menu anchorEl={anchorEl} open={open} onClose={() => setAnchorEl(null)}>
-            <MenuItem
-              onClick={() => {
-                setSearchParams({
-                  ...Object.fromEntries(searchParams),
-                  hideFinancialIncome: (!hideFinancialIncome).toString(),
-                })
-                setAnchorEl(null)
-              }}
-              sx={{ gap: 1 }}
-            >
-              <Checkbox checked={hideFinancialIncome} size="small" />
-              Hide Financial Income
-            </MenuItem>
+            {graphType === 'line' && (
+              <MenuItem
+                onClick={() => {
+                  setSearchParams({
+                    ...Object.fromEntries(searchParams),
+                    hideFinancialIncome: (!hideFinancialIncome).toString(),
+                  })
+                  setAnchorEl(null)
+                }}
+                sx={{ gap: 1 }}
+              >
+                <Checkbox checked={hideFinancialIncome} size="small" />
+                Hide Financial Income
+              </MenuItem>
+            )}
+            {graphType === 'pie' && (
+              <MenuItem>
+                <ToggleButtonGroup
+                  value={showIncomes ? 'income' : 'expense'}
+                  exclusive
+                  onChange={(_event, value) => {
+                    if (value) {
+                      setSearchParams({
+                        ...Object.fromEntries(searchParams),
+                        showIncomes: (value === 'income').toString(),
+                      })
+                    }
+                  }}
+                  size="small"
+                >
+                  <ToggleButton value="expense">Expenses</ToggleButton>
+                  <ToggleButton value="income">Income</ToggleButton>
+                </ToggleButtonGroup>
+              </MenuItem>
+            )}
           </Menu>
         </>
       }
       contentMaxWidth="100%"
       contentOverflowY="hidden"
-      contentPadding="1rem 0 0 0"
+      contentPadding="0"
       setContentRef={setContentRef}
     >
       <SpeedDial

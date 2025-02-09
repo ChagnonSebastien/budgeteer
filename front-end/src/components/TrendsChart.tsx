@@ -1,4 +1,4 @@
-import { Card } from '@mui/material'
+import { useTheme } from '@mui/material'
 import { ResponsiveBar } from '@nivo/bar'
 import {
   addMonths,
@@ -35,6 +35,7 @@ const TrendsChart: FC<Props> = (props) => {
   const { augmentedTransactions, exchangeRateOnDay } = useContext(MixedAugmentation)
   const { root } = useContext(CategoryServiceContext)
   const { privacyMode } = useContext(DrawerContext)
+  const theme = useTheme()
 
   const filteredTransactions = useMemo(() => {
     return augmentedTransactions.filter((t) => {
@@ -164,18 +165,60 @@ const TrendsChart: FC<Props> = (props) => {
             : formatAmount(defaultCurrency, i, privacyMode).slice(0, -((defaultCurrency?.decimalPoints ?? 2) + 1)),
       }}
       tooltip={(props) => (
-        <Card style={{ padding: '.5rem' }}>
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <div>{label(new Date(props.indexValue))}</div>
-            {!privacyMode && <div>{formatFull(defaultCurrency, props.value, privacyMode)}</div>}
+        <div
+          style={{
+            padding: '0.5rem 0.75rem',
+            background: 'rgba(0, 0, 0, 0.85)',
+            borderRadius: '4px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '4px',
+          }}
+        >
+          <div
+            style={{
+              color: 'rgba(255, 255, 255, 0.7)',
+              fontSize: '0.9rem',
+            }}
+          >
+            {label(new Date(props.indexValue))}
           </div>
-        </Card>
+          {!privacyMode && (
+            <div
+              style={{
+                color: props.value! < 0 ? theme.palette.error.light : theme.palette.success.light,
+                fontSize: '1.1rem',
+                fontWeight: 500,
+              }}
+            >
+              {formatFull(defaultCurrency, props.value, privacyMode)}
+            </div>
+          )}
+        </div>
       )}
       enableLabel={false}
       keys={['total']}
       indexBy={'date'}
-      theme={darkTheme}
-      colors={(props) => (props.value! < 0 ? '#f88' : '#8f8')}
+      theme={{
+        ...darkTheme,
+        axis: {
+          ...darkTheme.axis,
+          ticks: {
+            ...darkTheme.axis.ticks,
+            text: {
+              ...darkTheme.axis.ticks.text,
+              fontSize: 12,
+            },
+          },
+        },
+      }}
+      colors={(props) => {
+        return props.value! < 0 ? theme.palette.error.light : theme.palette.success.light
+      }}
+      borderRadius={4}
+      padding={0.2}
+      animate={true}
+      motionConfig="gentle"
     />
   ) : null
 }

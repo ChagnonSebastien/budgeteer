@@ -1,8 +1,7 @@
-import { Dialog, TextField } from '@mui/material'
+import { Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField } from '@mui/material'
 import { FC, useContext, useMemo, useState } from 'react'
 
 import { CategoryList } from './CategoryList'
-import ContentWithHeader from './ContentWithHeader'
 import { CategoryServiceContext } from '../service/ServiceContext'
 
 interface Props {
@@ -49,7 +48,8 @@ const CategoryPicker: FC<Props> = (props) => {
         required={!onMultiSelect}
       />
       <Dialog open={showModal} onClose={() => setShowModal(false)}>
-        <ContentWithHeader title="Select Category" button="return" onCancel={() => setShowModal(false)}>
+        <DialogTitle>Select Category</DialogTitle>
+        <DialogContent style={{ height: '70vh', overflow: 'hidden', padding: '0 20px' }}>
           <CategoryList
             categories={categories}
             onSelect={
@@ -63,7 +63,10 @@ const CategoryPicker: FC<Props> = (props) => {
             onMultiSelect={onMultiSelect}
             selected={selected}
           />
-        </ContentWithHeader>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowModal(false)}>Close</Button>
+        </DialogActions>
       </Dialog>
     </>
   )
