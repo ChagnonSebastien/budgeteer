@@ -432,7 +432,7 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
         }}
       >
         <IconLib.MdArrowForwardIos
-          style={{ transform: `rotate(${showSlider ? '' : '-'}90deg)`, transition: 'transform 0.2s ease-in-out' }}
+          style={{ transform: `rotate(${showSlider ? '-' : ''}90deg)`, transition: 'transform 0.2s ease-in-out' }}
         />
       </IconButton>
     </div>

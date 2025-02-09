@@ -15,6 +15,7 @@ export interface ContentWithHeaderProps {
   contentPadding?: string
   contentMaxWidth?: string
   contentOverflowY?: string
+  setContentRef?: (value: ((prevState: HTMLDivElement | null) => HTMLDivElement | null) | HTMLDivElement | null) => void
 }
 
 const ContentWithHeader: FC<ContentWithHeaderProps> = (props) => {
@@ -28,6 +29,7 @@ const ContentWithHeader: FC<ContentWithHeaderProps> = (props) => {
     contentPadding = '1rem',
     contentMaxWidth = '50rem',
     contentOverflowY = 'scroll',
+    setContentRef = undefined,
   } = props
   const { IconLib } = useContext(IconToolsContext)
   const { open } = useContext(DrawerContext)
@@ -89,6 +91,7 @@ const ContentWithHeader: FC<ContentWithHeaderProps> = (props) => {
           padding: contentPadding,
           maxWidth: contentMaxWidth,
         }}
+        ref={setContentRef}
       >
         {children}
       </Box>

@@ -7,6 +7,7 @@ import AggregatedDiffChart from '../components/AggregatedDiffChart'
 import ContentWithHeader from '../components/ContentWithHeader'
 import { IconToolsContext } from '../components/IconTools'
 import TransactionsPieChart from '../components/PieChart'
+import SplitView from '../components/SplitView'
 import { TransactionList } from '../components/TransactionList'
 import useTransactionFilter from '../components/useTransactionFilter'
 import { AugmentedCategory } from '../domain/model/category'
@@ -64,22 +65,50 @@ const TransactionPage: FC = () => {
     return () => window.removeEventListener('resize', callback)
   }, [contentRef])
 
-  const [filterRef, setFilterRef] = useState<HTMLDivElement | null>(null)
-  const [filterHeight, setFilterHeight] = useState(50)
-  useEffect(() => {
-    if (filterRef === null) return
-    const ref = filterRef
-
-    const callback = () => {
-      setFilterHeight(ref.scrollHeight)
-    }
-    callback()
-
-    window.addEventListener('resize', callback)
-    return () => window.removeEventListener('resize', callback)
-  }, [filterRef])
-
   const splitHorizontal = useMemo(() => contentWidth > 1200, [contentWidth])
+
+  const graphSection = (
+    <div
+      style={{
+        maxWidth: '100vh',
+        width: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        margin: 'auto',
+      }}
+    >
+      <div style={{ height: `60vh`, position: 'relative' }}>
+        {graphType === 'line' ? (
+          <AggregatedDiffChart transactions={filteredTransaction} toDate={toDate} fromDate={fromDate} />
+        ) : (
+          <TransactionsPieChart
+            rootCategory={categories.find((c) => c.id === categoryFilter) ?? rootCategory}
+            augmentedTransactions={filteredTransaction}
+          />
+        )}
+      </div>
+
+      {filterOverview}
+    </div>
+  )
+
+  const listSection = (
+    <div
+      style={{
+        padding: '0 1rem',
+        width: 'calc(min(35rem, 100vw))',
+        margin: 'auto',
+      }}
+    >
+      <TransactionList
+        transactions={filteredTransaction}
+        onClick={(transactionId) => {
+          navigate(`/transactions/edit/${transactionId}`)
+        }}
+        viewAsAccounts={accountFilter === null ? undefined : accountFilter}
+      />
+    </div>
+  )
 
   return (
     <ContentWithHeader
@@ -109,6 +138,7 @@ const TransactionPage: FC = () => {
       contentMaxWidth="100%"
       contentOverflowY="hidden"
       contentPadding="1rem 0 0 0"
+      setContentRef={setContentRef}
     >
       <SpeedDial
         ariaLabel="Create new transaction"
@@ -132,63 +162,31 @@ const TransactionPage: FC = () => {
         />
       </SpeedDial>
 
-      <div
-        style={{
-          height: '100%',
-          width: '100%',
-          overflowY: splitHorizontal ? 'hidden' : 'scroll',
-          overflowX: 'hidden',
-          display: 'flex',
-          flexDirection: splitHorizontal ? 'row' : 'column',
-        }}
-        ref={setContentRef}
-      >
-        <div
-          style={{
-            height: splitHorizontal ? `${contentHeight}px` : '80vh',
-            width: '100%',
-            display: 'flex',
-            flexDirection: 'column',
-          }}
-        >
-          <div
-            style={{
-              marginTop: splitHorizontal ? `${contentHeight / 12}px` : 0,
-              height: `calc( ${splitHorizontal ? `${contentHeight}px` : '80vh'} / 1.2 - ${filterHeight}px )`,
-              width: splitHorizontal ? `calc( ${contentWidth}px - 35rem )` : `${contentWidth}px`,
-              position: 'relative',
-            }}
-          >
-            {graphType === 'line' ? (
-              <AggregatedDiffChart transactions={filteredTransaction} toDate={toDate} fromDate={fromDate} />
-            ) : (
-              <TransactionsPieChart
-                rootCategory={categories.find((c) => c.id === categoryFilter) ?? rootCategory}
-                augmentedTransactions={filteredTransaction}
-              />
-            )}
-          </div>
-
-          <div ref={setFilterRef}>{filterOverview}</div>
+      {splitHorizontal ? (
+        <SplitView
+          first={
+            <div
+              style={{
+                height: '100%',
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+              }}
+            >
+              {graphSection}
+            </div>
+          }
+          second={listSection}
+          split="horizontal"
+          firstZoneStyling={{ grow: true, scroll: true }}
+          secondZoneStyling={{ grow: false, scroll: true }}
+        />
+      ) : (
+        <div style={{ height: '100%', display: 'flex', flexDirection: 'column', overflowY: 'scroll' }}>
+          {graphSection}
+          {listSection}
         </div>
-
-        <div
-          style={{
-            flexShrink: 0,
-            overflowY: splitHorizontal ? 'scroll' : 'clip',
-            padding: '0 1rem',
-            width: splitHorizontal ? '35rem' : undefined,
-          }}
-        >
-          <TransactionList
-            transactions={filteredTransaction}
-            onClick={(transactionId) => {
-              navigate(`/transactions/edit/${transactionId}`)
-            }}
-            viewAsAccounts={accountFilter === null ? undefined : accountFilter}
-          />
-        </div>
-      </div>
+      )}
     </ContentWithHeader>
   )
 }
