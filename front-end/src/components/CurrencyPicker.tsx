@@ -1,6 +1,7 @@
-import { Dialog, TextField } from '@mui/material'
+import { TextField } from '@mui/material'
 import { CSSProperties, FC, useMemo, useState } from 'react'
 
+import ContentDialog from './ContentDialog'
 import ContentWithHeader from './ContentWithHeader'
 import { CurrencyList } from './CurrencyList'
 import Currency from '../domain/model/currency'
@@ -37,7 +38,7 @@ const CurrencyPicker: FC<Props> = (props) => {
           e.target.blur()
         }}
       />
-      <Dialog open={showModal} onClose={() => setShowModal(false)}>
+      <ContentDialog open={showModal} onClose={() => setShowModal(false)}>
         <ContentWithHeader title={`Select ${labelText}`} button="return" onCancel={() => setShowModal(false)}>
           <CurrencyList
             currencies={currencies}
@@ -47,7 +48,7 @@ const CurrencyPicker: FC<Props> = (props) => {
             }}
           />
         </ContentWithHeader>
-      </Dialog>
+      </ContentDialog>
     </>
   )
 }

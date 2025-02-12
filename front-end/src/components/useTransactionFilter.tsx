@@ -1,4 +1,4 @@
-import { Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, useMediaQuery, useTheme } from '@mui/material'
+import { Button, Chip, DialogActions, DialogContent, DialogTitle, useMediaQuery, useTheme } from '@mui/material'
 import { DateCalendar, DateView } from '@mui/x-date-pickers'
 import { addDays, formatDate, isSameDay, startOfDay, subMonths, subYears } from 'date-fns'
 import dayjs, { Dayjs } from 'dayjs'
@@ -7,6 +7,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 
 import { AccountList } from './AccountList'
 import { CategoryList } from './CategoryList'
+import ContentDialog from './ContentDialog'
 import Account from '../domain/model/account'
 import { AccountServiceContext, CategoryServiceContext, TransactionServiceContext } from '../service/ServiceContext'
 import TimeRange from '../slider/TimeRange'
@@ -329,7 +330,7 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
 
   const overview = showSlider ? (
     <>
-      <Dialog
+      <ContentDialog
         fullScreen={fullScreen}
         open={showFilterSelection && !showFromDateModal && !showToDateModal}
         onClose={() => {
@@ -337,9 +338,9 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
         }}
       >
         {form}
-      </Dialog>
+      </ContentDialog>
 
-      <Dialog fullScreen={fullScreen} open={showCategoryModal} onClose={() => setShowCategoryModal(false)}>
+      <ContentDialog fullScreen={fullScreen} open={showCategoryModal} onClose={() => setShowCategoryModal(false)}>
         <DialogTitle>Filter by category</DialogTitle>
         <DialogContent style={{ height: '70vh', overflow: 'hidden', padding: '0 20px' }}>
           <CategoryList
@@ -358,9 +359,9 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
         <DialogActions>
           <Button onClick={() => setShowCategoryModal(false)}>Close</Button>
         </DialogActions>
-      </Dialog>
+      </ContentDialog>
 
-      <Dialog fullScreen={fullScreen} open={showAccountModal} onClose={() => setShowAccountModal(false)}>
+      <ContentDialog fullScreen={fullScreen} open={showAccountModal} onClose={() => setShowAccountModal(false)}>
         <DialogTitle>Pick Account</DialogTitle>
         <DialogContent style={{ height: '70vh', overflow: 'hidden' }}>
           <AccountList
@@ -381,9 +382,9 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
         <DialogActions>
           <Button onClick={() => setShowAccountModal(false)}>Close</Button>
         </DialogActions>
-      </Dialog>
+      </ContentDialog>
 
-      <Dialog
+      <ContentDialog
         fullScreen={fullScreen}
         open={showFromDateModal}
         onClose={() => {
@@ -406,9 +407,9 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
         <DialogActions>
           <Button onClick={() => setShowAccountModal(false)}>Close</Button>
         </DialogActions>
-      </Dialog>
+      </ContentDialog>
 
-      <Dialog
+      <ContentDialog
         fullScreen={fullScreen}
         open={showToDateModal}
         onClose={() => {
@@ -431,7 +432,7 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
         <DialogActions>
           <Button onClick={() => setShowAccountModal(false)}>Close</Button>
         </DialogActions>
-      </Dialog>
+      </ContentDialog>
     </>
   ) : null
 

@@ -1,7 +1,8 @@
-import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Stack, TextField } from '@mui/material'
+import { Button, DialogActions, DialogContent, DialogTitle, Stack, TextField } from '@mui/material'
 import { FC } from 'react'
 
 import CategoryPicker from './CategoryPicker'
+import ContentDialog from './ContentDialog'
 
 interface Props {
   open: boolean
@@ -21,7 +22,7 @@ const CostsAnalysisSetup: FC<Props> = ({
   onComplete,
 }) => {
   return (
-    <Dialog open={open} fullWidth maxWidth="sm">
+    <ContentDialog open={open} fullWidth maxWidth="sm">
       <DialogTitle>Costs Analysis Setup</DialogTitle>
       <DialogContent>
         <Stack spacing={3} sx={{ mt: 2 }}>
@@ -49,7 +50,7 @@ const CostsAnalysisSetup: FC<Props> = ({
           Complete Setup
         </Button>
       </DialogActions>
-    </Dialog>
+    </ContentDialog>
   )
 }
 

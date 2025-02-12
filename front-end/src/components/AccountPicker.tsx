@@ -1,7 +1,8 @@
-import { Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField } from '@mui/material'
+import { Button, DialogActions, DialogContent, DialogTitle, TextField } from '@mui/material'
 import { FC, useContext, useMemo, useState } from 'react'
 
 import { AccountList } from './AccountList'
+import ContentDialog from './ContentDialog'
 import { AccountServiceContext } from '../service/ServiceContext'
 
 interface Props {
@@ -40,7 +41,7 @@ const AccountPicker: FC<Props> = (props) => {
           setShowModal(true)
         }}
       />
-      <Dialog open={showModal} onClose={() => setShowModal(false)}>
+      <ContentDialog open={showModal} onClose={() => setShowModal(false)}>
         <DialogTitle>Select Account</DialogTitle>
         <DialogContent style={{ height: '70vh', overflow: 'hidden', padding: '0 20px' }}>
           <AccountList
@@ -83,7 +84,7 @@ const AccountPicker: FC<Props> = (props) => {
             </Button>
           )}
         </DialogActions>
-      </Dialog>
+      </ContentDialog>
     </>
   )
 }

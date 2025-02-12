@@ -1,9 +1,10 @@
-import { Button, Dialog, Snackbar, Stack, TextField, Typography } from '@mui/material'
+import { Button, Snackbar, Stack, TextField, Typography } from '@mui/material'
 import { DateCalendar, DateField, DateView } from '@mui/x-date-pickers'
 import { startOfDay } from 'date-fns'
 import dayjs, { Dayjs } from 'dayjs'
 import { FC, FormEvent, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 
+import ContentDialog from './ContentDialog'
 import Currency, { ExchangeRate } from '../domain/model/currency'
 import { CurrencyServiceContext } from '../service/ServiceContext'
 
@@ -377,7 +378,7 @@ const CurrencyForm: FC<Props> = (props) => {
                   sx={{ width: '100%' }}
                 />
 
-                <Dialog open={showDateModal} onClose={() => setShowDateModal(false)}>
+                <ContentDialog open={showDateModal} onClose={() => setShowDateModal(false)}>
                   <DateCalendar
                     views={['year', 'month', 'day']}
                     value={dayjs(initialExchangeRateDate)}
@@ -389,7 +390,7 @@ const CurrencyForm: FC<Props> = (props) => {
                       setDateView(view)
                     }}
                   />
-                </Dialog>
+                </ContentDialog>
               </div>
             </div>
           </div>

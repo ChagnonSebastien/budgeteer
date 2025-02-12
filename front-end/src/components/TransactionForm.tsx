@@ -1,10 +1,11 @@
-import { Button, Checkbox, Dialog, FormControlLabel, Snackbar, Stack, TextField } from '@mui/material'
+import { Button, Checkbox, FormControlLabel, Snackbar, Stack, TextField } from '@mui/material'
 import { DateCalendar, DateField, DateView } from '@mui/x-date-pickers'
 import dayjs, { Dayjs } from 'dayjs'
 import { FC, FormEvent, useContext, useEffect, useMemo, useState } from 'react'
 
 import AccountPicker from './AccountPicker'
 import { CategoryList } from './CategoryList'
+import ContentDialog from './ContentDialog'
 import ContentWithHeader from './ContentWithHeader'
 import CurrencyPicker from './CurrencyPicker'
 import IconCapsule from './IconCapsule'
@@ -315,7 +316,7 @@ const TransactionForm: FC<Props> = (props) => {
                 }}
               />
             </div>
-            <Dialog open={showParentModal} onClose={() => setShowCategoryModal(false)}>
+            <ContentDialog open={showParentModal} onClose={() => setShowCategoryModal(false)}>
               <ContentWithHeader title="Select Icon" button="return" onCancel={() => setShowCategoryModal(false)}>
                 <CategoryList
                   categories={categories}
@@ -325,7 +326,7 @@ const TransactionForm: FC<Props> = (props) => {
                   }}
                 />
               </ContentWithHeader>
-            </Dialog>
+            </ContentDialog>
           </>
         )}
 
@@ -386,7 +387,7 @@ const TransactionForm: FC<Props> = (props) => {
           sx={{ width: '100%' }}
         />
 
-        <Dialog open={showDateModal} onClose={() => setShowDateModal(false)}>
+        <ContentDialog open={showDateModal} onClose={() => setShowDateModal(false)}>
           <DateCalendar
             views={['year', 'month', 'day']}
             value={dayjs(date)}
@@ -398,7 +399,7 @@ const TransactionForm: FC<Props> = (props) => {
               setDateView(view)
             }}
           />
-        </Dialog>
+        </ContentDialog>
 
         <AccountPicker
           labelText="To"

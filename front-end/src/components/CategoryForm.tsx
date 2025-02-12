@@ -1,8 +1,9 @@
-import { Button, Checkbox, Dialog, FormControlLabel, Snackbar, Stack, TextField } from '@mui/material'
+import { Button, Checkbox, FormControlLabel, Snackbar, Stack, TextField } from '@mui/material'
 import { FC, FormEvent, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { HexColorPicker } from 'react-colorful'
 
 import CategoryPicker from './CategoryPicker'
+import ContentDialog from './ContentDialog'
 import ContentWithHeader from './ContentWithHeader'
 import IconCapsule from './IconCapsule'
 import IconList from './IconList'
@@ -181,7 +182,7 @@ const CategoryForm: FC<Props> = (props) => {
                 />
               </div>
             </Stack>
-            <Dialog open={showIconModal} onClose={() => setShowIconModal(false)}>
+            <ContentDialog open={showIconModal} onClose={() => setShowIconModal(false)}>
               <ContentWithHeader
                 title="Select Icon"
                 button="return"
@@ -190,13 +191,13 @@ const CategoryForm: FC<Props> = (props) => {
               >
                 <IconList filter={filter} onSelect={onIconSelect} />
               </ContentWithHeader>
-            </Dialog>
-            <Dialog onClose={() => setShowOuterColorModal(false)} open={showOuterColorModal}>
+            </ContentDialog>
+            <ContentDialog onClose={() => setShowOuterColorModal(false)} open={showOuterColorModal}>
               <HexColorPicker color={outerColor} onChange={setOuterColor} style={{ flexGrow: 1, overflow: 'hidden' }} />
-            </Dialog>
-            <Dialog onClose={() => setShowInnerColorModal(false)} open={showInnerColorModal}>
+            </ContentDialog>
+            <ContentDialog onClose={() => setShowInnerColorModal(false)} open={showInnerColorModal}>
               <HexColorPicker color={innerColor} onChange={setInnerColor} style={{ flexGrow: 1, overflow: 'hidden' }} />
-            </Dialog>
+            </ContentDialog>
             <div style={{ width: '1rem', flexShrink: 0 }} />
             <div
               style={{

@@ -79,9 +79,14 @@ interface Props {
   logout(): void
 }
 
-type DrawerActions = { open?(): void; privacyMode: boolean }
+type DrawerActions = {
+  open?(): void
+  privacyMode: boolean
+  drawerWidth: number
+}
 export const DrawerContext = createContext<DrawerActions>({
   privacyMode: false,
+  drawerWidth: 0,
 })
 
 const DrawerWrapper: FC<Props> = ({ logout, children }) => {
@@ -297,6 +302,7 @@ const DrawerWrapper: FC<Props> = ({ logout, children }) => {
       value={{
         open: persistentDrawer ? undefined : () => setOpen(true),
         privacyMode: privacyMode,
+        drawerWidth: drawerWidth,
       }}
     >
       {persistentDrawer ? (
