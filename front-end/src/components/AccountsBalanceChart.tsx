@@ -294,7 +294,7 @@ const AccountsBalanceChart: FC<Props> = (props) => {
           data={data}
           keys={[...groups.keys()].sort((a, b) => a.localeCompare(b))}
           valueFormat={(value) => `${formatFull(defaultCurrency, value, privacyMode)}`}
-          margin={{ top: 20, right: 60, bottom: 80, left: 70 }}
+          margin={{ top: 20, right: 25, bottom: 80, left: 70 }}
           axisBottom={{
             format: (i) =>
               (data.length - i - 1) % showLabelEveryFactor === 0

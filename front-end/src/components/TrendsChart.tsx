@@ -148,7 +148,7 @@ const TrendsChart: FC<Props> = (props) => {
 
   return data && defaultCurrency ? (
     <ResponsiveBar
-      margin={{ top: 10, right: 50, bottom: 70, left: 60 }}
+      margin={{ top: 20, right: 25, bottom: 60, left: 70 }}
       data={data.slice(
         data.length - Math.min(data.length, years * (grouping === 'months' ? 12 : grouping === 'quarters' ? 4 : 1)),
       )}

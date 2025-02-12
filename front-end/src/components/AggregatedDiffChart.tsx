@@ -123,7 +123,7 @@ const AggregatedDiffChart: FC<Props> = (props) => {
       <>
         <ResponsiveLine
           data={[{ id: 'Diff', data }]}
-          margin={{ top: 10, right: 50, bottom: 70, left: 60 }}
+          margin={{ top: 20, right: 25, bottom: 80, left: 60 }}
           axisBottom={{
             format: (i) =>
               (data.length - i - 1) % showLabelEveryFactor === 0
