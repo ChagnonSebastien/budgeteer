@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom'
 import { CategoryList } from '../components/CategoryList'
 import ContentWithHeader from '../components/ContentWithHeader'
 import { CategoryServiceContext } from '../service/ServiceContext'
+import '../styles/list-pages.css'
 
 const CategoryPage: FC = () => {
   const navigate = useNavigate()
@@ -28,12 +29,6 @@ const CategoryPage: FC = () => {
     return () => window.removeEventListener('resize', callback)
   }, [contentRef])
 
-  const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
-    const target = event.currentTarget
-    const progress = 1 - target.scrollTop / (target.scrollHeight - target.clientHeight)
-    setScrollProgress(Math.max(0, Math.min(1, progress)))
-  }
-
   return (
     <ContentWithHeader title="Categories" button="menu" contentMaxWidth="100%" contentOverflowY="hidden">
       <div style={{ height: '100%', maxWidth: '100%', display: 'flex', justifyContent: 'center' }} ref={setContentRef}>
@@ -43,16 +38,16 @@ const CategoryPage: FC = () => {
               width: '100%',
               position: 'relative',
               height: `${contentHeight - optionsHeight}px`,
-              overflowY: 'auto',
+              overflow: 'hidden',
               display: 'flex',
               flexDirection: 'column',
             }}
-            onScroll={handleScroll}
           >
             <CategoryList
               buttonText="Edit"
               categories={categories}
               onSelect={(categoryId) => navigate(`/categories/edit/${categoryId}`)}
+              onScrollProgress={setScrollProgress}
             />
           </div>
           <div
@@ -67,7 +62,7 @@ const CategoryPage: FC = () => {
                 borderTop: '1px solid transparent',
                 borderImage: 'linear-gradient(to right, transparent, #fff4 20%, #fff4 80%, transparent) 1',
                 background: 'radial-gradient(ellipse 100% 100% at 50% 0%, #fff2 0%, #fff0 50%, transparent 100%)',
-                opacity: scrollProgress,
+                opacity: scrollProgress ?? 1,
               }}
             />
             <Button fullWidth variant="contained" onClick={() => navigate('/categories/new')}>

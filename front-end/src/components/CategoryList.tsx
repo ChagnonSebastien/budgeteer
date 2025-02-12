@@ -1,5 +1,5 @@
 import { Button, CircularProgress } from '@mui/material'
-import { Fragment, useContext, useState } from 'react'
+import { Fragment, useContext, useEffect, useRef, useState } from 'react'
 
 import IconCapsule from './IconCapsule'
 import { IconToolsContext } from './IconTools'
@@ -15,10 +15,11 @@ interface Props {
   onMultiSelect?: (selected: number[]) => void
   selected?: number[]
   buttonText?: string
+  onScrollProgress?: (progress: number) => void
 }
 
 export const CategoryList = (props: Props) => {
-  const { categories, onSelect, onMultiSelect, selected = [], buttonText } = props
+  const { categories, onSelect, onMultiSelect, selected = [], buttonText, onScrollProgress } = props
   const { root, subCategories } = useContext(CategoryServiceContext)
   const { IconLib } = useContext(IconToolsContext)
 
@@ -45,6 +46,38 @@ export const CategoryList = (props: Props) => {
     return [...new Set(openCategories)] // Remove duplicates
   })
   const [hoveringOver, setHoveringOver] = useState<number | null>(null)
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!onScrollProgress || !scrollContainerRef.current) return
+    const element = scrollContainerRef.current
+
+    const handleScroll = () => {
+      const maxScroll = element.scrollHeight - element.clientHeight
+      const bufferZone = 64 // 4rem
+      if (maxScroll <= 0) {
+        onScrollProgress(0)
+      } else {
+        const remainingScroll = maxScroll - element.scrollTop
+        if (remainingScroll > bufferZone) {
+          onScrollProgress(1)
+        } else {
+          const progress = remainingScroll / bufferZone
+          onScrollProgress(Math.max(0, Math.min(1, progress)))
+        }
+      }
+    }
+
+    handleScroll()
+    element.addEventListener('scroll', handleScroll)
+    const observer = new ResizeObserver(handleScroll)
+    observer.observe(element)
+
+    return () => {
+      element.removeEventListener('scroll', handleScroll)
+      observer.disconnect()
+    }
+  }, [onScrollProgress, categories, open])
 
   if (!categories) {
     return <CircularProgress />
@@ -184,7 +217,10 @@ export const CategoryList = (props: Props) => {
         position: 'relative',
       }}
     >
-      <div style={{ overflowY: 'auto', flexGrow: 1, paddingBottom: '4rem', position: 'relative' }}>
+      <div
+        ref={scrollContainerRef}
+        style={{ overflowY: 'auto', flexGrow: 1, paddingBottom: '4rem', position: 'relative' }}
+      >
         {renderCategory(root, onSelect ?? doNothing, 0)}
       </div>
     </div>

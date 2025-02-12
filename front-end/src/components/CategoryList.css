@@ -100,16 +100,16 @@
 
 /* Collapsible content */
 .collapsible {
-    max-height: 0;
-    overflow: hidden;
-    transition: all 0.3s ease-in-out;
-    opacity: 0;
+  max-height: 0;
+  overflow: hidden;
+  transition: all 0.3s ease-in-out;
+  opacity: 0;
 }
 
 .collapsible.open {
-    max-height: 1000px;
-    overflow: visible;
-    opacity: 1;
+  max-height: none;
+  overflow: visible;
+  opacity: 1;
 }
 
 /* Nested categories indentation */
