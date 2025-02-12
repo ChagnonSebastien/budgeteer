@@ -82,7 +82,7 @@ export const CategoryList = (props: Props) => {
     return (
       <Fragment key={`category-list-id-${category.id}`}>
         <div
-          className={`category-list-item ${selected.includes(category.id) || (category.parentId === null && selected.length === 0) ? 'selected' : ''} ${
+          className={`category-list-item ${selected.includes(category.id) || (typeof onMultiSelect !== 'undefined' && category.parentId === null && selected.length === 0) ? 'selected' : ''} ${
             // Check if any descendant (not just direct children) is selected
             (function hasSelectedDescendant(catId: number): boolean {
               const children = subCategories[catId]
