@@ -1,5 +1,6 @@
-import { Fab, TextField } from '@mui/material'
+import { Fab, IconButton, TextField } from '@mui/material'
 import { Dispatch, SetStateAction, useContext, useEffect, useState } from 'react'
+
 import { IconToolsContext } from './IconTools'
 import '../styles/search-overlay.css'
 
@@ -23,6 +24,11 @@ export const SearchOverlay = ({ filter, setFilter, placeholder = 'Search...' }: 
     return () => document.removeEventListener('keydown', handleEscape)
   }, [showSearch])
 
+  const handleClose = () => {
+    setFilter('')
+    setShowSearch(false)
+  }
+
   return (
     <>
       {!showSearch && (
@@ -34,6 +40,7 @@ export const SearchOverlay = ({ filter, setFilter, placeholder = 'Search...' }: 
             bottom: '1rem',
             right: '2rem',
             zIndex: 1000,
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
           }}
           onClick={() => setShowSearch(true)}
         >
@@ -41,36 +48,37 @@ export const SearchOverlay = ({ filter, setFilter, placeholder = 'Search...' }: 
         </Fab>
       )}
       {showSearch && (
-        <div
-          className="search-overlay"
-          onClick={() => setShowSearch(false)}
-        >
-          <div
-            className="search-modal"
+        <div className="search-overlay" onClick={handleClose}>
+          <TextField
+            autoFocus
+            fullWidth
+            size="medium"
+            placeholder={placeholder}
+            value={filter}
+            onChange={(ev) => setFilter(ev.target.value)}
             onClick={(e) => e.stopPropagation()}
-          >
-            <TextField
-              autoFocus
-              fullWidth
-              size="medium"
-              placeholder={placeholder}
-              value={filter}
-              onChange={(ev) => setFilter(ev.target.value)}
-              slotProps={{
-                input: {
-                  endAdornment: (
-                    <IconLib.IoCloseCircle
-                      style={{ cursor: 'pointer', opacity: 0.7 }}
-                      onClick={() => {
-                        setFilter('')
-                        setShowSearch(false)
-                      }}
-                    />
-                  ),
-                },
-              }}
-            />
-          </div>
+            InputProps={{
+              endAdornment: (
+                <IconButton
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleClose()
+                  }}
+                  size="medium"
+                  sx={{
+                    color: 'rgba(255, 255, 255, 0.7)',
+                    padding: '8px',
+                    '&:hover': {
+                      color: 'rgba(255, 255, 255, 0.9)',
+                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                    },
+                  }}
+                >
+                  <IconLib.IoCloseCircle style={{ fontSize: '1.8rem' }} />
+                </IconButton>
+              ),
+            }}
+          />
         </div>
       )}
     </>
