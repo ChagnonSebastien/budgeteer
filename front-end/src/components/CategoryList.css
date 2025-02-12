@@ -69,13 +69,33 @@
 
 /* Rotatable icon */
 .rotatable {
-    transition: transform 0.2s ease-in-out;
+    transition: all 0.2s ease-in-out;
     opacity: 0.7;
     font-size: 1.1rem;
 }
 
 .rotatable.open {
     transform: rotate(90deg);
+}
+
+/* Style for parent category when it contains selected subcategories */
+.category-list-item.has-selected-child {
+    background-color: rgba(200, 75, 49, 0.04);
+}
+
+.category-list-item.has-selected-child > .category-content .expand-button .rotatable {
+    color: #C84B31;
+    opacity: 1;
+}
+
+.category-list-item.has-selected-child:hover {
+    background-color: rgba(200, 75, 49, 0.08);
+}
+
+/* Ensure selected items have stronger visual weight than parents with selected children */
+.category-list-item.selected {
+    background-color: rgba(200, 75, 49, 0.12);
+    border-left-color: #C84B31;
 }
 
 /* Collapsible content */

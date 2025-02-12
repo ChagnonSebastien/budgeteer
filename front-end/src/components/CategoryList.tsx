@@ -22,18 +22,76 @@ export const CategoryList = (props: Props) => {
   const { root, subCategories } = useContext(CategoryServiceContext)
   const { IconLib } = useContext(IconToolsContext)
 
-  const [open, setOpen] = useState<number[]>([root.id])
+  const [open, setOpen] = useState<number[]>(() => {
+    // Initialize with root and any parent categories of selected items
+    const openCategories = [root.id]
+
+    // Find parent categories of selected items
+    if (categories) {
+      selected.forEach((selectedId) => {
+        const initialCategory = categories.find((c) => c.id === selectedId)
+        if (!initialCategory) return
+
+        let category = initialCategory
+        while (category.parentId && category.parentId !== root.id) {
+          openCategories.push(category.parentId)
+          const parentCategory = categories.find((c) => c.id === category.parentId)
+          if (!parentCategory) break
+          category = parentCategory
+        }
+      })
+    }
+
+    return [...new Set(openCategories)] // Remove duplicates
+  })
   const [hoveringOver, setHoveringOver] = useState<number | null>(null)
 
   if (!categories) {
     return <CircularProgress />
   }
 
+  // Get all descendant category IDs recursively
+  const getAllDescendants = (categoryId: number): number[] => {
+    const descendants: number[] = []
+    const children = subCategories[categoryId]
+    if (!children) return descendants
+
+    children.forEach((child) => {
+      descendants.push(child.id)
+      descendants.push(...getAllDescendants(child.id))
+    })
+
+    return descendants
+  }
+
+  // Get all ancestor category IDs recursively
+  const getAllAncestors = (categoryId: number): number[] => {
+    const ancestors: number[] = []
+    if (!categories) return ancestors
+
+    let current = categories.find((c) => c.id === categoryId)
+    while (current?.parentId && current.parentId !== root.id) {
+      ancestors.push(current.parentId)
+      current = categories.find((c) => c.id === current?.parentId)
+    }
+
+    return ancestors
+  }
+
   const renderCategory = (category: Category, onSelect: (value: number) => void, depth: number): JSX.Element => {
     return (
       <Fragment key={`category-list-id-${category.id}`}>
         <div
-          className={`category-list-item ${selected.includes(category.id) ? 'selected' : ''}`}
+          className={`category-list-item ${selected.includes(category.id) || (category.parentId === null && selected.length === 0) ? 'selected' : ''} ${
+            // Check if any descendant (not just direct children) is selected
+            (function hasSelectedDescendant(catId: number): boolean {
+              const children = subCategories[catId]
+              if (!children) return false
+              return children.some((child) => selected.includes(child.id) || hasSelectedDescendant(child.id))
+            })(category.id)
+              ? 'has-selected-child'
+              : ''
+          }`}
           onMouseEnter={() => setHoveringOver(category.id)}
           onTouchStart={() => setHoveringOver(category.id)}
         >
@@ -57,17 +115,32 @@ export const CategoryList = (props: Props) => {
             <div
               className="category-main"
               onClick={() => {
-                if (typeof buttonText !== 'undefined' || category.id === root.id) return
+                if (typeof buttonText !== 'undefined') return
+
                 if (onMultiSelect) {
-                  const newSelected = selected.includes(category.id)
-                    ? selected.filter((id) => id !== category.id)
-                    : [...selected, category.id]
+                  // If clicking root category and there are selections, clear them all
+                  if (category.id === root.id) {
+                    onMultiSelect([])
+                    return
+                  }
+
+                  let newSelected: number[]
+                  if (selected.includes(category.id)) {
+                    // If deselecting, just remove this category
+                    newSelected = selected.filter((id) => id !== category.id)
+                  } else {
+                    // If selecting, remove all descendants and ancestors first
+                    const descendants = getAllDescendants(category.id)
+                    const ancestors = getAllAncestors(category.id)
+                    const toRemove = new Set([...descendants, ...ancestors])
+                    newSelected = [...selected.filter((id) => !toRemove.has(id)), category.id]
+                  }
                   onMultiSelect(newSelected)
                 } else if (onSelect) {
                   onSelect(category.id)
                 }
               }}
-              style={{ cursor: category.id === root.id ? 'default' : 'pointer' }}
+              style={{ cursor: 'pointer' }}
             >
               <div className="category-icon-container">
                 <IconCapsule
