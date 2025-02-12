@@ -63,7 +63,8 @@
     margin-right: 0.5rem;
 }
 
-.category-list-item:hover .category-edit-button {
+.category-list-item:hover .category-edit-button,
+.category-list-item .category-edit-button[style*="opacity: 1"] {
     opacity: 1;
 }
 

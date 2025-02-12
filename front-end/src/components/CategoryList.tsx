@@ -190,6 +190,7 @@ export const CategoryList = (props: Props) => {
                   size="small"
                   onClick={() => onSelect(category.id)}
                   className="category-edit-button"
+                  style={{ opacity: 1 }}
                 >
                   {buttonText}
                 </Button>
