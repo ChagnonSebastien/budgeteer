@@ -222,7 +222,21 @@ const TransactionPage: FC = () => {
       <SpeedDial
         ariaLabel="Create new transaction"
         sx={{ position: 'absolute', bottom: 16, right: 16 }}
-        icon={<SpeedDialIcon openIcon={<IconLib.FaPlus />} />}
+        icon={
+          <SpeedDialIcon
+            openIcon={<IconLib.FaPlus />}
+            sx={{
+              '& .MuiSpeedDialIcon-icon, & .MuiSpeedDialIcon-openIcon': {
+                transition: 'all 0.2s ease-in-out',
+                height: '24px',
+                width: '24px',
+              },
+              '& .MuiSpeedDialIcon-openIcon': {
+                transform: 'rotate(45deg)',
+              },
+            }}
+          />
+        }
       >
         <SpeedDialAction
           sx={{ backgroundColor: 'green' }}
