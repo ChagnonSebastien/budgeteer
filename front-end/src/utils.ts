@@ -5,25 +5,25 @@ export function notImplemented(..._params: never) {
 }
 
 export const darkColors = [
-  '#26D9D9AA', // Cyan
-  '#D98F26AA', // Dark Orange
-  '#D92626AA', // Red
-  '#4A26D9AA', // Indigo
-  '#D9C726AA', // Yellow
-  '#D926C7AA', // Magenta
-  '#266DD9AA', // Azure
-  '#D95C26AA', // Reddish Orange
-  '#26A3D9AA', // Sky Blue
-  '#D9265DAA', // Crimson
-  '#4AD926AA', // Lime Green
-  '#B526D9AA', // Purple
-  '#D99126AA', // Orange
-  '#2638D9AA', // Blue
-  '#D92692AA', // Pink
-  '#26D96FAA', // Turquoise
-  '#7F26D9AA', // Violet
-  '#A85F26AA', // Brown
-  '#B5D926AA', // Yellow-Green
+  '#CC6619CC', // Deep Orange
+  '#7B3B99CC', // Deep Purple
+  '#1B8599CC', // Deep Cyan
+  '#B33B73CC', // Deep Rose
+  '#739926CC', // Deep Lime
+  '#CC5B73CC', // Deep Coral
+  '#1B7A73CC', // Deep Teal
+  '#8B5BBFCC', // Deep Violet
+  '#B34D2BCC', // Deep Terra Cotta
+  '#BFA673CC', // Rich Beige
+  '#992626CC', // Dark Red
+  '#3B8B8BCC', // Deep Aqua
+  '#737326CC', // Deep Olive
+  '#BF704DCC', // Rich Copper
+  '#4D4D99CC', // Deep Indigo
+  '#CC3B3BCC', // Deep Red
+  '#2D995BCC', // Rich Green
+  '#CC9B20CC', // Deep Gold
+  '#2B5CADCC', // Deep Blue
 ]
 
 export const darkTheme = {

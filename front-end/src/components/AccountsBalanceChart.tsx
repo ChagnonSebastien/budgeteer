@@ -345,7 +345,33 @@ const AccountsBalanceChart: FC<Props> = (props) => {
             },
             background: 'transparent',
           }}
-          colors={darkColors}
+          colors={
+            splitInvestements === 'split'
+              ? ({ id }) => {
+                  if (typeof id !== 'string') return darkColors[0]
+                  const baseColorIndex = Math.floor(
+                    [...groups.keys()].sort((a, b) => a.localeCompare(b)).indexOf(id) / 2,
+                  )
+                  const baseColor = darkColors[baseColorIndex % darkColors.length]
+
+                  // If this is a "Gained" layer, create a lighter version of the base color
+                  if (id.endsWith('Gained')) {
+                    // Convert hex to RGB and lighten
+                    const r = parseInt(baseColor.slice(1, 3), 16)
+                    const g = parseInt(baseColor.slice(3, 5), 16)
+                    const b = parseInt(baseColor.slice(5, 7), 16)
+                    // Lighten by mixing with white (255,255,255)
+                    const lightenFactor = 0.2 // 40% lighter
+                    const lr = Math.round(r + (255 - r) * lightenFactor)
+                    const lg = Math.round(g + (255 - g) * lightenFactor)
+                    const lb = Math.round(b + (255 - b) * lightenFactor)
+                    return `#${lr.toString(16).padStart(2, '0')}${lg.toString(16).padStart(2, '0')}${lb.toString(16).padStart(2, '0')}`
+                  }
+
+                  return baseColor
+                }
+              : darkColors
+          }
           borderColor={{ theme: 'background' }}
           stackTooltip={(tooltipProps) => (
             <div className="graph-tooltip">
