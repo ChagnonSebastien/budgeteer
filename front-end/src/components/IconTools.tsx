@@ -25,6 +25,7 @@ export enum PreparedIcon {
   BsCurrencyExchange = 'BsCurrencyExchange',
   BiSolidFileImport = 'BiSolidFileImport',
   BsFileEarmarkSpreadsheet = 'BsFileEarmarkSpreadsheet',
+  BsFileEarmarkText = 'BsFileEarmarkText',
   MdArrowForwardIos = 'MdArrowForwardIos',
   BiSearch = 'BiSearch',
   MdVisibility = 'MdVisibility',
