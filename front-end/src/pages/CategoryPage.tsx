@@ -1,14 +1,4 @@
-import {
-  Button,
-  DialogContent,
-  Divider,
-  Fade,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
-  Typography,
-} from '@mui/material'
+import { Button, DialogContent, Divider, List, ListItem, ListItemIcon, ListItemText, Typography } from '@mui/material'
 import { FC, useContext, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
@@ -92,15 +82,14 @@ const CategoryPage: FC = () => {
       <ContentDialog
         open={clickedCategory !== null}
         onClose={() => setClickedCategory(null)}
-        TransitionComponent={Fade}
         slotProps={{
           paper: {
-            className: 'overview-modal-paper',
+            className: 'overview-modal',
           },
         }}
       >
         {clickedCategory !== null && (
-          <DialogContent sx={{ padding: 0 }}>
+          <DialogContent sx={{ padding: 0 }} className="overview-modal">
             <div className="overview-header">
               <div className="overview-header-glow-1" />
               <div className="overview-header-glow-2" />

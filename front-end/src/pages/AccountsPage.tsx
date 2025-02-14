@@ -3,7 +3,6 @@ import {
   Checkbox,
   DialogContent,
   Divider,
-  Fade,
   IconButton,
   List,
   ListItem,
@@ -161,15 +160,14 @@ const AccountsPage: FC = () => {
       <ContentDialog
         open={clickedAccount !== null}
         onClose={handleClose}
-        TransitionComponent={Fade}
         slotProps={{
           paper: {
-            className: 'overview-modal-paper',
+            className: 'overview-modal',
           },
         }}
       >
         {clickedAccount !== null && (
-          <DialogContent sx={{ padding: 0 }}>
+          <DialogContent sx={{ padding: 0 }} className="overview-modal">
             <div className="overview-header">
               <div className="overview-header-glow-1" />
               <div className="overview-header-glow-2" />

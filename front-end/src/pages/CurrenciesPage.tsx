@@ -3,7 +3,6 @@ import {
   Checkbox,
   DialogContent,
   Divider,
-  Fade,
   IconButton,
   List,
   ListItem,
@@ -176,15 +175,14 @@ const CurrenciesPage: FC = () => {
       <ContentDialog
         open={clickedCurrency !== null}
         onClose={() => setClickedCurrency(null)}
-        TransitionComponent={Fade}
         slotProps={{
           paper: {
-            className: 'overview-modal-paper',
+            className: 'overview-modal',
           },
         }}
       >
         {clickedCurrency !== null && defaultCurrency && (
-          <DialogContent sx={{ padding: 0 }}>
+          <DialogContent sx={{ padding: 0 }} className="overview-modal">
             <div className="overview-header">
               <div className="overview-header-glow-1" />
               <div className="overview-header-glow-2" />
