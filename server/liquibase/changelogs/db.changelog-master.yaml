@@ -23,3 +23,5 @@ databaseChangeLog:
       file: ./changelogs/011-account-type-and-institution.sql
   - include:
       file: ./changelogs/012-fixed-costs.sql
+  - include:
+      file: ./changelogs/013-categories-ordering.sql
