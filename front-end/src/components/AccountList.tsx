@@ -334,7 +334,7 @@ export const AccountList = (props: Props) => {
                   <AccountCard
                     key={`account-list-${account.id}`}
                     account={account}
-                    onSelect={onSelect}
+                    onSelect={onSelect ? () => onSelect(account) : undefined}
                     selected={selected}
                     onMultiSelect={onMultiSelect}
                     showBalances={showBalances}

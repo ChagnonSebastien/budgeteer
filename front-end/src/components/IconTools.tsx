@@ -31,6 +31,10 @@ export enum PreparedIcon {
   MdVisibility = 'MdVisibility',
   MdVisibilityOff = 'MdVisibilityOff',
   MdSettings = 'MdSettings',
+  MdEdit = 'MdEdit',
+  MdDelete = 'MdDelete',
+  MdList = 'MdList',
+  MdCalendarToday = 'MdCalendarToday',
 }
 
 type PreparedIconLib = {

@@ -1,7 +1,14 @@
 import {
   Box,
   Checkbox,
+  DialogContent,
+  Divider,
+  Fade,
   IconButton,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
   Menu,
   MenuItem,
   SpeedDial,
@@ -9,24 +16,32 @@ import {
   SpeedDialIcon,
   ToggleButton,
   ToggleButtonGroup,
+  Typography,
 } from '@mui/material'
-import { isAfter, isBefore, isSameDay } from 'date-fns'
+import { format, isAfter, isBefore, isSameDay } from 'date-fns'
 import { FC, useContext, useEffect, useMemo, useState } from 'react'
+import '../styles/overview-modal.css'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 
 import AggregatedDiffChart from '../components/AggregatedDiffChart'
+import ContentDialog from '../components/ContentDialog'
 import ContentWithHeader from '../components/ContentWithHeader'
 import { IconToolsContext } from '../components/IconTools'
+import { DrawerContext } from '../components/Menu'
 import TransactionsPieChart from '../components/PieChart'
 import SplitView from '../components/SplitView'
 import { TransactionList } from '../components/TransactionList'
 import useTransactionFilter from '../components/useTransactionFilter'
 import { AugmentedCategory } from '../domain/model/category'
+import { formatAmount } from '../domain/model/currency'
+import { AugmentedTransaction } from '../domain/model/transaction'
 import MixedAugmentation from '../service/MixedAugmentation'
 import { CategoryServiceContext } from '../service/ServiceContext'
 
 const TransactionPage: FC = () => {
   const navigate = useNavigate()
+  const { privacyMode } = useContext(DrawerContext)
+  const [clickedTransaction, setClickedTransaction] = useState<AugmentedTransaction | null>(null)
 
   const { augmentedTransactions } = useContext(MixedAugmentation)
   const { state: categories, root: rootCategory } = useContext(CategoryServiceContext)
@@ -139,7 +154,10 @@ const TransactionPage: FC = () => {
         <TransactionList
           transactions={filteredTransaction}
           onClick={(transactionId) => {
-            navigate(`/transactions/edit/${transactionId}`)
+            const transaction = filteredTransaction.find((t) => t.id === transactionId)
+            if (transaction) {
+              setClickedTransaction(transaction)
+            }
           }}
           viewAsAccounts={accountFilter === null ? undefined : accountFilter}
         />
@@ -280,6 +298,171 @@ const TransactionPage: FC = () => {
           {listSection}
         </div>
       )}
+
+      <ContentDialog
+        open={clickedTransaction !== null}
+        onClose={() => setClickedTransaction(null)}
+        TransitionComponent={Fade}
+      >
+        {clickedTransaction !== null && (
+          <DialogContent sx={{ padding: 0 }}>
+            <div className="overview-header">
+              <div className="overview-header-glow-1" />
+              <div className="overview-header-glow-2" />
+              <Typography variant="overline" className="overview-header-label">
+                {clickedTransaction.sender?.isMine && clickedTransaction.receiver?.isMine
+                  ? 'Transfer'
+                  : clickedTransaction.sender?.isMine
+                    ? 'Expense'
+                    : 'Income'}
+              </Typography>
+              <Typography variant="h5" className="overview-header-title">
+                {clickedTransaction.note || 'No description'}
+              </Typography>
+              <Typography variant="body2" className="overview-header-subtitle">
+                <IconLib.MdCalendarToday style={{ opacity: 0.5 }} />
+                {format(clickedTransaction.date, 'PPP')}
+              </Typography>
+            </div>
+
+            <div className="overview-content">
+              <Typography variant="subtitle2" className="overview-content-label" sx={{ opacity: 0.6 }}>
+                DETAILS
+              </Typography>
+              <div className="overview-items-container">
+                <div className="overview-item">
+                  <div className="overview-item-info">
+                    <div>
+                      <Typography variant="body2" className="overview-item-title">
+                        {clickedTransaction.currency.symbol}
+                      </Typography>
+                      <Typography variant="caption" className="overview-item-subtitle">
+                        {clickedTransaction.senderId &&
+                        clickedTransaction.receiverId &&
+                        clickedTransaction.currency.id !== clickedTransaction.receiverCurrency.id
+                          ? `Converted to ${clickedTransaction.receiverCurrency.name}`
+                          : clickedTransaction.currency.name}
+                      </Typography>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Typography variant="body1" className="overview-item-value">
+                      {formatAmount(clickedTransaction.currency, clickedTransaction.amount, privacyMode)}
+                    </Typography>
+                    {clickedTransaction.senderId &&
+                      clickedTransaction.receiverId &&
+                      clickedTransaction.currency.id !== clickedTransaction.receiverCurrency.id && (
+                        <>
+                          <IconLib.MdArrowForwardIos style={{ opacity: 0.5, width: '14px' }} />
+                          <Typography variant="body1" className="overview-item-value">
+                            {formatAmount(
+                              clickedTransaction.receiverCurrency,
+                              clickedTransaction.receiverAmount,
+                              privacyMode,
+                            )}
+                          </Typography>
+                        </>
+                      )}
+                  </div>
+                </div>
+                {/* Category */}
+                {clickedTransaction.category && (
+                  <div className="overview-item">
+                    <div className="overview-item-info">
+                      <Typography variant="body2" className="overview-item-title">
+                        Category
+                      </Typography>
+                    </div>
+                    <Typography variant="body1" className="overview-item-value">
+                      {clickedTransaction.category.name}
+                    </Typography>
+                  </div>
+                )}
+
+                {/* Sender Account */}
+                {clickedTransaction.sender && (
+                  <div className="overview-item">
+                    <div className="overview-item-info">
+                      <Typography variant="body2" className="overview-item-title">
+                        From
+                      </Typography>
+                    </div>
+                    <Typography variant="body1" className="overview-item-value">
+                      {clickedTransaction.sender.name}
+                    </Typography>
+                  </div>
+                )}
+
+                {/* Receiver Account */}
+                {clickedTransaction.receiver && (
+                  <div className="overview-item">
+                    <div className="overview-item-info">
+                      <Typography variant="body2" className="overview-item-title">
+                        To
+                      </Typography>
+                    </div>
+                    <Typography variant="body1" className="overview-item-value">
+                      {clickedTransaction.receiver.name}
+                    </Typography>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <Divider
+              sx={{
+                opacity: 0.1,
+                margin: '8px 0',
+              }}
+            />
+
+            <List className="overview-action-list">
+              {[
+                {
+                  icon: <IconLib.MdEdit />,
+                  label: 'Edit Transaction',
+                  color: '#64B5F6',
+                  description: 'Modify transaction details',
+                  action: (transaction: AugmentedTransaction) => {
+                    navigate(`/transactions/edit/${transaction.id}`)
+                    setClickedTransaction(null)
+                  },
+                  disabled: false,
+                },
+                {
+                  icon: <IconLib.MdDelete />,
+                  label: 'Delete Transaction',
+                  color: '#EF5350',
+                  description: 'Remove this transaction',
+                  action: (_transaction: AugmentedTransaction) => {},
+                  disabled: true,
+                },
+              ]
+                .filter((item) => !item.disabled)
+                .map((item) => (
+                  <ListItem
+                    key={item.label}
+                    component="div"
+                    onClick={() => item.action(clickedTransaction)}
+                    className="overview-action-item"
+                  >
+                    <ListItemIcon className="overview-action-icon" sx={{ color: item.color }}>
+                      {item.icon}
+                    </ListItemIcon>
+                    <ListItemText
+                      primary={item.label}
+                      secondary={item.description}
+                      slotProps={{
+                        primary: { className: 'overview-action-title' },
+                        secondary: { className: 'overview-action-description' },
+                      }}
+                    />
+                  </ListItem>
+                ))}
+            </List>
+          </DialogContent>
+        )}
+      </ContentDialog>
     </ContentWithHeader>
   )
 }
