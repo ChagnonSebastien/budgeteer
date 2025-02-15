@@ -1,4 +1,4 @@
-import { FC, useContext } from 'react'
+import { FC, useContext, memo } from 'react'
 
 import IconCapsule from './IconCapsule'
 import { DrawerContext } from './Menu'
@@ -20,7 +20,7 @@ interface Props {
   onClick: () => void
 }
 
-const TransactionCard: FC<Props> = (props) => {
+const TransactionCard: FC<Props> = memo((props) => {
   const {
     amount,
     currency,
@@ -41,11 +41,11 @@ const TransactionCard: FC<Props> = (props) => {
   const fromMe = from?.isMine ?? false
   const toMe = to?.isMine ?? false
 
-  let gradientColors = ['rgba(128, 128, 128, 0.05)', 'rgba(128, 128, 128, 0.02)']
+  let backgroundColor = 'rgba(128, 128, 128, 0.05)'
   if (fromMe && !toMe) {
-    gradientColors = ['rgba(240, 128, 128, 0.05)', 'rgba(240, 128, 128, 0.02)']
+    backgroundColor = 'rgba(240, 128, 128, 0.05)'
   } else if (!fromMe && toMe) {
-    gradientColors = ['rgba(128, 240, 128, 0.05)', 'rgba(128, 240, 128, 0.02)']
+    backgroundColor = 'rgba(128, 240, 128, 0.05)'
   }
 
   return (
@@ -54,7 +54,7 @@ const TransactionCard: FC<Props> = (props) => {
       style={{
         display: 'flex',
         flexDirection: 'row',
-        background: `linear-gradient(145deg, ${gradientColors[0]} 0%, ${gradientColors[1]} 100%)`,
+        background: backgroundColor,
         borderRadius: '12px',
         fontSize: 'small',
         textWrap: 'nowrap',
@@ -62,20 +62,9 @@ const TransactionCard: FC<Props> = (props) => {
         padding: '.5rem .75rem',
         alignItems: 'center',
         border: '1px solid rgba(255, 255, 255, 0.08)',
-        backdropFilter: 'blur(10px)',
-        boxShadow: '0 2px 12px -4px rgba(0, 0, 0, 0.15)',
-        transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
         cursor: 'pointer',
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.transform = 'translateY(-1px) scale(1.005)'
-        e.currentTarget.style.boxShadow = '0 4px 16px -4px rgba(0, 0, 0, 0.2)'
-        e.currentTarget.style.border = '1px solid rgba(255, 255, 255, 0.12)'
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.transform = 'translateY(0) scale(1)'
-        e.currentTarget.style.boxShadow = '0 2px 12px -4px rgba(0, 0, 0, 0.15)'
-        e.currentTarget.style.border = '1px solid rgba(255, 255, 255, 0.08)'
+        willChange: 'transform',
+        transform: 'translateZ(0)',
       }}
     >
       <div
@@ -116,7 +105,7 @@ const TransactionCard: FC<Props> = (props) => {
           >
             {formatFull(currency, amount, privacyMode)}
             {currency.id === receiverCurrency.id
-              ? ``
+              ? ''
               : ` -> ${formatFull(receiverCurrency, receiverAmount, privacyMode)}`}
           </div>
           <div
@@ -176,6 +165,8 @@ const TransactionCard: FC<Props> = (props) => {
       </div>
     </div>
   )
-}
+})
+
+TransactionCard.displayName = 'TransactionCard'
 
 export default TransactionCard

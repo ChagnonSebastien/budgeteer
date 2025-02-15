@@ -1,7 +1,7 @@
 import { FC, ReactNode } from 'react'
 
 interface ZoneStyling {
-  grow: boolean
+  grow: boolean | number
   scroll: boolean
 }
 
@@ -31,7 +31,7 @@ const SplitView: FC<Props> = (props) => {
           height: split === 'horizontal' ? '100%' : undefined,
           width: split === 'vertical' ? '100%' : undefined,
           overflow: 'hidden',
-          flexGrow: firstZoneStyling.grow ? 1 : 0,
+          flexGrow: typeof firstZoneStyling.grow === 'number' ? firstZoneStyling.grow : (firstZoneStyling.grow ? 1 : 0),
           overflowY: split === 'horizontal' && firstZoneStyling.scroll ? 'scroll' : 'hidden',
           overflowX: split === 'vertical' && firstZoneStyling.scroll ? 'scroll' : 'hidden',
         }}
@@ -43,9 +43,9 @@ const SplitView: FC<Props> = (props) => {
           height: split === 'horizontal' ? '100%' : undefined,
           width: split === 'vertical' ? '100%' : undefined,
           overflow: 'hidden',
-          flexGrow: secondZoneStyling.grow ? 1 : 0,
-          overflowY: split === 'horizontal' && firstZoneStyling.scroll ? 'scroll' : 'hidden',
-          overflowX: split === 'vertical' && firstZoneStyling.scroll ? 'scroll' : 'hidden',
+          flexGrow: typeof secondZoneStyling.grow === 'number' ? secondZoneStyling.grow : (secondZoneStyling.grow ? 1 : 0),
+          overflowY: split === 'horizontal' && secondZoneStyling.scroll ? 'scroll' : 'hidden',
+          overflowX: split === 'vertical' && secondZoneStyling.scroll ? 'scroll' : 'hidden',
         }}
       >
         {second}
