@@ -1,11 +1,19 @@
-import { Button, Snackbar, Stack, TextField, Typography } from '@mui/material'
+import { Stack, TextField, Typography } from '@mui/material'
 import { FC, FormEvent, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import styled from 'styled-components'
 
 import CurrencyPicker from './CurrencyPicker'
+import FormWrapper from './FormWrapper'
 import { IconToolsContext } from './IconTools'
 import { NumberInput, NumberInputFieldState } from './NumberInput'
 import Account from '../domain/model/account'
 import { AccountServiceContext, CurrencyServiceContext } from '../service/ServiceContext'
+
+const IconButton = styled.div`
+  margin: 1rem 0;
+  flex-shrink: 0;
+  cursor: pointer;
+`
 
 interface Props {
   initialAccount?: Account
@@ -92,20 +100,21 @@ const AccountForm: FC<Props> = (props) => {
     }))
   }, [validateAccountName, name])
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-
-    let hasErrors = Object.values(errors).some((value) => !value.isValid)
-    if (!hasErrors) {
+  const isFormValid = useMemo(() => {
+    let valid = Object.values(errors).every((value) => value.isValid)
+    if (valid) {
       for (const state of initialAmounts) {
         if (state.value.errorText !== NoError || state.currencyId === null) {
-          hasErrors = true
+          valid = false
           break
         }
       }
     }
+    return valid
+  }, [errors, initialAmounts])
 
-    if (hasErrors) {
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+    if (!isFormValid) {
       setErrors((prevState) => ({
         accountName: {
           ...prevState.accountName,
@@ -140,162 +149,135 @@ const AccountForm: FC<Props> = (props) => {
   }
 
   return (
-    <form noValidate onSubmit={handleSubmit}>
-      <div style={{ display: 'flex' }}>
-        <div style={{ color: 'gray', margin: '0 1rem', transform: 'translate(0, 0.5rem)' }}>Form</div>
-        <div style={{ borderBottom: '1px grey solid', flexGrow: 1 }} />
-      </div>
-      <Stack spacing="1rem" style={{ padding: '2rem 1rem', border: '1px grey solid', borderTop: 0 }}>
-        <TextField
-          type="text"
-          sx={{ width: '100%' }}
-          label="Account name"
-          variant="standard"
-          placeholder="e.g., Savings"
-          value={name}
-          onChange={(ev) => setName(ev.target.value as string)}
-          helperText={errors.accountName.hasVisited ? errors.accountName.errorText : ''}
-          error={errors.accountName.hasVisited && !!errors.accountName.errorText}
-          onBlur={() =>
-            setErrors((prevState) => ({
-              ...prevState,
-              accountName: {
-                ...prevState.accountName,
-                hasVisited: true,
-              },
-            }))
-          }
-        />
-
-        <TextField
-          type="text"
-          sx={{ width: '100%' }}
-          label="Account Type"
-          variant="standard"
-          placeholder="e.g., TFSA"
-          value={type}
-          helperText={NoError}
-          onChange={(ev) => setType(ev.target.value as string)}
-        />
-
-        <TextField
-          type="text"
-          sx={{ width: '100%' }}
-          label="Financial Institution"
-          variant="standard"
-          placeholder="e.g., National Bank of Canada"
-          value={financialInstitution}
-          helperText={NoError}
-          onChange={(ev) => setFinancialInstitution(ev.target.value as string)}
-        />
-
-        <div>
-          <Typography
-            color="textSecondary"
-            sx={{
-              transformOrigin: 'left center',
-              transform: 'scale(0.75)',
-              maxWidth: 'calc(100% / 0.75)',
-            }}
-          >
-            Starting balances
-          </Typography>
-
-          <div style={{ height: '1rem' }} />
-
-          {initialAmounts.map((i) => (
-            <div key={i.uid} style={{ display: 'flex', alignItems: 'start' }}>
-              <Minus
-                style={{ margin: '1rem 0', flexShrink: 0 }}
-                size="1.5rem"
-                onClick={() => setInitialAmount((prevState) => prevState.filter((state) => state.uid !== i.uid))}
-              />
-
-              <div style={{ width: '1rem', flexShrink: 0 }} />
-
-              <CurrencyPicker
-                errorText={NoError}
-                style={{ width: '100%' }}
-                currencies={[
-                  ...(i.currencyId ? [currencies.find((c) => c.id === i.currencyId)!] : []),
-                  ...availableCurrencies,
-                ]}
-                selectedCurrencyId={i.currencyId}
-                setSelectedCurrencyId={(selected) => {
-                  setInitialAmount((prevState) => {
-                    return prevState.map((ia) => {
-                      if (ia.uid !== i.uid) return ia
-
-                      return {
-                        ...ia,
-                        currencyId: selected,
-                      }
-                    })
-                  })
-                }}
-                labelText="Currency"
-              />
-
-              <div style={{ width: '1rem', flexShrink: 0 }} />
-
-              <NumberInput
-                label="Initial balance"
-                key={i.uid}
-                value={i.value}
-                setValue={(updater) =>
-                  setInitialAmount((prevState) => {
-                    return prevState.map((ia) => {
-                      if (ia.uid !== i.uid) return ia
-
-                      return {
-                        ...ia,
-                        value: updater(ia.value),
-                      }
-                    })
-                  })
-                }
-              />
-            </div>
-          ))}
-
-          {initialAmounts.length < currencies.length && (
-            <Plus
-              style={{ margin: '1rem 0', flexShrink: 0 }}
-              size="1.5rem"
-              onClick={() =>
-                setInitialAmount((prevState) => [
-                  ...prevState,
-                  {
-                    uid: Math.random(),
-                    currencyId: availableCurrencies[0].id,
-                    value: {
-                      value: '',
-                      errorText: 'Amount is required',
-                      hasVisited: false,
-                      isValid: false,
-                    },
-                  },
-                ])
-              }
-            >
-              Add initial amount
-            </Plus>
-          )}
-        </div>
-      </Stack>
-
-      <div style={{ height: '1rem' }} />
-      <Button fullWidth variant="contained" type="submit">
-        {submitText}
-      </Button>
-
-      <Snackbar
-        open={showErrorToast !== ''}
-        message={showErrorToast}
-        autoHideDuration={5000}
-        onClose={() => setShowErrorToast('')}
+    <FormWrapper onSubmit={handleSubmit} submitText={submitText} isValid={isFormValid} errorMessage={showErrorToast}>
+      <TextField
+        type="text"
+        className="w-full"
+        label="Account name"
+        variant="standard"
+        placeholder="e.g., Savings"
+        value={name}
+        onChange={(ev) => setName(ev.target.value as string)}
+        helperText={errors.accountName.hasVisited ? errors.accountName.errorText : ''}
+        error={errors.accountName.hasVisited && !!errors.accountName.errorText}
+        onBlur={() =>
+          setErrors((prevState) => ({
+            ...prevState,
+            accountName: {
+              ...prevState.accountName,
+              hasVisited: true,
+            },
+          }))
+        }
       />
-    </form>
+
+      <TextField
+        type="text"
+        className="w-full"
+        label="Account Type"
+        variant="standard"
+        placeholder="e.g., TFSA"
+        value={type}
+        helperText={NoError}
+        onChange={(ev) => setType(ev.target.value as string)}
+      />
+
+      <TextField
+        type="text"
+        className="w-full"
+        label="Financial Institution"
+        variant="standard"
+        placeholder="e.g., National Bank of Canada"
+        value={financialInstitution}
+        helperText={NoError}
+        onChange={(ev) => setFinancialInstitution(ev.target.value as string)}
+      />
+
+      <div>
+        <Typography color="textSecondary" className="origin-left scale-75" style={{ maxWidth: 'calc(100% / 0.75)' }}>
+          Starting balances
+        </Typography>
+
+        <div className="form-field-spacer" />
+
+        {initialAmounts.map((i) => (
+          <div key={i.uid} className="form-row">
+            <IconButton
+              onClick={() => setInitialAmount((prevState) => prevState.filter((state) => state.uid !== i.uid))}
+            >
+              <Minus className="text-2xl" />
+            </IconButton>
+
+            <div className="form-field-spacer-horizontal" />
+
+            <CurrencyPicker
+              errorText={NoError}
+              style={{ width: '100%' }}
+              currencies={[
+                ...(i.currencyId ? [currencies.find((c) => c.id === i.currencyId)!] : []),
+                ...availableCurrencies,
+              ]}
+              selectedCurrencyId={i.currencyId}
+              setSelectedCurrencyId={(selected) => {
+                setInitialAmount((prevState) => {
+                  return prevState.map((ia) => {
+                    if (ia.uid !== i.uid) return ia
+
+                    return {
+                      ...ia,
+                      currencyId: selected,
+                    }
+                  })
+                })
+              }}
+              labelText="Currency"
+            />
+
+            <div className="form-field-spacer-horizontal" />
+
+            <NumberInput
+              label="Initial balance"
+              key={i.uid}
+              value={i.value}
+              setValue={(updater) =>
+                setInitialAmount((prevState) => {
+                  return prevState.map((ia) => {
+                    if (ia.uid !== i.uid) return ia
+
+                    return {
+                      ...ia,
+                      value: updater(ia.value),
+                    }
+                  })
+                })
+              }
+            />
+          </div>
+        ))}
+
+        {initialAmounts.length < currencies.length && (
+          <IconButton
+            onClick={() =>
+              setInitialAmount((prevState) => [
+                ...prevState,
+                {
+                  uid: Math.random(),
+                  currencyId: availableCurrencies[0].id,
+                  value: {
+                    value: '',
+                    errorText: 'Amount is required',
+                    hasVisited: false,
+                    isValid: false,
+                  },
+                },
+              ])
+            }
+          >
+            <Plus className="text-2xl" />
+          </IconButton>
+        )}
+      </div>
+    </FormWrapper>
   )
 }
 

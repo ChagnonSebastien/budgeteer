@@ -9,6 +9,7 @@ import {
   subMonths,
 } from 'date-fns'
 import { useContext, useEffect, useMemo, useRef, useState } from 'react'
+import styled from 'styled-components'
 
 import { DrawerContext } from './Menu'
 import TransactionCard from './TransactionCard'
@@ -17,6 +18,23 @@ import { formatAmount, formatFull } from '../domain/model/currency'
 import { AugmentedTransaction } from '../domain/model/transaction'
 import MixedAugmentation from '../service/MixedAugmentation'
 import { AccountServiceContext, CurrencyServiceContext } from '../service/ServiceContext'
+
+import '../styles/transaction-list-tailwind.css'
+
+const TransactionListContainer = styled.div`
+  position: relative;
+  margin: auto;
+  height: 100%;
+`
+
+const LoadMoreSentinel = styled.div`
+  height: 100vh;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: -1;
+`
 
 interface Props {
   transactions: AugmentedTransaction[]
@@ -133,30 +151,13 @@ export const TransactionList = (props: Props) => {
     const wrap = (data: { Total: number; date: Date; diff: number }) => {
       const { Total, date, diff } = data
       return (
-        <div
-          key={`monthly-label-${date.getTime()}`}
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'end',
-            padding: '1rem 1rem .5rem',
-          }}
-        >
-          <div
-            style={{
-              alignSelf: 'center',
-              fontWeight: 'bolder',
-            }}
-          >
-            {formatDate(date, 'MMMM yyyy')}
-          </div>
+        <div key={`monthly-label-${date.getTime()}`} className="monthly-label">
+          <div className="monthly-label-title">{formatDate(date, 'MMMM yyyy')}</div>
           {!privacyMode && (
             <div>
-              <div>{formatFull(defaultCurrency, Total, privacyMode)}</div>
+              <div className="monthly-label-total">{formatFull(defaultCurrency, Total, privacyMode)}</div>
               {diff !== 0 && (
-                <div
-                  style={{ display: 'flex', color: diff > 0 ? 'var(--ion-color-success)' : 'var(--ion-color-danger)' }}
-                >
+                <div className={`monthly-label-diff ${diff > 0 ? 'positive' : 'negative'}`}>
                   <div>{diff > 0 ? `+` : `-`}</div>
                   <div>{formatAmount(defaultCurrency, Math.abs(diff), privacyMode)}</div>
                 </div>
@@ -225,19 +226,9 @@ export const TransactionList = (props: Props) => {
   }, [])
 
   return (
-    <div style={{ position: 'relative', margin: 'auto' }}>
+    <TransactionListContainer className="transaction-list-container">
       {displayedItems}
-      <div
-        style={{
-          height: '100vh',
-          position: 'absolute',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          zIndex: -1,
-        }}
-        ref={loadMoreRef}
-      />
-    </div>
+      <LoadMoreSentinel className="load-more-sentinel" ref={loadMoreRef} />
+    </TransactionListContainer>
   )
 }

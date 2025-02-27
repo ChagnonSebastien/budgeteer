@@ -4,6 +4,8 @@ import { FC, useContext, useEffect, useState } from 'react'
 import { CurrencyServiceContext } from '../service/ServiceContext'
 import { darkColors, darkTheme } from '../utils'
 
+import '../styles/graphs-tailwind.css'
+
 interface Props {
   grossIncome: number
   netIncome: number
@@ -91,25 +93,16 @@ const EarningsBreakdownChart: FC<Props> = ({ grossIncome, netIncome, fixedCosts,
   }
 
   return (
-    <div style={{ height: dimensions.height, width: dimensions.width, position: 'relative' }}>
-      <div
-        style={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          textAlign: 'center',
-          zIndex: 1,
-        }}
-      >
+    <div className="relative" style={{ height: dimensions.height, width: dimensions.width }}>
+      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center z-10">
         {clickedCategory ? (
           <>
-            <div style={{ fontWeight: 'bold' }}>{clickedCategory?.replace(/^(Fixed|Variable): /, '')}</div>
+            <div className="font-bold">{clickedCategory?.replace(/^(Fixed|Variable): /, '')}</div>
             <div>{((getCategoryValue(clickedCategory) / grossIncome) * 100).toFixed(1)}¢</div>
           </>
         ) : (
           <>
-            <div style={{ fontWeight: 'bold' }}>1.00$</div>
+            <div className="font-bold">1.00$</div>
           </>
         )}
       </div>

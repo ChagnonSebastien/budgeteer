@@ -1,10 +1,15 @@
 import { TextField } from '@mui/material'
 import { CSSProperties, FC, useMemo, useState } from 'react'
+import styled from 'styled-components'
 
 import ContentDialog from './ContentDialog'
 import ContentWithHeader from './ContentWithHeader'
 import { CurrencyList } from './CurrencyList'
 import Currency from '../domain/model/currency'
+
+const StyledTextField = styled(TextField)<{ $customStyle?: CSSProperties }>`
+  ${(props) => props.$customStyle && { ...props.$customStyle }}
+`
 
 interface Props {
   selectedCurrencyId: number | null
@@ -26,8 +31,8 @@ const CurrencyPicker: FC<Props> = (props) => {
 
   return (
     <>
-      <TextField
-        sx={style}
+      <StyledTextField
+        $customStyle={style}
         error={!!errorText}
         variant="standard"
         label={labelText}

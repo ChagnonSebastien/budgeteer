@@ -1,0 +1,51 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  /* ContentWithHeader styles */
+  .content-with-header-container {
+    @apply h-full w-full flex flex-col;
+  }
+
+  .content-container {
+    @apply flex-grow h-full w-full overflow-x-hidden m-auto;
+  }
+
+  /* SplitView styles */
+  .split-view-container {
+    @apply h-full w-full overflow-hidden flex;
+  }
+
+  .split-view-container.horizontal {
+    @apply flex-row;
+  }
+
+  .split-view-container.vertical {
+    @apply flex-col;
+  }
+
+  .split-view-panel {
+    @apply overflow-hidden;
+  }
+
+  .split-view-panel.horizontal {
+    @apply h-full;
+  }
+
+  .split-view-panel.vertical {
+    @apply w-full;
+  }
+
+  .split-view-panel.scroll-horizontal {
+    @apply overflow-x-scroll overflow-y-hidden;
+  }
+
+  .split-view-panel.scroll-vertical {
+    @apply overflow-y-scroll overflow-x-hidden;
+  }
+
+  .split-view-panel.grow {
+    @apply flex-grow;
+  }
+}

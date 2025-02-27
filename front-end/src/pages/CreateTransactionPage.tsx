@@ -1,12 +1,19 @@
 import { FC, useCallback, useContext, useMemo } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
+import styled from 'styled-components'
 
 import ContentWithHeader from '../components/ContentWithHeader'
 import TransactionForm from '../components/TransactionForm'
 import Transaction from '../domain/model/transaction'
 import { TransactionServiceContext } from '../service/ServiceContext'
 
-const CreateCategoryPage: FC = () => {
+const FormContainer = styled.div`
+  width: 100%;
+  max-width: 35rem;
+  margin: auto;
+`
+
+const CreateTransactionPage: FC = () => {
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -56,11 +63,11 @@ const CreateCategoryPage: FC = () => {
 
   return (
     <ContentWithHeader title={`Record new ${type ?? 'transaction'}`} button="return">
-      <div style={{ padding: '1rem' }}>
+      <FormContainer className="p-4">
         <TransactionForm onSubmit={onSubmit} submitText="Record" type={type} />
-      </div>
+      </FormContainer>
     </ContentWithHeader>
   )
 }
 
-export default CreateCategoryPage
+export default CreateTransactionPage

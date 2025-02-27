@@ -19,8 +19,8 @@ import {
 } from '@mui/material'
 import { format, isAfter, isBefore, isSameDay } from 'date-fns'
 import { FC, useContext, useEffect, useMemo, useState } from 'react'
-import '../styles/overview-modal.css'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import styled from 'styled-components'
 
 import AggregatedDiffChart from '../components/AggregatedDiffChart'
 import ContentDialog from '../components/ContentDialog'
@@ -36,6 +36,41 @@ import { formatAmount } from '../domain/model/currency'
 import { AugmentedTransaction } from '../domain/model/transaction'
 import MixedAugmentation from '../service/MixedAugmentation'
 import { CategoryServiceContext } from '../service/ServiceContext'
+
+import '../styles/overview-modal-tailwind.css'
+
+const GraphSectionContainer = styled.div`
+  max-width: 100vh;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  margin: auto;
+  padding-bottom: 1rem;
+  height: 100%;
+`
+
+const GraphContainer = styled.div`
+  height: 60vh;
+  position: relative;
+  width: 100%;
+`
+
+const ListContainer = styled.div`
+  padding: 0 1rem;
+  width: calc(min(35rem, 100vw));
+  margin: auto;
+  height: 100%;
+  overflow-y: auto;
+`
+
+const SplitViewContainer = styled.div`
+  height: 100%;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`
 
 const TransactionPage: FC = () => {
   const navigate = useNavigate()
@@ -95,17 +130,8 @@ const TransactionPage: FC = () => {
   const splitHorizontal = useMemo(() => contentWidth > 1200, [contentWidth])
 
   const graphSection = (
-    <div
-      style={{
-        maxWidth: '100vh',
-        width: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        margin: 'auto',
-        paddingBottom: '1rem',
-      }}
-    >
-      <div style={{ height: `60vh`, position: 'relative' }}>
+    <GraphSectionContainer>
+      <GraphContainer>
         {graphType === 'line' ? (
           <AggregatedDiffChart
             transactions={filteredTransaction}
@@ -130,26 +156,15 @@ const TransactionPage: FC = () => {
             }}
           />
         )}
-      </div>
+      </GraphContainer>
 
       <Box sx={{ padding: '0 1rem' }}>{filterOverview}</Box>
-    </div>
+    </GraphSectionContainer>
   )
 
   const listSection = (
-    <div
-      style={{
-        width: '100%',
-        background: 'rgba(255, 255, 255, 0.02)',
-      }}
-    >
-      <div
-        style={{
-          padding: '0 1rem',
-          width: 'calc(min(35rem, 100vw))',
-          margin: 'auto',
-        }}
-      >
+    <div className="w-full bg-white/[0.02] h-full overflow-hidden">
+      <ListContainer>
         <TransactionList
           transactions={filteredTransaction}
           onClick={(transactionId) => {
@@ -160,7 +175,7 @@ const TransactionPage: FC = () => {
           }}
           viewAsAccounts={accountFilter === null ? undefined : accountFilter}
         />
-      </div>
+      </ListContainer>
     </div>
   )
 
@@ -274,27 +289,16 @@ const TransactionPage: FC = () => {
 
       {splitHorizontal ? (
         <SplitView
-          first={
-            <div
-              style={{
-                height: '100%',
-                width: '100%',
-                display: 'flex',
-                alignItems: 'center',
-              }}
-            >
-              {graphSection}
-            </div>
-          }
+          first={<SplitViewContainer>{graphSection}</SplitViewContainer>}
           second={listSection}
           split="horizontal"
           firstZoneStyling={{ grow: true, scroll: true }}
           secondZoneStyling={{ grow: false, scroll: true }}
         />
       ) : (
-        <div style={{ height: '100%', display: 'flex', flexDirection: 'column', overflowY: 'scroll' }}>
+        <div className="h-full flex flex-col overflow-y-auto">
           {graphSection}
-          {listSection}
+          <div className="flex-shrink-0">{listSection}</div>
         </div>
       )}
 
@@ -308,7 +312,7 @@ const TransactionPage: FC = () => {
         }}
       >
         {clickedTransaction !== null && (
-          <DialogContent sx={{ padding: 0 }} className="overview-modal">
+          <DialogContent sx={{ padding: 0 }} className="overview-modal-content">
             <div className="overview-header">
               <div className="overview-header-glow-1" />
               <div className="overview-header-glow-2" />
@@ -323,13 +327,13 @@ const TransactionPage: FC = () => {
                 {clickedTransaction.note || 'No description'}
               </Typography>
               <Typography variant="body2" className="overview-header-subtitle">
-                <IconLib.MdCalendarToday style={{ opacity: 0.5 }} />
+                <IconLib.MdCalendarToday className="opacity-50" />
                 {format(clickedTransaction.date, 'PPP')}
               </Typography>
             </div>
 
             <div className="overview-content">
-              <Typography variant="subtitle2" className="overview-content-label" sx={{ opacity: 0.6 }}>
+              <Typography variant="subtitle2" className="overview-content-label opacity-60">
                 DETAILS
               </Typography>
               <div className="overview-items-container">
@@ -348,7 +352,7 @@ const TransactionPage: FC = () => {
                       </Typography>
                     </div>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div className="flex items-center gap-2">
                     <Typography variant="body1" className="overview-item-value">
                       {formatAmount(clickedTransaction.currency, clickedTransaction.amount, privacyMode)}
                     </Typography>
@@ -356,7 +360,7 @@ const TransactionPage: FC = () => {
                       clickedTransaction.receiverId &&
                       clickedTransaction.currency.id !== clickedTransaction.receiverCurrency.id && (
                         <>
-                          <IconLib.MdArrowForwardIos style={{ opacity: 0.5, width: '14px' }} />
+                          <IconLib.MdArrowForwardIos className="opacity-50 w-3.5" />
                           <Typography variant="body1" className="overview-item-value">
                             {formatAmount(
                               clickedTransaction.receiverCurrency,
@@ -412,12 +416,7 @@ const TransactionPage: FC = () => {
               </div>
             </div>
 
-            <Divider
-              sx={{
-                opacity: 0.1,
-                margin: '8px 0',
-              }}
-            />
+            <Divider className="opacity-10 my-2" />
 
             <List className="overview-action-list">
               {[

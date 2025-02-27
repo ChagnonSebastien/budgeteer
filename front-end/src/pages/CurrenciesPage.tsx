@@ -15,17 +15,52 @@ import {
 import { ResponsiveLine } from '@nivo/line'
 import { FC, useContext, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import styled from 'styled-components'
 
 import ContentDialog from '../components/ContentDialog'
 import ContentWithHeader from '../components/ContentWithHeader'
-import '../styles/list-pages.css'
-import '../styles/overview-modal.css'
 import { CurrencyList } from '../components/CurrencyList'
 import { IconToolsContext } from '../components/IconTools'
 import Currency, { ExchangeRate } from '../domain/model/currency'
 import MixedAugmentation from '../service/MixedAugmentation'
 import { CurrencyServiceContext } from '../service/ServiceContext'
+import '../styles/list-pages-tailwind.css'
+import '../styles/overview-modal-tailwind.css'
 import { darkTheme } from '../utils'
+
+const PageContainer = styled.div`
+  height: 100%;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  max-width: 100%;
+`
+
+const ListContentContainer = styled.div`
+  max-width: 50rem;
+  flex-grow: 1;
+`
+
+const ScrollAreaContainer = styled.div`
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+`
+
+const FadingDivider = styled.div<{ opacity: number }>`
+  height: 1rem;
+  border-top: 1px solid transparent;
+  border-image: linear-gradient(to right, transparent, #fff4 20%, #fff4 80%, transparent) 1;
+  background: radial-gradient(ellipse 100% 100% at 50% 0%, #fff2 0%, #fff0 50%, transparent 100%);
+  opacity: ${(props) => props.opacity};
+`
+
+const ChartContainer = styled.div`
+  height: 200px;
+  margin-top: 16px;
+`
 
 const CurrenciesPage: FC = () => {
   const navigate = useNavigate()
@@ -124,20 +159,11 @@ const CurrenciesPage: FC = () => {
       contentMaxWidth="100%"
       contentOverflowY="hidden"
     >
-      <div style={{ height: '100%', maxWidth: '100%', display: 'flex', justifyContent: 'center' }} ref={setContentRef}>
-        <div style={{ maxWidth: '50rem', flexGrow: 1 }}>
-          <div
-            style={{
-              width: '100%',
-              position: 'relative',
-              height: `${contentHeight - optionsHeight}px`,
-              overflow: 'hidden',
-              display: 'flex',
-              flexDirection: 'column',
-            }}
-          >
+      <PageContainer ref={setContentRef}>
+        <ListContentContainer>
+          <ScrollAreaContainer style={{ height: `${contentHeight - optionsHeight}px` }}>
             {currencies.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '2rem 0' }}>
+              <div className="text-center py-8">
                 <Typography color="text.secondary">No currencies added yet</Typography>
               </div>
             ) : (
@@ -149,28 +175,20 @@ const CurrenciesPage: FC = () => {
                 filterable={{ filter, setFilter }}
               />
             )}
-          </div>
+          </ScrollAreaContainer>
           <div
             ref={(ref) => {
               if (ref !== null) setOptionsHeight(ref.scrollHeight)
             }}
-            style={{ overflow: 'hidden' }}
+            className="overflow-hidden"
           >
-            <div
-              style={{
-                height: '1rem',
-                borderTop: '1px solid transparent',
-                borderImage: 'linear-gradient(to right, transparent, #fff4 20%, #fff4 80%, transparent) 1',
-                background: 'radial-gradient(ellipse 100% 100% at 50% 0%, #fff2 0%, #fff0 50%, transparent 100%)',
-                opacity: scrollProgress ?? 1,
-              }}
-            />
+            <FadingDivider opacity={scrollProgress ?? 1} />
             <Button fullWidth variant="contained" onClick={() => navigate('/currencies/new')}>
               New
             </Button>
           </div>
-        </div>
-      </div>
+        </ListContentContainer>
+      </PageContainer>
 
       <ContentDialog
         open={clickedCurrency !== null}
@@ -182,7 +200,7 @@ const CurrenciesPage: FC = () => {
         }}
       >
         {clickedCurrency !== null && defaultCurrency && (
-          <DialogContent sx={{ padding: 0 }} className="overview-modal">
+          <DialogContent sx={{ padding: 0 }} className="overview-modal-content">
             <div className="overview-header">
               <div className="overview-header-glow-1" />
               <div className="overview-header-glow-2" />
@@ -193,7 +211,7 @@ const CurrenciesPage: FC = () => {
                 {clickedCurrency.name}
               </Typography>
               <Typography variant="body2" className="overview-header-subtitle">
-                <IconLib.BsCurrencyExchange style={{ opacity: 0.5 }} />
+                <IconLib.BsCurrencyExchange className="opacity-50" />
                 {clickedCurrency.symbol}
               </Typography>
             </div>
@@ -202,7 +220,7 @@ const CurrenciesPage: FC = () => {
               <Typography variant="subtitle2" className="overview-content-label">
                 EXCHANGE RATE HISTORY
               </Typography>
-              <div style={{ height: 200, marginTop: 16 }}>
+              <ChartContainer>
                 <ResponsiveLine
                   margin={{ top: 0, right: 0, bottom: 30, left: 40 }}
                   data={[
@@ -237,10 +255,10 @@ const CurrenciesPage: FC = () => {
                   enableArea={true}
                   areaOpacity={0.1}
                 />
-              </div>
+              </ChartContainer>
             </div>
 
-            <Divider sx={{ opacity: 0.1, margin: '8px 0' }} />
+            <Divider className="opacity-10 my-2" />
 
             <List className="overview-action-list">
               {[

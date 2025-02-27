@@ -19,6 +19,8 @@ import MixedAugmentation from '../service/MixedAugmentation'
 import { AccountServiceContext, CurrencyServiceContext } from '../service/ServiceContext'
 import { darkColors, darkTheme } from '../utils'
 
+import '../styles/graphs-tailwind.css'
+
 export type GroupType = 'financialInstitution' | 'type' | 'account' | 'none'
 
 interface Props {
@@ -388,7 +390,7 @@ const AccountsBalanceChart: FC<Props> = (props) => {
                     {!privacyMode && (
                       <>
                         <div>:</div>
-                        <div style={{ minWidth: '1rem', flexGrow: 1 }} />
+                        <div className="min-w-4 flex-grow" />
                         <div className="graph-tooltip-value">{s.formattedValue}</div>
                       </>
                     )}

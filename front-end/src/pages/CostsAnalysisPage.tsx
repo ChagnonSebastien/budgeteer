@@ -1,6 +1,7 @@
 import { IconButton } from '@mui/material'
 import { differenceInYears, startOfDay } from 'date-fns'
 import { FC, useContext, useEffect, useMemo, useState } from 'react'
+import styled from 'styled-components'
 
 import ContentWithHeader from '../components/ContentWithHeader'
 import CostsAnalysisSetup from '../components/CostsAnalysisSetup'
@@ -11,7 +12,23 @@ import { formatFull } from '../domain/model/currency'
 import MixedAugmentation from '../service/MixedAugmentation'
 import { CategoryServiceContext, CurrencyServiceContext } from '../service/ServiceContext'
 import UserStore from '../UserStore'
-import './CostsAnalysisPage.css'
+import '../styles/costs-analysis-page-tailwind.css'
+
+const ContentContainer = styled.div<{ viewType: 'table' | 'chart' }>`
+  height: ${(props) => (props.viewType === 'chart' ? '100%' : 'auto')};
+  padding: ${(props) => (props.viewType === 'chart' ? 0 : '1rem')};
+
+  ${(props) =>
+    props.viewType === 'chart' &&
+    `
+    display: flex;
+    justify-content: center;
+    
+    & > div {
+      max-width: 100vh;
+    }
+  `}
+`
 
 const userStore = new UserStore(localStorage)
 
@@ -216,7 +233,7 @@ const CostsAnalysisPage: FC = () => {
       contentPadding="0"
       setContentRef={setContentRef}
     >
-      <div style={{ height: viewType === 'chart' ? '100%' : 'auto', padding: viewType === 'chart' ? 0 : '1rem' }}>
+      <ContentContainer viewType={viewType}>
         <CostsAnalysisSetup
           open={showSetup || showOptions}
           grossIncome={grossIncome}
@@ -361,7 +378,7 @@ const CostsAnalysisPage: FC = () => {
             </tbody>
           </table>
         )}
-      </div>
+      </ContentContainer>
     </ContentWithHeader>
   )
 }

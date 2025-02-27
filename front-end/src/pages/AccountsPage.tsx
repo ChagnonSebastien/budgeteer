@@ -13,8 +13,8 @@ import {
   Typography,
 } from '@mui/material'
 import { FC, useContext, useEffect, useState } from 'react'
-import '../styles/overview-modal.css'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import styled from 'styled-components'
 
 import { AccountList } from '../components/AccountList'
 import ContentDialog from '../components/ContentDialog'
@@ -25,6 +25,37 @@ import Account from '../domain/model/account'
 import { formatAmount } from '../domain/model/currency'
 import MixedAugmentation from '../service/MixedAugmentation'
 import { AccountServiceContext, CurrencyServiceContext } from '../service/ServiceContext'
+import '../styles/list-pages-tailwind.css'
+import '../styles/overview-modal-tailwind.css'
+
+const PageContainer = styled.div`
+  height: 100%;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  max-width: 100%;
+`
+
+const ListContentContainer = styled.div`
+  max-width: 50rem;
+  flex-grow: 1;
+`
+
+const ScrollAreaContainer = styled.div`
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+`
+
+const FadingDivider = styled.div<{ opacity: number }>`
+  height: 1rem;
+  border-top: 1px solid transparent;
+  border-image: linear-gradient(to right, transparent, #fff4 20%, #fff4 80%, transparent) 1;
+  background: radial-gradient(ellipse 100% 100% at 50% 0%, #fff2 0%, #fff0 50%, transparent 100%);
+  opacity: ${(props) => props.opacity};
+`
 
 const AccountsPage: FC = () => {
   const navigate = useNavigate()
@@ -112,18 +143,9 @@ const AccountsPage: FC = () => {
         </>
       }
     >
-      <div style={{ height: '100%', maxWidth: '100%', display: 'flex', justifyContent: 'center' }} ref={setContentRef}>
-        <div style={{ maxWidth: '50rem', flexGrow: 1 }}>
-          <div
-            style={{
-              width: '100%',
-              position: 'relative',
-              height: `${contentHeight - optionsHeight}px`,
-              overflow: 'hidden',
-              display: 'flex',
-              flexDirection: 'column',
-            }}
-          >
+      <PageContainer ref={setContentRef}>
+        <ListContentContainer>
+          <ScrollAreaContainer style={{ height: `${contentHeight - optionsHeight}px` }}>
             <AccountList
               accounts={accounts}
               onSelect={(account) => setClickedAccount(account)}
@@ -134,28 +156,20 @@ const AccountsPage: FC = () => {
               filterable={{ filter, setFilter }}
               onScrollProgress={setScrollProgress}
             />
-          </div>
+          </ScrollAreaContainer>
           <div
             ref={(ref) => {
               if (ref !== null) setOptionsHeight(ref.scrollHeight)
             }}
-            style={{ overflow: 'hidden' }}
+            className="overflow-hidden"
           >
-            <div
-              style={{
-                height: '1rem',
-                borderTop: '1px solid transparent',
-                borderImage: 'linear-gradient(to right, transparent, #fff4 20%, #fff4 80%, transparent) 1',
-                background: 'radial-gradient(ellipse 100% 100% at 50% 0%, #fff2 0%, #fff0 50%, transparent 100%)',
-                opacity: scrollProgress,
-              }}
-            />
+            <FadingDivider opacity={scrollProgress} />
             <Button fullWidth variant="contained" onClick={() => navigate('/accounts/new')}>
               New
             </Button>
           </div>
-        </div>
-      </div>
+        </ListContentContainer>
+      </PageContainer>
 
       <ContentDialog
         open={clickedAccount !== null}
@@ -167,7 +181,7 @@ const AccountsPage: FC = () => {
         }}
       >
         {clickedAccount !== null && (
-          <DialogContent sx={{ padding: 0 }} className="overview-modal">
+          <DialogContent sx={{ padding: 0 }} className="overview-modal-content">
             <div className="overview-header">
               <div className="overview-header-glow-1" />
               <div className="overview-header-glow-2" />
@@ -179,7 +193,7 @@ const AccountsPage: FC = () => {
               </Typography>
               {clickedAccount.financialInstitution && (
                 <Typography variant="body2" className="overview-header-subtitle">
-                  <IconLib.MdAccountBalance style={{ opacity: 0.5 }} />
+                  <IconLib.MdAccountBalance className="opacity-50" />
                   {clickedAccount.financialInstitution}
                 </Typography>
               )}
@@ -212,12 +226,7 @@ const AccountsPage: FC = () => {
               </div>
             )}
 
-            <Divider
-              sx={{
-                opacity: 0.1,
-                margin: '8px 0',
-              }}
-            />
+            <Divider className="opacity-10 my-2" />
 
             <List className="overview-action-list">
               {[

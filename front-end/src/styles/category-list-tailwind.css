@@ -1,0 +1,94 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  .category-list-item {
+    @apply rounded-lg transition-all duration-200 ease-in-out border-l-3 border-l-transparent my-0.5;
+  }
+
+  .category-list-item:hover {
+    @apply bg-white/[0.08];
+  }
+
+  .category-list-item.selected {
+    @apply bg-[rgba(200,75,49,0.12)] border-l-[#C84B31];
+  }
+
+  .category-list-item.selected:hover {
+    @apply bg-[rgba(200,75,49,0.16)];
+  }
+
+  .category-content {
+    @apply flex items-stretch rounded-xl overflow-hidden;
+  }
+
+  .expand-button {
+    @apply w-10 flex items-center justify-center cursor-pointer transition-colors duration-200;
+  }
+
+  .expand-button:hover {
+    @apply bg-white/[0.04];
+  }
+
+  .category-main {
+    @apply flex items-center flex-grow py-2 pr-2;
+  }
+
+  .category-icon-container {
+    @apply flex items-center mr-4;
+  }
+
+  .category-name {
+    @apply text-[0.95rem] text-white/[0.87] flex-grow;
+  }
+
+  .category-edit-button {
+    @apply opacity-0 transition-opacity duration-200 mr-2;
+  }
+
+  .category-list-item:hover .category-edit-button,
+  .category-list-item .category-edit-button[style*="opacity: 1"] {
+    @apply opacity-100;
+  }
+
+  .rotatable {
+    @apply transition-all duration-200 ease-in-out opacity-70 text-[1.1rem];
+  }
+
+  .rotatable.open {
+    @apply rotate-90;
+  }
+
+  .category-list-item.has-selected-child {
+    @apply bg-[rgba(200,75,49,0.04)];
+  }
+
+  .category-list-item.has-selected-child > .category-content .expand-button .rotatable {
+    @apply text-[#C84B31] opacity-100;
+  }
+
+  .category-list-item.has-selected-child:hover {
+    @apply bg-[rgba(200,75,49,0.08)];
+  }
+
+  .category-list-item.selected {
+    @apply bg-[rgba(200,75,49,0.12)] border-l-[#C84B31];
+  }
+
+  .collapsible {
+    @apply max-h-0 overflow-hidden transition-all duration-300 ease-in-out opacity-0;
+  }
+
+  .collapsible.open {
+    @apply max-h-none overflow-visible opacity-100;
+  }
+
+  .nested-category {
+    @apply ml-6 relative pl-2;
+  }
+
+  .nested-category::before {
+    @apply content-[''] absolute left-0 top-0 bottom-0 w-px bg-white/[0.12] rounded-sm;
+  }
+}

@@ -1,9 +1,20 @@
 import { Button, DialogActions, DialogContent, DialogTitle, TextField } from '@mui/material'
 import { FC, useContext, useMemo, useState } from 'react'
+import styled from 'styled-components'
 
 import { AccountList } from './AccountList'
 import ContentDialog from './ContentDialog'
 import { AccountServiceContext } from '../service/ServiceContext'
+
+const FullWidthTextField = styled(TextField)`
+  width: 100%;
+`
+
+const DialogContentContainer = styled(DialogContent)`
+  height: 70vh;
+  overflow: hidden;
+  padding: 0 20px;
+`
 
 interface Props {
   valueText: string
@@ -28,8 +39,7 @@ const AccountPicker: FC<Props> = (props) => {
 
   return (
     <>
-      <TextField
-        sx={{ width: '100%' }}
+      <FullWidthTextField
         variant="standard"
         helperText={errorText}
         type="text"
@@ -40,10 +50,11 @@ const AccountPicker: FC<Props> = (props) => {
           e.target.blur()
           setShowModal(true)
         }}
+        className="w-full"
       />
       <ContentDialog open={showModal} onClose={() => setShowModal(false)}>
         <DialogTitle>Select Account</DialogTitle>
-        <DialogContent style={{ height: '70vh', overflow: 'hidden', padding: '0 20px' }}>
+        <DialogContentContainer>
           <AccountList
             filterable={{ filter, setFilter }}
             accounts={accounts}
@@ -65,7 +76,7 @@ const AccountPicker: FC<Props> = (props) => {
             selected={selected}
             showZeroBalances={true}
           />
-        </DialogContent>
+        </DialogContentContainer>
         <DialogActions>
           <Button onClick={() => setShowModal(false)}>Close</Button>
           {allowNew && typeof onAccountSelected !== 'undefined' && (

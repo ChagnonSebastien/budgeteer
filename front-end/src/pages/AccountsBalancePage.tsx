@@ -1,12 +1,55 @@
-import { alpha, Box, MenuItem, TextField, Typography } from '@mui/material'
-import '../styles/graphs.css'
-import { FC, Suspense, useEffect, useState } from 'react'
+import {
+  alpha,
+  Box,
+  FormControl,
+  FormControlLabel,
+  FormLabel,
+  MenuItem,
+  Radio,
+  RadioGroup,
+  TextField,
+  Typography,
+} from '@mui/material'
+import '../styles/graphs-tailwind.css'
+import { FC, Suspense, useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
+import styled from 'styled-components'
 
 import AccountsBalanceChart, { GroupType } from '../components/AccountsBalanceChart'
 import ContentWithHeader from '../components/ContentWithHeader'
+import SplitView from '../components/SplitView'
 import useTransactionFilter from '../components/useTransactionFilter'
 import Account from '../domain/model/account'
+
+const GraphPageContainer = styled.div`
+  height: 100%;
+  width: 100%;
+`
+
+const GraphContainer = styled.div<{ height: number }>`
+  height: ${(props) => `${props.height}px`};
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 1rem 0 1rem 0;
+
+  & > div {
+    max-width: 100vh;
+  }
+`
+
+const ControlsContainer = styled.div<{ $splitView?: boolean }>`
+  padding: 1rem 2rem;
+  border-top: ${(props) => (props.$splitView ? 'none' : '1px solid rgba(255, 255, 255, 0.1)')};
+`
+
+const SplitViewContainer = styled.div`
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+`
 
 const AccountsBalancePage: FC = () => {
   const {
@@ -30,14 +73,19 @@ const AccountsBalancePage: FC = () => {
 
   const [optionsHeight, setOptionsHeight] = useState(140)
 
+  // Ref for the controls container to measure its height
+  const [controlsRef, setControlsRef] = useState<HTMLDivElement | null>(null)
+
   const [contentRef, setContentRef] = useState<HTMLDivElement | null>(null)
   const [contentHeight, setContentHeight] = useState(600)
+  const [contentWidth, setContentWidth] = useState(600)
   useEffect(() => {
     if (contentRef === null) return
     const ref = contentRef
 
     const callback = () => {
       setContentHeight(ref.clientHeight)
+      setContentWidth(ref.clientWidth)
     }
     callback()
 
@@ -45,21 +93,12 @@ const AccountsBalancePage: FC = () => {
     return () => window.removeEventListener('resize', callback)
   }, [contentRef])
 
-  return (
-    <ContentWithHeader
-      title="Balances"
-      button="menu"
-      contentMaxWidth="100%"
-      contentOverflowY="hidden"
-      contentPadding="1rem 0 0 0"
-    >
-      <div className="graph-page" ref={setContentRef}>
-        <div
-          className="graph-container"
-          style={{
-            height: `${contentHeight - optionsHeight}px`,
-          }}
-        >
+  const splitHorizontal = useMemo(() => contentWidth > 1200, [contentWidth])
+
+  const graphSection = (
+    <SplitViewContainer>
+      <div className="flex flex-col w-full">
+        <GraphContainer height={splitHorizontal ? contentHeight - 100 : contentHeight - optionsHeight}>
           <Suspense
             fallback={
               <Box
@@ -85,17 +124,84 @@ const AccountsBalancePage: FC = () => {
               spread={scale === 'relative'}
             />
           </Suspense>
-        </div>
+        </GraphContainer>
 
-        <div
-          className="graph-controls"
-          ref={(element: HTMLDivElement | null) => {
-            if (element) setOptionsHeight(element.scrollHeight)
-          }}
-        >
-          <div className="graph-controls-group">
-            <Box sx={{ mb: 2 }}>{filterOverview}</Box>
+        {splitHorizontal && <Box sx={{ padding: '0 1rem' }}>{filterOverview}</Box>}
+      </div>
+    </SplitViewContainer>
+  )
 
+  const controlsSection = (
+    <div className={`w-full h-full ${splitHorizontal ? 'bg-white/[0.02] overflow-auto' : ''}`}>
+      <ControlsContainer
+        $splitView={splitHorizontal}
+        className={!splitHorizontal ? 'bg-white/[0.02]' : ''}
+        ref={(element: HTMLDivElement | null) => {
+          if (element && !splitHorizontal) setOptionsHeight(element.scrollHeight)
+          setControlsRef(element)
+        }}
+      >
+        <div className="graph-controls-group">
+          {!splitHorizontal && <Box sx={{ mb: 2 }}>{filterOverview}</Box>}
+
+          {splitHorizontal ? (
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4, mt: 2 }}>
+              <FormControl>
+                <FormLabel id="group-by-label" sx={{ color: 'text.secondary', mb: 1 }}>
+                  Group by
+                </FormLabel>
+                <RadioGroup
+                  aria-labelledby="group-by-label"
+                  value={groupBy}
+                  onChange={(event) => {
+                    query.set('groupBy', event.target.value)
+                    navigate(`${location.pathname}?${query.toString()}`)
+                  }}
+                >
+                  <FormControlLabel value="none" control={<Radio />} label="None" />
+                  <FormControlLabel value="account" control={<Radio />} label="Account" />
+                  <FormControlLabel value="financialInstitution" control={<Radio />} label="Financial Institution" />
+                  <FormControlLabel value="type" control={<Radio />} label="Type" />
+                </RadioGroup>
+              </FormControl>
+
+              <FormControl>
+                <FormLabel id="interests-view-label" sx={{ color: 'text.secondary', mb: 1 }}>
+                  Interests View
+                </FormLabel>
+                <RadioGroup
+                  aria-labelledby="interests-view-label"
+                  value={splitInvestments}
+                  onChange={(event) => {
+                    query.set('splitInvestments', event.target.value)
+                    navigate(`${location.pathname}?${query.toString()}`)
+                  }}
+                >
+                  <FormControlLabel value="both" control={<Radio />} label="Merge" />
+                  <FormControlLabel value="split" control={<Radio />} label="Split Interests" />
+                  <FormControlLabel value="bookValue" control={<Radio />} label="Only Book Value" />
+                  <FormControlLabel value="interests" control={<Radio />} label="Only Interests" />
+                </RadioGroup>
+              </FormControl>
+
+              <FormControl>
+                <FormLabel id="scale-label" sx={{ color: 'text.secondary', mb: 1 }}>
+                  Scale
+                </FormLabel>
+                <RadioGroup
+                  aria-labelledby="scale-label"
+                  value={scale}
+                  onChange={(event) => {
+                    query.set('scale', event.target.value)
+                    navigate(`${location.pathname}?${query.toString()}`)
+                  }}
+                >
+                  <FormControlLabel value="absolute" control={<Radio />} label="Absolute" />
+                  <FormControlLabel value="relative" control={<Radio />} label="Relative (%)" />
+                </RadioGroup>
+              </FormControl>
+            </Box>
+          ) : (
             <Box
               sx={{
                 display: 'grid',
@@ -176,9 +282,37 @@ const AccountsBalancePage: FC = () => {
                 </TextField>
               </Box>
             </Box>
-          </div>
+          )}
         </div>
-      </div>
+      </ControlsContainer>
+    </div>
+  )
+
+  return (
+    <ContentWithHeader
+      title="Balances"
+      button="menu"
+      contentMaxWidth="100%"
+      contentOverflowY="hidden"
+      contentPadding="0"
+      setContentRef={setContentRef}
+    >
+      <GraphPageContainer>
+        {splitHorizontal ? (
+          <SplitView
+            first={graphSection}
+            second={controlsSection}
+            split="horizontal"
+            firstZoneStyling={{ grow: true, scroll: true }}
+            secondZoneStyling={{ grow: false, scroll: true }}
+          />
+        ) : (
+          <div className="h-full flex flex-col overflow-hidden">
+            {graphSection}
+            {controlsSection}
+          </div>
+        )}
+      </GraphPageContainer>
     </ContentWithHeader>
   )
 }

@@ -21,6 +21,8 @@ import MixedAugmentation from '../service/MixedAugmentation'
 import { CategoryServiceContext, CurrencyServiceContext } from '../service/ServiceContext'
 import { darkTheme } from '../utils'
 
+import '../styles/graphs-tailwind.css'
+
 export type grouping = 'years' | 'quarters' | 'months'
 
 interface Props {
@@ -165,30 +167,13 @@ const TrendsChart: FC<Props> = (props) => {
             : formatAmount(defaultCurrency, i, privacyMode).slice(0, -((defaultCurrency?.decimalPoints ?? 2) + 1)),
       }}
       tooltip={(props) => (
-        <div
-          style={{
-            padding: '0.5rem 0.75rem',
-            background: 'rgba(0, 0, 0, 0.85)',
-            borderRadius: '4px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '4px',
-          }}
-        >
-          <div
-            style={{
-              color: 'rgba(255, 255, 255, 0.7)',
-              fontSize: '0.9rem',
-            }}
-          >
-            {label(new Date(props.indexValue))}
-          </div>
+        <div className="p-2 px-3 bg-black/[0.85] rounded flex flex-col gap-1">
+          <div className="text-white/70 text-[0.9rem]">{label(new Date(props.indexValue))}</div>
           {!privacyMode && (
             <div
+              className="text-[1.1rem] font-medium"
               style={{
                 color: props.value! < 0 ? theme.palette.error.light : theme.palette.success.light,
-                fontSize: '1.1rem',
-                fontWeight: 500,
               }}
             >
               {formatFull(defaultCurrency, props.value, privacyMode)}

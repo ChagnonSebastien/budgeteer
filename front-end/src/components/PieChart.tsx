@@ -9,6 +9,8 @@ import MixedAugmentation from '../service/MixedAugmentation'
 import { CategoryServiceContext, CurrencyServiceContext } from '../service/ServiceContext'
 import { darkColors, darkTheme } from '../utils'
 
+import '../styles/graphs-tailwind.css'
+
 type LocalTree = {
   name: string
   loc: number | undefined
@@ -143,7 +145,7 @@ const TransactionsPieChart: FC<Props> = (props) => {
   const sunburst = useMemo(() => {
     if (defaultCurrency === null || typeof data === 'undefined') {
       return (
-        <div style={{ height: '100%', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div className="h-full w-full flex items-center justify-center">
           <h4>No transaction matches your filters</h4>
         </div>
       )
@@ -151,20 +153,10 @@ const TransactionsPieChart: FC<Props> = (props) => {
 
     return (
       <>
-        <div
-          style={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-          }}
-        >
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center">
           {clickedCategory ? (
             <>
-              <div style={{ fontWeight: 'bold' }}>{clickedCategory.name}</div>
+              <div className="font-bold">{clickedCategory.name}</div>
               {!privacyMode && <div>{formatFull(defaultCurrency, getCategoryTotal(clickedCategory), privacyMode)}</div>}
               <div>
                 {Math.abs(
@@ -177,7 +169,7 @@ const TransactionsPieChart: FC<Props> = (props) => {
             </>
           ) : (
             <>
-              <div style={{ fontWeight: 'bold' }}>Total {showIncomes ? 'Income' : 'Expenses'}</div>
+              <div className="font-bold">Total {showIncomes ? 'Income' : 'Expenses'}</div>
               {!privacyMode && (
                 <div>
                   {formatFull(
@@ -218,15 +210,8 @@ const TransactionsPieChart: FC<Props> = (props) => {
           arcLabelsSkipAngle={5}
           arcLabelsTextColor="white"
           tooltip={({ id, value }) => (
-            <div
-              style={{
-                backgroundColor: '#fff',
-                color: 'darkslategrey',
-                padding: '0.5rem',
-                boxShadow: '0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19)',
-              }}
-            >
-              <div style={{ fontWeight: 'bold' }}>{id}</div>
+            <div className="bg-white text-slate-700 p-2 shadow-lg">
+              <div className="font-bold">{id}</div>
               {!privacyMode && <div>{formatFull(defaultCurrency, value, privacyMode)}</div>}
             </div>
           )}

@@ -1,5 +1,6 @@
 import { Button, CircularProgress } from '@mui/material'
 import { Fragment, useContext, useEffect, useRef, useState } from 'react'
+import styled from 'styled-components'
 
 import IconCapsule from './IconCapsule'
 import { IconToolsContext } from './IconTools'
@@ -7,7 +8,23 @@ import Category from '../domain/model/category'
 import { CategoryServiceContext } from '../service/ServiceContext'
 import { doNothing } from '../utils'
 
-import './CategoryList.css'
+import '../styles/category-list-tailwind.css'
+
+const CategoryListContainer = styled.div`
+  min-width: 20rem;
+  max-width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+`
+
+const ScrollableContent = styled.div`
+  overflow-y: auto;
+  flex-grow: 1;
+  padding-bottom: 4rem;
+  position: relative;
+`
 
 interface Props {
   categories?: Category[]
@@ -208,22 +225,10 @@ export const CategoryList = (props: Props) => {
   }
 
   return (
-    <div
-      style={{
-        minWidth: '20rem',
-        maxWidth: '100%',
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        position: 'relative',
-      }}
-    >
-      <div
-        ref={scrollContainerRef}
-        style={{ overflowY: 'auto', flexGrow: 1, paddingBottom: '4rem', position: 'relative' }}
-      >
+    <CategoryListContainer>
+      <ScrollableContent ref={scrollContainerRef} className="custom-scrollbar">
         {renderCategory(root, onSelect ?? doNothing, 0)}
-      </div>
-    </div>
+      </ScrollableContent>
+    </CategoryListContainer>
   )
 }

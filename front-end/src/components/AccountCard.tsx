@@ -7,7 +7,7 @@ import { formatFull } from '../domain/model/currency'
 import MixedAugmentation from '../service/MixedAugmentation'
 import { CurrencyServiceContext } from '../service/ServiceContext'
 
-import './AccountList.css'
+import '../styles/account-list-tailwind.css'
 
 type Props = {
   account: Account

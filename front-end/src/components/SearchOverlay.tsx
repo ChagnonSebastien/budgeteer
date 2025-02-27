@@ -1,8 +1,16 @@
 import { Fab, IconButton, TextField } from '@mui/material'
 import { Dispatch, SetStateAction, useContext, useEffect, useState } from 'react'
+import styled from 'styled-components'
 
 import { IconToolsContext } from './IconTools'
-import '../styles/search-overlay.css'
+import '../styles/search-overlay-tailwind.css'
+
+const SearchButton = styled(Fab)`
+  position: absolute;
+  bottom: 1rem;
+  right: 2rem;
+  z-index: 1000;
+`
 
 interface Props {
   filter: string
@@ -32,20 +40,9 @@ export const SearchOverlay = ({ filter, setFilter, placeholder = 'Search...' }: 
   return (
     <>
       {!showSearch && (
-        <Fab
-          color="primary"
-          size="medium"
-          style={{
-            position: 'absolute',
-            bottom: '1rem',
-            right: '2rem',
-            zIndex: 1000,
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-          }}
-          onClick={() => setShowSearch(true)}
-        >
-          <IconLib.BiSearch style={{ fontSize: '1.5rem' }} />
-        </Fab>
+        <SearchButton color="primary" size="medium" onClick={() => setShowSearch(true)} className="shadow-lg">
+          <IconLib.BiSearch className="text-2xl" />
+        </SearchButton>
       )}
       {showSearch && (
         <div className="search-overlay" onClick={handleClose}>
@@ -65,16 +62,9 @@ export const SearchOverlay = ({ filter, setFilter, placeholder = 'Search...' }: 
                     handleClose()
                   }}
                   size="medium"
-                  sx={{
-                    color: 'rgba(255, 255, 255, 0.7)',
-                    padding: '8px',
-                    '&:hover': {
-                      color: 'rgba(255, 255, 255, 0.9)',
-                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                    },
-                  }}
+                  className="text-white/70 p-2 hover:text-white/90 hover:bg-white/10"
                 >
-                  <IconLib.IoCloseCircle style={{ fontSize: '1.8rem' }} />
+                  <IconLib.IoCloseCircle className="text-[1.8rem]" />
                 </IconButton>
               ),
             }}

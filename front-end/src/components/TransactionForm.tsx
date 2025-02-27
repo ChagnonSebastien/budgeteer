@@ -1,4 +1,4 @@
-import { Button, Checkbox, FormControlLabel, Snackbar, Stack, TextField } from '@mui/material'
+import { Checkbox, FormControlLabel, Stack, TextField } from '@mui/material'
 import { DateCalendar, DateField, DateView } from '@mui/x-date-pickers'
 import dayjs, { Dayjs } from 'dayjs'
 import { FC, FormEvent, useContext, useEffect, useMemo, useState } from 'react'
@@ -8,6 +8,7 @@ import { CategoryList } from './CategoryList'
 import ContentDialog from './ContentDialog'
 import ContentWithHeader from './ContentWithHeader'
 import CurrencyPicker from './CurrencyPicker'
+import FormWrapper from './FormWrapper'
 import IconCapsule from './IconCapsule'
 import { UserContext } from '../App'
 import Account from '../domain/model/account'
@@ -183,10 +184,12 @@ const TransactionForm: FC<Props> = (props) => {
     }))
   }, [sanitizedReceiverAmount, differentCurrency])
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
+  const isFormValid = useMemo(() => {
+    return Object.values(errors).every((value) => value.isValid)
+  }, [errors])
 
-    if (Object.values(errors).some((value) => !value.isValid)) {
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+    if (!isFormValid) {
       setErrors((prevState) => ({
         amount: {
           ...prevState.amount,
@@ -254,184 +257,167 @@ const TransactionForm: FC<Props> = (props) => {
   }
 
   return (
-    <form noValidate onSubmit={handleSubmit}>
+    <FormWrapper onSubmit={handleSubmit} submitText={submitText} isValid={isFormValid} errorMessage={showErrorToast}>
       <div style={{ display: 'flex' }}>
-        <div style={{ color: 'gray', margin: '0 1rem', transform: 'translate(0, 0.5rem)' }}>Form</div>
-        <div style={{ borderBottom: '1px grey solid', flexGrow: 1 }} />
+        <TextField
+          sx={{ width: '100%' }}
+          type="text"
+          label="Amount"
+          variant="standard"
+          autoFocus
+          value={amount}
+          onChange={(ev) => setAmount(ev.target.value as string)}
+          error={errors.amount.hasVisited && !!errors.amount.errorText}
+          helperText={errors.amount.hasVisited ? errors.amount.errorText : ''}
+          onBlur={() => {
+            setErrors((prevState) => ({
+              ...prevState,
+              amount: { ...prevState.amount, hasVisited: true },
+            }))
+          }}
+        />
+        <div style={{ width: '3rem' }} />
+        <CurrencyPicker
+          style={{ width: '100%', flexShrink: 2 }}
+          currencies={currencies}
+          selectedCurrencyId={currency}
+          setSelectedCurrencyId={setCurrency}
+          labelText="Currency"
+          errorText={NoError}
+        />
       </div>
-      <Stack spacing="1rem" sx={{ padding: '2rem 1rem', border: '1px grey solid', borderTop: 0 }}>
+
+      {typeof category !== 'undefined' && (
+        <>
+          <div
+            style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}
+            onClick={() => setShowCategoryModal(true)}
+          >
+            <IconCapsule
+              flexShrink={0}
+              iconName={category.iconName}
+              size="2rem"
+              color={category.iconColor}
+              backgroundColor={category.iconBackground}
+            />
+            <div style={{ width: '1rem', flexShrink: 0 }} />
+            <TextField
+              sx={{ width: '100%' }}
+              type="text"
+              label="Category"
+              variant="standard"
+              placeholder={typeof rootCategory === 'undefined' ? 'Loading...' : undefined}
+              value={categories?.find((c) => c.id === parent)?.name}
+              onFocus={(ev) => {
+                setShowCategoryModal(true)
+                ev.target.blur()
+              }}
+            />
+          </div>
+          <ContentDialog open={showParentModal} onClose={() => setShowCategoryModal(false)}>
+            <ContentWithHeader title="Select Icon" button="return" onCancel={() => setShowCategoryModal(false)}>
+              <CategoryList
+                categories={categories}
+                onSelect={(newParent) => {
+                  setParent(newParent)
+                  setShowCategoryModal(false)
+                }}
+              />
+            </ContentWithHeader>
+          </ContentDialog>
+        </>
+      )}
+
+      <AccountPicker
+        labelText="From"
+        errorText={errors.sender.hasVisited ? errors.sender.errorText : ''}
+        onAccountSelected={setSenderAccount}
+        valueText={senderAccount.name}
+        myOwn={type !== 'income'}
+        allowNew={type === 'income'}
+      />
+
+      {type === 'transfer' && (
+        <FormControlLabel
+          control={<Checkbox onChange={(ev) => setDifferentCurrency(ev.target.checked)} />}
+          label="TransferCurrencies"
+        />
+      )}
+
+      {differentCurrency && (
         <div style={{ display: 'flex' }}>
           <TextField
-            sx={{ width: '100%' }}
             type="text"
-            label="Amount"
+            label="Amount of transfered currency"
             variant="standard"
-            autoFocus
-            value={amount}
-            onChange={(ev) => setAmount(ev.target.value as string)}
-            error={errors.amount.hasVisited && !!errors.amount.errorText}
-            helperText={errors.amount.hasVisited ? errors.amount.errorText : ''}
-            onBlur={() => {
+            value={receiverAmount}
+            onChange={(ev) => setReceiverAmount(ev.target.value as string)}
+            helperText={errors.receiverAmount.hasVisited ? errors.receiverAmount.errorText : ''}
+            error={errors.receiverAmount.hasVisited && !!errors.receiverAmount.errorText}
+            onBlur={() =>
               setErrors((prevState) => ({
                 ...prevState,
-                amount: { ...prevState.amount, hasVisited: true },
+                receiverAmount: { ...prevState.receiverAmount, hasVisited: true },
               }))
-            }}
+            }
           />
           <div style={{ width: '3rem' }} />
           <CurrencyPicker
-            style={{ width: '100%', flexShrink: 2 }}
             currencies={currencies}
-            selectedCurrencyId={currency}
-            setSelectedCurrencyId={setCurrency}
-            labelText="Currency"
+            selectedCurrencyId={receiverCurrency}
+            setSelectedCurrencyId={setReceiverCurrency}
+            labelText="Transfer to:"
+            style={{ flexShrink: 2 }}
             errorText={NoError}
           />
         </div>
+      )}
 
-        {typeof category !== 'undefined' && (
-          <>
-            <div
-              style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}
-              onClick={() => setShowCategoryModal(true)}
-            >
-              <IconCapsule
-                flexShrink={0}
-                iconName={category.iconName}
-                size="2rem"
-                color={category.iconColor}
-                backgroundColor={category.iconBackground}
-              />
-              <div style={{ width: '1rem', flexShrink: 0 }} />
-              <TextField
-                sx={{ width: '100%' }}
-                type="text"
-                label="Category"
-                variant="standard"
-                placeholder={typeof rootCategory === 'undefined' ? 'Loading...' : undefined}
-                value={categories?.find((c) => c.id === parent)?.name}
-                onFocus={(ev) => {
-                  setShowCategoryModal(true)
-                  ev.target.blur()
-                }}
-              />
-            </div>
-            <ContentDialog open={showParentModal} onClose={() => setShowCategoryModal(false)}>
-              <ContentWithHeader title="Select Icon" button="return" onCancel={() => setShowCategoryModal(false)}>
-                <CategoryList
-                  categories={categories}
-                  onSelect={(newParent) => {
-                    setParent(newParent)
-                    setShowCategoryModal(false)
-                  }}
-                />
-              </ContentWithHeader>
-            </ContentDialog>
-          </>
-        )}
-
-        <AccountPicker
-          labelText="From"
-          errorText={errors.sender.hasVisited ? errors.sender.errorText : ''}
-          onAccountSelected={setSenderAccount}
-          valueText={senderAccount.name}
-          myOwn={type !== 'income'}
-          allowNew={type === 'income'}
-        />
-
-        {type === 'transfer' && (
-          <FormControlLabel
-            control={<Checkbox onChange={(ev) => setDifferentCurrency(ev.target.checked)} />}
-            label="TransferCurrencies"
-          />
-        )}
-
-        {differentCurrency && (
-          <div style={{ display: 'flex' }}>
-            <TextField
-              type="text"
-              label="Amount of transfered currency"
-              variant="standard"
-              value={receiverAmount}
-              onChange={(ev) => setReceiverAmount(ev.target.value as string)}
-              helperText={errors.receiverAmount.hasVisited ? errors.receiverAmount.errorText : ''}
-              error={errors.receiverAmount.hasVisited && !!errors.receiverAmount.errorText}
-              onBlur={() =>
-                setErrors((prevState) => ({
-                  ...prevState,
-                  receiverAmount: { ...prevState.receiverAmount, hasVisited: true },
-                }))
-              }
-            />
-            <div style={{ width: '3rem' }} />
-            <CurrencyPicker
-              currencies={currencies}
-              selectedCurrencyId={receiverCurrency}
-              setSelectedCurrencyId={setReceiverCurrency}
-              labelText="Transfer to:"
-              style={{ flexShrink: 2 }}
-              errorText={NoError}
-            />
-          </div>
-        )}
-
-        <DateField
-          label="Date"
-          value={dayjs(date)}
-          onFocus={(ev) => {
-            setShowDateModal(true)
-            ev.preventDefault()
-            ev.target.blur()
-          }}
-          variant="standard"
-          sx={{ width: '100%' }}
-        />
-
-        <ContentDialog open={showDateModal} onClose={() => setShowDateModal(false)}>
-          <DateCalendar
-            views={['year', 'month', 'day']}
-            value={dayjs(date)}
-            onChange={(newDate: Dayjs) => {
-              setDate(newDate.toDate())
-              if (dateView === 'day') setShowDateModal(false)
-            }}
-            onViewChange={(view) => {
-              setDateView(view)
-            }}
-          />
-        </ContentDialog>
-
-        <AccountPicker
-          labelText="To"
-          errorText={errors.receiver.hasVisited ? errors.receiver.errorText : ''}
-          onAccountSelected={setReceiverAccount}
-          valueText={receiverAccount.name}
-          myOwn={type !== 'expense'}
-          allowNew={type === 'expense'}
-        />
-
-        <TextField
-          type="text"
-          label="Note"
-          variant="standard"
-          sx={{ width: '100%' }}
-          placeholder="Optional details"
-          value={note}
-          onChange={(ev) => setNote(ev.target.value as string)}
-        />
-      </Stack>
-      <div style={{ height: '1rem' }} />
-      <Button fullWidth variant="contained" type="submit">
-        {submitText}
-      </Button>
-
-      <Snackbar
-        open={showErrorToast !== ''}
-        message={showErrorToast}
-        autoHideDuration={5000}
-        onClose={() => setShowErrorToast('')}
+      <DateField
+        label="Date"
+        value={dayjs(date)}
+        onFocus={(ev) => {
+          setShowDateModal(true)
+          ev.preventDefault()
+          ev.target.blur()
+        }}
+        variant="standard"
+        sx={{ width: '100%' }}
       />
-    </form>
+
+      <ContentDialog open={showDateModal} onClose={() => setShowDateModal(false)}>
+        <DateCalendar
+          views={['year', 'month', 'day']}
+          value={dayjs(date)}
+          onChange={(newDate: Dayjs) => {
+            setDate(newDate.toDate())
+            if (dateView === 'day') setShowDateModal(false)
+          }}
+          onViewChange={(view) => {
+            setDateView(view)
+          }}
+        />
+      </ContentDialog>
+
+      <AccountPicker
+        labelText="To"
+        errorText={errors.receiver.hasVisited ? errors.receiver.errorText : ''}
+        onAccountSelected={setReceiverAccount}
+        valueText={receiverAccount.name}
+        myOwn={type !== 'expense'}
+        allowNew={type === 'expense'}
+      />
+
+      <TextField
+        type="text"
+        label="Note"
+        variant="standard"
+        sx={{ width: '100%' }}
+        placeholder="Optional details"
+        value={note}
+        onChange={(ev) => setNote(ev.target.value as string)}
+      />
+    </FormWrapper>
   )
 }
 

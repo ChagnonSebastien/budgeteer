@@ -1,10 +1,11 @@
-import { Button, Snackbar, Stack, TextField, Typography } from '@mui/material'
+import { Stack, TextField, Typography } from '@mui/material'
 import { DateCalendar, DateField, DateView } from '@mui/x-date-pickers'
 import { startOfDay } from 'date-fns'
 import dayjs, { Dayjs } from 'dayjs'
 import { FC, FormEvent, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 
 import ContentDialog from './ContentDialog'
+import FormWrapper from './FormWrapper'
 import Currency, { ExchangeRate } from '../domain/model/currency'
 import { CurrencyServiceContext } from '../service/ServiceContext'
 
@@ -191,10 +192,12 @@ const CurrencyForm: FC<Props> = (props) => {
     }))
   }, [validateExchangeRate, initialExchangeRate])
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
+  const isFormValid = useMemo(() => {
+    return Object.values(errors).every((value) => value.isValid)
+  }, [errors])
 
-    if (Object.values(errors).some((value) => !value.isValid)) {
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+    if (!isFormValid) {
       setErrors((prevState) => ({
         accountName: {
           ...prevState.accountName,
@@ -232,184 +235,165 @@ const CurrencyForm: FC<Props> = (props) => {
   }
 
   return (
-    <form noValidate onSubmit={handleSubmit}>
-      <div style={{ display: 'flex' }}>
-        <div style={{ color: 'gray', margin: '0 1rem', transform: 'translate(0, 0.5rem)' }}>Form</div>
-        <div style={{ borderBottom: '1px grey solid', flexGrow: 1 }} />
+    <FormWrapper onSubmit={handleSubmit} submitText={submitText} isValid={isFormValid} errorMessage={showErrorToast}>
+      <TextField
+        type="text"
+        label="Currency name"
+        variant="standard"
+        placeholder="e.g., Canadian dollars"
+        value={name}
+        onChange={(ev) => setName(ev.target.value as string)}
+        helperText={errors.accountName.hasVisited ? errors.accountName.errorText : ''}
+        error={errors.accountName.hasVisited && !!errors.accountName.errorText}
+        sx={{ width: '100%' }}
+        onBlur={() =>
+          setErrors((prevState) => ({
+            ...prevState,
+            accountName: {
+              ...prevState.accountName,
+              hasVisited: true,
+            },
+          }))
+        }
+      />
+
+      <TextField
+        type="text"
+        label="Symbol"
+        variant="standard"
+        placeholder="e.g., CAD"
+        sx={{ width: '100%' }}
+        value={symbol}
+        onChange={(ev) => setSymbol(ev.target.value as string)}
+        helperText={errors.symbol.hasVisited ? errors.symbol.errorText : ''}
+        error={errors.symbol.hasVisited && !!errors.symbol.errorText}
+        onBlur={() =>
+          setErrors((prevState) => ({
+            ...prevState,
+            symbol: {
+              ...prevState.symbol,
+              hasVisited: true,
+            },
+          }))
+        }
+      />
+
+      {typeof initialCurrency === 'undefined' && (
+        <div>
+          <TextField
+            type="text"
+            label="Amount of decimal points"
+            variant="standard"
+            value={decimalPoints}
+            sx={{ width: '100%' }}
+            onChange={(ev) => setDecimalPoints(ev.target.value as string)}
+            helperText={errors.decimalPoints.hasVisited ? errors.decimalPoints.errorText : ''}
+            error={errors.decimalPoints.hasVisited && !!errors.decimalPoints.errorText}
+            onBlur={() =>
+              setErrors((prevState) => ({
+                ...prevState,
+                decimalPoints: {
+                  ...prevState.decimalPoints,
+                  hasVisited: true,
+                },
+              }))
+            }
+          />
+
+          <div
+            style={{
+              transformOrigin: 'left center',
+              transform: 'scale(0.75)',
+              maxWidth: 'calc(100% / 0.75)',
+            }}
+          >
+            <Typography color="warning">Warning: This value cannot be changed later</Typography>
+          </div>
+        </div>
+      )}
+
+      <div>
+        <div style={{ display: 'flex' }}>
+          <Typography
+            color="textSecondary"
+            style={{ margin: '0 1rem', transform: 'translate(0, 0.5rem)', fontSize: '.75rem' }}
+          >
+            Formatting example
+          </Typography>
+          <div style={{ borderBottom: '1px grey solid', flexGrow: 1 }} />
+        </div>
+        <Typography style={{ padding: '1rem', border: '1px grey solid', borderTop: 0, textAlign: 'center' }}>
+          {formatExample} {symbol}
+        </Typography>
       </div>
-      <Stack spacing="1rem" style={{ padding: '2rem 1rem', border: '1px grey solid', borderTop: 0 }}>
-        <TextField
-          type="text"
-          label="Currency name"
-          variant="standard"
-          placeholder="e.g., Canadian dollars"
-          value={name}
-          onChange={(ev) => setName(ev.target.value as string)}
-          helperText={errors.accountName.hasVisited ? errors.accountName.errorText : ''}
-          error={errors.accountName.hasVisited && !!errors.accountName.errorText}
-          sx={{ width: '100%' }}
-          onBlur={() =>
-            setErrors((prevState) => ({
-              ...prevState,
-              accountName: {
-                ...prevState.accountName,
-                hasVisited: true,
-              },
-            }))
-          }
-        />
 
-        <TextField
-          type="text"
-          label="Symbol"
-          variant="standard"
-          placeholder="e.g., CAD"
-          sx={{ width: '100%' }}
-          value={symbol}
-          onChange={(ev) => setSymbol(ev.target.value as string)}
-          helperText={errors.symbol.hasVisited ? errors.symbol.errorText : ''}
-          error={errors.symbol.hasVisited && !!errors.symbol.errorText}
-          onBlur={() =>
-            setErrors((prevState) => ({
-              ...prevState,
-              symbol: {
-                ...prevState.symbol,
-                hasVisited: true,
-              },
-            }))
-          }
-        />
-
-        {typeof initialCurrency === 'undefined' && (
-          <div>
+      {showExchangeRate && (
+        <div>
+          <div style={{ height: '1rem' }} />
+          <div style={{ color: 'grey' }}>Exchange Rates</div>
+          <div style={{ display: 'flex', alignItems: 'end' }}>
+            <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+              {`1 ${symbol === '' ? '___' : symbol}`}
+            </div>
+            <div style={{ margin: '0 1rem', display: 'flex', alignItems: 'center', flexShrink: 0 }}>=</div>
             <TextField
               type="text"
-              label="Amount of decimal points"
               variant="standard"
-              value={decimalPoints}
+              value={initialExchangeRate}
+              onChange={(ev) => setInitialExchangeRate(ev.target.value as string)}
+              error={errors.exchangeRate.hasVisited && !!errors.exchangeRate.errorText}
               sx={{ width: '100%' }}
-              onChange={(ev) => setDecimalPoints(ev.target.value as string)}
-              helperText={errors.decimalPoints.hasVisited ? errors.decimalPoints.errorText : ''}
-              error={errors.decimalPoints.hasVisited && !!errors.decimalPoints.errorText}
               onBlur={() =>
                 setErrors((prevState) => ({
                   ...prevState,
-                  decimalPoints: {
-                    ...prevState.decimalPoints,
+                  exchangeRate: {
+                    ...prevState.exchangeRate,
                     hasVisited: true,
                   },
                 }))
               }
             />
-
+            <div style={{ margin: '0 1rem', display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+              {defaultCurrency!.symbol} on
+            </div>
             <div
               style={{
-                transformOrigin: 'left center',
-                transform: 'scale(0.75)',
-                maxWidth: 'calc(100% / 0.75)',
+                display: 'flex',
+                alignItems: 'center',
+                flexShrink: 0,
+                borderBottom: '1px rgba(0, 0, 0, 0.13) solid',
               }}
             >
-              <Typography color="warning">Warning: This value cannot be changed later</Typography>
-            </div>
-          </div>
-        )}
-
-        <div>
-          <div style={{ display: 'flex' }}>
-            <Typography
-              color="textSecondary"
-              style={{ margin: '0 1rem', transform: 'translate(0, 0.5rem)', fontSize: '.75rem' }}
-            >
-              Formatting example
-            </Typography>
-            <div style={{ borderBottom: '1px grey solid', flexGrow: 1 }} />
-          </div>
-          <Typography style={{ padding: '1rem', border: '1px grey solid', borderTop: 0, textAlign: 'center' }}>
-            {formatExample} {symbol}
-          </Typography>
-        </div>
-
-        {showExchangeRate && (
-          <div>
-            <div style={{ height: '1rem' }} />
-            <div style={{ color: 'grey' }}>Exchange Rates</div>
-            <div style={{ display: 'flex', alignItems: 'end' }}>
-              <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
-                {`1 ${symbol === '' ? '___' : symbol}`}
-              </div>
-              <div style={{ margin: '0 1rem', display: 'flex', alignItems: 'center', flexShrink: 0 }}>=</div>
-              <TextField
-                type="text"
-                variant="standard"
-                value={initialExchangeRate}
-                onChange={(ev) => setInitialExchangeRate(ev.target.value as string)}
-                error={errors.exchangeRate.hasVisited && !!errors.exchangeRate.errorText}
-                sx={{ width: '100%' }}
-                onBlur={() =>
-                  setErrors((prevState) => ({
-                    ...prevState,
-                    exchangeRate: {
-                      ...prevState.exchangeRate,
-                      hasVisited: true,
-                    },
-                  }))
-                }
-              />
-              <div style={{ margin: '0 1rem', display: 'flex', alignItems: 'center', flexShrink: 0 }}>
-                {defaultCurrency!.symbol} on
-              </div>
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  flexShrink: 0,
-                  borderBottom: '1px rgba(0, 0, 0, 0.13) solid',
+              <DateField
+                value={dayjs(initialExchangeRateDate)}
+                onFocus={(ev) => {
+                  setShowDateModal(true)
+                  ev.preventDefault()
+                  ev.target.blur()
                 }}
-              >
-                <DateField
-                  value={dayjs(initialExchangeRateDate)}
-                  onFocus={(ev) => {
-                    setShowDateModal(true)
-                    ev.preventDefault()
-                    ev.target.blur()
-                  }}
-                  tabIndex={-1}
-                  variant="standard"
-                  sx={{ width: '100%' }}
-                />
+                tabIndex={-1}
+                variant="standard"
+                sx={{ width: '100%' }}
+              />
 
-                <ContentDialog open={showDateModal} onClose={() => setShowDateModal(false)}>
-                  <DateCalendar
-                    views={['year', 'month', 'day']}
-                    value={dayjs(initialExchangeRateDate)}
-                    onChange={(newDate: Dayjs) => {
-                      setInitialExchangeRateDate(newDate.toDate())
-                      if (dateView === 'day') setShowDateModal(false)
-                    }}
-                    onViewChange={(view) => {
-                      setDateView(view)
-                    }}
-                  />
-                </ContentDialog>
-              </div>
+              <ContentDialog open={showDateModal} onClose={() => setShowDateModal(false)}>
+                <DateCalendar
+                  views={['year', 'month', 'day']}
+                  value={dayjs(initialExchangeRateDate)}
+                  onChange={(newDate: Dayjs) => {
+                    setInitialExchangeRateDate(newDate.toDate())
+                    if (dateView === 'day') setShowDateModal(false)
+                  }}
+                  onViewChange={(view) => {
+                    setDateView(view)
+                  }}
+                />
+              </ContentDialog>
             </div>
           </div>
-        )}
-      </Stack>
-
-      <div style={{ height: '1rem' }} />
-
-      <Button type="submit" fullWidth variant="contained">
-        {submitText}
-      </Button>
-
-      <Snackbar
-        open={showErrorToast !== ''}
-        message={showErrorToast}
-        autoHideDuration={5000}
-        onClose={() => setShowErrorToast('')}
-      />
-    </form>
+        </div>
+      )}
+    </FormWrapper>
   )
 }
 

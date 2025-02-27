@@ -18,6 +18,14 @@ export default defineConfig(({ mode }) => ({
       },
     }),
   ],
+  css: {
+    preprocessorOptions: {
+      scss: {
+        // Use the modern Sass API
+        outputStyle: 'expanded',
+      },
+    },
+  },
   build: {
     sourcemap: mode === 'development',
   },

@@ -1,5 +1,6 @@
 import { Tab, Tabs } from '@mui/material'
 import { Dispatch, Fragment, SetStateAction, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import styled from 'styled-components'
 
 import { AccountCard } from './AccountCard'
 import { DrawerContext } from './Menu'
@@ -8,6 +9,74 @@ import Account from '../domain/model/account'
 import { formatFull } from '../domain/model/currency'
 import MixedAugmentation from '../service/MixedAugmentation'
 import { CurrencyServiceContext } from '../service/ServiceContext'
+
+import '../styles/account-list-tailwind.css'
+
+const AccountListContainer = styled.div`
+  min-width: 20rem;
+  max-width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+`
+
+const ScrollableContent = styled.div`
+  overflow-y: auto;
+  flex-grow: 1;
+  padding-bottom: 4rem;
+  position: relative;
+`
+
+const GroupHeader = styled.div`
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.75rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-bottom: 1.5rem;
+  margin-top: 1rem;
+  font-weight: 600;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+`
+
+const GroupName = styled.div`
+  font-size: 0.85rem;
+`
+
+const GroupTotal = styled.div`
+  opacity: 0.8;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding-left: 0.5rem;
+  border-left: 2px solid rgba(255, 255, 255, 0.1);
+`
+
+const TotalAmount = styled.div`
+  font-size: 0.8rem;
+`
+
+const TabLabel = styled.div`
+  display: inline-flex;
+  align-items: center;
+  position: relative;
+`
+
+const TabCounter = styled.div`
+  background-color: rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  padding: 0 8px;
+  font-size: 0.75rem;
+  margin-left: 0.5rem;
+  margin-top: -0.5rem;
+  min-width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`
 
 type Props = {
   accounts: Account[]
@@ -159,55 +228,19 @@ export const AccountList = (props: Props) => {
       >
         <Tab
           label={
-            <div style={{ display: 'inline-flex', alignItems: 'center', position: 'relative' }}>
+            <TabLabel>
               My Accounts
-              {filterable?.filter && (
-                <div
-                  style={{
-                    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-                    borderRadius: '12px',
-                    padding: '0 8px',
-                    fontSize: '0.75rem',
-                    marginLeft: '0.5rem',
-                    marginTop: '-0.5rem',
-                    minWidth: '20px',
-                    height: '20px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  {myOwnFilteredAccounts.length}
-                </div>
-              )}
-            </div>
+              {filterable?.filter && <TabCounter>{myOwnFilteredAccounts.length}</TabCounter>}
+            </TabLabel>
           }
           value="mine"
         />
         <Tab
           label={
-            <div style={{ display: 'inline-flex', alignItems: 'center', position: 'relative' }}>
+            <TabLabel>
               Third Parties
-              {filterable?.filter && (
-                <div
-                  style={{
-                    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-                    borderRadius: '12px',
-                    padding: '0 8px',
-                    fontSize: '0.75rem',
-                    marginLeft: '0.5rem',
-                    marginTop: '-0.5rem',
-                    minWidth: '20px',
-                    height: '20px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  {otherFilteredAccounts.length}
-                </div>
-              )}
-            </div>
+              {filterable?.filter && <TabCounter>{otherFilteredAccounts.length}</TabCounter>}
+            </TabLabel>
           }
           value="others"
         />
@@ -253,18 +286,9 @@ export const AccountList = (props: Props) => {
   }, [props.onScrollProgress, displayedAccount])
 
   return (
-    <div
-      style={{
-        minWidth: '20rem',
-        maxWidth: '100%',
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        position: 'relative',
-      }}
-    >
+    <AccountListContainer>
       <div>{segments}</div>
-      <div ref={contentRef} style={{ overflowY: 'auto', flexGrow: 1, paddingBottom: '4rem', position: 'relative' }}>
+      <ScrollableContent ref={contentRef} className="custom-scrollbar">
         {Object.entries(
           displayedAccount.reduce(
             (groups, account) => {
@@ -276,33 +300,11 @@ export const AccountList = (props: Props) => {
           ),
         ).map(([type, accounts]) => (
           <Fragment key={`account-group-${type}`}>
-            <div style={{ marginBottom: '2rem' }}>
+            <div className="mb-8">
               {type !== 'Other' && (
-                <div
-                  style={{
-                    color: 'rgba(255, 255, 255, 0.5)',
-                    fontSize: '0.75rem',
-                    letterSpacing: '0.15em',
-                    textTransform: 'uppercase',
-                    marginBottom: '1.5rem',
-                    marginTop: '1rem',
-                    fontWeight: 600,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '0.75rem',
-                  }}
-                >
-                  <div style={{ fontSize: '0.85rem' }}>{type}</div>
-                  <div
-                    style={{
-                      opacity: 0.8,
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '0.25rem',
-                      paddingLeft: '0.5rem',
-                      borderLeft: '2px solid rgba(255, 255, 255, 0.1)',
-                    }}
-                  >
+                <GroupHeader>
+                  <GroupName>{type}</GroupName>
+                  <GroupTotal>
                     {(() => {
                       if (!defaultCurrency || privacyMode || !props.showGroupTotals) return null
                       const now = new Date()
@@ -315,20 +317,13 @@ export const AccountList = (props: Props) => {
                         }, sum)
                       }, 0)
                       if (total === 0) return null
-                      return <div style={{ fontSize: '0.8rem' }}>{formatFull(defaultCurrency, Math.round(total))}</div>
+                      return <TotalAmount>{formatFull(defaultCurrency, Math.round(total))}</TotalAmount>
                     })()}
-                  </div>
-                </div>
+                  </GroupTotal>
+                </GroupHeader>
               )}
               <div
-                style={{
-                  display: showBalances ? 'grid' : 'flex',
-                  gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))',
-                  flexDirection: 'column',
-                  gap: showBalances ? '1.5rem' : '0.25rem',
-                  marginTop: type === 'Other' ? '1rem' : 0,
-                  padding: showBalances ? '0.25rem' : 0,
-                }}
+                className={`${showBalances ? 'grid grid-cols-[repeat(auto-fill,minmax(350px,1fr))] gap-6' : 'flex flex-col gap-1'} ${type === 'Other' ? 'mt-4' : ''} ${showBalances ? 'p-1' : ''}`}
               >
                 {accounts.map((account) => (
                   <AccountCard
@@ -344,10 +339,10 @@ export const AccountList = (props: Props) => {
             </div>
           </Fragment>
         ))}
-      </div>
+      </ScrollableContent>
       {filterable && (
         <SearchOverlay filter={filterable.filter} setFilter={filterable.setFilter} placeholder="Search accounts..." />
       )}
-    </div>
+    </AccountListContainer>
   )
 }

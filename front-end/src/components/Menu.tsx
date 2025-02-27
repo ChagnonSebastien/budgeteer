@@ -1,5 +1,4 @@
 import {
-  alpha,
   Box,
   Button,
   Divider,
@@ -14,10 +13,19 @@ import {
 } from '@mui/material'
 import { createContext, FC, ReactElement, useContext, useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
+import styled from 'styled-components'
 
 import { IconToolsContext, PreparedIcon } from './IconTools'
 import { UserContext } from '../App'
 import UserStore from '../UserStore'
+
+import '../styles/menu-tailwind.css'
+
+const ContentContainer = styled.div<{ $persistentDrawer: boolean; $totalWidth: number; $drawerWidth: number }>`
+  width: ${(props) => (props.$persistentDrawer ? `${props.$totalWidth - props.$drawerWidth}px` : '100%')};
+  height: 100%;
+  margin-left: ${(props) => (props.$persistentDrawer ? `${props.$drawerWidth}px` : 0)};
+`
 
 interface AppPage {
   title: string
@@ -120,32 +128,13 @@ const DrawerWrapper: FC<Props> = ({ logout, children }) => {
         if (ref != null) setDrawerWidth(ref.scrollWidth)
       }}
     >
-      <Box
-        p="1.5rem"
-        sx={{
-          background: (theme) => `linear-gradient(${alpha(theme.palette.primary.main, 0.05)}, transparent)`,
-        }}
-      >
-        <Typography
-          variant="h6"
-          sx={{
-            fontWeight: 600,
-            letterSpacing: '0.5px',
-            mb: 1,
-          }}
-        >
+      <Box className="menu-header">
+        <Typography variant="h6" className="menu-title">
           Budget App
         </Typography>
-        <Typography
-          sx={{
-            color: (theme) => alpha(theme.palette.common.white, 0.6),
-            fontSize: '0.9rem',
-          }}
-        >
-          {email}
-        </Typography>
+        <Typography className="menu-email">{email}</Typography>
       </Box>
-      <List sx={{ px: '0.5rem', py: '0.5rem' }}>
+      <List className="menu-list">
         {appPages.map((appPage, index) => {
           const Icon = iconTypeFromName(appPage.iconName)
           const selected = location.pathname === appPage.url
@@ -160,138 +149,36 @@ const DrawerWrapper: FC<Props> = ({ logout, children }) => {
                 navigate(`${appPage.url}?${query.toString()}`)
               }}
               selected={selected}
-              sx={{
-                borderRadius: '8px',
-                mb: 0.5,
-                transition: 'all 0.2s',
-                '&.Mui-selected': {
-                  backgroundColor: (theme) => alpha(theme.palette.primary.main, 0.15),
-                  '&:hover': {
-                    backgroundColor: (theme) => alpha(theme.palette.primary.main, 0.2),
-                  },
-                  '& .MuiListItemIcon-root': {
-                    color: 'primary.main',
-                  },
-                  '& .MuiTypography-root': {
-                    fontWeight: 500,
-                    color: 'primary.main',
-                  },
-                },
-                '&:hover': {
-                  backgroundColor: (theme) => alpha(theme.palette.primary.main, 0.08),
-                },
-              }}
+              className={`menu-item ${selected ? 'selected' : ''}`}
             >
-              <ListItemIcon
-                sx={{
-                  minWidth: '42px',
-                  color: (theme) => (selected ? theme.palette.primary.main : alpha(theme.palette.common.white, 0.7)),
-                  transition: 'color 0.2s',
-                }}
-              >
+              <ListItemIcon className={`menu-item-icon ${selected ? 'text-primary-500' : ''}`}>
                 <Icon style={iconStyle} />
               </ListItemIcon>
-              <ListItemText
-                primary={appPage.title}
-                sx={{
-                  '& .MuiTypography-root': {
-                    transition: 'color 0.2s, font-weight 0.2s',
-                  },
-                }}
-              />
+              <ListItemText primary={appPage.title} className="menu-item-text" />
             </ListItemButton>
           )
         })}
       </List>
       <Box p="1rem">
-        <Button
-          fullWidth
-          onClick={logout}
-          variant="contained"
-          disableElevation
-          sx={{
-            py: '0.8rem',
-            textTransform: 'none',
-            fontWeight: 500,
-            borderRadius: '8px',
-            transition: 'all 0.2s',
-            opacity: 0.9,
-            '&:hover': {
-              opacity: 1,
-            },
-          }}
-        >
+        <Button fullWidth onClick={logout} variant="contained" disableElevation className="menu-logout-button">
           Logout
         </Button>
       </Box>
-      <Divider sx={{ opacity: 0.1 }} />
-      <List sx={{ px: '0.5rem' }}>
+      <Divider className="menu-divider" />
+      <List className="menu-list">
         <ListItemButton
           onClick={() => {
             const newValue = !privacyMode
             setPrivacyMode(newValue)
             userStore.upsertPrivacyMode(newValue)
           }}
-          sx={{
-            borderRadius: '8px',
-            py: 1.5,
-            transition: 'background-color 0.2s',
-            '&:hover': {
-              backgroundColor: (theme) => alpha(theme.palette.primary.main, 0.08),
-            },
-          }}
+          className="menu-privacy-item"
         >
-          <ListItemIcon
-            sx={{
-              minWidth: '42px',
-              color: (theme) => (privacyMode ? theme.palette.primary.main : alpha(theme.palette.common.white, 0.7)),
-              transition: 'color 0.2s',
-            }}
-          >
+          <ListItemIcon className={`menu-privacy-icon ${privacyMode ? 'active' : ''}`}>
             {privacyMode ? <IconLib.MdVisibilityOff style={iconStyle} /> : <IconLib.MdVisibility style={iconStyle} />}
           </ListItemIcon>
-          <ListItemText
-            primary="Privacy Mode"
-            sx={{
-              '& .MuiTypography-root': {
-                fontWeight: 500,
-                color: (theme) => (privacyMode ? theme.palette.primary.main : 'inherit'),
-                transition: 'color 0.2s',
-              },
-            }}
-          />
-          <Switch
-            edge="end"
-            checked={privacyMode}
-            sx={{
-              width: 42,
-              height: 24,
-              padding: 0,
-              '& .MuiSwitch-switchBase': {
-                padding: 0,
-                margin: '2px',
-                transition: 'transform 0.2s',
-                '&.Mui-checked': {
-                  transform: 'translateX(18px)',
-                  color: (theme) => alpha(theme.palette.primary.main, 0.9),
-                  '& + .MuiSwitch-track': {
-                    opacity: 0.3,
-                    backgroundColor: (theme) => theme.palette.primary.main,
-                  },
-                },
-              },
-              '& .MuiSwitch-track': {
-                borderRadius: 12,
-                opacity: 0.1,
-                backgroundColor: (theme) => theme.palette.common.white,
-              },
-              '& .MuiSwitch-thumb': {
-                width: 20,
-                height: 20,
-                backgroundColor: (theme) => alpha(theme.palette.common.white, 0.9),
-              },
-            }}
-          />
+          <ListItemText primary="Privacy Mode" className={`menu-privacy-text ${privacyMode ? 'active' : ''}`} />
+          <Switch edge="end" checked={privacyMode} className="menu-privacy-switch" />
         </ListItemButton>
       </List>
     </div>
@@ -322,15 +209,9 @@ const DrawerWrapper: FC<Props> = ({ logout, children }) => {
         </SwipeableDrawer>
       )}
 
-      <div
-        style={{
-          width: persistentDrawer ? `${totalWidth - drawerWidth}px` : '100%',
-          height: '100%',
-          marginLeft: persistentDrawer ? `${drawerWidth}px` : 0,
-        }}
-      >
+      <ContentContainer $persistentDrawer={persistentDrawer} $totalWidth={totalWidth} $drawerWidth={drawerWidth}>
         {children}
-      </div>
+      </ContentContainer>
     </DrawerContext.Provider>
   )
 }

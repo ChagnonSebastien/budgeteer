@@ -1,0 +1,72 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  /* Time Controls */
+  .graph-time-controls {
+    @apply flex flex-col gap-2;
+  }
+
+  .graph-time-controls-label {
+    @apply text-white/70 text-xs font-normal leading-[1.4375em] tracking-[0.00938em] font-['Roboto','Helvetica','Arial',sans-serif];
+  }
+
+  .graph-time-range {
+    @apply flex items-center gap-4 p-0;
+  }
+
+  .graph-time-range .MuiToggleButtonGroup-root {
+    @apply min-h-[32px] w-full;
+  }
+
+  .graph-time-range .MuiToggleButton-root {
+    @apply flex-1 normal-case text-[0.9rem];
+  }
+
+  .graph-time-range .MuiSlider-root {
+    @apply text-white/70;
+  }
+
+  .graph-time-range .MuiSlider-mark {
+    @apply bg-white/30 w-0.5 h-0.5;
+  }
+
+  .graph-time-range .MuiSlider-markActive {
+    @apply bg-current;
+  }
+
+  .graph-year-input {
+    @apply flex items-center gap-2;
+  }
+
+  .year-input-container {
+    @apply flex items-center justify-center flex-1 bg-white/[0.05] rounded h-8 px-3;
+  }
+
+  .year-display {
+    @apply inline-flex items-center justify-center text-white/90 text-base font-normal leading-[1.4375em] tracking-[0.00938em] font-['Roboto','Helvetica','Arial',sans-serif] w-full;
+  }
+
+  .year-input {
+    @apply w-8 bg-transparent border-none text-white/90 text-base font-normal leading-[1.4375em] tracking-[0.00938em] font-['Roboto','Helvetica','Arial',sans-serif] text-right py-1 appearance-none;
+    -moz-appearance: textfield;
+  }
+
+  .year-text {
+    @apply ml-2 text-white/90 text-base font-normal leading-[1.4375em] tracking-[0.00938em] font-['Roboto','Helvetica','Arial',sans-serif];
+  }
+
+  .year-input::-webkit-inner-spin-button,
+  .year-input::-webkit-outer-spin-button {
+    @apply appearance-none m-0;
+  }
+
+  .year-input:focus {
+    @apply outline-none;
+  }
+
+  .graph-year-input .MuiButton-root {
+    @apply min-w-[32px] w-8 h-8 p-0;
+  }
+}

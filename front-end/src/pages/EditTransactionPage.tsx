@@ -1,12 +1,19 @@
 import { Button } from '@mui/material'
 import { FC, useCallback, useContext, useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import styled from 'styled-components'
 
 import ContentWithHeader from '../components/ContentWithHeader'
 import TransactionForm from '../components/TransactionForm'
 import Transaction from '../domain/model/transaction'
 import MixedAugmentation from '../service/MixedAugmentation'
 import { TransactionServiceContext } from '../service/ServiceContext'
+
+const FormContainer = styled.div`
+  width: 100%;
+  max-width: 35rem;
+  margin: auto;
+`
 
 type Params = {
   transactionId: string
@@ -41,15 +48,15 @@ const EditTransactionPage: FC = () => {
 
   return (
     <ContentWithHeader title="Edit Transaction" button="return">
-      <div style={{ margin: '1rem' }}>
+      <FormContainer className="p-4">
         <TransactionForm onSubmit={onSubmit} submitText="Update" initialTransaction={selectedTransaction} />
 
-        <div style={{ height: '.5rem' }} />
+        <div className="h-2" />
 
         <Button color="error" onClick={() => {}}>
           Delete
         </Button>
-      </div>
+      </FormContainer>
     </ContentWithHeader>
   )
 }

@@ -1,10 +1,11 @@
-import { Button, Checkbox, FormControlLabel, Snackbar, Stack, TextField } from '@mui/material'
+import { Button, Checkbox, FormControlLabel, Stack, TextField } from '@mui/material'
 import { FC, FormEvent, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { HexColorPicker } from 'react-colorful'
 
 import CategoryPicker from './CategoryPicker'
 import ContentDialog from './ContentDialog'
 import ContentWithHeader from './ContentWithHeader'
+import FormWrapper from './FormWrapper'
 import IconCapsule from './IconCapsule'
 import IconList from './IconList'
 import Category from '../domain/model/category'
@@ -67,10 +68,12 @@ const CategoryForm: FC<Props> = (props) => {
     }))
   }, [validateCategoryName, name])
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
+  const isFormValid = useMemo(() => {
+    return !Object.values(errors).some((value) => typeof value !== 'undefined')
+  }, [errors])
 
-    if (Object.values(errors).some((value) => typeof value !== 'undefined')) {
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+    if (!isFormValid) {
       setIsTouched(true)
       return
     }
@@ -90,141 +93,109 @@ const CategoryForm: FC<Props> = (props) => {
   }
 
   return (
-    <form noValidate onSubmit={handleSubmit}>
-      <div style={{ margin: '1rem' }}>
-        <div style={{ display: 'flex' }}>
-          <div style={{ color: 'gray', margin: '0 1rem', transform: 'translate(0, 0.5rem)' }}>Form</div>
-          <div style={{ borderBottom: '1px grey solid', flexGrow: 1 }} />
-        </div>
-        <Stack spacing="1rem" style={{ padding: '2rem 1rem', border: '1px grey solid', borderTop: 0 }}>
-          <TextField
-            type="text"
-            label="Account name"
-            variant="standard"
-            placeholder="e.g., Groceries"
-            value={name}
-            style={{ width: '100%' }}
-            onChange={(ev) => {
-              setName(ev.target.value as string)
-              setErrors({ categoryName: validateCategoryName(ev.target.value as string) })
-            }}
-            helperText={isTouched ? errors.categoryName : ''}
-            error={isTouched && !!errors.categoryName}
-            onBlur={() => setIsTouched(true)}
-          />
+    <FormWrapper onSubmit={handleSubmit} submitText={submitText} isValid={isFormValid} errorMessage={showErrorToast}>
+      <TextField
+        type="text"
+        label="Account name"
+        variant="standard"
+        placeholder="e.g., Groceries"
+        value={name}
+        className="w-full"
+        onChange={(ev) => {
+          setName(ev.target.value as string)
+          setErrors({ categoryName: validateCategoryName(ev.target.value as string) })
+        }}
+        helperText={isTouched ? errors.categoryName : ''}
+        error={isTouched && !!errors.categoryName}
+        onBlur={() => setIsTouched(true)}
+      />
 
-          {!editingRoot && <CategoryPicker categoryId={parent} setCategoryId={setParent} labelText="Parent Category" />}
+      {!editingRoot && <CategoryPicker categoryId={parent} setCategoryId={setParent} labelText="Parent Category" />}
 
-          <FormControlLabel
-            control={<Checkbox checked={fixedCost} onChange={(ev) => setFixedCost(ev.target.checked)} />}
-            label="Is a fixed cost"
-          />
+      <FormControlLabel
+        control={<Checkbox checked={fixedCost} onChange={(ev) => setFixedCost(ev.target.checked)} />}
+        label="Is a fixed cost"
+      />
 
-          <div style={{ display: 'flex', marginTop: '1rem', alignItems: 'center' }}>
-            <Stack spacing=".25rem" style={{ display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
-              <div style={{ display: 'flex', alignItems: 'center' }}>
-                <Button
-                  onClick={() => setShowIconModal(true)}
-                  color="secondary"
-                  sx={{ flexGrow: 1 }}
-                  variant="outlined"
-                >
-                  Select Icon
-                </Button>
-                <div style={{ width: '1rem', flexShrink: 0 }} />
-                <IconCapsule
-                  iconName={selectedIcon}
-                  size="2rem"
-                  backgroundColor="transparent"
-                  color="gray"
-                  border="1px gray solid"
-                  flexShrink={0}
-                />
-              </div>
+      <div className="flex mt-4 items-center">
+        <Stack spacing=".25rem" className="flex flex-col flex-grow">
+          <div className="form-row">
+            <Button onClick={() => setShowIconModal(true)} color="secondary" sx={{ flexGrow: 1 }} variant="outlined">
+              Select Icon
+            </Button>
+            <div className="form-field-spacer-horizontal" />
+            <IconCapsule
+              iconName={selectedIcon}
+              size="2rem"
+              backgroundColor="transparent"
+              color="gray"
+              border="1px gray solid"
+              flexShrink={0}
+            />
+          </div>
 
-              <div style={{ display: 'flex', alignItems: 'center' }}>
-                <Button
-                  onClick={() => setShowOuterColorModal(true)}
-                  style={{ flexGrow: 1 }}
-                  variant="outlined"
-                  color="secondary"
-                >
-                  Select Outer Color
-                </Button>
-                <div style={{ width: '1rem', flexShrink: 0 }} />
-                <IconCapsule
-                  iconName="GrX"
-                  size="2rem"
-                  backgroundColor={outerColor}
-                  color="transparent"
-                  border="1px gray solid"
-                  flexShrink={0}
-                />
-              </div>
-
-              <div style={{ display: 'flex', alignItems: 'center' }}>
-                <Button
-                  onClick={() => setShowInnerColorModal(true)}
-                  style={{ flexGrow: 1 }}
-                  variant="outlined"
-                  color="secondary"
-                >
-                  Select Inner Color
-                </Button>
-                <div style={{ width: '1rem', flexShrink: 0 }} />
-                <IconCapsule
-                  iconName="GrX"
-                  size="2rem"
-                  backgroundColor={innerColor}
-                  color="transparent"
-                  border="1px gray solid"
-                  flexShrink={0}
-                />
-              </div>
-            </Stack>
-            <ContentDialog open={showIconModal} onClose={() => setShowIconModal(false)}>
-              <ContentWithHeader
-                title="Select Icon"
-                button="return"
-                onSearch={setFilter}
-                onCancel={() => setShowIconModal(false)}
-              >
-                <IconList filter={filter} onSelect={onIconSelect} />
-              </ContentWithHeader>
-            </ContentDialog>
-            <ContentDialog onClose={() => setShowOuterColorModal(false)} open={showOuterColorModal}>
-              <HexColorPicker color={outerColor} onChange={setOuterColor} style={{ flexGrow: 1, overflow: 'hidden' }} />
-            </ContentDialog>
-            <ContentDialog onClose={() => setShowInnerColorModal(false)} open={showInnerColorModal}>
-              <HexColorPicker color={innerColor} onChange={setInnerColor} style={{ flexGrow: 1, overflow: 'hidden' }} />
-            </ContentDialog>
-            <div style={{ width: '1rem', flexShrink: 0 }} />
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center',
-                padding: '1rem',
-                border: '1px gray solid',
-              }}
+          <div className="form-row">
+            <Button
+              onClick={() => setShowOuterColorModal(true)}
+              className="flex-grow"
+              variant="outlined"
+              color="secondary"
             >
-              <IconCapsule iconName={selectedIcon} size="5rem" color={innerColor} backgroundColor={outerColor} />
-            </div>
+              Select Outer Color
+            </Button>
+            <div className="form-field-spacer-horizontal" />
+            <IconCapsule
+              iconName="GrX"
+              size="2rem"
+              backgroundColor={outerColor}
+              color="transparent"
+              border="1px gray solid"
+              flexShrink={0}
+            />
+          </div>
+
+          <div className="form-row">
+            <Button
+              onClick={() => setShowInnerColorModal(true)}
+              className="flex-grow"
+              variant="outlined"
+              color="secondary"
+            >
+              Select Inner Color
+            </Button>
+            <div className="form-field-spacer-horizontal" />
+            <IconCapsule
+              iconName="GrX"
+              size="2rem"
+              backgroundColor={innerColor}
+              color="transparent"
+              border="1px gray solid"
+              flexShrink={0}
+            />
           </div>
         </Stack>
-        <div style={{ height: '1rem' }} />
-        <Button fullWidth variant="contained" type="submit">
-          {submitText}
-        </Button>
+        <ContentDialog open={showIconModal} onClose={() => setShowIconModal(false)}>
+          <ContentWithHeader
+            title="Select Icon"
+            button="return"
+            onSearch={setFilter}
+            onCancel={() => setShowIconModal(false)}
+          >
+            <IconList filter={filter} onSelect={onIconSelect} />
+          </ContentWithHeader>
+        </ContentDialog>
+        <ContentDialog onClose={() => setShowOuterColorModal(false)} open={showOuterColorModal}>
+          <HexColorPicker color={outerColor} onChange={setOuterColor} className="flex-grow overflow-hidden" />
+        </ContentDialog>
+        <ContentDialog onClose={() => setShowInnerColorModal(false)} open={showInnerColorModal}>
+          <HexColorPicker color={innerColor} onChange={setInnerColor} className="flex-grow overflow-hidden" />
+        </ContentDialog>
+        <div className="form-field-spacer-horizontal" />
+        <div className="flex flex-col justify-center p-4 border border-gray-500">
+          <IconCapsule iconName={selectedIcon} size="5rem" color={innerColor} backgroundColor={outerColor} />
+        </div>
       </div>
-
-      <Snackbar
-        open={showErrorToast !== ''}
-        message={showErrorToast}
-        autoHideDuration={5000}
-        onClose={() => setShowErrorToast('')}
-      />
-    </form>
+    </FormWrapper>
   )
 }
 

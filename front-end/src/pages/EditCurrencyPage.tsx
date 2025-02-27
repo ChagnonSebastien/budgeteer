@@ -1,10 +1,17 @@
 import { FC, useCallback, useContext, useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import styled from 'styled-components'
 
 import ContentWithHeader from '../components/ContentWithHeader'
 import CurrencyForm from '../components/CurrencyForm'
 import Currency from '../domain/model/currency'
 import { CurrencyServiceContext } from '../service/ServiceContext'
+
+const FormContainer = styled.div`
+  width: 100%;
+  max-width: 35rem;
+  margin: auto;
+`
 
 type Params = {
   currencyId: string
@@ -38,9 +45,9 @@ const EditCurrency: FC = () => {
 
   return (
     <ContentWithHeader title="Edit currency" button="return">
-      <div style={{ padding: '1rem' }}>
+      <FormContainer className="p-4">
         <CurrencyForm onSubmit={onSubmit} submitText="Save changes" initialCurrency={selectedCurrency} />
-      </div>
+      </FormContainer>
     </ContentWithHeader>
   )
 }

@@ -1,5 +1,12 @@
 import { TextField } from '@mui/material'
 import { FC } from 'react'
+import styled from 'styled-components'
+
+import '../styles/form-components-tailwind.css'
+
+const FullWidthTextField = styled(TextField)`
+  width: 100%;
+`
 
 const validAmount = new RegExp(`^\\d*[.,]?\\d*$`)
 const NoError = ''
@@ -49,13 +56,12 @@ export const NumberInput: FC<Props> = (props) => {
   }
 
   return (
-    <TextField
+    <FullWidthTextField
       type="text"
-      sx={{ width: '100%' }}
       label={label}
       variant="standard"
       value={value.value}
-      className={classNameFromStatus(value)}
+      className={`w-full ${classNameFromStatus(value)}`}
       onChange={(ev) => onInput(ev.target.value as string)}
       helperText={value.hasVisited ? value.errorText : ''}
       error={value.hasVisited && !!value.errorText}
@@ -65,6 +71,17 @@ export const NumberInput: FC<Props> = (props) => {
           hasVisited: true,
         }))
       }
+      InputProps={{
+        style: { appearance: 'textfield' },
+      }}
+      inputProps={{
+        style: {
+          MozAppearance: 'textfield',
+          appearance: 'textfield',
+          WebkitAppearance: 'none',
+        },
+        inputMode: 'decimal',
+      }}
     />
   )
 }

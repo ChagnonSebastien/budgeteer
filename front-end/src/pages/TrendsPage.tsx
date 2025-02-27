@@ -1,12 +1,36 @@
 import { Button, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material'
 import { FC, useEffect, useState } from 'react'
-import '../styles/graphs.css'
+import '../styles/graphs-tailwind.css'
+import '../styles/trends-page-tailwind.css'
 import { useLocation, useNavigate } from 'react-router-dom'
+import styled from 'styled-components'
 
 import CategoryPicker from '../components/CategoryPicker'
 import ContentWithHeader from '../components/ContentWithHeader'
 import TrendsChart, { grouping } from '../components/TrendsChart'
-import './TrendsPage.css'
+
+const GraphPageContainer = styled.div`
+  height: 100%;
+  width: 100%;
+`
+
+const GraphContainer = styled.div<{ height: number }>`
+  height: ${(props) => `${props.height}px`};
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding-bottom: 1rem;
+
+  & > div {
+    max-width: 100vh;
+  }
+`
+
+const ControlsContainer = styled.div`
+  padding: 1rem 2rem;
+  background: rgba(255, 255, 255, 0.02);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+`
 
 const TrendsPage: FC = () => {
   const [optionsHeight, setOptionsHeight] = useState(240)
@@ -62,18 +86,12 @@ const TrendsPage: FC = () => {
       contentOverflowY="hidden"
       contentPadding="1rem 0 0 0"
     >
-      <div className="graph-page" ref={setContentRef}>
-        <div
-          className="graph-container"
-          style={{
-            height: `${contentHeight - optionsHeight}px`,
-          }}
-        >
+      <GraphPageContainer ref={setContentRef}>
+        <GraphContainer height={contentHeight - optionsHeight}>
           <TrendsChart categories={selectedCategories} grouping={grouping} years={years} />
-        </div>
+        </GraphContainer>
 
-        <div
-          className="graph-controls"
+        <ControlsContainer
           ref={(element: HTMLDivElement | null) => {
             if (element) setOptionsHeight(element.scrollHeight)
           }}
@@ -135,8 +153,8 @@ const TrendsPage: FC = () => {
               </div>
             </div>
           </div>
-        </div>
-      </div>
+        </ControlsContainer>
+      </GraphPageContainer>
     </ContentWithHeader>
   )
 }

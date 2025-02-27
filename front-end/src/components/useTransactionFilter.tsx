@@ -27,7 +27,10 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
   const navigate = useNavigate()
   const accountFilter: number[] = query.get('accounts') ? JSON.parse(query.get('accounts')!) : null
   const categoryFilter: number[] = query.get('categories') ? JSON.parse(query.get('categories')!) : null
-  const [showSlider, setShowSlider] = useState(false)
+
+  const hasFilters = query.has('accounts') || query.has('categories')
+  const [showSlider, setShowSlider] = useState(hasFilters)
+
   const fromDate = startOfDay(
     query.get('from') ? new Date(Number.parseInt(query.get('from')!)) : addDays(subYears(new Date(), 1), 1),
   )

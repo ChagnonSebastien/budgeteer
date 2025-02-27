@@ -1,10 +1,17 @@
 import { FC, useCallback, useContext } from 'react'
 import { useNavigate } from 'react-router-dom'
+import styled from 'styled-components'
 
 import CategoryForm from '../components/CategoryForm'
 import ContentWithHeader from '../components/ContentWithHeader'
 import Category from '../domain/model/category'
 import { CategoryServiceContext } from '../service/ServiceContext'
+
+const FormContainer = styled.div`
+  width: 100%;
+  max-width: 35rem;
+  margin: auto;
+`
 
 const CreateCategoryPage: FC = () => {
   const navigate = useNavigate()
@@ -34,7 +41,9 @@ const CreateCategoryPage: FC = () => {
 
   return (
     <ContentWithHeader title="Create new category" button="return">
-      <CategoryForm onSubmit={onSubmit} submitText="Create" />
+      <FormContainer className="p-4">
+        <CategoryForm onSubmit={onSubmit} submitText="Create" />
+      </FormContainer>
     </ContentWithHeader>
   )
 }

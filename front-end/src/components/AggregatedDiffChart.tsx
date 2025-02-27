@@ -20,6 +20,8 @@ import MixedAugmentation from '../service/MixedAugmentation'
 import { CurrencyServiceContext } from '../service/ServiceContext'
 import { darkColors, darkTheme } from '../utils'
 
+import '../styles/graphs-tailwind.css'
+
 interface Props {
   transactions: AugmentedTransaction[]
   fromDate: Date
@@ -151,8 +153,8 @@ const AggregatedDiffChart: FC<Props> = (props) => {
           tooltip={(props) => {
             return (
               <Card>
-                <div style={{ padding: '.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                  <div style={{ fontWeight: 'bolder' }}>{props.point.data.xFormatted}</div>
+                <div className="p-2 flex flex-col items-center">
+                  <div className="font-bold">{props.point.data.xFormatted}</div>
                   {!privacyMode && <div>{props.point.data.yFormatted}</div>}
                 </div>
               </Card>

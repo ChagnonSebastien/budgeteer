@@ -1,0 +1,10 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  /* IconCapsule styles */
+  .icon-capsule {
+    @apply flex items-center justify-center;
+  }
+}

@@ -1,10 +1,17 @@
 import { FC, useCallback, useContext, useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import styled from 'styled-components'
 
 import CategoryForm from '../components/CategoryForm'
 import ContentWithHeader from '../components/ContentWithHeader'
 import Category from '../domain/model/category'
 import { CategoryServiceContext } from '../service/ServiceContext'
+
+const FormContainer = styled.div`
+  width: 100%;
+  max-width: 35rem;
+  margin: auto;
+`
 
 type Params = {
   categoryId: string
@@ -36,11 +43,11 @@ const EditCategoryPage: FC = () => {
   }
 
   return (
-    <div>
-      <ContentWithHeader title="Edit category" button="return">
+    <ContentWithHeader title="Edit category" button="return">
+      <FormContainer className="p-4">
         <CategoryForm onSubmit={onSubmit} submitText="Save changes" initialCategory={selectedCategory} />
-      </ContentWithHeader>
-    </div>
+      </FormContainer>
+    </ContentWithHeader>
   )
 }
 

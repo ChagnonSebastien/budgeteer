@@ -1,10 +1,17 @@
 import { FC, useCallback, useContext, useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import styled from 'styled-components'
 
 import AccountForm from '../components/AccountForm'
 import ContentWithHeader from '../components/ContentWithHeader'
 import Account from '../domain/model/account'
 import { AccountServiceContext } from '../service/ServiceContext'
+
+const FormContainer = styled.div`
+  width: 100%;
+  max-width: 35rem;
+  margin: auto;
+`
 
 type Params = {
   accountId: string
@@ -35,9 +42,9 @@ const EditAccountPage: FC = () => {
 
   return (
     <ContentWithHeader title="Edit account" button="return">
-      <div style={{ padding: '1rem' }}>
+      <FormContainer className="p-4">
         <AccountForm onSubmit={onSubmit} submitText="Save changes" initialAccount={selectedAccount} />
-      </div>
+      </FormContainer>
     </ContentWithHeader>
   )
 }
