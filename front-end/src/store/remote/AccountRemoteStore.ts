@@ -19,7 +19,7 @@ export default class AccountRemoteStore {
     return await Promise.all(response.accounts.map<Promise<Account>>((dto) => conv.toModel(dto)))
   }
 
-  public async create(data: Omit<Account, 'id'>): Promise<Account> {
+  public async create(data: Omit<Account, 'id' | 'hasName'>): Promise<Account> {
     const response = await this.client.createAccount(
       CreateAccountRequest.create({
         ...data,

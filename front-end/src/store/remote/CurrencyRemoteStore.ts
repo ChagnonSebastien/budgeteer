@@ -26,7 +26,7 @@ export default class CurrencyRemoteStore {
     return await Promise.all(response.currencies.map<Promise<Currency>>((dto) => conv.toModel(dto)))
   }
 
-  public async create(data: Omit<Currency, 'id'>): Promise<Currency> {
+  public async create(data: Omit<Currency, 'id' | 'hasName'>): Promise<Currency> {
     let initialExchangeRate: InitialExchangeRate | undefined = undefined
     if (Object.keys(data.exchangeRates).length === 1) {
       const other = Object.keys(data.exchangeRates).map(Number)[0] as keyof typeof data.exchangeRates
