@@ -221,8 +221,8 @@ const TrendsChart: FC<Props> = (props) => {
                     trendlineData.length)
 
               const allValues = visibleData.map((d) => d.total)
-              const minValue = Math.min(...allValues)
-              const maxValue = Math.max(...allValues)
+              const minValue = Math.min(...allValues, 0)
+              const maxValue = Math.max(...allValues, 0)
               const valueRange = maxValue - minValue
 
               const y1 = 100 - ((prevPoint.value - minValue) / valueRange) * 100
