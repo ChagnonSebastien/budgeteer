@@ -36,11 +36,12 @@ export const SearchOverlay = ({ filter, setFilter, placeholder = 'Search...' }: 
   useEffect(() => {
     const handleEscape = (ev: KeyboardEvent) => {
       if ((ev.key === 'Escape' || ev.key === 'Enter') && showSearch) {
+        ev.stopPropagation()
         setShowSearch(false)
       }
     }
-    document.addEventListener('keydown', handleEscape)
-    return () => document.removeEventListener('keydown', handleEscape)
+    document.addEventListener('keydown', handleEscape, true)
+    return () => document.removeEventListener('keydown', handleEscape, true)
   }, [showSearch])
 
   const handleClose = () => {
