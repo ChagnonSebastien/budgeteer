@@ -148,63 +148,175 @@ const TrendsChart: FC<Props> = (props) => {
     [grouping],
   )
 
+  const rollingTail = useMemo(() => (grouping === 'months' ? 12 : grouping === 'quarters' ? 4 : 3), [grouping])
+
+  const trendlineData = useMemo(() => {
+    if (!data) return null
+
+    if (data.length < 2) {
+      return null
+    }
+
+    const movingAverages: { index: number; value: number }[] = []
+
+    for (let i = 0; i < data.length; i++) {
+      const windowSize = Math.min(i + 1, rollingTail)
+      let sum = 0
+
+      for (let j = 0; j < windowSize; j++) {
+        sum += data[i - j]?.total
+      }
+
+      const average = sum / windowSize
+      movingAverages.push({ index: i, value: average })
+    }
+
+    return movingAverages.slice(
+      data.length - Math.min(data.length, years * (grouping === 'months' ? 12 : grouping === 'quarters' ? 4 : 1)),
+    )
+  }, [data, years, grouping, rollingTail])
+
+  // Calculate the visible data points
+  const visibleData = useMemo(() => {
+    if (!data) return []
+    return data.slice(
+      data.length - Math.min(data.length, years * (grouping === 'months' ? 12 : grouping === 'quarters' ? 4 : 1)),
+    )
+  }, [data, years, grouping])
+
   return data && defaultCurrency ? (
-    <ResponsiveBar
-      margin={{ top: 20, right: 25, bottom: 60, left: 70 }}
-      data={data.slice(
-        data.length - Math.min(data.length, years * (grouping === 'months' ? 12 : grouping === 'quarters' ? 4 : 1)),
+    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+      {/* Trendline overlay */}
+      {visibleData.length >= 2 && trendlineData && (
+        <svg
+          style={{
+            position: 'absolute',
+            top: 20, // Match top margin
+            left: 70, // Match left margin
+            width: `calc(100% - 95px)`, // Adjust for margins (left + right)
+            height: `calc(100% - 80px)`, // Adjust for margins (top + bottom)
+            pointerEvents: 'none', // Allow clicks to pass through
+            zIndex: 10,
+          }}
+        >
+          <svg viewBox="0 0 100 100" preserveAspectRatio="none">
+            {trendlineData.map((point, index) => {
+              if (index === 0) return null
+
+              const prevPoint = trendlineData[index - 1]
+
+              const x1 =
+                ((index - 1) / Math.max(trendlineData.length - 1, 1)) *
+                  ((100 * ((trendlineData.length - 0.2) / trendlineData.length) * (trendlineData.length - 1)) /
+                    trendlineData.length) +
+                (100 -
+                  (100 * ((trendlineData.length - 0.1) / trendlineData.length) * (trendlineData.length - 0.5)) /
+                    trendlineData.length)
+              const x2 =
+                (index / Math.max(trendlineData.length - 1, 1)) *
+                  ((100 * ((trendlineData.length - 0.2) / trendlineData.length) * (trendlineData.length - 1)) /
+                    trendlineData.length) +
+                (100 -
+                  (100 * ((trendlineData.length - 0.1) / trendlineData.length) * (trendlineData.length - 0.5)) /
+                    trendlineData.length)
+
+              const allValues = visibleData.map((d) => d.total)
+              const minValue = Math.min(...allValues)
+              const maxValue = Math.max(...allValues)
+              const valueRange = maxValue - minValue
+
+              const y1 = 100 - ((prevPoint.value - minValue) / valueRange) * 100
+              const y2 = 100 - ((point.value - minValue) / valueRange) * 100
+
+              return (
+                <line
+                  key={index}
+                  x1={`${x1}%`}
+                  y1={`${y1}%`}
+                  x2={`${x2}%`}
+                  y2={`${y2}%`}
+                  stroke="#eeeeff"
+                  strokeWidth="0.2"
+                  strokeDasharray="1,0.5"
+                />
+              )
+            })}
+          </svg>
+
+          {/* Add a small legend for the moving average */}
+          <g transform="translate(10, 20)">
+            <line
+              x1="0"
+              y1="0"
+              x2="20"
+              y2="0"
+              stroke="#ffffff"
+              strokeWidth={1.5}
+              strokeDasharray="4,3"
+              strokeLinecap="round"
+            />
+            <text x="25" y="5" fontSize="12" fill="#ffffff" opacity="0.7">
+              Rolling Avg ({rollingTail})
+            </text>
+          </g>
+        </svg>
       )}
-      axisBottom={{
-        tickRotation: -45,
-        format: (props) => label(new Date(props)),
-      }}
-      enableGridY={!privacyMode}
-      axisLeft={{
-        tickSize: privacyMode ? 0 : 5,
-        format: (i) =>
-          privacyMode
-            ? ''
-            : formatAmount(defaultCurrency, i, privacyMode).slice(0, -((defaultCurrency?.decimalPoints ?? 2) + 1)),
-      }}
-      tooltip={(props) => (
-        <div className="p-2 px-3 bg-black/[0.85] rounded flex flex-col gap-1">
-          <div className="text-white/70 text-[0.9rem]">{label(new Date(props.indexValue))}</div>
-          {!privacyMode && (
-            <div
-              className="text-[1.1rem] font-medium"
-              style={{
-                color: props.value! < 0 ? theme.palette.error.light : theme.palette.success.light,
-              }}
-            >
-              {formatFull(defaultCurrency, props.value, privacyMode)}
-            </div>
-          )}
-        </div>
-      )}
-      enableLabel={false}
-      keys={['total']}
-      indexBy={'date'}
-      theme={{
-        ...darkTheme,
-        axis: {
-          ...darkTheme.axis,
-          ticks: {
-            ...darkTheme.axis.ticks,
-            text: {
-              ...darkTheme.axis.ticks.text,
-              fontSize: 12,
+
+      <ResponsiveBar
+        margin={{ top: 20, right: 25, bottom: 60, left: 70 }}
+        data={visibleData}
+        axisBottom={{
+          tickRotation: -45,
+          format: (props) => label(new Date(props)),
+        }}
+        enableGridY={!privacyMode}
+        axisLeft={{
+          tickSize: privacyMode ? 0 : 5,
+          format: (i) =>
+            privacyMode
+              ? ''
+              : formatAmount(defaultCurrency, i, privacyMode).slice(0, -((defaultCurrency?.decimalPoints ?? 2) + 1)),
+        }}
+        tooltip={(props) => (
+          <div className="p-2 px-3 bg-black/[0.85] rounded flex flex-col gap-1">
+            <div className="text-white/70 text-[0.9rem]">{label(new Date(props.indexValue))}</div>
+            {!privacyMode && (
+              <div
+                className="text-[1.1rem] font-medium"
+                style={{
+                  color: props.value! < 0 ? theme.palette.error.light : theme.palette.success.light,
+                }}
+              >
+                {formatFull(defaultCurrency, props.value, privacyMode)}
+              </div>
+            )}
+          </div>
+        )}
+        enableLabel={false}
+        keys={['total']}
+        indexBy={'date'}
+        theme={{
+          ...darkTheme,
+          axis: {
+            ...darkTheme.axis,
+            ticks: {
+              ...darkTheme.axis.ticks,
+              text: {
+                ...darkTheme.axis.ticks.text,
+                fontSize: 12,
+              },
             },
           },
-        },
-      }}
-      colors={(props) => {
-        return props.value! < 0 ? theme.palette.error.light : theme.palette.success.light
-      }}
-      borderRadius={4}
-      padding={0.2}
-      animate={true}
-      motionConfig="gentle"
-    />
+        }}
+        colors={(props) => {
+          return props.value! < 0 ? theme.palette.error.light : theme.palette.success.light
+        }}
+        borderRadius={4}
+        padding={0.2}
+        animate={true}
+        motionConfig="gentle"
+      />
+    </div>
   ) : null
 }
 
