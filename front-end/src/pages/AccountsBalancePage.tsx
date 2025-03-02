@@ -57,6 +57,7 @@ const AccountsBalancePage: FC = () => {
     toDate,
     accountFilter,
     overview: filterOverview,
+    showSlider,
   } = useTransactionFilter((account: Account) => account.isMine, false)
 
   const location = useLocation()
@@ -72,9 +73,6 @@ const AccountsBalancePage: FC = () => {
   const scale: 'absolute' | 'relative' = (query.get('scale') ?? 'absolute') as 'absolute' | 'relative'
 
   const [optionsHeight, setOptionsHeight] = useState(140)
-
-  // Ref for the controls container to measure its height
-  const [controlsRef, setControlsRef] = useState<HTMLDivElement | null>(null)
 
   const [contentRef, setContentRef] = useState<HTMLDivElement | null>(null)
   const [contentHeight, setContentHeight] = useState(600)
@@ -98,7 +96,11 @@ const AccountsBalancePage: FC = () => {
   const graphSection = (
     <SplitViewContainer>
       <div className="flex flex-col w-full">
-        <GraphContainer height={splitHorizontal ? contentHeight - 100 : contentHeight - optionsHeight}>
+        <GraphContainer
+          height={
+            splitHorizontal ? (showSlider ? contentHeight - 200 : contentHeight - 100) : contentHeight - optionsHeight
+          }
+        >
           <Suspense
             fallback={
               <Box
@@ -138,7 +140,6 @@ const AccountsBalancePage: FC = () => {
         className={!splitHorizontal ? 'bg-white/[0.02]' : ''}
         ref={(element: HTMLDivElement | null) => {
           if (element && !splitHorizontal) setOptionsHeight(element.scrollHeight)
-          setControlsRef(element)
         }}
       >
         <div className="graph-controls-group">
