@@ -8,7 +8,7 @@ import CostsAnalysisSetup from '../components/CostsAnalysisSetup'
 import EarningsBreakdownChart from '../components/EarningsBreakdownChart'
 import { IconToolsContext } from '../components/IconTools'
 import { DrawerContext } from '../components/Menu'
-import { formatFull } from '../domain/model/currency'
+import { formatAmount } from '../domain/model/currency'
 import MixedAugmentation from '../service/MixedAugmentation'
 import { CategoryServiceContext, CurrencyServiceContext } from '../service/ServiceContext'
 import UserStore from '../UserStore'
@@ -267,20 +267,20 @@ const CostsAnalysisPage: FC = () => {
                 <>
                   <tr className="header-row">
                     <th />
-                    <th className="header-label">Yearly</th>
-                    <th className="header-label">Monthly</th>
+                    <th className="header-label">Yearly ({defaultCurrency.symbol})</th>
+                    <th className="header-label">Monthly ({defaultCurrency.symbol})</th>
                   </tr>
                   <tr>
                     <td>Gross Income</td>
                     <td className="amount-cell">
-                      {formatFull(
+                      {formatAmount(
                         defaultCurrency,
                         grossIncome * Math.pow(10, defaultCurrency.decimalPoints),
                         privacyMode,
                       )}
                     </td>
                     <td className="amount-cell">
-                      {formatFull(
+                      {formatAmount(
                         defaultCurrency,
                         (grossIncome * Math.pow(10, defaultCurrency.decimalPoints)) / 12,
                         privacyMode,
@@ -289,8 +289,8 @@ const CostsAnalysisPage: FC = () => {
                   </tr>
                   <tr>
                     <td>Net Income</td>
-                    <td className="amount-cell">{formatFull(defaultCurrency, income, privacyMode)}</td>
-                    <td className="amount-cell">{formatFull(defaultCurrency, income / 12, privacyMode)}</td>
+                    <td className="amount-cell">{formatAmount(defaultCurrency, income, privacyMode)}</td>
+                    <td className="amount-cell">{formatAmount(defaultCurrency, income / 12, privacyMode)}</td>
                   </tr>
                 </>
               )}
@@ -299,28 +299,39 @@ const CostsAnalysisPage: FC = () => {
                 <th>Fixed Costs</th>
                 {privacyMode ? (
                   <>
-                    <th className="header-label">Yearly</th>
-                    <th className="header-label">Monthly</th>
+                    <th className="header-label">Yearly ({defaultCurrency.symbol})</th>
+                    <th className="header-label">Monthly ({defaultCurrency.symbol})</th>
                   </>
                 ) : (
                   <th colSpan={2}>
                     {!privacyMode && `${privacyMode ? 'XX' : percentages[0]}%`}
                     <div className="percentage-bar">
-                      <div className="percentage-fill" style={{ width: `${percentages[0]}%` }} />
+                      <div
+                        className="percentage-fill"
+                        style={{
+                          width: `${percentages[0]}%`,
+                          backgroundColor:
+                            percentages[0] < 50
+                              ? '#4caf50' // Green if < 50%
+                              : percentages[0] > 60
+                                ? '#f44336' // Red if > 60%
+                                : `rgb(${Math.floor(76 + ((244 - 76) * (percentages[0] - 50)) / 10)}, ${Math.floor(175 + ((67 - 175) * (percentages[0] - 50)) / 10)}, ${Math.floor(80 + ((54 - 80) * (percentages[0] - 50)) / 10)})`, // Gradient from green to red
+                        }}
+                      />
                     </div>
                   </th>
                 )}
               </tr>
               <tr className="section-header">
                 <th>Totals</th>
-                <td className="amount-cell">{formatFull(defaultCurrency, fixedAmount)}</td>
-                <td className="amount-cell">{formatFull(defaultCurrency, fixedAmount / 12)}</td>
+                <td className="amount-cell">{formatAmount(defaultCurrency, fixedAmount)}</td>
+                <td className="amount-cell">{formatAmount(defaultCurrency, fixedAmount / 12)}</td>
               </tr>
               {[...fixedCosts.entries()].map((entry) => (
                 <tr key={`fixed-${entry[0]}`}>
                   <td>{entry[0]}</td>
-                  <td className="amount-cell">{formatFull(defaultCurrency, entry[1])}</td>
-                  <td className="amount-cell">{formatFull(defaultCurrency, entry[1] / 12)}</td>
+                  <td className="amount-cell">{formatAmount(defaultCurrency, entry[1])}</td>
+                  <td className="amount-cell">{formatAmount(defaultCurrency, entry[1] / 12)}</td>
                 </tr>
               ))}
               <tr style={{ height: '1rem' }} />
@@ -328,49 +339,71 @@ const CostsAnalysisPage: FC = () => {
                 <th>Variable Costs</th>
                 {privacyMode ? (
                   <>
-                    <th className="header-label">Yearly</th>
-                    <th className="header-label">Monthly</th>
+                    <th className="header-label">Yearly ({defaultCurrency.symbol})</th>
+                    <th className="header-label">Monthly ({defaultCurrency.symbol})</th>
                   </>
                 ) : (
                   <th colSpan={2}>
                     {!privacyMode && `${privacyMode ? 'XX' : percentages[1]}%`}
                     <div className="percentage-bar">
-                      <div className="percentage-fill" style={{ width: `${percentages[1]}%` }} />
+                      <div
+                        className="percentage-fill"
+                        style={{
+                          width: `${percentages[1]}%`,
+                          backgroundColor:
+                            percentages[1] < 30
+                              ? '#4caf50' // Green if < 30%
+                              : percentages[1] > 40
+                                ? '#f44336' // Red if > 40%
+                                : `rgb(${Math.floor(76 + ((244 - 76) * (percentages[1] - 30)) / 10)}, ${Math.floor(175 + ((67 - 175) * (percentages[1] - 30)) / 10)}, ${Math.floor(80 + ((54 - 80) * (percentages[1] - 30)) / 10)})`, // Gradient from green to red
+                        }}
+                      />
                     </div>
                   </th>
                 )}
               </tr>
               <tr className="section-header">
                 <th>Totals</th>
-                <td className="amount-cell">{formatFull(defaultCurrency, variableAmount)}</td>
-                <td className="amount-cell">{formatFull(defaultCurrency, variableAmount / 12)}</td>
+                <td className="amount-cell">{formatAmount(defaultCurrency, variableAmount)}</td>
+                <td className="amount-cell">{formatAmount(defaultCurrency, variableAmount / 12)}</td>
               </tr>
               {[...variableCosts.entries()].map((entry) => (
                 <tr key={`variable-${entry[0]}`}>
                   <td>{entry[0]}</td>
-                  <td className="amount-cell">{formatFull(defaultCurrency, entry[1])}</td>
-                  <td className="amount-cell">{formatFull(defaultCurrency, entry[1] / 12)}</td>
+                  <td className="amount-cell">{formatAmount(defaultCurrency, entry[1])}</td>
+                  <td className="amount-cell">{formatAmount(defaultCurrency, entry[1] / 12)}</td>
                 </tr>
               ))}
               {!privacyMode && (
                 <>
                   <tr style={{ height: '1rem' }} />
                   <tr className="section-header investments">
-                    <th>Investments</th>
+                    <th>Investments & Savings</th>
                     <th colSpan={2}>
                       {privacyMode ? 'XX' : percentages[2]}%
                       <div className="percentage-bar">
-                        <div className="percentage-fill" style={{ width: `${percentages[2]}%` }} />
+                        <div
+                          className="percentage-fill"
+                          style={{
+                            width: `${percentages[2]}%`,
+                            backgroundColor:
+                              percentages[2] > 20
+                                ? '#4caf50' // Green if > 20%
+                                : percentages[2] < 10
+                                  ? '#f44336' // Red if < 10%
+                                  : `rgb(${Math.floor(76 + ((244 - 76) * (20 - percentages[2])) / 10)}, ${Math.floor(175 + ((67 - 175) * (20 - percentages[2])) / 10)}, ${Math.floor(80 + ((54 - 80) * (20 - percentages[2])) / 10)})`, // Gradient from green to red
+                          }}
+                        />
                       </div>
                     </th>
                   </tr>
                   <tr>
                     <td>All</td>
                     <td className="amount-cell">
-                      {formatFull(defaultCurrency, income - variableAmount - fixedAmount, privacyMode)}
+                      {formatAmount(defaultCurrency, income - variableAmount - fixedAmount, privacyMode)}
                     </td>
                     <td className="amount-cell">
-                      {formatFull(defaultCurrency, (income - variableAmount - fixedAmount) / 12, privacyMode)}
+                      {formatAmount(defaultCurrency, (income - variableAmount - fixedAmount) / 12, privacyMode)}
                     </td>
                   </tr>
                 </>

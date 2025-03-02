@@ -43,20 +43,8 @@
     @apply h-full transition-[width] duration-300 ease-in;
   }
 
-  .fixed-costs .percentage-fill {
-    @apply bg-[#ff9800];
-  }
-
-  .variable-costs .percentage-fill {
-    @apply bg-[#f44336];
-  }
-
-  .investments .percentage-fill {
-    @apply bg-[#4caf50];
-  }
-
   .header-label {
-    @apply text-center !important;
+    @apply text-right !important;
   }
 
   tr[style*="height: 1rem"] {
