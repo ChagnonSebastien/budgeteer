@@ -212,7 +212,7 @@ const CostsAnalysisPage: FC = () => {
                 setViewType('chart')
               }}
             >
-              <IconLib.FaChartPie size="1.5rem" />
+              <IconLib.TbChartSankey size="1.5rem" />
             </IconButton>
           ) : (
             <IconButton
