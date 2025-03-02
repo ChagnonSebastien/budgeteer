@@ -116,7 +116,7 @@ const EarningsBreakdownChart: FC<Props> = ({ grossIncome, netIncome, fixedCosts,
         borderWidth={1}
         borderColor={{
           from: 'color',
-          modifiers: [['darker', 0.5]],
+          modifiers: [['darker', 1]],
         }}
         childColor={{
           from: 'color',

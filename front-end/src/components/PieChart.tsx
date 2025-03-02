@@ -192,7 +192,7 @@ const TransactionsPieChart: FC<Props> = (props) => {
           borderWidth={1}
           borderColor={{
             from: 'color',
-            modifiers: [['darker', 0.5]],
+            modifiers: [['darker', 1]],
           }}
           theme={darkTheme}
           childColor={{
