@@ -18,7 +18,7 @@ const CreateCategoryPage: FC = () => {
 
   const { create: createCategory } = useContext(CategoryServiceContext)
 
-  const onSubmit = useCallback(async (data: Partial<Omit<Category, 'id'>>) => {
+  const onSubmit = useCallback(async (data: Partial<Omit<Category, 'id' | 'hasName'>>) => {
     if (typeof data.name === 'undefined') throw new Error('Name cannot be undefined')
     if (typeof data.iconName === 'undefined') throw new Error('iconName cannot be undefined')
     if (typeof data.iconColor === 'undefined') throw new Error('iconColor cannot be undefined')

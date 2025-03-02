@@ -28,7 +28,7 @@ const EditCurrency: FC = () => {
   )
 
   const onSubmit = useCallback(
-    async (data: Partial<Omit<Currency, 'id'>>) => {
+    async (data: Partial<Omit<Currency, 'id' | 'hasName'>>) => {
       if (typeof selectedCurrency === 'undefined') return
 
       await updateCurrencies(selectedCurrency!.id, data)

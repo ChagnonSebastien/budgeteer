@@ -1,4 +1,4 @@
-import { Stack, TextField, Typography } from '@mui/material'
+import { TextField, Typography } from '@mui/material'
 import { FC, FormEvent, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import styled from 'styled-components'
 
@@ -17,7 +17,7 @@ const IconButton = styled.div`
 
 interface Props {
   initialAccount?: Account
-  onSubmit: (data: Partial<Omit<Account, 'id'>>) => Promise<void>
+  onSubmit: (data: Partial<Omit<Account, 'id' | 'hasName'>>) => Promise<void>
   submitText: string
 }
 

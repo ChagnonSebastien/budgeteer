@@ -6,9 +6,9 @@ import Unique from '../domain/model/Unique'
 interface Store<T extends Unique> {
   getAll(): Promise<T[]>
 
-  create(data: Omit<T, 'id'>): Promise<T>
+  create(data: Omit<T, 'id' | 'hasName'>): Promise<T>
 
-  update(id: number, data: Partial<Omit<T, 'id'>>): Promise<void>
+  update(id: number, data: Partial<Omit<T, 'id' | 'hasName'>>): Promise<void>
 }
 
 export interface AugmenterProps<T extends Unique, A> {
@@ -33,14 +33,14 @@ export const BasicCrudServiceWithPersistence = <T extends Unique, A>(props: Prop
 
   const [state, setState] = useState<T[]>(initialState.sort(sorter ?? ((_a: T, _b: T) => 0)))
 
-  const create = useCallback(async (data: Omit<T, 'id'>): Promise<T> => {
+  const create = useCallback(async (data: Omit<T, 'id' | 'hasName'>): Promise<T> => {
     const newItem = await longTermStore.create(data)
 
     setState((prevState) => [...prevState, newItem].sort(sorter ?? ((_a: T, _b: T) => 0)))
     return newItem
   }, [])
 
-  const update = useCallback(async (id: number, data: Partial<Omit<T, 'id'>>): Promise<void> => {
+  const update = useCallback(async (id: number, data: Partial<Omit<T, 'id' | 'hasName'>>): Promise<void> => {
     await longTermStore.update(id, data)
     setState((prevState) =>
       prevState.map((c) => (c.id === id ? { ...c, ...data } : c)).sort(sorter ?? ((_a: T, _b: T) => 0)),

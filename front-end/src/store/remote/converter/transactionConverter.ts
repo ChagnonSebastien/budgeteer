@@ -48,7 +48,7 @@ export class TransactionConverter implements Converter<Transaction, TransactionD
     })
   }
 
-  toUpdateDTO(model: Partial<Omit<Transaction, 'id'>>): UpdateTransactionFields {
+  toUpdateDTO(model: Partial<Omit<Transaction, 'id' | 'hasName'>>): UpdateTransactionFields {
     return UpdateTransactionFields.create({
       amount: model.amount,
       updateCategory: typeof model.categoryId !== 'undefined',

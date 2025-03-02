@@ -43,7 +43,7 @@ export default class AccountRemoteStore {
     )
   }
 
-  public async update(id: number, data: Partial<Omit<Account, 'id'>>): Promise<void> {
+  public async update(id: number, data: Partial<Omit<Account, 'id' | 'hasName'>>): Promise<void> {
     await this.client.updateAccount(
       UpdateAccountRequest.create({
         id,

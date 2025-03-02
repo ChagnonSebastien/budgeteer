@@ -18,7 +18,7 @@ const CreateCurrencyPage: FC = () => {
 
   const { create: createCurrency } = useContext(CurrencyServiceContext)
 
-  const onSubmit = useCallback(async (data: Partial<Omit<Currency, 'id'>>) => {
+  const onSubmit = useCallback(async (data: Partial<Omit<Currency, 'id' | 'hasName'>>) => {
     if (typeof data.name === 'undefined') throw new Error('Name cannot be undefined')
     if (typeof data.symbol === 'undefined') throw new Error('Symbol cannot be undefined')
     if (typeof data.decimalPoints === 'undefined') throw new Error('Decimal Points cannot be undefined')

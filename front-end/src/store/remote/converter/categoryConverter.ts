@@ -31,7 +31,7 @@ export class CategoryConverter implements Converter<Category, CategoryDto> {
     })
   }
 
-  toUpdateDTO(data: Partial<Omit<Category, 'id'>>): UpdateCategoryFields {
+  toUpdateDTO(data: Partial<Omit<Category, 'id' | 'hasName'>>): UpdateCategoryFields {
     return UpdateCategoryFields.create({
       name: data.name,
       iconName: data.iconName,

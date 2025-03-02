@@ -7,14 +7,14 @@ import Currency, { ExchangeRate } from '../domain/model/currency'
 export interface CurrencyPersistenceAugmentation {
   defaultCurrency: Currency | null
 
-  create(data: Omit<Currency, 'id'>): Promise<Currency>
+  create(data: Omit<Currency, 'id' | 'hasName'>): Promise<Currency>
 }
 
 export const CurrencyPersistenceAugmenter: FC<AugmenterProps<Currency, CurrencyPersistenceAugmentation>> = (props) => {
   const { augment, setState, longTermStore, sorter, state } = props
   const { default_currency } = useContext(UserContext)
 
-  const create = useCallback(async (data: Omit<Currency, 'id'>): Promise<Currency> => {
+  const create = useCallback(async (data: Omit<Currency, 'id' | 'hasName'>): Promise<Currency> => {
     const newItem = await longTermStore.create(data)
 
     const other = Object.keys(data.exchangeRates)

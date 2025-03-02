@@ -1,4 +1,4 @@
-import { Stack, TextField, Typography } from '@mui/material'
+import { TextField, Typography } from '@mui/material'
 import { DateCalendar, DateField, DateView } from '@mui/x-date-pickers'
 import { startOfDay } from 'date-fns'
 import dayjs, { Dayjs } from 'dayjs'
@@ -14,7 +14,7 @@ const validRate = new RegExp(`^\\d*[.,]?\\d*$`)
 
 interface Props {
   initialCurrency?: Currency
-  onSubmit: (data: Partial<Omit<Currency, 'id'>>) => Promise<void>
+  onSubmit: (data: Partial<Omit<Currency, 'id' | 'hasName'>>) => Promise<void>
   submitText: string
 }
 

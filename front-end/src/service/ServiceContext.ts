@@ -12,10 +12,10 @@ import Unique from '../domain/model/Unique'
 
 const nilPersistence = {
   state: [],
-  create<T extends Unique>(_data: Omit<T, 'id'>): Promise<T> {
+  create<T extends Unique>(_data: Omit<T, 'id' | 'hasName'>): Promise<T> {
     return Promise.reject(new Error('nilPersistence'))
   },
-  update<T extends Unique>(_id: number, _data: Omit<T, 'id'>): Promise<void> {
+  update<T extends Unique>(_id: number, _data: Omit<T, 'id' | 'hasName'>): Promise<void> {
     return Promise.reject(new Error('nilPersistence'))
   },
   get root(): Category {

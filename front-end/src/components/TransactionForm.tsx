@@ -52,7 +52,7 @@ interface FieldStatus {
 
 interface Props {
   initialTransaction?: AugmentedTransaction
-  onSubmit: (data: Partial<Omit<Transaction, 'id'>>) => Promise<void>
+  onSubmit: (data: Partial<Omit<Transaction, 'id' | 'hasName'>>) => Promise<void>
   submitText: string
   type?: 'income' | 'expense' | 'transfer'
 }

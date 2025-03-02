@@ -32,7 +32,7 @@ export class AccountConverter implements Converter<Account, AccountDto> {
     })
   }
 
-  toUpdateDTO(data: Partial<Omit<Account, 'id'>>): EditableAccountFields {
+  toUpdateDTO(data: Partial<Omit<Account, 'id' | 'hasName'>>): EditableAccountFields {
     return EditableAccountFields.create({
       name: data.name,
       updateBalances: typeof data.initialAmounts !== 'undefined',

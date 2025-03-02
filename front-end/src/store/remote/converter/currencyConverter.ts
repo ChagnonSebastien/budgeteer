@@ -50,7 +50,7 @@ export class CurrencyConverter implements Converter<Currency, CurrencyDto> {
     })
   }
 
-  toUpdateDTO(dto: Partial<Omit<Currency, 'id'>>): UpdateCurrencyFields {
+  toUpdateDTO(dto: Partial<Omit<Currency, 'id' | 'hasName'>>): UpdateCurrencyFields {
     return UpdateCurrencyFields.create({
       name: dto.name,
       symbol: dto.symbol,

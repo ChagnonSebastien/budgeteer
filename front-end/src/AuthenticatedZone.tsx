@@ -77,7 +77,7 @@ const AuthenticatedZone: FC<Props> = (props) => {
   }, [])
 
   const onNewCurrency = useCallback(
-    async (data: Partial<Omit<Currency, 'id'>>) => {
+    async (data: Partial<Omit<Currency, 'id' | 'hasName'>>) => {
       if (currencies === null) return
 
       if (typeof data.name === 'undefined') return

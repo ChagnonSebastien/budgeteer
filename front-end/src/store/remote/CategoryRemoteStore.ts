@@ -19,7 +19,7 @@ export default class CategoryRemoteStore {
     return await Promise.all(response.categories.map<Promise<Category>>((dto) => conv.toModel(dto)))
   }
 
-  public async create(data: Omit<Category, 'id'>): Promise<Category> {
+  public async create(data: Omit<Category, 'id' | 'hasName'>): Promise<Category> {
     const { parentId, ...remainder } = data
     const response = await this.client.createCategory(
       CreateCategoryRequest.create({
@@ -39,7 +39,7 @@ export default class CategoryRemoteStore {
     )
   }
 
-  public async update(id: number, data: Partial<Omit<Category, 'id'>>): Promise<void> {
+  public async update(id: number, data: Partial<Omit<Category, 'id' | 'hasName'>>): Promise<void> {
     await this.client.updateCategory(
       UpdateCategoryRequest.create({
         id,

@@ -34,7 +34,7 @@ const CreateTransactionPage: FC = () => {
   const { create: createTransaction } = useContext(TransactionServiceContext)
 
   const onSubmit = useCallback(
-    async (data: Partial<Omit<Transaction, 'id'>>) => {
+    async (data: Partial<Omit<Transaction, 'id' | 'hasName'>>) => {
       if (typeof data.amount === 'undefined') throw new Error('amount cannot be undefined')
       if (typeof data.currencyId === 'undefined') throw new Error('currencyId cannot be undefined')
       if (typeof data.categoryId === 'undefined') throw new Error('categoryId cannot be undefined')

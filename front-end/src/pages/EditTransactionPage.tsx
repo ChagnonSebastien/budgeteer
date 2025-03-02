@@ -31,7 +31,7 @@ const EditTransactionPage: FC = () => {
   )
 
   const onSubmit = useCallback(
-    async (data: Partial<Omit<Transaction, 'id'>>) => {
+    async (data: Partial<Omit<Transaction, 'id' | 'hasName'>>) => {
       if (typeof selectedTransaction === 'undefined') return
 
       await updateTransaction(selectedTransaction.id, data)

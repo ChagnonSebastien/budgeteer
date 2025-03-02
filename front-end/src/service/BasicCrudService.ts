@@ -5,5 +5,5 @@ export interface BasicCrudService<T extends Unique> {
 
   create(data: Omit<T, 'id' | 'hasName'>): Promise<T>
 
-  update(id: number, data: Partial<Omit<T, 'id'>>): Promise<void>
+  update(id: number, data: Partial<Omit<T, 'id' | 'hasName'>>): Promise<void>
 }

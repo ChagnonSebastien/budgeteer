@@ -25,7 +25,7 @@ const EditAccountPage: FC = () => {
   const selectedAccount = useMemo(() => accounts.find((c) => c.id === parseInt(accountId!)), [accounts, accountId])
 
   const onSubmit = useCallback(
-    async (data: Partial<Omit<Account, 'id'>>) => {
+    async (data: Partial<Omit<Account, 'id' | 'hasName'>>) => {
       if (typeof selectedAccount === 'undefined') return
 
       await updateAccount(selectedAccount!.id, data)

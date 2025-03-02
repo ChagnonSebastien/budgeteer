@@ -19,7 +19,7 @@ export default class TransactionRemoteStore {
     return await Promise.all(response.transactions.map<Promise<Transaction>>((dto) => conv.toModel(dto)))
   }
 
-  public async create(data: Omit<Transaction, 'id'>): Promise<Transaction> {
+  public async create(data: Omit<Transaction, 'id' | 'hasName'>): Promise<Transaction> {
     const response = await this.client.createTransaction(
       CreateTransactionRequest.create({
         amount: data.amount,
@@ -47,7 +47,7 @@ export default class TransactionRemoteStore {
     )
   }
 
-  public async update(id: number, data: Partial<Omit<Transaction, 'id'>>): Promise<void> {
+  public async update(id: number, data: Partial<Omit<Transaction, 'id' | 'hasName'>>): Promise<void> {
     await this.client.updateTransaction(
       UpdateTransactionRequest.create({
         id,
