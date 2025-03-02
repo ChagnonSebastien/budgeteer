@@ -35,6 +35,9 @@ interface Props {
     filter: string
     setFilter: Dispatch<SetStateAction<string>>
   }
+  onFilteredCurrenciesChange?: (currencies: Currency[]) => void
+  focusedCurrency?: number | null
+  hideSearchOverlay?: boolean
 }
 
 export const CurrencyList = (props: Props) => {
@@ -97,6 +100,13 @@ export const CurrencyList = (props: Props) => {
     return currency.name.toLowerCase().includes(searchTerm) || currency.symbol.toLowerCase().includes(searchTerm)
   })
 
+  // Call onFilteredCurrenciesChange when filtered currencies change
+  useEffect(() => {
+    if (props.onFilteredCurrenciesChange) {
+      props.onFilteredCurrenciesChange(filteredCurrencies)
+    }
+  }, [filteredCurrencies, props.onFilteredCurrenciesChange])
+
   return (
     <CurrencyListContainer>
       <ScrollableContent ref={contentRef} className="custom-scrollbar">
@@ -105,7 +115,11 @@ export const CurrencyList = (props: Props) => {
             const total = getTotalForCurrency(currency.id)
             if (!showZeroBalances && total === 0) return null
             return (
-              <div key={`currency-list-${currency.id}`} className="currency-item" onClick={() => onSelect(currency.id)}>
+              <div
+                key={`currency-list-${currency.id}`}
+                className={`currency-item ${props.focusedCurrency === currency.id ? 'focused' : ''}`}
+                onClick={() => onSelect(currency.id)}
+              >
                 <div className="currency-item-content">
                   <div className="currency-item-left">
                     <div className="currency-icon-container">
@@ -125,7 +139,7 @@ export const CurrencyList = (props: Props) => {
           })}
         </div>
       </ScrollableContent>
-      {filterable && (
+      {filterable && !props.hideSearchOverlay && (
         <SearchOverlay filter={filterable.filter} setFilter={filterable.setFilter} placeholder="Search currencies..." />
       )}
     </CurrencyListContainer>

@@ -1,4 +1,4 @@
-import Unique from './Unique'
+import NamedItem from './NamedItem'
 
 export class Balance {
   constructor(
@@ -7,7 +7,7 @@ export class Balance {
   ) {}
 }
 
-export default class Account implements Unique {
+export default class Account implements NamedItem {
   constructor(
     public readonly id: number,
     public readonly name: string,
@@ -16,4 +16,8 @@ export default class Account implements Unique {
     public readonly type: string,
     public readonly financialInstitution: string,
   ) {}
+
+  hasName(name: string): boolean {
+    return this.name.toLowerCase() === name.toLowerCase()
+  }
 }

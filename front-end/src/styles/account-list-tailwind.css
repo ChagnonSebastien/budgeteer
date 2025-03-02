@@ -27,6 +27,14 @@
     @apply bg-[rgba(200,75,49,0.16)];
   }
 
+  .account-list-item.focused {
+    @apply bg-[rgba(200,75,49,0.08)] border-l-[#C84B31];
+  }
+
+  .account-list-item.focused:hover {
+    @apply bg-[rgba(200,75,49,0.12)];
+  }
+
   .account-content {
     @apply flex items-stretch rounded-xl overflow-hidden py-3 px-4;
   }

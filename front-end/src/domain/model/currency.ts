@@ -1,3 +1,4 @@
+import NamedItem from './NamedItem'
 import Unique from './Unique'
 
 export class ExchangeRate implements Unique {
@@ -8,7 +9,7 @@ export class ExchangeRate implements Unique {
   ) {}
 }
 
-export default class Currency implements Unique {
+export default class Currency implements NamedItem {
   constructor(
     public readonly id: number,
     public readonly name: string,
@@ -16,6 +17,10 @@ export default class Currency implements Unique {
     public readonly decimalPoints: number,
     public readonly exchangeRates: { [comparedTo: number]: ExchangeRate[] },
   ) {}
+
+  hasName(name: string): boolean {
+    return this.name.toLowerCase() === name.toLowerCase()
+  }
 }
 
 export function formatFull(currency: Currency, rawValue: number, anonymity = false): string {

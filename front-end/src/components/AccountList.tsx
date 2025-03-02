@@ -39,6 +39,7 @@ const GroupHeader = styled.div`
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  gap: 0.75rem;
 `
 
 const GroupName = styled.div`
@@ -89,6 +90,9 @@ type Props = {
   groupBy?: 'institution' | 'type'
   filterable?: { filter: string; setFilter: Dispatch<SetStateAction<string>> }
   onScrollProgress?: (progress: number) => void
+  hideSearchOverlay?: boolean
+  focusedAccount?: number | null
+  onFilteredAccountsChange?: (accounts: Account[]) => void
 }
 
 type tabs = 'mine' | 'others'
@@ -210,6 +214,26 @@ export const AccountList = (props: Props) => {
   const displayedAccount = useMemo(() => {
     return activeTab === 'mine' ? myOwnFilteredAccounts : otherFilteredAccounts
   }, [myOwnFilteredAccounts, otherFilteredAccounts, activeTab])
+
+  // Provide the filtered accounts in display order to the parent component
+  useEffect(() => {
+    if (props.onFilteredAccountsChange) {
+      // Flatten all accounts in the order they are displayed
+      const allDisplayedAccounts: Account[] = []
+
+      // First add accounts from the active tab
+      allDisplayedAccounts.push(...displayedAccount)
+
+      // Then add accounts from the other tab if there are any
+      if (activeTab === 'mine' && otherFilteredAccounts.length > 0) {
+        allDisplayedAccounts.push(...otherFilteredAccounts)
+      } else if (activeTab === 'others' && myOwnFilteredAccounts.length > 0) {
+        allDisplayedAccounts.push(...myOwnFilteredAccounts)
+      }
+
+      props.onFilteredAccountsChange(allDisplayedAccounts)
+    }
+  }, [props.onFilteredAccountsChange, displayedAccount, myOwnFilteredAccounts, otherFilteredAccounts, activeTab])
 
   const segments = useMemo(() => {
     if (myOwnAccounts.length === 0 || otherAccounts.length === 0) return undefined
@@ -333,6 +357,7 @@ export const AccountList = (props: Props) => {
                     selected={selected}
                     onMultiSelect={onMultiSelect}
                     showBalances={showBalances}
+                    focused={props.focusedAccount === account.id}
                   />
                 ))}
               </div>
@@ -340,7 +365,7 @@ export const AccountList = (props: Props) => {
           </Fragment>
         ))}
       </ScrollableContent>
-      {filterable && (
+      {filterable && !props.hideSearchOverlay && (
         <SearchOverlay filter={filterable.filter} setFilter={filterable.setFilter} placeholder="Search accounts..." />
       )}
     </AccountListContainer>

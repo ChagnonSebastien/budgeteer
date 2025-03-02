@@ -16,11 +16,19 @@
   }
 
   .currency-item {
-    @apply p-4 px-6 cursor-pointer bg-gradient-to-br from-white/[0.05] to-white/[0.02] rounded-2xl border border-white/[0.08] backdrop-blur-md shadow-md transition-all duration-200 ease-out;
+    @apply p-4 px-6 cursor-pointer bg-gradient-to-br from-white/[0.05] to-white/[0.02] rounded-2xl border border-white/[0.08] backdrop-blur-md shadow-md transition-all duration-200 ease-out border-l-3 border-l-transparent;
   }
 
   .currency-item:hover {
     @apply -translate-y-0.5 scale-[1.01] shadow-lg border-white/[0.15];
+  }
+
+  .currency-item.focused {
+    @apply bg-[rgba(200,75,49,0.08)] border-l-[#C84B31];
+  }
+
+  .currency-item.focused:hover {
+    @apply bg-[rgba(200,75,49,0.12)];
   }
 
   .currency-item-content {

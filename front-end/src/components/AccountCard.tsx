@@ -15,6 +15,7 @@ type Props = {
   selected?: number[]
   onMultiSelect?: (value: number[]) => void
   showBalances?: boolean
+  focused?: boolean
 }
 
 export const AccountCard = (props: Props) => {
@@ -50,7 +51,7 @@ export const AccountCard = (props: Props) => {
 
   return (
     <div
-      className={`account-list-item ${selected?.includes(account.id) ? 'selected' : ''} ${showBalances ? 'with-balance' : ''}`}
+      className={`account-list-item ${selected?.includes(account.id) ? 'selected' : ''} ${props.focused ? 'focused' : ''} ${showBalances ? 'with-balance' : ''}`}
       onClick={handleClick}
     >
       <div className={`account-content ${showBalances ? 'with-balance' : ''}`}>
