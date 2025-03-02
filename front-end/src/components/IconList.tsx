@@ -17,7 +17,7 @@ const IconList: FC<Props> = ({ filter, onSelect }) => {
 
   const filteredIcons = useMemo(() => {
     return iconNameList.filter((value) => value.toLowerCase().includes(filter.toLowerCase())).slice(0, amountItems)
-  }, [filter, amountItems])
+  }, [iconNameList, filter, amountItems])
 
   const loadMoreRef = useRef(null)
 
@@ -64,6 +64,7 @@ const IconList: FC<Props> = ({ filter, onSelect }) => {
       </div>
       <div
         style={{
+          zIndex: -1,
           height: '100vh',
           position: 'absolute',
           bottom: 0,
