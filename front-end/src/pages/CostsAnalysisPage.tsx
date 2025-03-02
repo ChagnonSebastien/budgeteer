@@ -39,12 +39,29 @@ const CostsAnalysisPage: FC = () => {
   const { privacyMode } = useContext(DrawerContext)
   const { IconLib } = useContext(IconToolsContext)
 
+  // Get the current URL search params
+  const query = new URLSearchParams(window.location.search)
+
   const [showSetup, setShowSetup] = useState(false)
   const [showOptions, setShowOptions] = useState(false)
-  const [viewType, setViewType] = useState<'table' | 'chart'>('table')
+  const [viewType, setViewType] = useState<'table' | 'chart'>(query.get('view') === 'chart' ? 'chart' : 'table')
   const [incomeCategory, setIncomeCategory] = useState<number>(userStore.getIncomeCategoryId() ?? root.id)
   const [grossIncome, setGrossIncome] = useState<number>(userStore.getGrossIncome() ?? 0)
   const [contentRef, setContentRef] = useState<HTMLDivElement | null>(null)
+
+  // Update URL when viewType changes
+  const updateViewTypeInUrl = (newViewType: 'table' | 'chart') => {
+    const newQuery = new URLSearchParams(window.location.search)
+    if (newViewType === 'table') {
+      newQuery.delete('view')
+    } else {
+      newQuery.set('view', newViewType)
+    }
+
+    // Update the URL without reloading the page
+    const newUrl = `${window.location.pathname}?${newQuery.toString()}`
+    window.history.pushState({ path: newUrl }, '', newUrl)
+  }
 
   useEffect(() => {
     if (!userStore.getGrossIncome() || !userStore.getIncomeCategoryId()) {
@@ -210,6 +227,7 @@ const CostsAnalysisPage: FC = () => {
             <IconButton
               onClick={() => {
                 setViewType('chart')
+                updateViewTypeInUrl('chart')
               }}
             >
               <IconLib.TbChartSankey size="1.5rem" />
@@ -218,6 +236,7 @@ const CostsAnalysisPage: FC = () => {
             <IconButton
               onClick={() => {
                 setViewType('table')
+                updateViewTypeInUrl('table')
               }}
             >
               <IconLib.BsFileEarmarkText size="1.5rem" />

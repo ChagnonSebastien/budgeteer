@@ -194,7 +194,7 @@ const EarningsBreakdownChart: FC<Props> = ({ grossIncome, netIncome, fixedCosts,
     <div className="relative" style={{ height: dimensions.height, width: dimensions.width }}>
       <ResponsiveSankey
         data={data}
-        margin={{ top: 50, right: 50, bottom: 50, left: 50 }}
+        margin={{ top: 50, right: window.innerWidth / 40, bottom: 50, left: window.innerWidth / 40 }}
         align="start"
         colors={(node) => node.nodeColor || darkColors[0]}
         nodeOpacity={1}
@@ -216,6 +216,22 @@ const EarningsBreakdownChart: FC<Props> = ({ grossIncome, netIncome, fixedCosts,
         labelTextColor={{
           from: 'color',
           modifiers: [['brighter', 1]],
+        }}
+        label={(node) => {
+          const words = node.id.toString().split(' ')
+          const lineHeight = 15
+
+          const initialOffset = words.length > 1 ? (-lineHeight * (words.length - 1)) / 2 : 0
+
+          return (
+            <tspan>
+              {words.map((word, i) => (
+                <tspan key={`${i}${word}`} x="0" dy={i === 0 ? initialOffset : lineHeight}>
+                  {word}
+                </tspan>
+              ))}
+            </tspan>
+          ) as unknown as string
         }}
         theme={darkTheme}
         nodeTooltip={NodeTooltip}
