@@ -5,11 +5,22 @@ import styled from 'styled-components'
 import { IconToolsContext } from './IconTools'
 import '../styles/search-overlay-tailwind.css'
 
-const SearchButton = styled(Fab)`
+const FloatingButton = styled(Fab)`
   position: absolute;
   bottom: 1rem;
   right: 2rem;
   z-index: 1000;
+`
+
+const FilterText = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.9rem;
 `
 
 interface Props {
@@ -40,9 +51,45 @@ export const SearchOverlay = ({ filter, setFilter, placeholder = 'Search...' }: 
   return (
     <>
       {!showSearch && (
-        <SearchButton color="primary" size="medium" onClick={() => setShowSearch(true)} className="shadow-lg">
-          <IconLib.BiSearch className="text-2xl" />
-        </SearchButton>
+        <FloatingButton
+          color="primary"
+          size="medium"
+          onClick={() => setShowSearch(true)}
+          className="shadow-lg"
+          sx={{
+            minWidth: filter.length > 0 ? 'auto' : '50px',
+            width: filter.length > 0 ? 'auto' : '50px',
+            height: '50px',
+            borderRadius: filter.length > 0 ? '25px' : '50%',
+            paddingLeft: filter.length > 0 ? 1.75 : 0,
+            paddingRight: filter.length > 0 ? 0.75 : 0,
+            transition: 'all 0.2s ease',
+          }}
+        >
+          {filter.length > 0 ? (
+            <FilterText>
+              <span>{`${filter}`}</span>
+              <IconButton
+                size="medium"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleClose()
+                }}
+                sx={{
+                  color: 'white',
+                  padding: '4px',
+                  '&:hover': {
+                    backgroundColor: 'rgba(255,255,255,0.1)',
+                  },
+                }}
+              >
+                <IconLib.IoCloseCircle />
+              </IconButton>
+            </FilterText>
+          ) : (
+            <IconLib.BiSearch className="text-2xl" />
+          )}
+        </FloatingButton>
       )}
       {showSearch && (
         <div className="search-overlay" onClick={handleClose}>
