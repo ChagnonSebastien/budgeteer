@@ -1,7 +1,7 @@
-import { Checkbox, FormControlLabel, Stack, TextField } from '@mui/material'
+import { Checkbox, FormControlLabel, TextField } from '@mui/material'
 import { DateCalendar, DateField, DateView } from '@mui/x-date-pickers'
 import dayjs, { Dayjs } from 'dayjs'
-import { FC, FormEvent, useContext, useEffect, useMemo, useState } from 'react'
+import { FC, useContext, useEffect, useMemo, useState } from 'react'
 
 import AccountPicker from './AccountPicker'
 import { CategoryList } from './CategoryList'
@@ -111,7 +111,7 @@ const TransactionForm: FC<Props> = (props) => {
     return { existing: true, id: initialTransaction.receiver.id, name: initialTransaction.receiver.name }
   })
 
-  const [note, setNote] = useState('')
+  const [note, setNote] = useState(initialTransaction?.note ?? '')
 
   const category = useMemo(() => {
     return categories.find((c) => c.id === parent)
@@ -188,7 +188,7 @@ const TransactionForm: FC<Props> = (props) => {
     return Object.values(errors).every((value) => value.isValid)
   }, [errors])
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = () => {
     if (!isFormValid) {
       setErrors((prevState) => ({
         amount: {
