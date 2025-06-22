@@ -65,12 +65,12 @@ const AccountsBalancePage: FC = () => {
   const navigate = useNavigate()
 
   const groupBy: GroupType = (query.get('groupBy') ?? 'account') as GroupType
-  const splitInvestments: 'both' | 'split' | 'bookValue' | 'interests' = (query.get('splitInvestments') ?? 'both') as
-    | 'both'
-    | 'split'
-    | 'bookValue'
-    | 'interests'
-  const scale: 'absolute' | 'relative' = (query.get('scale') ?? 'absolute') as 'absolute' | 'relative'
+  const baselineConfig: 'none' | 'showIndividualBaselines' | 'showGlobalBaseline' = (query.get('baselineConfig') ??
+    'none') as 'none' | 'showIndividualBaselines' | 'showGlobalBaseline'
+  const scale: 'absolute' | 'cropped-absolute' | 'relative' = (query.get('scale') ?? 'absolute') as
+    | 'absolute'
+    | 'cropped-absolute'
+    | 'relative'
 
   const [optionsHeight, setOptionsHeight] = useState(140)
 
@@ -122,8 +122,8 @@ const AccountsBalancePage: FC = () => {
               toDate={toDate}
               filterByAccounts={accountFilter === null ? undefined : accountFilter}
               groupBy={groupBy}
-              splitInvestements={splitInvestments}
-              spread={scale === 'relative'}
+              baselineConfig={baselineConfig}
+              scale={scale}
             />
           </Suspense>
         </GraphContainer>
@@ -168,20 +168,19 @@ const AccountsBalancePage: FC = () => {
 
               <FormControl>
                 <FormLabel id="interests-view-label" sx={{ color: 'text.secondary', mb: 1 }}>
-                  Interests View
+                  Baseline
                 </FormLabel>
                 <RadioGroup
                   aria-labelledby="interests-view-label"
-                  value={splitInvestments}
+                  value={baselineConfig}
                   onChange={(event) => {
-                    query.set('splitInvestments', event.target.value)
+                    query.set('baselineConfig', event.target.value)
                     navigate(`${location.pathname}?${query.toString()}`)
                   }}
                 >
-                  <FormControlLabel value="both" control={<Radio />} label="Merge" />
-                  <FormControlLabel value="split" control={<Radio />} label="Split Interests" />
-                  <FormControlLabel value="bookValue" control={<Radio />} label="Only Book Value" />
-                  <FormControlLabel value="interests" control={<Radio />} label="Only Interests" />
+                  <FormControlLabel value="none" control={<Radio />} label="None" />
+                  <FormControlLabel value="showIndividualBaselines" control={<Radio />} label="Individual Book Value" />
+                  <FormControlLabel value="showGlobalBaseline" control={<Radio />} label="Global Book Value" />
                 </RadioGroup>
               </FormControl>
 
@@ -198,6 +197,7 @@ const AccountsBalancePage: FC = () => {
                   }}
                 >
                   <FormControlLabel value="absolute" control={<Radio />} label="Absolute" />
+                  <FormControlLabel value="cropped-absolute" control={<Radio />} label="Cropped Absolute" />
                   <FormControlLabel value="relative" control={<Radio />} label="Relative (%)" />
                 </RadioGroup>
               </FormControl>
@@ -246,18 +246,17 @@ const AccountsBalancePage: FC = () => {
                     },
                   }}
                   select
-                  value={splitInvestments}
+                  value={baselineConfig}
                   onChange={(event) => {
-                    query.set('splitInvestments', event.target.value)
+                    query.set('baselineConfig', event.target.value)
                     navigate(`${location.pathname}?${query.toString()}`)
                   }}
                   variant="standard"
                   fullWidth
                 >
-                  <MenuItem value="both">Merge</MenuItem>
-                  <MenuItem value="split">Split Interests</MenuItem>
-                  <MenuItem value="bookValue">Only Book Value</MenuItem>
-                  <MenuItem value="interests">Only Interests</MenuItem>
+                  <MenuItem value="none">None</MenuItem>
+                  <MenuItem value="showIndividualBaselines">Individual Book Value</MenuItem>
+                  <MenuItem value="showGlobalBaseline">Global Book Value</MenuItem>
                 </TextField>
               </Box>
               <Box>
@@ -279,6 +278,7 @@ const AccountsBalancePage: FC = () => {
                   fullWidth
                 >
                   <MenuItem value="absolute">Absolute</MenuItem>
+                  <MenuItem value="cropped-absolute">Cropped Absolute</MenuItem>
                   <MenuItem value="relative">Relative (%)</MenuItem>
                 </TextField>
               </Box>

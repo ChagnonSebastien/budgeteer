@@ -1,4 +1,4 @@
-import { ResponsiveStream } from '@nivo/stream'
+import { useTheme } from '@mui/material'
 import {
   differenceInDays,
   differenceInMonths,
@@ -12,6 +12,7 @@ import {
 } from 'date-fns'
 import { FC, useCallback, useContext, useMemo } from 'react'
 
+import CustomChart from './CustomChart'
 import { DrawerContext } from './Menu'
 import Account from '../domain/model/account'
 import { formatFull } from '../domain/model/currency'
@@ -28,12 +29,13 @@ interface Props {
   fromDate: Date
   toDate: Date
   groupBy: GroupType
-  splitInvestements?: 'both' | 'split' | 'bookValue' | 'interests'
-  spread?: boolean
+  baselineConfig?: 'none' | 'showIndividualBaselines' | 'showGlobalBaseline'
+  scale?: 'absolute' | 'cropped-absolute' | 'relative'
 }
 
 const AccountsBalanceChart: FC<Props> = (props) => {
-  const { fromDate, toDate, filterByAccounts, groupBy, splitInvestements = 'both', spread = false } = props
+  const { fromDate, toDate, filterByAccounts, groupBy, baselineConfig = 'none', scale = 'absolute' } = props
+  const theme = useTheme()
 
   const { defaultCurrency } = useContext(CurrencyServiceContext)
   const { augmentedTransactions, exchangeRateOnDay } = useContext(MixedAugmentation)
@@ -177,7 +179,7 @@ const AccountsBalanceChart: FC<Props> = (props) => {
       groupData.bookValue = marketValue
     }
 
-    const data: { [account: string]: number }[] = []
+    const data: { baseline?: number; values: { [account: string]: { amount: number; baseline?: number } } }[] = []
     const labels: Date[] = []
     const groups = new Set<string>()
 
@@ -257,7 +259,8 @@ const AccountsBalanceChart: FC<Props> = (props) => {
         t -= 1
       }
 
-      const todaysData: { [account: string]: number } = { test: 100 }
+      const todaysData: { [account: string]: { amount: number; baseline?: number } } = {}
+      let todaysBookValue = 0
       for (const [groupLabel, groupData] of Investments.entries()) {
         let marketValue = 0
         for (const [currencyId, amount] of groupData.assets) {
@@ -268,35 +271,59 @@ const AccountsBalanceChart: FC<Props> = (props) => {
           marketValue += amount * factor
         }
 
-        if (splitInvestements === 'split') {
-          todaysData[`${groupLabel} Gained`] = marketValue === 0 ? 0 : marketValue - groupData.bookValue
-          todaysData[`${groupLabel} Invested`] = marketValue === 0 ? 0 : groupData.bookValue
-          groups.add(`${groupLabel} Gained`)
-          groups.add(`${groupLabel} Invested`)
-        } else if (splitInvestements === 'bookValue') {
-          todaysData[groupLabel] = marketValue === 0 ? 0 : groupData.bookValue
-          groups.add(groupLabel)
-        } else if (splitInvestements === 'interests') {
-          todaysData[groupLabel] = marketValue === 0 ? 0 : marketValue - groupData.bookValue
-          groups.add(groupLabel)
-        } else {
-          todaysData[groupLabel] = marketValue
-          groups.add(groupLabel)
-        }
+        todaysBookValue += groupData.bookValue
+        //if (splitInvestements === 'split') {
+        //  todaysData[`${groupLabel} Gained`] = marketValue === 0 ? 0 : marketValue - groupData.bookValue
+        //  todaysData[`${groupLabel} Invested`] = marketValue === 0 ? 0 : groupData.bookValue
+        //  groups.add(`${groupLabel} Gained`)
+        //  groups.add(`${groupLabel} Invested`)
+        //} else if (splitInvestements === 'bookValue') {
+        //  todaysData[groupLabel] = marketValue === 0 ? 0 : groupData.bookValue
+        //  groups.add(groupLabel)
+        //} else if (splitInvestements === 'interests') {
+        //  todaysData[groupLabel] = marketValue === 0 ? 0 : marketValue - groupData.bookValue
+        //  groups.add(groupLabel)
+        //} else {
+        todaysData[groupLabel] = { amount: marketValue, baseline: groupData.bookValue }
+        groups.add(groupLabel)
+        //}
       }
 
       labels.push(upTo)
-      data.push({ ...todaysData })
+      data.push({ values: { ...todaysData }, baseline: todaysBookValue })
       i -= 1
+    }
+
+    let minYValue = 0
+    if (scale === 'cropped-absolute' && groups.size === 1) {
+      minYValue = Number.MAX_SAFE_INTEGER
+      const groupLabel = [...groups.keys()][0]
+      for (let i = 0; i < data.length; i += 1) {
+        if (data[i].values[groupLabel].amount < minYValue) {
+          minYValue = data[i].values[groupLabel].amount
+        }
+        if (
+          baselineConfig == 'showIndividualBaselines' &&
+          (data[i].values[groupLabel].baseline ?? Number.MAX_SAFE_INTEGER) < minYValue
+        ) {
+          minYValue = data[i].values[groupLabel].baseline!
+        }
+        if (baselineConfig == 'showGlobalBaseline' && (data[i].baseline ?? Number.MAX_SAFE_INTEGER) < minYValue) {
+          minYValue = data[i].baseline!
+        }
+      }
     }
 
     return (
       <>
-        <ResponsiveStream
+        <CustomChart
           data={data}
           keys={[...groups.keys()].sort((a, b) => a.localeCompare(b))}
           valueFormat={(value) => `${formatFull(defaultCurrency, value, privacyMode)}`}
           margin={{ top: 20, right: 25, bottom: 80, left: 70 }}
+          showGlobalBaseline={baselineConfig === 'showGlobalBaseline'}
+          showIndividualBaselines={baselineConfig === 'showIndividualBaselines'}
+          minYValue={minYValue}
           axisBottom={{
             format: (i) =>
               (data.length - i - 1) % showLabelEveryFactor === 0
@@ -311,7 +338,7 @@ const AccountsBalanceChart: FC<Props> = (props) => {
             tickSize: privacyMode ? 0 : 8,
             tickPadding: 5,
             format: (i) => {
-              if (spread) {
+              if (scale == 'relative') {
                 return `${i * 100}%`
               }
               return privacyMode
@@ -321,8 +348,7 @@ const AccountsBalanceChart: FC<Props> = (props) => {
                   })
             },
           }}
-          curve="monotoneX"
-          offsetType={spread ? 'expand' : 'none'}
+          offsetType={scale == 'relative' ? 'expand' : 'normal'}
           order="reverse"
           theme={{
             ...darkTheme,
@@ -347,58 +373,72 @@ const AccountsBalanceChart: FC<Props> = (props) => {
             },
             background: 'transparent',
           }}
-          colors={
-            splitInvestements === 'split'
-              ? ({ id }) => {
-                  if (typeof id !== 'string') return darkColors[0]
-                  const baseColorIndex = Math.floor(
-                    [...groups.keys()].sort((a, b) => a.localeCompare(b)).indexOf(id) / 2,
-                  )
-                  const baseColor = darkColors[baseColorIndex % darkColors.length]
+          colors={darkColors}
+          stackTooltip={(tooltipProps) => {
+            const date = formatDate(labels[tooltipProps.slice.index], 'MMM d, yyyy')
+            const totalGain = tooltipProps.slice.stack.map((s) => s.gain ?? 0).reduce((sum, g) => sum + g, 0)
+            const showGlobalGain = !privacyMode && totalGain !== 0 && baselineConfig === 'showGlobalBaseline'
 
-                  // If this is a "Gained" layer, create a lighter version of the base color
-                  if (id.endsWith('Gained')) {
-                    // Convert hex to RGB and lighten
-                    const r = parseInt(baseColor.slice(1, 3), 16)
-                    const g = parseInt(baseColor.slice(3, 5), 16)
-                    const b = parseInt(baseColor.slice(5, 7), 16)
-                    // Lighten by mixing with white (255,255,255)
-                    const lightenFactor = 0.2 // 40% lighter
-                    const lr = Math.round(r + (255 - r) * lightenFactor)
-                    const lg = Math.round(g + (255 - g) * lightenFactor)
-                    const lb = Math.round(b + (255 - b) * lightenFactor)
-                    return `#${lr.toString(16).padStart(2, '0')}${lg.toString(16).padStart(2, '0')}${lb.toString(16).padStart(2, '0')}`
-                  }
+            return (
+              <div className="graph-tooltip">
+                <div className="graph-tooltip-date">{date}</div>
 
-                  return baseColor
-                }
-              : darkColors
-          }
-          borderColor={{ theme: 'background' }}
-          stackTooltip={(tooltipProps) => (
-            <div className="graph-tooltip">
-              <div className="graph-tooltip-date">{formatDate(labels[tooltipProps.slice.index], 'MMM d, yyyy')}</div>
-              {tooltipProps.slice.stack
-                .filter((s) => s.value !== 0)
-                .map((s) => (
-                  <div
-                    key={`line-chart-overlay-${labels[tooltipProps.slice.index] && formatDate(labels[tooltipProps.slice.index], 'MMM d, yyyy')}-${s.layerLabel}`}
-                    className="graph-tooltip-row"
-                  >
-                    <div className="graph-tooltip-color" style={{ backgroundColor: s.color }} />
-                    <div className="graph-tooltip-label">{s.layerLabel}</div>
-                    {!privacyMode && (
-                      <>
-                        <div>:</div>
-                        <div className="min-w-4 flex-grow" />
-                        <div className="graph-tooltip-value">{s.formattedValue}</div>
-                      </>
-                    )}
+                {tooltipProps.slice.stack
+                  .filter((s) => s.value !== 0)
+                  .map((s) => {
+                    const showGain = !privacyMode && s.gain !== 0 && baselineConfig === 'showIndividualBaselines'
+                    return (
+                      <div key={`${date}-${s.layerLabel}`} className="graph-tooltip-group">
+                        {/* main row */}
+                        <div className="graph-tooltip-row">
+                          <div className="graph-tooltip-color" style={{ backgroundColor: s.color }} />
+                          <div className="graph-tooltip-label">{s.layerLabel}</div>
+
+                          {!privacyMode && (
+                            <>
+                              <div>:</div>
+                              <div className="min-w-4 flex-grow" />
+                              <div className="graph-tooltip-value">{s.formattedValue}</div>
+                            </>
+                          )}
+                        </div>
+
+                        {/* indented gain row */}
+                        {showGain && (
+                          <div className="graph-tooltip-row">
+                            <div
+                              className={'graph-tooltip-value'}
+                              style={{
+                                fontSize: 'small',
+                                color: s.gain < 0 ? theme.palette.error.light : theme.palette.success.light,
+                              }}
+                            >
+                              {s.gainFormatted}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+
+                {showGlobalGain && (
+                  <div>
+                    <hr />
+                    <div className="graph-tooltip-row">
+                      <div
+                        className="graph-tooltip-value"
+                        style={{
+                          color: totalGain < 0 ? theme.palette.error.light : theme.palette.success.light,
+                        }}
+                      >
+                        Total Gains: {formatFull(defaultCurrency, totalGain, privacyMode)}
+                      </div>
+                    </div>
                   </div>
-                ))}
-            </div>
-          )}
-          animate={false}
+                )}
+              </div>
+            )
+          }}
         />
       </>
     )
