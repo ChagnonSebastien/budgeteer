@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"time"
 
 	"chagnon.dev/budget-server/internal/domain/model"
 	"chagnon.dev/budget-server/internal/infrastructure/db/repository"
@@ -39,7 +40,7 @@ func (a *CurrencyService) GetAllCurrencies(ctx context.Context, userId string) (
 type InitialExchangeRate struct {
 	Other int
 	Rate  float64
-	Date  string
+	Date  time.Time
 }
 
 func (a *CurrencyService) CreateCurrency(

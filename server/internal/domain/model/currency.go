@@ -1,9 +1,11 @@
 package model
 
+import "time"
+
 type ExchangeRate struct {
 	ID   int
 	Rate float64
-	Date string
+	Date time.Time
 }
 
 type Currency struct {

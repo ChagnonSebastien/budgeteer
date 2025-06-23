@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"time"
 
 	"chagnon.dev/budget-server/internal/domain/model"
 	"chagnon.dev/budget-server/internal/infrastructure/db/dao"
@@ -68,7 +69,7 @@ func (r *Repository) GetAllCurrencies(ctx context.Context, userId string) ([]mod
 type InitialExchangeRate struct {
 	Other int
 	Rate  float64
-	Date  string
+	Date  time.Time
 }
 
 func (r *Repository) CreateCurrency(

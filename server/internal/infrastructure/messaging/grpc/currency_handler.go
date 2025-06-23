@@ -4,6 +4,7 @@ import (
 	"chagnon.dev/budget-server/internal/infrastructure/db/repository"
 	"context"
 	"fmt"
+	"time"
 
 	"chagnon.dev/budget-server/internal/domain/service"
 	"chagnon.dev/budget-server/internal/infrastructure/messaging/dto"
@@ -30,10 +31,15 @@ func (s *CurrencyHandler) CreateCurrency(
 
 	var initialExchangeRate *service.InitialExchangeRate
 	if req.InitialExchangeRate != nil {
+		date, err := time.Parse(layout, (*req.InitialExchangeRate).Date)
+		if err != nil {
+			return nil, fmt.Errorf("parsing initial exchange rate date: %s", err)
+		}
+
 		initialExchangeRate = &service.InitialExchangeRate{
 			Other: int((*req.InitialExchangeRate).Other),
 			Rate:  (*req.InitialExchangeRate).Rate,
-			Date:  (*req.InitialExchangeRate).Date,
+			Date:  date,
 		}
 	}
 
@@ -113,7 +119,7 @@ func (s *CurrencyHandler) GetAllCurrencies(
 					exchangeRatesDto, &dto.ExchangeRate{
 						Id:   uint32(exchangeRate.ID),
 						Rate: exchangeRate.Rate,
-						Date: exchangeRate.Date,
+						Date: exchangeRate.Date.Format(layout),
 					},
 				)
 			}
