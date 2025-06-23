@@ -4,7 +4,7 @@ import { defineConfig } from 'vite'
 import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vitejs.dev/config/
-export default defineConfig(({ mode }) => ({
+export default defineConfig({
   server: {
     port: 8000,
   },
@@ -15,18 +15,20 @@ export default defineConfig(({ mode }) => ({
       registerType: 'autoUpdate',
       workbox: {
         navigateFallbackDenylist: [/^\/auth/],
+        maximumFileSizeToCacheInBytes: 10_000_000,
       },
     }),
   ],
   css: {
     preprocessorOptions: {
       scss: {
+        api: 'legacy',
         // Use the modern Sass API
         outputStyle: 'expanded',
       },
     },
   },
   build: {
-    sourcemap: mode === 'development',
+    sourcemap: true,
   },
-}))
+})

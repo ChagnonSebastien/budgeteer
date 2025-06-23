@@ -29,13 +29,26 @@ COPY --from=protoc /app/front-end/src/store/remote/dto src/store/remote/dto
 RUN npm run build
 
 
-FROM golang:1.24-alpine AS server-build
+FROM golang:1.24-bookworm AS server-build
+RUN apt-get update && apt-get install -y \
+  build-essential \
+  pkg-config \
+  libv8-dev \
+  python3 \
+  ninja-build \
+  libc++-dev \
+  libc++abi-dev
+
+ENV CGO_ENABLED=1
+
 WORKDIR /app
 COPY server/go.mod server/go.sum ./
 RUN go mod download
+
 COPY server .
 COPY --from=sqlc /app/internal/infrastructure/db/dao internal/infrastructure/db/dao
 COPY --from=protoc /app/server/internal/infrastructure/messaging/dto internal/infrastructure/messaging/dto
+
 RUN go build -o budget-server .
 
 

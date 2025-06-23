@@ -4,12 +4,12 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"rogchap.com/v8go"
+	v8 "rogchap.com/v8go"
 )
 
 func Runner(script string) (string, error) {
-	iso := v8go.NewIsolate()
-	ctx := v8go.NewContext(iso)
+	iso := v8.NewIsolate()
+	ctx := v8.NewContext(iso)
 	if err := bindHTTPGet(ctx); err != nil {
 		log.Printf("bindingHttpGet: %s", err)
 		return "", err
@@ -26,7 +26,7 @@ func Runner(script string) (string, error) {
 		log.Printf("error converting to promise: %s", err)
 		return "", err
 	}
-	for prom.State() == v8go.Pending {
+	for prom.State() == v8.Pending {
 		continue
 	}
 	log.Printf(prom.Result().String())
@@ -34,14 +34,14 @@ func Runner(script string) (string, error) {
 	return prom.Result().String(), nil
 }
 
-func bindHTTPGet(ctx *v8go.Context) error {
+func bindHTTPGet(ctx *v8.Context) error {
 	iso := ctx.Isolate()
-	tmpl := v8go.NewFunctionTemplate(iso, httpGetCallback)
+	tmpl := v8.NewFunctionTemplate(iso, httpGetCallback)
 	fn := tmpl.GetFunction(ctx)
 	return ctx.Global().Set("httpGet", fn)
 }
 
-func httpGetCallback(info *v8go.FunctionCallbackInfo) *v8go.Value {
+func httpGetCallback(info *v8.FunctionCallbackInfo) *v8.Value {
 	// Extract URL argument from JS
 	urlVal := info.Args()[0]
 	urlStr := urlVal.String()
@@ -50,7 +50,7 @@ func httpGetCallback(info *v8go.FunctionCallbackInfo) *v8go.Value {
 	if err != nil {
 		// Return JS rejection string or throw
 		iso := info.Context().Isolate()
-		val, _ := v8go.NewValue(iso, "")
+		val, _ := v8.NewValue(iso, "")
 		return val
 	}
 	defer resp.Body.Close()
@@ -58,6 +58,6 @@ func httpGetCallback(info *v8go.FunctionCallbackInfo) *v8go.Value {
 
 	// Return HTML string back to JS
 	iso := info.Context().Isolate()
-	result, _ := v8go.NewValue(iso, string(body))
+	result, _ := v8.NewValue(iso, string(body))
 	return result
 }
