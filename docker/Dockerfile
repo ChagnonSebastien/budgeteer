@@ -1,4 +1,4 @@
-FROM golang:1.22-alpine AS sqlc
+FROM golang:1.24-alpine AS sqlc
 WORKDIR /app
 RUN go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
 COPY server/internal/infrastructure/db/queries internal/infrastructure/db/queries
@@ -7,7 +7,7 @@ COPY server/sqlc.yaml sqlc.yaml
 RUN sqlc generate
 
 
-FROM golang:1.22-alpine AS protoc
+FROM golang:1.24-alpine AS protoc
 WORKDIR /app
 RUN apk update && apk add --no-cache make protobuf-dev nodejs npm
 RUN go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
@@ -29,7 +29,7 @@ COPY --from=protoc /app/front-end/src/store/remote/dto src/store/remote/dto
 RUN npm run build
 
 
-FROM golang:1.22-alpine AS server-build
+FROM golang:1.24-alpine AS server-build
 WORKDIR /app
 COPY server/go.mod server/go.sum ./
 RUN go mod download
