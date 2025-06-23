@@ -9,7 +9,6 @@ import { CurrencyServiceContext } from '../service/ServiceContext'
 
 const FormContainer = styled.div`
   width: 100%;
-  max-width: 35rem;
   margin: auto;
 `
 
@@ -17,7 +16,11 @@ type Params = {
   currencyId: string
 }
 
-const EditCurrency: FC = () => {
+interface Props {
+  scriptRunner: (script: string) => Promise<string>
+}
+
+const EditCurrency: FC<Props> = ({ scriptRunner }: Props) => {
   const navigate = useNavigate()
 
   const { currencyId } = useParams<Params>()
@@ -46,7 +49,12 @@ const EditCurrency: FC = () => {
   return (
     <ContentWithHeader title="Edit currency" button="return">
       <FormContainer className="p-4">
-        <CurrencyForm onSubmit={onSubmit} submitText="Save changes" initialCurrency={selectedCurrency} />
+        <CurrencyForm
+          onSubmit={onSubmit}
+          submitText="Save changes"
+          initialCurrency={selectedCurrency}
+          scriptRunner={scriptRunner}
+        />
       </FormContainer>
     </ContentWithHeader>
   )

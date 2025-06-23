@@ -10,10 +10,13 @@ import (
 	"chagnon.dev/budget-server/internal/infrastructure/messaging/shared"
 )
 
+type javascriptRunner func(script string) (string, error)
+
 type CurrencyHandler struct {
 	dto.UnimplementedCurrencyServiceServer
 
-	currencyService *service.CurrencyService
+	currencyService  *service.CurrencyService
+	javascriptRunner javascriptRunner
 }
 
 func (s *CurrencyHandler) CreateCurrency(
@@ -146,4 +149,14 @@ func (s *CurrencyHandler) SetDefaultCurrency(
 	}
 
 	return &dto.SetDefaultCurrencyResponse{}, nil
+}
+
+func (s *CurrencyHandler) TestGetCurrencyRate(ctx context.Context, req *dto.TestGetCurrencyRateRequest) (*dto.TestGetCurrencyRateResponse, error) {
+	script := fmt.Sprintf("%s;\ngetRate()", req.Script)
+	returnedValue, err := s.javascriptRunner(script)
+	if err != nil {
+		returnedValue = fmt.Sprintf("Error running script: %s", err)
+	}
+
+	return &dto.TestGetCurrencyRateResponse{Response: returnedValue}, nil
 }

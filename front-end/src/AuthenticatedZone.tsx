@@ -1,6 +1,6 @@
 import { CircularProgress } from '@mui/material'
 import { GrpcWebFetchTransport } from '@protobuf-ts/grpcweb-transport'
-import { FC, useCallback, useContext, useEffect, useState } from 'react'
+import { FC, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 
 import { UserContext } from './App'
@@ -68,6 +68,7 @@ const AuthenticatedZone: FC<Props> = (props) => {
   const [categories, setCategories] = useState<Category[] | null>(null)
   const [accounts, setAccounts] = useState<Account[] | null>(null)
   const [transactions, setTransactions] = useState<Transaction[] | null>(null)
+  const testGetRateScript = useMemo(() => currencyStore.testGetRateScript(), [])
 
   useEffect(() => {
     currencyStore.getAll().then(setCurrencies)
@@ -106,7 +107,7 @@ const AuthenticatedZone: FC<Props> = (props) => {
     return (
       <ContentWithHeader title="What's your main currency?" button="none">
         <div style={{ padding: '1rem' }}>
-          <CurrencyForm onSubmit={onNewCurrency} submitText="Create" />
+          <CurrencyForm onSubmit={onNewCurrency} submitText="Create" scriptRunner={testGetRateScript} />
         </div>
       </ContentWithHeader>
     )
@@ -144,8 +145,11 @@ const AuthenticatedZone: FC<Props> = (props) => {
                 <DrawerWrapper logout={logout}>
                   <Routes>
                     <Route path="/currencies" element={<CurrenciesPage />} />
-                    <Route path="/currencies/new" element={<CreateCurrencyPage />} />
-                    <Route path="/currencies/edit/:currencyId" element={<EditCurrencyPage />} />
+                    <Route path="/currencies/new" element={<CreateCurrencyPage scriptRunner={testGetRateScript} />} />
+                    <Route
+                      path="/currencies/edit/:currencyId"
+                      element={<EditCurrencyPage scriptRunner={testGetRateScript} />}
+                    />
                     <Route path="/categories" element={<CategoryPage />} />
                     <Route path="/categories/new" element={<CreateCategoryPage />} />
                     <Route path="/categories/edit/:categoryId" element={<EditCategoryPage />} />

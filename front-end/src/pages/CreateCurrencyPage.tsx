@@ -13,7 +13,11 @@ const FormContainer = styled.div`
   margin: auto;
 `
 
-const CreateCurrencyPage: FC = () => {
+interface Props {
+  scriptRunner: (script: string) => Promise<string>
+}
+
+const CreateCurrencyPage: FC<Props> = ({ scriptRunner }: Props) => {
   const navigate = useNavigate()
 
   const { create: createCurrency } = useContext(CurrencyServiceContext)
@@ -36,7 +40,7 @@ const CreateCurrencyPage: FC = () => {
   return (
     <ContentWithHeader title="Create new currency" button="return">
       <FormContainer className="p-4">
-        <CurrencyForm onSubmit={onSubmit} submitText="Create" />
+        <CurrencyForm onSubmit={onSubmit} submitText="Create" scriptRunner={scriptRunner} />
       </FormContainer>
     </ContentWithHeader>
   )

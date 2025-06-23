@@ -1,13 +1,23 @@
-import { TextField, Typography } from '@mui/material'
+import { Button, TextField, Typography } from '@mui/material'
 import { DateCalendar, DateField, DateView } from '@mui/x-date-pickers'
+import { Omit, ResponsiveLine } from '@nivo/line'
 import { startOfDay } from 'date-fns'
 import dayjs, { Dayjs } from 'dayjs'
 import { FC, FormEvent, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import styled from 'styled-components'
 
+import CodeEditor from './CodeEditor'
 import ContentDialog from './ContentDialog'
 import FormWrapper from './FormWrapper'
 import Currency, { ExchangeRate } from '../domain/model/currency'
+import MixedAugmentation from '../service/MixedAugmentation'
 import { CurrencyServiceContext } from '../service/ServiceContext'
+import { darkTheme } from '../utils'
+
+const ChartContainer = styled.div`
+  height: 200px;
+  margin-top: 16px;
+`
 
 const validAmount = new RegExp(`^\\d+[.,]?$`)
 const validRate = new RegExp(`^\\d*[.,]?\\d*$`)
@@ -16,6 +26,7 @@ interface Props {
   initialCurrency?: Currency
   onSubmit: (data: Partial<Omit<Currency, 'id' | 'hasName'>>) => Promise<void>
   submitText: string
+  scriptRunner: (script: string) => Promise<string>
 }
 
 interface FieldStatus {
@@ -26,10 +37,27 @@ interface FieldStatus {
 
 const NoError = ''
 
+const defaultScript = `async function getRate() {
+  // Update the code to fetch the exchange rate.
+  // Function should return a number value.
+  
+  // This code runs in a bare-bones V8 engine. It implements the ECMAScript language spec itself, but it doesn’t include
+  // any of the host-environment APIs you get in Node.js or a browser. This is for sandboxing reasons because one should
+  // never run untrusted code that could arbitrarily read files, make HTTP calls, spin up timers, etc. Some methods have
+  // been explicitly setup for your convenience within the sandbox:
+
+  // - httpGet(string url) string
+  //     Gets the response of a http get request to the specified url 
+  
+  return 1
+}
+`
+
 const CurrencyForm: FC<Props> = (props) => {
-  const { initialCurrency, onSubmit, submitText } = props
+  const { initialCurrency, onSubmit, submitText, scriptRunner } = props
 
   const { state: currencies, defaultCurrency } = useContext(CurrencyServiceContext)
+  const { exchangeRates, exchangeRateOnDay, augmentedTransactions } = useContext(MixedAugmentation)
 
   const [name, setName] = useState(initialCurrency?.name ?? '')
   const [symbol, setSymbol] = useState(initialCurrency?.symbol ?? '')
@@ -39,12 +67,54 @@ const CurrencyForm: FC<Props> = (props) => {
   const [initialExchangeRate, setInitialExchangeRate] = useState('1')
   const [initialExchangeRateDate, setInitialExchangeRateDate] = useState(startOfDay(new Date()))
   const [dateView, setDateView] = useState<DateView>('day')
+  const [getRateScript, setGetRateScript] = useState<string | undefined>(defaultScript)
 
   const [showDateModal, setShowDateModal] = useState(false)
 
   const showExchangeRate = useMemo(() => {
     return typeof initialCurrency === 'undefined' && defaultCurrency !== null
-  }, [currencies])
+  }, [initialCurrency, defaultCurrency])
+
+  const { monthlyRates, minRate } = useMemo(() => {
+    if (!initialCurrency || !defaultCurrency) {
+      return { monthlyRates: [], minRate: 0 }
+    }
+
+    let rates = exchangeRates.get(initialCurrency.id)?.get(defaultCurrency.id)
+    if (initialCurrency.id === defaultCurrency.id) {
+      rates = [new ExchangeRate(1, 1, new Date())]
+    }
+    if (typeof rates === 'undefined' || rates.length === 0) return { monthlyRates: [], minRate: 0 }
+
+    let startDate = new Date(Math.min(...rates.map((r) => new Date(r.date).getTime())))
+    if (initialCurrency.id === defaultCurrency.id) {
+      startDate = augmentedTransactions[augmentedTransactions.length - 1].date
+    }
+    startDate.setDate(1)
+    startDate.setHours(0, 0, 0, 0)
+
+    const dataPoints = []
+    const currentDate = new Date()
+    let currentMonth = new Date(startDate)
+
+    while (currentMonth <= currentDate) {
+      const monthTime = currentMonth.getTime()
+      const closestRate =
+        initialCurrency.id === defaultCurrency.id
+          ? 1
+          : exchangeRateOnDay(initialCurrency.id, defaultCurrency.id, currentMonth)
+
+      dataPoints.push({
+        x: monthTime,
+        y: closestRate,
+      })
+
+      currentMonth = new Date(currentMonth.setMonth(currentMonth.getMonth() + 1))
+    }
+
+    const minRate = Math.min(...dataPoints.map((d) => d.y))
+    return { monthlyRates: dataPoints, minRate }
+  }, [initialCurrency, defaultCurrency])
 
   const [showErrorToast, setShowErrorToast] = useState('')
   const [errors, setErrors] = useState<{
@@ -89,6 +159,8 @@ const CurrencyForm: FC<Props> = (props) => {
 
     return `${(Math.floor(123.456789 * Math.pow(10, shift)) / Math.pow(10, shift)).toFixed(shift)}`
   }, [decimalPoints])
+
+  const [scriptOutput, setScriptOutput] = useState<string>()
 
   const validateAccountName = useCallback(
     (newName: string) => {
@@ -196,7 +268,7 @@ const CurrencyForm: FC<Props> = (props) => {
     return Object.values(errors).every((value) => value.isValid)
   }, [errors])
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (_: FormEvent<HTMLFormElement>) => {
     if (!isFormValid) {
       setErrors((prevState) => ({
         accountName: {
@@ -232,6 +304,12 @@ const CurrencyForm: FC<Props> = (props) => {
       setShowErrorToast('Unexpected error while submitting the currency')
       console.error(err)
     })
+  }
+
+  // TODO: This is super unsafe. Fix at some later time. not a priority since I'm the only user for now afaik.
+  const testScript = async () => {
+    const rate = await scriptRunner(getRateScript!)
+    setScriptOutput(rate)
   }
 
   return (
@@ -312,86 +390,165 @@ const CurrencyForm: FC<Props> = (props) => {
         </div>
       )}
 
-      <div>
-        <div style={{ display: 'flex' }}>
-          <Typography
-            color="textSecondary"
-            style={{ margin: '0 1rem', transform: 'translate(0, 0.5rem)', fontSize: '.75rem' }}
-          >
-            Formatting example
-          </Typography>
-          <div style={{ borderBottom: '1px grey solid', flexGrow: 1 }} />
-        </div>
-        <Typography style={{ padding: '1rem', border: '1px grey solid', borderTop: 0, textAlign: 'center' }}>
-          {formatExample} {symbol}
-        </Typography>
-      </div>
-
       {showExchangeRate && (
-        <div>
-          <div style={{ height: '1rem' }} />
-          <div style={{ color: 'grey' }}>Exchange Rates</div>
-          <div style={{ display: 'flex', alignItems: 'end' }}>
-            <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
-              {`1 ${symbol === '' ? '___' : symbol}`}
+        <>
+          <div>
+            <div style={{ display: 'flex' }}>
+              <Typography
+                color="textSecondary"
+                style={{ margin: '0 1rem', transform: 'translate(0, 0.5rem)', fontSize: '.75rem' }}
+              >
+                Formatting example
+              </Typography>
+              <div style={{ borderBottom: '1px grey solid', flexGrow: 1 }} />
             </div>
-            <div style={{ margin: '0 1rem', display: 'flex', alignItems: 'center', flexShrink: 0 }}>=</div>
-            <TextField
-              type="text"
-              variant="standard"
-              value={initialExchangeRate}
-              onChange={(ev) => setInitialExchangeRate(ev.target.value as string)}
-              error={errors.exchangeRate.hasVisited && !!errors.exchangeRate.errorText}
-              sx={{ width: '100%' }}
-              onBlur={() =>
-                setErrors((prevState) => ({
-                  ...prevState,
-                  exchangeRate: {
-                    ...prevState.exchangeRate,
-                    hasVisited: true,
-                  },
-                }))
-              }
+            <Typography style={{ padding: '1rem', border: '1px grey solid', borderTop: 0, textAlign: 'center' }}>
+              {formatExample} {symbol}
+            </Typography>
+          </div>
+          <div>
+            <div style={{ height: '1rem' }} />
+            <div style={{ color: 'grey' }}>Exchange Rates</div>
+            <div style={{ display: 'flex', alignItems: 'end' }}>
+              <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+                {`1 ${symbol === '' ? '___' : symbol}`}
+              </div>
+              <div style={{ margin: '0 1rem', display: 'flex', alignItems: 'center', flexShrink: 0 }}>=</div>
+              <TextField
+                type="text"
+                variant="standard"
+                value={initialExchangeRate}
+                onChange={(ev) => setInitialExchangeRate(ev.target.value as string)}
+                error={errors.exchangeRate.hasVisited && !!errors.exchangeRate.errorText}
+                sx={{ width: '100%' }}
+                onBlur={() =>
+                  setErrors((prevState) => ({
+                    ...prevState,
+                    exchangeRate: {
+                      ...prevState.exchangeRate,
+                      hasVisited: true,
+                    },
+                  }))
+                }
+              />
+              <div style={{ margin: '0 1rem', display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+                {defaultCurrency!.symbol} on
+              </div>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  flexShrink: 0,
+                  borderBottom: '1px rgba(0, 0, 0, 0.13) solid',
+                }}
+              >
+                <DateField
+                  value={dayjs(initialExchangeRateDate)}
+                  onFocus={(ev) => {
+                    setShowDateModal(true)
+                    ev.preventDefault()
+                    ev.target.blur()
+                  }}
+                  tabIndex={-1}
+                  variant="standard"
+                  sx={{ width: '100%' }}
+                />
+
+                <ContentDialog open={showDateModal} onClose={() => setShowDateModal(false)}>
+                  <DateCalendar
+                    views={['year', 'month', 'day']}
+                    value={dayjs(initialExchangeRateDate)}
+                    onChange={(newDate: Dayjs) => {
+                      setInitialExchangeRateDate(newDate.toDate())
+                      if (dateView === 'day') setShowDateModal(false)
+                    }}
+                    onViewChange={(view) => {
+                      setDateView(view)
+                    }}
+                  />
+                </ContentDialog>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+      {defaultCurrency?.id !== initialCurrency?.id && (
+        <>
+          <Typography variant="subtitle2" className="overview-content-label">
+            EXCHANGE RATE HISTORY
+          </Typography>
+          <ChartContainer>
+            <ResponsiveLine
+              margin={{ top: 0, right: 0, bottom: 30, left: 40 }}
+              data={[
+                {
+                  id: 'Exchange Rate',
+                  data: monthlyRates,
+                },
+              ]}
+              axisBottom={{
+                format: (f) => {
+                  const date = new Date(f)
+                  if (date.getUTCMonth() === 0) {
+                    return date.getUTCFullYear()
+                  }
+                  return ''
+                },
+              }}
+              enablePoints={false}
+              enableGridX={false}
+              enableGridY={true}
+              yScale={{
+                type: 'linear',
+                min: minRate * 0.95, // Add 5% padding below the minimum
+                stacked: false,
+                reverse: false,
+              }}
+              theme={darkTheme}
+              colors={['#64B5F6']}
+              curve="monotoneX"
+              animate={true}
+              motionConfig="gentle"
+              enableArea={true}
+              areaOpacity={0.1}
             />
-            <div style={{ margin: '0 1rem', display: 'flex', alignItems: 'center', flexShrink: 0 }}>
-              {defaultCurrency!.symbol} on
+          </ChartContainer>
+          <Typography variant="subtitle2" className="overview-content-label">
+            EXCHANGE RATE FETCHER
+          </Typography>
+          <CodeEditor content={getRateScript} onChange={setGetRateScript} />
+          <div>
+            <div style={{ display: 'flex' }}>
+              <Typography
+                color="textSecondary"
+                style={{ margin: '0 1rem', transform: 'translate(0, 0.5rem)', fontSize: '.75rem' }}
+              >
+                Test and Submit
+              </Typography>
+              <div style={{ borderBottom: '1px grey solid', flexGrow: 1 }} />
             </div>
             <div
               style={{
+                padding: '1rem',
+                border: '1px grey solid',
+                borderTop: 0,
+                textAlign: 'center',
                 display: 'flex',
-                alignItems: 'center',
-                flexShrink: 0,
-                borderBottom: '1px rgba(0, 0, 0, 0.13) solid',
+                justifyContent: 'space-between',
               }}
             >
-              <DateField
-                value={dayjs(initialExchangeRateDate)}
-                onFocus={(ev) => {
-                  setShowDateModal(true)
-                  ev.preventDefault()
-                  ev.target.blur()
-                }}
-                tabIndex={-1}
-                variant="standard"
-                sx={{ width: '100%' }}
-              />
-
-              <ContentDialog open={showDateModal} onClose={() => setShowDateModal(false)}>
-                <DateCalendar
-                  views={['year', 'month', 'day']}
-                  value={dayjs(initialExchangeRateDate)}
-                  onChange={(newDate: Dayjs) => {
-                    setInitialExchangeRateDate(newDate.toDate())
-                    if (dateView === 'day') setShowDateModal(false)
-                  }}
-                  onViewChange={(view) => {
-                    setDateView(view)
-                  }}
-                />
-              </ContentDialog>
+              <Button variant="contained" onClick={testScript}>
+                Test
+              </Button>
+              <Typography>
+                {scriptOutput} {symbol}
+              </Typography>
+              <Button variant="contained" disabled>
+                Submit
+              </Button>
             </div>
           </div>
-        </div>
+        </>
       )}
     </FormWrapper>
   )

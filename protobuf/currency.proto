@@ -70,9 +70,18 @@ message SetDefaultCurrencyResponse {
 
 }
 
+message TestGetCurrencyRateRequest {
+  string script = 1;
+}
+
+message TestGetCurrencyRateResponse{
+  string response = 1;
+}
+
 service CurrencyService {
   rpc GetAllCurrencies (GetAllCurrenciesRequest) returns (GetAllCurrenciesResponse);
   rpc CreateCurrency (CreateCurrencyRequest) returns (CreateCurrencyResponse);
   rpc UpdateCurrency (UpdateCurrencyRequest) returns (UpdateCurrencyResponse);
   rpc SetDefaultCurrency (SetDefaultCurrencyRequest) returns (SetDefaultCurrencyResponse);
+  rpc TestGetCurrencyRate (TestGetCurrencyRateRequest) returns (TestGetCurrencyRateResponse);
 }

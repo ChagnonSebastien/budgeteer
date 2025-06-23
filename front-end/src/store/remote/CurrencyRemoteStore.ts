@@ -7,6 +7,7 @@ import {
   GetAllCurrenciesRequest,
   InitialExchangeRate,
   SetDefaultCurrencyRequest,
+  TestGetCurrencyRateRequest,
   UpdateCurrencyRequest,
 } from './dto/currency'
 import { CurrencyServiceClient } from './dto/currency.client'
@@ -69,5 +70,13 @@ export default class CurrencyRemoteStore {
 
   public async setDefault(id: number): Promise<void> {
     await this.client.setDefaultCurrency(SetDefaultCurrencyRequest.create({ currencyId: id })).response
+  }
+
+  public testGetRateScript(): (script: string) => Promise<string> {
+    const client = this.client
+    return async (script: string): Promise<string> => {
+      const resp = await client.testGetCurrencyRate(TestGetCurrencyRateRequest.create({ script }))
+      return resp.response.response
+    }
   }
 }
