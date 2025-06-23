@@ -59,9 +59,13 @@ RUN apk add --no-cache openjdk11-jre wget bash \
     && tar -xzf liquibase-4.7.1.tar.gz
 
 
-FROM alpine:latest
+FROM debian:bookworm
 WORKDIR /app
-RUN apk add --no-cache bash openjdk11-jre
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+      bash \
+      default-jre-headless && \
+    rm -rf /var/lib/apt/lists/*
 COPY --from=server-build /app/budget-server .
 COPY --from=server-build /app/configs configs
 COPY --from=web-build /app/dist static/web
@@ -70,5 +74,8 @@ COPY server/liquibase/changelogs changelogs
 #RUN chmod -R +r liquibase/changelogs
 ENV PATH="/liquibase:${PATH}"
 COPY docker/entrypoint.sh entrypoint.sh
+RUN chmod +x budget-server
+RUN chmod +x entrypoint.sh
 EXPOSE 8080
 CMD ["/bin/bash", "entrypoint.sh"]
+
