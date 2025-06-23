@@ -16,6 +16,7 @@
     "@capacitor/network": "^6.0.2",
     "@emotion/react": "^11.13.3",
     "@emotion/styled": "^11.13.0",
+    "@monaco-editor/react": "^4.7.0",
     "@mui/material": "^6.1.0",
     "@mui/x-date-pickers": "^7.17.0",
     "@nivo/bar": "^0.87.0",
@@ -47,7 +48,7 @@
     "@types/react-router-dom": "^5.3.3",
     "@typescript-eslint/eslint-plugin": "^8.2.0",
     "@typescript-eslint/parser": "^8.2.0",
-    "@vitejs/plugin-legacy": "^5.0.0",
+    "@vitejs/plugin-legacy": "^6.1.1",
     "@vitejs/plugin-react": "^4.0.1",
     "autoprefixer": "^10.4.20",
     "csstype": "^3.1.3",
@@ -62,8 +63,8 @@
     "sass": "^1.85.1",
     "tailwindcss": "^3.4.1",
     "typescript": "^5.1.6",
-    "vite": "^5.4.14",
-    "vite-plugin-pwa": "^0.20.1"
+    "vite": "^6.3.5",
+    "vite-plugin-pwa": "^1.0.0"
   },
   "description": "A budget project"
 }
