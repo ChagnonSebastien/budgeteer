@@ -1,3 +1,4 @@
+import { loader } from '@monaco-editor/react'
 import { createTheme, CssBaseline, ThemeProvider } from '@mui/material'
 import { LocalizationProvider } from '@mui/x-date-pickers'
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
@@ -23,6 +24,15 @@ const darkTheme = createTheme({
     },
   },
 })
+
+loader.config({ paths: { vs: '/vs' } })
+
+window.MonacoEnvironment = {
+  getWorkerUrl(_moduleId: string, _label: string) {
+    // you can route different labels to different worker scripts if you like
+    return `/vs/base/worker/workerMain.js`
+  },
+}
 
 root.render(
   <ThemeProvider theme={darkTheme}>
