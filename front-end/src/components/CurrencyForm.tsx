@@ -1,4 +1,4 @@
-import { Button, TextField, Typography } from '@mui/material'
+import { Button, Checkbox, FormControlLabel, TextField, Typography } from '@mui/material'
 import { DateCalendar, DateField, DateView } from '@mui/x-date-pickers'
 import { Omit, ResponsiveLine } from '@nivo/line'
 import { startOfDay } from 'date-fns'
@@ -67,7 +67,21 @@ const CurrencyForm: FC<Props> = (props) => {
   const [initialExchangeRate, setInitialExchangeRate] = useState('1')
   const [initialExchangeRateDate, setInitialExchangeRateDate] = useState(startOfDay(new Date()))
   const [dateView, setDateView] = useState<DateView>('day')
-  const [getRateScript, setGetRateScript] = useState<string | undefined>(defaultScript)
+  const [getRateScript, setGetRateScript] = useState<string>(
+    (initialCurrency?.rateAutoupdateSettings.script ?? '') === ''
+      ? defaultScript
+      : initialCurrency!.rateAutoupdateSettings.script,
+  )
+
+  const [scriptOutput, setScriptOutput] = useState<number | null>(null)
+  const setRateAutoupdateScript = useCallback((value?: string) => {
+    setScriptOutput(null)
+    setGetRateScript(value!)
+  }, [])
+  const [rateAutoupdateEnabled, setRateAutoupdateEnabled] = useState<boolean>(
+    initialCurrency?.rateAutoupdateSettings.enabled ?? false,
+  )
+  const [rateScriptError, setRateScriptError] = useState<string | null>(null)
 
   const [showDateModal, setShowDateModal] = useState(false)
 
@@ -122,6 +136,7 @@ const CurrencyForm: FC<Props> = (props) => {
     symbol: FieldStatus
     decimalPoints: FieldStatus
     exchangeRate: FieldStatus
+    autoupdateScriptValidated: FieldStatus
   }>({
     accountName: {
       hasVisited: false,
@@ -143,24 +158,30 @@ const CurrencyForm: FC<Props> = (props) => {
       isValid: !showExchangeRate,
       errorText: NoError,
     },
+    autoupdateScriptValidated: {
+      hasVisited: false,
+      isValid: false,
+      errorText: NoError,
+    },
   })
 
-  const formatExample = useMemo(() => {
-    let shift = 0
-    try {
-      shift = parseInt(decimalPoints)
-    } catch (_error) {
-      /* empty */
-    }
+  const formatExample = useCallback(
+    (value: number) => {
+      let shift = 0
+      try {
+        shift = parseInt(decimalPoints)
+      } catch (_error) {
+        /* empty */
+      }
 
-    if (shift > 100) {
-      shift = 100
-    }
+      if (shift > 100) {
+        shift = 100
+      }
 
-    return `${(Math.floor(123.456789 * Math.pow(10, shift)) / Math.pow(10, shift)).toFixed(shift)}`
-  }, [decimalPoints])
-
-  const [scriptOutput, setScriptOutput] = useState<string>()
+      return `${(Math.floor(value * Math.pow(10, shift)) / Math.pow(10, shift)).toFixed(shift)}`
+    },
+    [decimalPoints],
+  )
 
   const validateAccountName = useCallback(
     (newName: string) => {
@@ -264,6 +285,35 @@ const CurrencyForm: FC<Props> = (props) => {
     }))
   }, [validateExchangeRate, initialExchangeRate])
 
+  useEffect(() => {
+    let rateAutoupdateError = NoError
+    if (rateAutoupdateEnabled) {
+      if (getRateScript === defaultScript) {
+        rateAutoupdateError =
+          'You must edit the script before enabling autoupdates. Otherwise, this currency will be pinned to the the default currency'
+      } else if (initialCurrency?.rateAutoupdateSettings.script !== getRateScript) {
+        if (rateScriptError !== null || scriptOutput === null) {
+          rateAutoupdateError =
+            'You must have one successfully run with the script before you can save it with autoupdate enabled.'
+        }
+      }
+    }
+    setErrors((prevState) => ({
+      ...prevState,
+      autoupdateScriptValidated: {
+        ...prevState.autoupdateScriptValidated,
+        errorText: rateAutoupdateError,
+        isValid: rateAutoupdateError == NoError,
+      },
+    }))
+  }, [
+    rateScriptError,
+    scriptOutput,
+    initialCurrency?.rateAutoupdateSettings.script,
+    getRateScript,
+    rateAutoupdateEnabled,
+  ])
+
   const isFormValid = useMemo(() => {
     return Object.values(errors).every((value) => value.isValid)
   }, [errors])
@@ -287,6 +337,10 @@ const CurrencyForm: FC<Props> = (props) => {
           ...prevState.exchangeRate,
           hasVisited: true,
         },
+        autoupdateScriptValidated: {
+          ...prevState.autoupdateScriptValidated,
+          hasVisited: true,
+        },
       }))
       return
     }
@@ -306,14 +360,20 @@ const CurrencyForm: FC<Props> = (props) => {
     })
   }
 
-  // TODO: This is super unsafe. Fix at some later time. not a priority since I'm the only user for now afaik.
   const testScript = async () => {
-    const rate = await scriptRunner(getRateScript!)
+    const runnerResponse = await scriptRunner(getRateScript!)
+    const rate = Number.parseFloat(runnerResponse)
+    if (isNaN(rate)) {
+      setRateScriptError(`Invalid format or an error occurred: ${runnerResponse}`)
+      return
+    }
+
+    setRateScriptError(null)
     setScriptOutput(rate)
   }
 
   return (
-    <FormWrapper onSubmit={handleSubmit} submitText={submitText} isValid={isFormValid} errorMessage={showErrorToast}>
+    <FormWrapper onSubmit={handleSubmit} submitText={submitText} errorMessage={showErrorToast}>
       <TextField
         type="text"
         label="Currency name"
@@ -403,7 +463,7 @@ const CurrencyForm: FC<Props> = (props) => {
               <div style={{ borderBottom: '1px grey solid', flexGrow: 1 }} />
             </div>
             <Typography style={{ padding: '1rem', border: '1px grey solid', borderTop: 0, textAlign: 'center' }}>
-              {formatExample} {symbol}
+              {formatExample(123.456789)} {symbol}
             </Typography>
           </div>
           <div>
@@ -472,7 +532,7 @@ const CurrencyForm: FC<Props> = (props) => {
           </div>
         </>
       )}
-      {defaultCurrency?.id !== initialCurrency?.id && (
+      {defaultCurrency?.id !== initialCurrency?.id && initialCurrency && (
         <>
           <Typography variant="subtitle2" className="overview-content-label">
             EXCHANGE RATE HISTORY
@@ -513,10 +573,14 @@ const CurrencyForm: FC<Props> = (props) => {
               areaOpacity={0.1}
             />
           </ChartContainer>
+        </>
+      )}
+      {defaultCurrency?.id !== initialCurrency?.id && (
+        <>
           <Typography variant="subtitle2" className="overview-content-label">
             EXCHANGE RATE FETCHER
           </Typography>
-          <CodeEditor content={getRateScript} onChange={setGetRateScript} />
+          <CodeEditor content={getRateScript} onChange={setRateAutoupdateScript} />
           <div>
             <div style={{ display: 'flex' }}>
               <Typography
@@ -538,14 +602,60 @@ const CurrencyForm: FC<Props> = (props) => {
               }}
             >
               <Button variant="contained" onClick={testScript}>
-                Test
+                Test Run
               </Button>
-              <Typography>
-                {scriptOutput} {symbol}
+              <Typography color={rateScriptError === null ? 'success' : 'error'}>
+                {rateScriptError === null && scriptOutput !== null && (
+                  <>
+                    1 {symbol} = {scriptOutput} {defaultCurrency?.symbol ?? '$'}
+                  </>
+                )}
+                {rateScriptError !== null && rateScriptError}
               </Typography>
-              <Button variant="contained" disabled>
-                Submit
-              </Button>
+              {initialCurrency && (
+                <Button variant="contained" disabled={rateScriptError !== null || scriptOutput === null}>
+                  Submit
+                </Button>
+              )}
+            </div>
+          </div>
+
+          <div>
+            <div style={{ display: 'flex' }}>
+              <Typography
+                color="textSecondary"
+                style={{ margin: '0 1rem', transform: 'translate(0, 0.5rem)', fontSize: '.75rem' }}
+              >
+                Rate Auto Update
+              </Typography>
+              <div style={{ borderBottom: '1px grey solid', flexGrow: 1 }} />
+            </div>
+            <div>
+              <div
+                style={{
+                  padding: '1rem',
+                  border: '1px grey solid',
+                  borderTop: 0,
+                  textAlign: 'center',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                }}
+              >
+                <div style={{ margin: 'auto 2rem' }}>
+                  {errors.autoupdateScriptValidated.hasVisited && !!errors.autoupdateScriptValidated.errorText ? (
+                    <Typography color="error">{errors.autoupdateScriptValidated.errorText}</Typography>
+                  ) : (
+                    <Typography>
+                      Do you want to enable the auto update of the rate? It will be fetched at 6AM every day for the day
+                      before.
+                    </Typography>
+                  )}
+                </div>
+                <FormControlLabel
+                  control={<Checkbox onChange={(ev) => setRateAutoupdateEnabled(ev.target.checked)} />}
+                  label="Enabled"
+                />
+              </div>
             </div>
           </div>
         </>

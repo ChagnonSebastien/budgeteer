@@ -2,7 +2,7 @@ import { FC, useCallback, useContext, useMemo } from 'react'
 
 import { AugmenterProps } from './BasicCrudServiceWithPersistence'
 import { UserContext } from '../App'
-import Currency, { ExchangeRate } from '../domain/model/currency'
+import Currency, { ExchangeRate, RateAutoupdateSettings } from '../domain/model/currency'
 
 export interface CurrencyPersistenceAugmentation {
   defaultCurrency: Currency | null
@@ -34,7 +34,20 @@ export const CurrencyPersistenceAugmenter: FC<AugmenterProps<Currency, CurrencyP
               data.exchangeRates[other[0]][0].date,
             ),
           ]
-          return new Currency(prevItem.id, prevItem.name, prevItem.symbol, prevItem.decimalPoints, newExchangeRates)
+
+          const rateAutoupdateSettings = new RateAutoupdateSettings(
+            data.rateAutoupdateSettings.script,
+            data.rateAutoupdateSettings.enabled,
+          )
+
+          return new Currency(
+            prevItem.id,
+            prevItem.name,
+            prevItem.symbol,
+            prevItem.decimalPoints,
+            newExchangeRates,
+            rateAutoupdateSettings,
+          )
         })
       }
       return [...newState, newItem].sort(sorter ?? ((_a: Currency, _b: Currency) => 0))

@@ -16,6 +16,8 @@ type currencyRepository interface {
 		name, symbol string,
 		decimalPoints int,
 		initialExchangeRate *repository.InitialExchangeRate,
+		rateAutoUpdateScript string,
+		rateAutoUpdateEnabled bool,
 	) (
 		int,
 		int,
@@ -49,6 +51,8 @@ func (a *CurrencyService) CreateCurrency(
 	name, symbol string,
 	decimalPoints int,
 	initialExchangeRate *InitialExchangeRate,
+	rateAutoUpdateScript string,
+	rateAutoUpdateEnabled bool,
 ) (int, int, error) {
 	var t *repository.InitialExchangeRate
 	if initialExchangeRate != nil {
@@ -66,6 +70,8 @@ func (a *CurrencyService) CreateCurrency(
 		symbol,
 		decimalPoints,
 		t,
+		rateAutoUpdateScript,
+		rateAutoUpdateEnabled,
 	)
 }
 

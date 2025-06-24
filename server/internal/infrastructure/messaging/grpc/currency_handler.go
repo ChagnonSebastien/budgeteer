@@ -45,7 +45,7 @@ func (s *CurrencyHandler) CreateCurrency(
 
 	newCurrencyId, newExchangeRateId, err := s.currencyService.CreateCurrency(
 		ctx, claims.Sub, req.Name, req.Symbol, int(req.DecimalPoints),
-		initialExchangeRate,
+		initialExchangeRate, req.RateAutoUpdateSettings.Script, req.RateAutoUpdateSettings.Enabled,
 	)
 	if err != nil {
 		return nil, err
@@ -78,14 +78,23 @@ func (s *CurrencyHandler) UpdateCurrency(
 		decimalPoints = &id
 	}
 
+	var rateAutoUpdateScript *string
+	var rateAutoUpdateEnabled *bool
+	if req.Fields.AutoUpdateSettings != nil {
+		rateAutoUpdateScript = &req.Fields.AutoUpdateSettings.Script
+		rateAutoUpdateEnabled = &req.Fields.AutoUpdateSettings.Enabled
+	}
+
 	err := s.currencyService.UpdateCurrency(
 		ctx,
 		claims.Sub,
 		int(req.Id),
 		repository.UpdateCurrencyFields{
-			Name:          req.Fields.Name,
-			Symbol:        req.Fields.Symbol,
-			DecimalPoints: decimalPoints,
+			Name:                  req.Fields.Name,
+			Symbol:                req.Fields.Symbol,
+			DecimalPoints:         decimalPoints,
+			RateAutoUpdateScript:  rateAutoUpdateScript,
+			RateAutoUpdateEnabled: rateAutoUpdateEnabled,
 		},
 	)
 	if err != nil {
@@ -132,6 +141,10 @@ func (s *CurrencyHandler) GetAllCurrencies(
 			Symbol:        currency.Symbol,
 			DecimalPoints: uint32(currency.DecimalPoints),
 			ExchangeRates: exchangeRatesDTOs,
+			RateAutoUpdateSettings: &dto.RateAutoUpdateSettings{
+				Script:  currency.RateAutoUpdateSettings.Script,
+				Enabled: currency.RateAutoUpdateSettings.Enabled,
+			},
 		}
 	}
 
@@ -157,7 +170,7 @@ func (s *CurrencyHandler) SetDefaultCurrency(
 	return &dto.SetDefaultCurrencyResponse{}, nil
 }
 
-func (s *CurrencyHandler) TestGetCurrencyRate(ctx context.Context, req *dto.TestGetCurrencyRateRequest) (*dto.TestGetCurrencyRateResponse, error) {
+func (s *CurrencyHandler) TestGetCurrencyRate(_ context.Context, req *dto.TestGetCurrencyRateRequest) (*dto.TestGetCurrencyRateResponse, error) {
 	script := fmt.Sprintf("%s;\ngetRate()", req.Script)
 	returnedValue, err := s.javascriptRunner(script)
 	if err != nil {

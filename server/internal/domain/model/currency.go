@@ -8,10 +8,16 @@ type ExchangeRate struct {
 	Date time.Time
 }
 
+type RateAutoUpdateSettings struct {
+	Script  string
+	Enabled bool
+}
+
 type Currency struct {
-	ID            int
-	Name          string
-	Symbol        string
-	DecimalPoints int
-	ExchangeRates map[int][]ExchangeRate
+	ID                     int
+	Name                   string
+	Symbol                 string
+	DecimalPoints          int
+	ExchangeRates          map[int][]ExchangeRate
+	RateAutoUpdateSettings RateAutoUpdateSettings
 }

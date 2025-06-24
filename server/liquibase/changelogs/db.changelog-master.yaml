@@ -27,3 +27,5 @@ databaseChangeLog:
       file: ./changelogs/013-categories-ordering.sql
   - include:
       file: ./changelogs/014-currencies-exchange-rate-script.sql
+  - include:
+      file: ./changelogs/015-currencies-exchange-rate-script-toggle.sql

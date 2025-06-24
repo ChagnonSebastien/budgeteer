@@ -9,6 +9,13 @@ export class ExchangeRate implements Unique {
   ) {}
 }
 
+export class RateAutoupdateSettings {
+  constructor(
+    public readonly script: string,
+    public readonly enabled: boolean,
+  ) {}
+}
+
 export default class Currency implements NamedItem {
   constructor(
     public readonly id: number,
@@ -16,6 +23,7 @@ export default class Currency implements NamedItem {
     public readonly symbol: string,
     public readonly decimalPoints: number,
     public readonly exchangeRates: { [comparedTo: number]: ExchangeRate[] },
+    public readonly rateAutoupdateSettings: RateAutoupdateSettings,
   ) {}
 
   hasName(name: string): boolean {

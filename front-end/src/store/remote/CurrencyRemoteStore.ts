@@ -11,7 +11,7 @@ import {
   UpdateCurrencyRequest,
 } from './dto/currency'
 import { CurrencyServiceClient } from './dto/currency.client'
-import Currency, { ExchangeRate } from '../../domain/model/currency'
+import Currency, { ExchangeRate, RateAutoupdateSettings } from '../../domain/model/currency'
 
 const conv = new CurrencyConverter()
 
@@ -56,7 +56,19 @@ export default class CurrencyRemoteStore {
       ]
     }
 
-    return new Currency(response.currencyId, data.name, data.symbol, data.decimalPoints, exchangeRates)
+    const rateAutoupdateSettings = new RateAutoupdateSettings(
+      data.rateAutoupdateSettings.script,
+      data.rateAutoupdateSettings.enabled,
+    )
+
+    return new Currency(
+      response.currencyId,
+      data.name,
+      data.symbol,
+      data.decimalPoints,
+      exchangeRates,
+      rateAutoupdateSettings,
+    )
   }
 
   public async update(id: number, data: Partial<Omit<Currency, 'id' | 'hasName'>>): Promise<void> {

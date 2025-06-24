@@ -47,7 +47,7 @@ const EditCurrency: FC<Props> = ({ scriptRunner }: Props) => {
   }
 
   return (
-    <ContentWithHeader title="Edit currency" button="return">
+    <ContentWithHeader title="Edit currency" button="return" contentMaxWidth="">
       <FormContainer className="p-4">
         <CurrencyForm
           onSubmit={onSubmit}

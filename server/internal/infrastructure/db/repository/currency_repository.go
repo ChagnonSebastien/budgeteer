@@ -60,6 +60,10 @@ func (r *Repository) GetAllCurrencies(ctx context.Context, userId string) ([]mod
 			Symbol:        currencyDao.Symbol,
 			DecimalPoints: int(currencyDao.DecimalPoints),
 			ExchangeRates: exchangeRates,
+			RateAutoUpdateSettings: model.RateAutoUpdateSettings{
+				Script:  currencyDao.RateFetchScript,
+				Enabled: currencyDao.AutoUpdate,
+			},
 		}
 	}
 
@@ -78,6 +82,8 @@ func (r *Repository) CreateCurrency(
 	name, symbol string,
 	decimalPoints int,
 	initialExchangeRate *InitialExchangeRate,
+	rateAutoUpdateScript string,
+	rateAutoUpdateEnabled bool,
 ) (
 	int,
 	int,
@@ -92,10 +98,12 @@ func (r *Repository) CreateCurrency(
 
 	currencyId, err := queries.CreateCurrency(
 		ctx, &dao.CreateCurrencyParams{
-			UserID:        userId,
-			Name:          name,
-			Symbol:        symbol,
-			DecimalPoints: int16(decimalPoints),
+			UserID:          userId,
+			Name:            name,
+			Symbol:          symbol,
+			DecimalPoints:   int16(decimalPoints),
+			RateFetchScript: rateAutoUpdateScript,
+			AutoUpdate:      rateAutoUpdateEnabled,
 		},
 	)
 	if err != nil {
@@ -126,8 +134,10 @@ func (r *Repository) CreateCurrency(
 }
 
 type UpdateCurrencyFields struct {
-	Name, Symbol  *string
-	DecimalPoints *int
+	Name, Symbol          *string
+	DecimalPoints         *int
+	RateAutoUpdateScript  *string
+	RateAutoUpdateEnabled *bool
 }
 
 func (u *UpdateCurrencyFields) nullName() sql.NullString {
@@ -163,6 +173,28 @@ func (u *UpdateCurrencyFields) nullDecimalPoint() sql.NullInt16 {
 	}
 }
 
+func (u *UpdateCurrencyFields) nullRateAutoUpdateScript() sql.NullString {
+	if u.RateAutoUpdateScript == nil {
+		return sql.NullString{Valid: false}
+	}
+
+	return sql.NullString{
+		String: *u.RateAutoUpdateScript,
+		Valid:  true,
+	}
+}
+
+func (u *UpdateCurrencyFields) nullRateAutoUpdateEnabled() sql.NullBool {
+	if u.RateAutoUpdateEnabled == nil {
+		return sql.NullBool{Valid: false}
+	}
+
+	return sql.NullBool{
+		Bool:  *u.RateAutoUpdateEnabled,
+		Valid: true,
+	}
+}
+
 func (r *Repository) UpdateCurrency(
 	ctx context.Context,
 	userId string,
@@ -171,11 +203,13 @@ func (r *Repository) UpdateCurrency(
 ) error {
 	return r.queries.UpdateCurrency(
 		ctx, &dao.UpdateCurrencyParams{
-			UserID:        userId,
-			ID:            int32(id),
-			Name:          fields.nullName(),
-			Symbol:        fields.nullSymbol(),
-			DecimalPoints: fields.nullDecimalPoint(),
+			Name:            fields.nullName(),
+			Symbol:          fields.nullSymbol(),
+			DecimalPoints:   fields.nullDecimalPoint(),
+			RateFetchScript: fields.nullRateAutoUpdateScript(),
+			AutoUpdate:      fields.nullRateAutoUpdateEnabled(),
+			ID:              int32(id),
+			UserID:          userId,
 		},
 	)
 }

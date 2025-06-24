@@ -9,7 +9,6 @@ import { CurrencyServiceContext } from '../service/ServiceContext'
 
 const FormContainer = styled.div`
   width: 100%;
-  max-width: 35rem;
   margin: auto;
 `
 
@@ -27,18 +26,21 @@ const CreateCurrencyPage: FC<Props> = ({ scriptRunner }: Props) => {
     if (typeof data.symbol === 'undefined') throw new Error('Symbol cannot be undefined')
     if (typeof data.decimalPoints === 'undefined') throw new Error('Decimal Points cannot be undefined')
     if (typeof data.exchangeRates === 'undefined') throw new Error('Exchange Rates cannot be undefined')
+    if (typeof data.rateAutoupdateSettings === 'undefined')
+      throw new Error('Rate Autoupdate Settings cannot be undefined')
 
     await createCurrency({
       name: data.name,
       symbol: data.symbol,
       exchangeRates: data.exchangeRates,
       decimalPoints: data.decimalPoints,
+      rateAutoupdateSettings: data.rateAutoupdateSettings,
     })
     navigate('/currency', { replace: true })
   }, [])
 
   return (
-    <ContentWithHeader title="Create new currency" button="return">
+    <ContentWithHeader title="Create new currency" button="return" contentMaxWidth="">
       <FormContainer className="p-4">
         <CurrencyForm onSubmit={onSubmit} submitText="Create" scriptRunner={scriptRunner} />
       </FormContainer>
