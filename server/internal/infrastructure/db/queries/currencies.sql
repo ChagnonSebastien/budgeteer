@@ -8,6 +8,12 @@ SELECT id, name, symbol, decimal_points, rate_fetch_script, auto_update
 FROM currencies
 WHERE user_id = sqlc.arg(user_id);
 
+-- name: GetAllWithAutoUpdate :many
+SELECT id, name, symbol, decimal_points, rate_fetch_script, auto_update
+FROM currencies
+WHERE auto_update = true
+LIMIT sqlc.arg(page_size) OFFSET sqlc.arg(page_offset);
+
 -- name: UpdateCurrency :exec
 UPDATE currencies
 SET
@@ -54,4 +60,21 @@ WHERE EXISTS (
     WHERE ab.id = sqlc.arg(b)
       AND ab.user_id = sqlc.arg(user_id)
 )
+RETURNING id;
+
+-- name: NewAutoExchangeRateEntry :one
+INSERT INTO exchangerates (a, b, rate, date)
+SELECT
+    c.id,
+    u.default_currency,
+    CAST(sqlc.arg(rate) AS double precision) * POWER(
+            10,
+            cd.decimal_points
+                - c.decimal_points
+         ),
+    sqlc.arg(date)
+FROM currencies AS c
+         JOIN users      AS u  ON c.user_id        = u.id
+         JOIN currencies AS cd ON u.default_currency = cd.id
+WHERE c.id = sqlc.arg(currency_id)
 RETURNING id;

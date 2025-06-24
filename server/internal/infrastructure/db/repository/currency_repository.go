@@ -236,3 +236,43 @@ func (r *Repository) SetDefaultCurrency(
 	}
 	return nil
 }
+
+func (r *Repository) GetAllWithAutoUpdate(ctx context.Context, pageNumber, pageSize int) ([]model.Currency, bool, error) {
+	currenciesDao, err := r.queries.GetAllWithAutoUpdate(ctx, &dao.GetAllWithAutoUpdateParams{
+		PageOffset: int32((pageNumber - 1) * pageSize),
+		PageSize:   int32(pageSize + 1),
+	})
+	if err != nil {
+		return nil, false, err
+	}
+
+	currencies := make([]model.Currency, min(len(currenciesDao), pageSize))
+	for i, currencyDao := range currenciesDao {
+		if i >= pageSize {
+			break
+		}
+
+		currencies[i] = model.Currency{
+			ID:            int(currencyDao.ID),
+			Name:          currencyDao.Name,
+			Symbol:        currencyDao.Symbol,
+			DecimalPoints: int(currencyDao.DecimalPoints),
+			ExchangeRates: make(map[int][]model.ExchangeRate),
+			RateAutoUpdateSettings: model.RateAutoUpdateSettings{
+				Script:  currencyDao.RateFetchScript,
+				Enabled: currencyDao.AutoUpdate,
+			},
+		}
+	}
+
+	return currencies, len(currenciesDao) > pageSize, nil
+}
+
+func (r *Repository) UpdateExchangeRate(ctx context.Context, currencyID int, newRate float64, date time.Time) error {
+	_, err := r.queries.NewAutoExchangeRateEntry(ctx, &dao.NewAutoExchangeRateEntryParams{
+		Rate:       newRate,
+		Date:       date,
+		CurrencyID: int32(currencyID),
+	})
+	return err
+}

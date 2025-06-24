@@ -25,6 +25,10 @@ type GrpcWebServer struct {
 	auth        *Auth
 }
 
+func (s *GrpcWebServer) Stop() {
+	panic("implement me")
+}
+
 func NewServer(grpcServer *grpc.Server, auth *Auth) *GrpcWebServer {
 	return &GrpcWebServer{
 		wrappedGrpc: grpcweb.WrapServer(grpcServer),
@@ -32,7 +36,7 @@ func NewServer(grpcServer *grpc.Server, auth *Auth) *GrpcWebServer {
 	}
 }
 
-func (s *GrpcWebServer) Serve() {
+func (s *GrpcWebServer) Serve(_ context.Context) error {
 	mux := http.NewServeMux()
 
 	mux.Handle("/auth/", http.StripPrefix("/auth", s.auth.ServeMux()))
@@ -45,9 +49,7 @@ func (s *GrpcWebServer) Serve() {
 	}
 
 	log.Printf("Server is running on port :%d\n", serverPort)
-	if err := httpServer.ListenAndServe(); err != nil {
-		log.Fatalf("failed to serve: %v", err)
-	}
+	return httpServer.ListenAndServe()
 }
 
 func (s *GrpcWebServer) catchAllHandler(resp http.ResponseWriter, req *http.Request) {

@@ -4,8 +4,10 @@ go 1.22.5
 
 require (
 	github.com/coreos/go-oidc v2.3.0+incompatible
+	github.com/robfig/cron/v3 v3.0.1
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/viper v1.19.0
+	github.com/thejerf/suture/v4 v4.0.6
 	golang.org/x/oauth2 v0.25.0
 	google.golang.org/grpc v1.70.0
 	google.golang.org/protobuf v1.36.4

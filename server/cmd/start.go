@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"chagnon.dev/budget-server/internal/infrastructure/autoupdate"
+	"chagnon.dev/budget-server/internal/infrastructure/javascript"
 	"context"
 	"errors"
 	"fmt"
@@ -11,6 +13,7 @@ import (
 	"github.com/coreos/go-oidc"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"github.com/thejerf/suture/v4"
 	"golang.org/x/oauth2"
 
 	"chagnon.dev/budget-server/internal/domain/service"
@@ -95,7 +98,20 @@ var startCmd = &cobra.Command{
 				config.Auth.Oidc.ProviderUrl,
 			),
 		)
-		webServer.Serve()
+
+		exchangeRateAutoUpdater := autoupdate.NewRunner(ctx, repos, javascript.Runner)
+		exchangeRateAutoUpdateScheduler, err := autoupdate.NewScheduler("0 6 * * *", exchangeRateAutoUpdater.Run)
+		if err != nil {
+			log.Fatal("error during the exchange rate auto update scheduler: ", err)
+		}
+
+		rootSupervisor := suture.New("root", suture.Spec{})
+		rootSupervisor.Add(webServer)
+		rootSupervisor.Add(exchangeRateAutoUpdateScheduler)
+		err = rootSupervisor.Serve(ctx)
+		if err != nil {
+			log.Fatal(err)
+		}
 	},
 }
 
