@@ -354,6 +354,10 @@ const CurrencyForm: FC<Props> = (props) => {
             [defaultCurrency!.id]: [new ExchangeRate(0, parseFloat(initialExchangeRate), initialExchangeRateDate)],
           }
         : {},
+      rateAutoupdateSettings: {
+        script: getRateScript,
+        enabled: rateAutoupdateEnabled,
+      },
     }).catch((err) => {
       setShowErrorToast('Unexpected error while submitting the currency')
       console.error(err)
@@ -362,7 +366,9 @@ const CurrencyForm: FC<Props> = (props) => {
 
   const testScript = async () => {
     const runnerResponse = await scriptRunner(getRateScript!)
-    const rate = Number.parseFloat(runnerResponse)
+    console.log(runnerResponse)
+    const rate = Number.parseFloat(runnerResponse.replaceAll(',', '.'))
+    console.log(rate)
     if (isNaN(rate)) {
       setRateScriptError(`Invalid format or an error occurred: ${runnerResponse}`)
       return
