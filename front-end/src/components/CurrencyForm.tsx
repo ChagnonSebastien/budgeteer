@@ -658,7 +658,12 @@ const CurrencyForm: FC<Props> = (props) => {
                   )}
                 </div>
                 <FormControlLabel
-                  control={<Checkbox onChange={(ev) => setRateAutoupdateEnabled(ev.target.checked)} />}
+                  control={
+                    <Checkbox
+                      checked={rateAutoupdateEnabled}
+                      onChange={(ev) => setRateAutoupdateEnabled(ev.target.checked)}
+                    />
+                  }
                   label="Enabled"
                 />
               </div>
