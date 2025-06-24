@@ -91,6 +91,10 @@ const AuthenticatedZone: FC<Props> = (props) => {
         symbol: data.symbol,
         exchangeRates: data.exchangeRates,
         decimalPoints: data.decimalPoints,
+        rateAutoupdateSettings: {
+          script: '',
+          enabled: false,
+        },
       })
       await currencyStore.setDefault(newCurrency.id)
       setCurrencies([...currencies, newCurrency])
