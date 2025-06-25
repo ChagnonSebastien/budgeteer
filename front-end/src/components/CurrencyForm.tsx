@@ -39,7 +39,7 @@ const NoError = ''
 
 const defaultScript = `async function getRate() {
   // Update the code to fetch the exchange rate.
-  // Function should return a number value.
+  // Code block should end with a async function call that returns a number value.
   
   // This code runs in a bare-bones V8 engine. It implements the ECMAScript language spec itself, but it doesn’t include
   // any of the host-environment APIs you get in Node.js or a browser. This is for sandboxing reasons because one should

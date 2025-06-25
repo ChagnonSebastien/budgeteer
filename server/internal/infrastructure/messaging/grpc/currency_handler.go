@@ -171,8 +171,7 @@ func (s *CurrencyHandler) SetDefaultCurrency(
 }
 
 func (s *CurrencyHandler) TestGetCurrencyRate(_ context.Context, req *dto.TestGetCurrencyRateRequest) (*dto.TestGetCurrencyRateResponse, error) {
-	script := fmt.Sprintf("%s;\ngetRate()", req.Script)
-	returnedValue, err := s.javascriptRunner(script)
+	returnedValue, err := s.javascriptRunner(req.Script)
 	if err != nil {
 		returnedValue = fmt.Sprintf("Error running script: %s", err)
 	}
