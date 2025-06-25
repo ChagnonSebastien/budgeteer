@@ -37,20 +37,24 @@ interface FieldStatus {
 
 const NoError = ''
 
-const defaultScript = `async function getRate() {
-  // Update the code to fetch the exchange rate.
-  // Code block should end with a async function call that returns a number value.
-  
-  // This code runs in a bare-bones V8 engine. It implements the ECMAScript language spec itself, but it doesn’t include
-  // any of the host-environment APIs you get in Node.js or a browser. This is for sandboxing reasons because one should
-  // never run untrusted code that could arbitrarily read files, make HTTP calls, spin up timers, etc. Some methods have
-  // been explicitly setup for your convenience within the sandbox:
+const defaultScript = `// Update the code to fetch the exchange rate.
+// Code block should end with a async function call that returns a number value.
 
-  // - httpGet(string url) string
-  //     Gets the response of a http get request to the specified url 
-  
+// This code runs in a bare-bones V8 engine. It implements the ECMAScript language spec itself, but it doesn’t include
+// any of the host-environment APIs you get in Node.js or a browser. This is for sandboxing reasons because one should
+// never run untrusted code that could arbitrarily read files, make HTTP calls, spin up timers, etc. Some methods have
+// been explicitly setup for your convenience within the sandbox:
+
+// - httpGet(string url) string
+//     Gets the body response of a http get request to the specified url 
+// - httpGetWithStealth(string url) string
+//     Gets the body response of a http get request to the specified url that is behind a Cloudflare bot protection
+
+async function getRate() {
   return 1
 }
+
+getRate()
 `
 
 const CurrencyForm: FC<Props> = (props) => {

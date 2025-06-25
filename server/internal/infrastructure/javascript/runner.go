@@ -1,6 +1,9 @@
 package javascript
 
 import (
+	"github.com/go-rod/rod"
+	"github.com/go-rod/rod/lib/launcher"
+	"github.com/go-rod/stealth"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -12,6 +15,10 @@ func Runner(script string) (string, error) {
 	ctx := v8.NewContext(iso)
 	if err := bindHTTPGet(ctx); err != nil {
 		log.Printf("bindingHttpGet: %s", err)
+		return "", err
+	}
+	if err := bindHTTPGetWithStealth(ctx); err != nil {
+		log.Printf("bindingHttpGetWithStealth: %s", err)
 		return "", err
 	}
 
@@ -29,7 +36,6 @@ func Runner(script string) (string, error) {
 	for prom.State() == v8.Pending {
 		continue
 	}
-	log.Printf(prom.Result().String())
 
 	return prom.Result().String(), nil
 }
@@ -39,6 +45,13 @@ func bindHTTPGet(ctx *v8.Context) error {
 	tmpl := v8.NewFunctionTemplate(iso, httpGetCallback)
 	fn := tmpl.GetFunction(ctx)
 	return ctx.Global().Set("httpGet", fn)
+}
+
+func bindHTTPGetWithStealth(ctx *v8.Context) error {
+	iso := ctx.Isolate()
+	tmpl := v8.NewFunctionTemplate(iso, httpGetWithStealthCallback)
+	fn := tmpl.GetFunction(ctx)
+	return ctx.Global().Set("httpGetWithStealth", fn)
 }
 
 func httpGetCallback(info *v8.FunctionCallbackInfo) *v8.Value {
@@ -60,4 +73,44 @@ func httpGetCallback(info *v8.FunctionCallbackInfo) *v8.Value {
 	iso := info.Context().Isolate()
 	result, _ := v8.NewValue(iso, string(body))
 	return result
+}
+
+func httpGetWithStealthCallback(info *v8.FunctionCallbackInfo) *v8.Value {
+	// Extract URL argument from JS
+	urlVal := info.Args()[0]
+	urlStr := urlVal.String()
+	// Perform HTTP GET
+	body, err := fetchWithStealth(urlStr)
+	if err != nil {
+		// Return JS rejection string or throw
+		log.Printf("Error while fetching with chromedp: %s", err)
+		iso := info.Context().Isolate()
+		val, _ := v8.NewValue(iso, "")
+		return val
+	}
+
+	// Return HTML string back to JS
+	iso := info.Context().Isolate()
+	result, _ := v8.NewValue(iso, string(body))
+	return result
+}
+
+func fetchWithStealth(url string) (string, error) {
+	// Download a compatible Chromium if you don’t have one
+	ws := launcher.New().
+		Bin("chromium").
+		Headless(true).
+		MustLaunch()
+
+	browser := rod.New().ControlURL(ws).MustConnect()
+	defer browser.MustClose()
+
+	page := stealth.MustPage(browser)
+
+	// give Cloudflare a moment to settle
+	page = page.MustNavigate(url)
+	page.MustWaitLoad()
+
+	// grab your JSON
+	return page.MustElement("pre").MustText(), nil
 }
