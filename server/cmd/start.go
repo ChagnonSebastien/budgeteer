@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"chagnon.dev/budget-server/internal/logging"
 	"context"
 	"errors"
 	"fmt"
@@ -12,6 +11,8 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+
+	"chagnon.dev/budget-server/internal/logging"
 )
 
 type Config struct {

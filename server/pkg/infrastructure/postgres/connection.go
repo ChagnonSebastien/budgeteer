@@ -1,10 +1,11 @@
 package postgres
 
 import (
-	"chagnon.dev/budget-server/internal/logging"
 	"context"
 	"database/sql"
 	"fmt"
+
+	"chagnon.dev/budget-server/internal/logging"
 	_ "github.com/lib/pq"
 )
 

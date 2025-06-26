@@ -1,13 +1,14 @@
 package autoupdate
 
 import (
-	"chagnon.dev/budget-server/internal/domain/model"
-	"chagnon.dev/budget-server/internal/logging"
 	"context"
 	"fmt"
 	"strconv"
 	"strings"
 	"time"
+
+	"chagnon.dev/budget-server/internal/domain/model"
+	"chagnon.dev/budget-server/internal/logging"
 )
 
 type currencyRepository interface {

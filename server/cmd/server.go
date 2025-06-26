@@ -1,6 +1,13 @@
 package cmd
 
 import (
+	"context"
+	"fmt"
+
+	"github.com/coreos/go-oidc"
+	"github.com/thejerf/suture/v4"
+	"golang.org/x/oauth2"
+
 	"chagnon.dev/budget-server/internal/domain/service"
 	"chagnon.dev/budget-server/internal/infrastructure/autoupdate"
 	"chagnon.dev/budget-server/internal/infrastructure/db/dao"
@@ -8,11 +15,6 @@ import (
 	"chagnon.dev/budget-server/internal/infrastructure/messaging/grpc"
 	"chagnon.dev/budget-server/internal/infrastructure/messaging/http"
 	"chagnon.dev/budget-server/pkg/infrastructure/postgres"
-	"context"
-	"fmt"
-	"github.com/coreos/go-oidc"
-	"github.com/thejerf/suture/v4"
-	"golang.org/x/oauth2"
 )
 
 type OidcConfig struct {

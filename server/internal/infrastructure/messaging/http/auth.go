@@ -1,7 +1,6 @@
 package http
 
 import (
-	"chagnon.dev/budget-server/internal/logging"
 	"context"
 	"crypto/rand"
 	"encoding/base64"
@@ -12,6 +11,8 @@ import (
 	"net/url"
 	"os"
 	"time"
+
+	"chagnon.dev/budget-server/internal/logging"
 
 	"github.com/coreos/go-oidc"
 	"golang.org/x/oauth2"

@@ -4,6 +4,8 @@ import (
 	"context"
 	"time"
 
+	"chagnon.dev/budget-server/internal/logging"
+
 	"github.com/robfig/cron/v3"
 )
 
@@ -30,10 +32,15 @@ func NewScheduler(expr string, job func() error) (*Scheduler, error) {
 }
 
 func (c *Scheduler) Serve(ctx context.Context) error {
+	logger := logging.FromContext(ctx)
+
 	for {
 		now := time.Now()
 		next := c.schedule.Next(now)
 		timer := time.NewTimer(time.Until(next))
+
+		logger.Info("scheduled next exchange rate auto update", "timerDuration", time.Until(next).String())
+
 		select {
 		case <-ctx.Done():
 			timer.Stop()

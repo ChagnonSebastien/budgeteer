@@ -1,9 +1,10 @@
 package service
 
 import (
-	"chagnon.dev/budget-server/internal/infrastructure/db/repository"
 	"context"
 	"fmt"
+
+	"chagnon.dev/budget-server/internal/infrastructure/db/repository"
 
 	"chagnon.dev/budget-server/internal/domain/model"
 )

@@ -1,14 +1,15 @@
 package autoupdate
 
 import (
-	"chagnon.dev/budget-server/internal/logging"
 	"context"
 	"fmt"
+	"io"
+	"net/http"
+
+	"chagnon.dev/budget-server/internal/logging"
 	"github.com/go-rod/rod"
 	"github.com/go-rod/rod/lib/launcher"
 	"github.com/go-rod/stealth"
-	"io"
-	"net/http"
 	v8 "rogchap.com/v8go"
 )
 
