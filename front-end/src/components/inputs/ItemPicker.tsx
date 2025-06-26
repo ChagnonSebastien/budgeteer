@@ -2,8 +2,8 @@ import { Button, DialogActions, DialogContent, DialogTitle, TextField } from '@m
 import React, { CSSProperties, ReactNode, useEffect, useState } from 'react'
 import styled from 'styled-components'
 
-import ContentDialog from './ContentDialog'
-import NamedItem from '../domain/model/NamedItem'
+import NamedItem from '../../domain/model/NamedItem'
+import ContentDialog from '../ContentDialog'
 
 const StyledTextField = styled(TextField)<{ $customStyle?: CSSProperties }>`
   ${(props) => props.$customStyle && { ...props.$customStyle }}

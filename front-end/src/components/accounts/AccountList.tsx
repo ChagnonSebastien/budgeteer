@@ -3,14 +3,14 @@ import { Dispatch, Fragment, SetStateAction, useContext, useEffect, useMemo, use
 import styled from 'styled-components'
 
 import { AccountCard } from './AccountCard'
-import { DrawerContext } from './Menu'
-import { SearchOverlay } from './SearchOverlay'
-import Account from '../domain/model/account'
-import { formatFull } from '../domain/model/currency'
-import MixedAugmentation from '../service/MixedAugmentation'
-import { CurrencyServiceContext } from '../service/ServiceContext'
+import Account from '../../domain/model/account'
+import { formatFull } from '../../domain/model/currency'
+import MixedAugmentation from '../../service/MixedAugmentation'
+import { CurrencyServiceContext } from '../../service/ServiceContext'
+import { SearchOverlay } from '../inputs/SearchOverlay'
+import { DrawerContext } from '../Menu'
 
-import '../styles/account-list-tailwind.css'
+import '../../styles/account-list-tailwind.css'
 
 const AccountListContainer = styled.div`
   min-width: 20rem;

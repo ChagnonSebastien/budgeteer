@@ -15,13 +15,13 @@ import {
 } from 'date-fns'
 import { FC, useCallback, useContext, useMemo } from 'react'
 
-import { DrawerContext } from './Menu'
-import { formatAmount, formatFull } from '../domain/model/currency'
-import MixedAugmentation from '../service/MixedAugmentation'
-import { CategoryServiceContext, CurrencyServiceContext } from '../service/ServiceContext'
-import { darkTheme } from '../utils'
+import { formatAmount, formatFull } from '../../domain/model/currency'
+import MixedAugmentation from '../../service/MixedAugmentation'
+import { CategoryServiceContext, CurrencyServiceContext } from '../../service/ServiceContext'
+import { darkTheme } from '../../utils'
+import { DrawerContext } from '../Menu'
 
-import '../styles/graphs-tailwind.css'
+import '../../styles/graphs-tailwind.css'
 
 export type grouping = 'years' | 'quarters' | 'months'
 

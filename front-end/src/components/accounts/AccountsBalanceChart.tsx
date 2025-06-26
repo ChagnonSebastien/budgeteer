@@ -12,15 +12,15 @@ import {
 } from 'date-fns'
 import { FC, useCallback, useContext, useMemo } from 'react'
 
-import CustomChart from './CustomChart'
-import { DrawerContext } from './Menu'
-import Account from '../domain/model/account'
-import { formatFull } from '../domain/model/currency'
-import MixedAugmentation from '../service/MixedAugmentation'
-import { AccountServiceContext, CurrencyServiceContext } from '../service/ServiceContext'
-import { darkColors, darkTheme } from '../utils'
+import Account from '../../domain/model/account'
+import { formatFull } from '../../domain/model/currency'
+import MixedAugmentation from '../../service/MixedAugmentation'
+import { AccountServiceContext, CurrencyServiceContext } from '../../service/ServiceContext'
+import { darkColors, darkTheme } from '../../utils'
+import CustomChart from '../graphing/CustomChart'
+import { DrawerContext } from '../Menu'
 
-import '../styles/graphs-tailwind.css'
+import '../../styles/graphs-tailwind.css'
 
 export type GroupType = 'financialInstitution' | 'type' | 'account' | 'none'
 

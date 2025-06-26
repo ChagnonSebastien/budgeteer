@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import styled from 'styled-components'
 
 import ContentWithHeader from '../components/ContentWithHeader'
-import CurrencyForm from '../components/CurrencyForm'
+import CurrencyForm from '../components/currencies/CurrencyForm'
 import Currency from '../domain/model/currency'
 import { CurrencyServiceContext } from '../service/ServiceContext'
 

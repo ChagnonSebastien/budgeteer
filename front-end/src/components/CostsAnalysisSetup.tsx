@@ -1,7 +1,7 @@
 import { Button, DialogActions, DialogContent, DialogTitle, Stack, TextField } from '@mui/material'
 import { FC } from 'react'
 
-import CategoryPicker from './CategoryPicker'
+import CategoryPicker from './categories/CategoryPicker'
 import ContentDialog from './ContentDialog'
 
 interface Props {

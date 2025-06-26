@@ -1,14 +1,14 @@
 import { Dispatch, SetStateAction, useContext, useEffect, useRef } from 'react'
 import styled from 'styled-components'
 
-import { IconToolsContext } from './IconTools'
-import { DrawerContext } from './Menu'
-import { SearchOverlay } from './SearchOverlay'
-import Currency, { formatAmount } from '../domain/model/currency'
-import MixedAugmentation from '../service/MixedAugmentation'
-import { AccountServiceContext } from '../service/ServiceContext'
+import Currency, { formatAmount } from '../../domain/model/currency'
+import MixedAugmentation from '../../service/MixedAugmentation'
+import { AccountServiceContext } from '../../service/ServiceContext'
+import { IconToolsContext } from '../icons/IconTools'
+import { SearchOverlay } from '../inputs/SearchOverlay'
+import { DrawerContext } from '../Menu'
 
-import '../styles/currency-list-tailwind.css'
+import '../../styles/currency-list-tailwind.css'
 
 const CurrencyListContainer = styled.div`
   min-width: 20rem;

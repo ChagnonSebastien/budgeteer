@@ -2,12 +2,12 @@ import { TextField, Typography } from '@mui/material'
 import { FC, FormEvent, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import styled from 'styled-components'
 
-import CurrencyPicker from './CurrencyPicker'
-import FormWrapper from './FormWrapper'
-import { IconToolsContext } from './IconTools'
-import { NumberInput, NumberInputFieldState } from './NumberInput'
-import Account from '../domain/model/account'
-import { AccountServiceContext, CurrencyServiceContext } from '../service/ServiceContext'
+import Account from '../../domain/model/account'
+import { AccountServiceContext, CurrencyServiceContext } from '../../service/ServiceContext'
+import CurrencyPicker from '../currencies/CurrencyPicker'
+import FormWrapper from '../FormWrapper'
+import { IconToolsContext } from '../icons/IconTools'
+import { NumberInput, NumberInputFieldState } from '../inputs/NumberInput'
 
 const IconButton = styled.div`
   margin: 1rem 0;

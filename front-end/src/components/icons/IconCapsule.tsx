@@ -2,7 +2,7 @@ import { CSSProperties, useContext, useMemo } from 'react'
 import styled from 'styled-components'
 
 import { IconToolsContext } from './IconTools'
-import '../styles/ui-components-tailwind.css'
+import '../../styles/ui-components-tailwind.css'
 
 const regexp = new RegExp('^(?<comp>[0-9.]+) *(?<unit>[a-z]*)$')
 

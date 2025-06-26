@@ -1,9 +1,9 @@
 import { FC, useContext, useMemo } from 'react'
 
 import { AccountList } from './AccountList'
-import ItemPicker, { ItemListProps } from './ItemPicker'
-import Account from '../domain/model/account'
-import { AccountServiceContext } from '../service/ServiceContext'
+import Account from '../../domain/model/account'
+import { AccountServiceContext } from '../../service/ServiceContext'
+import ItemPicker, { ItemListProps } from '../inputs/ItemPicker'
 
 interface Props {
   valueText: string

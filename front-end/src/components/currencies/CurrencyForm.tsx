@@ -6,13 +6,13 @@ import dayjs, { Dayjs } from 'dayjs'
 import { FC, FormEvent, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import styled from 'styled-components'
 
-import CodeEditor from './CodeEditor'
-import ContentDialog from './ContentDialog'
-import FormWrapper from './FormWrapper'
-import Currency, { ExchangeRate } from '../domain/model/currency'
-import MixedAugmentation from '../service/MixedAugmentation'
-import { CurrencyServiceContext } from '../service/ServiceContext'
-import { darkTheme } from '../utils'
+import Currency, { ExchangeRate } from '../../domain/model/currency'
+import MixedAugmentation from '../../service/MixedAugmentation'
+import { CurrencyServiceContext } from '../../service/ServiceContext'
+import { darkTheme } from '../../utils'
+import ContentDialog from '../ContentDialog'
+import FormWrapper from '../FormWrapper'
+import CodeEditor from '../inputs/CodeEditor'
 
 const ChartContainer = styled.div`
   height: 200px;

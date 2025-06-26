@@ -5,7 +5,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 
 import { UserContext } from './App'
 import ContentWithHeader from './components/ContentWithHeader'
-import CurrencyForm from './components/CurrencyForm'
+import CurrencyForm from './components/currencies/CurrencyForm'
 import DrawerWrapper from './components/Menu'
 import Account from './domain/model/account'
 import Category from './domain/model/category'

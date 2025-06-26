@@ -5,8 +5,9 @@ import (
 	"database/sql"
 	"fmt"
 
-	"chagnon.dev/budget-server/internal/logging"
 	_ "github.com/lib/pq"
+
+	"chagnon.dev/budget-server/internal/logging"
 )
 
 func NewPostgresDatabase(ctx context.Context, host, user, pass, name string, port int) (*sql.DB, error) {

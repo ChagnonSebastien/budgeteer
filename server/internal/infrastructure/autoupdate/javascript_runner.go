@@ -6,11 +6,12 @@ import (
 	"io"
 	"net/http"
 
-	"chagnon.dev/budget-server/internal/logging"
 	"github.com/go-rod/rod"
 	"github.com/go-rod/rod/lib/launcher"
 	"github.com/go-rod/stealth"
 	v8 "rogchap.com/v8go"
+
+	"chagnon.dev/budget-server/internal/logging"
 )
 
 func RunJavascript(ctx context.Context, script string) (string, error) {

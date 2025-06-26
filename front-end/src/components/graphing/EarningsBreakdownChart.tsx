@@ -1,12 +1,12 @@
 import { ResponsiveSankey, SankeyLinkDatum, SankeyNodeDatum } from '@nivo/sankey'
 import { FC, useContext, useEffect, useState } from 'react'
 
-import { DrawerContext } from './Menu'
-import { formatFull } from '../domain/model/currency'
-import { CurrencyServiceContext } from '../service/ServiceContext'
-import { darkColors, darkTheme } from '../utils'
+import { formatFull } from '../../domain/model/currency'
+import { CurrencyServiceContext } from '../../service/ServiceContext'
+import { darkColors, darkTheme } from '../../utils'
+import { DrawerContext } from '../Menu'
 
-import '../styles/graphs-tailwind.css'
+import '../../styles/graphs-tailwind.css'
 
 interface Props {
   grossIncome: number

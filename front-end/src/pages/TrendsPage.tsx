@@ -5,9 +5,9 @@ import '../styles/trends-page-tailwind.css'
 import { useLocation, useNavigate } from 'react-router-dom'
 import styled from 'styled-components'
 
-import CategoryPicker from '../components/CategoryPicker'
+import CategoryPicker from '../components/categories/CategoryPicker'
 import ContentWithHeader from '../components/ContentWithHeader'
-import TrendsChart, { grouping } from '../components/TrendsChart'
+import TrendsChart, { grouping } from '../components/graphing/TrendsChart'
 
 const GraphPageContainer = styled.div`
   height: 100%;

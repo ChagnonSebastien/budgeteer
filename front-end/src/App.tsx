@@ -2,7 +2,7 @@ import { Button } from '@mui/material'
 import { createContext, FC } from 'react'
 
 import AuthenticatedZone from './AuthenticatedZone'
-import { IconToolsContext, useIconTools } from './components/IconTools'
+import { IconToolsContext, useIconTools } from './components/icons/IconTools'
 import LoadingScreen from './components/LoadingScreen'
 import User from './domain/model/user'
 import useAuthentication from './useAuthentication'

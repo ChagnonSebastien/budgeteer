@@ -15,7 +15,7 @@ import { createContext, FC, ReactElement, useContext, useEffect, useState } from
 import { useLocation, useNavigate } from 'react-router-dom'
 import styled from 'styled-components'
 
-import { IconToolsContext, PreparedIcon } from './IconTools'
+import { IconToolsContext, PreparedIcon } from './icons/IconTools'
 import { UserContext } from '../App'
 import UserStore from '../UserStore'
 

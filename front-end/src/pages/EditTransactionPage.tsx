@@ -4,7 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import styled from 'styled-components'
 
 import ContentWithHeader from '../components/ContentWithHeader'
-import TransactionForm from '../components/TransactionForm'
+import TransactionForm from '../components/transactions/TransactionForm'
 import Transaction from '../domain/model/transaction'
 import MixedAugmentation from '../service/MixedAugmentation'
 import { TransactionServiceContext } from '../service/ServiceContext'

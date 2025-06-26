@@ -2,8 +2,8 @@ import { Fab, IconButton, TextField } from '@mui/material'
 import { Dispatch, SetStateAction, useContext, useEffect, useState } from 'react'
 import styled from 'styled-components'
 
-import { IconToolsContext } from './IconTools'
-import '../styles/search-overlay-tailwind.css'
+import { IconToolsContext } from '../icons/IconTools'
+import '../../styles/search-overlay-tailwind.css'
 
 const FloatingButton = styled(Fab)`
   position: absolute;

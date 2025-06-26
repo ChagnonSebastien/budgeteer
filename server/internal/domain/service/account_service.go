@@ -3,9 +3,8 @@ package service
 import (
 	"context"
 
-	"chagnon.dev/budget-server/internal/infrastructure/db/repository"
-
 	"chagnon.dev/budget-server/internal/domain/model"
+	"chagnon.dev/budget-server/internal/infrastructure/db/repository"
 )
 
 type accountRepository interface {

@@ -15,10 +15,10 @@ import { FC, Suspense, useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import styled from 'styled-components'
 
-import AccountsBalanceChart, { GroupType } from '../components/AccountsBalanceChart'
+import AccountsBalanceChart, { GroupType } from '../components/accounts/AccountsBalanceChart'
 import ContentWithHeader from '../components/ContentWithHeader'
+import useTransactionFilter from '../components/inputs/useTransactionFilter'
 import SplitView from '../components/SplitView'
-import useTransactionFilter from '../components/useTransactionFilter'
 import Account from '../domain/model/account'
 
 const GraphPageContainer = styled.div`

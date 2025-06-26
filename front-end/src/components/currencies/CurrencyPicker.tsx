@@ -1,8 +1,8 @@
 import { FC } from 'react'
 
 import { CurrencyList } from './CurrencyList'
-import ItemPicker, { ItemListProps } from './ItemPicker'
-import Currency from '../domain/model/currency'
+import Currency from '../../domain/model/currency'
+import ItemPicker, { ItemListProps } from '../inputs/ItemPicker'
 
 interface Props {
   selectedCurrencyId: number | null

@@ -3,13 +3,13 @@ import { FC, FormEvent, useCallback, useContext, useEffect, useMemo, useState } 
 import { HexColorPicker } from 'react-colorful'
 
 import CategoryPicker from './CategoryPicker'
-import ContentDialog from './ContentDialog'
-import ContentWithHeader from './ContentWithHeader'
-import FormWrapper from './FormWrapper'
-import IconCapsule from './IconCapsule'
-import IconList from './IconList'
-import Category from '../domain/model/category'
-import { CategoryServiceContext } from '../service/ServiceContext'
+import Category from '../../domain/model/category'
+import { CategoryServiceContext } from '../../service/ServiceContext'
+import ContentDialog from '../ContentDialog'
+import ContentWithHeader from '../ContentWithHeader'
+import FormWrapper from '../FormWrapper'
+import IconCapsule from '../icons/IconCapsule'
+import IconList from '../icons/IconList'
 
 interface Props {
   initialCategory?: Category

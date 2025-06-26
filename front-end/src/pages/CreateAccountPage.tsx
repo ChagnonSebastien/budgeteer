@@ -2,7 +2,7 @@ import { FC, useCallback, useContext } from 'react'
 import { useNavigate } from 'react-router-dom'
 import styled from 'styled-components'
 
-import AccountForm from '../components/AccountForm'
+import AccountForm from '../components/accounts/AccountForm'
 import ContentWithHeader from '../components/ContentWithHeader'
 import Account from '../domain/model/account'
 import { AccountServiceContext } from '../service/ServiceContext'

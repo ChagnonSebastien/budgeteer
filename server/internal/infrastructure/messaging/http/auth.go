@@ -12,13 +12,12 @@ import (
 	"os"
 	"time"
 
-	"chagnon.dev/budget-server/internal/logging"
-
 	"github.com/coreos/go-oidc"
 	"golang.org/x/oauth2"
 
 	"chagnon.dev/budget-server/internal/domain/service"
 	"chagnon.dev/budget-server/internal/infrastructure/messaging/shared"
+	"chagnon.dev/budget-server/internal/logging"
 )
 
 type AuthMethods struct {

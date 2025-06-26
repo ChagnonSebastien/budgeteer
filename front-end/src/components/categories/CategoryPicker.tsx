@@ -3,8 +3,8 @@ import { FC, useContext, useMemo, useState } from 'react'
 import styled from 'styled-components'
 
 import { CategoryList } from './CategoryList'
-import ContentDialog from './ContentDialog'
-import { CategoryServiceContext } from '../service/ServiceContext'
+import { CategoryServiceContext } from '../../service/ServiceContext'
+import ContentDialog from '../ContentDialog'
 
 const FullWidthTextField = styled(TextField)`
   width: 100%;

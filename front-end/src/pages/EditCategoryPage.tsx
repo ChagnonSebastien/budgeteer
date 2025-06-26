@@ -2,7 +2,7 @@ import { FC, useCallback, useContext, useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import styled from 'styled-components'
 
-import CategoryForm from '../components/CategoryForm'
+import CategoryForm from '../components/categories/CategoryForm'
 import ContentWithHeader from '../components/ContentWithHeader'
 import Category from '../domain/model/category'
 import { CategoryServiceContext } from '../service/ServiceContext'

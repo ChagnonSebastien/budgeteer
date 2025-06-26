@@ -5,12 +5,12 @@ import dayjs, { Dayjs } from 'dayjs'
 import { ReactNode, useContext, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 
-import { AccountList } from './AccountList'
-import { CategoryList } from './CategoryList'
-import ContentDialog from './ContentDialog'
-import Account from '../domain/model/account'
-import { AccountServiceContext, CategoryServiceContext, TransactionServiceContext } from '../service/ServiceContext'
-import TimeRange from '../slider/TimeRange'
+import TimeRange from './slider/TimeRange'
+import Account from '../../domain/model/account'
+import { AccountServiceContext, CategoryServiceContext, TransactionServiceContext } from '../../service/ServiceContext'
+import { AccountList } from '../accounts/AccountList'
+import { CategoryList } from '../categories/CategoryList'
+import ContentDialog from '../ContentDialog'
 
 type Filters = {
   overview: ReactNode

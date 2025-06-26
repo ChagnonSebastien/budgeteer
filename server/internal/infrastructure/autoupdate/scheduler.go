@@ -4,9 +4,9 @@ import (
 	"context"
 	"time"
 
-	"chagnon.dev/budget-server/internal/logging"
-
 	"github.com/robfig/cron/v3"
+
+	"chagnon.dev/budget-server/internal/logging"
 )
 
 type Scheduler struct {

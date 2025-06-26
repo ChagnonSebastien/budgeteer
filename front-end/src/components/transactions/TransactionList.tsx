@@ -11,15 +11,15 @@ import {
 import { useContext, useEffect, useMemo, useRef, useState } from 'react'
 import styled from 'styled-components'
 
-import { DrawerContext } from './Menu'
 import TransactionCard from './TransactionCard'
-import Category from '../domain/model/category'
-import { formatAmount, formatFull } from '../domain/model/currency'
-import { AugmentedTransaction } from '../domain/model/transaction'
-import MixedAugmentation from '../service/MixedAugmentation'
-import { AccountServiceContext, CurrencyServiceContext } from '../service/ServiceContext'
+import Category from '../../domain/model/category'
+import { formatAmount, formatFull } from '../../domain/model/currency'
+import { AugmentedTransaction } from '../../domain/model/transaction'
+import MixedAugmentation from '../../service/MixedAugmentation'
+import { AccountServiceContext, CurrencyServiceContext } from '../../service/ServiceContext'
+import { DrawerContext } from '../Menu'
 
-import '../styles/transaction-list-tailwind.css'
+import '../../styles/transaction-list-tailwind.css'
 
 const TransactionListContainer = styled.div`
   position: relative;

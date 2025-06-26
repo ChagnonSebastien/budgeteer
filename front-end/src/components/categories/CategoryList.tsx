@@ -2,13 +2,13 @@ import { Button, CircularProgress } from '@mui/material'
 import { Fragment, useContext, useEffect, useRef, useState } from 'react'
 import styled from 'styled-components'
 
-import IconCapsule from './IconCapsule'
-import { IconToolsContext } from './IconTools'
-import Category from '../domain/model/category'
-import { CategoryServiceContext } from '../service/ServiceContext'
-import { doNothing } from '../utils'
+import Category from '../../domain/model/category'
+import { CategoryServiceContext } from '../../service/ServiceContext'
+import { doNothing } from '../../utils'
+import IconCapsule from '../icons/IconCapsule'
+import { IconToolsContext } from '../icons/IconTools'
 
-import '../styles/category-list-tailwind.css'
+import '../../styles/category-list-tailwind.css'
 
 const CategoryListContainer = styled.div`
   min-width: 20rem;

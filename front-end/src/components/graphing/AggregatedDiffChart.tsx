@@ -13,14 +13,14 @@ import {
 } from 'date-fns'
 import { FC, useContext, useMemo } from 'react'
 
-import { DrawerContext } from './Menu'
-import { formatFull } from '../domain/model/currency'
-import { AugmentedTransaction } from '../domain/model/transaction'
-import MixedAugmentation from '../service/MixedAugmentation'
-import { CurrencyServiceContext } from '../service/ServiceContext'
-import { darkColors, darkTheme } from '../utils'
+import { formatFull } from '../../domain/model/currency'
+import { AugmentedTransaction } from '../../domain/model/transaction'
+import MixedAugmentation from '../../service/MixedAugmentation'
+import { CurrencyServiceContext } from '../../service/ServiceContext'
+import { darkColors, darkTheme } from '../../utils'
+import { DrawerContext } from '../Menu'
 
-import '../styles/graphs-tailwind.css'
+import '../../styles/graphs-tailwind.css'
 
 interface Props {
   transactions: AugmentedTransaction[]

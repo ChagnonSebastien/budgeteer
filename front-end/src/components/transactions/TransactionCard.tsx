@@ -1,11 +1,11 @@
-import { FC, useContext, memo } from 'react'
+import { FC, memo, useContext } from 'react'
 
-import IconCapsule from './IconCapsule'
-import { DrawerContext } from './Menu'
-import Account from '../domain/model/account'
-import Currency, { formatFull } from '../domain/model/currency'
+import Account from '../../domain/model/account'
+import Currency, { formatFull } from '../../domain/model/currency'
+import IconCapsule from '../icons/IconCapsule'
+import { DrawerContext } from '../Menu'
 
-import '../styles/transaction-list-tailwind.css'
+import '../../styles/transaction-list-tailwind.css'
 
 interface Props {
   amount: number

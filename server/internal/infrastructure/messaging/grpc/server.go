@@ -1,10 +1,10 @@
 package grpc
 
 import (
-	"chagnon.dev/budget-server/internal/infrastructure/autoupdate"
 	"google.golang.org/grpc"
 
 	"chagnon.dev/budget-server/internal/domain/service"
+	"chagnon.dev/budget-server/internal/infrastructure/autoupdate"
 	"chagnon.dev/budget-server/internal/infrastructure/messaging/dto"
 )
 

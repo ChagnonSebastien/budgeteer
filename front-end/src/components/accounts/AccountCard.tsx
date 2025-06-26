@@ -1,13 +1,13 @@
 import { startOfDay } from 'date-fns'
 import { useContext } from 'react'
 
-import { DrawerContext } from './Menu'
-import Account from '../domain/model/account'
-import { formatFull } from '../domain/model/currency'
-import MixedAugmentation from '../service/MixedAugmentation'
-import { CurrencyServiceContext } from '../service/ServiceContext'
+import Account from '../../domain/model/account'
+import { formatFull } from '../../domain/model/currency'
+import MixedAugmentation from '../../service/MixedAugmentation'
+import { CurrencyServiceContext } from '../../service/ServiceContext'
+import { DrawerContext } from '../Menu'
 
-import '../styles/account-list-tailwind.css'
+import '../../styles/account-list-tailwind.css'
 
 type Props = {
   account: Account

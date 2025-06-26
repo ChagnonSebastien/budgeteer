@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"log/slog"
 	"os"
 	"strings"
@@ -73,7 +72,8 @@ var startCmd = &cobra.Command{
 
 		err := server.Serve(logging.WithLogger(context.Background(), logger))
 		if err != nil {
-			log.Fatal(fmt.Errorf("running server: %s", err))
+			logger.Error("running server: %s", err)
+			panic(err)
 		}
 	},
 }
