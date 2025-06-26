@@ -64,7 +64,8 @@ WORKDIR /app
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
       bash \
-      default-jre-headless && \
+      default-jre-headless \
+      chromium && \
     rm -rf /var/lib/apt/lists/*
 COPY --from=server-build /app/budget-server .
 COPY --from=server-build /app/configs configs
