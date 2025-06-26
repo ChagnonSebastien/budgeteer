@@ -3,7 +3,6 @@ package http
 import (
 	"context"
 	"fmt"
-	"log"
 	"net"
 	"net/http"
 	"os"
@@ -11,10 +10,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
 	"google.golang.org/grpc"
 
 	"chagnon.dev/budget-server/internal/infrastructure/messaging/shared"
+	"chagnon.dev/budget-server/internal/logging"
 )
 
 const serverPort = 8080
@@ -36,7 +37,7 @@ func NewServer(grpcServer *grpc.Server, auth *Auth) *GrpcWebServer {
 	}
 }
 
-func (s *GrpcWebServer) Serve(_ context.Context) error {
+func (s *GrpcWebServer) Serve(ctx context.Context) error {
 	mux := http.NewServeMux()
 
 	mux.Handle("/auth/", http.StripPrefix("/auth", s.auth.ServeMux()))
@@ -48,34 +49,42 @@ func (s *GrpcWebServer) Serve(_ context.Context) error {
 		Addr:    fmt.Sprintf(":%d", serverPort),
 	}
 
-	log.Printf("Server is running on port :%d\n", serverPort)
+	logging.FromContext(ctx).Info("running http server", "port", serverPort)
 	return httpServer.ListenAndServe()
 }
 
 func (s *GrpcWebServer) catchAllHandler(resp http.ResponseWriter, req *http.Request) {
 	if s.wrappedGrpc.IsGrpcWebRequest(req) {
+		logger := logging.FromContext(req.Context())
+
 		tokenSource, prevTokenCookie, err := s.auth.TokenSourceFromCookies(req.Context(), req.Cookie)
 		if err != nil {
+			logger.Error("reading tokens from request", "error", err)
 			http.Error(resp, "reading tokens from request", http.StatusInternalServerError)
 			return
 		}
 
 		rawToken, err := tokenSource.Token()
 		if err != nil {
+			logger.Error("getting valid access token", "error", err)
 			http.Error(resp, "getting valid access token", http.StatusUnauthorized)
 			return
 		}
 
 		token, err := s.auth.verifier.Verify(req.Context(), rawToken.AccessToken)
 		if err != nil {
+			logger.Error("verifying access token", "error", err)
 			http.Error(resp, "verifying access token", http.StatusUnauthorized)
 			return
 		}
 
 		var tokenClaims shared.Claims
 		if err := token.Claims(&tokenClaims); err != nil {
+			logger.Error("parsing claims", "error", err)
 			http.Error(resp, "parsing claims", http.StatusInternalServerError)
 		}
+
+		logger = logger.With("user", tokenClaims.Email)
 
 		if prevTokenCookie == nil || prevTokenCookie.Value != rawToken.AccessToken {
 			http.SetCookie(
@@ -101,7 +110,8 @@ func (s *GrpcWebServer) catchAllHandler(resp http.ResponseWriter, req *http.Requ
 			)
 		}
 
-		augmentedReq := req.WithContext(context.WithValue(req.Context(), shared.ClaimsKey{}, tokenClaims))
+		augmentedCtx := context.WithValue(req.Context(), shared.ClaimsKey{}, tokenClaims)
+		augmentedReq := req.WithContext(logging.WithLogger(augmentedCtx, logger))
 		s.wrappedGrpc.ServeHTTP(resp, augmentedReq)
 		return
 	}
@@ -149,19 +159,14 @@ func (lrw *LoggingResponseWriter) WriteHeader(code int) {
 func withLogging(next http.Handler) http.Handler {
 	return http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
+			logger := logging.FromContext(r.Context()).With("correlationId", uuid.NewString())
+			logger.Info("received http request", "method", r.URL, "peer", getClientIP(r))
+
 			start := time.Now()
 			lrw := &LoggingResponseWriter{ResponseWriter: w, statusCode: http.StatusOK}
-			p := getClientIP(r)
-
 			next.ServeHTTP(lrw, r)
 
-			log.Printf(
-				"Request - Method:%s\tDuration:%s\tPeer:%s\tStatusCode:%v",
-				r.URL,
-				time.Since(start),
-				p,
-				lrw.statusCode,
-			)
+			logger.Debug("finished handling http request", "duration", time.Since(start), "statusCode", lrw.statusCode)
 		},
 	)
 }

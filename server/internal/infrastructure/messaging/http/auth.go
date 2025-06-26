@@ -1,13 +1,13 @@
 package http
 
 import (
+	"chagnon.dev/budget-server/internal/logging"
 	"context"
 	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -84,10 +84,11 @@ func (auth *Auth) ServeMux() *http.ServeMux {
 	return mux
 }
 
-func (auth *Auth) infoHandler(w http.ResponseWriter, _ *http.Request) {
+func (auth *Auth) infoHandler(w http.ResponseWriter, req *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	if err := json.NewEncoder(w).Encode(auth.AuthMethods); err != nil {
+		logging.FromContext(req.Context()).Error("encoding response")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -103,33 +104,42 @@ func (auth *Auth) loginHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (auth *Auth) callbackHandler(w http.ResponseWriter, r *http.Request) {
+	logger := logging.FromContext(r.Context())
+
 	if r.URL.Query().Get("state") != auth.stateToken {
-		http.Error(w, "Invalid state parameter", http.StatusBadRequest)
+		logger.Error("invalid state parameter")
+		http.Error(w, "invalid state parameter", http.StatusBadRequest)
 		return
 	}
 
 	code := r.URL.Query().Get("code")
 	if code == "" {
-		http.Error(w, "Code not found", http.StatusBadRequest)
+		logger.Error("code not found")
+		http.Error(w, "code not found", http.StatusBadRequest)
 		return
 	}
 
 	rawToken, err := auth.OidcConfig.Exchange(r.Context(), code)
 	if err != nil {
-		http.Error(w, "Token exchange failed", http.StatusInternalServerError)
+		logger.Error("token exchange failed", "error", err)
+		http.Error(w, "token exchange failed", http.StatusInternalServerError)
 		return
 	}
 
 	token, err := auth.verifier.Verify(r.Context(), rawToken.AccessToken)
 	if err != nil {
+		logger.Error("verifying access token", "error", err)
 		http.Error(w, "verifying access token", http.StatusUnauthorized)
 		return
 	}
 
 	var tokenClaims shared.Claims
 	if err := token.Claims(&tokenClaims); err != nil {
+		logger.Error("parsing claims", "error", err)
 		http.Error(w, "parsing claims", http.StatusInternalServerError)
 	}
+
+	logger = logger.With("user", tokenClaims.Email)
 
 	if err := auth.UserService.Upsert(
 		r.Context(),
@@ -137,6 +147,7 @@ func (auth *Auth) callbackHandler(w http.ResponseWriter, r *http.Request) {
 		tokenClaims.Username,
 		tokenClaims.Email,
 	); err != nil {
+		logger.Error("syncing user with database", "error", err)
 		http.Error(w, "syncing user with database", http.StatusInternalServerError)
 		return
 	}
@@ -200,6 +211,8 @@ func (auth *Auth) logoutHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (auth *Auth) userInfoHandler(resp http.ResponseWriter, req *http.Request) {
+	logger := logging.FromContext(req.Context())
+
 	tokenSource, prevTokenCookie, err := auth.TokenSourceFromCookies(req.Context(), req.Cookie)
 	if err != nil {
 		http.Error(resp, "reading tokens from request", http.StatusInternalServerError)
@@ -208,25 +221,29 @@ func (auth *Auth) userInfoHandler(resp http.ResponseWriter, req *http.Request) {
 
 	rawToken, err := tokenSource.Token()
 	if err != nil {
-		log.Printf("getting valid access token: %s", err)
+		logger.Error("getting valid access token", "error", err)
 		http.Error(resp, "getting valid access token", http.StatusUnauthorized)
 		return
 	}
 
 	token, err := auth.verifier.Verify(req.Context(), rawToken.AccessToken)
 	if err != nil {
-		log.Printf("verifying access token: %s", err)
+		logger.Error("verifying access token", "error", err)
 		http.Error(resp, "verifying access token", http.StatusUnauthorized)
 		return
 	}
 
 	var tokenClaims shared.Claims
 	if err := token.Claims(&tokenClaims); err != nil {
+		logger.Error("parsing claims", "error", err)
 		http.Error(resp, "parsing claims", http.StatusInternalServerError)
 	}
 
+	logger = logger.With("user", tokenClaims.Email)
+
 	params, err := auth.UserService.UserParams(req.Context(), tokenClaims.Sub)
 	if err != nil {
+		logger.Error("getting user from db", "error", err)
 		http.Error(resp, "getting user from db", http.StatusInternalServerError)
 		return
 	}
@@ -261,6 +278,7 @@ func (auth *Auth) userInfoHandler(resp http.ResponseWriter, req *http.Request) {
 
 	resp.Header().Set("Content-Type", "application/json")
 	if err = json.NewEncoder(resp).Encode(tokenClaims); err != nil {
+		logger.Error("encoding response", "error", err)
 		http.Error(resp, "encoding response", http.StatusInternalServerError)
 		return
 	}

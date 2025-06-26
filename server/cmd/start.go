@@ -1,35 +1,18 @@
 package cmd
 
 import (
-	"chagnon.dev/budget-server/internal/infrastructure/autoupdate"
-	"chagnon.dev/budget-server/internal/infrastructure/javascript"
+	"chagnon.dev/budget-server/internal/logging"
 	"context"
 	"errors"
 	"fmt"
 	"log"
+	"log/slog"
 	"os"
 	"strings"
 
-	"github.com/coreos/go-oidc"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"github.com/thejerf/suture/v4"
-	"golang.org/x/oauth2"
-
-	"chagnon.dev/budget-server/internal/domain/service"
-	"chagnon.dev/budget-server/internal/infrastructure/db/dao"
-	"chagnon.dev/budget-server/internal/infrastructure/db/repository"
-	"chagnon.dev/budget-server/internal/infrastructure/messaging/grpc"
-	"chagnon.dev/budget-server/internal/infrastructure/messaging/http"
-	"chagnon.dev/budget-server/pkg/infrastructure/postgres"
 )
-
-type OidcConfig struct {
-	Enabled      bool   `mapstructure:"enabled"`
-	ClientId     string `mapstructure:"clientId"`
-	ClientSecret string `mapstructure:"clientSecret"`
-	ProviderUrl  string `mapstructure:"providerUrl"`
-}
 
 type Config struct {
 	Database struct {
@@ -40,7 +23,12 @@ type Config struct {
 		Name string `mapstructure:"name"`
 	} `mapstructure:"database"`
 	Auth struct {
-		Oidc     OidcConfig `mapstructure:"oidc"`
+		Oidc struct {
+			Enabled      bool   `mapstructure:"enabled"`
+			ClientId     string `mapstructure:"clientId"`
+			ClientSecret string `mapstructure:"clientSecret"`
+			ProviderUrl  string `mapstructure:"providerUrl"`
+		} `mapstructure:"oidc"`
 		UserPass struct {
 			Enabled bool `mapstructure:"enabled"`
 		} `mapstructure:"userpass"`
@@ -57,60 +45,34 @@ var startCmd = &cobra.Command{
 	Use:   "start",
 	Short: "Starts the budget server",
 	Run: func(cmd *cobra.Command, args []string) {
-		ctx := context.Background()
-
-		fmt.Println("=== Budget Server ===")
-		db, err := postgres.NewPostgresDatabase(
-			config.Database.Host,
-			config.Database.User,
-			config.Database.Pass,
-			config.Database.Name,
-			config.Database.Port,
-		)
-		if err != nil {
-			log.Fatal("error creating connection to database: ", err)
-		}
-
-		repos := repository.NewRepository(dao.New(db), db)
-
-		var oidcConfig *oauth2.Config
-		var verifier *oidc.IDTokenVerifier
-		if config.Auth.Oidc.Enabled {
-			oidcConfig, verifier = setupOidcConfig(ctx, config.Auth.Oidc, config.Server.PublicUrl)
-		}
-
-		webServer := http.NewServer(
-			grpc.NewServerWithHandlers(
-				grpc.Services{
-					Account:     service.NewAccountService(repos),
-					Category:    service.NewCategoryService(repos),
-					Currency:    service.NewCurrencyService(repos),
-					Transaction: service.NewTransactionService(repos),
+		server := &Server{config: ServerConfig{
+			Database: DatabaseConfig{
+				Host: config.Database.Host,
+				User: config.Database.User,
+				Pass: config.Database.Pass,
+				Name: config.Database.Name,
+				Port: config.Database.Port,
+			},
+			Auth: AuthConfig{
+				Oidc: OidcConfig{
+					Enabled:      config.Auth.Oidc.Enabled,
+					ProviderUrl:  config.Auth.Oidc.ProviderUrl,
+					ClientId:     config.Auth.Oidc.ClientId,
+					ClientSecret: config.Auth.Oidc.ClientSecret,
 				},
-			),
-			http.NewAuth(
-				service.NewUserService(repos),
-				config.Auth.Oidc.Enabled,
-				config.Auth.UserPass.Enabled,
-				oidcConfig,
-				verifier,
-				config.Server.PublicUrl,
-				config.Auth.Oidc.ProviderUrl,
-			),
-		)
+				UserPass: UserPassConfig{
+					Enabled: config.Auth.UserPass.Enabled,
+				},
+			},
+			PublicUrl: config.Server.PublicUrl,
+		}}
 
-		exchangeRateAutoUpdater := autoupdate.NewRunner(ctx, repos, javascript.Runner)
-		exchangeRateAutoUpdateScheduler, err := autoupdate.NewScheduler("0 6 * * *", exchangeRateAutoUpdater.Run)
-		if err != nil {
-			log.Fatal("error during the exchange rate auto update scheduler: ", err)
-		}
+		logger := logging.NewLogger(slog.LevelInfo, false)
+		slog.SetDefault(logger)
 
-		rootSupervisor := suture.New("root", suture.Spec{})
-		rootSupervisor.Add(webServer)
-		rootSupervisor.Add(exchangeRateAutoUpdateScheduler)
-		err = rootSupervisor.Serve(ctx)
+		err := server.Serve(logging.WithLogger(context.Background(), logger))
 		if err != nil {
-			log.Fatal(err)
+			log.Fatal(fmt.Errorf("running server: %s", err))
 		}
 	},
 }
@@ -148,31 +110,4 @@ func initConfig() {
 		fmt.Println("unable to decode into struct: %w", err)
 		os.Exit(1)
 	}
-}
-
-func setupOidcConfig(ctx context.Context, oidcConfig OidcConfig, serverPublicUrl string) (
-	*oauth2.Config,
-	*oidc.IDTokenVerifier,
-) {
-	if oidcConfig.ClientId == "" || oidcConfig.ClientSecret == "" || oidcConfig.ProviderUrl == "" {
-		return nil, nil
-	}
-
-	provider, err := oidc.NewProvider(ctx, oidcConfig.ProviderUrl)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	return &oauth2.Config{
-			ClientID:     oidcConfig.ClientId,
-			ClientSecret: oidcConfig.ClientSecret,
-			Endpoint:     provider.Endpoint(),
-			RedirectURL:  fmt.Sprintf("%s/auth/callback", serverPublicUrl),
-			Scopes:       []string{oidc.ScopeOpenID, oidc.ScopeOfflineAccess, "profile", "email"},
-		}, provider.Verifier(
-			&oidc.Config{
-				ClientID:          oidcConfig.ClientId,
-				SkipClientIDCheck: true,
-			},
-		)
 }
