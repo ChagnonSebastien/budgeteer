@@ -113,7 +113,7 @@ const AccountForm: FC<Props> = (props) => {
     return valid
   }, [errors, initialAmounts])
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (_e: FormEvent<HTMLFormElement>) => {
     if (!isFormValid) {
       setErrors((prevState) => ({
         accountName: {

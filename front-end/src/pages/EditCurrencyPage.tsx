@@ -34,7 +34,7 @@ const EditCurrency: FC<Props> = ({ scriptRunner }: Props) => {
     async (data: Partial<Omit<Currency, 'id' | 'hasName'>>) => {
       if (typeof selectedCurrency === 'undefined') return
 
-      await updateCurrencies(selectedCurrency!.id, data)
+      await updateCurrencies({ id: selectedCurrency!.id }, data)
 
       navigate(-1)
     },

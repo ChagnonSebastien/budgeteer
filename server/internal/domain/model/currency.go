@@ -1,23 +1,16 @@
 package model
 
-import "time"
-
-type ExchangeRate struct {
-	ID   int
-	Rate float64
-	Date time.Time
-}
-
 type RateAutoUpdateSettings struct {
 	Script  string
 	Enabled bool
 }
 
+type CurrencyID int
+
 type Currency struct {
-	ID                     int
+	ID                     CurrencyID
 	Name                   string
 	Symbol                 string
 	DecimalPoints          int
-	ExchangeRates          map[int][]ExchangeRate
 	RateAutoUpdateSettings RateAutoUpdateSettings
 }

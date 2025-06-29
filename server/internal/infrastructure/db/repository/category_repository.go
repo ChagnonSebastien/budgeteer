@@ -16,13 +16,13 @@ func (r *Repository) GetAllCategories(ctx context.Context, userId string) ([]mod
 
 	categories := make([]model.Category, len(categoriesDao))
 	for i, categoryDao := range categoriesDao {
-		var parentId int
+		var parentId model.CategoryID
 		if categoryDao.Parent.Valid {
-			parentId = int(categoryDao.Parent.Int32)
+			parentId = model.CategoryID(categoryDao.Parent.Int32)
 		}
 
 		categories[i] = model.Category{
-			ID:             int(categoryDao.ID),
+			ID:             model.CategoryID(categoryDao.ID),
 			Name:           categoryDao.Name,
 			ParentId:       parentId,
 			IconName:       categoryDao.IconName,
@@ -43,7 +43,7 @@ func (r *Repository) CreateCategory(
 	parentId int,
 	fixedCosts bool,
 	ordering float64,
-) (int, error) {
+) (model.CategoryID, error) {
 	id, err := r.queries.CreateCategory(
 		ctx, &dao.CreateCategoryParams{
 			UserID: userId,
@@ -63,7 +63,7 @@ func (r *Repository) CreateCategory(
 		return 0, err
 	}
 
-	return int(id), nil
+	return model.CategoryID(id), nil
 }
 
 type UpdateCategoryFields struct {
@@ -153,7 +153,7 @@ func (u *UpdateCategoryFields) nullOrdering() sql.NullFloat64 {
 func (r *Repository) UpdateCategory(
 	ctx context.Context,
 	userId string,
-	id int,
+	id model.CategoryID,
 	fields UpdateCategoryFields,
 ) error {
 	return r.queries.UpdateCategory(

@@ -1,6 +1,7 @@
 package http
 
 import (
+	"chagnon.dev/budget-server/internal/domain/model"
 	"context"
 	"crypto/rand"
 	"encoding/base64"
@@ -15,7 +16,6 @@ import (
 	"github.com/coreos/go-oidc"
 	"golang.org/x/oauth2"
 
-	"chagnon.dev/budget-server/internal/domain/service"
 	"chagnon.dev/budget-server/internal/infrastructure/messaging/shared"
 	"chagnon.dev/budget-server/internal/logging"
 )
@@ -25,8 +25,13 @@ type AuthMethods struct {
 	UserPass bool `json:"userPass"`
 }
 
+type userRepository interface {
+	UpsertUser(ctx context.Context, id, username, email string) error
+	UserParams(ctx context.Context, id string) (*model.UserParams, error)
+}
+
 type Auth struct {
-	UserService       *service.UserService
+	UserService       userRepository
 	OidcConfig        *oauth2.Config
 	verifier          *oidc.IDTokenVerifier
 	FrontendPublicUrl string
@@ -37,7 +42,7 @@ type Auth struct {
 }
 
 func NewAuth(
-	userService *service.UserService,
+	userService userRepository,
 	oidcEnabled,
 	userPassEnabled bool,
 	oidcConfig *oauth2.Config,
@@ -141,7 +146,7 @@ func (auth *Auth) callbackHandler(w http.ResponseWriter, r *http.Request) {
 
 	logger = logger.With("user", tokenClaims.Email)
 
-	if err := auth.UserService.Upsert(
+	if err := auth.UserService.UpsertUser(
 		r.Context(),
 		tokenClaims.Sub,
 		tokenClaims.Username,

@@ -1,15 +1,15 @@
 import { FC, useContext, useMemo } from 'react'
 
 import { AccountList } from './AccountList'
-import Account from '../../domain/model/account'
+import Account, { AccountID } from '../../domain/model/account'
 import { AccountServiceContext } from '../../service/ServiceContext'
 import ItemPicker, { ItemListProps } from '../inputs/ItemPicker'
 
 interface Props {
   valueText: string
-  onAccountSelected?: (newAccount: { existing: boolean; id: number | null; name: string }) => void
-  selected?: number[]
-  onMultiSelect?: (newAccounts: number[]) => void
+  onAccountSelected?: (newAccount: { existing: boolean; id: AccountID | null; name: string }) => void
+  selected?: AccountID[]
+  onMultiSelect?: (newAccounts: AccountID[]) => void
   labelText: string
   errorText?: string
   myOwn: boolean
@@ -31,7 +31,7 @@ const AccountPicker: FC<Props> = (props) => {
   }, [accounts, valueText, onAccountSelected])
 
   // Handle account selection
-  const handleAccountSelected = (id: number) => {
+  const handleAccountSelected = (id: AccountID) => {
     if (onAccountSelected) {
       const account = accounts.find((a) => a.id === id)
       if (account) {

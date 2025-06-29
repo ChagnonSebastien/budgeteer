@@ -1,19 +1,37 @@
 package grpc
 
 import (
+	"chagnon.dev/budget-server/internal/domain/model"
 	"context"
 	"fmt"
 
-	"chagnon.dev/budget-server/internal/domain/service"
 	"chagnon.dev/budget-server/internal/infrastructure/db/repository"
 	"chagnon.dev/budget-server/internal/infrastructure/messaging/dto"
 	"chagnon.dev/budget-server/internal/infrastructure/messaging/shared"
 )
 
+type categoryRepository interface {
+	GetAllCategories(ctx context.Context, userId string) ([]model.Category, error)
+	CreateCategory(
+		ctx context.Context,
+		userId string,
+		name, iconName, iconColor, iconBackground string,
+		parentId int,
+		fixedCosts bool,
+		ordering float64,
+	) (model.CategoryID, error)
+	UpdateCategory(
+		ctx context.Context,
+		userId string,
+		id model.CategoryID,
+		fields repository.UpdateCategoryFields,
+	) error
+}
+
 type CategoryHandler struct {
 	dto.UnimplementedCategoryServiceServer
 
-	categoryService *service.CategoryService
+	categoryService categoryRepository
 }
 
 func (s *CategoryHandler) CreateCategory(
@@ -68,7 +86,7 @@ func (s *CategoryHandler) UpdateCategory(
 	err := s.categoryService.UpdateCategory(
 		ctx,
 		claims.Sub,
-		int(req.Id),
+		model.CategoryID(req.Id),
 		repository.UpdateCategoryFields{
 			Name:           req.Fields.Name,
 			IconName:       req.Fields.IconName,

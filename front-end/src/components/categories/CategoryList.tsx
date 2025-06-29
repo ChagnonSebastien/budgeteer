@@ -2,7 +2,7 @@ import { Button, CircularProgress } from '@mui/material'
 import { Fragment, useContext, useEffect, useRef, useState } from 'react'
 import styled from 'styled-components'
 
-import Category from '../../domain/model/category'
+import Category, { CategoryID } from '../../domain/model/category'
 import { CategoryServiceContext } from '../../service/ServiceContext'
 import { doNothing } from '../../utils'
 import IconCapsule from '../icons/IconCapsule'
@@ -28,9 +28,9 @@ const ScrollableContent = styled.div`
 
 interface Props {
   categories?: Category[]
-  onSelect?: (value: number) => void
-  onMultiSelect?: (selected: number[]) => void
-  selected?: number[]
+  onSelect?: (value: CategoryID) => void
+  onMultiSelect?: (selected: CategoryID[]) => void
+  selected?: CategoryID[]
   buttonText?: string
   onScrollProgress?: (progress: number) => void
 }
@@ -40,7 +40,7 @@ export const CategoryList = (props: Props) => {
   const { root, subCategories } = useContext(CategoryServiceContext)
   const { IconLib } = useContext(IconToolsContext)
 
-  const [open, setOpen] = useState<number[]>(() => {
+  const [open, setOpen] = useState<CategoryID[]>(() => {
     // Initialize with root and any parent categories of selected items
     const openCategories = [root.id]
 
@@ -62,7 +62,7 @@ export const CategoryList = (props: Props) => {
 
     return [...new Set(openCategories)] // Remove duplicates
   })
-  const [hoveringOver, setHoveringOver] = useState<number | null>(null)
+  const [hoveringOver, setHoveringOver] = useState<CategoryID | null>(null)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -101,8 +101,8 @@ export const CategoryList = (props: Props) => {
   }
 
   // Get all descendant category IDs recursively
-  const getAllDescendants = (categoryId: number): number[] => {
-    const descendants: number[] = []
+  const getAllDescendants = (categoryId: CategoryID): CategoryID[] => {
+    const descendants: CategoryID[] = []
     const children = subCategories[categoryId]
     if (!children) return descendants
 
@@ -128,7 +128,7 @@ export const CategoryList = (props: Props) => {
     return ancestors
   }
 
-  const renderCategory = (category: Category, onSelect: (value: number) => void, depth: number): JSX.Element => {
+  const renderCategory = (category: Category, onSelect: (value: CategoryID) => void, depth: number): JSX.Element => {
     return (
       <Fragment key={`category-list-id-${category.id}`}>
         <div
@@ -174,7 +174,7 @@ export const CategoryList = (props: Props) => {
                     return
                   }
 
-                  let newSelected: number[]
+                  let newSelected: CategoryID[]
                   if (selected.includes(category.id)) {
                     // If deselecting, just remove this category
                     newSelected = selected.filter((id) => id !== category.id)

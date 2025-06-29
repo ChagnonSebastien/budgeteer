@@ -1,36 +1,43 @@
-import Unique from './Unique'
+import NamedItem from './NamedItem'
 
-export type AugmentedCategory = Category & {
-  readonly parent?: Category
-}
+export type CategoryID = number
 
-export default class Category implements Unique {
-  readonly id: number
-  name: string
-  iconName: string
-  iconColor: string
-  iconBackground: string
-  parentId: number | null
-  fixedCosts: boolean
-  ordering: number
-
+export default class Category implements NamedItem<CategoryID> {
   constructor(
-    id: number,
-    name: string,
-    iconName: string,
-    iconColor: string,
-    iconBackground: string,
-    parentId: number | null,
-    fixedCosts: boolean,
-    ordering: number,
-  ) {
-    this.id = id
-    this.name = name
-    this.iconName = iconName
-    this.parentId = parentId
-    this.iconColor = iconColor
-    this.iconBackground = iconBackground
-    this.fixedCosts = fixedCosts
-    this.ordering = ordering
+    public readonly id: CategoryID,
+    public name: string,
+    public iconName: string,
+    public iconColor: string,
+    public iconBackground: string,
+    public parentId: CategoryID | null,
+    public fixedCosts: boolean,
+    public ordering: number,
+  ) {}
+
+  hasName(name: string): boolean {
+    return this.name.toLowerCase() === name.toLowerCase()
   }
 }
+
+export class AugmentedCategory extends Category {
+  constructor(
+    category: Category,
+    public readonly parent?: Category,
+  ) {
+    super(
+      category.id,
+      category.name,
+      category.iconName,
+      category.iconColor,
+      category.iconBackground,
+      category.parentId,
+      category.fixedCosts,
+      category.ordering,
+    )
+  }
+}
+
+export type CategoryUpdatableFields = Pick<
+  Category,
+  'iconBackground' | 'iconColor' | 'iconName' | 'name' | 'fixedCosts' | 'ordering' | 'parentId'
+>

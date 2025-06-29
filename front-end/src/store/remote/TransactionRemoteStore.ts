@@ -4,6 +4,7 @@ import { formatDateTime, TransactionConverter } from './converter/transactionCon
 import { CreateTransactionRequest, GetAllTransactionsRequest, UpdateTransactionRequest } from './dto/transaction'
 import { TransactionServiceClient } from './dto/transaction.client'
 import Transaction from '../../domain/model/transaction'
+import { IdIdentifier } from '../../domain/model/Unique'
 
 const conv = new TransactionConverter()
 
@@ -16,7 +17,7 @@ export default class TransactionRemoteStore {
 
   public async getAll(): Promise<Transaction[]> {
     const response = await this.client.getAllTransactions(GetAllTransactionsRequest.create()).response
-    return await Promise.all(response.transactions.map<Promise<Transaction>>((dto) => conv.toModel(dto)))
+    return response.transactions.map<Transaction>((dto) => conv.toModel(dto))
   }
 
   public async create(data: Omit<Transaction, 'id' | 'hasName'>): Promise<Transaction> {
@@ -47,10 +48,10 @@ export default class TransactionRemoteStore {
     )
   }
 
-  public async update(id: number, data: Partial<Omit<Transaction, 'id' | 'hasName'>>): Promise<void> {
+  public async update(identity: IdIdentifier, data: Partial<Omit<Transaction, 'id' | 'hasName'>>): Promise<void> {
     await this.client.updateTransaction(
       UpdateTransactionRequest.create({
-        id,
+        id: identity.id,
         fields: conv.toUpdateDTO(data),
       }),
     ).response

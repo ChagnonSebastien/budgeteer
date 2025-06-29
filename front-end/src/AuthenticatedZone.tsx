@@ -9,7 +9,8 @@ import CurrencyForm from './components/currencies/CurrencyForm'
 import DrawerWrapper from './components/Menu'
 import Account from './domain/model/account'
 import Category from './domain/model/category'
-import Currency from './domain/model/currency'
+import Currency, { CurrencyUpdatableFields } from './domain/model/currency'
+import ExchangeRate from './domain/model/exchangeRate'
 import Transaction from './domain/model/transaction'
 import AccountsBalancePage from './pages/AccountsBalancePage'
 import AccountsPage from './pages/AccountsPage'
@@ -30,17 +31,20 @@ import { AccountPersistenceAugmenter } from './service/AccountServiceAugmenter'
 import { BasicCrudServiceWithPersistence } from './service/BasicCrudServiceWithPersistence'
 import { CategoryPersistenceAugmenter } from './service/CategoryServiceAugmenter'
 import { CurrencyPersistenceAugmenter } from './service/CurrencyServiceAugmenter'
+import { ExchangeRatePersistenceAugmenter } from './service/ExcahngeRateServiceAugmenter'
 import { MixedAugmentationProvider } from './service/MixedAugmentation'
 import { NilPersistenceAugmenter } from './service/NilAugmenter'
 import {
   AccountServiceContext,
   CategoryServiceContext,
   CurrencyServiceContext,
+  ExchangeRateServiceContext,
   TransactionServiceContext,
 } from './service/ServiceContext'
 import AccountRemoteStore from './store/remote/AccountRemoteStore'
 import CategoryRemoteStore from './store/remote/CategoryRemoteStore'
 import CurrencyRemoteStore from './store/remote/CurrencyRemoteStore'
+import ExchangeRateRemoteStore from './store/remote/ExchangeRateRemoteStore'
 import TransactionRemoteStore from './store/remote/TransactionRemoteStore'
 
 const transport = new GrpcWebFetchTransport({
@@ -50,8 +54,9 @@ const transport = new GrpcWebFetchTransport({
 
 const currencyStore = new CurrencyRemoteStore(transport)
 const categoryStore = new CategoryRemoteStore(transport)
-const accountRepository = new AccountRemoteStore(transport)
-const transactionRepository = new TransactionRemoteStore(transport)
+const accountStore = new AccountRemoteStore(transport)
+const transactionStore = new TransactionRemoteStore(transport)
+const exchangeRateStore = new ExchangeRateRemoteStore(transport)
 
 interface Props {
   logout(): void
@@ -68,29 +73,29 @@ const AuthenticatedZone: FC<Props> = (props) => {
   const [categories, setCategories] = useState<Category[] | null>(null)
   const [accounts, setAccounts] = useState<Account[] | null>(null)
   const [transactions, setTransactions] = useState<Transaction[] | null>(null)
-  const testGetRateScript = useMemo(() => currencyStore.testGetRateScript(), [])
+  const [exchangeRates, setExchangeRates] = useState<ExchangeRate[] | null>(null)
+  const testGetRateScript = useMemo(() => exchangeRateStore.testGetRateScript(), [])
 
   useEffect(() => {
     currencyStore.getAll().then(setCurrencies)
     categoryStore.getAll().then(setCategories)
-    accountRepository.getAll().then(setAccounts)
-    transactionRepository.getAll().then(setTransactions)
+    accountStore.getAll().then(setAccounts)
+    transactionStore.getAll().then(setTransactions)
+    exchangeRateStore.getAll().then(setExchangeRates)
   }, [])
 
   const onNewCurrency = useCallback(
-    async (data: Partial<Omit<Currency, 'id' | 'hasName'>>) => {
+    async (currencyData: Partial<CurrencyUpdatableFields>) => {
       if (currencies === null) return
 
-      if (typeof data.name === 'undefined') return
-      if (typeof data.symbol === 'undefined') return
-      if (typeof data.decimalPoints === 'undefined') return
-      if (typeof data.exchangeRates === 'undefined') return
+      if (typeof currencyData.name === 'undefined') return
+      if (typeof currencyData.symbol === 'undefined') return
+      if (typeof currencyData.decimalPoints === 'undefined') return
 
       const newCurrency = await currencyStore.create({
-        name: data.name,
-        symbol: data.symbol,
-        exchangeRates: data.exchangeRates,
-        decimalPoints: data.decimalPoints,
+        name: currencyData.name,
+        symbol: currencyData.symbol,
+        decimalPoints: currencyData.decimalPoints,
         rateAutoupdateSettings: {
           script: '',
           enabled: false,
@@ -103,7 +108,13 @@ const AuthenticatedZone: FC<Props> = (props) => {
     [currencies],
   )
 
-  if (currencies === null || categories === null || accounts === null || transactions === null) {
+  if (
+    currencies === null ||
+    categories === null ||
+    accounts === null ||
+    transactions === null ||
+    exchangeRates === null
+  ) {
     return <CircularProgress />
   }
 
@@ -133,44 +144,51 @@ const AuthenticatedZone: FC<Props> = (props) => {
       >
         <BasicCrudServiceWithPersistence
           initialState={accounts}
-          longTermStore={accountRepository}
+          longTermStore={accountStore}
           context={AccountServiceContext}
           Augmenter={AccountPersistenceAugmenter}
         >
           <BasicCrudServiceWithPersistence
-            initialState={transactions}
-            longTermStore={transactionRepository}
-            context={TransactionServiceContext}
-            Augmenter={NilPersistenceAugmenter}
-            sorter={(a, b) => b.date.getTime() - a.date.getTime()}
+            initialState={exchangeRates}
+            longTermStore={exchangeRateStore}
+            context={ExchangeRateServiceContext}
+            Augmenter={ExchangeRatePersistenceAugmenter}
           >
-            <MixedAugmentationProvider>
-              <BrowserRouter>
-                <DrawerWrapper logout={logout}>
-                  <Routes>
-                    <Route path="/currencies" element={<CurrenciesPage />} />
-                    <Route path="/currencies/new" element={<CreateCurrencyPage scriptRunner={testGetRateScript} />} />
-                    <Route
-                      path="/currencies/edit/:currencyId"
-                      element={<EditCurrencyPage scriptRunner={testGetRateScript} />}
-                    />
-                    <Route path="/categories" element={<CategoryPage />} />
-                    <Route path="/categories/new" element={<CreateCategoryPage />} />
-                    <Route path="/categories/edit/:categoryId" element={<EditCategoryPage />} />
-                    <Route path="/accounts" element={<AccountsPage />} />
-                    <Route path="/accounts/new" element={<CreateAccountPage />} />
-                    <Route path="/accounts/graph" element={<AccountsBalancePage />} />
-                    <Route path="/accounts/edit/:accountId" element={<EditAccountPage />} />
-                    <Route path="/transactions" element={<TransactionPage />} />
-                    <Route path="/transactions/new" element={<CreateTransactionPage />} />
-                    <Route path="/transactions/edit/:transactionId" element={<EditTransactionPage />} />
-                    <Route path="/costs" element={<CostsAnalysisPage />} />
-                    <Route path="/trends" element={<TrendsPage />} />
-                    <Route path="*" element={<Navigate to="/transactions" />} />
-                  </Routes>
-                </DrawerWrapper>
-              </BrowserRouter>
-            </MixedAugmentationProvider>
+            <BasicCrudServiceWithPersistence
+              initialState={transactions}
+              longTermStore={transactionStore}
+              context={TransactionServiceContext}
+              Augmenter={NilPersistenceAugmenter}
+              sorter={(a, b) => b.date.getTime() - a.date.getTime()}
+            >
+              <MixedAugmentationProvider>
+                <BrowserRouter>
+                  <DrawerWrapper logout={logout}>
+                    <Routes>
+                      <Route path="/currencies" element={<CurrenciesPage />} />
+                      <Route path="/currencies/new" element={<CreateCurrencyPage scriptRunner={testGetRateScript} />} />
+                      <Route
+                        path="/currencies/edit/:currencyId"
+                        element={<EditCurrencyPage scriptRunner={testGetRateScript} />}
+                      />
+                      <Route path="/categories" element={<CategoryPage />} />
+                      <Route path="/categories/new" element={<CreateCategoryPage />} />
+                      <Route path="/categories/edit/:categoryId" element={<EditCategoryPage />} />
+                      <Route path="/accounts" element={<AccountsPage />} />
+                      <Route path="/accounts/new" element={<CreateAccountPage />} />
+                      <Route path="/accounts/graph" element={<AccountsBalancePage />} />
+                      <Route path="/accounts/edit/:accountId" element={<EditAccountPage />} />
+                      <Route path="/transactions" element={<TransactionPage />} />
+                      <Route path="/transactions/new" element={<CreateTransactionPage />} />
+                      <Route path="/transactions/edit/:transactionId" element={<EditTransactionPage />} />
+                      <Route path="/costs" element={<CostsAnalysisPage />} />
+                      <Route path="/trends" element={<TrendsPage />} />
+                      <Route path="*" element={<Navigate to="/transactions" />} />
+                    </Routes>
+                  </DrawerWrapper>
+                </BrowserRouter>
+              </MixedAugmentationProvider>
+            </BasicCrudServiceWithPersistence>
           </BasicCrudServiceWithPersistence>
         </BasicCrudServiceWithPersistence>
       </BasicCrudServiceWithPersistence>

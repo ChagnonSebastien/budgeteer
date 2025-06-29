@@ -79,14 +79,15 @@ func (s *Server) Serve(ctx context.Context) error {
 	webServer := http.NewServer(
 		grpc.NewServerWithHandlers(
 			grpc.Services{
-				Account:     service.NewAccountService(repos),
-				Category:    service.NewCategoryService(repos),
-				Currency:    service.NewCurrencyService(repos),
-				Transaction: service.NewTransactionService(repos),
+				Account:      repos,
+				Category:     service.NewCategoryService(repos),
+				Currency:     repos,
+				Transaction:  repos,
+				ExchangeRate: repos,
 			},
 		),
 		http.NewAuth(
-			service.NewUserService(repos),
+			repos,
 			s.config.Auth.Oidc.Enabled,
 			s.config.Auth.UserPass.Enabled,
 			oidcConfig,

@@ -3,9 +3,10 @@ import { useNavigate } from 'react-router-dom'
 import styled from 'styled-components'
 
 import ContentWithHeader from '../components/ContentWithHeader'
-import CurrencyForm from '../components/currencies/CurrencyForm'
-import Currency from '../domain/model/currency'
-import { CurrencyServiceContext } from '../service/ServiceContext'
+import CurrencyForm, { ExchangeRateConfig } from '../components/currencies/CurrencyForm'
+import { CurrencyUpdatableFields } from '../domain/model/currency'
+import { ExchangeRateIdentifiableFields } from '../domain/model/exchangeRate'
+import { CurrencyServiceContext, ExchangeRateServiceContext } from '../service/ServiceContext'
 
 const FormContainer = styled.div`
   width: 100%;
@@ -20,22 +21,34 @@ const CreateCurrencyPage: FC<Props> = ({ scriptRunner }: Props) => {
   const navigate = useNavigate()
 
   const { create: createCurrency } = useContext(CurrencyServiceContext)
+  const { create: createExchangeRate } = useContext(ExchangeRateServiceContext)
 
-  const onSubmit = useCallback(async (data: Partial<Omit<Currency, 'id' | 'hasName'>>) => {
+  const onSubmit = useCallback(async (data: Partial<CurrencyUpdatableFields>, exchangeRates?: ExchangeRateConfig[]) => {
     if (typeof data.name === 'undefined') throw new Error('Name cannot be undefined')
     if (typeof data.symbol === 'undefined') throw new Error('Symbol cannot be undefined')
     if (typeof data.decimalPoints === 'undefined') throw new Error('Decimal Points cannot be undefined')
-    if (typeof data.exchangeRates === 'undefined') throw new Error('Exchange Rates cannot be undefined')
+    if (typeof exchangeRates === 'undefined') throw new Error('Exchange Rates cannot be undefined')
     if (typeof data.rateAutoupdateSettings === 'undefined')
       throw new Error('Rate Autoupdate Settings cannot be undefined')
 
-    await createCurrency({
+    const newCurrency = await createCurrency({
       name: data.name,
       symbol: data.symbol,
-      exchangeRates: data.exchangeRates,
       decimalPoints: data.decimalPoints,
       rateAutoupdateSettings: data.rateAutoupdateSettings,
     })
+
+    await Promise.all(
+      exchangeRates.map((rate) =>
+        createExchangeRate(
+          {
+            rate: rate.rate,
+          },
+          new ExchangeRateIdentifiableFields(newCurrency.id, rate.otherCurrency, rate.date),
+        ),
+      ),
+    )
+
     navigate('/currency', { replace: true })
   }, [])
 

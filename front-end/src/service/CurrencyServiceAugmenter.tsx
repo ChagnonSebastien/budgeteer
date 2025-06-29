@@ -1,61 +1,20 @@
-import { FC, useCallback, useContext, useMemo } from 'react'
+import { FC, useContext, useMemo } from 'react'
 
 import { AugmenterProps } from './BasicCrudServiceWithPersistence'
 import { UserContext } from '../App'
-import Currency, { ExchangeRate, RateAutoupdateSettings } from '../domain/model/currency'
+import Currency, { CurrencyID } from '../domain/model/currency'
 
 export interface CurrencyPersistenceAugmentation {
   defaultCurrency: Currency | null
-
-  create(data: Omit<Currency, 'id' | 'hasName'>): Promise<Currency>
 }
 
-export const CurrencyPersistenceAugmenter: FC<AugmenterProps<Currency, CurrencyPersistenceAugmentation>> = (props) => {
-  const { augment, setState, longTermStore, sorter, state } = props
+export const CurrencyPersistenceAugmenter: FC<AugmenterProps<CurrencyID, Currency, CurrencyPersistenceAugmentation>> = (
+  props,
+) => {
+  const { augment, state } = props
   const { default_currency } = useContext(UserContext)
-
-  const create = useCallback(async (data: Omit<Currency, 'id' | 'hasName'>): Promise<Currency> => {
-    const newItem = await longTermStore.create(data)
-
-    const other = Object.keys(data.exchangeRates)
-      .map(Number)
-      .map((k) => k as keyof typeof data.exchangeRates)
-    setState((prevState) => {
-      let newState = prevState
-      if (other.length > 0) {
-        newState = prevState.map((prevItem) => {
-          if (prevItem.id !== other[0]) return prevItem
-
-          const newExchangeRates = prevItem.exchangeRates
-          newExchangeRates[newItem.id] = [
-            new ExchangeRate(
-              Object.keys(newItem.exchangeRates).map(Number)[0],
-              1 / data.exchangeRates[other[0]][0].rate,
-              data.exchangeRates[other[0]][0].date,
-            ),
-          ]
-
-          const rateAutoupdateSettings = new RateAutoupdateSettings(
-            data.rateAutoupdateSettings.script,
-            data.rateAutoupdateSettings.enabled,
-          )
-
-          return new Currency(
-            prevItem.id,
-            prevItem.name,
-            prevItem.symbol,
-            prevItem.decimalPoints,
-            newExchangeRates,
-            rateAutoupdateSettings,
-          )
-        })
-      }
-      return [...newState, newItem].sort(sorter ?? ((_a: Currency, _b: Currency) => 0))
-    })
-    return newItem
-  }, [])
 
   const defaultCurrency = useMemo(() => state.find((c) => c.id === default_currency)!, [state])
 
-  return augment({ create, defaultCurrency })
+  return augment({ defaultCurrency })
 }

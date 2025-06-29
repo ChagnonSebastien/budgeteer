@@ -1,13 +1,4 @@
 import NamedItem from './NamedItem'
-import Unique from './Unique'
-
-export class ExchangeRate implements Unique {
-  constructor(
-    public readonly id: number,
-    public readonly rate: number,
-    public readonly date: Date,
-  ) {}
-}
 
 export class RateAutoupdateSettings {
   constructor(
@@ -16,13 +7,14 @@ export class RateAutoupdateSettings {
   ) {}
 }
 
-export default class Currency implements NamedItem {
+export type CurrencyID = number
+
+export default class Currency implements NamedItem<CurrencyID> {
   constructor(
-    public readonly id: number,
+    public readonly id: CurrencyID,
     public readonly name: string,
     public readonly symbol: string,
     public readonly decimalPoints: number,
-    public readonly exchangeRates: { [comparedTo: number]: ExchangeRate[] },
     public readonly rateAutoupdateSettings: RateAutoupdateSettings,
   ) {}
 
@@ -54,3 +46,5 @@ export function formatAmount(currency: Currency, rawValue: number, anonymity = f
 export function parseAmount(currency: Currency, rawValue: string): number {
   return Math.round(parseFloat(rawValue) * Math.pow(10, currency.decimalPoints))
 }
+
+export type CurrencyUpdatableFields = Pick<Currency, 'symbol' | 'name' | 'rateAutoupdateSettings' | 'decimalPoints'>

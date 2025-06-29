@@ -1,7 +1,7 @@
 import { Dispatch, SetStateAction, useContext, useEffect, useRef } from 'react'
 import styled from 'styled-components'
 
-import Currency, { formatAmount } from '../../domain/model/currency'
+import Currency, { CurrencyID, formatAmount } from '../../domain/model/currency'
 import MixedAugmentation from '../../service/MixedAugmentation'
 import { AccountServiceContext } from '../../service/ServiceContext'
 import { IconToolsContext } from '../icons/IconTools'
@@ -28,7 +28,7 @@ const ScrollableContent = styled.div`
 
 interface Props {
   currencies: Currency[]
-  onSelect: (value: number) => void
+  onSelect: (value: CurrencyID) => void
   showZeroBalances?: boolean
   onScrollProgress?: (progress: number) => void
   filterable?: {
@@ -36,7 +36,7 @@ interface Props {
     setFilter: Dispatch<SetStateAction<string>>
   }
   onFilteredCurrenciesChange?: (currencies: Currency[]) => void
-  focusedCurrency?: number | null
+  focusedCurrency?: CurrencyID | null
   hideSearchOverlay?: boolean
 }
 

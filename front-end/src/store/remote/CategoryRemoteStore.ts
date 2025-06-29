@@ -3,9 +3,10 @@ import { RpcTransport } from '@protobuf-ts/runtime-rpc'
 import { CategoryConverter } from './converter/categoryConverter'
 import { CreateCategoryRequest, GetAllCategoriesRequest, UpdateCategoryRequest } from './dto/category'
 import { CategoryServiceClient } from './dto/category.client'
-import Category from '../../domain/model/category'
+import Category, { CategoryUpdatableFields } from '../../domain/model/category'
+import { IdIdentifier } from '../../domain/model/Unique'
 
-const conv = new CategoryConverter()
+const converter = new CategoryConverter()
 
 export default class CategoryRemoteStore {
   private client: CategoryServiceClient
@@ -16,10 +17,10 @@ export default class CategoryRemoteStore {
 
   public async getAll(): Promise<Category[]> {
     const response = await this.client.getAllCategories(GetAllCategoriesRequest.create()).response
-    return await Promise.all(response.categories.map<Promise<Category>>((dto) => conv.toModel(dto)))
+    return response.categories.map<Category>((dto) => converter.toModel(dto))
   }
 
-  public async create(data: Omit<Category, 'id' | 'hasName'>): Promise<Category> {
+  public async create(data: CategoryUpdatableFields): Promise<Category> {
     const { parentId, ...remainder } = data
     const response = await this.client.createCategory(
       CreateCategoryRequest.create({
@@ -39,11 +40,11 @@ export default class CategoryRemoteStore {
     )
   }
 
-  public async update(id: number, data: Partial<Omit<Category, 'id' | 'hasName'>>): Promise<void> {
+  public async update(identity: IdIdentifier, data: Partial<CategoryUpdatableFields>): Promise<void> {
     await this.client.updateCategory(
       UpdateCategoryRequest.create({
-        id,
-        fields: conv.toUpdateDTO(data),
+        id: identity.id,
+        fields: converter.toUpdateDTO(data),
       }),
     ).response
   }

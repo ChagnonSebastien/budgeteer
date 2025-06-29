@@ -1,0 +1,59 @@
+syntax = "proto3";
+
+package currency;
+
+option go_package = "server/internal/infrastructure/messaging/dto";
+
+message ExchangeRate {
+  uint32 currency_a = 1;
+  uint32 currency_b = 2;
+  double rate = 3;
+  string date = 4;
+}
+
+message GetAllExchangeRateRequest {
+}
+
+message GetAllExchangeRateResponse {
+  repeated ExchangeRate rates = 1;
+}
+
+message CreateExchangeRateRequest {
+  uint32 currency_a = 1;
+  uint32 currency_b = 2;
+  double rate = 3;
+  string date = 4;
+}
+
+message CreateExchangeRateResponse {
+}
+
+message UpdateExchangeRateFields {
+  double rate = 3;
+}
+
+message UpdateExchangeRateRequest {
+  uint32 currency_a = 1;
+  uint32 currency_b = 2;
+  string date = 3;
+  UpdateExchangeRateFields fields = 4;
+}
+
+message UpdateExchangeRateResponse {
+
+}
+
+message TestGetCurrencyRateRequest {
+  string script = 1;
+}
+
+message TestGetCurrencyRateResponse{
+  string response = 1;
+}
+
+service ExchangeRateService {
+  rpc GetAllExchangeRate (GetAllExchangeRateRequest) returns (GetAllExchangeRateResponse);
+  rpc CreateExchangeRate (CreateExchangeRateRequest) returns (CreateExchangeRateResponse);
+  rpc UpdateExchangeRate (UpdateExchangeRateRequest) returns (UpdateExchangeRateResponse);
+  rpc TestGetCurrencyRate (TestGetCurrencyRateRequest) returns (TestGetCurrencyRateResponse);
+}

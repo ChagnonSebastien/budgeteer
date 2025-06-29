@@ -1,9 +1,11 @@
 package model
 
+type CategoryID int
+
 type Category struct {
-	ID             int
+	ID             CategoryID
 	Name           string
-	ParentId       int
+	ParentId       CategoryID
 	IconName       string
 	IconColor      string
 	IconBackground string

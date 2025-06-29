@@ -33,15 +33,15 @@ func (r *Repository) GetAllTransactions(ctx context.Context, userId string) ([]m
 		}
 
 		transactions[i] = model.Transaction{
-			ID:               int(transactionDao.ID),
+			ID:               model.TransactionID(transactionDao.ID),
 			Amount:           int(transactionDao.Amount),
-			Currency:         int(transactionDao.Currency),
-			Sender:           sender,
-			Receiver:         receiver,
-			Category:         category,
+			Currency:         model.CurrencyID(transactionDao.Currency),
+			Sender:           model.AccountID(sender),
+			Receiver:         model.AccountID(receiver),
+			Category:         model.CategoryID(category),
 			Date:             transactionDao.Date,
 			Note:             transactionDao.Note,
-			ReceiverCurrency: int(transactionDao.ReceiverCurrency),
+			ReceiverCurrency: model.CurrencyID(transactionDao.ReceiverCurrency),
 			ReceiverAmount:   int(transactionDao.ReceiverAmount),
 		}
 	}
@@ -57,7 +57,7 @@ func (r *Repository) CreateTransaction(
 	date time.Time,
 	note string,
 	receiverCurrencyId, receiverAmount int,
-) (int, error) {
+) (model.TransactionID, error) {
 	transactionId, err := r.queries.CreateTransaction(
 		ctx, &dao.CreateTransactionParams{
 			UserID:   userId,
@@ -84,7 +84,7 @@ func (r *Repository) CreateTransaction(
 	if err != nil {
 		return 0, err
 	}
-	return int(transactionId), nil
+	return model.TransactionID(transactionId), nil
 }
 
 type UpdateTransactionFields struct {
@@ -198,7 +198,7 @@ func (u *UpdateTransactionFields) nullCategoryId() sql.NullInt32 {
 func (r *Repository) UpdateTransaction(
 	ctx context.Context,
 	userId string,
-	id int,
+	id model.TransactionID,
 	field UpdateTransactionFields,
 ) error {
 	updatedRows, err := r.queries.UpdateTransaction(

@@ -1,22 +1,24 @@
 import { FC, useMemo } from 'react'
 
 import { AugmenterProps } from './BasicCrudServiceWithPersistence'
-import Category, { AugmentedCategory } from '../domain/model/category'
+import Category, { AugmentedCategory, CategoryID } from '../domain/model/category'
 
 export interface CategoryPersistenceAugmentation {
   readonly root: Category
-  readonly subCategories: { [parent: number]: Category[] }
+  readonly subCategories: { [parent: CategoryID]: Category[] }
   readonly augmentedCategories: AugmentedCategory[]
 }
 
-export const CategoryPersistenceAugmenter: FC<AugmenterProps<Category, CategoryPersistenceAugmentation>> = (props) => {
+export const CategoryPersistenceAugmenter: FC<AugmenterProps<CategoryID, Category, CategoryPersistenceAugmentation>> = (
+  props,
+) => {
   const { augment, state: categories } = props
 
   const root = useMemo(() => categories.find((c) => c.parentId === null)!, [categories])
 
   const subCategories = useMemo(() => {
     return (
-      categories?.reduce<{ [parent: number]: Category[] }>((tree, c) => {
+      categories?.reduce<{ [parent: CategoryID]: Category[] }>((tree, c) => {
         if (c.parentId === null) return tree
         return {
           ...tree,
@@ -28,7 +30,7 @@ export const CategoryPersistenceAugmenter: FC<AugmenterProps<Category, CategoryP
 
   const augmentedCategories = useMemo<AugmentedCategory[]>(() => {
     const augmentChildren = (raw: Category, parentCategory: Category | undefined): AugmentedCategory[] => {
-      const augmented: AugmentedCategory = { ...raw, parent: parentCategory }
+      const augmented = new AugmentedCategory(raw, parentCategory)
       const augmentedChildren = (subCategories[raw.id] ?? [])
         .map((c) => augmentChildren(c, augmented))
         .reduce((a, b) => [...a, ...b], [])

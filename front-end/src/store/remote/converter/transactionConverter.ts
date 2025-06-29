@@ -1,6 +1,9 @@
 import { Converter } from './converter'
-import Transaction from '../../../domain/model/transaction'
-import { Transaction as TransactionDto, UpdateTransactionFields } from '../dto/transaction'
+import Transaction, { TransactionUpdatableFields } from '../../../domain/model/transaction'
+import {
+  Transaction as TransactionDto,
+  UpdateTransactionFields as UpdateTransactionFieldsDTO,
+} from '../dto/transaction'
 
 function padToTwoDigits(num: number) {
   return num.toString().padStart(2, '0')
@@ -17,8 +20,10 @@ export const formatDateTime = (date: Date): string => {
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
 }
 
-export class TransactionConverter implements Converter<Transaction, TransactionDto> {
-  async toModel(dto: TransactionDto): Promise<Transaction> {
+export class TransactionConverter
+  implements Converter<Transaction, TransactionDto, TransactionUpdatableFields, UpdateTransactionFieldsDTO>
+{
+  toModel(dto: TransactionDto): Transaction {
     return new Transaction(
       dto.id,
       dto.amount,
@@ -48,8 +53,8 @@ export class TransactionConverter implements Converter<Transaction, TransactionD
     })
   }
 
-  toUpdateDTO(model: Partial<Omit<Transaction, 'id' | 'hasName'>>): UpdateTransactionFields {
-    return UpdateTransactionFields.create({
+  toUpdateDTO(model: Partial<TransactionUpdatableFields>): UpdateTransactionFieldsDTO {
+    return UpdateTransactionFieldsDTO.create({
       amount: model.amount,
       updateCategory: typeof model.categoryId !== 'undefined',
       category: model.categoryId ?? undefined,

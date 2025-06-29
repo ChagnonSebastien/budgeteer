@@ -1,13 +1,14 @@
 import { differenceInMilliseconds, isBefore } from 'date-fns'
-import { createContext, FC, useCallback, useContext, useMemo } from 'react'
+import React, { createContext, FC, JSX, useCallback, useContext, useMemo } from 'react'
 
+import { addComparison, RateOnDate } from './ExcahngeRateServiceAugmenter'
 import {
   AccountServiceContext,
   CategoryServiceContext,
   CurrencyServiceContext,
+  ExchangeRateServiceContext,
   TransactionServiceContext,
 } from './ServiceContext'
-import { ExchangeRate } from '../domain/model/currency'
 import { AugmentedTransaction } from '../domain/model/transaction'
 
 type CurrencyAmounts = Map<number, number>
@@ -16,7 +17,7 @@ type AccountBalances = Map<number, CurrencyAmounts>
 type MixedAugmentationContext = {
   accountBalances: AccountBalances
   augmentedTransactions: AugmentedTransaction[]
-  exchangeRates: Map<number, Map<number, ExchangeRate[]>>
+  exchangeRates: Map<number, Map<number, RateOnDate[]>>
   exchangeRateOnDay(from: number, to: number, date: Date): number
 }
 
@@ -36,6 +37,7 @@ export const MixedAugmentationProvider: FC<Props> = ({ children }) => {
   const { state: currencies } = useContext(CurrencyServiceContext)
   const { augmentedCategories: categories } = useContext(CategoryServiceContext)
   const { state: accounts } = useContext(AccountServiceContext)
+  const { exchangeRates: rawExchangeRates } = useContext(ExchangeRateServiceContext)
 
   const accountBalances = useMemo(() => {
     const accountAmounts = new Map<number, Map<number, number>>()
@@ -76,44 +78,39 @@ export const MixedAugmentationProvider: FC<Props> = ({ children }) => {
   }, [accounts, transactions])
 
   const augmentedTransactions = useMemo<AugmentedTransaction[]>(() => {
-    return transactions.map<AugmentedTransaction>((transaction) => ({
-      ...transaction,
-      category: categories.find((c) => c.id === transaction.categoryId),
-      currency: currencies.find((c) => c.id === transaction.currencyId)!,
-      sender: accounts.find((c) => c.id === transaction.senderId),
-      receiver: accounts.find((c) => c.id === transaction.receiverId),
-      receiverCurrency: currencies.find((c) => c.id === transaction.receiverCurrencyId)!,
-    }))
+    return transactions.map<AugmentedTransaction>(
+      (transaction) =>
+        new AugmentedTransaction(
+          transaction,
+          currencies.find((c) => c.id === transaction.currencyId)!,
+          currencies.find((c) => c.id === transaction.receiverCurrencyId)!,
+          categories.find((c) => c.id === transaction.categoryId),
+          accounts.find((c) => c.id === transaction.senderId),
+          accounts.find((c) => c.id === transaction.receiverId),
+        ),
+    )
   }, [transactions, currencies, categories, accounts])
 
-  const exchangeRates = useMemo(() => {
-    const rates = new Map<number, Map<number, ExchangeRate[]>>()
-    currencies.forEach((c) => {
-      const comparedTo = new Map<number, ExchangeRate[]>()
-      currencies.forEach((c2) => {
-        comparedTo.set(c2.id, c.exchangeRates[c2.id] ?? [])
+  const exchangeRates = useMemo((): Map<number, Map<number, RateOnDate[]>> => {
+    const rates = new Map<number, Map<number, RateOnDate[]>>()
+    rawExchangeRates.forEach((value, key) => {
+      const level1 = new Map()
+      rates.set(key, level1)
+      value.forEach((data, key2) => {
+        level1.set(key2, [...data])
       })
-      rates.set(c.id, comparedTo)
     })
 
     transactions.forEach((transaction) => {
       if (transaction.currencyId === transaction.receiverCurrencyId) return
-      rates
-        .get(transaction.currencyId)
-        ?.get(transaction.receiverCurrencyId)
-        ?.push(
-          new ExchangeRate(
-            transaction.receiverCurrencyId,
-            transaction.receiverAmount / transaction.amount,
-            transaction.date,
-          ),
-        )
-      rates
-        .get(transaction.receiverCurrencyId)
-        ?.get(transaction.currencyId)
-        ?.push(
-          new ExchangeRate(transaction.currencyId, transaction.amount / transaction.receiverAmount, transaction.date),
-        )
+      addComparison(rates, transaction.currencyId, transaction.receiverCurrencyId, {
+        rate: transaction.receiverAmount / transaction.amount,
+        date: transaction.date,
+      })
+      addComparison(rates, transaction.receiverCurrencyId, transaction.currencyId, {
+        rate: transaction.amount / transaction.receiverAmount,
+        date: transaction.date,
+      })
     })
 
     for (const specificRates of rates.values()) {
@@ -124,9 +121,8 @@ export const MixedAugmentationProvider: FC<Props> = ({ children }) => {
         )
       }
     }
-
     return rates
-  }, [currencies, transactions])
+  }, [rawExchangeRates, transactions])
 
   const exchangeRateOnDay = useCallback(
     (from: number, to: number, date: Date): number => {

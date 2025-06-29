@@ -5,8 +5,10 @@ type Balance struct {
 	Value      int
 }
 
+type AccountID int
+
 type Account struct {
-	ID                   int
+	ID                   AccountID
 	Name                 string
 	InitialBalances      []Balance
 	IsMine               bool

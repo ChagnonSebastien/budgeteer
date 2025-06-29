@@ -1,7 +1,7 @@
 import { startOfDay } from 'date-fns'
 import { useContext } from 'react'
 
-import Account from '../../domain/model/account'
+import Account, { AccountID } from '../../domain/model/account'
 import { formatFull } from '../../domain/model/currency'
 import MixedAugmentation from '../../service/MixedAugmentation'
 import { CurrencyServiceContext } from '../../service/ServiceContext'
@@ -12,8 +12,8 @@ import '../../styles/account-list-tailwind.css'
 type Props = {
   account: Account
   onSelect?: (value: Account) => void
-  selected?: number[]
-  onMultiSelect?: (value: number[]) => void
+  selected?: AccountID[]
+  onMultiSelect?: (value: AccountID[]) => void
   showBalances?: boolean
   focused?: boolean
 }

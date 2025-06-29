@@ -1,18 +1,22 @@
 import { Converter } from './converter'
-import Account, { Balance } from '../../../domain/model/account'
-import { Account as AccountDto, CurrencyBalance, EditableAccountFields } from '../dto/account'
+import Account, { AccountUpdatableFields, Balance } from '../../../domain/model/account'
+import {
+  Account as AccountDto,
+  CurrencyBalance,
+  EditableAccountFields as AccountUpdatableFieldsDTO,
+} from '../dto/account'
 
-export class AccountConverter implements Converter<Account, AccountDto> {
-  toModel(dto: AccountDto): Promise<Account> {
-    return Promise.resolve(
-      new Account(
-        dto.id,
-        dto.name,
-        dto.balances.map((value) => new Balance(value.currencyId, value.amount)),
-        dto.isMine,
-        dto.type,
-        dto.financialInstitution,
-      ),
+export class AccountConverter
+  implements Converter<Account, AccountDto, AccountUpdatableFields, AccountUpdatableFieldsDTO>
+{
+  toModel(dto: AccountDto): Account {
+    return new Account(
+      dto.id,
+      dto.name,
+      dto.balances.map((value) => new Balance(value.currencyId, value.amount)),
+      dto.isMine,
+      dto.type,
+      dto.financialInstitution,
     )
   }
 
@@ -32,19 +36,18 @@ export class AccountConverter implements Converter<Account, AccountDto> {
     })
   }
 
-  toUpdateDTO(data: Partial<Omit<Account, 'id' | 'hasName'>>): EditableAccountFields {
-    return EditableAccountFields.create({
-      name: data.name,
-      updateBalances: typeof data.initialAmounts !== 'undefined',
-      balances: data.initialAmounts?.map((value) =>
+  toUpdateDTO(model: Partial<AccountUpdatableFields>): AccountUpdatableFieldsDTO {
+    return AccountUpdatableFieldsDTO.create({
+      name: model.name,
+      updateBalances: typeof model.initialAmounts !== 'undefined',
+      balances: model.initialAmounts?.map((value) =>
         CurrencyBalance.create({
           currencyId: value.currencyId,
           amount: value.value,
         }),
       ),
-      isMine: data.isMine,
-      type: data.type,
-      financialInstitution: data.financialInstitution,
+      type: model.type,
+      financialInstitution: model.financialInstitution,
     })
   }
 }

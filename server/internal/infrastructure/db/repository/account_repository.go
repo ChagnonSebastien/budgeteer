@@ -57,7 +57,7 @@ func (r *Repository) GetAllAccountsWithCurrencyIDs(ctx context.Context, userId s
 		}
 
 		accounts[i] = model.Account{
-			ID:                   int(accountDao.ID),
+			ID:                   model.AccountID(accountDao.ID),
 			Name:                 accountDao.Name,
 			InitialBalances:      balances,
 			IsMine:               accountDao.IsMine,
@@ -76,7 +76,7 @@ func (r *Repository) CreateAccount(
 	initialsAmounts []model.Balance,
 	isMine bool,
 	accountType, financialInstitution string,
-) (int, error) {
+) (model.AccountID, error) {
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
 		return 0, err
@@ -129,7 +129,7 @@ func (r *Repository) CreateAccount(
 		return 0, err
 	}
 
-	return int(accountId), nil
+	return model.AccountID(accountId), nil
 }
 
 type UpdateAccountFields struct {
@@ -186,7 +186,7 @@ func (u *UpdateAccountFields) nullFinancialInstitution() sql.NullString {
 func (r *Repository) UpdateAccount(
 	ctx context.Context,
 	userId string,
-	id int,
+	id model.AccountID,
 	fields UpdateAccountFields,
 ) error {
 	tx, err := r.db.BeginTx(ctx, nil)

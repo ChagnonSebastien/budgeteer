@@ -1,12 +1,13 @@
 import { Button, Checkbox, FormControlLabel, TextField, Typography } from '@mui/material'
 import { DateCalendar, DateField, DateView } from '@mui/x-date-pickers'
-import { Omit, ResponsiveLine } from '@nivo/line'
+import { ResponsiveLine } from '@nivo/line'
 import { startOfDay } from 'date-fns'
 import dayjs, { Dayjs } from 'dayjs'
 import { FC, FormEvent, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import styled from 'styled-components'
 
-import Currency, { ExchangeRate } from '../../domain/model/currency'
+import Currency, { CurrencyUpdatableFields } from '../../domain/model/currency'
+import ExchangeRate, { ExchangeRateIdentifiableFields } from '../../domain/model/exchangeRate'
 import MixedAugmentation from '../../service/MixedAugmentation'
 import { CurrencyServiceContext } from '../../service/ServiceContext'
 import { darkTheme } from '../../utils'
@@ -22,9 +23,18 @@ const ChartContainer = styled.div`
 const validAmount = new RegExp(`^\\d+[.,]?$`)
 const validRate = new RegExp(`^\\d*[.,]?\\d*$`)
 
+export interface ExchangeRateConfig {
+  otherCurrency: number
+  date: Date
+  rate: number
+}
+
 interface Props {
   initialCurrency?: Currency
-  onSubmit: (data: Partial<Omit<Currency, 'id' | 'hasName'>>) => Promise<void>
+  onSubmit: (
+    currencyData: Partial<CurrencyUpdatableFields>,
+    initialExchangeRates?: ExchangeRateConfig[],
+  ) => Promise<void>
   submitText: string
   scriptRunner: (script: string) => Promise<string>
 }
@@ -100,7 +110,9 @@ const CurrencyForm: FC<Props> = (props) => {
 
     let rates = exchangeRates.get(initialCurrency.id)?.get(defaultCurrency.id)
     if (initialCurrency.id === defaultCurrency.id) {
-      rates = [new ExchangeRate(1, 1, new Date())]
+      rates = [
+        new ExchangeRate(new ExchangeRateIdentifiableFields(defaultCurrency.id, defaultCurrency.id, new Date()), 1),
+      ]
     }
     if (typeof rates === 'undefined' || rates.length === 0) return { monthlyRates: [], minRate: 0 }
 
@@ -349,20 +361,28 @@ const CurrencyForm: FC<Props> = (props) => {
       return
     }
 
-    onSubmit({
-      name,
-      decimalPoints: parseInt(decimalPoints),
-      symbol: symbol,
-      exchangeRates: showExchangeRate
-        ? {
-            [defaultCurrency!.id]: [new ExchangeRate(0, parseFloat(initialExchangeRate), initialExchangeRateDate)],
-          }
-        : {},
-      rateAutoupdateSettings: {
-        script: getRateScript,
-        enabled: rateAutoupdateEnabled,
+    onSubmit(
+      {
+        name,
+        decimalPoints: parseInt(decimalPoints),
+        symbol: symbol,
+        rateAutoupdateSettings: {
+          script: getRateScript,
+          enabled: rateAutoupdateEnabled,
+        },
       },
-    }).catch((err) => {
+      showExchangeRate && defaultCurrency != null
+        ? [
+            {
+              otherCurrency: defaultCurrency.id,
+              rate:
+                parseFloat(initialExchangeRate.replaceAll(',', '.')) *
+                Math.pow(10, defaultCurrency.decimalPoints - parseInt(decimalPoints)),
+              date: initialExchangeRateDate,
+            },
+          ]
+        : undefined,
+    ).catch((err) => {
       setShowErrorToast('Unexpected error while submitting the currency')
       console.error(err)
     })
@@ -370,9 +390,7 @@ const CurrencyForm: FC<Props> = (props) => {
 
   const testScript = async () => {
     const runnerResponse = await scriptRunner(getRateScript!)
-    console.log(runnerResponse)
     const rate = Number.parseFloat(runnerResponse.replaceAll(',', '.'))
-    console.log(rate)
     if (isNaN(rate)) {
       setRateScriptError(`Invalid format or an error occurred: ${runnerResponse}`)
       return

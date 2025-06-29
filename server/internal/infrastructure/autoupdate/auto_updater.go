@@ -13,7 +13,7 @@ import (
 
 type currencyRepository interface {
 	GetAllWithAutoUpdate(ctx context.Context, pageNumber, pageSize int) ([]model.Currency, bool, error)
-	UpdateExchangeRate(ctx context.Context, currencyID int, newRate float64, date time.Time) error
+	UpdateExchangeRateRelativeToDefaultCurrency(ctx context.Context, currencyID model.CurrencyID, date time.Time, newRate float64) error
 }
 
 type scriptRunner func(context.Context, string) (string, error)
@@ -67,7 +67,7 @@ func (r *Runner) NewRunner(ctx context.Context) func() error {
 				}
 
 				yesterday := time.Now().Add(-1 * 24 * time.Hour)
-				err := r.currencyRepository.UpdateExchangeRate(r.ctx, currency.ID, newRate, yesterday)
+				err := r.currencyRepository.UpdateExchangeRateRelativeToDefaultCurrency(r.ctx, currency.ID, yesterday, newRate)
 				if err != nil {
 					logger.Error("saving exchange rate for currency", "error", javascriptErr)
 					continue

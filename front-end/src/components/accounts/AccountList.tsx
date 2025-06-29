@@ -3,7 +3,7 @@ import { Dispatch, Fragment, SetStateAction, useContext, useEffect, useMemo, use
 import styled from 'styled-components'
 
 import { AccountCard } from './AccountCard'
-import Account from '../../domain/model/account'
+import Account, { AccountID } from '../../domain/model/account'
 import { formatFull } from '../../domain/model/currency'
 import MixedAugmentation from '../../service/MixedAugmentation'
 import { CurrencyServiceContext } from '../../service/ServiceContext'
@@ -82,8 +82,8 @@ const TabCounter = styled.div`
 type Props = {
   accounts: Account[]
   onSelect?: (value: Account) => void
-  selected?: number[]
-  onMultiSelect?: (value: number[]) => void
+  selected?: AccountID[]
+  onMultiSelect?: (value: AccountID[]) => void
   showBalances?: boolean
   showZeroBalances?: boolean
   showGroupTotals?: boolean
@@ -91,7 +91,7 @@ type Props = {
   filterable?: { filter: string; setFilter: Dispatch<SetStateAction<string>> }
   onScrollProgress?: (progress: number) => void
   hideSearchOverlay?: boolean
-  focusedAccount?: number | null
+  focusedAccount?: AccountID | null
   onFilteredAccountsChange?: (accounts: Account[]) => void
 }
 

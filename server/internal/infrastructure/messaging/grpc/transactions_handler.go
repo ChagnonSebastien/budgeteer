@@ -1,11 +1,11 @@
 package grpc
 
 import (
+	"chagnon.dev/budget-server/internal/domain/model"
 	"context"
 	"fmt"
 	"time"
 
-	"chagnon.dev/budget-server/internal/domain/service"
 	"chagnon.dev/budget-server/internal/infrastructure/db/repository"
 	"chagnon.dev/budget-server/internal/infrastructure/messaging/dto"
 	"chagnon.dev/budget-server/internal/infrastructure/messaging/shared"
@@ -13,10 +13,29 @@ import (
 
 const layout = "2006-01-02 15:04:05"
 
+type transactionRepository interface {
+	GetAllTransactions(ctx context.Context, userId string) ([]model.Transaction, error)
+	CreateTransaction(
+		ctx context.Context,
+		userId string,
+		amount int,
+		currencyId, senderAccountId, receiverAccountId, categoryId int,
+		date time.Time,
+		note string,
+		receiverCurrencyId, receiverAmount int,
+	) (model.TransactionID, error)
+	UpdateTransaction(
+		ctx context.Context,
+		userId string,
+		id model.TransactionID,
+		fields repository.UpdateTransactionFields,
+	) error
+}
+
 type TransactionHandler struct {
 	dto.UnimplementedTransactionServiceServer
 
-	transactionService *service.TransactionService
+	transactionService transactionRepository
 }
 
 func (s *TransactionHandler) CreateTransaction(
@@ -148,7 +167,7 @@ func (s *TransactionHandler) UpdateTransaction(
 	err := s.transactionService.UpdateTransaction(
 		ctx,
 		claims.Sub,
-		int(req.Id),
+		model.TransactionID(req.Id),
 		repository.UpdateTransactionFields{
 			Amount:             amount,
 			CurrencyId:         currencyId,

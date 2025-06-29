@@ -7,9 +7,11 @@ export class Balance {
   ) {}
 }
 
-export default class Account implements NamedItem {
+export type AccountID = number
+
+export default class Account implements NamedItem<AccountID> {
   constructor(
-    public readonly id: number,
+    public readonly id: AccountID,
     public readonly name: string,
     public readonly initialAmounts: Balance[],
     public readonly isMine: boolean,
@@ -21,3 +23,8 @@ export default class Account implements NamedItem {
     return this.name.toLowerCase() === name.toLowerCase()
   }
 }
+
+export type AccountUpdatableFields = Pick<
+  Account,
+  'name' | 'initialAmounts' | 'type' | 'financialInstitution' | 'isMine'
+>

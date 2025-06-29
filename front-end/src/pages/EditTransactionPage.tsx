@@ -34,7 +34,7 @@ const EditTransactionPage: FC = () => {
     async (data: Partial<Omit<Transaction, 'id' | 'hasName'>>) => {
       if (typeof selectedTransaction === 'undefined') return
 
-      await updateTransaction(selectedTransaction.id, data)
+      await updateTransaction({ id: selectedTransaction.id }, data)
 
       navigate(-1)
     },

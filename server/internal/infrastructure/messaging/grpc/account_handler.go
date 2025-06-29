@@ -5,16 +5,33 @@ import (
 	"fmt"
 
 	"chagnon.dev/budget-server/internal/domain/model"
-	"chagnon.dev/budget-server/internal/domain/service"
 	"chagnon.dev/budget-server/internal/infrastructure/db/repository"
 	"chagnon.dev/budget-server/internal/infrastructure/messaging/dto"
 	"chagnon.dev/budget-server/internal/infrastructure/messaging/shared"
 )
 
+type accountRepository interface {
+	GetAllAccountsWithCurrencyIDs(ctx context.Context, userId string) ([]model.Account, error)
+	CreateAccount(
+		ctx context.Context,
+		userId string,
+		name string,
+		balances []model.Balance,
+		isMine bool,
+		accountType, financialInstitution string,
+	) (model.AccountID, error)
+	UpdateAccount(
+		ctx context.Context,
+		userId string,
+		id model.AccountID,
+		fields repository.UpdateAccountFields,
+	) error
+}
+
 type AccountHandler struct {
 	dto.UnimplementedAccountServiceServer
 
-	accountService *service.AccountService
+	accountService accountRepository
 }
 
 func (s *AccountHandler) CreateAccount(ctx context.Context, req *dto.CreateAccountRequest) (
@@ -80,11 +97,10 @@ func (s *AccountHandler) UpdateAccount(
 	err := s.accountService.UpdateAccount(
 		ctx,
 		claims.Sub,
-		int(req.Id),
+		model.AccountID(req.Id),
 		repository.UpdateAccountFields{
 			Name:                 req.Fields.Name,
 			InitialsAmounts:      initialAmounts,
-			IsMine:               req.Fields.IsMine,
 			AccountType:          req.Fields.Type,
 			FinancialInstitution: req.Fields.FinancialInstitution,
 		},
@@ -105,7 +121,7 @@ func (s *AccountHandler) GetAllAccounts(ctx context.Context, _ *dto.GetAllAccoun
 		return nil, fmt.Errorf("invalid claims")
 	}
 
-	accounts, err := s.accountService.GetAllAccounts(ctx, claims.Sub)
+	accounts, err := s.accountService.GetAllAccountsWithCurrencyIDs(ctx, claims.Sub)
 	if err != nil {
 		return nil, err
 	}

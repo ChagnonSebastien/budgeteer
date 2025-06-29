@@ -30,7 +30,7 @@ const EditCategoryPage: FC = () => {
     async (data: Partial<Omit<Category, 'id' | 'hasName'>>) => {
       if (typeof selectedCategory === 'undefined') return
 
-      await updateCategory(selectedCategory!.id, data)
+      await updateCategory({ id: selectedCategory!.id }, data)
 
       navigate(-1)
     },

@@ -4,8 +4,9 @@ import dayjs, { Dayjs } from 'dayjs'
 import { FC, useContext, useEffect, useMemo, useState } from 'react'
 
 import { UserContext } from '../../App'
-import Account from '../../domain/model/account'
-import { formatAmount, parseAmount } from '../../domain/model/currency'
+import Account, { AccountID } from '../../domain/model/account'
+import { CategoryID } from '../../domain/model/category'
+import { CurrencyID, formatAmount, parseAmount } from '../../domain/model/currency'
 import Transaction, { AugmentedTransaction } from '../../domain/model/transaction'
 import { AccountServiceContext, CategoryServiceContext, CurrencyServiceContext } from '../../service/ServiceContext'
 import AccountPicker from '../accounts/AccountPicker'
@@ -76,7 +77,7 @@ const TransactionForm: FC<Props> = (props) => {
     return `${formatAmount(initialTransaction.currency, initialTransaction.amount)}`
   })
   const sanitizedAmount = useMemo(() => `0${amount.replace(',', '')}`, [amount])
-  const [currency, setCurrency] = useState<number>(initialTransaction?.currencyId ?? default_currency!)
+  const [currency, setCurrency] = useState<CurrencyID>(initialTransaction?.currencyId ?? default_currency!)
   const [date, setDate] = useState(initialTransaction?.date ?? new Date())
   const [dateView, setDateView] = useState<DateView>('day')
   const [showDateModal, setShowDateModal] = useState(false)
@@ -89,22 +90,22 @@ const TransactionForm: FC<Props> = (props) => {
     `${typeof initialTransaction === 'undefined' ? '' : formatAmount(initialTransaction.receiverCurrency, initialTransaction.receiverAmount)}`,
   )
   const sanitizedReceiverAmount = useMemo(() => `0${receiverAmount.replace(',', '')}`, [receiverAmount])
-  const [receiverCurrency, setReceiverCurrency] = useState<number>(
+  const [receiverCurrency, setReceiverCurrency] = useState<CurrencyID>(
     initialTransaction?.receiverCurrencyId ?? currencies[0].id,
   )
 
-  const [parent, setParent] = useState<number | null>(
+  const [parent, setParent] = useState<CategoryID | null>(
     initialTransaction?.categoryId === null || type === 'transfer'
       ? null
       : (initialTransaction?.categoryId ?? rootCategory.id),
   )
-  const [senderAccount, setSenderAccount] = useState<{ existing: boolean; id: number | null; name: string }>(() => {
+  const [senderAccount, setSenderAccount] = useState<{ existing: boolean; id: AccountID | null; name: string }>(() => {
     if (typeof initialTransaction?.sender?.id === 'undefined') return { existing: false, id: null, name: '' }
     return { existing: true, id: initialTransaction.sender.id, name: initialTransaction.sender.name }
   })
   const [receiverAccount, setReceiverAccount] = useState<{
     existing: boolean
-    id: number | null
+    id: AccountID | null
     name: string
   }>(() => {
     if (typeof initialTransaction?.receiver?.id === 'undefined') return { existing: false, id: null, name: '' }

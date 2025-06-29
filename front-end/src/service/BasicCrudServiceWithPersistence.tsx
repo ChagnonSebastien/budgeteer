@@ -1,58 +1,70 @@
-import { Context, Dispatch, FC, ReactNode, SetStateAction, useCallback, useState } from 'react'
+import { Context, FC, ReactNode, useCallback, useState } from 'react'
 
 import { BasicCrudService } from './BasicCrudService'
 import Unique from '../domain/model/Unique'
 
-interface Store<T extends Unique> {
+interface Store<IdType, T extends Unique<IdType>, ItemIdentifiableFields, ItemUpdatableFields> {
   getAll(): Promise<T[]>
-
-  create(data: Omit<T, 'id' | 'hasName'>): Promise<T>
-
-  update(id: number, data: Partial<Omit<T, 'id' | 'hasName'>>): Promise<void>
+  create(data: ItemUpdatableFields, identifier?: ItemIdentifiableFields): Promise<T>
+  update(identity: ItemIdentifiableFields, data: Partial<ItemUpdatableFields>): Promise<void>
 }
 
-export interface AugmenterProps<T extends Unique, A> {
+export interface AugmenterProps<IdType, T extends Unique<IdType>, Augment> {
   state: T[]
-  setState: Dispatch<SetStateAction<T[]>>
-  longTermStore: Store<T>
-  augment: (b: A) => JSX.Element
-  sorter?: (a: T, b: T) => number
+  augment: (b: Augment) => JSX.Element
 }
 
-interface Props<T extends Unique, A> {
-  initialState: T[]
-  longTermStore: Store<T>
+interface Props<IdType, Item extends Unique<IdType>, ItemIdentifiableFields, ItemUpdatableFields, Augmentation> {
+  initialState: Item[]
+  longTermStore: Store<IdType, Item, ItemIdentifiableFields, ItemUpdatableFields>
   children: ReactNode[] | ReactNode
-  context: Context<A & BasicCrudService<T>>
-  sorter?: (a: T, b: T) => number
-  Augmenter: FC<AugmenterProps<T, A>>
+  context: Context<Augmentation & BasicCrudService<IdType, Item, ItemIdentifiableFields, ItemUpdatableFields>>
+  sorter?: (a: Item, b: Item) => number
+  Augmenter: FC<AugmenterProps<IdType, Item, Augmentation>>
 }
 
-export const BasicCrudServiceWithPersistence = <T extends Unique, A>(props: Props<T, A>) => {
+export const BasicCrudServiceWithPersistence = <
+  IdType,
+  Item extends Unique<IdType>,
+  ItemIdentifiableFields extends Unique<IdType>,
+  ItemUpdatableFields,
+  Augmentation,
+>(
+  props: Props<IdType, Item, ItemIdentifiableFields, ItemUpdatableFields, Augmentation>,
+) => {
   const { initialState, children, context, longTermStore, sorter, Augmenter } = props
 
-  const [state, setState] = useState<T[]>(initialState.sort(sorter ?? ((_a: T, _b: T) => 0)))
+  const [state, setState] = useState<Item[]>(initialState.sort(sorter ?? ((_a: Item, _b: Item) => 0)))
 
-  const create = useCallback(async (data: Omit<T, 'id' | 'hasName'>): Promise<T> => {
-    const newItem = await longTermStore.create(data)
+  const create = useCallback(async (data: ItemUpdatableFields, identity?: ItemIdentifiableFields): Promise<Item> => {
+    const newItem = await longTermStore.create(data, identity)
 
-    setState((prevState) => [...prevState, newItem].sort(sorter ?? ((_a: T, _b: T) => 0)))
+    setState((prevState) => [...prevState, newItem].sort(sorter ?? ((_a: Item, _b: Item) => 0)))
     return newItem
   }, [])
 
-  const update = useCallback(async (id: number, data: Partial<Omit<T, 'id' | 'hasName'>>): Promise<void> => {
-    await longTermStore.update(id, data)
-    setState((prevState) =>
-      prevState.map((c) => (c.id === id ? { ...c, ...data } : c)).sort(sorter ?? ((_a: T, _b: T) => 0)),
-    )
+  const update = useCallback(
+    async (identity: ItemIdentifiableFields, data: Partial<ItemUpdatableFields>): Promise<void> => {
+      await longTermStore.update(identity, data)
+      setState((prevState) =>
+        prevState
+          .map((c) => (c.id === identity.id ? { ...c, ...data } : c))
+          .sort(sorter ?? ((_a: Item, _b: Item) => 0)),
+      )
+    },
+    [],
+  )
+
+  const deleteItem = useCallback(async (_uid: string): Promise<void> => {
+    throw new Error('not yet supported')
   }, [])
 
   return (
     <Augmenter
       state={state}
-      setState={setState}
-      longTermStore={longTermStore}
-      augment={(b) => <context.Provider value={{ state, create, update, ...b }}>{children}</context.Provider>}
+      augment={(b) => (
+        <context.Provider value={{ state, create, update, delete: deleteItem, ...b }}>{children}</context.Provider>
+      )}
     />
   )
 }

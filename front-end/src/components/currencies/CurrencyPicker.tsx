@@ -1,12 +1,12 @@
 import { FC } from 'react'
 
 import { CurrencyList } from './CurrencyList'
-import Currency from '../../domain/model/currency'
+import Currency, { CurrencyID } from '../../domain/model/currency'
 import ItemPicker, { ItemListProps } from '../inputs/ItemPicker'
 
 interface Props {
-  selectedCurrencyId: number | null
-  setSelectedCurrencyId: (id: number) => void
+  selectedCurrencyId: CurrencyID | null
+  setSelectedCurrencyId: (id: CurrencyID) => void
   labelText: string
   style?: React.CSSProperties
   errorText?: string

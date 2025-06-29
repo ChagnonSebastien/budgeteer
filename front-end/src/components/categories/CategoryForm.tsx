@@ -72,7 +72,7 @@ const CategoryForm: FC<Props> = (props) => {
     return !Object.values(errors).some((value) => typeof value !== 'undefined')
   }, [errors])
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (_e: FormEvent<HTMLFormElement>) => {
     if (!isFormValid) {
       setIsTouched(true)
       return

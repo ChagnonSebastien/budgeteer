@@ -1,23 +1,35 @@
 package grpc
 
 import (
-	"context"
-	"fmt"
-	"time"
-
-	"chagnon.dev/budget-server/internal/domain/service"
+	"chagnon.dev/budget-server/internal/domain/model"
 	"chagnon.dev/budget-server/internal/infrastructure/db/repository"
 	"chagnon.dev/budget-server/internal/infrastructure/messaging/dto"
 	"chagnon.dev/budget-server/internal/infrastructure/messaging/shared"
+	"context"
+	"fmt"
 )
 
-type scriptRunner func(context.Context, string) (string, error)
+type currencyRepository interface {
+	GetAllCurrencies(ctx context.Context, userId string) ([]model.Currency, error)
+	CreateCurrency(
+		ctx context.Context,
+		userId string,
+		name, symbol string,
+		decimalPoints int,
+		rateAutoUpdateScript string,
+		rateAutoUpdateEnabled bool,
+	) (
+		model.CurrencyID,
+		error,
+	)
+	UpdateCurrency(ctx context.Context, userId string, id model.CurrencyID, fields repository.UpdateCurrencyFields) error
+	SetDefaultCurrency(ctx context.Context, userId string, currencyId model.CurrencyID) error
+}
 
 type CurrencyHandler struct {
 	dto.UnimplementedCurrencyServiceServer
 
-	currencyService  *service.CurrencyService
-	javascriptRunner scriptRunner
+	currencyService currencyRepository
 }
 
 func (s *CurrencyHandler) CreateCurrency(
@@ -29,37 +41,16 @@ func (s *CurrencyHandler) CreateCurrency(
 		return nil, fmt.Errorf("invalid claims")
 	}
 
-	var initialExchangeRate *service.InitialExchangeRate
-	if req.InitialExchangeRate != nil {
-		date, err := time.Parse(layout, (*req.InitialExchangeRate).Date)
-		if err != nil {
-			return nil, fmt.Errorf("parsing initial exchange rate date: %s", err)
-		}
-
-		initialExchangeRate = &service.InitialExchangeRate{
-			Other: int((*req.InitialExchangeRate).Other),
-			Rate:  (*req.InitialExchangeRate).Rate,
-			Date:  date,
-		}
-	}
-
-	newCurrencyId, newExchangeRateId, err := s.currencyService.CreateCurrency(
+	newCurrencyId, err := s.currencyService.CreateCurrency(
 		ctx, claims.Sub, req.Name, req.Symbol, int(req.DecimalPoints),
-		initialExchangeRate, req.RateAutoUpdateSettings.Script, req.RateAutoUpdateSettings.Enabled,
+		req.AutoUpdateSettingsScript, req.AutoUpdateSettingsEnabled,
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	var newExchangeRateIdPointer *uint32
-	if newExchangeRateId != 0 {
-		convertedExchangeRateId := uint32(newExchangeRateId)
-		newExchangeRateIdPointer = &convertedExchangeRateId
-	}
-
 	return &dto.CreateCurrencyResponse{
-		CurrencyId:     uint32(newCurrencyId),
-		ExchangeRateId: newExchangeRateIdPointer,
+		CurrencyId: uint32(newCurrencyId),
 	}, nil
 }
 
@@ -78,23 +69,16 @@ func (s *CurrencyHandler) UpdateCurrency(
 		decimalPoints = &id
 	}
 
-	var rateAutoUpdateScript *string
-	var rateAutoUpdateEnabled *bool
-	if req.Fields.AutoUpdateSettings != nil {
-		rateAutoUpdateScript = &req.Fields.AutoUpdateSettings.Script
-		rateAutoUpdateEnabled = &req.Fields.AutoUpdateSettings.Enabled
-	}
-
 	err := s.currencyService.UpdateCurrency(
 		ctx,
 		claims.Sub,
-		int(req.Id),
+		model.CurrencyID(req.Id),
 		repository.UpdateCurrencyFields{
 			Name:                  req.Fields.Name,
 			Symbol:                req.Fields.Symbol,
 			DecimalPoints:         decimalPoints,
-			RateAutoUpdateScript:  rateAutoUpdateScript,
-			RateAutoUpdateEnabled: rateAutoUpdateEnabled,
+			RateAutoUpdateScript:  req.Fields.AutoUpdateSettingsScript,
+			RateAutoUpdateEnabled: req.Fields.AutoUpdateSettingsEnabled,
 		},
 	)
 	if err != nil {
@@ -120,31 +104,14 @@ func (s *CurrencyHandler) GetAllCurrencies(
 
 	currenciesDto := make([]*dto.Currency, len(currencies))
 	for i, currency := range currencies {
-		exchangeRatesDTOs := make(map[uint32]*dto.RatesList)
-		for otherCurrencyId, exchangeRates := range currency.ExchangeRates {
-			exchangeRatesDto := make([]*dto.ExchangeRate, 0, len(exchangeRates))
-			for _, exchangeRate := range exchangeRates {
-				exchangeRatesDto = append(
-					exchangeRatesDto, &dto.ExchangeRate{
-						Id:   uint32(exchangeRate.ID),
-						Rate: exchangeRate.Rate,
-						Date: exchangeRate.Date.Format(layout),
-					},
-				)
-			}
-			exchangeRatesDTOs[uint32(otherCurrencyId)] = &dto.RatesList{Rates: exchangeRatesDto}
-		}
 
 		currenciesDto[i] = &dto.Currency{
-			Id:            uint32(currency.ID),
-			Name:          currency.Name,
-			Symbol:        currency.Symbol,
-			DecimalPoints: uint32(currency.DecimalPoints),
-			ExchangeRates: exchangeRatesDTOs,
-			RateAutoUpdateSettings: &dto.RateAutoUpdateSettings{
-				Script:  currency.RateAutoUpdateSettings.Script,
-				Enabled: currency.RateAutoUpdateSettings.Enabled,
-			},
+			Id:                        uint32(currency.ID),
+			Name:                      currency.Name,
+			Symbol:                    currency.Symbol,
+			DecimalPoints:             uint32(currency.DecimalPoints),
+			AutoUpdateSettingsScript:  currency.RateAutoUpdateSettings.Script,
+			AutoUpdateSettingsEnabled: currency.RateAutoUpdateSettings.Enabled,
 		}
 	}
 
@@ -162,19 +129,10 @@ func (s *CurrencyHandler) SetDefaultCurrency(
 		return nil, fmt.Errorf("invalid claims")
 	}
 
-	err := s.currencyService.SetDefaultCurrency(ctx, claims.Sub, int(req.CurrencyId))
+	err := s.currencyService.SetDefaultCurrency(ctx, claims.Sub, model.CurrencyID(req.CurrencyId))
 	if err != nil {
 		return nil, err
 	}
 
 	return &dto.SetDefaultCurrencyResponse{}, nil
-}
-
-func (s *CurrencyHandler) TestGetCurrencyRate(ctx context.Context, req *dto.TestGetCurrencyRateRequest) (*dto.TestGetCurrencyRateResponse, error) {
-	returnedValue, err := s.javascriptRunner(ctx, req.Script)
-	if err != nil {
-		returnedValue = fmt.Sprintf("Error running script: %s", err)
-	}
-
-	return &dto.TestGetCurrencyRateResponse{Response: returnedValue}, nil
 }

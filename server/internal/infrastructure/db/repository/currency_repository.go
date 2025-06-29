@@ -1,65 +1,26 @@
 package repository
 
 import (
+	"chagnon.dev/budget-server/internal/domain/model"
+	"chagnon.dev/budget-server/internal/infrastructure/db/dao"
 	"context"
 	"database/sql"
 	"fmt"
-	"time"
-
-	"chagnon.dev/budget-server/internal/domain/model"
-	"chagnon.dev/budget-server/internal/infrastructure/db/dao"
 )
 
 func (r *Repository) GetAllCurrencies(ctx context.Context, userId string) ([]model.Currency, error) {
-	tx, err := r.db.BeginTx(ctx, &sql.TxOptions{ReadOnly: true})
+	currenciesDao, err := r.queries.GetAllCurrencies(ctx, userId)
 	if err != nil {
-		return nil, err
-	}
-
-	queries := r.queries.WithTx(tx)
-
-	currenciesDao, err := queries.GetAllCurrencies(ctx, userId)
-	if err != nil {
-		return nil, err
-	}
-
-	exchangeRatesDAOs := make([][]dao.GetAllExchangeRatesOfRow, len(currenciesDao))
-	for i, currency := range currenciesDao {
-		exchangeRatesDao, err := queries.GetAllExchangeRatesOf(ctx, currency.ID)
-		if err != nil {
-			return nil, err
-		}
-		exchangeRatesDAOs[i] = exchangeRatesDao
-	}
-
-	if err := tx.Commit(); err != nil {
 		return nil, err
 	}
 
 	currencies := make([]model.Currency, len(currenciesDao))
 	for i, currencyDao := range currenciesDao {
-		exchangeRates := make(map[int][]model.ExchangeRate)
-		for _, exchangeRateDao := range exchangeRatesDAOs[i] {
-			currencySpecificRates, ok := exchangeRates[int(exchangeRateDao.ComparedTo)]
-			if !ok {
-				currencySpecificRates = make([]model.ExchangeRate, 0)
-			}
-			currencySpecificRates = append(
-				currencySpecificRates, model.ExchangeRate{
-					ID:   int(exchangeRateDao.ID),
-					Rate: exchangeRateDao.AdjustedExchangeRate,
-					Date: exchangeRateDao.Date,
-				},
-			)
-			exchangeRates[int(exchangeRateDao.ComparedTo)] = currencySpecificRates
-		}
-
 		currencies[i] = model.Currency{
-			ID:            int(currencyDao.ID),
+			ID:            model.CurrencyID(currencyDao.ID),
 			Name:          currencyDao.Name,
 			Symbol:        currencyDao.Symbol,
 			DecimalPoints: int(currencyDao.DecimalPoints),
-			ExchangeRates: exchangeRates,
 			RateAutoUpdateSettings: model.RateAutoUpdateSettings{
 				Script:  currencyDao.RateFetchScript,
 				Enabled: currencyDao.AutoUpdate,
@@ -70,33 +31,18 @@ func (r *Repository) GetAllCurrencies(ctx context.Context, userId string) ([]mod
 	return currencies, nil
 }
 
-type InitialExchangeRate struct {
-	Other int
-	Rate  float64
-	Date  time.Time
-}
-
 func (r *Repository) CreateCurrency(
 	ctx context.Context,
 	userId string,
 	name, symbol string,
 	decimalPoints int,
-	initialExchangeRate *InitialExchangeRate,
 	rateAutoUpdateScript string,
 	rateAutoUpdateEnabled bool,
 ) (
-	int,
-	int,
+	model.CurrencyID,
 	error,
 ) {
-	tx, err := r.db.BeginTx(ctx, nil)
-	if err != nil {
-		return 0, 0, err
-	}
-
-	queries := r.queries.WithTx(tx)
-
-	currencyId, err := queries.CreateCurrency(
+	currencyId, err := r.queries.CreateCurrency(
 		ctx, &dao.CreateCurrencyParams{
 			UserID:          userId,
 			Name:            name,
@@ -106,31 +52,7 @@ func (r *Repository) CreateCurrency(
 			AutoUpdate:      rateAutoUpdateEnabled,
 		},
 	)
-	if err != nil {
-		return 0, 0, err
-	}
-
-	var rateId int32
-	if initialExchangeRate != nil {
-		rateId, err = queries.CreateExchangeRate(
-			ctx, &dao.CreateExchangeRateParams{
-				A:      currencyId,
-				B:      int32(initialExchangeRate.Other),
-				Rate:   initialExchangeRate.Rate,
-				Date:   initialExchangeRate.Date,
-				UserID: userId,
-			},
-		)
-		if err != nil {
-			return 0, 0, err
-		}
-	}
-
-	if err := tx.Commit(); err != nil {
-		return 0, 0, err
-	}
-
-	return int(currencyId), int(rateId), nil
+	return model.CurrencyID(currencyId), err
 }
 
 type UpdateCurrencyFields struct {
@@ -198,7 +120,7 @@ func (u *UpdateCurrencyFields) nullRateAutoUpdateEnabled() sql.NullBool {
 func (r *Repository) UpdateCurrency(
 	ctx context.Context,
 	userId string,
-	id int,
+	id model.CurrencyID,
 	fields UpdateCurrencyFields,
 ) error {
 	return r.queries.UpdateCurrency(
@@ -217,7 +139,7 @@ func (r *Repository) UpdateCurrency(
 func (r *Repository) SetDefaultCurrency(
 	ctx context.Context,
 	userId string,
-	currencyId int,
+	currencyId model.CurrencyID,
 ) error {
 	i, err := r.queries.SetDefaultCurrency(
 		ctx, &dao.SetDefaultCurrencyParams{
@@ -253,11 +175,10 @@ func (r *Repository) GetAllWithAutoUpdate(ctx context.Context, pageNumber, pageS
 		}
 
 		currencies[i] = model.Currency{
-			ID:            int(currencyDao.ID),
+			ID:            model.CurrencyID(currencyDao.ID),
 			Name:          currencyDao.Name,
 			Symbol:        currencyDao.Symbol,
 			DecimalPoints: int(currencyDao.DecimalPoints),
-			ExchangeRates: make(map[int][]model.ExchangeRate),
 			RateAutoUpdateSettings: model.RateAutoUpdateSettings{
 				Script:  currencyDao.RateFetchScript,
 				Enabled: currencyDao.AutoUpdate,
@@ -266,13 +187,4 @@ func (r *Repository) GetAllWithAutoUpdate(ctx context.Context, pageNumber, pageS
 	}
 
 	return currencies, len(currenciesDao) > pageSize, nil
-}
-
-func (r *Repository) UpdateExchangeRate(ctx context.Context, currencyID int, newRate float64, date time.Time) error {
-	_, err := r.queries.NewAutoExchangeRateEntry(ctx, &dao.NewAutoExchangeRateEntryParams{
-		Rate:       newRate,
-		Date:       date,
-		CurrencyID: int32(currencyID),
-	})
-	return err
 }

@@ -4,16 +4,6 @@ package currency;
 
 option go_package = "server/internal/infrastructure/messaging/dto";
 
-message ExchangeRate {
-  uint32 id = 1;
-  double rate = 3;
-  string date = 4;
-}
-
-message RatesList {
-  repeated ExchangeRate rates = 1;
-}
-
 message RateAutoUpdateSettings {
   string script = 1;
   bool enabled = 2;
@@ -24,8 +14,8 @@ message Currency {
   string name = 2;
   string symbol = 3;
   uint32 decimal_points = 4;
-  map<uint32, RatesList> exchange_rates = 5;
-  RateAutoUpdateSettings rate_auto_update_settings = 6;
+  string auto_update_settings_script = 5;
+  bool auto_update_settings_enabled = 6;
 }
 
 message GetAllCurrenciesRequest {
@@ -35,30 +25,24 @@ message GetAllCurrenciesResponse {
   repeated Currency currencies = 1;
 }
 
-message InitialExchangeRate {
-  uint32 other = 4;
-  double rate = 5;
-  string date = 6;
-}
-
 message CreateCurrencyRequest {
   string name = 1;
   string symbol = 2;
   uint32 decimal_points = 3;
-  optional InitialExchangeRate initial_exchange_rate = 4;
-  RateAutoUpdateSettings rate_auto_update_settings = 5;
+  string auto_update_settings_script = 4;
+  bool auto_update_settings_enabled = 5;
 }
 
 message CreateCurrencyResponse {
   uint32 currencyId = 1;
-  optional uint32 exchangeRateId = 2;
 }
 
 message UpdateCurrencyFields {
   optional string name = 1;
   optional string symbol = 2;
   optional uint32 decimal_points = 3;
-  optional RateAutoUpdateSettings auto_update_settings = 4;
+  optional string auto_update_settings_script = 4;
+  optional bool auto_update_settings_enabled = 5;
 }
 
 message UpdateCurrencyRequest {
@@ -78,18 +62,9 @@ message SetDefaultCurrencyResponse {
 
 }
 
-message TestGetCurrencyRateRequest {
-  string script = 1;
-}
-
-message TestGetCurrencyRateResponse{
-  string response = 1;
-}
-
 service CurrencyService {
   rpc GetAllCurrencies (GetAllCurrenciesRequest) returns (GetAllCurrenciesResponse);
   rpc CreateCurrency (CreateCurrencyRequest) returns (CreateCurrencyResponse);
   rpc UpdateCurrency (UpdateCurrencyRequest) returns (UpdateCurrencyResponse);
   rpc SetDefaultCurrency (SetDefaultCurrencyRequest) returns (SetDefaultCurrencyResponse);
-  rpc TestGetCurrencyRate (TestGetCurrencyRateRequest) returns (TestGetCurrencyRateResponse);
 }

@@ -28,7 +28,7 @@ const EditAccountPage: FC = () => {
     async (data: Partial<Omit<Account, 'id' | 'hasName'>>) => {
       if (typeof selectedAccount === 'undefined') return
 
-      await updateAccount(selectedAccount!.id, data)
+      await updateAccount({ id: selectedAccount!.id }, data)
 
       navigate(-1)
     },

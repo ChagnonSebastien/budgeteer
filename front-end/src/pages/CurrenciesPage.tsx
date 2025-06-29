@@ -21,7 +21,8 @@ import ContentDialog from '../components/ContentDialog'
 import ContentWithHeader from '../components/ContentWithHeader'
 import { CurrencyList } from '../components/currencies/CurrencyList'
 import { IconToolsContext } from '../components/icons/IconTools'
-import Currency, { ExchangeRate } from '../domain/model/currency'
+import Currency from '../domain/model/currency'
+import ExchangeRate, { ExchangeRateIdentifiableFields } from '../domain/model/exchangeRate'
 import MixedAugmentation from '../service/MixedAugmentation'
 import { CurrencyServiceContext } from '../service/ServiceContext'
 import '../styles/list-pages-tailwind.css'
@@ -86,7 +87,9 @@ const CurrenciesPage: FC = () => {
 
     let rates = exchangeRates.get(clickedCurrency.id)?.get(defaultCurrency.id)
     if (clickedCurrency.id === defaultCurrency.id) {
-      rates = [new ExchangeRate(1, 1, new Date())]
+      rates = [
+        new ExchangeRate(new ExchangeRateIdentifiableFields(defaultCurrency.id, defaultCurrency.id, new Date()), 1),
+      ]
     }
     if (typeof rates === 'undefined' || rates.length === 0) return { monthlyRates: [], minRate: 0 }
 

@@ -17,11 +17,11 @@ type categoryRepository interface {
 		parentId int,
 		fixedCosts bool,
 		ordering float64,
-	) (int, error)
+	) (model.CategoryID, error)
 	UpdateCategory(
 		ctx context.Context,
 		userId string,
-		id int,
+		id model.CategoryID,
 		fields repository.UpdateCategoryFields,
 	) error
 }
@@ -61,7 +61,7 @@ func (a *CategoryService) GetAllCategories(ctx context.Context, userId string) (
 		}
 		categories = append(
 			categories, model.Category{
-				ID:             rootId,
+				ID:             model.CategoryID(rootId),
 				Name:           rootCategoryName,
 				ParentId:       0,
 				IconName:       rootIconName,
@@ -82,7 +82,7 @@ func (a *CategoryService) CreateCategory(
 	parentId int,
 	fixedCosts bool,
 	ordering float64,
-) (int, error) {
+) (model.CategoryID, error) {
 	if parentId == 0 {
 		return 0, fmt.Errorf("cannot create root category from request (parentId=0)")
 	}
@@ -103,7 +103,7 @@ func (a *CategoryService) CreateCategory(
 func (a *CategoryService) UpdateCategory(
 	ctx context.Context,
 	userId string,
-	id int,
+	id model.CategoryID,
 	fields repository.UpdateCategoryFields,
 ) error {
 	return a.categoryRepository.UpdateCategory(
