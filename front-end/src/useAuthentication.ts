@@ -7,12 +7,15 @@ import UserStore from './UserStore'
 
 const serverUrl = import.meta.env.VITE_BACKEND_URL || window.location.origin
 
+const userStore = new UserStore(localStorage)
+
 const oidcLogin = () => {
   window.location.href = `${serverUrl}/auth/login`
 }
 
 const oidcLogout = () => {
   IndexedDB.delete()
+  userStore.clear()
   window.location.href = `${serverUrl}/auth/logout`
 }
 
@@ -22,13 +25,12 @@ const userPassLogin = () => {
 
 const userPassLogout = () => {
   IndexedDB.delete()
+  userStore.clear()
   throw new Error('Not implemented')
 }
 
 type AuthMethod = 'oidc' | 'userPass'
 type AuthMethodStatuses = { [K in AuthMethod]: (() => void) | null }
-
-const userStore = new UserStore(localStorage)
 
 const useAuthentication = () => {
   const [loginMethods, setLoginMethods] = useState<AuthMethodStatuses | null>(null)
@@ -90,16 +92,11 @@ const useAuthentication = () => {
     if (user !== null && user.authMethod !== 'oidc') return
     if (user === null && (loginMethods === null || !loginMethods.oidc)) return
 
-    fetchUserInfo()
-      .then(async (user) => {
-        setUser({ ...user, authMethod: 'oidc' })
-        userStore.upsertUser(user, 'oidc')
-      })
-      .catch(() => {
-        setUser(null)
-        userStore.clear()
-      })
-      .finally(() => setSynced(true))
+    fetchUserInfo().then(async (user) => {
+      setUser({ ...user, authMethod: 'oidc' })
+      userStore.upsertUser(user, 'oidc')
+      setSynced(true)
+    })
   }, [synced, hasInternet, user, loginMethods])
 
   const logout = useMemo(() => {
