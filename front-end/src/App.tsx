@@ -18,33 +18,29 @@ export const UserContext = createContext<User>({
 })
 
 const App: FC = () => {
-  const { user, synced, hasInternet, authMethods, logout, setDefaultCurrency } = useAuthentication()
+  const { user, attemptedUserVerification, hasInternet, authMethods, logout, setDefaultCurrency } = useAuthentication()
 
   const iconTools = useIconTools()
 
   if (user !== null) {
-    if (!hasInternet || synced) {
-      return (
-        <IconToolsContext.Provider value={iconTools}>
-          <UserContext.Provider value={user}>
-            <AuthenticatedZone hasInternet={hasInternet} logout={logout} setDefaultCurrency={setDefaultCurrency} />
-          </UserContext.Provider>
-        </IconToolsContext.Provider>
-      )
-    } else {
-      return <LoadingScreen />
-    }
+    return (
+      <IconToolsContext.Provider value={iconTools}>
+        <UserContext.Provider value={user}>
+          <AuthenticatedZone hasInternet={hasInternet} logout={logout} setDefaultCurrency={setDefaultCurrency} />
+        </UserContext.Provider>
+      </IconToolsContext.Provider>
+    )
   }
 
   if (!hasInternet) {
-    return <div className="centered">Internet connection required on first use</div>
+    return <div className="centered">Internet connection required to login</div>
   }
 
   if (authMethods !== null && authMethods.oidc === null) {
     return <div className="centered">Only OIDC is supported as of now</div>
   }
 
-  if (authMethods === null || !synced) {
+  if (authMethods === null || !attemptedUserVerification) {
     return <LoadingScreen />
   }
 

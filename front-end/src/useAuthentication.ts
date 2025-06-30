@@ -36,7 +36,8 @@ const useAuthentication = () => {
   const [loginMethods, setLoginMethods] = useState<AuthMethodStatuses | null>(null)
 
   const [user, setUser] = useState<(User & { authMethod: AuthMethod }) | null>(userStore.getUser())
-  const [synced, setSynced] = useState(false)
+  const [userVerified, setUserVerified] = useState(false)
+  const [attemptedUserVerification, setAttemptedUserVerification] = useState(false)
   const [hasInternet, setHasInternet] = useState(false)
 
   const setDefaultCurrency = useCallback((id: number) => {
@@ -72,7 +73,7 @@ const useAuthentication = () => {
   }, [])
 
   useEffect(() => {
-    if (!hasInternet || synced) return
+    if (!hasInternet || userVerified) return
 
     fetch(`${serverUrl}/auth/info`)
       .then(async (response) => {
@@ -88,29 +89,39 @@ const useAuthentication = () => {
         })
       })
       .catch(console.error)
-  }, [hasInternet, synced])
+  }, [hasInternet, userVerified])
 
   useEffect(() => {
     if (!hasInternet) return
-    if (synced) return
+    if (userVerified) return
     if (user !== null && user.authMethod !== 'oidc') return
     if (user === null && (loginMethods === null || !loginMethods.oidc)) return
 
-    fetchUserInfo().then(async (user) => {
-      if (user !== null) {
-        setUser({ ...user, authMethod: 'oidc' })
-        userStore.upsertUser(user, 'oidc')
-        setSynced(true)
-      }
-    })
-  }, [synced, hasInternet, user, loginMethods])
+    fetchUserInfo()
+      .then(async (user) => {
+        if (user !== null) {
+          setUser({ ...user, authMethod: 'oidc' })
+          userStore.upsertUser(user, 'oidc')
+          setUserVerified(true)
+        }
+      })
+      .finally(() => setAttemptedUserVerification(true))
+  }, [userVerified, hasInternet, user, loginMethods])
 
   const logout = useMemo(() => {
     if (user === null) return () => console.error('cannot logout if not logged in')
     return user.authMethod === 'oidc' ? oidcLogout : userPassLogout
   }, [user])
 
-  return { authMethods: loginMethods, user, synced, hasInternet, logout, setDefaultCurrency }
+  return {
+    authMethods: loginMethods,
+    user,
+    attemptedUserVerification,
+    userVerified,
+    hasInternet,
+    logout,
+    setDefaultCurrency,
+  }
 }
 
 export default useAuthentication
