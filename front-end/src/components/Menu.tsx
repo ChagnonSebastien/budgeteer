@@ -36,6 +36,12 @@ interface AppPage {
 
 const appPages: AppPage[] = [
   {
+    title: 'Dashboard',
+    url: '/',
+    iconName: PreparedIcon.TbLayoutDashboardFilled,
+    keepQuery: [],
+  },
+  {
     title: 'Transactions',
     url: '/transactions',
     iconName: PreparedIcon.TbArrowsExchange,

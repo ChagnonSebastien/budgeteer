@@ -18,6 +18,7 @@ import CreateCategoryPage from './pages/CreateCategoryPage'
 import CreateCurrencyPage from './pages/CreateCurrencyPage'
 import CreateTransactionPage from './pages/CreateTransactionPage'
 import CurrenciesPage from './pages/CurrenciesPage'
+import Dashboard from './pages/Dashboard'
 import EditAccountPage from './pages/EditAccountPage'
 import EditCategoryPage from './pages/EditCategoryPage'
 import EditCurrencyPage from './pages/EditCurrencyPage'
@@ -289,6 +290,7 @@ const AuthenticatedZone: FC<Props> = (props) => {
     () => () => (
       <DrawerWrapper logout={logout}>
         <Routes>
+          <Route path="/" element={<Dashboard />} />
           <Route path="/currencies" element={<CurrenciesPage />} />
           <Route path="/currencies/new" element={<CreateCurrencyPage scriptRunner={testGetRateScript} />} />
           <Route path="/currencies/edit/:currencyId" element={<EditCurrencyPage scriptRunner={testGetRateScript} />} />

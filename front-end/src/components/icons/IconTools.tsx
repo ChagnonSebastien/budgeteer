@@ -36,6 +36,7 @@ export enum PreparedIcon {
   MdList = 'MdList',
   MdCalendarToday = 'MdCalendarToday',
   TbChartSankey = 'TbChartSankey',
+  TbLayoutDashboardFilled = 'TbLayoutDashboardFilled',
 }
 
 type PreparedIconLib = {
