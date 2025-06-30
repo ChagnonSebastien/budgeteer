@@ -9,10 +9,6 @@ interface Currency {
   autoUpdate: boolean
 }
 
-type CurrencyDB = {
-  currencies: EntityTable<Currency, 'id'>
-}
-
 interface Account {
   id: number
   name: string
@@ -23,10 +19,6 @@ interface Account {
   isMine: boolean
   financialInstitution: string
   type: string
-}
-
-type AccountDB = {
-  accounts: EntityTable<Account, 'id'>
 }
 
 interface Category {
@@ -40,20 +32,11 @@ interface Category {
   ordering: number
 }
 
-type CategoryDB = {
-  categories: EntityTable<Category, 'id'>
-}
-
 interface ExchangeRate {
   a: number
   b: number
   date: Date
   rate: number
-}
-
-export type ExchangeRateCompositeKey = [number, number, Date]
-type ExchangeRateDB = {
-  exchangeRates: Table<ExchangeRate, ExchangeRateCompositeKey, ExchangeRate>
 }
 
 interface Transaction {
@@ -69,10 +52,6 @@ interface Transaction {
   receiverAmount: number
 }
 
-type TransactionDB = {
-  transactions: EntityTable<Transaction, 'id'>
-}
-
 export type ActionType = 'create' | 'update' | 'delete'
 
 interface Action {
@@ -84,18 +63,16 @@ interface Action {
   data: unknown
 }
 
-type ReplayDB = {
-  replay: EntityTable<Action, 'id'>
-}
-
 export const BudgeteerDatabaseName = 'BudgeteerLocalDB'
-class BudgeteerDB extends Dexie {
-  currencies!: CurrencyDB
-  accounts!: AccountDB
-  categories!: ExchangeRateDB
-  exchangeRates!: CategoryDB
-  transactions!: TransactionDB
-  replay!: ReplayDB
+export type ExchangeRateCompositeKey = [number, number, Date]
+
+export class BudgeteerDB extends Dexie {
+  currencies!: EntityTable<Currency, 'id'>
+  accounts!: EntityTable<Account, 'id'>
+  exchangeRates!: Table<ExchangeRate, ExchangeRateCompositeKey, ExchangeRate>
+  categories!: EntityTable<Category, 'id'>
+  transactions!: EntityTable<Transaction, 'id'>
+  replay!: EntityTable<Action, 'id'>
 
   constructor() {
     super(BudgeteerDatabaseName)
