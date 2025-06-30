@@ -2,7 +2,7 @@ import { ResponsiveSankey, SankeyLinkDatum, SankeyNodeDatum } from '@nivo/sankey
 import { FC, useContext, useEffect, useState } from 'react'
 
 import { formatFull } from '../../domain/model/currency'
-import { CurrencyServiceContext } from '../../service/ServiceContext'
+import MixedAugmentation from '../../service/MixedAugmentation'
 import { darkColors, darkTheme } from '../../utils'
 import { DrawerContext } from '../Menu'
 
@@ -33,10 +33,8 @@ const EarningsBreakdownChart: FC<Props> = ({ grossIncome, netIncome, fixedCosts,
     window.addEventListener('resize', updateDimensions)
     return () => window.removeEventListener('resize', updateDimensions)
   }, [contentRef])
-  const { tentativeDefaultCurrency } = useContext(CurrencyServiceContext)
+  const { defaultCurrency } = useContext(MixedAugmentation)
   const { privacyMode } = useContext(DrawerContext)
-
-  if (!tentativeDefaultCurrency) return null
 
   const taxes = grossIncome - netIncome
   const investments =
@@ -161,7 +159,7 @@ const EarningsBreakdownChart: FC<Props> = ({ grossIncome, netIncome, fixedCosts,
     return (
       <div className="bg-white text-slate-700 p-2 shadow-lg">
         <div className="font-bold">{nodeId}</div>
-        {!privacyMode && <div>{formatFull(tentativeDefaultCurrency, value, privacyMode)}</div>}
+        {!privacyMode && <div>{formatFull(defaultCurrency, value, privacyMode)}</div>}
         <div>{percentage.toFixed(1)}% of Income</div>
       </div>
     )
@@ -182,7 +180,7 @@ const EarningsBreakdownChart: FC<Props> = ({ grossIncome, netIncome, fixedCosts,
     return (
       <div className="bg-white text-slate-700 p-2 shadow-lg">
         <div className="font-bold">{targetId}</div>
-        {!privacyMode && <div>{formatFull(tentativeDefaultCurrency, value, privacyMode)}</div>}
+        {!privacyMode && <div>{formatFull(defaultCurrency, value, privacyMode)}</div>}
         <div>
           {percentage.toFixed(1)}% of {sourceId}
         </div>

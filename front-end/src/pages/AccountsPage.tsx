@@ -61,7 +61,7 @@ const AccountsPage: FC = () => {
   const navigate = useNavigate()
   const { IconLib } = useContext(IconToolsContext)
   const { state: accounts } = useContext(AccountServiceContext)
-  const { state: currencies, tentativeDefaultCurrency } = useContext(CurrencyServiceContext)
+  const { state: currencies } = useContext(CurrencyServiceContext)
   const { accountBalances } = useContext(MixedAugmentation)
   const { privacyMode } = useContext(DrawerContext)
   const [searchParams, setSearchParams] = useSearchParams()
@@ -199,7 +199,7 @@ const AccountsPage: FC = () => {
               )}
             </div>
 
-            {tentativeDefaultCurrency && balanceEntries.length > 0 && (
+            {balanceEntries.length > 0 && (
               <div className="overview-content">
                 <Typography variant="subtitle2" className="overview-content-label">
                   BALANCES

@@ -15,7 +15,7 @@ import { FC, useCallback, useContext, useMemo } from 'react'
 import Account from '../../domain/model/account'
 import { formatFull } from '../../domain/model/currency'
 import MixedAugmentation from '../../service/MixedAugmentation'
-import { AccountServiceContext, CurrencyServiceContext } from '../../service/ServiceContext'
+import { AccountServiceContext } from '../../service/ServiceContext'
 import { darkColors, darkTheme } from '../../utils'
 import CustomChart from '../graphing/CustomChart'
 import { DrawerContext } from '../Menu'
@@ -37,8 +37,7 @@ const AccountsBalanceChart: FC<Props> = (props) => {
   const { fromDate, toDate, filterByAccounts, groupBy, baselineConfig = 'none', scale = 'absolute' } = props
   const theme = useTheme()
 
-  const { tentativeDefaultCurrency } = useContext(CurrencyServiceContext)
-  const { augmentedTransactions, exchangeRateOnDay } = useContext(MixedAugmentation)
+  const { augmentedTransactions, exchangeRateOnDay, defaultCurrency } = useContext(MixedAugmentation)
   const { myOwnAccounts } = useContext(AccountServiceContext)
   const { privacyMode } = useContext(DrawerContext)
 
@@ -72,8 +71,6 @@ const AccountsBalanceChart: FC<Props> = (props) => {
   )
 
   return useMemo(() => {
-    if (tentativeDefaultCurrency === null) return null
-
     const diffDays = differenceInDays(toDate, fromDate)
     const diffWeeks = differenceInWeeks(toDate, fromDate)
     const diffMonths = differenceInMonths(toDate, fromDate)
@@ -171,8 +168,8 @@ const AccountsBalanceChart: FC<Props> = (props) => {
       let marketValue = 0
       for (const [currencyId, amount] of groupData.assets) {
         let factor = 1
-        if (currencyId !== tentativeDefaultCurrency.id) {
-          factor = exchangeRateOnDay(currencyId, tentativeDefaultCurrency.id, upTo)
+        if (currencyId !== defaultCurrency.id) {
+          factor = exchangeRateOnDay(currencyId, defaultCurrency.id, upTo)
         }
         marketValue += amount * factor
       }
@@ -213,12 +210,12 @@ const AccountsBalanceChart: FC<Props> = (props) => {
               transaction.category?.name === 'Financial income'
             )
           ) {
-            if (transaction.receiverCurrencyId === tentativeDefaultCurrency.id) {
+            if (transaction.receiverCurrencyId === defaultCurrency.id) {
               data.bookValue += transaction.receiverAmount
-            } else if (transaction.currencyId === tentativeDefaultCurrency.id) {
+            } else if (transaction.currencyId === defaultCurrency.id) {
               data.bookValue += transaction.amount
             } else {
-              const factor = exchangeRateOnDay(transaction.receiverCurrencyId, tentativeDefaultCurrency.id, upTo)
+              const factor = exchangeRateOnDay(transaction.receiverCurrencyId, defaultCurrency.id, upTo)
               data.bookValue += transaction.receiverAmount * factor
             }
           }
@@ -243,12 +240,12 @@ const AccountsBalanceChart: FC<Props> = (props) => {
               transaction.category?.name === 'Financial income'
             )
           ) {
-            if (transaction.receiverCurrencyId === tentativeDefaultCurrency.id) {
+            if (transaction.receiverCurrencyId === defaultCurrency.id) {
               data.bookValue -= transaction.receiverAmount
-            } else if (transaction.currencyId === tentativeDefaultCurrency.id) {
+            } else if (transaction.currencyId === defaultCurrency.id) {
               data.bookValue -= transaction.amount
             } else {
-              const factor = exchangeRateOnDay(transaction.currencyId, tentativeDefaultCurrency.id, upTo)
+              const factor = exchangeRateOnDay(transaction.currencyId, defaultCurrency.id, upTo)
               data.bookValue -= transaction.amount * factor
             }
           }
@@ -265,8 +262,8 @@ const AccountsBalanceChart: FC<Props> = (props) => {
         let marketValue = 0
         for (const [currencyId, amount] of groupData.assets) {
           let factor = 1
-          if (currencyId !== tentativeDefaultCurrency.id) {
-            factor = exchangeRateOnDay(currencyId, tentativeDefaultCurrency.id, upTo)
+          if (currencyId !== defaultCurrency.id) {
+            factor = exchangeRateOnDay(currencyId, defaultCurrency.id, upTo)
           }
           marketValue += amount * factor
         }
@@ -319,7 +316,7 @@ const AccountsBalanceChart: FC<Props> = (props) => {
         <CustomChart
           data={data}
           keys={[...groups.keys()].sort((a, b) => a.localeCompare(b))}
-          valueFormat={(value) => `${formatFull(tentativeDefaultCurrency, value, privacyMode)}`}
+          valueFormat={(value) => `${formatFull(defaultCurrency, value, privacyMode)}`}
           margin={{ top: 20, right: 25, bottom: 80, left: 70 }}
           showGlobalBaseline={baselineConfig === 'showGlobalBaseline'}
           showIndividualBaselines={baselineConfig === 'showIndividualBaselines'}
@@ -343,7 +340,7 @@ const AccountsBalanceChart: FC<Props> = (props) => {
               }
               return privacyMode
                 ? ''
-                : ((i as number) / Math.pow(10, tentativeDefaultCurrency?.decimalPoints)).toLocaleString(undefined, {
+                : ((i as number) / Math.pow(10, defaultCurrency.decimalPoints)).toLocaleString(undefined, {
                     notation: 'compact',
                   })
             },
@@ -431,7 +428,7 @@ const AccountsBalanceChart: FC<Props> = (props) => {
                           color: totalGain < 0 ? theme.palette.error.light : theme.palette.success.light,
                         }}
                       >
-                        Total Gains: {formatFull(tentativeDefaultCurrency, totalGain, privacyMode)}
+                        Total Gains: {formatFull(defaultCurrency, totalGain, privacyMode)}
                       </div>
                     </div>
                   </div>
@@ -442,7 +439,7 @@ const AccountsBalanceChart: FC<Props> = (props) => {
         />
       </>
     )
-  }, [tentativeDefaultCurrency, filteredAccounts, groupBy, fromDate, toDate, group, privacyMode, exchangeRateOnDay])
+  }, [defaultCurrency, filteredAccounts, groupBy, fromDate, toDate, group, privacyMode, exchangeRateOnDay])
 }
 
 export default AccountsBalanceChart

@@ -77,8 +77,8 @@ const TransactionPage: FC = () => {
   const { privacyMode } = useContext(DrawerContext)
   const [clickedTransaction, setClickedTransaction] = useState<AugmentedTransaction | null>(null)
 
-  const { augmentedTransactions } = useContext(MixedAugmentation)
-  const { state: categories, tentativeRoot: rootCategory } = useContext(CategoryServiceContext)
+  const { augmentedTransactions, rootCategory } = useContext(MixedAugmentation)
+  const { state: categories } = useContext(CategoryServiceContext)
 
   const [searchParams, setSearchParams] = useSearchParams()
   const [graphType, setGraphType] = useState<'line' | 'pie'>((searchParams.get('chart') as 'line' | 'pie') || 'line')

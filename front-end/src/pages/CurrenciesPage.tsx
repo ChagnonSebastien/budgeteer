@@ -65,8 +65,8 @@ const ChartContainer = styled.div`
 
 const CurrenciesPage: FC = () => {
   const navigate = useNavigate()
-  const { state: currencies, tentativeDefaultCurrency } = useContext(CurrencyServiceContext)
-  const { exchangeRates, exchangeRateOnDay, augmentedTransactions } = useContext(MixedAugmentation)
+  const { state: currencies } = useContext(CurrencyServiceContext)
+  const { exchangeRates, exchangeRateOnDay, augmentedTransactions, defaultCurrency } = useContext(MixedAugmentation)
   const { IconLib } = useContext(IconToolsContext)
   const [searchParams, setSearchParams] = useSearchParams()
   const showZeroBalances = searchParams.get('showZero') === 'true'
@@ -81,23 +81,20 @@ const CurrenciesPage: FC = () => {
   const [contentHeight, setContentHeight] = useState(600)
 
   const { monthlyRates, minRate } = useMemo(() => {
-    if (!clickedCurrency || !tentativeDefaultCurrency) {
+    if (!clickedCurrency) {
       return { monthlyRates: [], minRate: 0 }
     }
 
-    let rates = exchangeRates.get(clickedCurrency.id)?.get(tentativeDefaultCurrency.id)
-    if (clickedCurrency.id === tentativeDefaultCurrency.id) {
+    let rates = exchangeRates.get(clickedCurrency.id)?.get(defaultCurrency.id)
+    if (clickedCurrency.id === defaultCurrency.id) {
       rates = [
-        new ExchangeRate(
-          new ExchangeRateIdentifiableFields(tentativeDefaultCurrency.id, tentativeDefaultCurrency.id, new Date()),
-          1,
-        ),
+        new ExchangeRate(new ExchangeRateIdentifiableFields(defaultCurrency.id, defaultCurrency.id, new Date()), 1),
       ]
     }
     if (typeof rates === 'undefined' || rates.length === 0) return { monthlyRates: [], minRate: 0 }
 
     let startDate = new Date(Math.min(...rates.map((r) => new Date(r.date).getTime())))
-    if (clickedCurrency.id === tentativeDefaultCurrency.id) {
+    if (clickedCurrency.id === defaultCurrency.id) {
       startDate = augmentedTransactions[augmentedTransactions.length - 1].date
     }
     startDate.setDate(1)
@@ -110,9 +107,9 @@ const CurrenciesPage: FC = () => {
     while (currentMonth <= currentDate) {
       const monthTime = currentMonth.getTime()
       const closestRate =
-        clickedCurrency.id === tentativeDefaultCurrency.id
+        clickedCurrency.id === defaultCurrency.id
           ? 1
-          : exchangeRateOnDay(clickedCurrency.id, tentativeDefaultCurrency.id, currentMonth)
+          : exchangeRateOnDay(clickedCurrency.id, defaultCurrency.id, currentMonth)
 
       dataPoints.push({
         x: monthTime,
@@ -124,7 +121,7 @@ const CurrenciesPage: FC = () => {
 
     const minRate = Math.min(...dataPoints.map((d) => d.y))
     return { monthlyRates: dataPoints, minRate }
-  }, [clickedCurrency, tentativeDefaultCurrency])
+  }, [clickedCurrency, defaultCurrency])
 
   useEffect(() => {
     if (contentRef === null) return
@@ -205,7 +202,7 @@ const CurrenciesPage: FC = () => {
           },
         }}
       >
-        {clickedCurrency !== null && tentativeDefaultCurrency && (
+        {clickedCurrency !== null && (
           <DialogContent sx={{ padding: 0 }} className="overview-modal-content">
             <div className="overview-header">
               <div className="overview-header-glow-1" />

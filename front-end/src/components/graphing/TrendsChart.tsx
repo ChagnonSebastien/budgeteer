@@ -17,7 +17,6 @@ import { FC, useCallback, useContext, useMemo } from 'react'
 
 import { formatAmount, formatFull } from '../../domain/model/currency'
 import MixedAugmentation from '../../service/MixedAugmentation'
-import { CategoryServiceContext, CurrencyServiceContext } from '../../service/ServiceContext'
 import { darkTheme } from '../../utils'
 import { DrawerContext } from '../Menu'
 
@@ -33,16 +32,14 @@ interface Props {
 
 const TrendsChart: FC<Props> = (props) => {
   const { categories, years = 1, grouping = 'months' } = props
-  const { tentativeDefaultCurrency } = useContext(CurrencyServiceContext)
-  const { augmentedTransactions, exchangeRateOnDay } = useContext(MixedAugmentation)
-  const { tentativeRoot } = useContext(CategoryServiceContext)
+  const { augmentedTransactions, exchangeRateOnDay, rootCategory, defaultCurrency } = useContext(MixedAugmentation)
   const { privacyMode } = useContext(DrawerContext)
   const theme = useTheme()
 
   const filteredTransactions = useMemo(() => {
     return augmentedTransactions.filter((t) => {
       if (typeof t.category === 'undefined') return false
-      if (categories.length === 0 || categories[0] === tentativeRoot.id) return true
+      if (categories.length === 0 || categories[0] === rootCategory.id) return true
 
       let current = t.category!
       do {
@@ -51,10 +48,10 @@ const TrendsChart: FC<Props> = (props) => {
       } while (typeof current?.parent !== 'undefined')
       return false
     })
-  }, [augmentedTransactions, categories, tentativeRoot])
+  }, [augmentedTransactions, categories, rootCategory.id])
 
   const data = useMemo(() => {
-    if (tentativeDefaultCurrency === null || filteredTransactions.length === 0) return null
+    if (filteredTransactions.length === 0) return null
     const today = new Date()
     let toDate = addMonths(today, 1)
     toDate.setDate(1)
@@ -108,8 +105,8 @@ const TrendsChart: FC<Props> = (props) => {
 
         if (t.receiver?.isMine) {
           let multiplier = 1
-          if (t.receiverCurrencyId !== tentativeDefaultCurrency.id) {
-            multiplier = exchangeRateOnDay(t.receiverCurrencyId, tentativeDefaultCurrency.id, t.date)
+          if (t.receiverCurrencyId !== defaultCurrency.id) {
+            multiplier = exchangeRateOnDay(t.receiverCurrencyId, defaultCurrency.id, t.date)
           }
 
           bucket += t.receiverAmount * multiplier
@@ -117,8 +114,8 @@ const TrendsChart: FC<Props> = (props) => {
 
         if (t.sender?.isMine) {
           let multiplier = 1
-          if (t.currencyId !== tentativeDefaultCurrency.id) {
-            multiplier = exchangeRateOnDay(t.currencyId, tentativeDefaultCurrency.id, t.date)
+          if (t.currencyId !== defaultCurrency.id) {
+            multiplier = exchangeRateOnDay(t.currencyId, defaultCurrency.id, t.date)
           }
 
           bucket -= t.amount * multiplier
@@ -132,7 +129,7 @@ const TrendsChart: FC<Props> = (props) => {
     }
 
     return data
-  }, [filteredTransactions, tentativeDefaultCurrency, grouping])
+  }, [filteredTransactions, defaultCurrency, grouping])
 
   const label = useCallback(
     (d: Date): string => {
@@ -184,7 +181,7 @@ const TrendsChart: FC<Props> = (props) => {
     )
   }, [data, years, grouping])
 
-  return data && tentativeDefaultCurrency ? (
+  return data ? (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
       {/* Trendline overlay */}
       {visibleData.length >= 2 && trendlineData && (
@@ -275,10 +272,7 @@ const TrendsChart: FC<Props> = (props) => {
           format: (i) =>
             privacyMode
               ? ''
-              : formatAmount(tentativeDefaultCurrency, i, privacyMode).slice(
-                  0,
-                  -((tentativeDefaultCurrency?.decimalPoints ?? 2) + 1),
-                ),
+              : formatAmount(defaultCurrency, i, privacyMode).slice(0, -((defaultCurrency?.decimalPoints ?? 2) + 1)),
         }}
         tooltip={(props) => (
           <div className="p-2 px-3 bg-black/[0.85] rounded flex flex-col gap-1">
@@ -290,7 +284,7 @@ const TrendsChart: FC<Props> = (props) => {
                   color: props.value! < 0 ? theme.palette.error.light : theme.palette.success.light,
                 }}
               >
-                {formatFull(tentativeDefaultCurrency, props.value, privacyMode)}
+                {formatFull(defaultCurrency, props.value, privacyMode)}
               </div>
             )}
           </div>

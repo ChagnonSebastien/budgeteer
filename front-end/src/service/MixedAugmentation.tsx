@@ -1,5 +1,5 @@
 import { differenceInMilliseconds, isBefore } from 'date-fns'
-import React, { createContext, FC, JSX, useContext, useMemo } from 'react'
+import React, { createContext, FC, useContext, useMemo } from 'react'
 
 import { addComparison, RateOnDate } from './ExcahngeRateServiceAugmenter'
 import {
@@ -9,6 +9,9 @@ import {
   ExchangeRateServiceContext,
   TransactionServiceContext,
 } from './ServiceContext'
+import LoadingScreen from '../components/LoadingScreen'
+import Category from '../domain/model/category'
+import Currency, { RateAutoupdateSettings } from '../domain/model/currency'
 import { AugmentedTransaction } from '../domain/model/transaction'
 
 type CurrencyAmounts = Map<number, number>
@@ -19,6 +22,8 @@ type MixedAugmentationContext = {
   augmentedTransactions: AugmentedTransaction[]
   exchangeRates: Map<number, Map<number, RateOnDate[]>>
   exchangeRateOnDay(from: number, to: number, date: Date): number
+  defaultCurrency: Currency
+  rootCategory: Category
 }
 
 const MixedAugmentation = createContext<MixedAugmentationContext>({
@@ -26,16 +31,18 @@ const MixedAugmentation = createContext<MixedAugmentationContext>({
   augmentedTransactions: [],
   exchangeRates: new Map(),
   exchangeRateOnDay: (_from: number, _to: number, _date: Date) => 1,
+  defaultCurrency: new Currency(0, 'zero', '.', 0, new RateAutoupdateSettings('', false)),
+  rootCategory: new Category(0, 'zero', '', '', '', null, false, 0),
 })
 
 export interface Props {
-  children: JSX.Element
+  NextComponent: FC
 }
 
-export const MixedAugmentationProvider: FC<Props> = ({ children }) => {
+export const MixedAugmentationProvider: FC<Props> = ({ NextComponent }) => {
   const { state: transactions } = useContext(TransactionServiceContext)
-  const { state: currencies } = useContext(CurrencyServiceContext)
-  const { augmentedCategories: categories } = useContext(CategoryServiceContext)
+  const { state: currencies, tentativeDefaultCurrency } = useContext(CurrencyServiceContext)
+  const { augmentedCategories: categories, tentativeRoot } = useContext(CategoryServiceContext)
   const { state: accounts } = useContext(AccountServiceContext)
   const { exchangeRates: rawExchangeRates } = useContext(ExchangeRateServiceContext)
 
@@ -144,9 +151,21 @@ export const MixedAugmentationProvider: FC<Props> = ({ children }) => {
     return { exchangeRates, exchangeRateOnDay }
   }, [rawExchangeRates, transactions])
 
+  if (tentativeRoot === null || tentativeDefaultCurrency === null) {
+    return <LoadingScreen />
+  }
+
   return (
-    <MixedAugmentation.Provider value={{ accountBalances, augmentedTransactions, ...augmentedData }}>
-      {children}
+    <MixedAugmentation.Provider
+      value={{
+        rootCategory: tentativeRoot,
+        defaultCurrency: tentativeDefaultCurrency,
+        accountBalances,
+        augmentedTransactions,
+        ...augmentedData,
+      }}
+    >
+      <NextComponent />
     </MixedAugmentation.Provider>
   )
 }

@@ -285,35 +285,35 @@ const AuthenticatedZone: FC<Props> = (props) => {
 
   const testGetRateScript = useMemo(() => exchangeRateRemoteStore.testGetRateScript(), [])
 
-  const CompleteView = useMemo<FC>(
+  const FullyAugmentedView = useMemo<FC>(
     () => () => (
-      <MixedAugmentationProvider>
-        <DrawerWrapper logout={logout}>
-          <Routes>
-            <Route path="/currencies" element={<CurrenciesPage />} />
-            <Route path="/currencies/new" element={<CreateCurrencyPage scriptRunner={testGetRateScript} />} />
-            <Route
-              path="/currencies/edit/:currencyId"
-              element={<EditCurrencyPage scriptRunner={testGetRateScript} />}
-            />
-            <Route path="/categories" element={<CategoryPage />} />
-            <Route path="/categories/new" element={<CreateCategoryPage />} />
-            <Route path="/categories/edit/:categoryId" element={<EditCategoryPage />} />
-            <Route path="/accounts" element={<AccountsPage />} />
-            <Route path="/accounts/new" element={<CreateAccountPage />} />
-            <Route path="/accounts/graph" element={<AccountsBalancePage />} />
-            <Route path="/accounts/edit/:accountId" element={<EditAccountPage />} />
-            <Route path="/transactions" element={<TransactionPage />} />
-            <Route path="/transactions/new" element={<CreateTransactionPage />} />
-            <Route path="/transactions/edit/:transactionId" element={<EditTransactionPage />} />
-            <Route path="/costs" element={<CostsAnalysisPage />} />
-            <Route path="/trends" element={<TrendsPage />} />
-            <Route path="*" element={<Navigate to="/transactions" />} />
-          </Routes>
-        </DrawerWrapper>
-      </MixedAugmentationProvider>
+      <DrawerWrapper logout={logout}>
+        <Routes>
+          <Route path="/currencies" element={<CurrenciesPage />} />
+          <Route path="/currencies/new" element={<CreateCurrencyPage scriptRunner={testGetRateScript} />} />
+          <Route path="/currencies/edit/:currencyId" element={<EditCurrencyPage scriptRunner={testGetRateScript} />} />
+          <Route path="/categories" element={<CategoryPage />} />
+          <Route path="/categories/new" element={<CreateCategoryPage />} />
+          <Route path="/categories/edit/:categoryId" element={<EditCategoryPage />} />
+          <Route path="/accounts" element={<AccountsPage />} />
+          <Route path="/accounts/new" element={<CreateAccountPage />} />
+          <Route path="/accounts/graph" element={<AccountsBalancePage />} />
+          <Route path="/accounts/edit/:accountId" element={<EditAccountPage />} />
+          <Route path="/transactions" element={<TransactionPage />} />
+          <Route path="/transactions/new" element={<CreateTransactionPage />} />
+          <Route path="/transactions/edit/:transactionId" element={<EditTransactionPage />} />
+          <Route path="/costs" element={<CostsAnalysisPage />} />
+          <Route path="/trends" element={<TrendsPage />} />
+          <Route path="*" element={<Navigate to="/transactions" />} />
+        </Routes>
+      </DrawerWrapper>
     ),
     [logout, testGetRateScript],
+  )
+
+  const CompleteView = useMemo<FC>(
+    () => () => <MixedAugmentationProvider NextComponent={FullyAugmentedView} />,
+    [FullyAugmentedView],
   )
 
   return (

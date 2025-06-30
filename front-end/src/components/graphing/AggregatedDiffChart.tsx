@@ -16,7 +16,6 @@ import { FC, useContext, useMemo } from 'react'
 import { formatFull } from '../../domain/model/currency'
 import { AugmentedTransaction } from '../../domain/model/transaction'
 import MixedAugmentation from '../../service/MixedAugmentation'
-import { CurrencyServiceContext } from '../../service/ServiceContext'
 import { darkColors, darkTheme } from '../../utils'
 import { DrawerContext } from '../Menu'
 
@@ -32,13 +31,10 @@ interface Props {
 const AggregatedDiffChart: FC<Props> = (props) => {
   const { fromDate, toDate, transactions } = props
 
-  const { tentativeDefaultCurrency } = useContext(CurrencyServiceContext)
-  const { exchangeRateOnDay } = useContext(MixedAugmentation)
+  const { exchangeRateOnDay, defaultCurrency } = useContext(MixedAugmentation)
   const { privacyMode } = useContext(DrawerContext)
 
   return useMemo(() => {
-    if (tentativeDefaultCurrency === null) return null
-
     const diffDays = differenceInDays(toDate, fromDate)
     const diffWeeks = differenceInWeeks(toDate, fromDate)
     const diffMonths = differenceInMonths(toDate, fromDate)
@@ -103,16 +99,16 @@ const AggregatedDiffChart: FC<Props> = (props) => {
 
         if (t.sender?.isMine ?? false) {
           let amount = t.amount
-          if (t.currencyId !== tentativeDefaultCurrency.id) {
-            amount *= exchangeRateOnDay(t.currencyId, tentativeDefaultCurrency!.id, t.date)
+          if (t.currencyId !== defaultCurrency.id) {
+            amount *= exchangeRateOnDay(t.currencyId, defaultCurrency!.id, t.date)
           }
 
           data[data.length - 1].y = (data[data.length - 1].y as number) - amount
         }
         if (t.receiver?.isMine ?? false) {
           let amount = t.receiverAmount
-          if (t.receiverCurrencyId !== tentativeDefaultCurrency.id) {
-            amount *= exchangeRateOnDay(t.receiverCurrencyId, tentativeDefaultCurrency!.id, t.date)
+          if (t.receiverCurrencyId !== defaultCurrency.id) {
+            amount *= exchangeRateOnDay(t.receiverCurrencyId, defaultCurrency!.id, t.date)
           }
           data[data.length - 1].y = (data[data.length - 1].y as number) + amount
         }
@@ -140,11 +136,11 @@ const AggregatedDiffChart: FC<Props> = (props) => {
             format: (i) =>
               privacyMode
                 ? ''
-                : ((i as number) / Math.pow(10, tentativeDefaultCurrency?.decimalPoints)).toLocaleString(undefined, {
+                : ((i as number) / Math.pow(10, defaultCurrency.decimalPoints)).toLocaleString(undefined, {
                     notation: 'compact',
                   }),
           }}
-          yFormat={(n) => formatFull(tentativeDefaultCurrency, n as number, privacyMode)}
+          yFormat={(n) => formatFull(defaultCurrency, n as number, privacyMode)}
           yScale={{
             type: 'linear',
             min: 'auto',
@@ -169,7 +165,7 @@ const AggregatedDiffChart: FC<Props> = (props) => {
         />
       </>
     )
-  }, [tentativeDefaultCurrency, transactions, fromDate, toDate, privacyMode])
+  }, [defaultCurrency, transactions, fromDate, toDate, privacyMode])
 }
 
 export default AggregatedDiffChart

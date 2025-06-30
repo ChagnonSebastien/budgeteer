@@ -16,7 +16,7 @@ import Category from '../../domain/model/category'
 import { formatAmount, formatFull } from '../../domain/model/currency'
 import { AugmentedTransaction } from '../../domain/model/transaction'
 import MixedAugmentation from '../../service/MixedAugmentation'
-import { AccountServiceContext, CurrencyServiceContext } from '../../service/ServiceContext'
+import { AccountServiceContext } from '../../service/ServiceContext'
 import { DrawerContext } from '../Menu'
 
 import '../../styles/transaction-list-tailwind.css'
@@ -59,9 +59,8 @@ const defaultCategory = new Category(
 export const TransactionList = (props: Props) => {
   const { transactions, onClick, viewAsAccounts, includeInitialAmounts } = props
 
-  const { tentativeDefaultCurrency } = useContext(CurrencyServiceContext)
   const { state: accounts } = useContext(AccountServiceContext)
-  const { exchangeRateOnDay } = useContext(MixedAugmentation)
+  const { exchangeRateOnDay, defaultCurrency } = useContext(MixedAugmentation)
   const { privacyMode } = useContext(DrawerContext)
 
   const [displayedAmount, setDisplayedAmount] = useState<number>(chunkSize)
@@ -70,7 +69,6 @@ export const TransactionList = (props: Props) => {
   }, [transactions])
 
   const viewWithMonthLabels: JSX.Element[] = useMemo(() => {
-    if (tentativeDefaultCurrency === null) return []
     if (transactions.length === 0) return []
 
     const today = startOfDay(new Date())
@@ -86,12 +84,10 @@ export const TransactionList = (props: Props) => {
       const iterator = viewAsAccounts?.map((aId) => accounts.find((a) => a.id === aId)!) ?? accounts
       for (const account of iterator) {
         for (const initialAmount of account.initialAmounts) {
-          if (initialAmount.currencyId === tentativeDefaultCurrency.id) {
+          if (initialAmount.currencyId === defaultCurrency.id) {
             Total += initialAmount.value
           } else {
-            Total +=
-              initialAmount.value *
-              exchangeRateOnDay(initialAmount.currencyId, tentativeDefaultCurrency.id, startingFrom)
+            Total += initialAmount.value * exchangeRateOnDay(initialAmount.currencyId, defaultCurrency.id, startingFrom)
           }
         }
       }
@@ -123,8 +119,8 @@ export const TransactionList = (props: Props) => {
             : viewAsAccounts.includes(transaction.senderId ?? 0)
         ) {
           let convertedAmount = transaction.amount
-          if (transaction.currencyId !== tentativeDefaultCurrency.id) {
-            convertedAmount *= exchangeRateOnDay(transaction.currencyId, tentativeDefaultCurrency?.id, upTo)
+          if (transaction.currencyId !== defaultCurrency.id) {
+            convertedAmount *= exchangeRateOnDay(transaction.currencyId, defaultCurrency?.id, upTo)
           }
           data[data.length - 1].diff -= convertedAmount
         }
@@ -134,8 +130,8 @@ export const TransactionList = (props: Props) => {
             : viewAsAccounts.includes(transaction.receiverId ?? 0)
         ) {
           let convertedAmount = transaction.receiverAmount
-          if (transaction.receiverCurrencyId !== tentativeDefaultCurrency.id) {
-            convertedAmount *= exchangeRateOnDay(transaction.receiverCurrencyId, tentativeDefaultCurrency?.id, upTo)
+          if (transaction.receiverCurrencyId !== defaultCurrency.id) {
+            convertedAmount *= exchangeRateOnDay(transaction.receiverCurrencyId, defaultCurrency?.id, upTo)
           }
           data[data.length - 1].diff += convertedAmount
         }
@@ -157,11 +153,11 @@ export const TransactionList = (props: Props) => {
           <div className="monthly-label-title">{formatDate(date, 'MMMM yyyy')}</div>
           {!privacyMode && (
             <div>
-              <div className="monthly-label-total">{formatFull(tentativeDefaultCurrency, Total, privacyMode)}</div>
+              <div className="monthly-label-total">{formatFull(defaultCurrency, Total, privacyMode)}</div>
               {diff !== 0 && (
                 <div className={`monthly-label-diff ${diff > 0 ? 'positive' : 'negative'}`}>
                   <div>{diff > 0 ? `+` : `-`}</div>
-                  <div>{formatAmount(tentativeDefaultCurrency, Math.abs(diff), privacyMode)}</div>
+                  <div>{formatAmount(defaultCurrency, Math.abs(diff), privacyMode)}</div>
                 </div>
               )}
             </div>

@@ -4,6 +4,7 @@ import { HexColorPicker } from 'react-colorful'
 
 import CategoryPicker from './CategoryPicker'
 import Category from '../../domain/model/category'
+import MixedAugmentation from '../../service/MixedAugmentation'
 import { CategoryServiceContext } from '../../service/ServiceContext'
 import ContentDialog from '../ContentDialog'
 import ContentWithHeader from '../ContentWithHeader'
@@ -20,7 +21,8 @@ interface Props {
 const CategoryForm: FC<Props> = (props) => {
   const { initialCategory, onSubmit, submitText } = props
 
-  const { state: categories, tentativeRoot: rootCategory } = useContext(CategoryServiceContext)
+  const { state: categories } = useContext(CategoryServiceContext)
+  const { rootCategory } = useContext(MixedAugmentation)
 
   const editingRoot = useMemo(() => initialCategory?.id === rootCategory.id, [initialCategory, rootCategory])
 

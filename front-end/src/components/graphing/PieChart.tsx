@@ -5,7 +5,7 @@ import Category, { AugmentedCategory } from '../../domain/model/category'
 import { formatFull } from '../../domain/model/currency'
 import { AugmentedTransaction } from '../../domain/model/transaction'
 import MixedAugmentation from '../../service/MixedAugmentation'
-import { CategoryServiceContext, CurrencyServiceContext } from '../../service/ServiceContext'
+import { CategoryServiceContext } from '../../service/ServiceContext'
 import { darkColors, darkTheme } from '../../utils'
 import { DrawerContext } from '../Menu'
 
@@ -27,33 +27,26 @@ interface Props {
 const TransactionsPieChart: FC<Props> = (props) => {
   const { augmentedTransactions, rootCategory: root, showIncomes, onShowIncomesChange } = props
   const { state: categories, subCategories } = useContext(CategoryServiceContext)
-  const { tentativeDefaultCurrency } = useContext(CurrencyServiceContext)
-  const { exchangeRateOnDay } = useContext(MixedAugmentation)
+  const { exchangeRateOnDay, defaultCurrency } = useContext(MixedAugmentation)
   const { privacyMode } = useContext(DrawerContext)
 
   const [clickedCategory, setClickedCategory] = useState<Category | null>(null)
 
   const differences = useMemo(() => {
     const diffs = new Map<number, number>()
-    if (tentativeDefaultCurrency === null) return diffs
-
     augmentedTransactions.forEach((transaction) => {
       if (transaction.categoryId === null) return
 
       if (transaction.sender?.isMine ?? false) {
         let convertedAmount = transaction.amount
-        if (transaction.currencyId !== tentativeDefaultCurrency.id) {
-          convertedAmount *= exchangeRateOnDay(transaction.currencyId, tentativeDefaultCurrency?.id, transaction.date)
+        if (transaction.currencyId !== defaultCurrency.id) {
+          convertedAmount *= exchangeRateOnDay(transaction.currencyId, defaultCurrency.id, transaction.date)
         }
         diffs.set(transaction.categoryId, (diffs.get(transaction.categoryId) ?? 0) + -convertedAmount)
       } else {
         let convertedAmount = transaction.receiverAmount
-        if (transaction.receiverCurrencyId !== tentativeDefaultCurrency.id) {
-          convertedAmount *= exchangeRateOnDay(
-            transaction.receiverCurrencyId,
-            tentativeDefaultCurrency?.id,
-            transaction.date,
-          )
+        if (transaction.receiverCurrencyId !== defaultCurrency.id) {
+          convertedAmount *= exchangeRateOnDay(transaction.receiverCurrencyId, defaultCurrency.id, transaction.date)
         }
         diffs.set(transaction.categoryId, (diffs.get(transaction.categoryId) ?? 0) + convertedAmount)
       }
@@ -147,7 +140,7 @@ const TransactionsPieChart: FC<Props> = (props) => {
   }, [crunchedData, showIncomes])
 
   const sunburst = useMemo(() => {
-    if (tentativeDefaultCurrency === null || typeof data === 'undefined') {
+    if (typeof data === 'undefined') {
       return (
         <div className="h-full w-full flex items-center justify-center">
           <h4>No transaction matches your filters</h4>
@@ -161,9 +154,7 @@ const TransactionsPieChart: FC<Props> = (props) => {
           {clickedCategory ? (
             <>
               <div className="font-bold">{clickedCategory.name}</div>
-              {!privacyMode && (
-                <div>{formatFull(tentativeDefaultCurrency, getCategoryTotal(clickedCategory), privacyMode)}</div>
-              )}
+              {!privacyMode && <div>{formatFull(defaultCurrency, getCategoryTotal(clickedCategory), privacyMode)}</div>}
               <div>
                 {Math.abs(
                   (getCategoryTotal(clickedCategory) /
@@ -179,7 +170,7 @@ const TransactionsPieChart: FC<Props> = (props) => {
               {!privacyMode && (
                 <div>
                   {formatFull(
-                    tentativeDefaultCurrency,
+                    defaultCurrency,
                     showIncomes ? crunchedData.incomeTotal : -crunchedData.expenseTotal,
                     privacyMode,
                   )}
@@ -209,7 +200,7 @@ const TransactionsPieChart: FC<Props> = (props) => {
             setClickedCategory(categories.find((c) => c.name === id)!)
           }}
           valueFormat={(data) => {
-            return formatFull(tentativeDefaultCurrency, data, privacyMode)
+            return formatFull(defaultCurrency, data, privacyMode)
           }}
           enableArcLabels={true}
           arcLabel="id"
@@ -218,7 +209,7 @@ const TransactionsPieChart: FC<Props> = (props) => {
           tooltip={({ id, value }) => (
             <div className="bg-white text-slate-700 p-2 shadow-lg">
               <div className="font-bold">{id}</div>
-              {!privacyMode && <div>{formatFull(tentativeDefaultCurrency, value, privacyMode)}</div>}
+              {!privacyMode && <div>{formatFull(defaultCurrency, value, privacyMode)}</div>}
             </div>
           )}
         />

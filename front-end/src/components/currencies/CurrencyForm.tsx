@@ -104,7 +104,7 @@ const CurrencyForm: FC<Props> = (props) => {
   }, [initialCurrency, tentativeDefaultCurrency])
 
   const { monthlyRates, minRate } = useMemo(() => {
-    if (!initialCurrency || !tentativeDefaultCurrency) {
+    if (typeof initialCurrency === 'undefined' || tentativeDefaultCurrency === null) {
       return { monthlyRates: [], minRate: 0 }
     }
 

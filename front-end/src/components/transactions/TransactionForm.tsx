@@ -8,6 +8,7 @@ import Account, { AccountID } from '../../domain/model/account'
 import { CategoryID } from '../../domain/model/category'
 import { CurrencyID, formatAmount, parseAmount } from '../../domain/model/currency'
 import Transaction, { AugmentedTransaction } from '../../domain/model/transaction'
+import MixedAugmentation from '../../service/MixedAugmentation'
 import { AccountServiceContext, CategoryServiceContext, CurrencyServiceContext } from '../../service/ServiceContext'
 import AccountPicker from '../accounts/AccountPicker'
 import { CategoryList } from '../categories/CategoryList'
@@ -62,8 +63,9 @@ const TransactionForm: FC<Props> = (props) => {
   const { initialTransaction, onSubmit, submitText, type: rawType } = props
 
   const { create: createAccount } = useContext(AccountServiceContext)
-  const { state: categories, tentativeRoot: rootCategory } = useContext(CategoryServiceContext)
+  const { state: categories } = useContext(CategoryServiceContext)
   const { state: currencies } = useContext(CurrencyServiceContext)
+  const { rootCategory } = useContext(MixedAugmentation)
   const { default_currency } = useContext(UserContext)
 
   const type: 'income' | 'expense' | 'transfer' = useMemo(() => {
