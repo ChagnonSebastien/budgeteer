@@ -315,7 +315,23 @@ const CustomChart: FC<Props> = ({
   return (
     <div ref={containerRef} style={{ position: 'relative', width: '100%', height: h ? '100%' : `${fallbackHeight}px` }}>
       {w > 0 && (
-        <svg width={w} height={h} style={{ background: mergedTheme.background }}>
+        <svg
+          width={w}
+          height={h}
+          style={{ background: mergedTheme.background }}
+          onMouseLeave={() => {
+            setTooltip(null)
+          }}
+          onMouseMove={(e) => {
+            const rect = containerRef.current?.getBoundingClientRect()
+            if (!rect) return
+
+            const y = e.clientY - rect.top
+            if (y < margin.top || y > margin.top + innerH) {
+              setTooltip(null)
+            }
+          }}
+        >
           {/* clip everything to the chart-area */}
           <defs>
             <clipPath id="chart-area">
@@ -360,6 +376,8 @@ const CustomChart: FC<Props> = ({
           {/* X Axis */}
           {data.map((_, i) => {
             const x = xScale(i)
+            const label = fmtX(i)
+            if (label === '') return null
             return (
               <g key={i} transform={`translate(${x},${margin.top + innerH})`}>
                 <line y2={tickSize} stroke={mergedTheme.axis?.ticks?.text?.fill} />
@@ -410,8 +428,13 @@ const CustomChart: FC<Props> = ({
           </g>
           {/* Interaction zones */}
           {data.map((_, i) => {
-            const x0 = i === 0 ? margin.left : xScale(i - 1)
-            const x1 = xScale(i)
+            const isFirst = i === 0
+            const isLast = i === data.length - 1
+
+            const edgePad = 20
+            const x0 = isFirst ? margin.left - edgePad : xScale(i - 1)
+            const x1 = isLast ? xScale(i) + edgePad : xScale(i)
+
             return (
               <rect
                 key={i}
@@ -423,9 +446,6 @@ const CustomChart: FC<Props> = ({
                 onMouseMove={(e) => {
                   const rect = containerRef.current?.getBoundingClientRect()
                   if (rect) setTooltip({ index: i, x: e.clientX - rect.left, y: e.clientY - rect.top })
-                }}
-                onMouseLeave={() => {
-                  setTooltip(null)
                 }}
               />
             )
