@@ -33,10 +33,10 @@ const EarningsBreakdownChart: FC<Props> = ({ grossIncome, netIncome, fixedCosts,
     window.addEventListener('resize', updateDimensions)
     return () => window.removeEventListener('resize', updateDimensions)
   }, [contentRef])
-  const { defaultCurrency } = useContext(CurrencyServiceContext)
+  const { tentativeDefaultCurrency } = useContext(CurrencyServiceContext)
   const { privacyMode } = useContext(DrawerContext)
 
-  if (!defaultCurrency) return null
+  if (!tentativeDefaultCurrency) return null
 
   const taxes = grossIncome - netIncome
   const investments =
@@ -161,7 +161,7 @@ const EarningsBreakdownChart: FC<Props> = ({ grossIncome, netIncome, fixedCosts,
     return (
       <div className="bg-white text-slate-700 p-2 shadow-lg">
         <div className="font-bold">{nodeId}</div>
-        {!privacyMode && <div>{formatFull(defaultCurrency, value, privacyMode)}</div>}
+        {!privacyMode && <div>{formatFull(tentativeDefaultCurrency, value, privacyMode)}</div>}
         <div>{percentage.toFixed(1)}% of Income</div>
       </div>
     )
@@ -182,7 +182,7 @@ const EarningsBreakdownChart: FC<Props> = ({ grossIncome, netIncome, fixedCosts,
     return (
       <div className="bg-white text-slate-700 p-2 shadow-lg">
         <div className="font-bold">{targetId}</div>
-        {!privacyMode && <div>{formatFull(defaultCurrency, value, privacyMode)}</div>}
+        {!privacyMode && <div>{formatFull(tentativeDefaultCurrency, value, privacyMode)}</div>}
         <div>
           {percentage.toFixed(1)}% of {sourceId}
         </div>

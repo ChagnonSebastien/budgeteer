@@ -23,15 +23,15 @@ export const AccountCard = (props: Props) => {
   const { accountBalances, exchangeRateOnDay } = useContext(MixedAugmentation)
   const { privacyMode } = useContext(DrawerContext)
 
-  const { state: currencies, defaultCurrency } = useContext(CurrencyServiceContext)
+  const { state: currencies, tentativeDefaultCurrency } = useContext(CurrencyServiceContext)
 
   const totalValue = [...(accountBalances?.get(account.id)?.entries() ?? [])].reduce((prev: number, entry) => {
     const currency = currencies.find((c) => c.id === entry[0])
-    if (typeof currency === 'undefined' || defaultCurrency === null) return prev
+    if (typeof currency === 'undefined' || tentativeDefaultCurrency === null) return prev
 
     let rate = 1
-    if (entry[0] !== defaultCurrency.id) {
-      rate = exchangeRateOnDay(entry[0], defaultCurrency.id, startOfDay(new Date()))
+    if (entry[0] !== tentativeDefaultCurrency.id) {
+      rate = exchangeRateOnDay(entry[0], tentativeDefaultCurrency.id, startOfDay(new Date()))
     }
 
     return prev + entry[1] * rate
@@ -57,9 +57,9 @@ export const AccountCard = (props: Props) => {
       <div className={`account-content ${showBalances ? 'with-balance' : ''}`}>
         <div className="account-main">
           <div className="account-name">{account.name}</div>
-          {showBalances && defaultCurrency !== null && totalValue !== 0 && (
+          {showBalances && tentativeDefaultCurrency !== null && totalValue !== 0 && (
             <div className="account-balance">
-              <div className="account-total">{formatFull(defaultCurrency, totalValue, privacyMode)}</div>
+              <div className="account-total">{formatFull(tentativeDefaultCurrency, totalValue, privacyMode)}</div>
             </div>
           )}
         </div>

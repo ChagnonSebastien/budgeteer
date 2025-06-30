@@ -27,7 +27,7 @@ const App: FC = () => {
       return (
         <IconToolsContext.Provider value={iconTools}>
           <UserContext.Provider value={user}>
-            <AuthenticatedZone logout={logout} setDefaultCurrency={setDefaultCurrency} />
+            <AuthenticatedZone hasInternet={hasInternet} logout={logout} setDefaultCurrency={setDefaultCurrency} />
           </UserContext.Provider>
         </IconToolsContext.Provider>
       )

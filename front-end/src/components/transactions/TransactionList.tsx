@@ -59,7 +59,7 @@ const defaultCategory = new Category(
 export const TransactionList = (props: Props) => {
   const { transactions, onClick, viewAsAccounts, includeInitialAmounts } = props
 
-  const { defaultCurrency } = useContext(CurrencyServiceContext)
+  const { tentativeDefaultCurrency } = useContext(CurrencyServiceContext)
   const { state: accounts } = useContext(AccountServiceContext)
   const { exchangeRateOnDay } = useContext(MixedAugmentation)
   const { privacyMode } = useContext(DrawerContext)
@@ -70,7 +70,7 @@ export const TransactionList = (props: Props) => {
   }, [transactions])
 
   const viewWithMonthLabels: JSX.Element[] = useMemo(() => {
-    if (defaultCurrency === null) return []
+    if (tentativeDefaultCurrency === null) return []
     if (transactions.length === 0) return []
 
     const today = startOfDay(new Date())
@@ -86,10 +86,12 @@ export const TransactionList = (props: Props) => {
       const iterator = viewAsAccounts?.map((aId) => accounts.find((a) => a.id === aId)!) ?? accounts
       for (const account of iterator) {
         for (const initialAmount of account.initialAmounts) {
-          if (initialAmount.currencyId === defaultCurrency.id) {
+          if (initialAmount.currencyId === tentativeDefaultCurrency.id) {
             Total += initialAmount.value
           } else {
-            Total += initialAmount.value * exchangeRateOnDay(initialAmount.currencyId, defaultCurrency.id, startingFrom)
+            Total +=
+              initialAmount.value *
+              exchangeRateOnDay(initialAmount.currencyId, tentativeDefaultCurrency.id, startingFrom)
           }
         }
       }
@@ -121,8 +123,8 @@ export const TransactionList = (props: Props) => {
             : viewAsAccounts.includes(transaction.senderId ?? 0)
         ) {
           let convertedAmount = transaction.amount
-          if (transaction.currencyId !== defaultCurrency.id) {
-            convertedAmount *= exchangeRateOnDay(transaction.currencyId, defaultCurrency?.id, upTo)
+          if (transaction.currencyId !== tentativeDefaultCurrency.id) {
+            convertedAmount *= exchangeRateOnDay(transaction.currencyId, tentativeDefaultCurrency?.id, upTo)
           }
           data[data.length - 1].diff -= convertedAmount
         }
@@ -132,8 +134,8 @@ export const TransactionList = (props: Props) => {
             : viewAsAccounts.includes(transaction.receiverId ?? 0)
         ) {
           let convertedAmount = transaction.receiverAmount
-          if (transaction.receiverCurrencyId !== defaultCurrency.id) {
-            convertedAmount *= exchangeRateOnDay(transaction.receiverCurrencyId, defaultCurrency?.id, upTo)
+          if (transaction.receiverCurrencyId !== tentativeDefaultCurrency.id) {
+            convertedAmount *= exchangeRateOnDay(transaction.receiverCurrencyId, tentativeDefaultCurrency?.id, upTo)
           }
           data[data.length - 1].diff += convertedAmount
         }
@@ -155,11 +157,11 @@ export const TransactionList = (props: Props) => {
           <div className="monthly-label-title">{formatDate(date, 'MMMM yyyy')}</div>
           {!privacyMode && (
             <div>
-              <div className="monthly-label-total">{formatFull(defaultCurrency, Total, privacyMode)}</div>
+              <div className="monthly-label-total">{formatFull(tentativeDefaultCurrency, Total, privacyMode)}</div>
               {diff !== 0 && (
                 <div className={`monthly-label-diff ${diff > 0 ? 'positive' : 'negative'}`}>
                   <div>{diff > 0 ? `+` : `-`}</div>
-                  <div>{formatAmount(defaultCurrency, Math.abs(diff), privacyMode)}</div>
+                  <div>{formatAmount(tentativeDefaultCurrency, Math.abs(diff), privacyMode)}</div>
                 </div>
               )}
             </div>

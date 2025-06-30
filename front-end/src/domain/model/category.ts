@@ -2,7 +2,7 @@ import NamedItem from './NamedItem'
 
 export type CategoryID = number
 
-export default class Category implements NamedItem<CategoryID> {
+export default class Category implements NamedItem<CategoryID, Category> {
   constructor(
     public readonly id: CategoryID,
     public name: string,
@@ -16,6 +16,17 @@ export default class Category implements NamedItem<CategoryID> {
 
   hasName(name: string): boolean {
     return this.name.toLowerCase() === name.toLowerCase()
+  }
+
+  equals(other: Category): boolean {
+    if (this.id !== other.id) return false
+    if (this.name !== other.name) return false
+    if (this.iconName !== other.iconName) return false
+    if (this.iconColor !== other.iconColor) return false
+    if (this.iconBackground !== other.iconBackground) return false
+    if (this.parentId !== other.parentId) return false
+    if (this.fixedCosts !== other.fixedCosts) return false
+    return this.ordering === other.ordering
   }
 }
 

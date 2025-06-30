@@ -29,6 +29,7 @@ export const CategoryPersistenceAugmenter: FC<AugmenterProps<CategoryID, Categor
   }, [categories])
 
   const augmentedCategories = useMemo<AugmentedCategory[]>(() => {
+    if (!root) return []
     const augmentChildren = (raw: Category, parentCategory: Category | undefined): AugmentedCategory[] => {
       const augmented = new AugmentedCategory(raw, parentCategory)
       const augmentedChildren = (subCategories[raw.id] ?? [])

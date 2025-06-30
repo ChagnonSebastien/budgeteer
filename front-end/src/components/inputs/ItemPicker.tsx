@@ -22,7 +22,7 @@ const SearchContainer = styled.div`
   width: 100%;
 `
 
-export interface ItemPickerProps<T extends NamedItem<number>> {
+export interface ItemPickerProps<T extends NamedItem<number, T>> {
   items: T[]
   selectedItemId: number | null
   onItemSelected: (id: number) => void
@@ -43,7 +43,7 @@ export interface ItemPickerProps<T extends NamedItem<number>> {
   additionalActions?: ReactNode
 }
 
-export interface ItemListProps<T extends NamedItem<number>> {
+export interface ItemListProps<T extends NamedItem<number, T>> {
   items: T[]
   onSelect: (id: number) => void
   filterable: {
@@ -55,7 +55,7 @@ export interface ItemListProps<T extends NamedItem<number>> {
   hideSearchOverlay?: boolean
 }
 
-function ItemPicker<T extends NamedItem<number>>(props: ItemPickerProps<T>) {
+function ItemPicker<T extends NamedItem<number, T>>(props: ItemPickerProps<T>) {
   const {
     items,
     selectedItemId,

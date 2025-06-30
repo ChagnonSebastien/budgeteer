@@ -34,7 +34,7 @@ const userStore = new UserStore(localStorage)
 
 const CostsAnalysisPage: FC = () => {
   const { augmentedTransactions: transactions, exchangeRateOnDay } = useContext(MixedAugmentation)
-  const { defaultCurrency } = useContext(CurrencyServiceContext)
+  const { tentativeDefaultCurrency } = useContext(CurrencyServiceContext)
   const { root } = useContext(CategoryServiceContext)
   const { privacyMode } = useContext(DrawerContext)
   const { IconLib } = useContext(IconToolsContext)
@@ -85,12 +85,16 @@ const CostsAnalysisPage: FC = () => {
         .filter((value) => value.receiver?.isMine ?? false)
         .reduce((previousValue, currentValue) => {
           let value = currentValue.receiverAmount
-          if (currentValue.receiverCurrencyId !== defaultCurrency?.id) {
-            value *= exchangeRateOnDay(currentValue.receiverCurrencyId, defaultCurrency!.id, startOfDay(new Date()))
+          if (currentValue.receiverCurrencyId !== tentativeDefaultCurrency?.id) {
+            value *= exchangeRateOnDay(
+              currentValue.receiverCurrencyId,
+              tentativeDefaultCurrency!.id,
+              startOfDay(new Date()),
+            )
           }
           return previousValue + value
         }, 0),
-    [incomeCategory, transactions, exchangeRateOnDay, defaultCurrency],
+    [incomeCategory, transactions, exchangeRateOnDay, tentativeDefaultCurrency],
   )
 
   const fixedCosts = useMemo(() => {
@@ -102,8 +106,8 @@ const CostsAnalysisPage: FC = () => {
       .filter((value) => value.sender?.isMine ?? false)
       .reduce((previousValue, currentValue) => {
         let value = currentValue.amount
-        if (currentValue.currencyId !== defaultCurrency?.id) {
-          value *= exchangeRateOnDay(currentValue.currencyId, defaultCurrency!.id, startOfDay(new Date()))
+        if (currentValue.currencyId !== tentativeDefaultCurrency?.id) {
+          value *= exchangeRateOnDay(currentValue.currencyId, tentativeDefaultCurrency!.id, startOfDay(new Date()))
         }
 
         let category = currentValue.category!
@@ -119,8 +123,12 @@ const CostsAnalysisPage: FC = () => {
       .filter((value) => value.receiver?.isMine ?? false)
       .forEach((currentValue) => {
         let value = currentValue.receiverAmount
-        if (currentValue.receiverCurrencyId !== defaultCurrency?.id) {
-          value *= exchangeRateOnDay(currentValue.receiverCurrencyId, defaultCurrency!.id, startOfDay(new Date()))
+        if (currentValue.receiverCurrencyId !== tentativeDefaultCurrency?.id) {
+          value *= exchangeRateOnDay(
+            currentValue.receiverCurrencyId,
+            tentativeDefaultCurrency!.id,
+            startOfDay(new Date()),
+          )
         }
 
         let category = currentValue.category!
@@ -134,7 +142,7 @@ const CostsAnalysisPage: FC = () => {
       })
 
     return data
-  }, [incomeCategory, transactions, exchangeRateOnDay, defaultCurrency])
+  }, [incomeCategory, transactions, exchangeRateOnDay, tentativeDefaultCurrency])
 
   const fixedAmount = useMemo(() => {
     return [...fixedCosts.values()].reduce((previousValue, currentValue) => previousValue + currentValue, 0)
@@ -150,8 +158,8 @@ const CostsAnalysisPage: FC = () => {
       .filter((value) => value.sender?.isMine ?? false)
       .reduce((previousValue, currentValue) => {
         let value = currentValue.amount
-        if (currentValue.currencyId !== defaultCurrency?.id) {
-          value *= exchangeRateOnDay(currentValue.currencyId, defaultCurrency!.id, new Date())
+        if (currentValue.currencyId !== tentativeDefaultCurrency?.id) {
+          value *= exchangeRateOnDay(currentValue.currencyId, tentativeDefaultCurrency!.id, new Date())
         }
 
         let category = currentValue.category!
@@ -169,8 +177,12 @@ const CostsAnalysisPage: FC = () => {
       .filter((value) => value.receiver?.isMine ?? false)
       .forEach((currentValue) => {
         let value = currentValue.receiverAmount
-        if (currentValue.receiverCurrencyId !== defaultCurrency?.id) {
-          value *= exchangeRateOnDay(currentValue.receiverCurrencyId, defaultCurrency!.id, startOfDay(new Date()))
+        if (currentValue.receiverCurrencyId !== tentativeDefaultCurrency?.id) {
+          value *= exchangeRateOnDay(
+            currentValue.receiverCurrencyId,
+            tentativeDefaultCurrency!.id,
+            startOfDay(new Date()),
+          )
         }
 
         let category = currentValue.category!
@@ -184,13 +196,13 @@ const CostsAnalysisPage: FC = () => {
       })
 
     return data
-  }, [incomeCategory, transactions, exchangeRateOnDay, defaultCurrency])
+  }, [incomeCategory, transactions, exchangeRateOnDay, tentativeDefaultCurrency])
 
   const variableAmount = useMemo(() => {
     return [...variableCosts.values()].reduce((previousValue, currentValue) => previousValue + currentValue, 0)
   }, [variableCosts])
 
-  if (defaultCurrency === null) {
+  if (tentativeDefaultCurrency === null) {
     return null
   }
 
@@ -273,7 +285,7 @@ const CostsAnalysisPage: FC = () => {
 
         {viewType === 'chart' ? (
           <EarningsBreakdownChart
-            grossIncome={grossIncome * Math.pow(10, defaultCurrency.decimalPoints)}
+            grossIncome={grossIncome * Math.pow(10, tentativeDefaultCurrency.decimalPoints)}
             netIncome={income}
             fixedCosts={fixedCosts}
             variableCosts={variableCosts}
@@ -286,30 +298,30 @@ const CostsAnalysisPage: FC = () => {
                 <>
                   <tr className="header-row">
                     <th />
-                    <th className="header-label">Yearly ({defaultCurrency.symbol})</th>
-                    <th className="header-label">Monthly ({defaultCurrency.symbol})</th>
+                    <th className="header-label">Yearly ({tentativeDefaultCurrency.symbol})</th>
+                    <th className="header-label">Monthly ({tentativeDefaultCurrency.symbol})</th>
                   </tr>
                   <tr>
                     <td>Gross Income</td>
                     <td className="amount-cell">
                       {formatAmount(
-                        defaultCurrency,
-                        grossIncome * Math.pow(10, defaultCurrency.decimalPoints),
+                        tentativeDefaultCurrency,
+                        grossIncome * Math.pow(10, tentativeDefaultCurrency.decimalPoints),
                         privacyMode,
                       )}
                     </td>
                     <td className="amount-cell">
                       {formatAmount(
-                        defaultCurrency,
-                        (grossIncome * Math.pow(10, defaultCurrency.decimalPoints)) / 12,
+                        tentativeDefaultCurrency,
+                        (grossIncome * Math.pow(10, tentativeDefaultCurrency.decimalPoints)) / 12,
                         privacyMode,
                       )}
                     </td>
                   </tr>
                   <tr>
                     <td>Net Income</td>
-                    <td className="amount-cell">{formatAmount(defaultCurrency, income, privacyMode)}</td>
-                    <td className="amount-cell">{formatAmount(defaultCurrency, income / 12, privacyMode)}</td>
+                    <td className="amount-cell">{formatAmount(tentativeDefaultCurrency, income, privacyMode)}</td>
+                    <td className="amount-cell">{formatAmount(tentativeDefaultCurrency, income / 12, privacyMode)}</td>
                   </tr>
                 </>
               )}
@@ -318,8 +330,8 @@ const CostsAnalysisPage: FC = () => {
                 <th>Fixed Costs</th>
                 {privacyMode ? (
                   <>
-                    <th className="header-label">Yearly ({defaultCurrency.symbol})</th>
-                    <th className="header-label">Monthly ({defaultCurrency.symbol})</th>
+                    <th className="header-label">Yearly ({tentativeDefaultCurrency.symbol})</th>
+                    <th className="header-label">Monthly ({tentativeDefaultCurrency.symbol})</th>
                   </>
                 ) : (
                   <th colSpan={2}>
@@ -343,14 +355,14 @@ const CostsAnalysisPage: FC = () => {
               </tr>
               <tr className="section-header">
                 <th>Totals</th>
-                <td className="amount-cell">{formatAmount(defaultCurrency, fixedAmount)}</td>
-                <td className="amount-cell">{formatAmount(defaultCurrency, fixedAmount / 12)}</td>
+                <td className="amount-cell">{formatAmount(tentativeDefaultCurrency, fixedAmount)}</td>
+                <td className="amount-cell">{formatAmount(tentativeDefaultCurrency, fixedAmount / 12)}</td>
               </tr>
               {[...fixedCosts.entries()].map((entry) => (
                 <tr key={`fixed-${entry[0]}`}>
                   <td>{entry[0]}</td>
-                  <td className="amount-cell">{formatAmount(defaultCurrency, entry[1])}</td>
-                  <td className="amount-cell">{formatAmount(defaultCurrency, entry[1] / 12)}</td>
+                  <td className="amount-cell">{formatAmount(tentativeDefaultCurrency, entry[1])}</td>
+                  <td className="amount-cell">{formatAmount(tentativeDefaultCurrency, entry[1] / 12)}</td>
                 </tr>
               ))}
               <tr style={{ height: '1rem' }} />
@@ -358,8 +370,8 @@ const CostsAnalysisPage: FC = () => {
                 <th>Variable Costs</th>
                 {privacyMode ? (
                   <>
-                    <th className="header-label">Yearly ({defaultCurrency.symbol})</th>
-                    <th className="header-label">Monthly ({defaultCurrency.symbol})</th>
+                    <th className="header-label">Yearly ({tentativeDefaultCurrency.symbol})</th>
+                    <th className="header-label">Monthly ({tentativeDefaultCurrency.symbol})</th>
                   </>
                 ) : (
                   <th colSpan={2}>
@@ -383,14 +395,14 @@ const CostsAnalysisPage: FC = () => {
               </tr>
               <tr className="section-header">
                 <th>Totals</th>
-                <td className="amount-cell">{formatAmount(defaultCurrency, variableAmount)}</td>
-                <td className="amount-cell">{formatAmount(defaultCurrency, variableAmount / 12)}</td>
+                <td className="amount-cell">{formatAmount(tentativeDefaultCurrency, variableAmount)}</td>
+                <td className="amount-cell">{formatAmount(tentativeDefaultCurrency, variableAmount / 12)}</td>
               </tr>
               {[...variableCosts.entries()].map((entry) => (
                 <tr key={`variable-${entry[0]}`}>
                   <td>{entry[0]}</td>
-                  <td className="amount-cell">{formatAmount(defaultCurrency, entry[1])}</td>
-                  <td className="amount-cell">{formatAmount(defaultCurrency, entry[1] / 12)}</td>
+                  <td className="amount-cell">{formatAmount(tentativeDefaultCurrency, entry[1])}</td>
+                  <td className="amount-cell">{formatAmount(tentativeDefaultCurrency, entry[1] / 12)}</td>
                 </tr>
               ))}
               {!privacyMode && (
@@ -419,10 +431,14 @@ const CostsAnalysisPage: FC = () => {
                   <tr>
                     <td>All</td>
                     <td className="amount-cell">
-                      {formatAmount(defaultCurrency, income - variableAmount - fixedAmount, privacyMode)}
+                      {formatAmount(tentativeDefaultCurrency, income - variableAmount - fixedAmount, privacyMode)}
                     </td>
                     <td className="amount-cell">
-                      {formatAmount(defaultCurrency, (income - variableAmount - fixedAmount) / 12, privacyMode)}
+                      {formatAmount(
+                        tentativeDefaultCurrency,
+                        (income - variableAmount - fixedAmount) / 12,
+                        privacyMode,
+                      )}
                     </td>
                   </tr>
                 </>

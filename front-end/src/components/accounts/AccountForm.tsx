@@ -2,7 +2,7 @@ import { TextField, Typography } from '@mui/material'
 import { FC, FormEvent, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import styled from 'styled-components'
 
-import Account from '../../domain/model/account'
+import Account, { Balance } from '../../domain/model/account'
 import { AccountServiceContext, CurrencyServiceContext } from '../../service/ServiceContext'
 import CurrencyPicker from '../currencies/CurrencyPicker'
 import FormWrapper from '../FormWrapper'
@@ -135,10 +135,9 @@ const AccountForm: FC<Props> = (props) => {
 
     onSubmit({
       name,
-      initialAmounts: initialAmounts.map((ia) => ({
-        currencyId: ia.currencyId!,
-        value: Math.floor(parseFloat(`0${ia.value.value.replace(',', '.')}`) * 100),
-      })),
+      initialAmounts: initialAmounts.map(
+        (ia) => new Balance(ia.currencyId!, Math.floor(parseFloat(`0${ia.value.value.replace(',', '.')}`) * 100)),
+      ),
       isMine,
       type: type.trim(),
       financialInstitution: financialInstitution.trim(),

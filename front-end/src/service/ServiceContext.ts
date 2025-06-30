@@ -14,8 +14,9 @@ import Unique, { IdIdentifier } from '../domain/model/Unique'
 import { UpdateExchangeRateFields } from '../store/remote/dto/exchangeRate'
 
 const nilPersistence = {
+  initialized: false,
   state: [],
-  create<Item extends Unique<unknown>, IdentifiableFields, UpdatableFields>(
+  create<IdType, Item extends Unique<IdType, Item>, IdentifiableFields, UpdatableFields>(
     _data: UpdatableFields,
     _identity?: IdentifiableFields,
   ): Promise<Item> {
@@ -48,7 +49,7 @@ export const CurrencyServiceContext = createContext<
   BasicCrudService<CurrencyID, Currency, IdIdentifier, CurrencyUpdatableFields> & CurrencyPersistenceAugmentation
 >({
   ...nilPersistence,
-  get defaultCurrency(): Currency | null {
+  get tentativeDefaultCurrency(): Currency | null {
     return null
   },
 })

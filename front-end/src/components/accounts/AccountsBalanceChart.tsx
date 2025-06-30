@@ -37,7 +37,7 @@ const AccountsBalanceChart: FC<Props> = (props) => {
   const { fromDate, toDate, filterByAccounts, groupBy, baselineConfig = 'none', scale = 'absolute' } = props
   const theme = useTheme()
 
-  const { defaultCurrency } = useContext(CurrencyServiceContext)
+  const { tentativeDefaultCurrency } = useContext(CurrencyServiceContext)
   const { augmentedTransactions, exchangeRateOnDay } = useContext(MixedAugmentation)
   const { myOwnAccounts } = useContext(AccountServiceContext)
   const { privacyMode } = useContext(DrawerContext)
@@ -72,7 +72,7 @@ const AccountsBalanceChart: FC<Props> = (props) => {
   )
 
   return useMemo(() => {
-    if (defaultCurrency === null) return null
+    if (tentativeDefaultCurrency === null) return null
 
     const diffDays = differenceInDays(toDate, fromDate)
     const diffWeeks = differenceInWeeks(toDate, fromDate)
@@ -171,8 +171,8 @@ const AccountsBalanceChart: FC<Props> = (props) => {
       let marketValue = 0
       for (const [currencyId, amount] of groupData.assets) {
         let factor = 1
-        if (currencyId !== defaultCurrency.id) {
-          factor = exchangeRateOnDay(currencyId, defaultCurrency.id, upTo)
+        if (currencyId !== tentativeDefaultCurrency.id) {
+          factor = exchangeRateOnDay(currencyId, tentativeDefaultCurrency.id, upTo)
         }
         marketValue += amount * factor
       }
@@ -213,12 +213,12 @@ const AccountsBalanceChart: FC<Props> = (props) => {
               transaction.category?.name === 'Financial income'
             )
           ) {
-            if (transaction.receiverCurrencyId === defaultCurrency.id) {
+            if (transaction.receiverCurrencyId === tentativeDefaultCurrency.id) {
               data.bookValue += transaction.receiverAmount
-            } else if (transaction.currencyId === defaultCurrency.id) {
+            } else if (transaction.currencyId === tentativeDefaultCurrency.id) {
               data.bookValue += transaction.amount
             } else {
-              const factor = exchangeRateOnDay(transaction.receiverCurrencyId, defaultCurrency.id, upTo)
+              const factor = exchangeRateOnDay(transaction.receiverCurrencyId, tentativeDefaultCurrency.id, upTo)
               data.bookValue += transaction.receiverAmount * factor
             }
           }
@@ -243,12 +243,12 @@ const AccountsBalanceChart: FC<Props> = (props) => {
               transaction.category?.name === 'Financial income'
             )
           ) {
-            if (transaction.receiverCurrencyId === defaultCurrency.id) {
+            if (transaction.receiverCurrencyId === tentativeDefaultCurrency.id) {
               data.bookValue -= transaction.receiverAmount
-            } else if (transaction.currencyId === defaultCurrency.id) {
+            } else if (transaction.currencyId === tentativeDefaultCurrency.id) {
               data.bookValue -= transaction.amount
             } else {
-              const factor = exchangeRateOnDay(transaction.currencyId, defaultCurrency.id, upTo)
+              const factor = exchangeRateOnDay(transaction.currencyId, tentativeDefaultCurrency.id, upTo)
               data.bookValue -= transaction.amount * factor
             }
           }
@@ -265,8 +265,8 @@ const AccountsBalanceChart: FC<Props> = (props) => {
         let marketValue = 0
         for (const [currencyId, amount] of groupData.assets) {
           let factor = 1
-          if (currencyId !== defaultCurrency.id) {
-            factor = exchangeRateOnDay(currencyId, defaultCurrency.id, upTo)
+          if (currencyId !== tentativeDefaultCurrency.id) {
+            factor = exchangeRateOnDay(currencyId, tentativeDefaultCurrency.id, upTo)
           }
           marketValue += amount * factor
         }
@@ -319,7 +319,7 @@ const AccountsBalanceChart: FC<Props> = (props) => {
         <CustomChart
           data={data}
           keys={[...groups.keys()].sort((a, b) => a.localeCompare(b))}
-          valueFormat={(value) => `${formatFull(defaultCurrency, value, privacyMode)}`}
+          valueFormat={(value) => `${formatFull(tentativeDefaultCurrency, value, privacyMode)}`}
           margin={{ top: 20, right: 25, bottom: 80, left: 70 }}
           showGlobalBaseline={baselineConfig === 'showGlobalBaseline'}
           showIndividualBaselines={baselineConfig === 'showIndividualBaselines'}
@@ -343,7 +343,7 @@ const AccountsBalanceChart: FC<Props> = (props) => {
               }
               return privacyMode
                 ? ''
-                : ((i as number) / Math.pow(10, defaultCurrency?.decimalPoints)).toLocaleString(undefined, {
+                : ((i as number) / Math.pow(10, tentativeDefaultCurrency?.decimalPoints)).toLocaleString(undefined, {
                     notation: 'compact',
                   })
             },
@@ -431,7 +431,7 @@ const AccountsBalanceChart: FC<Props> = (props) => {
                           color: totalGain < 0 ? theme.palette.error.light : theme.palette.success.light,
                         }}
                       >
-                        Total Gains: {formatFull(defaultCurrency, totalGain, privacyMode)}
+                        Total Gains: {formatFull(tentativeDefaultCurrency, totalGain, privacyMode)}
                       </div>
                     </div>
                   </div>
@@ -442,7 +442,7 @@ const AccountsBalanceChart: FC<Props> = (props) => {
         />
       </>
     )
-  }, [defaultCurrency, filteredAccounts, groupBy, fromDate, toDate, group, privacyMode, exchangeRateOnDay])
+  }, [tentativeDefaultCurrency, filteredAccounts, groupBy, fromDate, toDate, group, privacyMode, exchangeRateOnDay])
 }
 
 export default AccountsBalanceChart

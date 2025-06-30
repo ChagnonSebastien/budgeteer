@@ -33,7 +33,7 @@ interface Props {
 
 const TrendsChart: FC<Props> = (props) => {
   const { categories, years = 1, grouping = 'months' } = props
-  const { defaultCurrency } = useContext(CurrencyServiceContext)
+  const { tentativeDefaultCurrency } = useContext(CurrencyServiceContext)
   const { augmentedTransactions, exchangeRateOnDay } = useContext(MixedAugmentation)
   const { root } = useContext(CategoryServiceContext)
   const { privacyMode } = useContext(DrawerContext)
@@ -54,7 +54,7 @@ const TrendsChart: FC<Props> = (props) => {
   }, [augmentedTransactions, categories, root])
 
   const data = useMemo(() => {
-    if (defaultCurrency === null || filteredTransactions.length === 0) return null
+    if (tentativeDefaultCurrency === null || filteredTransactions.length === 0) return null
     const today = new Date()
     let toDate = addMonths(today, 1)
     toDate.setDate(1)
@@ -108,8 +108,8 @@ const TrendsChart: FC<Props> = (props) => {
 
         if (t.receiver?.isMine) {
           let multiplier = 1
-          if (t.receiverCurrencyId !== defaultCurrency.id) {
-            multiplier = exchangeRateOnDay(t.receiverCurrencyId, defaultCurrency.id, t.date)
+          if (t.receiverCurrencyId !== tentativeDefaultCurrency.id) {
+            multiplier = exchangeRateOnDay(t.receiverCurrencyId, tentativeDefaultCurrency.id, t.date)
           }
 
           bucket += t.receiverAmount * multiplier
@@ -117,8 +117,8 @@ const TrendsChart: FC<Props> = (props) => {
 
         if (t.sender?.isMine) {
           let multiplier = 1
-          if (t.currencyId !== defaultCurrency.id) {
-            multiplier = exchangeRateOnDay(t.currencyId, defaultCurrency.id, t.date)
+          if (t.currencyId !== tentativeDefaultCurrency.id) {
+            multiplier = exchangeRateOnDay(t.currencyId, tentativeDefaultCurrency.id, t.date)
           }
 
           bucket -= t.amount * multiplier
@@ -132,7 +132,7 @@ const TrendsChart: FC<Props> = (props) => {
     }
 
     return data
-  }, [filteredTransactions, defaultCurrency, grouping])
+  }, [filteredTransactions, tentativeDefaultCurrency, grouping])
 
   const label = useCallback(
     (d: Date): string => {
@@ -184,7 +184,7 @@ const TrendsChart: FC<Props> = (props) => {
     )
   }, [data, years, grouping])
 
-  return data && defaultCurrency ? (
+  return data && tentativeDefaultCurrency ? (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
       {/* Trendline overlay */}
       {visibleData.length >= 2 && trendlineData && (
@@ -275,7 +275,10 @@ const TrendsChart: FC<Props> = (props) => {
           format: (i) =>
             privacyMode
               ? ''
-              : formatAmount(defaultCurrency, i, privacyMode).slice(0, -((defaultCurrency?.decimalPoints ?? 2) + 1)),
+              : formatAmount(tentativeDefaultCurrency, i, privacyMode).slice(
+                  0,
+                  -((tentativeDefaultCurrency?.decimalPoints ?? 2) + 1),
+                ),
         }}
         tooltip={(props) => (
           <div className="p-2 px-3 bg-black/[0.85] rounded flex flex-col gap-1">
@@ -287,7 +290,7 @@ const TrendsChart: FC<Props> = (props) => {
                   color: props.value! < 0 ? theme.palette.error.light : theme.palette.success.light,
                 }}
               >
-                {formatFull(defaultCurrency, props.value, privacyMode)}
+                {formatFull(tentativeDefaultCurrency, props.value, privacyMode)}
               </div>
             )}
           </div>

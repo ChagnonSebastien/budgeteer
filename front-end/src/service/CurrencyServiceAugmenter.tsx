@@ -5,7 +5,7 @@ import { UserContext } from '../App'
 import Currency, { CurrencyID } from '../domain/model/currency'
 
 export interface CurrencyPersistenceAugmentation {
-  defaultCurrency: Currency | null
+  tentativeDefaultCurrency: Currency | null
 }
 
 export const CurrencyPersistenceAugmenter: FC<AugmenterProps<CurrencyID, Currency, CurrencyPersistenceAugmentation>> = (
@@ -14,7 +14,7 @@ export const CurrencyPersistenceAugmenter: FC<AugmenterProps<CurrencyID, Currenc
   const { augment, state } = props
   const { default_currency } = useContext(UserContext)
 
-  const defaultCurrency = useMemo(() => state.find((c) => c.id === default_currency)!, [state])
+  const defaultCurrency = useMemo(() => state.find((c) => c.id === default_currency) ?? null, [default_currency, state])
 
-  return augment({ defaultCurrency })
+  return augment({ tentativeDefaultCurrency: defaultCurrency })
 }

@@ -31,6 +31,8 @@
     "@types/styled-components": "^5.1.34",
     "date-fns": "^3.6.0",
     "dayjs": "^1.11.13",
+    "dexie": "^4.0.11",
+    "dexie-react-hooks": "^1.1.7",
     "monaco-editor": "^0.52.2",
     "papaparse": "^5.4.1",
     "react": "^18.3.1",

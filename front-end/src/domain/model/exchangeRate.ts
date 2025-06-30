@@ -9,7 +9,7 @@ const formatDate = (date: Date): string => {
 
 export type ExchangeRateId = string
 
-export class ExchangeRateIdentifiableFields implements Unique<ExchangeRateId> {
+export class ExchangeRateIdentifiableFields implements Unique<ExchangeRateId, ExchangeRateIdentifiableFields> {
   constructor(
     public readonly currencyA: number,
     public readonly currencyB: number,
@@ -18,6 +18,12 @@ export class ExchangeRateIdentifiableFields implements Unique<ExchangeRateId> {
 
   get id(): ExchangeRateId {
     return `${this.currencyA},${this.currencyB},${formatDate(this.date)}`
+  }
+
+  equals(other: ExchangeRateIdentifiableFields): boolean {
+    if (this.currencyA !== other.currencyA) return false
+    if (this.currencyB !== other.currencyB) return false
+    return this.date === other.date
   }
 }
 
@@ -31,6 +37,13 @@ export default class ExchangeRate extends ExchangeRateIdentifiableFields {
       exchangeRateIdentifiableFields.currencyB,
       exchangeRateIdentifiableFields.date,
     )
+  }
+
+  override equals(other: ExchangeRate): boolean {
+    if (this.currencyA !== other.currencyA) return false
+    if (this.currencyB !== other.currencyB) return false
+    if (this.date.getTime() !== other.date.getTime()) return false
+    return this.rate === other.rate
   }
 }
 

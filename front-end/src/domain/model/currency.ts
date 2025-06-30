@@ -5,11 +5,16 @@ export class RateAutoupdateSettings {
     public readonly script: string,
     public readonly enabled: boolean,
   ) {}
+
+  equals(other: RateAutoupdateSettings): boolean {
+    if (this.script !== other.script) return false
+    return this.enabled === other.enabled
+  }
 }
 
 export type CurrencyID = number
 
-export default class Currency implements NamedItem<CurrencyID> {
+export default class Currency implements NamedItem<CurrencyID, Currency> {
   constructor(
     public readonly id: CurrencyID,
     public readonly name: string,
@@ -20,6 +25,14 @@ export default class Currency implements NamedItem<CurrencyID> {
 
   hasName(name: string): boolean {
     return this.name.toLowerCase() === name.toLowerCase()
+  }
+
+  equals(other: Currency): boolean {
+    if (this.id !== other.id) return false
+    if (this.name !== other.name) return false
+    if (this.symbol !== other.symbol) return false
+    if (this.decimalPoints !== other.decimalPoints) return false
+    return this.rateAutoupdateSettings.equals(other.rateAutoupdateSettings)
   }
 }
 

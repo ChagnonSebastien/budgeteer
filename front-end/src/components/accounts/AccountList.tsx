@@ -102,7 +102,7 @@ export const AccountList = (props: Props) => {
 
   const { augmentedTransactions: transactions, accountBalances, exchangeRateOnDay } = useContext(MixedAugmentation)
   const currencyContext = useContext(CurrencyServiceContext)
-  const defaultCurrency = currencyContext.defaultCurrency
+  const defaultCurrency = currencyContext.tentativeDefaultCurrency
   const { privacyMode } = useContext(DrawerContext)
   const [activeTab, setActiveTab] = useState<tabs>('mine')
   const myOwnAccounts = useMemo(() => accounts.filter((account) => account.isMine), [accounts])

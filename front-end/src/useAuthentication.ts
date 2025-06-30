@@ -2,15 +2,18 @@ import { Network } from '@capacitor/network'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import User from './domain/model/user'
+import IndexedDB from './store/local/indexedDb/db'
 import UserStore from './UserStore'
 
 const serverUrl = import.meta.env.VITE_BACKEND_URL || window.location.origin
 
 const oidcLogin = () => {
+  IndexedDB.delete()
   window.location.href = `${serverUrl}/auth/login`
 }
 
 const oidcLogout = () => {
+  IndexedDB.delete()
   window.location.href = `${serverUrl}/auth/logout`
 }
 

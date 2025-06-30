@@ -6,7 +6,7 @@ import dayjs, { Dayjs } from 'dayjs'
 import { FC, FormEvent, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import styled from 'styled-components'
 
-import Currency, { CurrencyUpdatableFields } from '../../domain/model/currency'
+import Currency, { CurrencyUpdatableFields, RateAutoupdateSettings } from '../../domain/model/currency'
 import ExchangeRate, { ExchangeRateIdentifiableFields } from '../../domain/model/exchangeRate'
 import MixedAugmentation from '../../service/MixedAugmentation'
 import { CurrencyServiceContext } from '../../service/ServiceContext'
@@ -70,7 +70,7 @@ getRate()
 const CurrencyForm: FC<Props> = (props) => {
   const { initialCurrency, onSubmit, submitText, scriptRunner } = props
 
-  const { state: currencies, defaultCurrency } = useContext(CurrencyServiceContext)
+  const { state: currencies, tentativeDefaultCurrency } = useContext(CurrencyServiceContext)
   const { exchangeRates, exchangeRateOnDay, augmentedTransactions } = useContext(MixedAugmentation)
 
   const [name, setName] = useState(initialCurrency?.name ?? '')
@@ -100,24 +100,27 @@ const CurrencyForm: FC<Props> = (props) => {
   const [showDateModal, setShowDateModal] = useState(false)
 
   const showExchangeRate = useMemo(() => {
-    return typeof initialCurrency === 'undefined' && defaultCurrency !== null
-  }, [initialCurrency, defaultCurrency])
+    return typeof initialCurrency === 'undefined' && tentativeDefaultCurrency !== null
+  }, [initialCurrency, tentativeDefaultCurrency])
 
   const { monthlyRates, minRate } = useMemo(() => {
-    if (!initialCurrency || !defaultCurrency) {
+    if (!initialCurrency || !tentativeDefaultCurrency) {
       return { monthlyRates: [], minRate: 0 }
     }
 
-    let rates = exchangeRates.get(initialCurrency.id)?.get(defaultCurrency.id)
-    if (initialCurrency.id === defaultCurrency.id) {
+    let rates = exchangeRates.get(initialCurrency.id)?.get(tentativeDefaultCurrency.id)
+    if (initialCurrency.id === tentativeDefaultCurrency.id) {
       rates = [
-        new ExchangeRate(new ExchangeRateIdentifiableFields(defaultCurrency.id, defaultCurrency.id, new Date()), 1),
+        new ExchangeRate(
+          new ExchangeRateIdentifiableFields(tentativeDefaultCurrency.id, tentativeDefaultCurrency.id, new Date()),
+          1,
+        ),
       ]
     }
     if (typeof rates === 'undefined' || rates.length === 0) return { monthlyRates: [], minRate: 0 }
 
     let startDate = new Date(Math.min(...rates.map((r) => new Date(r.date).getTime())))
-    if (initialCurrency.id === defaultCurrency.id) {
+    if (initialCurrency.id === tentativeDefaultCurrency.id) {
       startDate = augmentedTransactions[augmentedTransactions.length - 1].date
     }
     startDate.setDate(1)
@@ -130,9 +133,9 @@ const CurrencyForm: FC<Props> = (props) => {
     while (currentMonth <= currentDate) {
       const monthTime = currentMonth.getTime()
       const closestRate =
-        initialCurrency.id === defaultCurrency.id
+        initialCurrency.id === tentativeDefaultCurrency.id
           ? 1
-          : exchangeRateOnDay(initialCurrency.id, defaultCurrency.id, currentMonth)
+          : exchangeRateOnDay(initialCurrency.id, tentativeDefaultCurrency.id, currentMonth)
 
       dataPoints.push({
         x: monthTime,
@@ -144,7 +147,7 @@ const CurrencyForm: FC<Props> = (props) => {
 
     const minRate = Math.min(...dataPoints.map((d) => d.y))
     return { monthlyRates: dataPoints, minRate }
-  }, [initialCurrency, defaultCurrency])
+  }, [initialCurrency, tentativeDefaultCurrency])
 
   const [showErrorToast, setShowErrorToast] = useState('')
   const [errors, setErrors] = useState<{
@@ -366,18 +369,15 @@ const CurrencyForm: FC<Props> = (props) => {
         name,
         decimalPoints: parseInt(decimalPoints),
         symbol: symbol,
-        rateAutoupdateSettings: {
-          script: getRateScript,
-          enabled: rateAutoupdateEnabled,
-        },
+        rateAutoupdateSettings: new RateAutoupdateSettings(getRateScript, rateAutoupdateEnabled),
       },
-      showExchangeRate && defaultCurrency != null
+      showExchangeRate && tentativeDefaultCurrency != null
         ? [
             {
-              otherCurrency: defaultCurrency.id,
+              otherCurrency: tentativeDefaultCurrency.id,
               rate:
                 parseFloat(initialExchangeRate.replaceAll(',', '.')) *
-                Math.pow(10, defaultCurrency.decimalPoints - parseInt(decimalPoints)),
+                Math.pow(10, tentativeDefaultCurrency.decimalPoints - parseInt(decimalPoints)),
               date: initialExchangeRateDate,
             },
           ]
@@ -520,7 +520,7 @@ const CurrencyForm: FC<Props> = (props) => {
                 }
               />
               <div style={{ margin: '0 1rem', display: 'flex', alignItems: 'center', flexShrink: 0 }}>
-                {defaultCurrency!.symbol} on
+                {tentativeDefaultCurrency!.symbol} on
               </div>
               <div
                 style={{
@@ -560,7 +560,7 @@ const CurrencyForm: FC<Props> = (props) => {
           </div>
         </>
       )}
-      {defaultCurrency?.id !== initialCurrency?.id && initialCurrency && (
+      {tentativeDefaultCurrency?.id !== initialCurrency?.id && initialCurrency && (
         <>
           <Typography variant="subtitle2" className="overview-content-label">
             EXCHANGE RATE HISTORY
@@ -603,7 +603,7 @@ const CurrencyForm: FC<Props> = (props) => {
           </ChartContainer>
         </>
       )}
-      {defaultCurrency?.id !== initialCurrency?.id && (
+      {tentativeDefaultCurrency?.id !== initialCurrency?.id && (
         <>
           <Typography variant="subtitle2" className="overview-content-label">
             EXCHANGE RATE FETCHER
@@ -635,7 +635,7 @@ const CurrencyForm: FC<Props> = (props) => {
               <Typography color={rateScriptError === null ? 'success' : 'error'}>
                 {rateScriptError === null && scriptOutput !== null && (
                   <>
-                    1 {symbol} = {scriptOutput} {defaultCurrency?.symbol ?? '$'}
+                    1 {symbol} = {scriptOutput} {tentativeDefaultCurrency?.symbol ?? '$'}
                   </>
                 )}
                 {rateScriptError !== null && rateScriptError}
