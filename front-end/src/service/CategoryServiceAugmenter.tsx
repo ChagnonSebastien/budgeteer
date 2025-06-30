@@ -4,20 +4,21 @@ import { AugmenterProps } from './BasicCrudServiceWithPersistence'
 import Category, { AugmentedCategory, CategoryID } from '../domain/model/category'
 
 export interface CategoryPersistenceAugmentation {
-  readonly root: Category
+  readonly tentativeRoot: Category | null
   readonly subCategories: { [parent: CategoryID]: Category[] }
   readonly augmentedCategories: AugmentedCategory[]
+  readonly augmentedVersion: number
 }
 
 export const CategoryPersistenceAugmenter: FC<AugmenterProps<CategoryID, Category, CategoryPersistenceAugmentation>> = (
   props,
 ) => {
-  const { augment, state: categories } = props
+  const { augment, state: categories, version } = props
 
-  const root = useMemo(() => categories.find((c) => c.parentId === null)!, [categories])
+  const augmentedData = useMemo<CategoryPersistenceAugmentation>(() => {
+    const root = categories.find((c) => c.parentId === null) ?? null
 
-  const subCategories = useMemo(() => {
-    return (
+    const subCategories =
       categories?.reduce<{ [parent: CategoryID]: Category[] }>((tree, c) => {
         if (c.parentId === null) return tree
         return {
@@ -25,11 +26,8 @@ export const CategoryPersistenceAugmenter: FC<AugmenterProps<CategoryID, Categor
           [c.parentId]: [...(tree[c.parentId] ?? []), c],
         }
       }, {}) ?? {}
-    )
-  }, [categories])
 
-  const augmentedCategories = useMemo<AugmentedCategory[]>(() => {
-    if (!root) return []
+    if (!root) return { tentativeRoot: root, subCategories, augmentedCategories: [], augmentedVersion: -1 }
     const augmentChildren = (raw: Category, parentCategory: Category | undefined): AugmentedCategory[] => {
       const augmented = new AugmentedCategory(raw, parentCategory)
       const augmentedChildren = (subCategories[raw.id] ?? [])
@@ -38,8 +36,10 @@ export const CategoryPersistenceAugmenter: FC<AugmenterProps<CategoryID, Categor
       return [augmented, ...augmentedChildren]
     }
 
-    return augmentChildren(root, undefined)
-  }, [categories, subCategories, root])
+    const augmentedCategories = augmentChildren(root, undefined)
 
-  return augment({ root, subCategories, augmentedCategories })
+    return { tentativeRoot: root, subCategories, augmentedCategories, augmentedVersion: version }
+  }, [categories, version])
+
+  return augment(augmentedData)
 }

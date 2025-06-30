@@ -9,7 +9,8 @@ export interface RateOnDate {
 }
 
 export interface ExchangeRatePersistenceAugmentation {
-  exchangeRates: Map<number, Map<number, RateOnDate[]>>
+  readonly exchangeRates: Map<number, Map<number, RateOnDate[]>>
+  readonly augmentedVersion: number
 }
 
 export const addComparison = (
@@ -36,16 +37,16 @@ export const addComparison = (
 export const ExchangeRatePersistenceAugmenter: FC<
   AugmenterProps<ExchangeRateId, ExchangeRate, ExchangeRatePersistenceAugmentation>
 > = (props) => {
-  const { augment, state } = props
+  const { augment, state, version } = props
 
-  const exchangeRates = useMemo(() => {
-    const rates = new Map<number, Map<number, RateOnDate[]>>()
+  const augmentedData = useMemo(() => {
+    const exchangeRates = new Map<number, Map<number, RateOnDate[]>>()
     state.forEach((rate) => {
-      addComparison(rates, rate.currencyA, rate.currencyB, { rate: rate.rate, date: rate.date })
-      addComparison(rates, rate.currencyB, rate.currencyA, { rate: 1 / rate.rate, date: rate.date })
+      addComparison(exchangeRates, rate.currencyA, rate.currencyB, { rate: rate.rate, date: rate.date })
+      addComparison(exchangeRates, rate.currencyB, rate.currencyA, { rate: 1 / rate.rate, date: rate.date })
     })
 
-    for (const specificRates of rates.values()) {
+    for (const specificRates of exchangeRates.values()) {
       for (const [child, list] of specificRates.entries()) {
         specificRates.set(
           child,
@@ -54,8 +55,8 @@ export const ExchangeRatePersistenceAugmenter: FC<
       }
     }
 
-    return rates
-  }, [state])
+    return { exchangeRates, augmentedVersion: version }
+  }, [state, version])
 
-  return augment({ exchangeRates })
+  return augment(augmentedData)
 }

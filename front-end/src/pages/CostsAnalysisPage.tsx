@@ -35,7 +35,7 @@ const userStore = new UserStore(localStorage)
 const CostsAnalysisPage: FC = () => {
   const { augmentedTransactions: transactions, exchangeRateOnDay } = useContext(MixedAugmentation)
   const { tentativeDefaultCurrency } = useContext(CurrencyServiceContext)
-  const { root } = useContext(CategoryServiceContext)
+  const { tentativeRoot } = useContext(CategoryServiceContext)
   const { privacyMode } = useContext(DrawerContext)
   const { IconLib } = useContext(IconToolsContext)
 
@@ -45,7 +45,7 @@ const CostsAnalysisPage: FC = () => {
   const [showSetup, setShowSetup] = useState(false)
   const [showOptions, setShowOptions] = useState(false)
   const [viewType, setViewType] = useState<'table' | 'chart'>(query.get('view') === 'chart' ? 'chart' : 'table')
-  const [incomeCategory, setIncomeCategory] = useState<number>(userStore.getIncomeCategoryId() ?? root.id)
+  const [incomeCategory, setIncomeCategory] = useState<number>(userStore.getIncomeCategoryId() ?? tentativeRoot.id)
   const [grossIncome, setGrossIncome] = useState<number>(userStore.getGrossIncome() ?? 0)
   const [contentRef, setContentRef] = useState<HTMLDivElement | null>(null)
 
@@ -111,7 +111,7 @@ const CostsAnalysisPage: FC = () => {
         }
 
         let category = currentValue.category!
-        while (category.parentId !== root.id) {
+        while (category.parentId !== tentativeRoot.id) {
           category = category.parent!
         }
 
@@ -132,7 +132,7 @@ const CostsAnalysisPage: FC = () => {
         }
 
         let category = currentValue.category!
-        while (category.parentId !== root.id) {
+        while (category.parentId !== tentativeRoot.id) {
           category = category.parent!
         }
 
@@ -163,8 +163,8 @@ const CostsAnalysisPage: FC = () => {
         }
 
         let category = currentValue.category!
-        if (category.id !== root.id) {
-          while (category.parentId !== root.id) {
+        if (category.id !== tentativeRoot.id) {
+          while (category.parentId !== tentativeRoot.id) {
             category = category.parent!
           }
         }
@@ -186,7 +186,7 @@ const CostsAnalysisPage: FC = () => {
         }
 
         let category = currentValue.category!
-        while (category.parentId !== root.id) {
+        while (category.parentId !== tentativeRoot.id) {
           category = category.parent!
         }
 

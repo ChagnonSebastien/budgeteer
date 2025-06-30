@@ -73,10 +73,13 @@ type TransactionDB = {
   transactions: EntityTable<Transaction, 'id'>
 }
 
+export type ActionType = 'create' | 'update' | 'delete'
+
 interface Action {
   id: number
+  time: number
   itemType: string
-  actionType: string
+  actionType: ActionType
   identity: unknown
   data: unknown
 }
@@ -99,7 +102,7 @@ IndexedDB.version(1).stores({
   categories: '++id',
   exchangeRates: '[a+b+date]',
   transactions: '++id',
-  replay: '++id',
+  replay: '++id time',
 })
 
 export default IndexedDB

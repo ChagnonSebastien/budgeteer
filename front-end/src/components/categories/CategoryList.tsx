@@ -37,12 +37,12 @@ interface Props {
 
 export const CategoryList = (props: Props) => {
   const { categories, onSelect, onMultiSelect, selected = [], buttonText, onScrollProgress } = props
-  const { root, subCategories } = useContext(CategoryServiceContext)
+  const { tentativeRoot, subCategories } = useContext(CategoryServiceContext)
   const { IconLib } = useContext(IconToolsContext)
 
   const [open, setOpen] = useState<CategoryID[]>(() => {
     // Initialize with root and any parent categories of selected items
-    const openCategories = [root.id]
+    const openCategories = [tentativeRoot.id]
 
     // Find parent categories of selected items
     if (categories) {
@@ -51,7 +51,7 @@ export const CategoryList = (props: Props) => {
         if (!initialCategory) return
 
         let category = initialCategory
-        while (category.parentId && category.parentId !== root.id) {
+        while (category.parentId && category.parentId !== tentativeRoot.id) {
           openCategories.push(category.parentId)
           const parentCategory = categories.find((c) => c.id === category.parentId)
           if (!parentCategory) break
@@ -120,7 +120,7 @@ export const CategoryList = (props: Props) => {
     if (!categories) return ancestors
 
     let current = categories.find((c) => c.id === categoryId)
-    while (current?.parentId && current.parentId !== root.id) {
+    while (current?.parentId && current.parentId !== tentativeRoot.id) {
       ancestors.push(current.parentId)
       current = categories.find((c) => c.id === current?.parentId)
     }
@@ -169,7 +169,7 @@ export const CategoryList = (props: Props) => {
 
                 if (onMultiSelect) {
                   // If clicking root category and there are selections, clear them all
-                  if (category.id === root.id) {
+                  if (category.id === tentativeRoot.id) {
                     onMultiSelect([])
                     return
                   }
@@ -227,7 +227,7 @@ export const CategoryList = (props: Props) => {
   return (
     <CategoryListContainer>
       <ScrollableContent ref={scrollContainerRef} className="custom-scrollbar">
-        {renderCategory(root, onSelect ?? doNothing, 0)}
+        {renderCategory(tentativeRoot, onSelect ?? doNothing, 0)}
       </ScrollableContent>
     </CategoryListContainer>
   )

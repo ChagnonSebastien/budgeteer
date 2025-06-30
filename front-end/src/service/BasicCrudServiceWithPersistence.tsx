@@ -1,8 +1,8 @@
 import { Context, FC, ReactNode, useCallback, useEffect, useState } from 'react'
 
 import { BasicCrudService } from './BasicCrudService'
-import Unique from '../domain/model/Unique'
-import { ActionType } from '../store/local/ReplayStore'
+import Unique, { ItemType } from '../domain/model/Unique'
+import { ActionType } from '../store/local/IndexedDB'
 
 interface Store<IdType, Item extends Unique<IdType, Item>, ItemIdentifiableFields, ItemUpdatableFields> {
   getAll(): Promise<Item[]>
@@ -27,12 +27,13 @@ interface ReplayStore<ItemIdentifiableFields, ItemUpdatableFields> {
 
 export interface AugmenterProps<IdType, Item extends Unique<IdType, Item>, Augment> {
   state: Item[]
+  version: number
   augment: (b: Augment) => JSX.Element
 }
 
 interface Props<IdType, Item extends Unique<IdType, Item>, ItemIdentifiableFields, ItemUpdatableFields, Augmentation> {
   initialState?: Item[]
-  itemName: string
+  itemName: ItemType
   longTermStore: Store<IdType, Item, ItemIdentifiableFields, ItemUpdatableFields>
   localStore: LocalStore<IdType, Item, ItemIdentifiableFields, ItemUpdatableFields>
   actionStore: ReplayStore<ItemIdentifiableFields, ItemUpdatableFields>
@@ -67,16 +68,16 @@ export const BasicCrudServiceWithPersistence = <
     hasInternet,
   } = props
 
-  const [state, setState] = useState<Item[]>(initialState ?? [])
+  const [state, setState] = useState<{ version: number; data: Item[] }>({ version: 0, data: initialState ?? [] })
   const [initialized, setInitialized] = useState<boolean>(typeof initialState !== 'undefined')
 
   useEffect(() => {
     localStore.getAll().then((items) => {
       setState((prev) => {
         const ordered = items.sort(sorter)
-        if (prev.length != ordered.length) return ordered
+        if (prev.data.length != ordered.length) return { version: prev.version + 1, data: ordered }
         for (let i = 0; i < ordered.length; i += 1) {
-          if (!prev[i].equals(ordered[i])) return ordered
+          if (!prev.data[i].equals(ordered[i])) return { version: prev.version + 1, data: ordered }
         }
         return prev
       })
@@ -90,9 +91,9 @@ export const BasicCrudServiceWithPersistence = <
     longTermStore.getAll().then(async (items) => {
       setState((prev) => {
         const ordered = items.sort(sorter)
-        if (prev.length != ordered.length) return ordered
+        if (prev.data.length != ordered.length) return { version: prev.version + 1, data: ordered }
         for (let i = 0; i < ordered.length; i += 1) {
-          if (!prev[i].equals(ordered[i])) return ordered
+          if (!prev.data[i].equals(ordered[i])) return { version: prev.version + 1, data: ordered }
         }
         return prev
       })
@@ -111,7 +112,10 @@ export const BasicCrudServiceWithPersistence = <
         await actionStore.saveAction(itemName, 'create', identity, data)
       }
 
-      setState((prevState) => [...prevState, newItem].sort(sorter))
+      setState((prevState) => ({
+        data: [...prevState.data, newItem].sort(sorter),
+        version: prevState.version + 1,
+      }))
       return newItem
     },
     [hasInternet],
@@ -127,7 +131,10 @@ export const BasicCrudServiceWithPersistence = <
         await actionStore.saveAction(itemName, 'update', identity, data)
       }
 
-      setState((prevState) => prevState.map((c) => (c.id === identity.id ? { ...c, ...data } : c)).sort(sorter))
+      setState((prevState) => ({
+        data: prevState.data.map((c) => (c.id === identity.id ? { ...c, ...data } : c)).sort(sorter),
+        version: prevState.version + 1,
+      }))
     },
     [hasInternet],
   )
@@ -141,9 +148,12 @@ export const BasicCrudServiceWithPersistence = <
 
   return (
     <Augmenter
-      state={state}
+      version={state.version}
+      state={state.data}
       augment={(b) => (
-        <context.Provider value={{ initialized, state, create, update, delete: deleteItem, ...b }}>
+        <context.Provider
+          value={{ initialized, version: state.version, state: state.data, create, update, delete: deleteItem, ...b }}
+        >
           {children}
         </context.Provider>
       )}

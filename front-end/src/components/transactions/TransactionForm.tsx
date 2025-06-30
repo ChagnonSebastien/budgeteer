@@ -62,7 +62,7 @@ const TransactionForm: FC<Props> = (props) => {
   const { initialTransaction, onSubmit, submitText, type: rawType } = props
 
   const { create: createAccount } = useContext(AccountServiceContext)
-  const { state: categories, root: rootCategory } = useContext(CategoryServiceContext)
+  const { state: categories, tentativeRoot: rootCategory } = useContext(CategoryServiceContext)
   const { state: currencies } = useContext(CurrencyServiceContext)
   const { default_currency } = useContext(UserContext)
 

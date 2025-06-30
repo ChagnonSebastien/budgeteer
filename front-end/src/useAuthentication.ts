@@ -2,7 +2,7 @@ import { Network } from '@capacitor/network'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import User from './domain/model/user'
-import IndexedDB from './store/local/indexedDb/db'
+import IndexedDB from './store/local/IndexedDB'
 import UserStore from './UserStore'
 
 const serverUrl = import.meta.env.VITE_BACKEND_URL || window.location.origin

@@ -1,6 +1,4 @@
-import { BudgeteerDB } from './indexedDb/db'
-
-export type ActionType = 'create' | 'update' | 'delete'
+import { Action, ActionType, BudgeteerDB } from './IndexedDB'
 
 export default class ReplayStore {
   private db: BudgeteerDB
@@ -20,6 +18,16 @@ export default class ReplayStore {
       actionType: actionType,
       identity: identifier,
       data: data,
+      time: Date.now(),
     })
+  }
+
+  public async replayEvents(): Promise<IterableIterator<Action>> {
+    const items = await this.db.replay.orderBy('time').toArray()
+    return items[Symbol.iterator]()
+  }
+
+  public async clear(): Promise<void> {
+    await this.db.replay.clear()
   }
 }

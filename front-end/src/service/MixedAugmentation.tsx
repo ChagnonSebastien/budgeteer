@@ -1,5 +1,5 @@
 import { differenceInMilliseconds, isBefore } from 'date-fns'
-import React, { createContext, FC, JSX, useCallback, useContext, useMemo } from 'react'
+import React, { createContext, FC, JSX, useContext, useMemo } from 'react'
 
 import { addComparison, RateOnDate } from './ExcahngeRateServiceAugmenter'
 import {
@@ -91,11 +91,11 @@ export const MixedAugmentationProvider: FC<Props> = ({ children }) => {
     )
   }, [transactions, currencies, categories, accounts])
 
-  const exchangeRates = useMemo((): Map<number, Map<number, RateOnDate[]>> => {
-    const rates = new Map<number, Map<number, RateOnDate[]>>()
+  const augmentedData = useMemo(() => {
+    const exchangeRates = new Map<number, Map<number, RateOnDate[]>>()
     rawExchangeRates.forEach((value, key) => {
       const level1 = new Map()
-      rates.set(key, level1)
+      exchangeRates.set(key, level1)
       value.forEach((data, key2) => {
         level1.set(key2, [...data])
       })
@@ -103,17 +103,17 @@ export const MixedAugmentationProvider: FC<Props> = ({ children }) => {
 
     transactions.forEach((transaction) => {
       if (transaction.currencyId === transaction.receiverCurrencyId) return
-      addComparison(rates, transaction.currencyId, transaction.receiverCurrencyId, {
+      addComparison(exchangeRates, transaction.currencyId, transaction.receiverCurrencyId, {
         rate: transaction.receiverAmount / transaction.amount,
         date: transaction.date,
       })
-      addComparison(rates, transaction.receiverCurrencyId, transaction.currencyId, {
+      addComparison(exchangeRates, transaction.receiverCurrencyId, transaction.currencyId, {
         rate: transaction.amount / transaction.receiverAmount,
         date: transaction.date,
       })
     })
 
-    for (const specificRates of rates.values()) {
+    for (const specificRates of exchangeRates.values()) {
       for (const [child, list] of specificRates.entries()) {
         specificRates.set(
           child,
@@ -121,12 +121,13 @@ export const MixedAugmentationProvider: FC<Props> = ({ children }) => {
         )
       }
     }
-    return rates
-  }, [rawExchangeRates, transactions])
 
-  const exchangeRateOnDay = useCallback(
-    (from: number, to: number, date: Date): number => {
-      const specificRates = exchangeRates.get(from)!.get(to)!
+    const exchangeRateOnDay = (from: number, to: number, date: Date): number => {
+      const specificRates = exchangeRates.get(from)?.get(to)
+      if (typeof specificRates === 'undefined') {
+        return 1
+      }
+
       let beforeIndex = specificRates.findLastIndex((r) => isBefore(r.date, date))
       let afterIndex = beforeIndex + 1
       if (beforeIndex === -1) beforeIndex = 0
@@ -138,12 +139,13 @@ export const MixedAugmentationProvider: FC<Props> = ({ children }) => {
           ? 1
           : differenceInMilliseconds(before.date, date) / differenceInMilliseconds(before.date, after.date)
       return after.rate * ratio + before.rate * (1 - ratio)
-    },
-    [exchangeRates],
-  )
+    }
+
+    return { exchangeRates, exchangeRateOnDay }
+  }, [rawExchangeRates, transactions])
 
   return (
-    <MixedAugmentation.Provider value={{ accountBalances, augmentedTransactions, exchangeRates, exchangeRateOnDay }}>
+    <MixedAugmentation.Provider value={{ accountBalances, augmentedTransactions, ...augmentedData }}>
       {children}
     </MixedAugmentation.Provider>
   )

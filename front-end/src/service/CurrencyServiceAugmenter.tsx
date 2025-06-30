@@ -6,15 +6,22 @@ import Currency, { CurrencyID } from '../domain/model/currency'
 
 export interface CurrencyPersistenceAugmentation {
   tentativeDefaultCurrency: Currency | null
+  augmentedVersion: number
 }
 
 export const CurrencyPersistenceAugmenter: FC<AugmenterProps<CurrencyID, Currency, CurrencyPersistenceAugmentation>> = (
   props,
 ) => {
-  const { augment, state } = props
+  const { augment, state, version } = props
   const { default_currency } = useContext(UserContext)
 
-  const defaultCurrency = useMemo(() => state.find((c) => c.id === default_currency) ?? null, [default_currency, state])
+  const augmentedData = useMemo(
+    () => ({
+      tentativeDefaultCurrency: state.find((c) => c.id === default_currency) ?? null,
+      augmentedVersion: version,
+    }),
+    [default_currency, state, version],
+  )
 
-  return augment({ tentativeDefaultCurrency: defaultCurrency })
+  return augment(augmentedData)
 }

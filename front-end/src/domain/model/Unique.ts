@@ -6,3 +6,5 @@ export default interface Unique<T, TSelf extends Unique<T, TSelf>> {
 export interface IdIdentifier {
   id: number
 }
+
+export type ItemType = 'transaction' | 'currency' | 'category' | 'exchangeRate' | 'account'

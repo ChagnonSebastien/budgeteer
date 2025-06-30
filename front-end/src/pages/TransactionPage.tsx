@@ -78,7 +78,7 @@ const TransactionPage: FC = () => {
   const [clickedTransaction, setClickedTransaction] = useState<AugmentedTransaction | null>(null)
 
   const { augmentedTransactions } = useContext(MixedAugmentation)
-  const { state: categories, root: rootCategory } = useContext(CategoryServiceContext)
+  const { state: categories, tentativeRoot: rootCategory } = useContext(CategoryServiceContext)
 
   const [searchParams, setSearchParams] = useSearchParams()
   const [graphType, setGraphType] = useState<'line' | 'pie'>((searchParams.get('chart') as 'line' | 'pie') || 'line')

@@ -1,4 +1,4 @@
-import { BudgeteerDB, ExchangeRateCompositeKey } from './indexedDb/db'
+import { BudgeteerDB, ExchangeRateCompositeKey } from './IndexedDB'
 import ExchangeRate, {
   ExchangeRateIdentifiableFields,
   ExchangeRateUpdatableFields,
@@ -12,18 +12,15 @@ export default class ExchangeRateLocalStore {
   }
 
   public async getAll(): Promise<ExchangeRate[]> {
-    const rates: ExchangeRate[] = []
-    await this.db.exchangeRates.each((er) => {
-      rates.push(new ExchangeRate(new ExchangeRateIdentifiableFields(er.a, er.b, er.date), er.rate))
-    })
-    return rates
+    const exchangeRates = await this.db.exchangeRates.toCollection().toArray()
+    return exchangeRates.map((er) => new ExchangeRate(new ExchangeRateIdentifiableFields(er.a, er.b, er.date), er.rate))
   }
 
   public async create(
     data: ExchangeRateUpdatableFields,
     identity: ExchangeRateIdentifiableFields,
   ): Promise<ExchangeRate> {
-    await this.db.exchangeRates.add({
+    await this.db.exchangeRates.put({
       a: identity.currencyA,
       b: identity.currencyB,
       date: identity.date,
@@ -37,7 +34,7 @@ export default class ExchangeRateLocalStore {
   }
 
   public async createKnown(data: ExchangeRate): Promise<void> {
-    await this.db.exchangeRates.add({
+    await this.db.exchangeRates.put({
       a: data.currencyA,
       b: data.currencyB,
       date: data.date,
@@ -57,15 +54,13 @@ export default class ExchangeRateLocalStore {
 
   public async sync(rates: ExchangeRate[]): Promise<void> {
     await this.db.exchangeRates.clear()
-    await Promise.all(
-      rates.map((er) =>
-        this.db.exchangeRates.add({
-          a: er.currencyA,
-          b: er.currencyB,
-          date: er.date,
-          rate: er.rate,
-        }),
-      ),
+    await this.db.exchangeRates.bulkPut(
+      rates.map((er) => ({
+        a: er.currencyA,
+        b: er.currencyB,
+        date: er.date,
+        rate: er.rate,
+      })),
     )
   }
 }

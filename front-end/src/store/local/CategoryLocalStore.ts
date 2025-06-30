@@ -1,4 +1,4 @@
-import { BudgeteerDB } from './indexedDb/db'
+import { BudgeteerDB } from './IndexedDB'
 import Category, { CategoryUpdatableFields } from '../../domain/model/category'
 import { IdIdentifier } from '../../domain/model/Unique'
 
@@ -10,9 +10,9 @@ export default class CategoryLocalStore {
   }
 
   public async getAll(): Promise<Category[]> {
-    const categories: Category[] = []
-    await this.db.categories.each((category) => {
-      categories.push(
+    const categories = await this.db.categories.toCollection().toArray()
+    return categories.map(
+      (category) =>
         new Category(
           category.id,
           category.name,
@@ -23,13 +23,11 @@ export default class CategoryLocalStore {
           category.fixedCosts,
           category.ordering,
         ),
-      )
-    })
-    return categories
+    )
   }
 
   public async create(data: CategoryUpdatableFields): Promise<Category> {
-    const newID = await this.db.categories.add({
+    const newID = await this.db.categories.put({
       ordering: data.ordering,
       fixedCosts: data.fixedCosts,
       parentId: data.parentId,
@@ -52,7 +50,7 @@ export default class CategoryLocalStore {
   }
 
   public async createKnown(data: Category): Promise<void> {
-    await this.db.categories.add({
+    await this.db.categories.put({
       id: data.id,
       ordering: data.ordering,
       fixedCosts: data.fixedCosts,
@@ -78,19 +76,17 @@ export default class CategoryLocalStore {
 
   public async sync(categories: Category[]): Promise<void> {
     await this.db.categories.clear()
-    await Promise.all(
-      categories.map((category) =>
-        this.db.categories.add({
-          id: category.id,
-          ordering: category.ordering,
-          fixedCosts: category.fixedCosts,
-          parentId: category.parentId,
-          iconBackground: category.iconBackground,
-          iconColor: category.iconColor,
-          name: category.name,
-          iconName: category.iconName,
-        }),
-      ),
+    await this.db.categories.bulkPut(
+      categories.map((category) => ({
+        id: category.id,
+        ordering: category.ordering,
+        fixedCosts: category.fixedCosts,
+        parentId: category.parentId,
+        iconBackground: category.iconBackground,
+        iconColor: category.iconColor,
+        name: category.name,
+        iconName: category.iconName,
+      })),
     )
   }
 }

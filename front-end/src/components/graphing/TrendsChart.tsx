@@ -35,14 +35,14 @@ const TrendsChart: FC<Props> = (props) => {
   const { categories, years = 1, grouping = 'months' } = props
   const { tentativeDefaultCurrency } = useContext(CurrencyServiceContext)
   const { augmentedTransactions, exchangeRateOnDay } = useContext(MixedAugmentation)
-  const { root } = useContext(CategoryServiceContext)
+  const { tentativeRoot } = useContext(CategoryServiceContext)
   const { privacyMode } = useContext(DrawerContext)
   const theme = useTheme()
 
   const filteredTransactions = useMemo(() => {
     return augmentedTransactions.filter((t) => {
       if (typeof t.category === 'undefined') return false
-      if (categories.length === 0 || categories[0] === root.id) return true
+      if (categories.length === 0 || categories[0] === tentativeRoot.id) return true
 
       let current = t.category!
       do {
@@ -51,7 +51,7 @@ const TrendsChart: FC<Props> = (props) => {
       } while (typeof current?.parent !== 'undefined')
       return false
     })
-  }, [augmentedTransactions, categories, root])
+  }, [augmentedTransactions, categories, tentativeRoot])
 
   const data = useMemo(() => {
     if (tentativeDefaultCurrency === null || filteredTransactions.length === 0) return null

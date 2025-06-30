@@ -20,7 +20,7 @@ interface Props {
 const CategoryForm: FC<Props> = (props) => {
   const { initialCategory, onSubmit, submitText } = props
 
-  const { state: categories, root: rootCategory } = useContext(CategoryServiceContext)
+  const { state: categories, tentativeRoot: rootCategory } = useContext(CategoryServiceContext)
 
   const editingRoot = useMemo(() => initialCategory?.id === rootCategory.id, [initialCategory, rootCategory])
 

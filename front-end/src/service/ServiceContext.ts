@@ -16,6 +16,7 @@ import { UpdateExchangeRateFields } from '../store/remote/dto/exchangeRate'
 const nilPersistence = {
   initialized: false,
   state: [],
+  version: -1,
   create<IdType, Item extends Unique<IdType, Item>, IdentifiableFields, UpdatableFields>(
     _data: UpdatableFields,
     _identity?: IdentifiableFields,
@@ -34,7 +35,8 @@ export const CategoryServiceContext = createContext<
   BasicCrudService<CategoryID, Category, IdIdentifier, CategoryUpdatableFields> & CategoryPersistenceAugmentation
 >({
   ...nilPersistence,
-  get root(): Category {
+  augmentedVersion: -1,
+  get tentativeRoot(): Category | null {
     throw new Error('root is not implemented')
   },
   get subCategories(): { [parent: CategoryID]: Category[] } {
@@ -49,6 +51,7 @@ export const CurrencyServiceContext = createContext<
   BasicCrudService<CurrencyID, Currency, IdIdentifier, CurrencyUpdatableFields> & CurrencyPersistenceAugmentation
 >({
   ...nilPersistence,
+  augmentedVersion: -1,
   get tentativeDefaultCurrency(): Currency | null {
     return null
   },
@@ -58,6 +61,7 @@ export const AccountServiceContext = createContext<
   BasicCrudService<AccountID, Account, IdIdentifier, AccountUpdatableFields> & AccountPersistenceAugmentation
 >({
   ...nilPersistence,
+  augmentedVersion: -1,
   get myOwnAccounts(): Account[] {
     throw new Error('myOwnAccounts is not implemented')
   },
@@ -71,6 +75,7 @@ export const ExchangeRateServiceContext = createContext<
     ExchangeRatePersistenceAugmentation
 >({
   ...nilPersistence,
+  augmentedVersion: -1,
   get exchangeRates(): Map<number, Map<number, RateOnDate[]>> {
     throw new Error('myOwnAccounts is not implemented')
   },
