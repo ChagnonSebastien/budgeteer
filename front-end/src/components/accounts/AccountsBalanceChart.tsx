@@ -327,12 +327,12 @@ const AccountsBalanceChart: FC<Props> = (props) => {
                 ? labels[i] && formatDate(labels[i], 'MMM d, yyyy')
                 : '',
             tickRotation: -45,
-            tickSize: 8,
-            tickPadding: 5,
+            tickSize: 5,
+            tickPadding: 8,
           }}
           enableGridY={!privacyMode}
           axisLeft={{
-            tickSize: privacyMode ? 0 : 8,
+            tickSize: privacyMode ? 0 : 5,
             tickPadding: 5,
             format: (i) => {
               if (scale == 'relative') {

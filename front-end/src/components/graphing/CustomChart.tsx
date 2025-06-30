@@ -217,9 +217,9 @@ const CustomChart: FC<Props> = ({
     format: fmtX = (i) => (xLabels && xLabels.length === data.length ? xLabels[i] : String(i)),
     tickRotation = -45,
     tickSize = 8,
-    tickPadding = 5,
+    tickPadding: tpX = 5,
   } = axisBottom
-  const { format: fmtY = (v) => String(v), tickSize: tsY = 3, tickPadding: tpY = 4 } = axisLeft
+  const { format: fmtY = (v) => String(v), tickSize: tsY = 2, tickPadding: tpY = 4 } = axisLeft
 
   const yTicks = useMemo(() => {
     if (!layers.length) return []
@@ -364,8 +364,8 @@ const CustomChart: FC<Props> = ({
               <g key={i} transform={`translate(${x},${margin.top + innerH})`}>
                 <line y2={tickSize} stroke={mergedTheme.axis?.ticks?.text?.fill} />
                 <text
-                  x={0}
-                  y={tickSize + tickPadding}
+                  x={-tpX}
+                  y={tickSize + tpX}
                   transform={`rotate(${tickRotation})`}
                   fontSize={mergedTheme.axis?.ticks?.text?.fontSize}
                   fill={mergedTheme.axis?.ticks?.text?.fill}
