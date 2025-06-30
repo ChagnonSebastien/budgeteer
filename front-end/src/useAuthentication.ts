@@ -35,7 +35,7 @@ const useAuthentication = () => {
 
   const [user, setUser] = useState<(User & { authMethod: AuthMethod }) | null>(userStore.getUser())
   const [synced, setSynced] = useState(false)
-  const [hasInternet, setHasInternet] = useState(true)
+  const [hasInternet, setHasInternet] = useState(false)
 
   const setDefaultCurrency = useCallback((id: number) => {
     if (user === null) return
