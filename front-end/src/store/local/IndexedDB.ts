@@ -88,21 +88,29 @@ type ReplayDB = {
   replay: EntityTable<Action, 'id'>
 }
 
-export type BudgeteerDB = Dexie & CurrencyDB & AccountDB & ExchangeRateDB & CategoryDB & TransactionDB & ReplayDB
+export const BudgeteerDatabaseName = 'BudgeteerLocalDB'
+class BudgeteerDB extends Dexie {
+  currencies!: CurrencyDB
+  accounts!: AccountDB
+  categories!: ExchangeRateDB
+  exchangeRates!: CategoryDB
+  transactions!: TransactionDB
+  replay!: ReplayDB
+
+  constructor() {
+    super(BudgeteerDatabaseName)
+    this.version(1).stores({
+      currencies: '++id',
+      accounts: '++id',
+      categories: '++id',
+      exchangeRates: '[a+b+date]',
+      transactions: '++id',
+      replay: '++id,time',
+    })
+  }
+}
 
 export type { Currency, Account, Category, Action, Transaction, ExchangeRate }
 
-export const BudgeteerDatabaseName = 'BudgeteerLocalDB'
-const IndexedDB = new Dexie(BudgeteerDatabaseName) as BudgeteerDB
-
-// Schema declaration:
-IndexedDB.version(1).stores({
-  currencies: '++id',
-  accounts: '++id',
-  categories: '++id',
-  exchangeRates: '[a+b+date]',
-  transactions: '++id',
-  replay: '++id time',
-})
-
+const IndexedDB = new BudgeteerDB()
 export default IndexedDB

@@ -202,7 +202,7 @@ const WaitOnInitializedData: FC<{
 
 const PersistenceSetup: FC<{ children: React.JSX.Element; hasInternet: boolean }> = ({ children, hasInternet }) => (
   <BasicCrudServiceWithPersistence
-    itemName="category"
+    itemName="currency"
     synced={true}
     longTermStore={currencyRemoteStore}
     localStore={currencyLocalStore}

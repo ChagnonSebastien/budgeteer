@@ -8,7 +8,6 @@ import UserStore from './UserStore'
 const serverUrl = import.meta.env.VITE_BACKEND_URL || window.location.origin
 
 const oidcLogin = () => {
-  IndexedDB.delete()
   window.location.href = `${serverUrl}/auth/login`
 }
 
@@ -22,6 +21,7 @@ const userPassLogin = () => {
 }
 
 const userPassLogout = () => {
+  IndexedDB.delete()
   throw new Error('Not implemented')
 }
 
