@@ -189,7 +189,7 @@ const CustomChart: FC<Props> = ({
       return maxFrac
     } else {
       // normal stacking: start from top of last layer
-      let m = Math.max(0, ...layers[layers.length - 1].map(([, y1]) => y1))
+      let m = layers.length > 0 ? Math.max(0, ...layers[layers.length - 1].map(([, y1]) => y1)) : 0
       // also consider any baseline that may sit above the stack bottom
       ordered.forEach((key, li) => {
         layers[li].forEach(([y0], i) => {
