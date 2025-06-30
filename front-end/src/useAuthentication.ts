@@ -45,8 +45,12 @@ const useAuthentication = () => {
     userStore.upsertUser({ ...user, default_currency: id }, 'oidc')
   }, [])
 
-  const fetchUserInfo = useCallback(async (): Promise<User> => {
+  const fetchUserInfo = useCallback(async (): Promise<User | null> => {
     const response = await fetch(`${serverUrl}/auth/userinfo`, { credentials: 'include' })
+
+    if (response.status === 401) {
+      return null
+    }
 
     if (!response.ok) {
       throw new Error('Unable to fetch user info')
@@ -93,9 +97,11 @@ const useAuthentication = () => {
     if (user === null && (loginMethods === null || !loginMethods.oidc)) return
 
     fetchUserInfo().then(async (user) => {
-      setUser({ ...user, authMethod: 'oidc' })
-      userStore.upsertUser(user, 'oidc')
-      setSynced(true)
+      if (user !== null) {
+        setUser({ ...user, authMethod: 'oidc' })
+        userStore.upsertUser(user, 'oidc')
+        setSynced(true)
+      }
     })
   }, [synced, hasInternet, user, loginMethods])
 
