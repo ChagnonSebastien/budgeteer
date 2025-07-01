@@ -64,8 +64,4 @@ FROM currencies AS c
 WHERE c.id = sqlc.arg(currency_id)
 ON CONFLICT (a, b, date)
     DO UPDATE
-    SET rate = CAST(sqlc.arg(rate) AS double precision) * POWER(
-            10,
-            cd.decimal_points
-                - c.decimal_points
-                                                          );
+    SET rate = EXCLUDED.rate;
