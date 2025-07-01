@@ -62,14 +62,13 @@ func (r *Runner) NewRunner(ctx context.Context) func() error {
 
 				newRate, conversionErr := strconv.ParseFloat(strings.ReplaceAll(result, ",", "."), 64)
 				if conversionErr != nil {
-					logger.Error("parsing exchange rate for currency", "error", javascriptErr)
+					logger.Error("parsing exchange rate for currency", "error", conversionErr)
 					continue
 				}
 
 				yesterday := time.Now().Add(-1 * 24 * time.Hour)
-				err := r.currencyRepository.UpdateExchangeRateRelativeToDefaultCurrency(r.ctx, currency.ID, yesterday, newRate)
-				if err != nil {
-					logger.Error("saving exchange rate for currency", "error", javascriptErr)
+				if err := r.currencyRepository.UpdateExchangeRateRelativeToDefaultCurrency(r.ctx, currency.ID, yesterday, newRate); err != nil {
+					logger.Error("saving exchange rate for currency", "error", err)
 					continue
 				}
 
