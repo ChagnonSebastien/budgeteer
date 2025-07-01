@@ -64,4 +64,4 @@ FROM currencies AS c
 WHERE c.id = sqlc.arg(currency_id)
 ON CONFLICT (a, b, date)
     DO UPDATE
-    SET rate = sqlc.arg(date);
+    SET rate = sqlc.arg(rate);
