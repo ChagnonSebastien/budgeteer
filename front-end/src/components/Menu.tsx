@@ -63,7 +63,7 @@ const appPages: AppPage[] = [
     title: 'Account Balances',
     url: '/accounts/graph',
     iconName: PreparedIcon.FaScaleUnbalanced,
-    keepQuery: ['from', 'to', 'accounts', 'groupBy'],
+    keepQuery: ['from', 'to', 'accounts'],
   },
   {
     title: 'Currencies',
