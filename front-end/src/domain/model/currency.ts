@@ -19,6 +19,8 @@ export default class Currency implements NamedItem<CurrencyID, Currency> {
     public readonly id: CurrencyID,
     public readonly name: string,
     public readonly symbol: string,
+    public readonly risk: string,
+    public readonly type: string,
     public readonly decimalPoints: number,
     public readonly rateAutoupdateSettings: RateAutoupdateSettings,
   ) {}
@@ -31,6 +33,8 @@ export default class Currency implements NamedItem<CurrencyID, Currency> {
     if (this.id !== other.id) return false
     if (this.name !== other.name) return false
     if (this.symbol !== other.symbol) return false
+    if (this.risk !== other.risk) return false
+    if (this.type !== other.type) return false
     if (this.decimalPoints !== other.decimalPoints) return false
     return this.rateAutoupdateSettings.equals(other.rateAutoupdateSettings)
   }
@@ -60,4 +64,7 @@ export function parseAmount(currency: Currency, rawValue: string): number {
   return Math.round(parseFloat(rawValue) * Math.pow(10, currency.decimalPoints))
 }
 
-export type CurrencyUpdatableFields = Pick<Currency, 'symbol' | 'name' | 'rateAutoupdateSettings' | 'decimalPoints'>
+export type CurrencyUpdatableFields = Pick<
+  Currency,
+  'symbol' | 'name' | 'rateAutoupdateSettings' | 'decimalPoints' | 'risk' | 'type'
+>

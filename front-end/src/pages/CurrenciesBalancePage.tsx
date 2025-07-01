@@ -161,6 +161,7 @@ const CurrenciesBalancePage: FC = () => {
                 >
                   <FormControlLabel value="none" control={<Radio />} label="None" />
                   <FormControlLabel value="currency" control={<Radio />} label="Currency" />
+                  <FormControlLabel value="type" control={<Radio />} label="Type" />
                   <FormControlLabel value="risk" control={<Radio />} label="Risk" />
                 </RadioGroup>
               </FormControl>
@@ -230,6 +231,7 @@ const CurrenciesBalancePage: FC = () => {
                 >
                   <MenuItem value="none">None</MenuItem>
                   <MenuItem value="currency">Currency</MenuItem>
+                  <MenuItem value="type">Type</MenuItem>
                   <MenuItem value="risk">Risk</MenuItem>
                 </TextField>
               </Box>

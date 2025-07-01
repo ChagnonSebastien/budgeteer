@@ -33,7 +33,15 @@ export default class CurrencyRemoteStore {
       data.rateAutoupdateSettings.enabled,
     )
 
-    return new Currency(response.currencyId, data.name, data.symbol, data.decimalPoints, rateAutoupdateSettings)
+    return new Currency(
+      response.currencyId,
+      data.name,
+      data.symbol,
+      data.risk,
+      data.type,
+      data.decimalPoints,
+      rateAutoupdateSettings,
+    )
   }
 
   public async update(identity: IdIdentifier, data: Partial<CurrencyUpdatableFields>): Promise<void> {

@@ -75,6 +75,8 @@ const CurrencyForm: FC<Props> = (props) => {
 
   const [name, setName] = useState(initialCurrency?.name ?? '')
   const [symbol, setSymbol] = useState(initialCurrency?.symbol ?? '')
+  const [risk, setRisk] = useState(initialCurrency?.risk ?? '')
+  const [type, setType] = useState(initialCurrency?.type ?? '')
   const [decimalPoints, setDecimalPoints] = useState(
     `${typeof initialCurrency === 'undefined' ? '2' : initialCurrency.decimalPoints}`,
   )
@@ -368,6 +370,8 @@ const CurrencyForm: FC<Props> = (props) => {
       {
         name,
         decimalPoints: parseInt(decimalPoints),
+        type: type.trim(),
+        risk: risk.trim(),
         symbol: symbol,
         rateAutoupdateSettings: new RateAutoupdateSettings(getRateScript, rateAutoupdateEnabled),
       },
@@ -421,6 +425,28 @@ const CurrencyForm: FC<Props> = (props) => {
             },
           }))
         }
+      />
+
+      <TextField
+        type="text"
+        className="w-full"
+        label="Type"
+        variant="standard"
+        placeholder="e.g., Mutual Fund"
+        value={type}
+        helperText={NoError}
+        onChange={(ev) => setType(ev.target.value as string)}
+      />
+
+      <TextField
+        type="text"
+        className="w-full"
+        label="Risk"
+        variant="standard"
+        placeholder="e.g., High"
+        value={risk}
+        helperText={NoError}
+        onChange={(ev) => setRisk(ev.target.value as string)}
       />
 
       <TextField

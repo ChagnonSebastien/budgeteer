@@ -14,7 +14,7 @@ type currencyRepository interface {
 	CreateCurrency(
 		ctx context.Context,
 		userId string,
-		name, symbol string,
+		name, symbol, risk, cType string,
 		decimalPoints int,
 		rateAutoUpdateScript string,
 		rateAutoUpdateEnabled bool,
@@ -42,7 +42,7 @@ func (s *CurrencyHandler) CreateCurrency(
 	}
 
 	newCurrencyId, err := s.currencyService.CreateCurrency(
-		ctx, claims.Sub, req.Name, req.Symbol, int(req.DecimalPoints),
+		ctx, claims.Sub, req.Name, req.Symbol, req.Risk, req.Type, int(req.DecimalPoints),
 		req.AutoUpdateSettingsScript, req.AutoUpdateSettingsEnabled,
 	)
 	if err != nil {
@@ -76,6 +76,8 @@ func (s *CurrencyHandler) UpdateCurrency(
 		repository.UpdateCurrencyFields{
 			Name:                  req.Fields.Name,
 			Symbol:                req.Fields.Symbol,
+			Risk:                  req.Fields.Risk,
+			Type:                  req.Fields.Type,
 			DecimalPoints:         decimalPoints,
 			RateAutoUpdateScript:  req.Fields.AutoUpdateSettingsScript,
 			RateAutoUpdateEnabled: req.Fields.AutoUpdateSettingsEnabled,
@@ -109,6 +111,8 @@ func (s *CurrencyHandler) GetAllCurrencies(
 			Id:                        uint32(currency.ID),
 			Name:                      currency.Name,
 			Symbol:                    currency.Symbol,
+			Risk:                      currency.Risk,
+			Type:                      currency.Type,
 			DecimalPoints:             uint32(currency.DecimalPoints),
 			AutoUpdateSettingsScript:  currency.RateAutoUpdateSettings.Script,
 			AutoUpdateSettingsEnabled: currency.RateAutoUpdateSettings.Enabled,

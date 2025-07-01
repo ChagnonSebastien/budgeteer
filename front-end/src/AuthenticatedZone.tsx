@@ -93,11 +93,15 @@ const CreateDefaultCurrency: FC<{
                   onSubmit={async (currencyData: Partial<CurrencyUpdatableFields>) => {
                     if (typeof currencyData.name === 'undefined') return
                     if (typeof currencyData.symbol === 'undefined') return
+                    if (typeof currencyData.type === 'undefined') return
+                    if (typeof currencyData.risk === 'undefined') return
                     if (typeof currencyData.decimalPoints === 'undefined') return
 
                     const newCurrency = await create({
                       name: currencyData.name,
                       symbol: currencyData.symbol,
+                      type: currencyData.type,
+                      risk: currencyData.risk,
                       decimalPoints: currencyData.decimalPoints,
                       rateAutoupdateSettings: new RateAutoupdateSettings('', false),
                     })

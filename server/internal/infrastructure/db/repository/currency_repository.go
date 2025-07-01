@@ -20,6 +20,8 @@ func (r *Repository) GetAllCurrencies(ctx context.Context, userId string) ([]mod
 			ID:            model.CurrencyID(currencyDao.ID),
 			Name:          currencyDao.Name,
 			Symbol:        currencyDao.Symbol,
+			Risk:          currencyDao.Risk,
+			Type:          currencyDao.Type,
 			DecimalPoints: int(currencyDao.DecimalPoints),
 			RateAutoUpdateSettings: model.RateAutoUpdateSettings{
 				Script:  currencyDao.RateFetchScript,
@@ -34,7 +36,7 @@ func (r *Repository) GetAllCurrencies(ctx context.Context, userId string) ([]mod
 func (r *Repository) CreateCurrency(
 	ctx context.Context,
 	userId string,
-	name, symbol string,
+	name, symbol, risk, cType string,
 	decimalPoints int,
 	rateAutoUpdateScript string,
 	rateAutoUpdateEnabled bool,
@@ -47,6 +49,8 @@ func (r *Repository) CreateCurrency(
 			UserID:          userId,
 			Name:            name,
 			Symbol:          symbol,
+			Risk:            risk,
+			Type:            cType,
 			DecimalPoints:   int16(decimalPoints),
 			RateFetchScript: rateAutoUpdateScript,
 			AutoUpdate:      rateAutoUpdateEnabled,
@@ -56,10 +60,10 @@ func (r *Repository) CreateCurrency(
 }
 
 type UpdateCurrencyFields struct {
-	Name, Symbol          *string
-	DecimalPoints         *int
-	RateAutoUpdateScript  *string
-	RateAutoUpdateEnabled *bool
+	Name, Symbol, Risk, Type *string
+	DecimalPoints            *int
+	RateAutoUpdateScript     *string
+	RateAutoUpdateEnabled    *bool
 }
 
 func (u *UpdateCurrencyFields) nullName() sql.NullString {
@@ -80,6 +84,28 @@ func (u *UpdateCurrencyFields) nullSymbol() sql.NullString {
 
 	return sql.NullString{
 		String: *u.Symbol,
+		Valid:  true,
+	}
+}
+
+func (u *UpdateCurrencyFields) nullRisk() sql.NullString {
+	if u.Risk == nil {
+		return sql.NullString{Valid: false}
+	}
+
+	return sql.NullString{
+		String: *u.Risk,
+		Valid:  true,
+	}
+}
+
+func (u *UpdateCurrencyFields) nullType() sql.NullString {
+	if u.Type == nil {
+		return sql.NullString{Valid: false}
+	}
+
+	return sql.NullString{
+		String: *u.Type,
 		Valid:  true,
 	}
 }
@@ -127,6 +153,8 @@ func (r *Repository) UpdateCurrency(
 		ctx, &dao.UpdateCurrencyParams{
 			Name:            fields.nullName(),
 			Symbol:          fields.nullSymbol(),
+			Risk:            fields.nullRisk(),
+			Type:            fields.nullType(),
 			DecimalPoints:   fields.nullDecimalPoint(),
 			RateFetchScript: fields.nullRateAutoUpdateScript(),
 			AutoUpdate:      fields.nullRateAutoUpdateEnabled(),
@@ -178,6 +206,8 @@ func (r *Repository) GetAllWithAutoUpdate(ctx context.Context, pageNumber, pageS
 			ID:            model.CurrencyID(currencyDao.ID),
 			Name:          currencyDao.Name,
 			Symbol:        currencyDao.Symbol,
+			Risk:          currencyDao.Risk,
+			Type:          currencyDao.Type,
 			DecimalPoints: int(currencyDao.DecimalPoints),
 			RateAutoUpdateSettings: model.RateAutoUpdateSettings{
 				Script:  currencyDao.RateFetchScript,

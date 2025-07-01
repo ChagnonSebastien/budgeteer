@@ -10,6 +10,8 @@ export class CurrencyConverter
       dto.id,
       dto.name,
       dto.symbol,
+      dto.risk,
+      dto.type,
       dto.decimalPoints,
       new RateAutoupdateSettings(dto.autoUpdateSettingsScript, dto.autoUpdateSettingsEnabled),
     )
@@ -20,6 +22,8 @@ export class CurrencyConverter
       id: model.id,
       name: model.name,
       symbol: model.symbol,
+      risk: model.risk,
+      type: model.type,
       decimalPoints: model.decimalPoints,
       autoUpdateSettingsScript: model.rateAutoupdateSettings.script,
       autoUpdateSettingsEnabled: model.rateAutoupdateSettings.enabled,
@@ -30,6 +34,8 @@ export class CurrencyConverter
     return UpdateCurrencyFields.create({
       name: model.name,
       symbol: model.symbol,
+      risk: model.risk,
+      type: model.type,
       decimalPoints: model.decimalPoints,
       autoUpdateSettingsScript: model.rateAutoupdateSettings?.script,
       autoUpdateSettingsEnabled: model.rateAutoupdateSettings?.enabled,

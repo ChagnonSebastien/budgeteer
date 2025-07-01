@@ -16,6 +16,8 @@ message Currency {
   uint32 decimal_points = 4;
   string auto_update_settings_script = 5;
   bool auto_update_settings_enabled = 6;
+  string risk = 7;
+  string type = 8;
 }
 
 message GetAllCurrenciesRequest {
@@ -31,6 +33,8 @@ message CreateCurrencyRequest {
   uint32 decimal_points = 3;
   string auto_update_settings_script = 4;
   bool auto_update_settings_enabled = 5;
+  string risk = 6;
+  string type = 7;
 }
 
 message CreateCurrencyResponse {
@@ -43,6 +47,8 @@ message UpdateCurrencyFields {
   optional uint32 decimal_points = 3;
   optional string auto_update_settings_script = 4;
   optional bool auto_update_settings_enabled = 5;
+  optional string risk = 6;
+  optional string type = 7;
 }
 
 message UpdateCurrencyRequest {

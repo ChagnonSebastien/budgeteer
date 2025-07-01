@@ -31,7 +31,7 @@ const MixedAugmentation = createContext<MixedAugmentationContext>({
   augmentedTransactions: [],
   exchangeRates: new Map(),
   exchangeRateOnDay: (_from: number, _to: number, _date: Date) => 1,
-  defaultCurrency: new Currency(0, 'zero', '.', 0, new RateAutoupdateSettings('', false)),
+  defaultCurrency: new Currency(0, 'zero', '', '', '.', 0, new RateAutoupdateSettings('', false)),
   rootCategory: new Category(0, 'zero', '', '', '', null, false, 0),
 })
 

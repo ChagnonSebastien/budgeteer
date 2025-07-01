@@ -4,6 +4,8 @@ interface Currency {
   id: number
   name: string
   symbol: string
+  risk: string
+  type: string
   decimalPoints: number
   rateFetchScript: string
   autoUpdate: boolean

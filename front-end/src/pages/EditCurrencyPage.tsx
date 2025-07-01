@@ -4,7 +4,7 @@ import styled from 'styled-components'
 
 import ContentWithHeader from '../components/ContentWithHeader'
 import CurrencyForm from '../components/currencies/CurrencyForm'
-import Currency from '../domain/model/currency'
+import { CurrencyUpdatableFields } from '../domain/model/currency'
 import { CurrencyServiceContext } from '../service/ServiceContext'
 
 const FormContainer = styled.div`
@@ -31,7 +31,7 @@ const EditCurrency: FC<Props> = ({ scriptRunner }: Props) => {
   )
 
   const onSubmit = useCallback(
-    async (data: Partial<Omit<Currency, 'id' | 'hasName'>>) => {
+    async (data: Partial<CurrencyUpdatableFields>) => {
       if (typeof selectedCurrency === 'undefined') return
 
       await updateCurrencies({ id: selectedCurrency!.id }, data)

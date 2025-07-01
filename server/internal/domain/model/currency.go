@@ -11,6 +11,8 @@ type Currency struct {
 	ID                     CurrencyID
 	Name                   string
 	Symbol                 string
+	Risk                   string
+	Type                   string
 	DecimalPoints          int
 	RateAutoUpdateSettings RateAutoUpdateSettings
 }

@@ -21,7 +21,7 @@ import { DrawerContext } from '../Menu'
 
 import '../../styles/graphs-tailwind.css'
 
-export type GroupType = 'currency' | 'risk' | 'none'
+export type GroupType = 'currency' | 'risk' | 'type' | 'none'
 
 interface Props {
   filterByAccounts?: number[]
@@ -60,7 +60,9 @@ const CurrenciesBalanceChart: FC<Props> = (props) => {
         case 'currency':
           return currency.name
         case 'risk':
-          return currency.id === defaultCurrency.id ? 'None' : 'Some'
+          return currency.risk !== '' ? currency.risk : 'Unknown'
+        case 'type':
+          return currency.type !== '' ? currency.type : 'Unknown'
         case 'none':
           return 'Total'
       }

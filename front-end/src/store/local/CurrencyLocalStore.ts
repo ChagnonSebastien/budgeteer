@@ -17,6 +17,8 @@ export default class CurrencyLocalStore {
           currency.id,
           currency.name,
           currency.symbol,
+          currency.risk,
+          currency.type,
           currency.decimalPoints,
           new RateAutoupdateSettings(currency.rateFetchScript, currency.autoUpdate),
         ),
@@ -29,6 +31,8 @@ export default class CurrencyLocalStore {
       autoUpdate: data.rateAutoupdateSettings.enabled,
       symbol: data.symbol,
       name: data.name,
+      risk: data.risk,
+      type: data.type,
       decimalPoints: data.decimalPoints,
     })
 
@@ -37,7 +41,7 @@ export default class CurrencyLocalStore {
       data.rateAutoupdateSettings.enabled,
     )
 
-    return new Currency(newID, data.name, data.symbol, data.decimalPoints, rateAutoupdateSettings)
+    return new Currency(newID, data.name, data.symbol, data.risk, data.type, data.decimalPoints, rateAutoupdateSettings)
   }
 
   public async createKnown(data: Currency): Promise<void> {
@@ -47,6 +51,8 @@ export default class CurrencyLocalStore {
       autoUpdate: data.rateAutoupdateSettings.enabled,
       symbol: data.symbol,
       name: data.name,
+      risk: data.risk,
+      type: data.type,
       decimalPoints: data.decimalPoints,
     })
   }
@@ -57,6 +63,8 @@ export default class CurrencyLocalStore {
       autoUpdate: data.rateAutoupdateSettings?.enabled,
       symbol: data.symbol,
       name: data.name,
+      risk: data.risk,
+      type: data.type,
       decimalPoints: data.decimalPoints,
     })
   }
@@ -70,6 +78,8 @@ export default class CurrencyLocalStore {
         autoUpdate: currency.rateAutoupdateSettings.enabled,
         symbol: currency.symbol,
         name: currency.name,
+        risk: currency.risk,
+        type: currency.type,
         decimalPoints: currency.decimalPoints,
       })),
     )

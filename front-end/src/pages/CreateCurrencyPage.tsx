@@ -26,6 +26,8 @@ const CreateCurrencyPage: FC<Props> = ({ scriptRunner }: Props) => {
   const onSubmit = useCallback(async (data: Partial<CurrencyUpdatableFields>, exchangeRates?: ExchangeRateConfig[]) => {
     if (typeof data.name === 'undefined') throw new Error('Name cannot be undefined')
     if (typeof data.symbol === 'undefined') throw new Error('Symbol cannot be undefined')
+    if (typeof data.risk === 'undefined') throw new Error('Risk cannot be undefined')
+    if (typeof data.type === 'undefined') throw new Error('Type cannot be undefined')
     if (typeof data.decimalPoints === 'undefined') throw new Error('Decimal Points cannot be undefined')
     if (typeof exchangeRates === 'undefined') throw new Error('Exchange Rates cannot be undefined')
     if (typeof data.rateAutoupdateSettings === 'undefined')
@@ -36,6 +38,8 @@ const CreateCurrencyPage: FC<Props> = ({ scriptRunner }: Props) => {
       symbol: data.symbol,
       decimalPoints: data.decimalPoints,
       rateAutoupdateSettings: data.rateAutoupdateSettings,
+      type: data.type,
+      risk: data.risk,
     })
 
     await Promise.all(
