@@ -60,16 +60,22 @@ const appPages: AppPage[] = [
     keepQuery: [],
   },
   {
+    title: 'Account Balances',
+    url: '/accounts/graph',
+    iconName: PreparedIcon.FaScaleUnbalanced,
+    keepQuery: ['from', 'to', 'accounts', 'groupBy'],
+  },
+  {
     title: 'Currencies',
     url: '/currencies',
     iconName: PreparedIcon.BsCurrencyExchange,
     keepQuery: [],
   },
   {
-    title: 'Account Balances',
-    url: '/accounts/graph',
+    title: 'Currency Balances',
+    url: '/currencies/graph',
     iconName: PreparedIcon.FaScaleUnbalanced,
-    keepQuery: ['from', 'to', 'accounts', 'groupBy'],
+    keepQuery: ['from', 'to', 'accounts'],
   },
   {
     title: 'Trends',

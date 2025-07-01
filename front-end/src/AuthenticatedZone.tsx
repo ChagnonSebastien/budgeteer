@@ -17,6 +17,7 @@ import CreateAccountPage from './pages/CreateAccountPage'
 import CreateCategoryPage from './pages/CreateCategoryPage'
 import CreateCurrencyPage from './pages/CreateCurrencyPage'
 import CreateTransactionPage from './pages/CreateTransactionPage'
+import CurrenciesBalancePage from './pages/CurrenciesBalancePage'
 import CurrenciesPage from './pages/CurrenciesPage'
 import Dashboard from './pages/Dashboard'
 import EditAccountPage from './pages/EditAccountPage'
@@ -292,6 +293,7 @@ const AuthenticatedZone: FC<Props> = (props) => {
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/currencies" element={<CurrenciesPage />} />
+          <Route path="/currencies/graph" element={<CurrenciesBalancePage />} />
           <Route path="/currencies/new" element={<CreateCurrencyPage scriptRunner={testGetRateScript} />} />
           <Route path="/currencies/edit/:currencyId" element={<EditCurrencyPage scriptRunner={testGetRateScript} />} />
           <Route path="/categories" element={<CategoryPage />} />

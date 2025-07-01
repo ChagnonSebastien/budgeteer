@@ -13,16 +13,15 @@ import {
 import { FC, useCallback, useContext, useMemo } from 'react'
 
 import CustomChart from './CustomChart'
-import Account from '../../domain/model/account'
-import { formatFull } from '../../domain/model/currency'
+import Currency, { formatFull } from '../../domain/model/currency'
 import MixedAugmentation from '../../service/MixedAugmentation'
-import { AccountServiceContext } from '../../service/ServiceContext'
+import { AccountServiceContext, CurrencyServiceContext } from '../../service/ServiceContext'
 import { darkColors, darkTheme } from '../../utils'
 import { DrawerContext } from '../Menu'
 
 import '../../styles/graphs-tailwind.css'
 
-export type GroupType = 'financialInstitution' | 'type' | 'account' | 'none'
+export type GroupType = 'currency' | 'risk' | 'none'
 
 interface Props {
   filterByAccounts?: number[]
@@ -33,12 +32,13 @@ interface Props {
   scale?: 'absolute' | 'cropped-absolute' | 'relative'
 }
 
-const AccountsBalanceChart: FC<Props> = (props) => {
+const CurrenciesBalanceChart: FC<Props> = (props) => {
   const { fromDate, toDate, filterByAccounts, groupBy, baselineConfig = 'none', scale = 'absolute' } = props
   const theme = useTheme()
 
   const { augmentedTransactions, exchangeRateOnDay, defaultCurrency } = useContext(MixedAugmentation)
   const { myOwnAccounts } = useContext(AccountServiceContext)
+  const { state: currencies } = useContext(CurrencyServiceContext)
   const { privacyMode } = useContext(DrawerContext)
 
   const filteredAccounts = useMemo(() => {
@@ -53,16 +53,14 @@ const AccountsBalanceChart: FC<Props> = (props) => {
   }, [myOwnAccounts, filterByAccounts])
 
   const group = useCallback(
-    (account?: Account) => {
-      if (typeof account === 'undefined') return undefined
+    (currency?: Currency) => {
+      if (typeof currency === 'undefined') return 'Total'
 
       switch (groupBy) {
-        case 'account':
-          return account.name
-        case 'financialInstitution':
-          return account.financialInstitution ?? 'Other'
-        case 'type':
-          return account.type ?? 'Other'
+        case 'currency':
+          return currency.name
+        case 'risk':
+          return currency.id === defaultCurrency.id ? 'None' : 'Some'
         case 'none':
           return 'Total'
       }
@@ -117,15 +115,15 @@ const AccountsBalanceChart: FC<Props> = (props) => {
     }
 
     const Investments = filteredAccounts.reduce((totals, account) => {
-      const groupLabel = group(account)!
-      const groupData = totals.get(groupLabel) ?? { bookValue: 0, assets: new Map() }
       for (const initialAmount of account.initialAmounts) {
+        const groupLabel = group(currencies.find((c) => c.id === initialAmount.currencyId))
+        const groupData = totals.get(groupLabel) ?? { bookValue: 0, assets: new Map() }
         groupData.assets.set(
           initialAmount.currencyId,
           (groupData.assets.get(initialAmount.currencyId) ?? 0) + initialAmount.value,
         )
+        totals.set(groupLabel, groupData)
       }
-      totals.set(groupLabel, groupData)
       return totals
     }, new Map<string, { bookValue: number; assets: Map<number, number> }>())
 
@@ -142,7 +140,7 @@ const AccountsBalanceChart: FC<Props> = (props) => {
         transaction.receiver.isMine && // I am the receiver
         filteredAccounts.findIndex((a) => a.id === transaction.receiver?.id) >= 0 // The account respects filters
       ) {
-        const groupLabel = group(transaction.receiver)!
+        const groupLabel = group(transaction.receiverCurrency)!
         const data = Investments.get(groupLabel) ?? { bookValue: 0, assets: new Map() }
         data.assets.set(
           transaction.receiverCurrencyId,
@@ -155,7 +153,7 @@ const AccountsBalanceChart: FC<Props> = (props) => {
         transaction.sender.isMine &&
         filteredAccounts.findIndex((a) => a.id === transaction.sender?.id) >= 0
       ) {
-        const groupLabel = group(transaction.sender)!
+        const groupLabel = group(transaction.currency)!
         const data = Investments.get(groupLabel) ?? { bookValue: 0, assets: new Map() }
         data.assets.set(transaction.currencyId, (data.assets.get(transaction.currencyId) ?? 0) - transaction.amount)
         Investments.set(groupLabel, data)
@@ -194,7 +192,7 @@ const AccountsBalanceChart: FC<Props> = (props) => {
           transaction.receiver.isMine && // I am the receiver
           filteredAccounts.findIndex((a) => a.id === transaction.receiver?.id) >= 0 // The account respects filters
         ) {
-          const groupLabel = group(transaction.receiver)!
+          const groupLabel = group(transaction.receiverCurrency)!
           const data = Investments.get(groupLabel) ?? { bookValue: 0, assets: new Map() }
           data.assets.set(
             transaction.receiverCurrencyId,
@@ -206,7 +204,7 @@ const AccountsBalanceChart: FC<Props> = (props) => {
               (typeof transaction.sender !== 'undefined' &&
                 transaction.sender.isMine &&
                 filteredAccounts.findIndex((a) => a.id === transaction.sender?.id) >= 0 &&
-                group(transaction.sender) === groupLabel) ||
+                group(transaction.currency) === groupLabel) ||
               transaction.category?.name === 'Financial income'
             )
           ) {
@@ -227,7 +225,7 @@ const AccountsBalanceChart: FC<Props> = (props) => {
           transaction.sender.isMine &&
           filteredAccounts.findIndex((a) => a.id === transaction.sender?.id) >= 0
         ) {
-          const groupLabel = group(transaction.sender)!
+          const groupLabel = group(transaction.currency)!
           const data = Investments.get(groupLabel) ?? { bookValue: 0, assets: new Map() }
           data.assets.set(transaction.currencyId, (data.assets.get(transaction.currencyId) ?? 0) - transaction.amount)
 
@@ -236,7 +234,7 @@ const AccountsBalanceChart: FC<Props> = (props) => {
               (typeof transaction.receiver !== 'undefined' &&
                 transaction.receiver.isMine &&
                 filteredAccounts.findIndex((a) => a.id === transaction.receiver?.id) >= 0 &&
-                group(transaction.receiver) === groupLabel) ||
+                group(transaction.receiverCurrency) === groupLabel) ||
               transaction.category?.name === 'Financial income'
             )
           ) {
@@ -269,21 +267,8 @@ const AccountsBalanceChart: FC<Props> = (props) => {
         }
 
         todaysBookValue += groupData.bookValue
-        //if (splitInvestements === 'split') {
-        //  todaysData[`${groupLabel} Gained`] = marketValue === 0 ? 0 : marketValue - groupData.bookValue
-        //  todaysData[`${groupLabel} Invested`] = marketValue === 0 ? 0 : groupData.bookValue
-        //  groups.add(`${groupLabel} Gained`)
-        //  groups.add(`${groupLabel} Invested`)
-        //} else if (splitInvestements === 'bookValue') {
-        //  todaysData[groupLabel] = marketValue === 0 ? 0 : groupData.bookValue
-        //  groups.add(groupLabel)
-        //} else if (splitInvestements === 'interests') {
-        //  todaysData[groupLabel] = marketValue === 0 ? 0 : marketValue - groupData.bookValue
-        //  groups.add(groupLabel)
-        //} else {
         todaysData[groupLabel] = { amount: marketValue, baseline: groupData.bookValue }
         groups.add(groupLabel)
-        //}
       }
 
       labels.push(upTo)
@@ -442,4 +427,4 @@ const AccountsBalanceChart: FC<Props> = (props) => {
   }, [defaultCurrency, filteredAccounts, groupBy, fromDate, toDate, group, privacyMode, exchangeRateOnDay])
 }
 
-export default AccountsBalanceChart
+export default CurrenciesBalanceChart
