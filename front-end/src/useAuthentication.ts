@@ -99,11 +99,14 @@ const useAuthentication = () => {
 
     fetchUserInfo()
       .then(async (user) => {
-        if (user !== null) {
-          setUser({ ...user, authMethod: 'oidc' })
-          userStore.upsertUser(user, 'oidc')
-          setUserVerified(true)
+        if (user === null) {
+          loginMethods!.oidc!()
+          return
         }
+
+        setUser({ ...user, authMethod: 'oidc' })
+        userStore.upsertUser(user, 'oidc')
+        setUserVerified(true)
       })
       .finally(() => setAttemptedUserVerification(true))
   }, [userVerified, hasInternet, user, loginMethods])
