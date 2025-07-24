@@ -10,8 +10,6 @@ import { CurrencyServiceContext } from '../../service/ServiceContext'
 import { SearchOverlay } from '../inputs/SearchOverlay'
 import { DrawerContext } from '../Menu'
 
-import '../../styles/account-list-tailwind.css'
-
 const AccountListContainer = styled.div`
   min-width: 20rem;
   max-width: 100%;
@@ -324,7 +322,7 @@ export const AccountList = (props: Props) => {
           ),
         ).map(([type, accounts]) => (
           <Fragment key={`account-group-${type}`}>
-            <div className="mb-8">
+            <div style={{ marginBottom: '2rem' }}>
               {type !== 'Other' && (
                 <GroupHeader>
                   <GroupName>{type}</GroupName>
@@ -347,7 +345,21 @@ export const AccountList = (props: Props) => {
                 </GroupHeader>
               )}
               <div
-                className={`${showBalances ? 'grid grid-cols-[repeat(auto-fill,minmax(350px,1fr))] gap-6' : 'flex flex-col gap-1'} ${type === 'Other' ? 'mt-4' : ''} ${showBalances ? 'p-1' : ''}`}
+                style={{
+                  ...(showBalances
+                    ? {
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))',
+                        gap: '1.5rem',
+                        padding: '0.25rem',
+                      }
+                    : {
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '0.25rem',
+                      }),
+                  ...(type === 'Other' ? { marginTop: '1rem' } : {}),
+                }}
               >
                 {accounts.map((account) => (
                   <AccountCard
