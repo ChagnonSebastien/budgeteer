@@ -9,22 +9,71 @@ import { doNothing } from '../../utils'
 import IconCapsule from '../icons/IconCapsule'
 import { IconToolsContext } from '../icons/IconTools'
 
-import '../../styles/category-list-tailwind.css'
+// Styled components only for complex hover effects and transitions
+const CategoryListItem = styled.div<{ isSelected: boolean; hasSelectedChild: boolean }>`
+  border-radius: 0.5rem;
+  transition: all 200ms ease-in-out;
+  border-left: 3px solid ${(props) => (props.isSelected ? '#C84B31' : 'transparent')};
+  margin: 0.125rem 0;
+  background-color: ${(props) =>
+    props.isSelected ? 'rgba(200, 75, 49, 0.12)' : props.hasSelectedChild ? 'rgba(200, 75, 49, 0.04)' : 'transparent'};
 
-const CategoryListContainer = styled.div`
-  min-width: 20rem;
-  max-width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  position: relative;
+  &:hover {
+    background-color: ${(props) =>
+      props.isSelected
+        ? 'rgba(200, 75, 49, 0.16)'
+        : props.hasSelectedChild
+          ? 'rgba(200, 75, 49, 0.08)'
+          : 'rgba(255, 255, 255, 0.08)'};
+  }
 `
 
-const ScrollableContent = styled.div`
-  overflow-y: auto;
-  flex-grow: 1;
-  padding-bottom: 4rem;
+const ExpandButton = styled.div<{ hasSelectedChild: boolean }>`
+  width: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 200ms;
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.04);
+  }
+
+  .rotatable {
+    transition: all 200ms ease-in-out;
+    opacity: ${(props) => (props.hasSelectedChild ? 1 : 0.7)};
+    font-size: 1.1rem;
+    color: ${(props) => (props.hasSelectedChild ? '#C84B31' : 'inherit')};
+
+    &.open {
+      transform: rotate(90deg);
+    }
+  }
+`
+
+const Collapsible = styled.div<{ isOpen: boolean }>`
+  max-height: ${(props) => (props.isOpen ? 'none' : '0')};
+  overflow: ${(props) => (props.isOpen ? 'visible' : 'hidden')};
+  transition: all 300ms ease-in-out;
+  opacity: ${(props) => (props.isOpen ? 1 : 0)};
+`
+
+const NestedCategoryContainer = styled.div`
+  margin-left: 1.5rem;
   position: relative;
+  padding-left: 0.5rem;
+
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background-color: rgba(255, 255, 255, 0.12);
+    border-radius: 0.125rem;
+  }
 `
 
 interface Props {
@@ -131,26 +180,36 @@ export const CategoryList = (props: Props) => {
   }
 
   const renderCategory = (category: Category, onSelect: (value: CategoryID) => void, depth: number): JSX.Element => {
+    const isSelected =
+      selected.includes(category.id) ||
+      (typeof onMultiSelect !== 'undefined' && category.parentId === null && selected.length === 0)
+
+    // Check if any descendant (not just direct children) is selected
+    const hasSelectedDescendant = (function hasSelectedDescendant(catId: number): boolean {
+      const children = subCategories[catId]
+      if (!children) return false
+      return children.some((child) => selected.includes(child.id) || hasSelectedDescendant(child.id))
+    })(category.id)
+
     return (
       <Fragment key={`category-list-id-${category.id}`}>
-        <div
-          className={`category-list-item ${selected.includes(category.id) || (typeof onMultiSelect !== 'undefined' && category.parentId === null && selected.length === 0) ? 'selected' : ''} ${
-            // Check if any descendant (not just direct children) is selected
-            (function hasSelectedDescendant(catId: number): boolean {
-              const children = subCategories[catId]
-              if (!children) return false
-              return children.some((child) => selected.includes(child.id) || hasSelectedDescendant(child.id))
-            })(category.id)
-              ? 'has-selected-child'
-              : ''
-          }`}
+        <CategoryListItem
+          isSelected={isSelected}
+          hasSelectedChild={hasSelectedDescendant}
           onMouseEnter={() => setHoveringOver(category.id)}
           onTouchStart={() => setHoveringOver(category.id)}
         >
-          <div className="category-content">
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'stretch',
+              borderRadius: '0.75rem',
+              overflow: 'hidden',
+            }}
+          >
             {typeof subCategories[category.id] !== 'undefined' ? (
-              <div
-                className="expand-button"
+              <ExpandButton
+                hasSelectedChild={hasSelectedDescendant}
                 onClick={() => {
                   if (!open.includes(category.id)) {
                     setOpen((prev) => [...prev, category.id])
@@ -160,12 +219,11 @@ export const CategoryList = (props: Props) => {
                 }}
               >
                 <IconLib.MdArrowForwardIos className={`rotatable ${open.includes(category.id) ? 'open' : ''}`} />
-              </div>
+              </ExpandButton>
             ) : (
-              <div className="expand-button" /> /* Placeholder for alignment */
+              <ExpandButton hasSelectedChild={false} /> /* Placeholder for alignment */
             )}
             <div
-              className="category-main"
               onClick={() => {
                 if (typeof buttonText !== 'undefined') return
 
@@ -192,9 +250,15 @@ export const CategoryList = (props: Props) => {
                   onSelect(category.id)
                 }
               }}
-              style={{ cursor: 'pointer' }}
+              style={{
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                flexGrow: 1,
+                padding: '0.5rem 0.5rem 0.5rem 0',
+              }}
             >
-              <div className="category-icon-container">
+              <div style={{ display: 'flex', alignItems: 'center', marginRight: '1rem' }}>
                 <IconCapsule
                   iconName={category.iconName}
                   size={'2rem'}
@@ -202,35 +266,60 @@ export const CategoryList = (props: Props) => {
                   backgroundColor={category.iconBackground}
                 />
               </div>
-              <div className="category-name">{category.name}</div>
+              <div
+                style={{
+                  fontSize: '0.95rem',
+                  color: 'rgba(255, 255, 255, 0.87)',
+                  flexGrow: 1,
+                }}
+              >
+                {category.name}
+              </div>
               {hoveringOver === category.id && typeof buttonText !== 'undefined' && (
                 <Button
                   variant="contained"
                   size="small"
                   onClick={() => onSelect(category.id)}
-                  className="category-edit-button"
-                  style={{ opacity: 1 }}
+                  style={{ opacity: 1, marginRight: '0.5rem' }}
                 >
                   {buttonText}
                 </Button>
               )}
             </div>
           </div>
-        </div>
-        <div className={`collapsible ${open.includes(category.id) ? 'open' : ''}`}>
-          <div className="nested-category">
+        </CategoryListItem>
+        <Collapsible isOpen={open.includes(category.id)}>
+          <NestedCategoryContainer>
             {subCategories[category.id]?.map((item) => renderCategory(item, onSelect, depth + 1))}
-          </div>
-        </div>
+          </NestedCategoryContainer>
+        </Collapsible>
       </Fragment>
     )
   }
 
   return (
-    <CategoryListContainer>
-      <ScrollableContent ref={scrollContainerRef} className="custom-scrollbar">
+    <div
+      style={{
+        minWidth: '20rem',
+        maxWidth: '100%',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        position: 'relative',
+      }}
+    >
+      <div
+        ref={scrollContainerRef}
+        className="custom-scrollbar"
+        style={{
+          overflowY: 'auto',
+          flexGrow: 1,
+          paddingBottom: '4rem',
+          position: 'relative',
+        }}
+      >
         {renderCategory(rootCategory, onSelect ?? doNothing, 0)}
-      </ScrollableContent>
-    </CategoryListContainer>
+      </div>
+    </div>
   )
 }
