@@ -247,7 +247,7 @@ const InvestmentGainLineChart: FC<GainChartProps> = ({ fromDate, toDate }) => {
           const { amount, baseline = 0 } = data[idx].values[groupLabel] || { amount: 0, baseline: 0 }
           return {
             x: date,
-            y: Math.max(0, amount - baseline),
+            y: amount - baseline,
           }
         }),
       })),
@@ -259,7 +259,7 @@ const InvestmentGainLineChart: FC<GainChartProps> = ({ fromDate, toDate }) => {
       data={gainSeries}
       margin={{ top: 20, right: 50, bottom: 50, left: 60 }}
       xScale={{ type: 'time', format: 'native', precision: 'day' }}
-      yScale={{ type: 'linear', min: 0, max: 'auto' }}
+      yScale={{ type: 'linear', min: 'auto' }}
       xFormat={(i) => formatDate(i, 'MMM d, yyyy')}
       yFormat={(i) => formatFull(defaultCurrency, i as number, privacyMode)}
       axisBottom={{
