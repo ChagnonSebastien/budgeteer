@@ -257,7 +257,7 @@ const InvestmentGainLineChart: FC<GainChartProps> = ({ fromDate, toDate }) => {
   return (
     <ResponsiveLine
       data={gainSeries}
-      margin={{ top: 20, right: 50, bottom: 50, left: 60 }}
+      margin={{ top: 20, right: 20, bottom: 50, left: 50 }}
       xScale={{ type: 'time', format: 'native', precision: 'day' }}
       yScale={{ type: 'linear', min: 'auto' }}
       xFormat={(i) => formatDate(i, 'MMM d, yyyy')}

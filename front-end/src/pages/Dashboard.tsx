@@ -37,7 +37,7 @@ const CashFlowBarChart: FC<{ data: CashFlowDataPoint[] }> = ({ data }) => {
       data={barData}
       keys={['Inflow', 'Outflow']}
       indexBy="month"
-      margin={{ top: 20, right: 50, bottom: 60, left: 60 }}
+      margin={{ top: 20, right: 20, bottom: 60, left: 50 }}
       padding={0.3}
       groupMode="stacked"
       valueScale={{ type: 'linear' }}
@@ -159,7 +159,7 @@ const Dashboard: FC = () => {
   const savingsRate = totalInflow > 0 ? surplus / totalInflow : 0
 
   return (
-    <ContentWithHeader title="Dashboard" button="menu" contentMaxWidth="50rem" contentPadding="2rem">
+    <ContentWithHeader title="Dashboard" button="menu" contentMaxWidth="50rem" contentPadding="1rem">
       {/* Net Worth */}
 
       <div style={{ display: 'flex', marginTop: '1rem' }}>
@@ -195,7 +195,7 @@ const Dashboard: FC = () => {
         </div>
         <div style={{ borderBottom: '1px grey solid', flexGrow: 1 }} />
       </div>
-      <Box sx={{ padding: '2rem 1rem', border: '1px grey solid', borderTop: 0 }}>
+      <Box sx={{ padding: `2rem ${window.innerWidth > 600 ? '1' : '0'}rem`, border: '1px grey solid', borderTop: 0 }}>
         <div style={{ height: '20rem', width: '100%' }}>
           <InvestmentGainLineChart fromDate={startOfDay(subMonths(new Date(), 12))} toDate={startOfDay(new Date())} />
         </div>
@@ -207,7 +207,7 @@ const Dashboard: FC = () => {
         <div style={{ color: 'gray', margin: '0 1rem', transform: 'translate(0, 0.5rem)' }}>Cash Flow</div>
         <div style={{ borderBottom: '1px grey solid', flexGrow: 1 }} />
       </div>
-      <Box sx={{ padding: '2rem 1rem', border: '1px grey solid', borderTop: 0 }}>
+      <Box sx={{ padding: `2rem ${window.innerWidth > 600 ? '1' : '0'}rem`, border: '1px grey solid', borderTop: 0 }}>
         <div style={{ height: '20rem', width: '100%' }}>
           <CashFlowBarChart data={cashFlowData} />
         </div>
