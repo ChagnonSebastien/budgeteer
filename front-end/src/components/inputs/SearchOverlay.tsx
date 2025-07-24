@@ -93,7 +93,7 @@ export const SearchOverlay = ({ filter, setFilter, placeholder = 'Search...' }: 
         </FloatingButton>
       )}
       {showSearch && (
-        <div className="search-overlay" onClick={handleClose}>
+        <div className="search-overlay" onClick={() => setShowSearch(false)}>
           <TextField
             autoFocus
             fullWidth
