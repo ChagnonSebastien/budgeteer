@@ -10,46 +10,21 @@ import {
   TextField,
   Typography,
 } from '@mui/material'
-import '../styles/graphs-tailwind.css'
 import { FC, Suspense, useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import styled from 'styled-components'
 
 import ContentWithHeader from '../components/ContentWithHeader'
 import AccountsBalanceChart, { GroupType } from '../components/graphing/AccountsBalanceChart'
+import {
+  ControlsContainer,
+  GraphContainer,
+  GraphPageContainer,
+  GraphSelectField,
+  SplitViewContainer,
+} from '../components/graphing/GraphStyledComponents'
 import useTransactionFilter from '../components/inputs/useTransactionFilter'
 import SplitView from '../components/SplitView'
 import Account from '../domain/model/account'
-
-const GraphPageContainer = styled.div`
-  height: 100%;
-  width: 100%;
-`
-
-const GraphContainer = styled.div<{ height: number }>`
-  height: ${(props) => `${props.height}px`};
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  padding: 1rem 0 1rem 0;
-
-  & > div {
-    max-width: 100vh;
-  }
-`
-
-const ControlsContainer = styled.div<{ $splitView?: boolean }>`
-  padding: 1rem 2rem;
-  border-top: ${(props) => (props.$splitView ? 'none' : '1px solid rgba(255, 255, 255, 0.1)')};
-`
-
-const SplitViewContainer = styled.div`
-  height: 100%;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-`
 
 const AccountsBalancePage: FC = () => {
   const {
@@ -100,6 +75,7 @@ const AccountsBalancePage: FC = () => {
           height={
             splitHorizontal ? (showSlider ? contentHeight - 200 : contentHeight - 100) : contentHeight - optionsHeight
           }
+          style={{ padding: '1rem 0 1rem 0' }}
         >
           <Suspense
             fallback={
@@ -142,7 +118,7 @@ const AccountsBalancePage: FC = () => {
           if (element && !splitHorizontal) setOptionsHeight(element.scrollHeight)
         }}
       >
-        <div className="graph-controls-group">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           {!splitHorizontal && <Box sx={{ mb: 2 }}>{filterOverview}</Box>}
 
           {splitHorizontal ? (
@@ -212,28 +188,29 @@ const AccountsBalancePage: FC = () => {
               }}
             >
               <Box>
-                <TextField
-                  className="graph-select-field"
-                  label="Group by"
-                  sx={{
-                    '& .MuiInput-underline:before': {
-                      borderBottomColor: (theme) => alpha(theme.palette.primary.main, 0.1),
-                    },
-                  }}
-                  select
-                  value={groupBy}
-                  onChange={(event) => {
-                    query.set('groupBy', event.target.value)
-                    navigate(`${location.pathname}?${query.toString()}`)
-                  }}
-                  variant="standard"
-                  fullWidth
-                >
-                  <MenuItem value="none">None</MenuItem>
-                  <MenuItem value="account">Account</MenuItem>
-                  <MenuItem value="financialInstitution">Financial Institution</MenuItem>
-                  <MenuItem value="type">Type</MenuItem>
-                </TextField>
+                <GraphSelectField>
+                  <TextField
+                    label="Group by"
+                    sx={{
+                      '& .MuiInput-underline:before': {
+                        borderBottomColor: (theme) => alpha(theme.palette.primary.main, 0.1),
+                      },
+                    }}
+                    select
+                    value={groupBy}
+                    onChange={(event) => {
+                      query.set('groupBy', event.target.value)
+                      navigate(`${location.pathname}?${query.toString()}`)
+                    }}
+                    variant="standard"
+                    fullWidth
+                  >
+                    <MenuItem value="none">None</MenuItem>
+                    <MenuItem value="account">Account</MenuItem>
+                    <MenuItem value="financialInstitution">Financial Institution</MenuItem>
+                    <MenuItem value="type">Type</MenuItem>
+                  </TextField>
+                </GraphSelectField>
               </Box>
               <Box>
                 <TextField

@@ -9,8 +9,6 @@ import { CategoryServiceContext } from '../../service/ServiceContext'
 import { darkColors, darkTheme } from '../../utils'
 import { DrawerContext } from '../Menu'
 
-import '../../styles/graphs-tailwind.css'
-
 type LocalTree = {
   name: string
   loc: number | undefined

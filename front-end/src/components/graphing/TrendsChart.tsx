@@ -20,8 +20,6 @@ import MixedAugmentation from '../../service/MixedAugmentation'
 import { darkTheme } from '../../utils'
 import { DrawerContext } from '../Menu'
 
-import '../../styles/graphs-tailwind.css'
-
 export type grouping = 'years' | 'quarters' | 'months'
 
 interface Props {

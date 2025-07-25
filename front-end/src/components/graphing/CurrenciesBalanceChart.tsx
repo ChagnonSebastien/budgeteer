@@ -13,13 +13,19 @@ import {
 import { FC, useCallback, useContext, useMemo } from 'react'
 
 import CustomChart from './CustomChart'
+import {
+  GraphTooltip,
+  GraphTooltipColor,
+  GraphTooltipDate,
+  GraphTooltipLabel,
+  GraphTooltipRow,
+  GraphTooltipValue,
+} from './GraphStyledComponents'
 import Currency, { formatFull } from '../../domain/model/currency'
 import MixedAugmentation from '../../service/MixedAugmentation'
 import { AccountServiceContext, CurrencyServiceContext } from '../../service/ServiceContext'
 import { darkColors, darkTheme } from '../../utils'
 import { DrawerContext } from '../Menu'
-
-import '../../styles/graphs-tailwind.css'
 
 export type GroupType = 'currency' | 'risk' | 'type' | 'none'
 
@@ -364,42 +370,41 @@ const CurrenciesBalanceChart: FC<Props> = (props) => {
             const showGlobalGain = !privacyMode && totalGain !== 0 && baselineConfig === 'showGlobalBaseline'
 
             return (
-              <div className="graph-tooltip">
-                <div className="graph-tooltip-date">{date}</div>
+              <GraphTooltip>
+                <GraphTooltipDate>{date}</GraphTooltipDate>
 
                 {tooltipProps.slice.stack
                   .filter((s) => s.value !== 0)
                   .map((s) => {
                     const showGain = !privacyMode && s.gain !== 0 && baselineConfig === 'showIndividualBaselines'
                     return (
-                      <div key={`${date}-${s.layerLabel}`} className="graph-tooltip-group">
+                      <div key={`${date}-${s.layerLabel}`}>
                         {/* main row */}
-                        <div className="graph-tooltip-row">
-                          <div className="graph-tooltip-color" style={{ backgroundColor: s.color }} />
-                          <div className="graph-tooltip-label">{s.layerLabel}</div>
+                        <GraphTooltipRow>
+                          <GraphTooltipColor style={{ backgroundColor: s.color }} />
+                          <GraphTooltipLabel>{s.layerLabel}</GraphTooltipLabel>
 
                           {!privacyMode && (
                             <>
                               <div>:</div>
-                              <div className="min-w-4 flex-grow" />
-                              <div className="graph-tooltip-value">{s.formattedValue}</div>
+                              <div style={{ minWidth: '1rem', flexGrow: 1 }} />
+                              <GraphTooltipValue>{s.formattedValue}</GraphTooltipValue>
                             </>
                           )}
-                        </div>
+                        </GraphTooltipRow>
 
                         {/* indented gain row */}
                         {showGain && (
-                          <div className="graph-tooltip-row">
-                            <div
-                              className={'graph-tooltip-value'}
+                          <GraphTooltipRow>
+                            <GraphTooltipValue
                               style={{
                                 fontSize: 'small',
                                 color: s.gain < 0 ? theme.palette.error.light : theme.palette.success.light,
                               }}
                             >
                               {s.gainFormatted}
-                            </div>
-                          </div>
+                            </GraphTooltipValue>
+                          </GraphTooltipRow>
                         )}
                       </div>
                     )
@@ -408,19 +413,18 @@ const CurrenciesBalanceChart: FC<Props> = (props) => {
                 {showGlobalGain && (
                   <div>
                     <hr />
-                    <div className="graph-tooltip-row">
-                      <div
-                        className="graph-tooltip-value"
+                    <GraphTooltipRow>
+                      <GraphTooltipValue
                         style={{
                           color: totalGain < 0 ? theme.palette.error.light : theme.palette.success.light,
                         }}
                       >
                         Total Gains: {formatFull(defaultCurrency, totalGain, privacyMode)}
-                      </div>
-                    </div>
+                      </GraphTooltipValue>
+                    </GraphTooltipRow>
                   </div>
                 )}
-              </div>
+              </GraphTooltip>
             )
           }}
         />

@@ -6,9 +6,18 @@ import styled from 'styled-components'
 import { IconToolsContext } from './icons/IconTools'
 import { DrawerContext } from './Menu'
 
-import '../styles/layout-components-tailwind.css'
+const SearchField = styled(TextField)`
+  width: 100%;
+`
 
-const ContentContainer = styled(Box)<{ $maxWidth: string; $padding: string; $overflowY: string }>`
+export const ContentWithHeaderContainer = styled.div`
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+`
+
+export const ContentContainer = styled(Box)<{ $maxWidth: string; $padding: string; $overflowY: string }>`
   flex-grow: 1;
   height: 100%;
   width: 100%;
@@ -17,13 +26,6 @@ const ContentContainer = styled(Box)<{ $maxWidth: string; $padding: string; $ove
   margin: auto;
   padding: ${(props) => props.$padding};
   max-width: ${(props) => props.$maxWidth};
-`
-
-// Using regular Typography with className instead of styled-components
-// to avoid TypeScript issues with the component prop
-
-const SearchField = styled(TextField)`
-  width: 100%;
 `
 
 export interface ContentWithHeaderProps {
@@ -76,7 +78,7 @@ const ContentWithHeader: FC<ContentWithHeaderProps> = (props) => {
   }
 
   return (
-    <div className="content-with-header-container">
+    <ContentWithHeaderContainer>
       <Box>
         <AppBar position="static">
           <Toolbar>
@@ -109,7 +111,7 @@ const ContentWithHeader: FC<ContentWithHeaderProps> = (props) => {
       >
         {children}
       </ContentContainer>
-    </div>
+    </ContentWithHeaderContainer>
   )
 }
 

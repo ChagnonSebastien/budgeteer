@@ -1,36 +1,12 @@
 import { Button, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material'
 import { FC, useEffect, useState } from 'react'
-import '../styles/graphs-tailwind.css'
 import '../styles/trends-page-tailwind.css'
 import { useLocation, useNavigate } from 'react-router-dom'
-import styled from 'styled-components'
 
 import CategoryPicker from '../components/categories/CategoryPicker'
 import ContentWithHeader from '../components/ContentWithHeader'
+import { ControlsContainer, GraphContainer, GraphPageContainer } from '../components/graphing/GraphStyledComponents'
 import TrendsChart, { grouping } from '../components/graphing/TrendsChart'
-
-const GraphPageContainer = styled.div`
-  height: 100%;
-  width: 100%;
-`
-
-const GraphContainer = styled.div<{ height: number }>`
-  height: ${(props) => `${props.height}px`};
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  padding-bottom: 1rem;
-
-  & > div {
-    max-width: 100vh;
-  }
-`
-
-const ControlsContainer = styled.div`
-  padding: 1rem 2rem;
-  background: rgba(255, 255, 255, 0.02);
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-`
 
 const TrendsPage: FC = () => {
   const [optionsHeight, setOptionsHeight] = useState(240)
@@ -96,7 +72,7 @@ const TrendsPage: FC = () => {
             if (element) setOptionsHeight(element.scrollHeight)
           }}
         >
-          <div className="graph-controls-group">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
             <CategoryPicker
               selected={selectedCategories}
               onMultiSelect={(categories) => updateQuery({ categories })}

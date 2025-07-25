@@ -19,8 +19,6 @@ import MixedAugmentation from '../../service/MixedAugmentation'
 import { darkColors, darkTheme } from '../../utils'
 import { DrawerContext } from '../Menu'
 
-import '../../styles/graphs-tailwind.css'
-
 interface Props {
   transactions: AugmentedTransaction[]
   fromDate: Date
