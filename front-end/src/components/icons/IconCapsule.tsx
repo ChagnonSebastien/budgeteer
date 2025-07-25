@@ -2,7 +2,6 @@ import { CSSProperties, useContext, useMemo } from 'react'
 import styled from 'styled-components'
 
 import { IconToolsContext } from './IconTools'
-import '../../styles/ui-components-tailwind.css'
 
 const regexp = new RegExp('^(?<comp>[0-9.]+) *(?<unit>[a-z]*)$')
 
@@ -14,6 +13,9 @@ type Props = {
 } & CSSProperties
 
 const CapsuleContainer = styled.div<{ $size: string | number; $sizeNumber: number; $unit: string }>`
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border-radius: ${(props) => `${props.$sizeNumber * 0.5}${props.$unit}`};
   height: ${(props) => props.$size};
   width: ${(props) => props.$size};
@@ -41,7 +43,7 @@ const IconCapsule = (props: Props) => {
   }, [size])
 
   return (
-    <CapsuleContainer $size={size} $sizeNumber={sizeNumber} $unit={unit} className="icon-capsule" style={style}>
+    <CapsuleContainer $size={size} $sizeNumber={sizeNumber} $unit={unit} style={style}>
       <Icon size={`${sizeNumber * 0.625}${unit}`} color={color} />
     </CapsuleContainer>
   )
