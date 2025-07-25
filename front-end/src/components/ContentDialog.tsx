@@ -3,7 +3,6 @@ import { FC, useContext } from 'react'
 import styled from 'styled-components'
 
 import { DrawerContext } from './Menu'
-import '../styles/dialog-components-tailwind.css'
 
 const StyledDialog = styled(Dialog)<{ $isPersistentDrawer: boolean; $drawerWidth: number }>`
   ${(props) =>
