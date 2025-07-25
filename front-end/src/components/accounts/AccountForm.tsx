@@ -197,17 +197,17 @@ const AccountForm: FC<Props> = (props) => {
           Starting balances
         </Typography>
 
-        <div className="form-field-spacer" />
+        <div style={{ height: '1rem' }} />
 
         {initialAmounts.map((i) => (
-          <div key={i.uid} className="form-row">
+          <div key={i.uid} style={{ display: 'flex', alignItems: 'start' }}>
             <IconButton
               onClick={() => setInitialAmount((prevState) => prevState.filter((state) => state.uid !== i.uid))}
             >
               <Minus className="text-2xl" />
             </IconButton>
 
-            <div className="form-field-spacer-horizontal" />
+            <div style={{ width: '1rem', flexShrink: 0 }} />
 
             <CurrencyPicker
               errorText={NoError}
@@ -232,7 +232,7 @@ const AccountForm: FC<Props> = (props) => {
               labelText="Currency"
             />
 
-            <div className="form-field-spacer-horizontal" />
+            <div style={{ width: '1rem', flexShrink: 0 }} />
 
             <NumberInput
               label="Initial balance"

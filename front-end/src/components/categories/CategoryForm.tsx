@@ -121,11 +121,11 @@ const CategoryForm: FC<Props> = (props) => {
 
       <div className="flex mt-4 items-center">
         <Stack spacing=".25rem" className="flex flex-col flex-grow">
-          <div className="form-row">
+          <div style={{ display: 'flex', alignItems: 'start' }}>
             <Button onClick={() => setShowIconModal(true)} color="secondary" sx={{ flexGrow: 1 }} variant="outlined">
               Select Icon
             </Button>
-            <div className="form-field-spacer-horizontal" />
+            <div style={{ width: '1rem', flexShrink: 0 }} />
             <IconCapsule
               iconName={selectedIcon}
               size="2rem"
@@ -136,7 +136,7 @@ const CategoryForm: FC<Props> = (props) => {
             />
           </div>
 
-          <div className="form-row">
+          <div style={{ display: 'flex', alignItems: 'start' }}>
             <Button
               onClick={() => setShowOuterColorModal(true)}
               className="flex-grow"
@@ -145,7 +145,7 @@ const CategoryForm: FC<Props> = (props) => {
             >
               Select Outer Color
             </Button>
-            <div className="form-field-spacer-horizontal" />
+            <div style={{ width: '1rem', flexShrink: 0 }} />
             <IconCapsule
               iconName="GrX"
               size="2rem"
@@ -156,7 +156,7 @@ const CategoryForm: FC<Props> = (props) => {
             />
           </div>
 
-          <div className="form-row">
+          <div style={{ display: 'flex', alignItems: 'start' }}>
             <Button
               onClick={() => setShowInnerColorModal(true)}
               className="flex-grow"
@@ -165,7 +165,7 @@ const CategoryForm: FC<Props> = (props) => {
             >
               Select Inner Color
             </Button>
-            <div className="form-field-spacer-horizontal" />
+            <div style={{ width: '1rem', flexShrink: 0 }} />
             <IconCapsule
               iconName="GrX"
               size="2rem"
@@ -192,7 +192,7 @@ const CategoryForm: FC<Props> = (props) => {
         <ContentDialog onClose={() => setShowInnerColorModal(false)} open={showInnerColorModal}>
           <HexColorPicker color={innerColor} onChange={setInnerColor} className="flex-grow overflow-hidden" />
         </ContentDialog>
-        <div className="form-field-spacer-horizontal" />
+        <div style={{ width: '1rem', flexShrink: 0 }} />
         <div className="flex flex-col justify-center p-4 border border-gray-500">
           <IconCapsule iconName={selectedIcon} size="5rem" color={innerColor} backgroundColor={outerColor} />
         </div>
