@@ -11,9 +11,9 @@ import ExchangeRate, { ExchangeRateIdentifiableFields } from '../../domain/model
 import MixedAugmentation from '../../service/MixedAugmentation'
 import { CurrencyServiceContext } from '../../service/ServiceContext'
 import { darkTheme } from '../../utils'
-import ContentDialog from '../ContentDialog'
-import FormWrapper from '../FormWrapper'
 import CodeEditor from '../inputs/CodeEditor'
+import ContentDialog from '../shared/ContentDialog'
+import FormWrapper from '../shared/FormWrapper'
 
 const ChartContainer = styled.div`
   height: 200px;

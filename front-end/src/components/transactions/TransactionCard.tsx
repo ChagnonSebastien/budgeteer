@@ -5,8 +5,6 @@ import Currency, { formatFull } from '../../domain/model/currency'
 import IconCapsule from '../icons/IconCapsule'
 import { DrawerContext } from '../Menu'
 
-import '../../styles/transaction-list-tailwind.css'
-
 interface Props {
   amount: number
   currency: Currency
@@ -45,9 +43,38 @@ const TransactionCard: FC<Props> = memo((props) => {
 
   const cardType = fromMe && !toMe ? 'expense' : !fromMe && toMe ? 'income' : ''
 
+  const getBackgroundColor = () => {
+    if (cardType === 'expense') return 'rgba(240, 128, 128, 0.05)'
+    if (cardType === 'income') return 'rgba(128, 240, 128, 0.05)'
+    return 'rgba(128, 128, 128, 0.05)'
+  }
+
   return (
-    <div onClick={onClick} className={`transaction-card ${cardType}`}>
-      <div className="transaction-card-icon">
+    <div
+      onClick={onClick}
+      style={{
+        display: 'flex',
+        flexDirection: 'row',
+        backgroundColor: getBackgroundColor(),
+        borderRadius: '0.75rem',
+        fontSize: '0.875rem',
+        margin: '0.3rem',
+        padding: '0.5rem 0.75rem',
+        alignItems: 'center',
+        border: '1px solid rgba(255, 255, 255, 0.08)',
+        cursor: 'pointer',
+        willChange: 'transform',
+        transform: 'translateZ(0)',
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          flexShrink: 0,
+        }}
+      >
         <IconCapsule
           iconName={categoryIconName}
           size="2.4rem"
@@ -55,30 +82,96 @@ const TransactionCard: FC<Props> = memo((props) => {
           color={categoryIconColor}
         />
       </div>
-      <div className="transaction-card-spacer" />
-      <div className="transaction-card-content">
-        <div className="transaction-card-header">
-          <div className="transaction-card-amount">
+      <div style={{ width: '0.5rem', flexShrink: 0 }} />
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          justifyItems: 'stretch',
+          flexGrow: 1,
+          width: '100%',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+        }}
+      >
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+          }}
+        >
+          <div
+            style={{
+              fontWeight: 600,
+              letterSpacing: '0.01em',
+              fontSize: '0.95rem',
+            }}
+          >
             {formatFull(currency, amount, privacyMode)}
             {currency.id === receiverCurrency.id
               ? ''
               : ` -> ${formatFull(receiverCurrency, receiverAmount, privacyMode)}`}
           </div>
-          <div className="transaction-card-date">{date.toDateString()}</div>
+          <div
+            style={{
+              color: 'rgba(255, 255, 255, 0.7)',
+              fontSize: '0.85rem',
+            }}
+          >
+            {date.toDateString()}
+          </div>
         </div>
-        <div className="transaction-card-details">
-          <div className="transaction-card-accounts">
-            <div className="transaction-card-account">
-              <span className="transaction-card-account-label">From:</span>{' '}
-              <span className="transaction-card-account-name">{from?.name ?? '-'}</span>
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            width: '100%',
+          }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden',
+            }}
+          >
+            <div
+              style={{
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+              }}
+            >
+              <span style={{ color: 'rgba(255, 255, 255, 0.6)' }}>From:</span>{' '}
+              <span style={{ fontWeight: 500 }}>{from?.name ?? '-'}</span>
             </div>
-            <div className="transaction-card-account">
-              <span className="transaction-card-account-label">To:</span>{' '}
-              <span className="transaction-card-account-name">{to?.name ?? '-'}</span>
+            <div
+              style={{
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+              }}
+            >
+              <span style={{ color: 'rgba(255, 255, 255, 0.6)' }}>To:</span>{' '}
+              <span style={{ fontWeight: 500 }}>{to?.name ?? '-'}</span>
             </div>
           </div>
 
-          <div className="transaction-card-note">{note}</div>
+          <div
+            style={{
+              whiteSpace: 'normal',
+              textOverflow: 'ellipsis',
+              fontWeight: 300,
+              color: 'rgba(255, 255, 255, 0.7)',
+              fontSize: '0.85rem',
+              textAlign: 'end',
+            }}
+          >
+            {note}
+          </div>
         </div>
       </div>
     </div>

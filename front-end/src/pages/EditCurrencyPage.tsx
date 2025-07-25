@@ -2,8 +2,8 @@ import { FC, useCallback, useContext, useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import styled from 'styled-components'
 
-import ContentWithHeader from '../components/ContentWithHeader'
 import CurrencyForm from '../components/currencies/CurrencyForm'
+import ContentWithHeader from '../components/shared/ContentWithHeader'
 import { CurrencyUpdatableFields } from '../domain/model/currency'
 import { CurrencyServiceContext } from '../service/ServiceContext'
 

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import styled from 'styled-components'
 
 import AccountForm from '../components/accounts/AccountForm'
-import ContentWithHeader from '../components/ContentWithHeader'
+import ContentWithHeader from '../components/shared/ContentWithHeader'
 import Account from '../domain/model/account'
 import { AccountServiceContext } from '../service/ServiceContext'
 

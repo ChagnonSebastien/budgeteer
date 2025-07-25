@@ -15,53 +15,24 @@ import {
 import { ResponsiveLine } from '@nivo/line'
 import { FC, useContext, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import styled from 'styled-components'
 
-import ContentDialog from '../components/ContentDialog'
-import ContentWithHeader from '../components/ContentWithHeader'
 import { CurrencyList } from '../components/currencies/CurrencyList'
 import { IconToolsContext } from '../components/icons/IconTools'
+import ContentDialog from '../components/shared/ContentDialog'
+import ContentWithHeader from '../components/shared/ContentWithHeader'
+import {
+  ChartContainer,
+  FadingDivider,
+  ListContentContainer,
+  PageContainer,
+  ScrollAreaContainer,
+} from '../components/shared/PageStyledComponents'
 import Currency from '../domain/model/currency'
 import ExchangeRate, { ExchangeRateIdentifiableFields } from '../domain/model/exchangeRate'
 import MixedAugmentation from '../service/MixedAugmentation'
 import { CurrencyServiceContext } from '../service/ServiceContext'
-import '../styles/list-pages-tailwind.css'
 import '../styles/overview-modal-tailwind.css'
 import { darkTheme } from '../utils'
-
-const PageContainer = styled.div`
-  height: 100%;
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  max-width: 100%;
-`
-
-const ListContentContainer = styled.div`
-  max-width: 50rem;
-  flex-grow: 1;
-`
-
-const ScrollAreaContainer = styled.div`
-  width: 100%;
-  position: relative;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-`
-
-const FadingDivider = styled.div<{ opacity: number }>`
-  height: 1rem;
-  border-top: 1px solid transparent;
-  border-image: linear-gradient(to right, transparent, #fff4 20%, #fff4 80%, transparent) 1;
-  background: radial-gradient(ellipse 100% 100% at 50% 0%, #fff2 0%, #fff0 50%, transparent 100%);
-  opacity: ${(props) => props.opacity};
-`
-
-const ChartContainer = styled.div`
-  height: 200px;
-  margin-top: 16px;
-`
 
 const CurrenciesPage: FC = () => {
   const navigate = useNavigate()

@@ -3,7 +3,7 @@ import { FC, useCallback, useContext, useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import styled from 'styled-components'
 
-import ContentWithHeader from '../components/ContentWithHeader'
+import ContentWithHeader from '../components/shared/ContentWithHeader'
 import TransactionForm from '../components/transactions/TransactionForm'
 import Transaction from '../domain/model/transaction'
 import MixedAugmentation from '../service/MixedAugmentation'

@@ -10,7 +10,7 @@ import Account from '../../domain/model/account'
 import { AccountServiceContext, CategoryServiceContext, TransactionServiceContext } from '../../service/ServiceContext'
 import { AccountList } from '../accounts/AccountList'
 import { CategoryList } from '../categories/CategoryList'
-import ContentDialog from '../ContentDialog'
+import ContentDialog from '../shared/ContentDialog'
 
 type Filters = {
   overview: ReactNode

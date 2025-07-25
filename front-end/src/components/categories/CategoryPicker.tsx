@@ -4,7 +4,7 @@ import styled from 'styled-components'
 
 import { CategoryList } from './CategoryList'
 import { CategoryServiceContext } from '../../service/ServiceContext'
-import ContentDialog from '../ContentDialog'
+import ContentDialog from '../shared/ContentDialog'
 
 const FullWidthTextField = styled(TextField)`
   width: 100%;

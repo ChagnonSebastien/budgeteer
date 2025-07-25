@@ -3,7 +3,7 @@ import React, { CSSProperties, ReactNode, useEffect, useState } from 'react'
 import styled from 'styled-components'
 
 import NamedItem from '../../domain/model/NamedItem'
-import ContentDialog from '../ContentDialog'
+import ContentDialog from '../shared/ContentDialog'
 
 const StyledTextField = styled(TextField)<{ $customStyle?: CSSProperties }>`
   ${(props) => props.$customStyle && { ...props.$customStyle }}

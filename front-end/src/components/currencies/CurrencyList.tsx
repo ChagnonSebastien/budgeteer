@@ -7,6 +7,7 @@ import { AccountServiceContext } from '../../service/ServiceContext'
 import { IconToolsContext } from '../icons/IconTools'
 import { SearchOverlay } from '../inputs/SearchOverlay'
 import { DrawerContext } from '../Menu'
+import { CustomScrollbarContainer } from '../shared/CustomScrollbarContainer'
 
 const CurrencyItem = styled.div<{ focused: boolean }>`
   padding: 1rem 1.5rem;
@@ -136,9 +137,8 @@ export const CurrencyList = (props: Props) => {
         position: 'relative',
       }}
     >
-      <div
+      <CustomScrollbarContainer
         ref={contentRef}
-        className="custom-scrollbar"
         style={{
           overflowY: 'auto',
           flexGrow: 1,
@@ -212,7 +212,7 @@ export const CurrencyList = (props: Props) => {
             )
           })}
         </div>
-      </div>
+      </CustomScrollbarContainer>
       {filterable && !props.hideSearchOverlay && (
         <SearchOverlay filter={filterable.filter} setFilter={filterable.setFilter} placeholder="Search currencies..." />
       )}

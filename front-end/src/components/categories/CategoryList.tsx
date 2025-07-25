@@ -8,6 +8,7 @@ import { CategoryServiceContext } from '../../service/ServiceContext'
 import { doNothing } from '../../utils'
 import IconCapsule from '../icons/IconCapsule'
 import { IconToolsContext } from '../icons/IconTools'
+import { CustomScrollbarContainer } from '../shared/CustomScrollbarContainer'
 
 // Styled components only for complex hover effects and transitions
 const CategoryListItem = styled.div<{ isSelected: boolean; hasSelectedChild: boolean }>`
@@ -308,9 +309,8 @@ export const CategoryList = (props: Props) => {
         position: 'relative',
       }}
     >
-      <div
+      <CustomScrollbarContainer
         ref={scrollContainerRef}
-        className="custom-scrollbar"
         style={{
           overflowY: 'auto',
           flexGrow: 1,
@@ -319,7 +319,7 @@ export const CategoryList = (props: Props) => {
         }}
       >
         {renderCategory(rootCategory, onSelect ?? doNothing, 0)}
-      </div>
+      </CustomScrollbarContainer>
     </div>
   )
 }

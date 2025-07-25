@@ -4,9 +4,9 @@ import '../styles/trends-page-tailwind.css'
 import { useLocation, useNavigate } from 'react-router-dom'
 
 import CategoryPicker from '../components/categories/CategoryPicker'
-import ContentWithHeader from '../components/ContentWithHeader'
 import { ControlsContainer, GraphContainer, GraphPageContainer } from '../components/graphing/GraphStyledComponents'
 import TrendsChart, { grouping } from '../components/graphing/TrendsChart'
+import ContentWithHeader from '../components/shared/ContentWithHeader'
 
 const TrendsPage: FC = () => {
   const [optionsHeight, setOptionsHeight] = useState(240)

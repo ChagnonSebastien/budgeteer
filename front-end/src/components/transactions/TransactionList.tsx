@@ -9,7 +9,6 @@ import {
   subMonths,
 } from 'date-fns'
 import { useContext, useEffect, useMemo, useRef, useState } from 'react'
-import styled from 'styled-components'
 
 import TransactionCard from './TransactionCard'
 import Category from '../../domain/model/category'
@@ -18,23 +17,6 @@ import { AugmentedTransaction } from '../../domain/model/transaction'
 import MixedAugmentation from '../../service/MixedAugmentation'
 import { AccountServiceContext } from '../../service/ServiceContext'
 import { DrawerContext } from '../Menu'
-
-import '../../styles/transaction-list-tailwind.css'
-
-const TransactionListContainer = styled.div`
-  position: relative;
-  margin: auto;
-  height: 100%;
-`
-
-const LoadMoreSentinel = styled.div`
-  height: 100vh;
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  z-index: -1;
-`
 
 interface Props {
   transactions: AugmentedTransaction[]
@@ -149,13 +131,34 @@ export const TransactionList = (props: Props) => {
     const wrap = (data: { Total: number; date: Date; diff: number }) => {
       const { Total, date, diff } = data
       return (
-        <div key={`monthly-label-${date.getTime()}`} className="monthly-label">
-          <div className="monthly-label-title">{formatDate(date, 'MMMM yyyy')}</div>
+        <div
+          key={`monthly-label-${date.getTime()}`}
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'flex-end',
+            padding: '1rem',
+            paddingBottom: '0.5rem',
+          }}
+        >
+          <div
+            style={{
+              alignSelf: 'center',
+              fontWeight: 'bold',
+            }}
+          >
+            {formatDate(date, 'MMMM yyyy')}
+          </div>
           {!privacyMode && (
             <div>
-              <div className="monthly-label-total">{formatFull(defaultCurrency, Total, privacyMode)}</div>
+              <div style={{ display: 'flex' }}>{formatFull(defaultCurrency, Total, privacyMode)}</div>
               {diff !== 0 && (
-                <div className={`monthly-label-diff ${diff > 0 ? 'positive' : 'negative'}`}>
+                <div
+                  style={{
+                    display: 'flex',
+                    color: diff > 0 ? 'var(--ion-color-success)' : 'var(--ion-color-danger)',
+                  }}
+                >
                   <div>{diff > 0 ? `+` : `-`}</div>
                   <div>{formatAmount(defaultCurrency, Math.abs(diff), privacyMode)}</div>
                 </div>
@@ -203,30 +206,43 @@ export const TransactionList = (props: Props) => {
     [viewWithMonthLabels, displayedAmount],
   )
 
-  const loadMoreRef = useRef(null)
+  const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    const observer = new IntersectionObserver((entries) => {
-      if (entries[0].isIntersecting) {
+    const container = containerRef.current
+    if (!container) return
+
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = container
+      const scrollPosition = scrollTop + clientHeight
+      const threshold = scrollHeight - 800 // Load more when 800px from bottom
+
+      if (scrollPosition >= threshold && displayedAmount < viewWithMonthLabels.length) {
         setDisplayedAmount((prevState) => Math.min(prevState + chunkSize, viewWithMonthLabels.length))
       }
-    })
-
-    if (loadMoreRef.current) {
-      observer.observe(loadMoreRef.current)
     }
+
+    container.addEventListener('scroll', handleScroll)
+
+    // Check initial state in case content is shorter than container
+    handleScroll()
 
     return () => {
-      if (loadMoreRef.current) {
-        observer.unobserve(loadMoreRef.current)
-      }
+      container.removeEventListener('scroll', handleScroll)
     }
-  }, [])
+  }, [displayedAmount, viewWithMonthLabels.length])
 
   return (
-    <TransactionListContainer className="transaction-list-container">
+    <div
+      ref={containerRef}
+      style={{
+        position: 'relative',
+        margin: 'auto',
+        height: '100%',
+        overflowY: 'auto',
+      }}
+    >
       {displayedItems}
-      <LoadMoreSentinel className="load-more-sentinel" ref={loadMoreRef} />
-    </TransactionListContainer>
+    </div>
   )
 }

@@ -13,7 +13,6 @@ import {
 import { FC, Suspense, useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 
-import ContentWithHeader from '../components/ContentWithHeader'
 import CurrenciesBalanceChart, { GroupType } from '../components/graphing/CurrenciesBalanceChart'
 import {
   ControlsContainer,
@@ -23,7 +22,8 @@ import {
   SplitViewContainer,
 } from '../components/graphing/GraphStyledComponents'
 import useTransactionFilter from '../components/inputs/useTransactionFilter'
-import SplitView from '../components/SplitView'
+import ContentWithHeader from '../components/shared/ContentWithHeader'
+import SplitView from '../components/shared/SplitView'
 import Account from '../domain/model/account'
 
 const CurrenciesBalancePage: FC = () => {

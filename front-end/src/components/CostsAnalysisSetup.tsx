@@ -2,7 +2,7 @@ import { Button, DialogActions, DialogContent, DialogTitle, Stack, TextField } f
 import { FC } from 'react'
 
 import CategoryPicker from './categories/CategoryPicker'
-import ContentDialog from './ContentDialog'
+import ContentDialog from './shared/ContentDialog'
 
 interface Props {
   open: boolean

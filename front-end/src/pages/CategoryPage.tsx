@@ -1,45 +1,20 @@
 import { Button, DialogContent, Divider, List, ListItem, ListItemIcon, ListItemText, Typography } from '@mui/material'
 import { FC, useContext, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import styled from 'styled-components'
 
 import { CategoryList } from '../components/categories/CategoryList'
-import ContentDialog from '../components/ContentDialog'
-import ContentWithHeader from '../components/ContentWithHeader'
 import { IconToolsContext } from '../components/icons/IconTools'
+import ContentDialog from '../components/shared/ContentDialog'
+import ContentWithHeader from '../components/shared/ContentWithHeader'
+import {
+  FadingDivider,
+  ListContentContainer,
+  PageContainer,
+  ScrollAreaContainer,
+} from '../components/shared/PageStyledComponents'
 import Category from '../domain/model/category'
 import { CategoryServiceContext } from '../service/ServiceContext'
-import '../styles/list-pages-tailwind.css'
 import '../styles/overview-modal-tailwind.css'
-
-const PageContainer = styled.div`
-  height: 100%;
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  max-width: 100%;
-`
-
-const ListContentContainer = styled.div`
-  max-width: 50rem;
-  flex-grow: 1;
-`
-
-const ScrollAreaContainer = styled.div`
-  width: 100%;
-  position: relative;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-`
-
-const FadingDivider = styled.div<{ opacity: number }>`
-  height: 1rem;
-  border-top: 1px solid transparent;
-  border-image: linear-gradient(to right, transparent, #fff4 20%, #fff4 80%, transparent) 1;
-  background: radial-gradient(ellipse 100% 100% at 50% 0%, #fff2 0%, #fff0 50%, transparent 100%);
-  opacity: ${(props) => props.opacity};
-`
 
 const CategoryPage: FC = () => {
   const navigate = useNavigate()

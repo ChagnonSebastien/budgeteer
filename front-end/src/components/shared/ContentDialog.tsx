@@ -2,7 +2,7 @@ import { Dialog, DialogProps } from '@mui/material'
 import { FC, useContext } from 'react'
 import styled from 'styled-components'
 
-import { DrawerContext } from './Menu'
+import { DrawerContext } from '../Menu'
 
 const StyledDialog = styled(Dialog)<{ $isPersistentDrawer: boolean; $drawerWidth: number }>`
   ${(props) =>

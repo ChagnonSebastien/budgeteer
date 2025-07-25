@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import styled from 'styled-components'
 
 import CategoryForm from '../components/categories/CategoryForm'
-import ContentWithHeader from '../components/ContentWithHeader'
+import ContentWithHeader from '../components/shared/ContentWithHeader'
 import Category from '../domain/model/category'
 import { CategoryServiceContext } from '../service/ServiceContext'
 

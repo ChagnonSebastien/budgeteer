@@ -5,9 +5,9 @@ import styled from 'styled-components'
 import Account, { Balance } from '../../domain/model/account'
 import { AccountServiceContext, CurrencyServiceContext } from '../../service/ServiceContext'
 import CurrencyPicker from '../currencies/CurrencyPicker'
-import FormWrapper from '../FormWrapper'
 import { IconToolsContext } from '../icons/IconTools'
 import { NumberInput, NumberInputFieldState } from '../inputs/NumberInput'
+import FormWrapper from '../shared/FormWrapper'
 
 const IconButton = styled.div`
   margin: 1rem 0;

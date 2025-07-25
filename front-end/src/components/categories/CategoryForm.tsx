@@ -6,11 +6,11 @@ import CategoryPicker from './CategoryPicker'
 import Category from '../../domain/model/category'
 import MixedAugmentation from '../../service/MixedAugmentation'
 import { CategoryServiceContext } from '../../service/ServiceContext'
-import ContentDialog from '../ContentDialog'
-import ContentWithHeader from '../ContentWithHeader'
-import FormWrapper from '../FormWrapper'
 import IconCapsule from '../icons/IconCapsule'
 import IconList from '../icons/IconList'
+import ContentDialog from '../shared/ContentDialog'
+import ContentWithHeader from '../shared/ContentWithHeader'
+import FormWrapper from '../shared/FormWrapper'
 
 interface Props {
   initialCategory?: Category
