@@ -3,7 +3,6 @@ import {
   Button,
   Divider,
   Drawer,
-  List,
   ListItemButton,
   ListItemIcon,
   ListItemText,
@@ -18,8 +17,6 @@ import styled from 'styled-components'
 import { IconToolsContext, PreparedIcon } from './icons/IconTools'
 import { UserContext } from '../App'
 import UserStore from '../UserStore'
-
-import '../styles/menu-tailwind.css'
 
 const ContentContainer = styled.div<{ $persistentDrawer: boolean; $totalWidth: number; $drawerWidth: number }>`
   width: ${(props) => (props.$persistentDrawer ? `${props.$totalWidth - props.$drawerWidth}px` : '100%')};
@@ -140,59 +137,63 @@ const DrawerWrapper: FC<Props> = ({ logout, children }) => {
         if (ref != null) setDrawerWidth(ref.scrollWidth)
       }}
     >
-      <Box className="menu-header">
-        <Typography variant="h6" className="menu-title">
+      <Box style={{ padding: '1.5rem' }}>
+        <Typography variant="h6" sx={{ fontWeight: 600, letterSpacing: '0.05em', marginBottom: '0.25rem' }}>
           Budget App
         </Typography>
-        <Typography className="menu-email">{email}</Typography>
+        <Typography sx={{ color: 'gray', fontSize: '0.875rem' }}>{email}</Typography>
       </Box>
-      <List className="menu-list">
-        {appPages.map((appPage, index) => {
-          const Icon = iconTypeFromName(appPage.iconName)
-          const selected = location.pathname === appPage.url
-          return (
-            <ListItemButton
-              key={index}
-              onClick={() => {
-                for (const key of [...query.keys()]) {
-                  if (!appPage.keepQuery.includes(key)) query.delete(key)
-                }
 
-                navigate(`${appPage.url}?${query.toString()}`)
-              }}
-              selected={selected}
-              className={`menu-item ${selected ? 'selected' : ''}`}
-            >
-              <ListItemIcon className={`menu-item-icon ${selected ? 'text-primary-500' : ''}`}>
-                <Icon style={iconStyle} />
-              </ListItemIcon>
-              <ListItemText primary={appPage.title} className="menu-item-text" />
-            </ListItemButton>
-          )
-        })}
-      </List>
-      <Box p="1rem">
-        <Button fullWidth onClick={logout} variant="contained" disableElevation className="menu-logout-button">
+      {appPages.map((appPage, index) => {
+        const Icon = iconTypeFromName(appPage.iconName)
+        const selected = location.pathname === appPage.url
+        return (
+          <ListItemButton
+            key={index}
+            onClick={() => {
+              for (const key of [...query.keys()]) {
+                if (!appPage.keepQuery.includes(key)) query.delete(key)
+              }
+
+              navigate(`${appPage.url}?${query.toString()}`)
+            }}
+            selected={selected}
+          >
+            <ListItemIcon style={{ minWidth: '42px' }}>
+              <Icon style={iconStyle} />
+            </ListItemIcon>
+            <ListItemText primary={appPage.title} />
+          </ListItemButton>
+        )
+      })}
+      <Box style={{ padding: '1rem' }}>
+        <Button fullWidth onClick={logout} variant="contained" disableElevation>
           Logout
         </Button>
       </Box>
-      <Divider className="menu-divider" />
-      <List className="menu-list">
+      <Divider sx={{ margin: '1rem 0' }} />
+      <div>
         <ListItemButton
           onClick={() => {
             const newValue = !privacyMode
             setPrivacyMode(newValue)
             userStore.upsertPrivacyMode(newValue)
           }}
-          className="menu-privacy-item"
+          disableRipple
+          sx={{
+            padding: '0.5rem 1rem',
+            '&:hover': {
+              backgroundColor: 'transparent',
+            },
+          }}
         >
-          <ListItemIcon className={`menu-privacy-icon ${privacyMode ? 'active' : ''}`}>
+          <ListItemIcon>
             {privacyMode ? <IconLib.MdVisibilityOff style={iconStyle} /> : <IconLib.MdVisibility style={iconStyle} />}
           </ListItemIcon>
-          <ListItemText primary="Privacy Mode" className={`menu-privacy-text ${privacyMode ? 'active' : ''}`} />
-          <Switch edge="end" checked={privacyMode} className="menu-privacy-switch" />
+          <ListItemText primary="Privacy Mode" />
+          <Switch edge="end" checked={privacyMode} />
         </ListItemButton>
-      </List>
+      </div>
     </div>
   )
 
