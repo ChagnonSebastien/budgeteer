@@ -2,6 +2,8 @@ import { Button, Snackbar, Stack } from '@mui/material'
 import { FC, FormEvent, ReactNode, useState } from 'react'
 import styled from 'styled-components'
 
+import NoteContainer from './NoteContainer'
+
 const FormContainer = styled.form`
   width: 100%;
 `
@@ -30,16 +32,11 @@ const FormWrapper: FC<Props> = (props) => {
 
   return (
     <FormContainer noValidate onSubmit={handleSubmit}>
-      <div style={{ display: 'flex' }}>
-        <div style={{ color: '#6b7280', margin: '0 1rem', transform: 'translateY(0.5rem)' }}>Form</div>
-        <div style={{ borderBottom: '1px solid #6b7280', flexGrow: 1 }} />
-      </div>
-      <Stack spacing="1rem" sx={{ padding: '2rem 1rem', border: '1px solid #6b7280', borderTop: 0 }}>
-        {children}
-      </Stack>
+      <NoteContainer title="Form">
+        <Stack spacing="1rem">{children}</Stack>
+      </NoteContainer>
 
-      <div style={{ height: '1rem' }} />
-      <Button fullWidth variant="contained" type="submit">
+      <Button fullWidth variant="contained" type="submit" style={{ marginTop: '1rem' }}>
         {submitText}
       </Button>
 

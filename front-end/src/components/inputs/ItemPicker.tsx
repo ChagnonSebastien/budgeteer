@@ -46,10 +46,7 @@ export interface ItemPickerProps<T extends NamedItem<number, T>> {
 export interface ItemListProps<T extends NamedItem<number, T>> {
   items: T[]
   onSelect: (id: number) => void
-  filterable: {
-    filter: string
-    setFilter: React.Dispatch<React.SetStateAction<string>>
-  }
+  filter: string
   onFilteredItemsChange: (items: T[]) => void
   focusedItemId: number | null
   hideSearchOverlay?: boolean
@@ -203,7 +200,7 @@ function ItemPicker<T extends NamedItem<number, T>>(props: ItemPickerProps<T>) {
               onItemSelected(id)
               setShowModal(false)
             },
-            filterable: { filter, setFilter },
+            filter: filter,
             onFilteredItemsChange: handleFilteredItemsChange,
             focusedItemId,
             hideSearchOverlay: true,

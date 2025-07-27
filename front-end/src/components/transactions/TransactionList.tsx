@@ -239,7 +239,6 @@ export const TransactionList = (props: Props) => {
         position: 'relative',
         margin: 'auto',
         height: '100%',
-        overflowY: 'auto',
       }}
     >
       {displayedItems}

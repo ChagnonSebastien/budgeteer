@@ -1,13 +1,11 @@
-import { Dispatch, SetStateAction, useContext, useEffect, useRef } from 'react'
+import { useContext, useEffect } from 'react'
 import styled from 'styled-components'
 
 import Currency, { CurrencyID, formatAmount } from '../../domain/model/currency'
 import MixedAugmentation from '../../service/MixedAugmentation'
 import { AccountServiceContext } from '../../service/ServiceContext'
 import { IconToolsContext } from '../icons/IconTools'
-import { SearchOverlay } from '../inputs/SearchOverlay'
 import { DrawerContext } from '../Menu'
-import { CustomScrollbarContainer } from '../shared/CustomScrollbarContainer'
 
 const CurrencyItem = styled.div<{ focused: boolean }>`
   padding: 1rem 1.5rem;
@@ -49,18 +47,13 @@ interface Props {
   currencies: Currency[]
   onSelect: (value: CurrencyID) => void
   showZeroBalances?: boolean
-  onScrollProgress?: (progress: number) => void
-  filterable?: {
-    filter: string
-    setFilter: Dispatch<SetStateAction<string>>
-  }
+  filter?: string
   onFilteredCurrenciesChange?: (currencies: Currency[]) => void
   focusedCurrency?: CurrencyID | null
-  hideSearchOverlay?: boolean
 }
 
 export const CurrencyList = (props: Props) => {
-  const { currencies, onSelect, showZeroBalances = true, onScrollProgress, filterable } = props
+  const { currencies, onSelect, showZeroBalances = true, filter } = props
   const { IconLib } = useContext(IconToolsContext)
   const { accountBalances } = useContext(MixedAugmentation)
   const { privacyMode } = useContext(DrawerContext)
@@ -80,42 +73,9 @@ export const CurrencyList = (props: Props) => {
     return total
   }
 
-  const contentRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (!onScrollProgress || !contentRef.current) return
-    const element = contentRef.current
-
-    const handleScroll = () => {
-      const maxScroll = element.scrollHeight - element.clientHeight
-      const bufferZone = 64 // 4rem
-      if (maxScroll <= 0) {
-        onScrollProgress(0)
-      } else {
-        const remainingScroll = maxScroll - element.scrollTop
-        if (remainingScroll > bufferZone) {
-          onScrollProgress(1)
-        } else {
-          const progress = remainingScroll / bufferZone
-          onScrollProgress(Math.max(0, Math.min(1, progress)))
-        }
-      }
-    }
-
-    handleScroll()
-    element.addEventListener('scroll', handleScroll)
-    const observer = new ResizeObserver(handleScroll)
-    observer.observe(element)
-
-    return () => {
-      element.removeEventListener('scroll', handleScroll)
-      observer.disconnect()
-    }
-  }, [onScrollProgress, currencies, filterable?.filter])
-
   const filteredCurrencies = currencies.filter((currency) => {
-    if (!filterable || !filterable.filter) return true
-    const searchTerm = filterable.filter.toLowerCase()
+    if (!filter) return true
+    const searchTerm = filter.toLowerCase()
     return currency.name.toLowerCase().includes(searchTerm) || currency.symbol.toLowerCase().includes(searchTerm)
   })
 
@@ -127,95 +87,71 @@ export const CurrencyList = (props: Props) => {
   }, [filteredCurrencies, props.onFilteredCurrenciesChange])
 
   return (
-    <div
-      style={{
-        minWidth: '20rem',
-        maxWidth: '100%',
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        position: 'relative',
-      }}
-    >
-      <CustomScrollbarContainer
-        ref={contentRef}
+    <>
+      <div
         style={{
-          overflowY: 'auto',
-          flexGrow: 1,
-          paddingBottom: '4rem',
-          position: 'relative',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '0.75rem',
+          padding: '0.5rem 0.75rem 0.5rem 0.25rem',
         }}
       >
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '0.75rem',
-            padding: '0.5rem 0.75rem 0.5rem 0.25rem',
-          }}
-        >
-          {filteredCurrencies.map((currency) => {
-            const total = getTotalForCurrency(currency.id)
-            if (!showZeroBalances && total === 0) return null
-            return (
-              <CurrencyItem
-                key={`currency-list-${currency.id}`}
-                focused={props.focusedCurrency === currency.id}
-                onClick={() => onSelect(currency.id)}
+        {filteredCurrencies.map((currency) => {
+          const total = getTotalForCurrency(currency.id)
+          if (!showZeroBalances && total === 0) return null
+          return (
+            <CurrencyItem
+              key={`currency-list-${currency.id}`}
+              focused={props.focusedCurrency === currency.id}
+              onClick={() => onSelect(currency.id)}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  width: '100%',
+                  justifyContent: 'space-between',
+                }}
               >
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    width: '100%',
-                    justifyContent: 'space-between',
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center' }}>
-                    <div
-                      style={{
-                        borderRadius: '0.75rem',
-                        padding: '0.75rem',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        marginRight: '1.25rem',
-                      }}
-                    >
-                      <IconLib.BsCurrencyExchange style={{ color: 'white', fontSize: '1.5rem' }} />
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                      <div style={{ fontSize: '1.25rem', fontWeight: 500, letterSpacing: '0.01em' }}>
-                        {currency.name}
-                      </div>
-                    </div>
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  <div
+                    style={{
+                      borderRadius: '0.75rem',
+                      padding: '0.75rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      marginRight: '1.25rem',
+                    }}
+                  >
+                    <IconLib.BsCurrencyExchange style={{ color: 'white', fontSize: '1.5rem' }} />
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.25rem' }}>
-                    <div style={{ fontSize: '1.3rem', fontWeight: 600 }}>
-                      {formatAmount(currency, total, privacyMode)}
-                    </div>
-                    <div
-                      style={{
-                        fontSize: '0.95rem',
-                        fontWeight: 400,
-                        letterSpacing: '0.02em',
-                        backgroundColor: 'var(--ion-color-primary)',
-                        borderRadius: '0.375rem',
-                        color: '#d1d5db',
-                      }}
-                    >
-                      {currency.symbol}
-                    </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                    <div style={{ fontSize: '1.25rem', fontWeight: 500, letterSpacing: '0.01em' }}>{currency.name}</div>
                   </div>
                 </div>
-              </CurrencyItem>
-            )
-          })}
-        </div>
-      </CustomScrollbarContainer>
-      {filterable && !props.hideSearchOverlay && (
-        <SearchOverlay filter={filterable.filter} setFilter={filterable.setFilter} placeholder="Search currencies..." />
-      )}
-    </div>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.25rem' }}>
+                  <div style={{ fontSize: '1.3rem', fontWeight: 600 }}>
+                    {formatAmount(currency, total, privacyMode)}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: '0.95rem',
+                      fontWeight: 400,
+                      letterSpacing: '0.02em',
+                      backgroundColor: 'var(--ion-color-primary)',
+                      borderRadius: '0.375rem',
+                      color: '#d1d5db',
+                    }}
+                  >
+                    {currency.symbol}
+                  </div>
+                </div>
+              </div>
+            </CurrencyItem>
+          )
+        })}
+      </div>
+    </>
   )
 }

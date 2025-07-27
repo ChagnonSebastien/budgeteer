@@ -1,5 +1,5 @@
 import { Tab, Tabs } from '@mui/material'
-import { Dispatch, Fragment, SetStateAction, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { Dispatch, Fragment, LegacyRef, SetStateAction, useContext, useEffect, useMemo, useState } from 'react'
 
 import { AccountCard } from './AccountCard'
 import Account, { AccountID } from '../../domain/model/account'
@@ -20,16 +20,16 @@ type Props = {
   showGroupTotals?: boolean
   groupBy?: 'institution' | 'type'
   filterable?: { filter: string; setFilter: Dispatch<SetStateAction<string>> }
-  onScrollProgress?: (progress: number) => void
   hideSearchOverlay?: boolean
   focusedAccount?: AccountID | null
   onFilteredAccountsChange?: (accounts: Account[]) => void
+  scrollingContainerRef?: LegacyRef<HTMLDivElement> | undefined
 }
 
 type tabs = 'mine' | 'others'
 
 export const AccountList = (props: Props) => {
-  const { accounts, onSelect, showBalances = false, filterable, onMultiSelect, selected } = props
+  const { accounts, onSelect, showBalances = false, filterable, onMultiSelect, selected, scrollingContainerRef } = props
 
   const { augmentedTransactions: transactions, accountBalances, exchangeRateOnDay } = useContext(MixedAugmentation)
   const currencyContext = useContext(CurrencyServiceContext)
@@ -251,43 +251,6 @@ export const AccountList = (props: Props) => {
     )
   }, [myOwnAccounts, otherAccounts, activeTab, myOwnFilteredAccounts, otherFilteredAccounts, filterable?.filter])
 
-  const contentRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (!props.onScrollProgress || !contentRef.current) return
-
-    const handleScroll = () => {
-      const element = contentRef.current
-      if (element) {
-        const maxScroll = element.scrollHeight - element.clientHeight
-        const bufferZone = 64 // 4rem
-        if (maxScroll <= 0) {
-          props.onScrollProgress?.(0)
-        } else {
-          const remainingScroll = maxScroll - element.scrollTop
-          if (remainingScroll > bufferZone) {
-            props.onScrollProgress?.(1)
-          } else {
-            const progress = remainingScroll / bufferZone
-            props.onScrollProgress?.(Math.max(0, Math.min(1, progress)))
-          }
-        }
-      }
-    }
-
-    handleScroll()
-    contentRef.current.addEventListener('scroll', handleScroll)
-    const observer = new ResizeObserver(handleScroll)
-    observer.observe(contentRef.current)
-
-    return () => {
-      if (contentRef.current) {
-        contentRef.current.removeEventListener('scroll', handleScroll)
-      }
-      observer.disconnect()
-    }
-  }, [props.onScrollProgress, displayedAccount])
-
   return (
     <div
       style={{
@@ -301,7 +264,7 @@ export const AccountList = (props: Props) => {
     >
       <div>{segments}</div>
       <CustomScrollbarContainer
-        ref={contentRef}
+        ref={scrollingContainerRef}
         style={{
           overflowY: 'auto',
           flexGrow: 1,

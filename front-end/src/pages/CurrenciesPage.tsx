@@ -1,5 +1,4 @@
 import {
-  Button,
   Checkbox,
   DialogContent,
   Divider,
@@ -13,20 +12,17 @@ import {
   Typography,
 } from '@mui/material'
 import { ResponsiveLine } from '@nivo/line'
-import { FC, useContext, useEffect, useMemo, useState } from 'react'
+import { FC, useContext, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 
 import { CurrencyList } from '../components/currencies/CurrencyList'
 import { IconToolsContext } from '../components/icons/IconTools'
+import { SearchOverlay } from '../components/inputs/SearchOverlay'
 import ContentDialog from '../components/shared/ContentDialog'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
-import {
-  ChartContainer,
-  FadingDivider,
-  ListContentContainer,
-  PageContainer,
-  ScrollAreaContainer,
-} from '../components/shared/PageStyledComponents'
+import { CustomScrollbarContainer } from '../components/shared/CustomScrollbarContainer'
+import { ChartContainer } from '../components/shared/PageStyledComponents'
+import ScrollingOverButton from '../components/shared/ScrollingOverButton'
 import Currency from '../domain/model/currency'
 import ExchangeRate, { ExchangeRateIdentifiableFields } from '../domain/model/exchangeRate'
 import MixedAugmentation from '../service/MixedAugmentation'
@@ -45,11 +41,7 @@ const CurrenciesPage: FC = () => {
   const [clickedCurrency, setClickedCurrency] = useState<Currency | null>(null)
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
   const open = Boolean(anchorEl)
-  const [scrollProgress, setScrollProgress] = useState(1)
-
-  const [optionsHeight, setOptionsHeight] = useState(240)
-  const [contentRef, setContentRef] = useState<HTMLDivElement | null>(null)
-  const [contentHeight, setContentHeight] = useState(600)
+  const scrollingContainerRef = useRef<HTMLDivElement>(null)
 
   const { monthlyRates, minRate } = useMemo(() => {
     if (!clickedCurrency) {
@@ -94,19 +86,6 @@ const CurrenciesPage: FC = () => {
     return { monthlyRates: dataPoints, minRate }
   }, [clickedCurrency, defaultCurrency])
 
-  useEffect(() => {
-    if (contentRef === null) return
-    const ref = contentRef
-
-    const callback = () => {
-      setContentHeight(ref.clientHeight)
-    }
-    callback()
-
-    window.addEventListener('resize', callback)
-    return () => window.removeEventListener('resize', callback)
-  }, [contentRef])
-
   return (
     <ContentWithHeader
       title="Currencies"
@@ -133,36 +112,37 @@ const CurrenciesPage: FC = () => {
       contentMaxWidth="100%"
       contentOverflowY="hidden"
     >
-      <PageContainer ref={setContentRef}>
-        <ListContentContainer>
-          <ScrollAreaContainer style={{ height: `${contentHeight - optionsHeight}px` }}>
-            {currencies.length === 0 ? (
-              <div className="text-center py-8">
-                <Typography color="text.secondary">No currencies added yet</Typography>
-              </div>
-            ) : (
+      <ScrollingOverButton
+        button={{ text: 'New', onClick: () => navigate('/currencies/new') }}
+        scrollingContainerRef={scrollingContainerRef}
+      >
+        {currencies.length === 0 ? (
+          <div className="text-center py-8">
+            <Typography color="text.secondary">No currencies added yet</Typography>
+          </div>
+        ) : (
+          <>
+            <CustomScrollbarContainer
+              ref={scrollingContainerRef}
+              style={{
+                overflowY: 'auto',
+                flexGrow: 1,
+                paddingBottom: '4rem',
+                position: 'relative',
+              }}
+            >
               <CurrencyList
                 currencies={currencies}
                 onSelect={(currencyId) => setClickedCurrency(currencies.find((c) => c.id === currencyId) ?? null)}
                 showZeroBalances={showZeroBalances}
-                onScrollProgress={setScrollProgress}
-                filterable={{ filter, setFilter }}
+                filter={filter}
               />
-            )}
-          </ScrollAreaContainer>
-          <div
-            ref={(ref) => {
-              if (ref !== null) setOptionsHeight(ref.scrollHeight)
-            }}
-            className="overflow-hidden"
-          >
-            <FadingDivider opacity={scrollProgress ?? 1} />
-            <Button fullWidth variant="contained" onClick={() => navigate('/currencies/new')}>
-              New
-            </Button>
-          </div>
-        </ListContentContainer>
-      </PageContainer>
+            </CustomScrollbarContainer>
+
+            <SearchOverlay filter={filter} setFilter={setFilter} placeholder="Search currencies..." />
+          </>
+        )}
+      </ScrollingOverButton>
 
       <ContentDialog
         open={clickedCurrency !== null}

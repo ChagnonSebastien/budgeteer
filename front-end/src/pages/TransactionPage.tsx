@@ -20,7 +20,7 @@ import {
 import { format, isAfter, isBefore, isSameDay } from 'date-fns'
 import { FC, useContext, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import styled from 'styled-components'
+import { default as styled } from 'styled-components'
 
 import AggregatedDiffChart from '../components/graphing/AggregatedDiffChart'
 import TransactionsPieChart from '../components/graphing/PieChart'
@@ -61,7 +61,6 @@ const ListContainer = styled.div`
   width: calc(min(35rem, 100vw));
   margin: auto;
   height: 100%;
-  overflow-y: auto;
 `
 
 const SplitViewContainer = styled.div`
@@ -163,7 +162,7 @@ const TransactionPage: FC = () => {
   )
 
   const listSection = (
-    <div className="w-full bg-white/[0.02] h-full overflow-hidden">
+    <div className="bg-white/[0.02]">
       <ListContainer>
         <TransactionList
           transactions={filteredTransaction}

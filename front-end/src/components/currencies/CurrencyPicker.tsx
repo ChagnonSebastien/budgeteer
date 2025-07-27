@@ -21,10 +21,9 @@ const CurrencyPicker: FC<Props> = (props) => {
     <CurrencyList
       currencies={listProps.items}
       onSelect={listProps.onSelect}
-      filterable={listProps.filterable}
+      filter={listProps.filter}
       onFilteredCurrenciesChange={listProps.onFilteredItemsChange}
       focusedCurrency={listProps.focusedItemId}
-      hideSearchOverlay={listProps.hideSearchOverlay}
     />
   )
 

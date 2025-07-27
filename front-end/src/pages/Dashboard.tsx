@@ -6,6 +6,7 @@ import { FC, useContext, useMemo } from 'react'
 import InvestmentGainLineChart from '../components/graphing/InvestmentGainLineChart'
 import { DrawerContext } from '../components/Menu'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
+import NoteContainer from '../components/shared/NoteContainer'
 import { formatFull } from '../domain/model/currency'
 import MixedAugmentation from '../service/MixedAugmentation'
 import { AccountServiceContext } from '../service/ServiceContext'
@@ -162,15 +163,9 @@ const Dashboard: FC = () => {
     <ContentWithHeader title="Dashboard" button="menu" contentMaxWidth="50rem" contentPadding="1rem">
       {/* Net Worth */}
 
-      <div style={{ display: 'flex', marginTop: '1rem' }}>
-        <div style={{ color: 'gray', margin: '0 1rem', transform: 'translate(0, 0.5rem)' }}>Net Worth</div>
-        <div style={{ borderBottom: '1px grey solid', flexGrow: 1 }} />
-      </div>
-      <Box
+      <NoteContainer
+        title="Net Worth"
         sx={{
-          padding: '2rem 1rem',
-          border: '1px grey solid',
-          borderTop: 0,
           display: 'flex',
           width: '100%',
           justifyContent: 'center',
@@ -185,29 +180,19 @@ const Dashboard: FC = () => {
         >
           {formatFull(defaultCurrency, netWorth, privacyMode)}
         </p>
-      </Box>
+      </NoteContainer>
 
       {/* Investments */}
 
-      <div style={{ display: 'flex', marginTop: '1rem' }}>
-        <div style={{ color: 'gray', margin: '0 1rem', transform: 'translate(0, 0.5rem)' }}>
-          Investments Performance
-        </div>
-        <div style={{ borderBottom: '1px grey solid', flexGrow: 1 }} />
-      </div>
-      <Box sx={{ padding: `2rem ${window.innerWidth > 600 ? '1' : '0'}rem`, border: '1px grey solid', borderTop: 0 }}>
+      <NoteContainer title="Investments Performance">
         <div style={{ height: '20rem', width: '100%' }}>
           <InvestmentGainLineChart fromDate={startOfDay(subMonths(new Date(), 12))} toDate={startOfDay(new Date())} />
         </div>
-      </Box>
+      </NoteContainer>
 
       {/* Cash Flow */}
 
-      <div style={{ display: 'flex', marginTop: '1rem' }}>
-        <div style={{ color: 'gray', margin: '0 1rem', transform: 'translate(0, 0.5rem)' }}>Cash Flow</div>
-        <div style={{ borderBottom: '1px grey solid', flexGrow: 1 }} />
-      </div>
-      <Box sx={{ padding: `2rem ${window.innerWidth > 600 ? '1' : '0'}rem`, border: '1px grey solid', borderTop: 0 }}>
+      <NoteContainer title="Cash Flow">
         <div style={{ height: '20rem', width: '100%' }}>
           <CashFlowBarChart data={cashFlowData} />
         </div>
@@ -257,7 +242,7 @@ const Dashboard: FC = () => {
             </span>
           </div>
         </div>
-      </Box>
+      </NoteContainer>
     </ContentWithHeader>
   )
 }

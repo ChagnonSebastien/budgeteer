@@ -1,5 +1,5 @@
 import { Button, CircularProgress } from '@mui/material'
-import { Fragment, useContext, useEffect, useRef, useState } from 'react'
+import { Fragment, useContext, useState } from 'react'
 import styled from 'styled-components'
 
 import Category, { CategoryID } from '../../domain/model/category'
@@ -8,7 +8,6 @@ import { CategoryServiceContext } from '../../service/ServiceContext'
 import { doNothing } from '../../utils'
 import IconCapsule from '../icons/IconCapsule'
 import { IconToolsContext } from '../icons/IconTools'
-import { CustomScrollbarContainer } from '../shared/CustomScrollbarContainer'
 
 // Styled components only for complex hover effects and transitions
 const CategoryListItem = styled.div<{ isSelected: boolean; hasSelectedChild: boolean }>`
@@ -83,11 +82,10 @@ interface Props {
   onMultiSelect?: (selected: CategoryID[]) => void
   selected?: CategoryID[]
   buttonText?: string
-  onScrollProgress?: (progress: number) => void
 }
 
 export const CategoryList = (props: Props) => {
-  const { categories, onSelect, onMultiSelect, selected = [], buttonText, onScrollProgress } = props
+  const { categories, onSelect, onMultiSelect, selected = [], buttonText } = props
   const { subCategories } = useContext(CategoryServiceContext)
   const { rootCategory } = useContext(MixedAugmentation)
   const { IconLib } = useContext(IconToolsContext)
@@ -115,38 +113,6 @@ export const CategoryList = (props: Props) => {
     return [...new Set(openCategories)] // Remove duplicates
   })
   const [hoveringOver, setHoveringOver] = useState<CategoryID | null>(null)
-  const scrollContainerRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (!onScrollProgress || !scrollContainerRef.current) return
-    const element = scrollContainerRef.current
-
-    const handleScroll = () => {
-      const maxScroll = element.scrollHeight - element.clientHeight
-      const bufferZone = 64 // 4rem
-      if (maxScroll <= 0) {
-        onScrollProgress(0)
-      } else {
-        const remainingScroll = maxScroll - element.scrollTop
-        if (remainingScroll > bufferZone) {
-          onScrollProgress(1)
-        } else {
-          const progress = remainingScroll / bufferZone
-          onScrollProgress(Math.max(0, Math.min(1, progress)))
-        }
-      }
-    }
-
-    handleScroll()
-    element.addEventListener('scroll', handleScroll)
-    const observer = new ResizeObserver(handleScroll)
-    observer.observe(element)
-
-    return () => {
-      element.removeEventListener('scroll', handleScroll)
-      observer.disconnect()
-    }
-  }, [onScrollProgress, categories, open])
 
   if (!categories) {
     return <CircularProgress />
@@ -298,28 +264,5 @@ export const CategoryList = (props: Props) => {
     )
   }
 
-  return (
-    <div
-      style={{
-        minWidth: '20rem',
-        maxWidth: '100%',
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        position: 'relative',
-      }}
-    >
-      <CustomScrollbarContainer
-        ref={scrollContainerRef}
-        style={{
-          overflowY: 'auto',
-          flexGrow: 1,
-          paddingBottom: '4rem',
-          position: 'relative',
-        }}
-      >
-        {renderCategory(rootCategory, onSelect ?? doNothing, 0)}
-      </CustomScrollbarContainer>
-    </div>
-  )
+  return renderCategory(rootCategory, onSelect ?? doNothing, 0)
 }

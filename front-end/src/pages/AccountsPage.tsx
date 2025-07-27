@@ -1,5 +1,4 @@
 import {
-  Button,
   Checkbox,
   DialogContent,
   Divider,
@@ -12,7 +11,7 @@ import {
   MenuItem,
   Typography,
 } from '@mui/material'
-import { FC, useContext, useEffect, useState } from 'react'
+import { FC, useContext, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 
 import { AccountList } from '../components/accounts/AccountList'
@@ -20,12 +19,7 @@ import { IconToolsContext } from '../components/icons/IconTools'
 import { DrawerContext } from '../components/Menu'
 import ContentDialog from '../components/shared/ContentDialog'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
-import {
-  FadingDivider,
-  ListContentContainer,
-  PageContainer,
-  ScrollAreaContainer,
-} from '../components/shared/PageStyledComponents'
+import ScrollingOverButton from '../components/shared/ScrollingOverButton'
 import Account from '../domain/model/account'
 import { formatAmount } from '../domain/model/currency'
 import MixedAugmentation from '../service/MixedAugmentation'
@@ -46,25 +40,10 @@ const AccountsPage: FC = () => {
   const open = Boolean(anchorEl)
 
   const [filter, setFilter] = useState('')
-  const [scrollProgress, setScrollProgress] = useState(1)
-
-  const [optionsHeight, setOptionsHeight] = useState(240)
-  const [contentRef, setContentRef] = useState<HTMLDivElement | null>(null)
-  const [contentHeight, setContentHeight] = useState(600)
-  useEffect(() => {
-    if (contentRef === null) return
-    const ref = contentRef
-
-    const callback = () => {
-      setContentHeight(ref.clientHeight)
-    }
-    callback()
-
-    window.addEventListener('resize', callback)
-    return () => window.removeEventListener('resize', callback)
-  }, [contentRef])
 
   const [clickedAccount, setClickedAccount] = useState<Account | null>(null)
+
+  const scrollingContainerRef = useRef<HTMLDivElement>(null)
 
   const handleClose = () => {
     setClickedAccount(null)
@@ -118,33 +97,21 @@ const AccountsPage: FC = () => {
         </>
       }
     >
-      <PageContainer ref={setContentRef}>
-        <ListContentContainer>
-          <ScrollAreaContainer style={{ height: `${contentHeight - optionsHeight}px` }}>
-            <AccountList
-              accounts={accounts}
-              onSelect={(account) => setClickedAccount(account)}
-              showBalances
-              showZeroBalances={showZeroBalances}
-              showGroupTotals={true}
-              groupBy={groupBy}
-              filterable={{ filter, setFilter }}
-              onScrollProgress={setScrollProgress}
-            />
-          </ScrollAreaContainer>
-          <div
-            ref={(ref) => {
-              if (ref !== null) setOptionsHeight(ref.scrollHeight)
-            }}
-            className="overflow-hidden"
-          >
-            <FadingDivider opacity={scrollProgress} />
-            <Button fullWidth variant="contained" onClick={() => navigate('/accounts/new')}>
-              New
-            </Button>
-          </div>
-        </ListContentContainer>
-      </PageContainer>
+      <ScrollingOverButton
+        button={{ text: 'New', onClick: () => navigate('/accounts/new') }}
+        scrollingContainerRef={scrollingContainerRef}
+      >
+        <AccountList
+          accounts={accounts}
+          onSelect={(account) => setClickedAccount(account)}
+          showBalances
+          showZeroBalances={showZeroBalances}
+          showGroupTotals={true}
+          groupBy={groupBy}
+          filterable={{ filter, setFilter }}
+          scrollingContainerRef={scrollingContainerRef}
+        />
+      </ScrollingOverButton>
 
       <ContentDialog
         open={clickedAccount !== null}

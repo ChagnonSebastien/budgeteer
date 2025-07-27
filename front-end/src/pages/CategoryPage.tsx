@@ -1,17 +1,13 @@
-import { Button, DialogContent, Divider, List, ListItem, ListItemIcon, ListItemText, Typography } from '@mui/material'
-import { FC, useContext, useEffect, useState } from 'react'
+import { DialogContent, Divider, List, ListItem, ListItemIcon, ListItemText, Typography } from '@mui/material'
+import { FC, useContext, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import { CategoryList } from '../components/categories/CategoryList'
 import { IconToolsContext } from '../components/icons/IconTools'
 import ContentDialog from '../components/shared/ContentDialog'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
-import {
-  FadingDivider,
-  ListContentContainer,
-  PageContainer,
-  ScrollAreaContainer,
-} from '../components/shared/PageStyledComponents'
+import { CustomScrollbarContainer } from '../components/shared/CustomScrollbarContainer'
+import ScrollingOverButton from '../components/shared/ScrollingOverButton'
 import Category from '../domain/model/category'
 import { CategoryServiceContext } from '../service/ServiceContext'
 import '../styles/overview-modal-tailwind.css'
@@ -22,51 +18,32 @@ const CategoryPage: FC = () => {
   const { state: categories } = useContext(CategoryServiceContext)
   const [clickedCategory, setClickedCategory] = useState<Category | null>(null)
 
-  const [optionsHeight, setOptionsHeight] = useState(240)
-  const [contentRef, setContentRef] = useState<HTMLDivElement | null>(null)
-  const [contentHeight, setContentHeight] = useState(600)
-  const [scrollProgress, setScrollProgress] = useState(1)
-
-  useEffect(() => {
-    if (contentRef === null) return
-    const ref = contentRef
-
-    const callback = () => {
-      setContentHeight(ref.clientHeight)
-    }
-    callback()
-
-    window.addEventListener('resize', callback)
-    return () => window.removeEventListener('resize', callback)
-  }, [contentRef])
+  const scrollingContainerRef = useRef<HTMLDivElement>(null)
 
   return (
     <ContentWithHeader title="Categories" button="menu" contentMaxWidth="100%" contentOverflowY="hidden">
-      <PageContainer ref={setContentRef}>
-        <ListContentContainer>
-          <ScrollAreaContainer style={{ height: `${contentHeight - optionsHeight}px` }}>
-            <CategoryList
-              categories={categories}
-              onSelect={(categoryId) => {
-                const category = categories.find((c) => c.id === categoryId)
-                if (category) setClickedCategory(category)
-              }}
-              onScrollProgress={setScrollProgress}
-            />
-          </ScrollAreaContainer>
-          <div
-            ref={(ref) => {
-              if (ref !== null) setOptionsHeight(ref.scrollHeight)
+      <ScrollingOverButton
+        button={{ text: 'New', onClick: () => navigate('/categories/new') }}
+        scrollingContainerRef={scrollingContainerRef}
+      >
+        <CustomScrollbarContainer
+          ref={scrollingContainerRef}
+          style={{
+            overflowY: 'auto',
+            flexGrow: 1,
+            paddingBottom: '4rem',
+            position: 'relative',
+          }}
+        >
+          <CategoryList
+            categories={categories}
+            onSelect={(categoryId) => {
+              const category = categories.find((c) => c.id === categoryId)
+              if (category) setClickedCategory(category)
             }}
-            className="overflow-hidden"
-          >
-            <FadingDivider opacity={scrollProgress ?? 1} />
-            <Button fullWidth variant="contained" onClick={() => navigate('/categories/new')}>
-              New
-            </Button>
-          </div>
-        </ListContentContainer>
-      </PageContainer>
+          />
+        </CustomScrollbarContainer>
+      </ScrollingOverButton>
       <ContentDialog
         open={clickedCategory !== null}
         onClose={() => setClickedCategory(null)}
