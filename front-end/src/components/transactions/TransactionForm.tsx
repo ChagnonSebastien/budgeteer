@@ -105,6 +105,7 @@ const TransactionForm: FC<Props> = (props) => {
     if (typeof initialTransaction?.sender?.id === 'undefined') return { existing: false, id: null, name: '' }
     return { existing: true, id: initialTransaction.sender.id, name: initialTransaction.sender.name }
   })
+
   const [receiverAccount, setReceiverAccount] = useState<{
     existing: boolean
     id: AccountID | null
@@ -279,7 +280,6 @@ const TransactionForm: FC<Props> = (props) => {
             }))
           }}
         />
-        <div style={{ width: '3rem' }} />
         <CurrencyPicker
           style={{ width: '100%', flexShrink: 2 }}
           currencies={currencies}

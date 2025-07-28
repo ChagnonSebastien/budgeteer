@@ -2,13 +2,14 @@ import { startOfDay } from 'date-fns'
 import { useContext } from 'react'
 import styled from 'styled-components'
 
+import { ItemProps } from './ItemList'
 import Account, { AccountID } from '../../domain/model/account'
 import { formatFull } from '../../domain/model/currency'
 import MixedAugmentation from '../../service/MixedAugmentation'
 import { CurrencyServiceContext } from '../../service/ServiceContext'
 import { DrawerContext } from '../Menu'
 
-const AccountListItem = styled.div<{ $selected: boolean; $focused: boolean; $withBalance: boolean }>`
+const AccountListItem = styled.div<{ $selected: boolean; $withBalance: boolean }>`
   border-radius: 0.5rem;
   transition: all 200ms ease-in-out;
   border-left: 3px solid transparent;
@@ -49,36 +50,22 @@ const AccountListItem = styled.div<{ $selected: boolean; $focused: boolean; $wit
       background-color: rgba(200, 75, 49, 0.16);
     }
   `}
-
-  ${({ $focused }) =>
-    $focused &&
-    `
-    background-color: rgba(200, 75, 49, 0.08);
-    border-left-color: #C84B31;
-
-    &:hover {
-      background-color: rgba(200, 75, 49, 0.12);
-    }
-  `}
 `
 
-type Props = {
-  account: Account
-  onSelect?: (value: Account) => void
-  selected?: AccountID[]
-  onMultiSelect?: (value: AccountID[]) => void
+export type AdditionalAccountCardProps = {
   showBalances?: boolean
-  focused?: boolean
 }
 
+type Props = ItemProps<AccountID, Account, AdditionalAccountCardProps>
+
 export const AccountCard = (props: Props) => {
-  const { account, onSelect, showBalances = false, onMultiSelect, selected } = props
+  const { item, selected = false, onClick = () => {}, showBalances = false } = props
   const { accountBalances, exchangeRateOnDay, defaultCurrency } = useContext(MixedAugmentation)
   const { privacyMode } = useContext(DrawerContext)
 
   const { state: currencies } = useContext(CurrencyServiceContext)
 
-  const totalValue = [...(accountBalances?.get(account.id)?.entries() ?? [])].reduce((prev: number, entry) => {
+  const totalValue = [...(accountBalances?.get(item.id)?.entries() ?? [])].reduce((prev: number, entry) => {
     const currency = currencies.find((c) => c.id === entry[0])
     if (typeof currency === 'undefined') return prev
 
@@ -90,25 +77,8 @@ export const AccountCard = (props: Props) => {
     return prev + entry[1] * rate
   }, 0)
 
-  const handleClick = () => {
-    if (onSelect) {
-      onSelect(account)
-    } else if (onMultiSelect) {
-      if (selected?.includes(account.id)) {
-        onMultiSelect(selected.filter((id) => id !== account.id))
-      } else {
-        onMultiSelect([...(selected || []), account.id])
-      }
-    }
-  }
-
   return (
-    <AccountListItem
-      $selected={selected?.includes(account.id) || false}
-      $focused={props.focused || false}
-      $withBalance={showBalances}
-      onClick={handleClick}
-    >
+    <AccountListItem $selected={selected} $withBalance={showBalances} onClick={onClick}>
       <div
         style={{
           alignItems: 'stretch',
@@ -133,7 +103,7 @@ export const AccountCard = (props: Props) => {
               color: 'rgba(255, 255, 255, 0.87)',
             }}
           >
-            {account.name}
+            {item.name}
           </div>
 
           {showBalances && totalValue !== 0 && (

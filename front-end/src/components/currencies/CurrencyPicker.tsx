@@ -1,8 +1,8 @@
 import { FC } from 'react'
 
-import { CurrencyList } from './CurrencyList'
+import CurrencyCard from './CurrencyCard'
 import Currency, { CurrencyID } from '../../domain/model/currency'
-import ItemPicker, { ItemListProps } from '../inputs/ItemPicker'
+import ItemPicker from '../inputs/ItemPicker'
 
 interface Props {
   selectedCurrencyId: CurrencyID | null
@@ -16,28 +16,18 @@ interface Props {
 const CurrencyPicker: FC<Props> = (props) => {
   const { selectedCurrencyId, setSelectedCurrencyId, labelText, style, errorText, currencies } = props
 
-  // Render the currency list
-  const renderCurrencyList = (listProps: ItemListProps<Currency>) => (
-    <CurrencyList
-      currencies={listProps.items}
-      onSelect={listProps.onSelect}
-      filter={listProps.filter}
-      onFilteredCurrenciesChange={listProps.onFilteredItemsChange}
-      focusedCurrency={listProps.focusedItemId}
-    />
-  )
-
   return (
-    <ItemPicker<Currency>
+    <ItemPicker<CurrencyID, Currency, unknown>
       items={currencies}
       selectedItemId={selectedCurrencyId}
-      onItemSelected={setSelectedCurrencyId}
+      onSelectItem={setSelectedCurrencyId}
       labelText={labelText}
       style={style}
       errorText={errorText}
       searchPlaceholder="Search currency..."
-      renderItemValue={(currency) => currency?.symbol ?? ''}
-      renderItemList={renderCurrencyList}
+      itemDisplayText={(currency) => currency?.symbol ?? ''}
+      ItemComponent={CurrencyCard}
+      additionalItemProps={{}}
     />
   )
 }

@@ -10,12 +10,6 @@ const FullWidthTextField = styled(TextField)`
   width: 100%;
 `
 
-const DialogContentContainer = styled(DialogContent)`
-  height: 70vh;
-  overflow: hidden;
-  padding: 0 20px;
-`
-
 interface Props {
   categoryId?: number
   setCategoryId?: (categoryId: number) => void
@@ -61,7 +55,13 @@ const CategoryPicker: FC<Props> = (props) => {
       />
       <ContentDialog open={showModal} onClose={() => setShowModal(false)}>
         <DialogTitle>Select Category</DialogTitle>
-        <DialogContentContainer>
+        <DialogContent
+          sx={{
+            height: '70vh',
+            overflowY: 'scroll',
+            padding: '0 20px',
+          }}
+        >
           <CategoryList
             categories={categories}
             onSelect={
@@ -75,7 +75,7 @@ const CategoryPicker: FC<Props> = (props) => {
             onMultiSelect={onMultiSelect}
             selected={selected}
           />
-        </DialogContentContainer>
+        </DialogContent>
         <DialogActions>
           <Button onClick={() => setShowModal(false)}>Close</Button>
         </DialogActions>

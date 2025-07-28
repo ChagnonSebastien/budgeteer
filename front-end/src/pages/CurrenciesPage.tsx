@@ -15,7 +15,8 @@ import { ResponsiveLine } from '@nivo/line'
 import { FC, useContext, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 
-import { CurrencyList } from '../components/currencies/CurrencyList'
+import ItemList from '../components/accounts/ItemList'
+import CurrencyCard from '../components/currencies/CurrencyCard'
 import { IconToolsContext } from '../components/icons/IconTools'
 import { SearchOverlay } from '../components/inputs/SearchOverlay'
 import ContentDialog from '../components/shared/ContentDialog'
@@ -23,10 +24,10 @@ import ContentWithHeader from '../components/shared/ContentWithHeader'
 import { CustomScrollbarContainer } from '../components/shared/CustomScrollbarContainer'
 import { ChartContainer } from '../components/shared/PageStyledComponents'
 import ScrollingOverButton from '../components/shared/ScrollingOverButton'
-import Currency from '../domain/model/currency'
+import Currency, { CurrencyID } from '../domain/model/currency'
 import ExchangeRate, { ExchangeRateIdentifiableFields } from '../domain/model/exchangeRate'
 import MixedAugmentation from '../service/MixedAugmentation'
-import { CurrencyServiceContext } from '../service/ServiceContext'
+import { AccountServiceContext, CurrencyServiceContext } from '../service/ServiceContext'
 import '../styles/overview-modal-tailwind.css'
 import { darkTheme } from '../utils'
 
@@ -42,6 +43,8 @@ const CurrenciesPage: FC = () => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
   const open = Boolean(anchorEl)
   const scrollingContainerRef = useRef<HTMLDivElement>(null)
+  const { accountBalances } = useContext(MixedAugmentation)
+  const { state: accounts } = useContext(AccountServiceContext)
 
   const { monthlyRates, minRate } = useMemo(() => {
     if (!clickedCurrency) {
@@ -85,6 +88,20 @@ const CurrenciesPage: FC = () => {
     const minRate = Math.min(...dataPoints.map((d) => d.y))
     return { monthlyRates: dataPoints, minRate }
   }, [clickedCurrency, defaultCurrency])
+
+  const getTotalForCurrency = (targetCurrencyId: CurrencyID): number => {
+    let total = 0
+    const myAccountIds = new Set(accounts.filter((account) => account.isMine).map((account) => account.id))
+
+    accountBalances?.forEach((balances, accountId) => {
+      if (!myAccountIds.has(accountId)) return
+      const amount = balances.get(targetCurrencyId)
+      if (amount) {
+        total += amount
+      }
+    })
+    return total
+  }
 
   return (
     <ContentWithHeader
@@ -131,11 +148,17 @@ const CurrenciesPage: FC = () => {
                 position: 'relative',
               }}
             >
-              <CurrencyList
-                currencies={currencies}
-                onSelect={(currencyId) => setClickedCurrency(currencies.find((c) => c.id === currencyId) ?? null)}
-                showZeroBalances={showZeroBalances}
-                filter={filter}
+              <ItemList
+                items={currencies}
+                ItemComponent={CurrencyCard}
+                selectConfiguration={{
+                  mode: 'click',
+                  onClick: (item: Currency) => setClickedCurrency(currencies.find((c) => c.id === item.id) ?? null),
+                }}
+                additionalItemsProps={{
+                  total: getTotalForCurrency,
+                }}
+                filter={(item: Currency) => showZeroBalances || getTotalForCurrency(item.id) !== 0}
               />
             </CustomScrollbarContainer>
 

@@ -6,9 +6,9 @@ import { ReactNode, useContext, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 
 import TimeRange from './slider/TimeRange'
-import Account from '../../domain/model/account'
+import Account, { AccountID } from '../../domain/model/account'
 import { AccountServiceContext, CategoryServiceContext, TransactionServiceContext } from '../../service/ServiceContext'
-import { AccountList } from '../accounts/AccountList'
+import GroupedAccountList from '../accounts/GroupedAccountList'
 import { CategoryList } from '../categories/CategoryList'
 import ContentDialog from '../shared/ContentDialog'
 
@@ -25,8 +25,8 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
   const location = useLocation()
   const query = new URLSearchParams(location.search)
   const navigate = useNavigate()
-  const accountFilter: number[] = query.get('accounts') ? JSON.parse(query.get('accounts')!) : null
-  const categoryFilter: number[] = query.get('categories') ? JSON.parse(query.get('categories')!) : null
+  const accountFilter: number[] | null = query.get('accounts') ? JSON.parse(query.get('accounts')!) : null
+  const categoryFilter: number[] | null = query.get('categories') ? JSON.parse(query.get('categories')!) : null
 
   const hasFilters = query.has('accounts') || query.has('categories')
   const [showSlider, setShowSlider] = useState(hasFilters)
@@ -56,8 +56,6 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
 
   const [toView, setToView] = useState<DateView>('day')
   const [showToDateModal, setShowToDateModal] = useState(false)
-
-  const [filter, setFilter] = useState('')
 
   const accountPills = useMemo(() => {
     if (accountFilter === null) return null
@@ -345,7 +343,7 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
 
       <ContentDialog fullScreen={fullScreen} open={showCategoryModal} onClose={() => setShowCategoryModal(false)}>
         <DialogTitle>Filter by category</DialogTitle>
-        <DialogContent style={{ height: '70vh', overflow: 'hidden', padding: '0 20px' }}>
+        <DialogContent style={{ height: '70vh', overflowY: 'scroll', padding: '0 20px' }}>
           <CategoryList
             categories={categories}
             selected={categoryFilter ?? undefined}
@@ -367,19 +365,23 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
       <ContentDialog fullScreen={fullScreen} open={showAccountModal} onClose={() => setShowAccountModal(false)}>
         <DialogTitle>Pick Account</DialogTitle>
         <DialogContent style={{ height: '70vh', overflow: 'hidden' }}>
-          <AccountList
-            accounts={accounts}
-            filterable={{ filter, setFilter }}
-            selected={accountFilter ?? undefined}
+          <GroupedAccountList
+            items={accounts}
+            filterable
             showZeroBalances={true}
-            onMultiSelect={(accountIds) => {
-              if (accountIds.length === 0) {
-                query.delete('accounts')
-              } else {
-                query.set('accounts', JSON.stringify(accountIds))
-              }
-              navigate(`${location.pathname}?${query.toString()}`)
+            selectConfiguration={{
+              mode: 'multi',
+              selectedItems: accountFilter ?? [],
+              onSelectItems: (items: AccountID[]) => {
+                if (items.length === 0) {
+                  query.delete('accounts')
+                } else {
+                  query.set('accounts', JSON.stringify(items))
+                }
+                navigate(`${location.pathname}?${query.toString()}`)
+              },
             }}
+            additionalItemsProps={{}}
           />
         </DialogContent>
         <DialogActions>

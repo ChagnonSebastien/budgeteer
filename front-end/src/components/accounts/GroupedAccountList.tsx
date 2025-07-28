@@ -1,7 +1,8 @@
 import { Tab, Tabs } from '@mui/material'
-import { Dispatch, Fragment, LegacyRef, SetStateAction, useContext, useEffect, useMemo, useState } from 'react'
+import { FC, Fragment, LegacyRef, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 
-import { AccountCard } from './AccountCard'
+import { AccountCard, AdditionalAccountCardProps } from './AccountCard'
+import ItemList, { ItemProps, SelectConfiguration } from './ItemList'
 import Account, { AccountID } from '../../domain/model/account'
 import { formatFull } from '../../domain/model/currency'
 import MixedAugmentation from '../../service/MixedAugmentation'
@@ -11,33 +12,65 @@ import { DrawerContext } from '../Menu'
 import { CustomScrollbarContainer } from '../shared/CustomScrollbarContainer'
 
 type Props = {
-  accounts: Account[]
-  onSelect?: (value: Account) => void
-  selected?: AccountID[]
-  onMultiSelect?: (value: AccountID[]) => void
-  showBalances?: boolean
   showZeroBalances?: boolean
   showGroupTotals?: boolean
   groupBy?: 'institution' | 'type'
-  filterable?: { filter: string; setFilter: Dispatch<SetStateAction<string>> }
+  filterable?: boolean
   hideSearchOverlay?: boolean
   focusedAccount?: AccountID | null
   onFilteredAccountsChange?: (accounts: Account[]) => void
   scrollingContainerRef?: LegacyRef<HTMLDivElement> | undefined
+
+  items: Account[]
+  filter?(item: Account): boolean
+  selectConfiguration?: SelectConfiguration<AccountID, Account>
+  ItemComponent?: FC<ItemProps<AccountID, Account, AdditionalAccountCardProps>>
+  additionalItemsProps: AdditionalAccountCardProps
 }
 
 type tabs = 'mine' | 'others'
 
-export const AccountList = (props: Props) => {
-  const { accounts, onSelect, showBalances = false, filterable, onMultiSelect, selected, scrollingContainerRef } = props
+const GroupedAccountList = (props: Props) => {
+  const {
+    items,
+    selectConfiguration,
+    additionalItemsProps,
+    ItemComponent = AccountCard,
+
+    scrollingContainerRef,
+    filterable = false,
+    showZeroBalances = false,
+    groupBy = 'institution',
+    showGroupTotals = false,
+    onFilteredAccountsChange,
+  } = props
 
   const { augmentedTransactions: transactions, accountBalances, exchangeRateOnDay } = useContext(MixedAugmentation)
   const currencyContext = useContext(CurrencyServiceContext)
   const defaultCurrency = currencyContext.tentativeDefaultCurrency
   const { privacyMode } = useContext(DrawerContext)
   const [activeTab, setActiveTab] = useState<tabs>('mine')
-  const myOwnAccounts = useMemo(() => accounts.filter((account) => account.isMine), [accounts])
-  const otherAccounts = useMemo(() => accounts.filter((account) => !account.isMine), [accounts])
+  const myOwnAccounts = useMemo(() => items.filter((account) => account.isMine), [items])
+  const otherAccounts = useMemo(() => items.filter((account) => !account.isMine), [items])
+
+  const [filter, setFilter] = useState('')
+
+  const filterAccounts = useCallback(
+    (account: Account) => {
+      if (filterable && filter !== '' && !account.name.toLowerCase().includes(filter.toLowerCase())) {
+        return false
+      }
+
+      if (!showZeroBalances) {
+        const balances = accountBalances?.get(account.id)
+        if (!balances) return false
+        if (!Array.from(balances.values()).some((balance) => balance !== 0)) return false
+      }
+
+      return true
+    },
+    [filterable, filter, items, showZeroBalances, accountBalances],
+  )
 
   const myOwnOrderedAccounts = useMemo(() => {
     const visited = new Set<number>()
@@ -66,8 +99,8 @@ export const AccountList = (props: Props) => {
       }
     }
 
-    return ordered
-  }, [myOwnAccounts, transactions])
+    return ordered.filter(filterAccounts)
+  }, [myOwnAccounts, transactions, filterAccounts])
 
   const otherOrderedAccounts = useMemo(() => {
     const visited = new Set<number>()
@@ -96,59 +129,23 @@ export const AccountList = (props: Props) => {
       }
     }
 
-    return ordered
-  }, [otherAccounts, transactions])
-
-  const myOwnFilteredAccounts = useMemo(() => {
-    let filtered = myOwnOrderedAccounts
-
-    if (typeof filterable !== 'undefined') {
-      filtered = filtered.filter((account) => account.name.toLowerCase().includes(filterable.filter.toLowerCase()))
-    }
-
-    if (!props.showZeroBalances) {
-      filtered = filtered.filter((account) => {
-        const balances = accountBalances?.get(account.id)
-        if (!balances) return false
-        return Array.from(balances.values()).some((balance) => balance !== 0)
-      })
-    }
-
-    return filtered
-  }, [myOwnOrderedAccounts, filterable?.filter, props.showZeroBalances, accountBalances])
-
-  const otherFilteredAccounts = useMemo(() => {
-    let filtered = otherOrderedAccounts
-
-    if (typeof filterable !== 'undefined') {
-      filtered = filtered.filter((account) => account.name.toLowerCase().includes(filterable.filter.toLowerCase()))
-    }
-
-    if (!props.showZeroBalances) {
-      filtered = filtered.filter((account) => {
-        const balances = accountBalances?.get(account.id)
-        if (!balances) return false
-        return Array.from(balances.values()).some((balance) => balance !== 0)
-      })
-    }
-
-    return filtered
-  }, [otherOrderedAccounts, filterable?.filter, props.showZeroBalances, accountBalances])
+    return ordered.filter(filterAccounts)
+  }, [otherAccounts, transactions, filterAccounts])
 
   useEffect(() => {
-    if (activeTab === 'mine' && myOwnFilteredAccounts.length === 0 && otherFilteredAccounts.length > 0)
+    if (activeTab === 'mine' && myOwnOrderedAccounts.length === 0 && otherOrderedAccounts.length > 0)
       setActiveTab('others')
-    if (activeTab === 'others' && otherFilteredAccounts.length === 0 && myOwnFilteredAccounts.length > 0)
+    if (activeTab === 'others' && otherOrderedAccounts.length === 0 && myOwnOrderedAccounts.length > 0)
       setActiveTab('mine')
-  }, [activeTab, myOwnFilteredAccounts, otherFilteredAccounts])
+  }, [activeTab, myOwnOrderedAccounts, otherOrderedAccounts])
 
   const displayedAccount = useMemo(() => {
-    return activeTab === 'mine' ? myOwnFilteredAccounts : otherFilteredAccounts
-  }, [myOwnFilteredAccounts, otherFilteredAccounts, activeTab])
+    return activeTab === 'mine' ? myOwnOrderedAccounts : otherOrderedAccounts
+  }, [myOwnOrderedAccounts, otherOrderedAccounts, activeTab])
 
   // Provide the filtered accounts in display order to the parent component
   useEffect(() => {
-    if (props.onFilteredAccountsChange) {
+    if (onFilteredAccountsChange) {
       // Flatten all accounts in the order they are displayed
       const allDisplayedAccounts: Account[] = []
 
@@ -156,15 +153,15 @@ export const AccountList = (props: Props) => {
       allDisplayedAccounts.push(...displayedAccount)
 
       // Then add accounts from the other tab if there are any
-      if (activeTab === 'mine' && otherFilteredAccounts.length > 0) {
-        allDisplayedAccounts.push(...otherFilteredAccounts)
-      } else if (activeTab === 'others' && myOwnFilteredAccounts.length > 0) {
-        allDisplayedAccounts.push(...myOwnFilteredAccounts)
+      if (activeTab === 'mine' && otherOrderedAccounts.length > 0) {
+        allDisplayedAccounts.push(...otherOrderedAccounts)
+      } else if (activeTab === 'others' && myOwnOrderedAccounts.length > 0) {
+        allDisplayedAccounts.push(...myOwnOrderedAccounts)
       }
 
-      props.onFilteredAccountsChange(allDisplayedAccounts)
+      onFilteredAccountsChange(allDisplayedAccounts)
     }
-  }, [props.onFilteredAccountsChange, displayedAccount, myOwnFilteredAccounts, otherFilteredAccounts, activeTab])
+  }, [onFilteredAccountsChange, displayedAccount, myOwnOrderedAccounts, otherOrderedAccounts, activeTab])
 
   const segments = useMemo(() => {
     if (myOwnAccounts.length === 0 || otherAccounts.length === 0) return undefined
@@ -191,7 +188,7 @@ export const AccountList = (props: Props) => {
               }}
             >
               My Accounts
-              {filterable?.filter && (
+              {filterable && filter && (
                 <div
                   style={{
                     backgroundColor: 'rgba(255, 255, 255, 0.15)',
@@ -207,7 +204,7 @@ export const AccountList = (props: Props) => {
                     justifyContent: 'center',
                   }}
                 >
-                  {myOwnFilteredAccounts.length}
+                  {myOwnOrderedAccounts.length}
                 </div>
               )}
             </div>
@@ -224,7 +221,7 @@ export const AccountList = (props: Props) => {
               }}
             >
               Third Parties
-              {filterable?.filter && (
+              {filterable && filter && (
                 <div
                   style={{
                     backgroundColor: 'rgba(255, 255, 255, 0.15)',
@@ -240,7 +237,7 @@ export const AccountList = (props: Props) => {
                     justifyContent: 'center',
                   }}
                 >
-                  {otherFilteredAccounts.length}
+                  {otherOrderedAccounts.length}
                 </div>
               )}
             </div>
@@ -249,7 +246,7 @@ export const AccountList = (props: Props) => {
         />
       </Tabs>
     )
-  }, [myOwnAccounts, otherAccounts, activeTab, myOwnFilteredAccounts, otherFilteredAccounts, filterable?.filter])
+  }, [myOwnAccounts, otherAccounts, activeTab, myOwnOrderedAccounts, otherOrderedAccounts, filterable, filter])
 
   return (
     <div
@@ -275,8 +272,7 @@ export const AccountList = (props: Props) => {
         {Object.entries(
           displayedAccount.reduce(
             (groups, account) => {
-              const groupKey =
-                props.groupBy === 'type' ? account.type || 'Other' : account.financialInstitution || 'Other'
+              const groupKey = groupBy === 'type' ? account.type || 'Other' : account.financialInstitution || 'Other'
               return { ...groups, [groupKey]: [...(groups[groupKey] || []), account] }
             },
             {} as Record<string, Account[]>,
@@ -311,7 +307,7 @@ export const AccountList = (props: Props) => {
                     }}
                   >
                     {(() => {
-                      if (!defaultCurrency || privacyMode || !props.showGroupTotals) return null
+                      if (!defaultCurrency || privacyMode || !showGroupTotals) return null
                       const now = new Date()
                       const total = accounts.reduce((sum, account) => {
                         const balances = accountBalances?.get(account.id)
@@ -329,7 +325,7 @@ export const AccountList = (props: Props) => {
               )}
               <div
                 style={{
-                  ...(showBalances
+                  ...(additionalItemsProps.showBalances
                     ? {
                         display: 'grid',
                         gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))',
@@ -344,25 +340,21 @@ export const AccountList = (props: Props) => {
                   ...(type === 'Other' ? { marginTop: '1rem' } : {}),
                 }}
               >
-                {accounts.map((account) => (
-                  <AccountCard
-                    key={`account-list-${account.id}`}
-                    account={account}
-                    onSelect={onSelect ? () => onSelect(account) : undefined}
-                    selected={selected}
-                    onMultiSelect={onMultiSelect}
-                    showBalances={showBalances}
-                    focused={props.focusedAccount === account.id}
-                  />
-                ))}
+                <ItemList
+                  items={accounts}
+                  ItemComponent={ItemComponent}
+                  additionalItemsProps={additionalItemsProps}
+                  selectConfiguration={selectConfiguration}
+                  filter={filterAccounts}
+                />
               </div>
             </div>
           </Fragment>
         ))}
       </CustomScrollbarContainer>
-      {filterable && !props.hideSearchOverlay && (
-        <SearchOverlay filter={filterable.filter} setFilter={filterable.setFilter} placeholder="Search accounts..." />
-      )}
+      {filterable && <SearchOverlay filter={filter} setFilter={setFilter} placeholder="Search accounts..." />}
     </div>
   )
 }
+
+export default GroupedAccountList

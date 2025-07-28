@@ -1,9 +1,10 @@
 import { FC, useContext, useMemo } from 'react'
 
-import { AccountList } from './AccountList'
+import { AccountCard, AdditionalAccountCardProps } from './AccountCard'
+import GroupedAccountList from './GroupedAccountList'
 import Account, { AccountID } from '../../domain/model/account'
 import { AccountServiceContext } from '../../service/ServiceContext'
-import ItemPicker, { ItemListProps } from '../inputs/ItemPicker'
+import ItemPicker from '../inputs/ItemPicker'
 
 interface Props {
   valueText: string
@@ -17,7 +18,7 @@ interface Props {
 }
 
 const AccountPicker: FC<Props> = (props) => {
-  const { valueText, onAccountSelected, labelText, errorText, myOwn, allowNew = false, onMultiSelect, selected } = props
+  const { valueText, onAccountSelected, myOwn, allowNew = false, labelText, errorText } = props
   const { myOwnAccounts, otherAccounts } = useContext(AccountServiceContext)
   const accounts = useMemo(() => {
     return myOwn ? myOwnAccounts : otherAccounts
@@ -56,40 +57,20 @@ const AccountPicker: FC<Props> = (props) => {
     }
   }
 
-  // Render the account list
-  const renderAccountList = (listProps: ItemListProps<Account>) => (
-    <AccountList
-      accounts={listProps.items}
-      onSelect={
-        onAccountSelected
-          ? (selected) => {
-              onAccountSelected({ existing: true, id: selected.id, name: selected.name })
-              listProps.onSelect(selected.id)
-            }
-          : undefined
-      }
-      onMultiSelect={onMultiSelect}
-      selected={selected}
-      showZeroBalances={true}
-      filterable={listProps.filterable}
-      hideSearchOverlay={listProps.hideSearchOverlay}
-      focusedAccount={listProps.focusedItemId}
-      onFilteredAccountsChange={listProps.onFilteredItemsChange}
-    />
-  )
-
   return (
-    <ItemPicker<Account>
+    <ItemPicker<AccountID, Account, AdditionalAccountCardProps>
       items={accounts}
+      ItemListComponent={GroupedAccountList}
+      ItemComponent={AccountCard}
       selectedItemId={selectedAccountId}
-      onItemSelected={handleAccountSelected}
+      onSelectItem={handleAccountSelected}
       labelText={labelText}
       errorText={errorText}
       searchPlaceholder={allowNew ? 'Search or create account...' : 'Search account...'}
-      renderItemValue={() => valueText}
-      renderItemList={renderAccountList}
+      itemDisplayText={(account) => account?.name ?? ''}
       allowNew={allowNew}
       onNewItemSelected={handleNewAccountSelected}
+      additionalItemProps={{}}
     />
   )
 }

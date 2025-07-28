@@ -1,6 +1,10 @@
 import styled from 'styled-components'
 
 export const CustomScrollbarContainer = styled.div`
+  overflow-y: scroll;
+  padding-left: 1rem;
+  padding-right: 1rem;
+
   /* Modern scrollbar styling */
   &::-webkit-scrollbar {
     width: 6px;
@@ -22,6 +26,5 @@ export const CustomScrollbarContainer = styled.div`
   }
 
   /* Firefox scrollbar styling */
-  scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
 `

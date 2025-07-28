@@ -1,9 +1,11 @@
 import { Button, DialogActions, DialogContent, DialogTitle, TextField } from '@mui/material'
-import React, { CSSProperties, ReactNode, useEffect, useState } from 'react'
+import React, { CSSProperties, FC, ReactNode, useEffect, useMemo, useState } from 'react'
 import styled from 'styled-components'
 
 import NamedItem from '../../domain/model/NamedItem'
+import ItemList, { ItemListProps, ItemProps } from '../accounts/ItemList'
 import ContentDialog from '../shared/ContentDialog'
+import { CustomScrollbarContainer } from '../shared/CustomScrollbarContainer'
 
 const StyledTextField = styled(TextField)<{ $customStyle?: CSSProperties }>`
   ${(props) => props.$customStyle && { ...props.$customStyle }}
@@ -22,10 +24,8 @@ const SearchContainer = styled.div`
   width: 100%;
 `
 
-export interface ItemPickerProps<T extends NamedItem<number, T>> {
+export interface ItemPickerProps<ItemID, T extends NamedItem<ItemID, T>, AdditionalItemProps> {
   items: T[]
-  selectedItemId: number | null
-  onItemSelected: (id: number) => void
 
   labelText: string
   dialogTitle?: string
@@ -33,55 +33,56 @@ export interface ItemPickerProps<T extends NamedItem<number, T>> {
   style?: CSSProperties
   errorText?: string
 
-  renderItemValue: (item: T | undefined) => string
-  renderItemList: (props: ItemListProps<T>) => ReactNode
+  itemDisplayText: (item: T | undefined) => string
 
   allowNew?: boolean
   onNewItemSelected?: (name: string) => void
 
   // Optional additional actions for the dialog
   additionalActions?: ReactNode
+
+  selectedItemId: ItemID | null
+  onSelectItem: (item: ItemID) => void
+
+  ItemListComponent?: FC<ItemListProps<ItemID, T, AdditionalItemProps>>
+  ItemComponent: FC<ItemProps<ItemID, T, AdditionalItemProps>>
+  additionalItemProps: AdditionalItemProps
 }
 
-export interface ItemListProps<T extends NamedItem<number, T>> {
-  items: T[]
-  onSelect: (id: number) => void
-  filter: string
-  onFilteredItemsChange: (items: T[]) => void
-  focusedItemId: number | null
-  hideSearchOverlay?: boolean
-}
-
-function ItemPicker<T extends NamedItem<number, T>>(props: ItemPickerProps<T>) {
+function ItemPicker<ItemID, T extends NamedItem<ItemID, T>, AdditionalItemProps>(
+  props: ItemPickerProps<ItemID, T, AdditionalItemProps>,
+) {
   const {
     items,
-    selectedItemId,
-    onItemSelected,
     labelText,
     dialogTitle,
     searchPlaceholder,
     style,
     errorText,
-    renderItemValue,
-    renderItemList,
+    itemDisplayText,
     allowNew = false,
     onNewItemSelected,
     additionalActions,
+
+    selectedItemId,
+    onSelectItem,
+
+    ItemListComponent = ItemList,
+    ItemComponent,
+    additionalItemProps,
   } = props
 
   const selectedItem = items.find((item) => item.id === selectedItemId)
 
   const [showModal, setShowModal] = useState(false)
   const [filter, setFilter] = useState('')
-  const [focusedItemId, setFocusedItemId] = useState<number | null>(null)
-  const [displayedItems, setDisplayedItems] = useState<T[]>([])
+  const [focusedItemId, setFocusedItemId] = useState<ItemID | null>(null)
 
-  // Handle filtered items change
-  const handleFilteredItemsChange = (items: T[]) => {
-    setDisplayedItems(items)
-  }
+  const displayedItems = useMemo(() => {
+    if (filter === '') return items
+    return items.filter((i) => itemDisplayText(i).toLowerCase().includes(filter.toLowerCase()))
+  }, [items, filter, itemDisplayText])
 
-  // Reset focused item when filter changes
   useEffect(() => {
     setFocusedItemId(null)
   }, [filter])
@@ -90,14 +91,14 @@ function ItemPicker<T extends NamedItem<number, T>>(props: ItemPickerProps<T>) {
     if (e.key === 'Enter') {
       // If there's a focused item, select it
       if (focusedItemId !== null) {
-        onItemSelected(focusedItemId)
+        onSelectItem(focusedItemId)
         setShowModal(false)
         return
       }
 
       // If there's exactly one item in the filtered list, select it
       if (displayedItems.length === 1) {
-        onItemSelected(displayedItems[0].id)
+        onSelectItem(displayedItems[0].id)
         setShowModal(false)
         return
       }
@@ -107,7 +108,7 @@ function ItemPicker<T extends NamedItem<number, T>>(props: ItemPickerProps<T>) {
         const exactMatch = items.find((item) => item.hasName(filter))
 
         if (exactMatch) {
-          onItemSelected(exactMatch.id)
+          onSelectItem(exactMatch.id)
         } else {
           onNewItemSelected(filter)
         }
@@ -152,7 +153,7 @@ function ItemPicker<T extends NamedItem<number, T>>(props: ItemPickerProps<T>) {
 
       if (exactMatch) {
         // If there's an exact match, select it
-        onItemSelected(exactMatch.id)
+        onSelectItem(exactMatch.id)
       } else if (allowNew && onNewItemSelected) {
         // Otherwise create a new item if allowed
         onNewItemSelected(filter)
@@ -172,7 +173,7 @@ function ItemPicker<T extends NamedItem<number, T>>(props: ItemPickerProps<T>) {
         variant="standard"
         label={labelText}
         placeholder={'None'}
-        value={renderItemValue(selectedItem)}
+        value={itemDisplayText(selectedItem)}
         helperText={errorText}
         onFocus={(e) => {
           setShowModal(true)
@@ -194,17 +195,21 @@ function ItemPicker<T extends NamedItem<number, T>>(props: ItemPickerProps<T>) {
               onKeyDown={handleKeyDown}
             />
           </SearchContainer>
-          {renderItemList({
-            items,
-            onSelect: (id) => {
-              onItemSelected(id)
-              setShowModal(false)
-            },
-            filter: filter,
-            onFilteredItemsChange: handleFilteredItemsChange,
-            focusedItemId,
-            hideSearchOverlay: true,
-          })}
+          <CustomScrollbarContainer>
+            <ItemListComponent
+              items={displayedItems}
+              ItemComponent={ItemComponent}
+              additionalItemsProps={additionalItemProps}
+              selectConfiguration={{
+                mode: 'single',
+                onSelectItem: (item: ItemID) => {
+                  setShowModal(false)
+                  onSelectItem(item)
+                },
+                selectedItem: selectedItemId,
+              }}
+            />
+          </CustomScrollbarContainer>
         </DialogContentContainer>
         <DialogActions>
           <Button onClick={() => setShowModal(false)}>Close</Button>

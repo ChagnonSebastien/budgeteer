@@ -14,7 +14,7 @@ import {
 import { FC, useContext, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 
-import { AccountList } from '../components/accounts/AccountList'
+import GroupedAccountList from '../components/accounts/GroupedAccountList'
 import { IconToolsContext } from '../components/icons/IconTools'
 import { DrawerContext } from '../components/Menu'
 import ContentDialog from '../components/shared/ContentDialog'
@@ -38,8 +38,6 @@ const AccountsPage: FC = () => {
   const groupBy = (searchParams.get('groupBy') || 'institution') as 'institution' | 'type'
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
   const open = Boolean(anchorEl)
-
-  const [filter, setFilter] = useState('')
 
   const [clickedAccount, setClickedAccount] = useState<Account | null>(null)
 
@@ -101,15 +99,18 @@ const AccountsPage: FC = () => {
         button={{ text: 'New', onClick: () => navigate('/accounts/new') }}
         scrollingContainerRef={scrollingContainerRef}
       >
-        <AccountList
-          accounts={accounts}
-          onSelect={(account) => setClickedAccount(account)}
-          showBalances
+        <GroupedAccountList
+          items={accounts}
+          selectConfiguration={{
+            mode: 'click',
+            onClick: (account) => setClickedAccount(account),
+          }}
+          additionalItemsProps={{ showBalances: true }}
           showZeroBalances={showZeroBalances}
           showGroupTotals={true}
           groupBy={groupBy}
-          filterable={{ filter, setFilter }}
           scrollingContainerRef={scrollingContainerRef}
+          filterable
         />
       </ScrollingOverButton>
 
