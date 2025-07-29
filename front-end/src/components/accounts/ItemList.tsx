@@ -1,36 +1,36 @@
 import { FC, useMemo } from 'react'
 
-import NamedItem from '../../domain/model/NamedItem'
+import Unique from '../../domain/model/Unique'
 
-export interface ClickConfiguration<ItemID, Item extends NamedItem<ItemID, Item>> {
+export interface ClickConfiguration<ItemID, Item extends Unique<ItemID, Item>> {
   mode: 'click'
   onClick: (item: Item) => void
 }
 
-export interface SingleSelectConfiguration<ItemID, Item extends NamedItem<ItemID, Item>> {
+export interface SingleSelectConfiguration<ItemID, Item extends Unique<ItemID, Item>> {
   mode: 'single'
   selectedItem: ItemID | null
   onSelectItem: (item: ItemID) => void
 }
 
-export interface MultiSelectConfiguration<ItemID, Item extends NamedItem<ItemID, Item>> {
+export interface MultiSelectConfiguration<ItemID, Item extends Unique<ItemID, Item>> {
   mode: 'multi'
   selectedItems: ItemID[]
   onSelectItems: (items: ItemID[]) => void
 }
 
-export type SelectConfiguration<ItemID, Item extends NamedItem<ItemID, Item>> =
+export type SelectConfiguration<ItemID, Item extends Unique<ItemID, Item>> =
   | ClickConfiguration<ItemID, Item>
   | SingleSelectConfiguration<ItemID, Item>
   | MultiSelectConfiguration<ItemID, Item>
 
-export type ItemProps<ItemID, Item extends NamedItem<ItemID, Item>, AdditionalItemProps> = {
+export type ItemProps<ItemID, Item extends Unique<ItemID, Item>, AdditionalItemProps> = {
   item: Item
   selected?: boolean
   onClick?(): void
 } & AdditionalItemProps
 
-export interface ItemListProps<ItemID, Item extends NamedItem<ItemID, Item>, AdditionalItemProps> {
+export interface ItemListProps<ItemID, Item extends Unique<ItemID, Item>, AdditionalItemProps> {
   items: Item[]
   filter?(item: Item): boolean
   selectConfiguration?: SelectConfiguration<ItemID, Item>
@@ -38,7 +38,7 @@ export interface ItemListProps<ItemID, Item extends NamedItem<ItemID, Item>, Add
   additionalItemsProps: AdditionalItemProps
 }
 
-const ItemList = <ItemID, Item extends NamedItem<ItemID, Item>, AdditionalItemProps>(
+const ItemList = <ItemID, Item extends Unique<ItemID, Item>, AdditionalItemProps>(
   props: ItemListProps<ItemID, Item, AdditionalItemProps>,
 ) => {
   const {
@@ -96,7 +96,13 @@ const ItemList = <ItemID, Item extends NamedItem<ItemID, Item>, AdditionalItemPr
   }
 
   return filteredList.map((item) => (
-    <ItemComponent item={item} selected={isSelected(item.id)} onClick={() => click(item)} {...additionalItemsProps} />
+    <ItemComponent
+      key={`item-component-${item.id}`}
+      item={item}
+      selected={isSelected(item.id)}
+      onClick={() => click(item)}
+      {...additionalItemsProps}
+    />
   ))
 }
 

@@ -43,7 +43,12 @@ const SplitView: FC<Props> = (props) => {
       <SplitViewPanel $split={split} $grow={firstZoneStyling.grow} $scroll={firstZoneStyling.scroll}>
         {first}
       </SplitViewPanel>
-      <SplitViewPanel $split={split} $grow={secondZoneStyling.grow} $scroll={secondZoneStyling.scroll}>
+      <SplitViewPanel
+        $split={split}
+        $grow={secondZoneStyling.grow}
+        $scroll={secondZoneStyling.scroll}
+        style={{ flexShrink: 0 }}
+      >
         {second}
       </SplitViewPanel>
     </SplitViewContainer>

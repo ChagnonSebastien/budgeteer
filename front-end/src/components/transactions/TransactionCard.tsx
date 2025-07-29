@@ -1,47 +1,32 @@
 import { Typography } from '@mui/material'
 import { FC, memo, useContext } from 'react'
 
-import Account from '../../domain/model/account'
-import Currency, { formatFull } from '../../domain/model/currency'
+import Category from '../../domain/model/category'
+import { formatFull } from '../../domain/model/currency'
+import { AugmentedTransaction, TransactionID } from '../../domain/model/transaction'
+import { ItemProps } from '../accounts/ItemList'
 import IconCapsule from '../icons/IconCapsule'
 import { DrawerContext } from '../Menu'
 import { Column, GradientCard, Row } from '../shared/NoteContainer'
 
-interface Props {
-  amount: number
-  currency: Currency
-  receiverAmount: number
-  receiverCurrency: Currency
-  from?: Account
-  to?: Account
-  categoryIconName: string
-  categoryIconColor: string
-  categoryIconBackground: string
-  date: Date
-  note: string
-  onClick: () => void
-}
+const defaultCategory = new Category(
+  0,
+  'Transfer Between accounts',
+  'GrTransaction',
+  'var(--ion-color-dark-contrast)',
+  'var(--ion-color-dark)',
+  null,
+  false,
+  0,
+)
 
-const TransactionCard: FC<Props> = memo((props) => {
-  const {
-    amount,
-    currency,
-    receiverAmount,
-    receiverCurrency,
-    from,
-    to,
-    categoryIconName,
-    date,
-    note,
-    categoryIconColor,
-    categoryIconBackground,
-    onClick,
-  } = props
+const TransactionCard: FC<ItemProps<TransactionID, AugmentedTransaction, object>> = memo((props) => {
+  const { item, onClick } = props
 
   const { privacyMode } = useContext(DrawerContext)
 
-  const fromMe = from?.isMine ?? false
-  const toMe = to?.isMine ?? false
+  const fromMe = item.sender?.isMine ?? false
+  const toMe = item.receiver?.isMine ?? false
 
   const cardType = fromMe && !toMe ? 'expense' : !fromMe && toMe ? 'income' : ''
 
@@ -68,22 +53,23 @@ const TransactionCard: FC<Props> = memo((props) => {
       }}
     >
       <IconCapsule
-        iconName={categoryIconName}
+        iconName={item.category?.iconName ?? defaultCategory.iconName}
         size="2.4rem"
-        backgroundColor={categoryIconBackground}
-        color={categoryIconColor}
+        backgroundColor={item.category?.iconBackground ?? defaultCategory.iconBackground}
+        color={item.category?.iconColor ?? defaultCategory.iconColor}
         flexShrink={0}
       />
       <Column style={{ flexGrow: 1 }}>
         <Row style={{ justifyContent: 'space-between' }}>
           <Typography letterSpacing="0.01rem" fontSize="0.95rem" fontWeight="600">
-            {formatFull(currency, amount, privacyMode)}
+            {formatFull(item.currency, item.amount, privacyMode)}
 
-            {currency.id !== receiverCurrency.id && ` ➜ ${formatFull(receiverCurrency, receiverAmount, privacyMode)}`}
+            {item.currency.id !== item.receiverCurrency.id &&
+              ` ➜ ${formatFull(item.receiverCurrency, item.receiverAmount, privacyMode)}`}
           </Typography>
 
           <Typography color="textDisabled" fontSize="0.9rem">
-            {date.toDateString()}
+            {item.date.toDateString()}
           </Typography>
         </Row>
 
@@ -95,7 +81,7 @@ const TransactionCard: FC<Props> = memo((props) => {
               </Typography>
 
               <Typography fontSize="0.9rem" fontWeight="500" textOverflow={'ellipsis'} overflow={'hidden'}>
-                {from?.name ?? '-'}
+                {item.sender?.name ?? '-'}
               </Typography>
             </Row>
 
@@ -105,7 +91,7 @@ const TransactionCard: FC<Props> = memo((props) => {
               </Typography>
 
               <Typography fontSize="0.9rem" fontWeight="500" textOverflow={'ellipsis'} overflow={'hidden'}>
-                {to?.name ?? '-'}
+                {item.receiver?.name ?? '-'}
               </Typography>
             </Row>
           </Column>
@@ -119,14 +105,12 @@ const TransactionCard: FC<Props> = memo((props) => {
             minWidth={0}
             overflow={'hidden'}
           >
-            {note}
+            {item.note}
           </Typography>
         </Row>
       </Column>
     </GradientCard>
   )
 })
-
-TransactionCard.displayName = 'TransactionCard'
 
 export default TransactionCard

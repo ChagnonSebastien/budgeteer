@@ -9,25 +9,29 @@ import { ItemListProps, MultiSelectConfiguration, SingleSelectConfiguration } fr
 import { IconToolsContext } from '../icons/IconTools'
 
 // Styled components only for complex hover effects and transitions
-const CategoryListItem = styled.div<{ isSelected: boolean; hasSelectedChild: boolean }>`
+const CategoryListItem = styled.div<{ $isSelected: boolean; $hasSelectedChild: boolean }>`
   border-radius: 0.5rem;
   transition: all 200ms ease-in-out;
-  border-left: 3px solid ${(props) => (props.isSelected ? '#C84B31' : 'transparent')};
+  border-left: 3px solid ${(props) => (props.$isSelected ? '#C84B31' : 'transparent')};
   margin: 0.125rem 0;
   background-color: ${(props) =>
-    props.isSelected ? 'rgba(200, 75, 49, 0.12)' : props.hasSelectedChild ? 'rgba(200, 75, 49, 0.04)' : 'transparent'};
+    props.$isSelected
+      ? 'rgba(200, 75, 49, 0.12)'
+      : props.$hasSelectedChild
+        ? 'rgba(200, 75, 49, 0.04)'
+        : 'transparent'};
 
   &:hover {
     background-color: ${(props) =>
-      props.isSelected
+      props.$isSelected
         ? 'rgba(200, 75, 49, 0.16)'
-        : props.hasSelectedChild
+        : props.$hasSelectedChild
           ? 'rgba(200, 75, 49, 0.08)'
           : 'rgba(255, 255, 255, 0.08)'};
   }
 `
 
-const ExpandButton = styled.div<{ hasSelectedChild: boolean }>`
+const ExpandButton = styled.div<{ $hasSelectedChild: boolean }>`
   width: 2.5rem;
   display: flex;
   align-items: center;
@@ -41,9 +45,9 @@ const ExpandButton = styled.div<{ hasSelectedChild: boolean }>`
 
   .rotatable {
     transition: all 200ms ease-in-out;
-    opacity: ${(props) => (props.hasSelectedChild ? 1 : 0.7)};
+    opacity: ${(props) => (props.$hasSelectedChild ? 1 : 0.7)};
     font-size: 1.1rem;
-    color: ${(props) => (props.hasSelectedChild ? '#C84B31' : 'inherit')};
+    color: ${(props) => (props.$hasSelectedChild ? '#C84B31' : 'inherit')};
 
     &.open {
       transform: rotate(90deg);
@@ -51,11 +55,11 @@ const ExpandButton = styled.div<{ hasSelectedChild: boolean }>`
   }
 `
 
-const Collapsible = styled.div<{ isOpen: boolean }>`
-  max-height: ${(props) => (props.isOpen ? 'none' : '0')};
-  overflow: ${(props) => (props.isOpen ? 'visible' : 'hidden')};
+const Collapsible = styled.div<{ $isOpen: boolean }>`
+  max-height: ${(props) => (props.$isOpen ? 'none' : '0')};
+  overflow: ${(props) => (props.$isOpen ? 'visible' : 'hidden')};
   transition: all 300ms ease-in-out;
-  opacity: ${(props) => (props.isOpen ? 1 : 0)};
+  opacity: ${(props) => (props.$isOpen ? 1 : 0)};
 `
 
 const NestedCategoryContainer = styled.div`
@@ -199,8 +203,8 @@ export const CategoryList = (props: Props) => {
     return (
       <Fragment key={`category-list-id-${category.id}`}>
         <CategoryListItem
-          isSelected={isSelected(category.id)}
-          hasSelectedChild={hasSelectedDescendant}
+          $isSelected={isSelected(category.id)}
+          $hasSelectedChild={hasSelectedDescendant}
           onMouseEnter={() => setHoveringOver(category.id)}
           onTouchStart={() => setHoveringOver(category.id)}
         >
@@ -214,7 +218,7 @@ export const CategoryList = (props: Props) => {
           >
             {typeof subCategories[category.id] !== 'undefined' ? (
               <ExpandButton
-                hasSelectedChild={hasSelectedDescendant}
+                $hasSelectedChild={hasSelectedDescendant}
                 onClick={() => {
                   if (!open.includes(category.id)) {
                     setOpen((prev) => [...prev, category.id])
@@ -226,7 +230,7 @@ export const CategoryList = (props: Props) => {
                 <IconLib.MdArrowForwardIos className={`rotatable ${open.includes(category.id) ? 'open' : ''}`} />
               </ExpandButton>
             ) : (
-              <ExpandButton hasSelectedChild={false} /> /* Placeholder for alignment */
+              <ExpandButton $hasSelectedChild={false} /> /* Placeholder for alignment */
             )}
             <div
               onClick={() => {
@@ -259,7 +263,7 @@ export const CategoryList = (props: Props) => {
             </div>
           </div>
         </CategoryListItem>
-        <Collapsible isOpen={open.includes(category.id)}>
+        <Collapsible $isOpen={open.includes(category.id)}>
           <NestedCategoryContainer>
             {subCategories[category.id]?.map((item) => renderCategory(item, depth + 1))}
           </NestedCategoryContainer>

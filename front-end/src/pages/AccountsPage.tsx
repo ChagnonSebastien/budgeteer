@@ -151,7 +151,7 @@ const AccountsPage: FC = () => {
                 </Typography>
                 <div className="overview-items-container">
                   {balanceEntries.map(({ currency, amount }) => (
-                    <div key={currency.id} className="overview-item">
+                    <div key={`currency-card-${currency.id}`} className="overview-item">
                       <div className="overview-item-info">
                         <div>
                           <Typography variant="body2" className="overview-item-title">
@@ -203,7 +203,7 @@ const AccountsPage: FC = () => {
                 .filter((item) => !item.disabled)
                 .map((item) => (
                   <ListItem
-                    key={item.label}
+                    key={`action-${item.label}`}
                     component="div"
                     onClick={() => item.action(clickedAccount)}
                     className="overview-action-item"

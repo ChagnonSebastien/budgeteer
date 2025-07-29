@@ -28,16 +28,20 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
   const location = useLocation()
   const query = new URLSearchParams(location.search)
   const navigate = useNavigate()
-  const accountFilter: number[] | null = query.get('accounts') ? JSON.parse(query.get('accounts')!) : null
-  const categoryFilter: number[] | null = query.get('categories') ? JSON.parse(query.get('categories')!) : null
+  const [accountFilter, setAccountFilter] = useState<number[] | null>(
+    query.get('accounts') ? JSON.parse(query.get('accounts')!) : null,
+  )
+  const [categoryFilter, setCategoryFilter] = useState<number[] | null>(
+    query.get('categories') ? JSON.parse(query.get('categories')!) : null,
+  )
 
   const hasFilters = query.has('accounts') || query.has('categories')
   const [showSlider, setShowSlider] = useState(hasFilters)
 
-  const fromDate = startOfDay(
-    query.get('from') ? new Date(Number.parseInt(query.get('from')!)) : addDays(subYears(new Date(), 1), 1),
-  )
-  const toDate = startOfDay(query.get('to') ? new Date(Number.parseInt(query.get('to')!)) : new Date())
+  const [timeRange, setTimeRange] = useState<[Date, Date]>([
+    startOfDay(query.get('from') ? new Date(Number.parseInt(query.get('from')!)) : addDays(subYears(new Date(), 1), 1)),
+    startOfDay(query.get('to') ? new Date(Number.parseInt(query.get('to')!)) : new Date()),
+  ])
 
   const theme = useTheme()
   const fullScreen = useMediaQuery(theme.breakpoints.down('xs'))
@@ -74,8 +78,10 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
           const newFilter = accountFilter.filter((a) => a != accountId)
           if (newFilter.length === 0) {
             query.delete('accounts')
+            setAccountFilter(null)
           } else {
             query.set('accounts', JSON.stringify(newFilter))
+            setAccountFilter(newFilter)
           }
           navigate(`${location.pathname}?${query.toString()}`)
         }}
@@ -98,8 +104,10 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
           const newFilter = categoryFilter.filter((c) => c != categoryId)
           if (newFilter.length === 0) {
             query.delete('categories')
+            setCategoryFilter(null)
           } else {
             query.set('categories', JSON.stringify(newFilter))
+            setCategoryFilter(newFilter)
           }
           navigate(`${location.pathname}?${query.toString()}`)
         }}
@@ -116,10 +124,10 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
           ev.stopPropagation()
           setShowFromDateModal(true)
         }}
-        label={`From: ${fromDate.toDateString()}`}
+        label={`From: ${timeRange[0].toDateString()}`}
       />
     )
-  }, [fromDate])
+  }, [timeRange[0]])
 
   const toPills = useMemo(() => {
     return (
@@ -129,10 +137,10 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
           ev.stopPropagation()
           setShowToDateModal(true)
         }}
-        label={`To: ${toDate.toDateString()}`}
+        label={`To: ${timeRange[1].toDateString()}`}
       />
     )
-  }, [toDate])
+  }, [timeRange[1]])
 
   const form = useMemo(
     () => (
@@ -217,8 +225,14 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
             style={{ padding: '.25rem 1rem', fontWeight: 'bolder', cursor: 'pointer' }}
             onClick={() => {
               if (transactions.length > 0) {
-                query.set('from', String(startOfDay(transactions[transactions.length - 1].date).getTime()))
-                query.set('to', String(startOfDay(new Date()).getTime()))
+                const newFrom = startOfDay(transactions[transactions.length - 1].date)
+                const newTo = startOfDay(new Date())
+                if (!isSameDay(timeRange[0], newFrom)) query.set('from', String(newFrom.getTime()))
+                if (!isSameDay(timeRange[1], newTo)) query.set('to', String(newTo.getTime()))
+                setTimeRange(([from, to]) => [
+                  isSameDay(from, newFrom) ? from : newFrom,
+                  isSameDay(to, newTo) ? to : newTo,
+                ])
                 navigate(`${location.pathname}?${query.toString()}`)
               }
             }}
@@ -229,8 +243,14 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
             style={{ padding: '.25rem 1rem', fontWeight: 'bolder', cursor: 'pointer' }}
             onClick={() => {
               if (transactions.length > 0) {
-                query.set('from', String(startOfDay(addDays(subYears(new Date(), 5), 1)).getTime()))
-                query.set('to', String(startOfDay(new Date()).getTime()))
+                const newFrom = startOfDay(addDays(subYears(new Date(), 5), 1))
+                const newTo = startOfDay(new Date())
+                if (!isSameDay(timeRange[0], newFrom)) query.set('from', String(newFrom.getTime()))
+                if (!isSameDay(timeRange[1], newTo)) query.set('to', String(newTo.getTime()))
+                setTimeRange(([from, to]) => [
+                  isSameDay(from, newFrom) ? from : newFrom,
+                  isSameDay(to, newTo) ? to : newTo,
+                ])
                 navigate(`${location.pathname}?${query.toString()}`)
               }
             }}
@@ -241,8 +261,14 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
             style={{ padding: '.25rem 1rem', fontWeight: 'bolder', cursor: 'pointer' }}
             onClick={() => {
               if (transactions.length > 0) {
-                query.set('from', String(startOfDay(addDays(subYears(new Date(), 3), 1)).getTime()))
-                query.set('to', String(startOfDay(new Date()).getTime()))
+                const newFrom = startOfDay(addDays(subYears(new Date(), 3), 1))
+                const newTo = startOfDay(new Date())
+                if (!isSameDay(timeRange[0], newFrom)) query.set('from', String(newFrom.getTime()))
+                if (!isSameDay(timeRange[1], newTo)) query.set('to', String(newTo.getTime()))
+                setTimeRange(([from, to]) => [
+                  isSameDay(from, newFrom) ? from : newFrom,
+                  isSameDay(to, newTo) ? to : newTo,
+                ])
                 navigate(`${location.pathname}?${query.toString()}`)
               }
             }}
@@ -253,8 +279,14 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
             style={{ padding: '.25rem 1rem', fontWeight: 'bolder', cursor: 'pointer' }}
             onClick={() => {
               if (transactions.length > 0) {
-                query.set('from', String(startOfDay(addDays(subYears(new Date(), 1), 1)).getTime()))
-                query.set('to', String(startOfDay(new Date()).getTime()))
+                const newFrom = startOfDay(addDays(subYears(new Date(), 1), 1))
+                const newTo = startOfDay(new Date())
+                if (!isSameDay(timeRange[0], newFrom)) query.set('from', String(newFrom.getTime()))
+                if (!isSameDay(timeRange[1], newTo)) query.set('to', String(newTo.getTime()))
+                setTimeRange(([from, to]) => [
+                  isSameDay(from, newFrom) ? from : newFrom,
+                  isSameDay(to, newTo) ? to : newTo,
+                ])
                 navigate(`${location.pathname}?${query.toString()}`)
               }
             }}
@@ -265,8 +297,14 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
             style={{ padding: '.25rem 1rem', fontWeight: 'bolder', cursor: 'pointer' }}
             onClick={() => {
               if (transactions.length > 0) {
-                query.set('from', String(startOfDay(addDays(subMonths(new Date(), 1), 1)).getTime()))
-                query.set('to', String(startOfDay(new Date()).getTime()))
+                const newFrom = startOfDay(addDays(subMonths(new Date(), 1), 1))
+                const newTo = startOfDay(new Date())
+                if (!isSameDay(timeRange[0], newFrom)) query.set('from', String(newFrom.getTime()))
+                if (!isSameDay(timeRange[1], newTo)) query.set('to', String(newTo.getTime()))
+                setTimeRange(([from, to]) => [
+                  isSameDay(from, newFrom) ? from : newFrom,
+                  isSameDay(to, newTo) ? to : newTo,
+                ])
                 navigate(`${location.pathname}?${query.toString()}`)
               }
             }}
@@ -279,7 +317,7 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
             <TimeRange
               ticksNumber={10}
               disabledIntervals={[]}
-              selectedInterval={[fromDate, toDate]}
+              selectedInterval={timeRange}
               timelineInterval={[startOfDay(transactions[transactions.length - 1].date), startOfDay(new Date())]}
               step={20}
               formatTick={(a) => formatDate(new Date(a), 'MMM yyyy')}
@@ -287,12 +325,18 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
                 /** Ignore */
               }}
               onChangeCallback={(data: Date[]) => {
-                if (isSameDay(data[0], fromDate) && isSameDay(data[1], toDate)) {
+                if (isSameDay(data[0], timeRange[0]) && isSameDay(data[1], timeRange[1])) {
                   return
                 }
 
-                query.set('from', String(startOfDay(data[0]).getTime()))
-                query.set('to', String(startOfDay(data[1]).getTime()))
+                const newFrom = startOfDay(data[0])
+                const newTo = startOfDay(data[1])
+                if (!isSameDay(timeRange[0], newFrom)) query.set('from', String(newFrom.getTime()))
+                if (!isSameDay(timeRange[1], newTo)) query.set('to', String(newTo.getTime()))
+                setTimeRange(([from, to]) => [
+                  isSameDay(from, newFrom) ? from : newFrom,
+                  isSameDay(to, newTo) ? to : newTo,
+                ])
                 navigate(`${location.pathname}?${query.toString()}`)
               }}
             />
@@ -351,8 +395,10 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
               onSelectItems: (categoryIds) => {
                 if (categoryIds.length === 0) {
                   query.delete('categories')
+                  setCategoryFilter(null)
                 } else {
                   query.set('categories', JSON.stringify(categoryIds))
+                  setCategoryFilter(categoryIds)
                 }
                 navigate(`${location.pathname}?${query.toString()}`)
               },
@@ -377,8 +423,10 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
               onSelectItems: (items: AccountID[]) => {
                 if (items.length === 0) {
                   query.delete('accounts')
+                  setAccountFilter(null)
                 } else {
                   query.set('accounts', JSON.stringify(items))
+                  setAccountFilter(items)
                 }
                 navigate(`${location.pathname}?${query.toString()}`)
               },
@@ -403,9 +451,10 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
         <DialogContent>
           <DateCalendar
             views={['year', 'month', 'day']}
-            value={dayjs(fromDate)}
+            value={dayjs(timeRange[0])}
             onChange={(newDate: Dayjs) => {
-              query.set('from', String(newDate.toDate().getTime()))
+              if (!isSameDay(timeRange[0], newDate.toDate())) query.set('from', String(newDate.toDate().getTime()))
+              setTimeRange(([_from, to]) => [newDate.toDate(), to])
               navigate(`${location.pathname}?${query.toString()}`)
               if (fromView === 'day') setShowFromDateModal(false)
             }}
@@ -428,9 +477,10 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
         <DialogContent>
           <DateCalendar
             views={['year', 'month', 'day']}
-            value={dayjs(toDate)}
+            value={dayjs(timeRange[1])}
             onChange={(newDate: Dayjs) => {
-              query.set('to', String(newDate.toDate().getTime()))
+              if (!isSameDay(timeRange[1], newDate.toDate())) query.set('to', String(newDate.toDate().getTime()))
+              setTimeRange(([from, to]) => [from, isSameDay(newDate.toDate(), to) ? to : newDate.toDate()])
               navigate(`${location.pathname}?${query.toString()}`)
               if (toView === 'day') setShowToDateModal(false)
             }}
@@ -455,8 +505,8 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
     overview: overviewWithToggle,
     accountFilter,
     categoryFilter,
-    fromDate,
-    toDate,
+    fromDate: timeRange[0],
+    toDate: timeRange[1],
     showSlider,
   }
 }

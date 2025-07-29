@@ -30,6 +30,7 @@ import { DrawerContext } from '../components/Menu'
 import ContentDialog from '../components/shared/ContentDialog'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
 import SplitView from '../components/shared/SplitView'
+import TransactionCard from '../components/transactions/TransactionCard'
 import { TransactionList } from '../components/transactions/TransactionList'
 import { AugmentedCategory } from '../domain/model/category'
 import { formatAmount } from '../domain/model/currency'
@@ -54,13 +55,6 @@ const GraphContainer = styled.div`
   height: 60vh;
   position: relative;
   width: 100%;
-`
-
-const ListContainer = styled.div`
-  padding: 0 1rem;
-  width: calc(min(35rem, 100vw));
-  margin: auto;
-  height: 100%;
 `
 
 const SplitViewContainer = styled.div`
@@ -161,21 +155,37 @@ const TransactionPage: FC = () => {
     </GraphSectionContainer>
   )
 
-  const listSection = (
-    <div className="bg-white/[0.02]">
-      <ListContainer>
-        <TransactionList
-          transactions={filteredTransaction}
-          onClick={(transactionId) => {
-            const transaction = filteredTransaction.find((t) => t.id === transactionId)
-            if (transaction) {
-              setClickedTransaction(transaction)
-            }
+  const listSection = useMemo(
+    () => (
+      <Box
+        sx={{
+          height: '100%',
+          background: 'rgba(255,255,255,0.02)',
+        }}
+      >
+        <Box
+          sx={{
+            padding: '0 1rem',
+            margin: 'auto',
+            width: 'calc(min(35rem, 100vw))',
           }}
-          viewAsAccounts={accountFilter === null ? undefined : accountFilter}
-        />
-      </ListContainer>
-    </div>
+        >
+          <TransactionList
+            items={filteredTransaction}
+            onClick={(transactionId) => {
+              const transaction = filteredTransaction.find((t) => t.id === transactionId)
+              if (transaction) {
+                setClickedTransaction(transaction)
+              }
+            }}
+            viewAsAccounts={accountFilter === null ? undefined : accountFilter}
+            ItemComponent={TransactionCard}
+            additionalItemsProps={{}}
+          />
+        </Box>
+      </Box>
+    ),
+    [filteredTransaction, accountFilter],
   )
 
   return (

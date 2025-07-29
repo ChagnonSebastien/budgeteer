@@ -11,36 +11,26 @@ import {
 import { useContext, useEffect, useMemo, useRef, useState } from 'react'
 
 import TransactionCard from './TransactionCard'
-import Category from '../../domain/model/category'
 import { formatAmount, formatFull } from '../../domain/model/currency'
-import { AugmentedTransaction } from '../../domain/model/transaction'
+import { AugmentedTransaction, TransactionID } from '../../domain/model/transaction'
 import MixedAugmentation from '../../service/MixedAugmentation'
 import { AccountServiceContext } from '../../service/ServiceContext'
+import { ItemListProps } from '../accounts/ItemList'
 import { DrawerContext } from '../Menu'
 import { Column, Row } from '../shared/NoteContainer'
 
-interface Props {
-  transactions: AugmentedTransaction[]
+const chunkSize = 100
+
+interface AdditionalTransactionListProps {
   onClick: (transactionId: number) => void
   viewAsAccounts?: number[]
   includeInitialAmounts?: boolean
 }
 
-const chunkSize = 100
-
-const defaultCategory = new Category(
-  0,
-  'Transfer Between accounts',
-  'GrTransaction',
-  'var(--ion-color-dark-contrast)',
-  'var(--ion-color-dark)',
-  null,
-  false,
-  0,
-)
+type Props = ItemListProps<TransactionID, AugmentedTransaction, object> & AdditionalTransactionListProps
 
 export const TransactionList = (props: Props) => {
-  const { transactions, onClick, viewAsAccounts, includeInitialAmounts } = props
+  const { items, ItemComponent = TransactionCard, onClick, viewAsAccounts, includeInitialAmounts } = props
 
   const { state: accounts } = useContext(AccountServiceContext)
   const { exchangeRateOnDay, defaultCurrency } = useContext(MixedAugmentation)
@@ -49,13 +39,13 @@ export const TransactionList = (props: Props) => {
   const [displayedAmount, setDisplayedAmount] = useState<number>(chunkSize)
   useEffect(() => {
     setDisplayedAmount(chunkSize)
-  }, [transactions])
+  }, [items])
 
   const viewWithMonthLabels: JSX.Element[] = useMemo(() => {
-    if (transactions.length === 0) return []
+    if (items.length === 0) return []
 
     const today = startOfDay(new Date())
-    const firstTransaction = startOfDay(transactions[transactions.length - 1].date)
+    const firstTransaction = startOfDay(items[items.length - 1].date)
 
     const diffMonths = differenceInMonths(today, firstTransaction)
 
@@ -86,15 +76,15 @@ export const TransactionList = (props: Props) => {
       },
     ]
 
-    let i = transactions.length - 1
+    let i = items.length - 1
 
     while (!isAfter(upTo, today)) {
       upTo = incrementDate(upTo)
       const lastDayOfPrevMonth = subDays(upTo, 1)
       data.push({ ...data[data.length - 1], date: lastDayOfPrevMonth, diff: 0 })
 
-      while (i >= 0 && isSameMonth(transactions[i].date, lastDayOfPrevMonth)) {
-        const transaction = transactions[i]
+      while (i >= 0 && isSameMonth(items[i].date, lastDayOfPrevMonth)) {
+        const transaction = items[i]
 
         if (
           typeof viewAsAccounts === 'undefined'
@@ -168,79 +158,60 @@ export const TransactionList = (props: Props) => {
     }
 
     let previousTransactionDate = addMonths(today, 1)
-    for (const transaction of transactions) {
+    for (const transaction of items) {
       while (j >= 0 && !isSameMonth(previousTransactionDate, transaction.date)) {
         view.push(wrap(data[j]))
 
         previousTransactionDate = data[j].date
         j -= 1
       }
-      view.push(
-        <TransactionCard
-          key={transaction.id}
-          onClick={() => onClick(transaction.id)}
-          from={transaction.sender}
-          to={transaction.receiver}
-          amount={transaction.amount}
-          currency={transaction.currency}
-          receiverAmount={transaction.receiverAmount}
-          receiverCurrency={transaction.receiverCurrency}
-          categoryIconName={transaction.category?.iconName ?? defaultCategory.iconName}
-          date={transaction.date}
-          note={transaction.note ?? ''}
-          categoryIconColor={transaction.category?.iconColor ?? defaultCategory.iconColor}
-          categoryIconBackground={transaction.category?.iconBackground ?? defaultCategory.iconBackground}
-        />,
-      )
+      view.push(<ItemComponent key={transaction.id} item={transaction} onClick={() => onClick(transaction.id)} />)
     }
 
     view.push(wrap(data[j]))
 
     return view
-  }, [transactions, viewAsAccounts, includeInitialAmounts, privacyMode])
+  }, [items, viewAsAccounts, includeInitialAmounts, privacyMode])
 
   const displayedItems = useMemo(
     () => viewWithMonthLabels.slice(0, displayedAmount),
     [viewWithMonthLabels, displayedAmount],
   )
 
-  const containerRef = useRef<HTMLDivElement>(null)
+  const loadMoreRef = useRef(null)
 
   useEffect(() => {
-    const container = containerRef.current
-    if (!container) return
-
-    const handleScroll = () => {
-      const { scrollTop, scrollHeight, clientHeight } = container
-      const scrollPosition = scrollTop + clientHeight
-      const threshold = scrollHeight - 800 // Load more when 800px from bottom
-
-      if (scrollPosition >= threshold && displayedAmount < viewWithMonthLabels.length) {
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting) {
         setDisplayedAmount((prevState) => Math.min(prevState + chunkSize, viewWithMonthLabels.length))
       }
+    })
+
+    if (loadMoreRef.current) {
+      observer.observe(loadMoreRef.current)
     }
-
-    container.addEventListener('scroll', handleScroll)
-
-    // Check initial state in case content is shorter than container
-    handleScroll()
 
     return () => {
-      container.removeEventListener('scroll', handleScroll)
+      if (loadMoreRef.current) {
+        observer.unobserve(loadMoreRef.current)
+      }
     }
-  }, [displayedAmount, viewWithMonthLabels.length])
+  }, [])
 
   return (
-    <Column
-      ref={containerRef}
-      style={{
-        position: 'relative',
-        margin: 'auto',
-        height: '100%',
-        gap: '0.2rem',
-      }}
-    >
+    <div style={{ position: 'relative', margin: 'auto', height: '100%' }}>
       {displayedItems}
-    </Column>
+      <div
+        style={{
+          height: '100vh',
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          zIndex: -1,
+        }}
+        ref={loadMoreRef}
+      />
+    </div>
   )
 }
