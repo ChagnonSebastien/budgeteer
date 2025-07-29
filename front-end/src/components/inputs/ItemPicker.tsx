@@ -7,10 +7,6 @@ import ItemList, { ItemListProps, ItemProps } from '../accounts/ItemList'
 import ContentDialog from '../shared/ContentDialog'
 import { CustomScrollbarContainer } from '../shared/CustomScrollbarContainer'
 
-const StyledTextField = styled(TextField)<{ $customStyle?: CSSProperties }>`
-  ${(props) => props.$customStyle && { ...props.$customStyle }}
-`
-
 const DialogContentContainer = styled(DialogContent)`
   height: 70vh;
   overflow: hidden;
@@ -167,8 +163,8 @@ function ItemPicker<ItemID, T extends NamedItem<ItemID, T>, AdditionalItemProps>
 
   return (
     <>
-      <StyledTextField
-        $customStyle={style}
+      <TextField
+        sx={style}
         error={!!errorText}
         variant="standard"
         label={labelText}

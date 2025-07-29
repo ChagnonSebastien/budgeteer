@@ -9,6 +9,7 @@ import ItemPicker from '../inputs/ItemPicker'
 interface Props {
   valueText: string
   onAccountSelected?: (newAccount: { existing: boolean; id: AccountID | null; name: string }) => void
+  itemDisplayText?: (item: Account | undefined) => string
   selected?: AccountID[]
   onMultiSelect?: (newAccounts: AccountID[]) => void
   labelText: string
@@ -18,7 +19,15 @@ interface Props {
 }
 
 const AccountPicker: FC<Props> = (props) => {
-  const { valueText, onAccountSelected, myOwn, allowNew = false, labelText, errorText } = props
+  const {
+    valueText,
+    onAccountSelected,
+    myOwn,
+    allowNew = false,
+    labelText,
+    errorText,
+    itemDisplayText = (item) => item?.name ?? '',
+  } = props
   const { myOwnAccounts, otherAccounts } = useContext(AccountServiceContext)
   const accounts = useMemo(() => {
     return myOwn ? myOwnAccounts : otherAccounts
@@ -67,7 +76,7 @@ const AccountPicker: FC<Props> = (props) => {
       labelText={labelText}
       errorText={errorText}
       searchPlaceholder={allowNew ? 'Search or create account...' : 'Search account...'}
-      itemDisplayText={(account) => account?.name ?? ''}
+      itemDisplayText={itemDisplayText}
       allowNew={allowNew}
       onNewItemSelected={handleNewAccountSelected}
       additionalItemProps={{}}
