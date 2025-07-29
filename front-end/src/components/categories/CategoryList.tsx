@@ -1,14 +1,12 @@
-import { Button, CircularProgress } from '@mui/material'
-import { Fragment, useContext, useState } from 'react'
+import { Box, Button, CircularProgress } from '@mui/material'
+import { Fragment, ReactNode, useContext, useMemo, useState } from 'react'
 import styled from 'styled-components'
 
 import Category, { CategoryID } from '../../domain/model/category'
 import MixedAugmentation from '../../service/MixedAugmentation'
 import { CategoryServiceContext } from '../../service/ServiceContext'
-import { doNothing } from '../../utils'
-import IconCapsule from '../icons/IconCapsule'
+import { ItemListProps, MultiSelectConfiguration, SingleSelectConfiguration } from '../accounts/ItemList'
 import { IconToolsContext } from '../icons/IconTools'
-import { Row } from '../shared/NoteContainer'
 
 // Styled components only for complex hover effects and transitions
 const CategoryListItem = styled.div<{ isSelected: boolean; hasSelectedChild: boolean }>`
@@ -77,49 +75,36 @@ const NestedCategoryContainer = styled.div`
   }
 `
 
-interface Props {
-  categories?: Category[]
-  onSelect?: (value: CategoryID) => void
-  onMultiSelect?: (selected: CategoryID[]) => void
-  selected?: CategoryID[]
+interface CategoryListProps {
   buttonText?: string
 }
 
+type Props = ItemListProps<CategoryID, Category, object> & CategoryListProps
+
 export const CategoryList = (props: Props) => {
-  const { categories, onSelect, onMultiSelect, selected = [], buttonText } = props
+  const { buttonText, items, selectConfiguration, filter, ItemComponent, additionalItemsProps } = props
   const { subCategories } = useContext(CategoryServiceContext)
   const { rootCategory } = useContext(MixedAugmentation)
   const { IconLib } = useContext(IconToolsContext)
 
-  const [open, setOpen] = useState<CategoryID[]>(() => {
-    // Initialize with root and any parent categories of selected items
-    const openCategories = [rootCategory.id]
+  const filteredList = useMemo(() => (filter ? items.filter(filter) : items), [items, filter])
 
-    // Find parent categories of selected items
-    if (categories) {
-      selected.forEach((selectedId) => {
-        const initialCategory = categories.find((c) => c.id === selectedId)
-        if (!initialCategory) return
+  const isSelected = (id: CategoryID) => {
+    if (typeof selectConfiguration === 'undefined') return false
 
-        let category = initialCategory
-        while (category.parentId && category.parentId !== rootCategory.id) {
-          openCategories.push(category.parentId)
-          const parentCategory = categories.find((c) => c.id === category.parentId)
-          if (!parentCategory) break
-          category = parentCategory
-        }
-      })
+    if (selectConfiguration.mode === 'single') {
+      const config = selectConfiguration as SingleSelectConfiguration<CategoryID, Category>
+      return config.selectedItem === id
     }
 
-    return [...new Set(openCategories)] // Remove duplicates
-  })
-  const [hoveringOver, setHoveringOver] = useState<CategoryID | null>(null)
+    if (selectConfiguration.mode === 'multi') {
+      const config = selectConfiguration as MultiSelectConfiguration<CategoryID, Category>
+      return config.selectedItems.findIndex((i) => i === id) >= 0
+    }
 
-  if (!categories) {
-    return <CircularProgress />
+    return false
   }
 
-  // Get all descendant category IDs recursively
   const getAllDescendants = (categoryId: CategoryID): CategoryID[] => {
     const descendants: CategoryID[] = []
     const children = subCategories[categoryId]
@@ -133,36 +118,88 @@ export const CategoryList = (props: Props) => {
     return descendants
   }
 
-  // Get all ancestor category IDs recursively
   const getAllAncestors = (categoryId: number): number[] => {
     const ancestors: number[] = []
-    if (!categories) return ancestors
 
-    let current = categories.find((c) => c.id === categoryId)
+    let current = filteredList.find((c) => c.id === categoryId)
     while (current?.parentId && current.parentId !== rootCategory.id) {
       ancestors.push(current.parentId)
-      current = categories.find((c) => c.id === current?.parentId)
+      current = filteredList.find((c) => c.id === current?.parentId)
     }
 
     return ancestors
   }
 
-  const renderCategory = (category: Category, onSelect: (value: CategoryID) => void, depth: number): JSX.Element => {
-    const isSelected =
-      selected.includes(category.id) ||
-      (typeof onMultiSelect !== 'undefined' && category.parentId === null && selected.length === 0)
+  const click = (item: Category) => {
+    if (typeof selectConfiguration === 'undefined') return false
 
+    if (selectConfiguration.mode === 'single') {
+      const config = selectConfiguration as SingleSelectConfiguration<CategoryID, Category>
+      config.onSelectItem(item.id)
+      return
+    }
+
+    if (selectConfiguration.mode === 'multi') {
+      if (item.id === rootCategory.id) {
+        selectConfiguration.onSelectItems([])
+        return
+      }
+
+      const config = selectConfiguration as MultiSelectConfiguration<CategoryID, Category>
+      if (config.selectedItems.findIndex((i) => i === item.id) >= 0) {
+        config.onSelectItems(config.selectedItems.filter((i) => i !== item.id))
+      } else {
+        const descendants = getAllDescendants(item.id)
+        const ancestors = getAllAncestors(item.id)
+        const toRemove = new Set([...descendants, ...ancestors])
+        config.onSelectItems([...selectConfiguration.selectedItems.filter((id) => !toRemove.has(id)), item.id])
+      }
+      return
+    }
+  }
+
+  const [open, setOpen] = useState<CategoryID[]>(() => {
+    // Initialize with root and any parent categories of selected items
+    const openCategories = [rootCategory.id]
+
+    // Find parent categories of selected items
+    if (filteredList) {
+      filteredList
+        .filter((category) => isSelected(category.id))
+        .forEach((selected) => {
+          const initialCategory = filteredList.find((c) => c.id === selected.id)
+          if (!initialCategory) return
+
+          let category = initialCategory
+          while (category.parentId && category.parentId !== rootCategory.id) {
+            openCategories.push(category.parentId)
+            const parentCategory = filteredList.find((c) => c.id === category.parentId)
+            if (!parentCategory) break
+            category = parentCategory
+          }
+        })
+    }
+
+    return [...new Set(openCategories)] // Remove duplicates
+  })
+  const [hoveringOver, setHoveringOver] = useState<CategoryID | null>(null)
+
+  if (!filteredList) {
+    return <CircularProgress />
+  }
+
+  const renderCategory = (category: Category, depth: number): ReactNode => {
     // Check if any descendant (not just direct children) is selected
     const hasSelectedDescendant = (function hasSelectedDescendant(catId: number): boolean {
       const children = subCategories[catId]
       if (!children) return false
-      return children.some((child) => selected.includes(child.id) || hasSelectedDescendant(child.id))
+      return children.some((child) => isSelected(child.id) || hasSelectedDescendant(child.id))
     })(category.id)
 
     return (
       <Fragment key={`category-list-id-${category.id}`}>
         <CategoryListItem
-          isSelected={isSelected}
+          isSelected={isSelected(category.id)}
           hasSelectedChild={hasSelectedDescendant}
           onMouseEnter={() => setHoveringOver(category.id)}
           onTouchStart={() => setHoveringOver(category.id)}
@@ -194,29 +231,7 @@ export const CategoryList = (props: Props) => {
             <div
               onClick={() => {
                 if (typeof buttonText !== 'undefined') return
-
-                if (onMultiSelect) {
-                  // If clicking root category and there are selections, clear them all
-                  if (category.id === rootCategory.id) {
-                    onMultiSelect([])
-                    return
-                  }
-
-                  let newSelected: CategoryID[]
-                  if (selected.includes(category.id)) {
-                    // If deselecting, just remove this category
-                    newSelected = selected.filter((id) => id !== category.id)
-                  } else {
-                    // If selecting, remove all descendants and ancestors first
-                    const descendants = getAllDescendants(category.id)
-                    const ancestors = getAllAncestors(category.id)
-                    const toRemove = new Set([...descendants, ...ancestors])
-                    newSelected = [...selected.filter((id) => !toRemove.has(id)), category.id]
-                  }
-                  onMultiSelect(newSelected)
-                } else if (onSelect) {
-                  onSelect(category.id)
-                }
+                click(category)
               }}
               style={{
                 cursor: 'pointer',
@@ -226,44 +241,32 @@ export const CategoryList = (props: Props) => {
                 padding: '0.5rem 0.5rem 0.5rem 0',
               }}
             >
-              <Row style={{ alignItems: 'center', marginRight: '1rem' }}>
-                <IconCapsule
-                  iconName={category.iconName}
-                  size={'2rem'}
-                  color={category.iconColor}
-                  backgroundColor={category.iconBackground}
-                />
-              </Row>
-              <div
-                style={{
-                  fontSize: '0.95rem',
-                  color: 'rgba(255, 255, 255, 0.87)',
-                  flexGrow: 1,
-                }}
-              >
-                {category.name}
-              </div>
-              {hoveringOver === category.id && typeof buttonText !== 'undefined' && (
-                <Button
-                  variant="contained"
-                  size="small"
-                  onClick={() => onSelect(category.id)}
-                  style={{ opacity: 1, marginRight: '0.5rem' }}
-                >
-                  {buttonText}
-                </Button>
-              )}
+              <Box sx={{ flexGrow: 1 }}>
+                <ItemComponent item={category} {...additionalItemsProps} />
+              </Box>
+              {hoveringOver === category.id &&
+                typeof selectConfiguration !== 'undefined' &&
+                selectConfiguration.mode === 'click' && (
+                  <Button
+                    variant="contained"
+                    size="small"
+                    onClick={() => selectConfiguration.onClick(category)}
+                    style={{ opacity: 1, marginRight: '0.5rem' }}
+                  >
+                    {buttonText ?? 'Select'}
+                  </Button>
+                )}
             </div>
           </div>
         </CategoryListItem>
         <Collapsible isOpen={open.includes(category.id)}>
           <NestedCategoryContainer>
-            {subCategories[category.id]?.map((item) => renderCategory(item, onSelect, depth + 1))}
+            {subCategories[category.id]?.map((item) => renderCategory(item, depth + 1))}
           </NestedCategoryContainer>
         </Collapsible>
       </Fragment>
     )
   }
 
-  return renderCategory(rootCategory, onSelect ?? doNothing, 0)
+  return renderCategory(rootCategory, 0)
 }

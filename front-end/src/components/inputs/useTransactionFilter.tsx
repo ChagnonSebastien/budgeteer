@@ -10,6 +10,7 @@ import Account, { AccountID } from '../../domain/model/account'
 import { AccountServiceContext, CategoryServiceContext, TransactionServiceContext } from '../../service/ServiceContext'
 import AccountCard from '../accounts/AccountCard'
 import GroupedAccountList from '../accounts/GroupedAccountList'
+import { CategoryCard } from '../categories/CategoryCard'
 import { CategoryList } from '../categories/CategoryList'
 import ContentDialog from '../shared/ContentDialog'
 import { Row } from '../shared/NoteContainer'
@@ -341,15 +342,20 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
         <DialogTitle>Filter by category</DialogTitle>
         <DialogContent style={{ height: '70vh', overflowY: 'auto', padding: '0 20px' }}>
           <CategoryList
-            categories={categories}
-            selected={categoryFilter ?? undefined}
-            onMultiSelect={(categoryIds) => {
-              if (categoryIds.length === 0) {
-                query.delete('categories')
-              } else {
-                query.set('categories', JSON.stringify(categoryIds))
-              }
-              navigate(`${location.pathname}?${query.toString()}`)
+            ItemComponent={CategoryCard}
+            additionalItemsProps={{}}
+            items={categories}
+            selectConfiguration={{
+              mode: 'multi',
+              selectedItems: categoryFilter ?? [],
+              onSelectItems: (categoryIds) => {
+                if (categoryIds.length === 0) {
+                  query.delete('categories')
+                } else {
+                  query.set('categories', JSON.stringify(categoryIds))
+                }
+                navigate(`${location.pathname}?${query.toString()}`)
+              },
             }}
           />
         </DialogContent>

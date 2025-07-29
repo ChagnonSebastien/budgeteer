@@ -99,10 +99,13 @@ const TrendsPage: FC = () => {
             if (element) setOptionsHeight(element.scrollHeight)
           }}
         >
-          <Column style={{ gap: '1.5rem' }}>
+          <Column style={{ gap: '1rem' }}>
             <CategoryPicker
-              selected={selectedCategories}
-              onMultiSelect={(categories) => updateQuery({ categories })}
+              selectedConfig={{
+                mode: 'multi',
+                selectedItems: selectedCategories,
+                onSelectItems: (categories) => updateQuery({ categories }),
+              }}
               labelText="Filter by categories"
               valueText={selectedCategories.length === 0 ? 'All Categories' : undefined}
             />
@@ -164,29 +167,29 @@ const TrendsPage: FC = () => {
                   +
                 </Button>
               </Row>
-
-              <Row style={{ alignItems: 'center', gap: '1rem', padding: 0 }}>
-                <ToggleButtonGroup
-                  value={grouping}
-                  exclusive
-                  onChange={(_event, value) => value && updateQuery({ grouping: value as grouping })}
-                  size="small"
-                  sx={{
-                    minHeight: '2rem',
-                    width: '100%',
-                    '& .MuiToggleButton-root': {
-                      flex: 1,
-                      textTransform: 'none',
-                      fontSize: '0.9rem',
-                    },
-                  }}
-                >
-                  <ToggleButton value="months">Monthly</ToggleButton>
-                  <ToggleButton value="quarters">Quarterly</ToggleButton>
-                  <ToggleButton value="years">Yearly</ToggleButton>
-                </ToggleButtonGroup>
-              </Row>
             </Column>
+
+            <Row>
+              <ToggleButtonGroup
+                value={grouping}
+                exclusive
+                onChange={(_event, value) => value && updateQuery({ grouping: value as grouping })}
+                size="small"
+                sx={{
+                  minHeight: '2rem',
+                  width: '100%',
+                  '& .MuiToggleButton-root': {
+                    flex: 1,
+                    textTransform: 'none',
+                    fontSize: '0.9rem',
+                  },
+                }}
+              >
+                <ToggleButton value="months">Monthly</ToggleButton>
+                <ToggleButton value="quarters">Quarterly</ToggleButton>
+                <ToggleButton value="years">Yearly</ToggleButton>
+              </ToggleButtonGroup>
+            </Row>
           </Column>
         </ControlsContainer>
       </GraphPageContainer>

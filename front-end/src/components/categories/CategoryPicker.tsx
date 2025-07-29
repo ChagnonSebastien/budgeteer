@@ -1,58 +1,76 @@
 import { Button, DialogActions, DialogContent, DialogTitle, TextField } from '@mui/material'
 import { FC, useContext, useMemo, useState } from 'react'
-import styled from 'styled-components'
 
+import { CategoryCard } from './CategoryCard'
 import { CategoryList } from './CategoryList'
+import Category, { CategoryID } from '../../domain/model/category'
 import { CategoryServiceContext } from '../../service/ServiceContext'
+import { MultiSelectConfiguration, SingleSelectConfiguration } from '../accounts/ItemList'
+import IconCapsule from '../icons/IconCapsule'
 import ContentDialog from '../shared/ContentDialog'
-
-const FullWidthTextField = styled(TextField)`
-  width: 100%;
-`
+import { Row } from '../shared/NoteContainer'
 
 interface Props {
-  categoryId?: number
-  setCategoryId?: (categoryId: number) => void
-  selected?: number[]
-  onMultiSelect?: (selected: number[]) => void
+  selectedConfig: MultiSelectConfiguration<CategoryID, Category> | SingleSelectConfiguration<CategoryID, Category>
   labelText: string
   valueText?: string
+  icon?: {
+    iconName: string
+    iconColor: string
+    iconBackground: string
+  }
 }
 
 const CategoryPicker: FC<Props> = (props) => {
-  const { categoryId, setCategoryId, selected = [], onMultiSelect, labelText, valueText } = props
+  const { selectedConfig, labelText, valueText, icon } = props
   const { state: categories } = useContext(CategoryServiceContext)
-  const currentCategory = useMemo(
-    () => (categoryId ? categories.find((c) => c.id === categoryId)! : undefined),
-    [categories, categoryId],
-  )
-  const selectedCategories = useMemo(
-    () => selected.map((id) => categories.find((c) => c.id === id)!).filter((c) => c),
-    [categories, selected],
-  )
+
+  const selectedCategories = useMemo(() => {
+    if (selectedConfig.mode === 'single') {
+      const category = categories.find((c) => c.id === selectedConfig.selectedItem)
+      if (typeof category === 'undefined') return undefined
+      return [category]
+    } else if (selectedConfig.mode === 'multi') {
+      const selectedCategories = selectedConfig.selectedItems
+        .map((categoryId) => categories.find((c) => c.id === categoryId))
+        .filter((c) => typeof c !== 'undefined')
+      if (selectedCategories.length === 0) return undefined
+      return selectedCategories
+    }
+  }, [categories, selectedConfig])
 
   const [showModal, setShowModal] = useState(false)
 
-  const displayValue =
-    valueText ??
-    (onMultiSelect ? selectedCategories.map((c) => c.name).join(', ') || 'None' : (currentCategory?.name ?? 'None'))
+  const displayValue = valueText ?? (selectedCategories?.map((c) => c.name).join(', ') || 'None')
 
   return (
     <>
-      <FullWidthTextField
-        variant="standard"
-        type="text"
-        label={labelText}
-        placeholder={'None'}
-        value={displayValue}
-        onFocus={(ev) => {
-          ev.preventDefault()
-          setShowModal(true)
-          ev.target.blur()
-        }}
-        required={!onMultiSelect}
-        className="w-full"
-      />
+      <Row style={{ alignItems: 'center', gap: '1rem' }}>
+        {icon && (
+          <IconCapsule
+            flexShrink={0}
+            iconName={icon.iconName}
+            size="2rem"
+            color={icon.iconColor}
+            backgroundColor={icon.iconBackground}
+          />
+        )}
+        <TextField
+          sx={{ width: '100%', flexShrink: 1 }}
+          variant="standard"
+          type="text"
+          label={labelText}
+          placeholder={'None'}
+          value={displayValue}
+          onFocus={(ev) => {
+            ev.preventDefault()
+            setShowModal(true)
+            ev.target.blur()
+          }}
+          required={selectedConfig.mode === 'single'}
+          className="w-full"
+        />
+      </Row>
       <ContentDialog open={showModal} onClose={() => setShowModal(false)}>
         <DialogTitle>Select Category</DialogTitle>
         <DialogContent
@@ -63,17 +81,20 @@ const CategoryPicker: FC<Props> = (props) => {
           }}
         >
           <CategoryList
-            categories={categories}
-            onSelect={
-              setCategoryId
-                ? (newParent) => {
-                    setCategoryId(newParent)
-                    setShowModal(false)
+            items={categories}
+            selectConfiguration={
+              selectedConfig.mode === 'single'
+                ? {
+                    ...selectedConfig,
+                    onSelectItem: (item) => {
+                      setShowModal(false)
+                      selectedConfig.onSelectItem(item)
+                    },
                   }
-                : undefined
+                : selectedConfig
             }
-            onMultiSelect={onMultiSelect}
-            selected={selected}
+            ItemComponent={CategoryCard}
+            additionalItemsProps={{}}
           />
         </DialogContent>
         <DialogActions>

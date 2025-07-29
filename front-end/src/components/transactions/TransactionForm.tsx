@@ -1,6 +1,4 @@
 import { Checkbox, FormControlLabel, TextField } from '@mui/material'
-import { DateCalendar, DateField, DateView } from '@mui/x-date-pickers'
-import dayjs, { Dayjs } from 'dayjs'
 import { FC, useContext, useEffect, useMemo, useState } from 'react'
 
 import { UserContext } from '../../App'
@@ -11,11 +9,9 @@ import Transaction, { AugmentedTransaction } from '../../domain/model/transactio
 import MixedAugmentation from '../../service/MixedAugmentation'
 import { AccountServiceContext, CategoryServiceContext, CurrencyServiceContext } from '../../service/ServiceContext'
 import AccountPicker from '../accounts/AccountPicker'
-import { CategoryList } from '../categories/CategoryList'
+import CategoryPicker from '../categories/CategoryPicker'
 import CurrencyPicker from '../currencies/CurrencyPicker'
-import IconCapsule from '../icons/IconCapsule'
-import ContentDialog from '../shared/ContentDialog'
-import ContentWithHeader from '../shared/ContentWithHeader'
+import DatePicker from '../inputs/DatePicker'
 import FormWrapper from '../shared/FormWrapper'
 import { Row } from '../shared/NoteContainer'
 
@@ -82,8 +78,6 @@ const TransactionForm: FC<Props> = (props) => {
   const sanitizedAmount = useMemo(() => `0${amount.replace(',', '')}`, [amount])
   const [currency, setCurrency] = useState<CurrencyID>(initialTransaction?.currencyId ?? default_currency!)
   const [date, setDate] = useState(initialTransaction?.date ?? new Date())
-  const [dateView, setDateView] = useState<DateView>('day')
-  const [showDateModal, setShowDateModal] = useState(false)
 
   const [differentCurrency, setDifferentCurrency] = useState(() => {
     if (typeof initialTransaction === 'undefined') return false
@@ -121,8 +115,6 @@ const TransactionForm: FC<Props> = (props) => {
   const category = useMemo(() => {
     return categories.find((c) => c.id === parent)
   }, [categories, parent])
-
-  const [showParentModal, setShowCategoryModal] = useState(false)
 
   const [showErrorToast, setShowErrorToast] = useState('')
   const [errors, setErrors] = useState<{
@@ -263,11 +255,10 @@ const TransactionForm: FC<Props> = (props) => {
 
   return (
     <FormWrapper onSubmit={handleSubmit} submitText={submitText} isValid={isFormValid} errorMessage={showErrorToast}>
-      <Row>
+      <Row style={{ gap: '1rem' }}>
         <TextField
           sx={{ width: '100%' }}
-          type="text"
-          label="Amount"
+          label={`Amount${differentCurrency ? ' Sent' : ''}`}
           variant="standard"
           autoFocus
           value={amount}
@@ -292,41 +283,11 @@ const TransactionForm: FC<Props> = (props) => {
       </Row>
 
       {typeof category !== 'undefined' && (
-        <>
-          <Row style={{ alignItems: 'center', cursor: 'pointer' }} onClick={() => setShowCategoryModal(true)}>
-            <IconCapsule
-              flexShrink={0}
-              iconName={category.iconName}
-              size="2rem"
-              color={category.iconColor}
-              backgroundColor={category.iconBackground}
-            />
-            <div style={{ width: '1rem', flexShrink: 0 }} />
-            <TextField
-              sx={{ width: '100%' }}
-              type="text"
-              label="Category"
-              variant="standard"
-              placeholder={typeof rootCategory === 'undefined' ? 'Loading...' : undefined}
-              value={categories?.find((c) => c.id === parent)?.name}
-              onFocus={(ev) => {
-                setShowCategoryModal(true)
-                ev.target.blur()
-              }}
-            />
-          </Row>
-          <ContentDialog open={showParentModal} onClose={() => setShowCategoryModal(false)}>
-            <ContentWithHeader title="Select Icon" button="return" onCancel={() => setShowCategoryModal(false)}>
-              <CategoryList
-                categories={categories}
-                onSelect={(newParent) => {
-                  setParent(newParent)
-                  setShowCategoryModal(false)
-                }}
-              />
-            </ContentWithHeader>
-          </ContentDialog>
-        </>
+        <CategoryPicker
+          labelText="Category"
+          icon={category}
+          selectedConfig={{ mode: 'single', onSelectItem: setParent, selectedItem: parent }}
+        />
       )}
 
       <AccountPicker
@@ -338,18 +299,17 @@ const TransactionForm: FC<Props> = (props) => {
         allowNew={type === 'income'}
       />
 
-      {type === 'transfer' && (
-        <FormControlLabel
-          control={<Checkbox onChange={(ev) => setDifferentCurrency(ev.target.checked)} />}
-          label="TransferCurrencies"
-        />
-      )}
+      <FormControlLabel
+        control={<Checkbox onChange={(ev) => setDifferentCurrency(ev.target.checked)} />}
+        label="Receive in a different Currency"
+      />
 
       {differentCurrency && (
-        <Row>
+        <Row style={{ gap: '1rem' }}>
           <TextField
+            sx={{ width: '100%' }}
             type="text"
-            label="Amount of transfered currency"
+            label="Amount Received"
             variant="standard"
             value={receiverAmount}
             onChange={(ev) => setReceiverAmount(ev.target.value as string)}
@@ -362,43 +322,18 @@ const TransactionForm: FC<Props> = (props) => {
               }))
             }
           />
-          <div style={{ width: '3rem' }} />
           <CurrencyPicker
             currencies={currencies}
             selectedCurrencyId={receiverCurrency}
             setSelectedCurrencyId={setReceiverCurrency}
-            labelText="Transfer to:"
-            style={{ flexShrink: 2 }}
+            labelText="Currency"
+            style={{ width: '100%', flexShrink: 2 }}
             errorText={NoError}
           />
         </Row>
       )}
 
-      <DateField
-        label="Date"
-        value={dayjs(date)}
-        onFocus={(ev) => {
-          setShowDateModal(true)
-          ev.preventDefault()
-          ev.target.blur()
-        }}
-        variant="standard"
-        sx={{ width: '100%' }}
-      />
-
-      <ContentDialog open={showDateModal} onClose={() => setShowDateModal(false)}>
-        <DateCalendar
-          views={['year', 'month', 'day']}
-          value={dayjs(date)}
-          onChange={(newDate: Dayjs) => {
-            setDate(newDate.toDate())
-            if (dateView === 'day') setShowDateModal(false)
-          }}
-          onViewChange={(view) => {
-            setDateView(view)
-          }}
-        />
-      </ContentDialog>
+      <DatePicker label="Date" date={date} onChange={setDate} />
 
       <AccountPicker
         labelText="To"

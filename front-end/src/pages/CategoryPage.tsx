@@ -2,6 +2,7 @@ import { DialogContent, Divider, List, ListItem, ListItemIcon, ListItemText, Typ
 import { FC, useContext, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
+import { CategoryCard } from '../components/categories/CategoryCard'
 import { CategoryList } from '../components/categories/CategoryList'
 import { IconToolsContext } from '../components/icons/IconTools'
 import ContentDialog from '../components/shared/ContentDialog'
@@ -36,11 +37,13 @@ const CategoryPage: FC = () => {
           }}
         >
           <CategoryList
-            categories={categories}
-            onSelect={(categoryId) => {
-              const category = categories.find((c) => c.id === categoryId)
-              if (category) setClickedCategory(category)
+            items={categories}
+            selectConfiguration={{
+              mode: 'click',
+              onClick: setClickedCategory,
             }}
+            ItemComponent={CategoryCard}
+            additionalItemsProps={{}}
           />
         </CustomScrollbarContainer>
       </ScrollingOverButton>

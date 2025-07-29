@@ -113,7 +113,16 @@ const CategoryForm: FC<Props> = (props) => {
         onBlur={() => setIsTouched(true)}
       />
 
-      {!editingRoot && <CategoryPicker categoryId={parent} setCategoryId={setParent} labelText="Parent Category" />}
+      {!editingRoot && (
+        <CategoryPicker
+          selectedConfig={{
+            mode: 'single',
+            selectedItem: parent,
+            onSelectItem: setParent,
+          }}
+          labelText="Parent Category"
+        />
+      )}
 
       <FormControlLabel
         control={<Checkbox checked={fixedCost} onChange={(ev) => setFixedCost(ev.target.checked)} />}
@@ -180,7 +189,7 @@ const CategoryForm: FC<Props> = (props) => {
         <ContentDialog open={showIconModal} onClose={() => setShowIconModal(false)}>
           <ContentWithHeader
             title="Select Icon"
-            button="return"
+            button="none"
             onSearch={setFilter}
             onCancel={() => setShowIconModal(false)}
           >

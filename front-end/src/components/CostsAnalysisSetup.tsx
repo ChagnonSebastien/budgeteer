@@ -1,8 +1,9 @@
 import { Button, DialogActions, DialogContent, DialogTitle, Stack, TextField } from '@mui/material'
-import { FC } from 'react'
+import { FC, useContext } from 'react'
 
 import CategoryPicker from './categories/CategoryPicker'
 import ContentDialog from './shared/ContentDialog'
+import { CategoryServiceContext } from '../service/ServiceContext'
 
 interface Props {
   open: boolean
@@ -21,6 +22,8 @@ const CostsAnalysisSetup: FC<Props> = ({
   setIncomeCategory,
   onComplete,
 }) => {
+  const { augmentedCategories } = useContext(CategoryServiceContext)
+
   return (
     <ContentDialog open={open} fullWidth maxWidth="sm">
       <DialogTitle>Costs Analysis Setup</DialogTitle>
@@ -39,9 +42,13 @@ const CostsAnalysisSetup: FC<Props> = ({
           />
 
           <CategoryPicker
-            categoryId={incomeCategory}
-            setCategoryId={setIncomeCategory}
+            selectedConfig={{
+              mode: 'single',
+              selectedItem: incomeCategory,
+              onSelectItem: setIncomeCategory,
+            }}
             labelText="Select your net income category"
+            icon={augmentedCategories.find((category) => category.id === incomeCategory)}
           />
         </Stack>
       </DialogContent>

@@ -1,8 +1,7 @@
 import { Button, Checkbox, FormControlLabel, TextField, Typography } from '@mui/material'
-import { DateCalendar, DateField, DateView } from '@mui/x-date-pickers'
+import { DateView } from '@mui/x-date-pickers'
 import { ResponsiveLine } from '@nivo/line'
 import { startOfDay } from 'date-fns'
-import dayjs, { Dayjs } from 'dayjs'
 import { FC, FormEvent, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import styled from 'styled-components'
 
@@ -12,7 +11,7 @@ import MixedAugmentation from '../../service/MixedAugmentation'
 import { CurrencyServiceContext } from '../../service/ServiceContext'
 import { darkTheme } from '../../utils'
 import CodeEditor from '../inputs/CodeEditor'
-import ContentDialog from '../shared/ContentDialog'
+import DatePicker from '../inputs/DatePicker'
 import FormWrapper from '../shared/FormWrapper'
 import { Row } from '../shared/NoteContainer'
 
@@ -547,39 +546,7 @@ const CurrencyForm: FC<Props> = (props) => {
               <Row style={{ margin: '0 1rem', alignItems: 'center', flexShrink: 0 }}>
                 {tentativeDefaultCurrency!.symbol} on
               </Row>
-              <Row
-                style={{
-                  alignItems: 'center',
-                  flexShrink: 0,
-                  borderBottom: '1px rgba(0, 0, 0, 0.13) solid',
-                }}
-              >
-                <DateField
-                  value={dayjs(initialExchangeRateDate)}
-                  onFocus={(ev) => {
-                    setShowDateModal(true)
-                    ev.preventDefault()
-                    ev.target.blur()
-                  }}
-                  tabIndex={-1}
-                  variant="standard"
-                  sx={{ width: '100%' }}
-                />
-
-                <ContentDialog open={showDateModal} onClose={() => setShowDateModal(false)}>
-                  <DateCalendar
-                    views={['year', 'month', 'day']}
-                    value={dayjs(initialExchangeRateDate)}
-                    onChange={(newDate: Dayjs) => {
-                      setInitialExchangeRateDate(newDate.toDate())
-                      if (dateView === 'day') setShowDateModal(false)
-                    }}
-                    onViewChange={(view) => {
-                      setDateView(view)
-                    }}
-                  />
-                </ContentDialog>
-              </Row>
+              <DatePicker date={initialExchangeRateDate} onChange={setInitialExchangeRateDate} label="" />
             </Row>
           </div>
         </>
