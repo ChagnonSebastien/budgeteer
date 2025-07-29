@@ -8,6 +8,7 @@ import { CategoryServiceContext } from '../../service/ServiceContext'
 import { doNothing } from '../../utils'
 import IconCapsule from '../icons/IconCapsule'
 import { IconToolsContext } from '../icons/IconTools'
+import { Row } from '../shared/NoteContainer'
 
 // Styled components only for complex hover effects and transitions
 const CategoryListItem = styled.div<{ isSelected: boolean; hasSelectedChild: boolean }>`
@@ -225,14 +226,14 @@ export const CategoryList = (props: Props) => {
                 padding: '0.5rem 0.5rem 0.5rem 0',
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', marginRight: '1rem' }}>
+              <Row style={{ alignItems: 'center', marginRight: '1rem' }}>
                 <IconCapsule
                   iconName={category.iconName}
                   size={'2rem'}
                   color={category.iconColor}
                   backgroundColor={category.iconBackground}
                 />
-              </div>
+              </Row>
               <div
                 style={{
                   fontSize: '0.95rem',

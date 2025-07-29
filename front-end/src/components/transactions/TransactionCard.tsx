@@ -1,9 +1,11 @@
+import { Typography } from '@mui/material'
 import { FC, memo, useContext } from 'react'
 
 import Account from '../../domain/model/account'
 import Currency, { formatFull } from '../../domain/model/currency'
 import IconCapsule from '../icons/IconCapsule'
 import { DrawerContext } from '../Menu'
+import { Column, GradientCard, Row } from '../shared/NoteContainer'
 
 interface Props {
   amount: number
@@ -50,131 +52,78 @@ const TransactionCard: FC<Props> = memo((props) => {
   }
 
   return (
-    <div
+    <GradientCard
       onClick={onClick}
+      $selected={false}
+      $withGradientBackground={false}
       style={{
         display: 'flex',
-        flexDirection: 'row',
-        backgroundColor: getBackgroundColor(),
-        borderRadius: '0.75rem',
-        fontSize: '0.875rem',
-        margin: '0.3rem',
-        padding: '0.5rem 0.75rem',
         alignItems: 'center',
+        backgroundColor: getBackgroundColor(),
+        fontSize: '0.875rem',
+        padding: '0.5rem 0.75rem',
         border: '1px solid rgba(255, 255, 255, 0.08)',
-        cursor: 'pointer',
-        willChange: 'transform',
-        transform: 'translateZ(0)',
+        gap: '0.75rem',
+        overflow: 'hidden',
       }}
     >
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          flexShrink: 0,
-        }}
-      >
-        <IconCapsule
-          iconName={categoryIconName}
-          size="2.4rem"
-          backgroundColor={categoryIconBackground}
-          color={categoryIconColor}
-        />
-      </div>
-      <div style={{ width: '0.5rem', flexShrink: 0 }} />
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          justifyItems: 'stretch',
-          flexGrow: 1,
-          width: '100%',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap',
-        }}
-      >
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-          }}
-        >
-          <div
-            style={{
-              fontWeight: 600,
-              letterSpacing: '0.01em',
-              fontSize: '0.95rem',
-            }}
-          >
+      <IconCapsule
+        iconName={categoryIconName}
+        size="2.4rem"
+        backgroundColor={categoryIconBackground}
+        color={categoryIconColor}
+        flexShrink={0}
+      />
+      <Column style={{ flexGrow: 1 }}>
+        <Row style={{ justifyContent: 'space-between' }}>
+          <Typography letterSpacing="0.01rem" fontSize="0.95rem" fontWeight="600">
             {formatFull(currency, amount, privacyMode)}
-            {currency.id === receiverCurrency.id
-              ? ''
-              : ` -> ${formatFull(receiverCurrency, receiverAmount, privacyMode)}`}
-          </div>
-          <div
-            style={{
-              color: 'rgba(255, 255, 255, 0.7)',
-              fontSize: '0.85rem',
-            }}
-          >
-            {date.toDateString()}
-          </div>
-        </div>
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            width: '100%',
-          }}
-        >
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              overflow: 'hidden',
-            }}
-          >
-            <div
-              style={{
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-              }}
-            >
-              <span style={{ color: 'rgba(255, 255, 255, 0.6)' }}>From:</span>{' '}
-              <span style={{ fontWeight: 500 }}>{from?.name ?? '-'}</span>
-            </div>
-            <div
-              style={{
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-              }}
-            >
-              <span style={{ color: 'rgba(255, 255, 255, 0.6)' }}>To:</span>{' '}
-              <span style={{ fontWeight: 500 }}>{to?.name ?? '-'}</span>
-            </div>
-          </div>
 
-          <div
-            style={{
-              whiteSpace: 'normal',
-              textOverflow: 'ellipsis',
-              fontWeight: 300,
-              color: 'rgba(255, 255, 255, 0.7)',
-              fontSize: '0.85rem',
-              textAlign: 'end',
-            }}
+            {currency.id !== receiverCurrency.id && ` ➜ ${formatFull(receiverCurrency, receiverAmount, privacyMode)}`}
+          </Typography>
+
+          <Typography color="textDisabled" fontSize="0.9rem">
+            {date.toDateString()}
+          </Typography>
+        </Row>
+
+        <Row style={{ justifyContent: 'space-between', gap: '0.75rem' }}>
+          <Column style={{ overflow: 'hidden', whiteSpace: 'nowrap' }}>
+            <Row style={{ gap: '0.5rem' }}>
+              <Typography fontSize="0.9rem" color="textDisabled">
+                From:
+              </Typography>
+
+              <Typography fontSize="0.9rem" fontWeight="500" textOverflow={'ellipsis'} overflow={'hidden'}>
+                {from?.name ?? '-'}
+              </Typography>
+            </Row>
+
+            <Row style={{ gap: '0.5rem' }}>
+              <Typography fontSize="0.9rem" color="textDisabled">
+                To:
+              </Typography>
+
+              <Typography fontSize="0.9rem" fontWeight="500" textOverflow={'ellipsis'} overflow={'hidden'}>
+                {to?.name ?? '-'}
+              </Typography>
+            </Row>
+          </Column>
+
+          <Typography
+            fontSize="0.9rem"
+            alignSelf="stretch"
+            align="right"
+            textOverflow="ellipsis"
+            flexShrink={4}
+            minWidth={0}
+            overflow={'hidden'}
           >
             {note}
-          </div>
-        </div>
-      </div>
-    </div>
+          </Typography>
+        </Row>
+      </Column>
+    </GradientCard>
   )
 })
 

@@ -1,6 +1,6 @@
 import { FC, useContext, useMemo } from 'react'
 
-import { AccountCard, AdditionalAccountCardProps } from './AccountCard'
+import AccountCard, { AdditionalAccountCardProps } from './AccountCard'
 import GroupedAccountList from './GroupedAccountList'
 import Account, { AccountID } from '../../domain/model/account'
 import { AccountServiceContext } from '../../service/ServiceContext'

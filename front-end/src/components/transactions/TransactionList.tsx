@@ -17,6 +17,7 @@ import { AugmentedTransaction } from '../../domain/model/transaction'
 import MixedAugmentation from '../../service/MixedAugmentation'
 import { AccountServiceContext } from '../../service/ServiceContext'
 import { DrawerContext } from '../Menu'
+import { Column, Row } from '../shared/NoteContainer'
 
 interface Props {
   transactions: AugmentedTransaction[]
@@ -131,11 +132,9 @@ export const TransactionList = (props: Props) => {
     const wrap = (data: { Total: number; date: Date; diff: number }) => {
       const { Total, date, diff } = data
       return (
-        <div
+        <Column
           key={`monthly-label-${date.getTime()}`}
           style={{
-            display: 'flex',
-            flexDirection: 'column',
             alignItems: 'flex-end',
             padding: '1rem',
             paddingBottom: '0.5rem',
@@ -151,21 +150,20 @@ export const TransactionList = (props: Props) => {
           </div>
           {!privacyMode && (
             <div>
-              <div style={{ display: 'flex' }}>{formatFull(defaultCurrency, Total, privacyMode)}</div>
+              <Row>{formatFull(defaultCurrency, Total, privacyMode)}</Row>
               {diff !== 0 && (
-                <div
+                <Row
                   style={{
-                    display: 'flex',
                     color: diff > 0 ? 'var(--ion-color-success)' : 'var(--ion-color-danger)',
                   }}
                 >
                   <div>{diff > 0 ? `+` : `-`}</div>
                   <div>{formatAmount(defaultCurrency, Math.abs(diff), privacyMode)}</div>
-                </div>
+                </Row>
               )}
             </div>
           )}
-        </div>
+        </Column>
       )
     }
 
@@ -233,15 +231,16 @@ export const TransactionList = (props: Props) => {
   }, [displayedAmount, viewWithMonthLabels.length])
 
   return (
-    <div
+    <Column
       ref={containerRef}
       style={{
         position: 'relative',
         margin: 'auto',
         height: '100%',
+        gap: '0.2rem',
       }}
     >
       {displayedItems}
-    </div>
+    </Column>
   )
 }

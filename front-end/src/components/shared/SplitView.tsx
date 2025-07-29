@@ -18,8 +18,8 @@ export const SplitViewPanel = styled.div<{
   width: ${(props) => (props.$split === 'vertical' ? '100%' : 'auto')};
   overflow: hidden;
   flex-grow: ${(props) => (typeof props.$grow === 'number' ? props.$grow : props.$grow ? 1 : 0)};
-  overflow-y: ${(props) => (props.$split === 'horizontal' && props.$scroll ? 'scroll' : 'hidden')};
-  overflow-x: ${(props) => (props.$split === 'vertical' && props.$scroll ? 'scroll' : 'hidden')};
+  overflow-y: ${(props) => (props.$split === 'horizontal' && props.$scroll ? 'auto' : 'hidden')};
+  overflow-x: ${(props) => (props.$split === 'vertical' && props.$scroll ? 'auto' : 'hidden')};
 `
 
 interface ZoneStyling {

@@ -1,7 +1,7 @@
 import styled from 'styled-components'
 
 export const CustomScrollbarContainer = styled.div`
-  overflow-y: scroll;
+  overflow-y: auto;
   padding-left: 1rem;
   padding-right: 1rem;
 

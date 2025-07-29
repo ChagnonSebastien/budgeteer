@@ -1,6 +1,7 @@
 import { FC, useContext, useEffect, useMemo, useRef, useState } from 'react'
 
 import { IconToolsContext } from './IconTools'
+import { Row } from '../shared/NoteContainer'
 
 const perfectMultiplier = 4 * 3 * 5 * 7
 
@@ -41,9 +42,8 @@ const IconList: FC<Props> = ({ filter, onSelect }) => {
 
   return (
     <div style={{ position: 'relative' }}>
-      <div
+      <Row
         style={{
-          display: 'flex',
           flexWrap: 'wrap',
           justifyContent: 'space-evenly',
           paddingTop: '.5rem',
@@ -61,7 +61,7 @@ const IconList: FC<Props> = ({ filter, onSelect }) => {
             </div>
           )
         })}
-      </div>
+      </Row>
       <div
         style={{
           zIndex: -1,

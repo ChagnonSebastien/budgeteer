@@ -6,7 +6,7 @@ import { FC, useContext, useMemo } from 'react'
 import InvestmentGainLineChart from '../components/graphing/InvestmentGainLineChart'
 import { DrawerContext } from '../components/Menu'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
-import NoteContainer from '../components/shared/NoteContainer'
+import NoteContainer, { Column, Row } from '../components/shared/NoteContainer'
 import { formatFull } from '../domain/model/currency'
 import MixedAugmentation from '../service/MixedAugmentation'
 import { AccountServiceContext } from '../service/ServiceContext'
@@ -197,13 +197,12 @@ const Dashboard: FC = () => {
           <CashFlowBarChart data={cashFlowData} />
         </div>
         <Box height="1rem" />
-        <div
+        <Row
           style={{
-            display: 'flex',
             justifyContent: 'space-around',
           }}
         >
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <Column>
             <span
               style={{
                 fontSize: '0.75rem',
@@ -221,8 +220,8 @@ const Dashboard: FC = () => {
             >
               {(savingsRate * 100).toFixed(1)}%
             </span>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
+          </Column>
+          <Column>
             <span
               style={{
                 fontSize: '0.75rem',
@@ -240,8 +239,8 @@ const Dashboard: FC = () => {
             >
               {formatFull(defaultCurrency, surplus, privacyMode)}
             </span>
-          </div>
-        </div>
+          </Column>
+        </Row>
       </NoteContainer>
     </ContentWithHeader>
   )

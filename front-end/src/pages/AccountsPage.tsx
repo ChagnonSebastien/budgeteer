@@ -14,6 +14,7 @@ import {
 import { FC, useContext, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 
+import AccountCard from '../components/accounts/AccountCard'
 import GroupedAccountList from '../components/accounts/GroupedAccountList'
 import { IconToolsContext } from '../components/icons/IconTools'
 import { DrawerContext } from '../components/Menu'
@@ -100,6 +101,7 @@ const AccountsPage: FC = () => {
         scrollingContainerRef={scrollingContainerRef}
       >
         <GroupedAccountList
+          ItemComponent={AccountCard}
           items={accounts}
           selectConfiguration={{
             mode: 'click',

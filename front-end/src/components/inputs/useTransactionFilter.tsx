@@ -8,9 +8,11 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import TimeRange from './slider/TimeRange'
 import Account, { AccountID } from '../../domain/model/account'
 import { AccountServiceContext, CategoryServiceContext, TransactionServiceContext } from '../../service/ServiceContext'
+import AccountCard from '../accounts/AccountCard'
 import GroupedAccountList from '../accounts/GroupedAccountList'
 import { CategoryList } from '../categories/CategoryList'
 import ContentDialog from '../shared/ContentDialog'
+import { Row } from '../shared/NoteContainer'
 
 type Filters = {
   overview: ReactNode
@@ -136,9 +138,8 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
       <>
         <DialogTitle>Edit filters</DialogTitle>
         <DialogContent>
-          <div
+          <Row
             style={{
-              display: 'flex',
               borderBottom: '1px #8885 solid',
               marginBottom: '1rem',
               padding: '.5rem',
@@ -149,11 +150,10 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
             <div>Account:</div>
             <div style={{ width: '.5rem' }} />
             <div style={{ flexGrow: 1, minWidth: '20rem', flexWrap: 'wrap' }}>{accountPills}</div>
-          </div>
+          </Row>
           {canFilterByCategory && (
-            <div
+            <Row
               style={{
-                display: 'flex',
                 borderBottom: '1px #8885 solid',
                 marginBottom: '1rem',
                 padding: '.5rem',
@@ -164,11 +164,10 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
               <div>Category:</div>
               <div style={{ width: '.5rem' }} />
               <div style={{ flexGrow: 1, minWidth: '10rem' }}>{categoryPills}</div>
-            </div>
+            </Row>
           )}
-          <div
+          <Row
             style={{
-              display: 'flex',
               borderBottom: '1px #8885 solid',
               marginBottom: '1rem',
               padding: '.5rem',
@@ -182,7 +181,7 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
               {fromPills}
               {toPills}
             </div>
-          </div>
+          </Row>
         </DialogContent>
 
         <DialogActions>
@@ -194,11 +193,10 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
   )
 
   const quickDates = (
-    <div
+    <Row
       style={{
         backgroundColor: '#8882',
         borderRadius: '.5rem',
-        display: 'flex',
         overflow: 'hidden',
       }}
     >
@@ -208,10 +206,9 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
           flexGrow: 1,
         }}
       >
-        <div
+        <Row
           style={{
             flexGrow: 1,
-            display: 'flex',
             justifyContent: 'space-around',
           }}
         >
@@ -275,7 +272,7 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
           >
             1M
           </div>
-        </div>
+        </Row>
         {showSlider && (
           <>
             <TimeRange
@@ -299,9 +296,8 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
               }}
             />
             <div style={{ marginTop: '.75rem', padding: '0 1.5rem' }}>
-              <div
+              <Row
                 style={{
-                  display: 'flex',
                   alignItems: 'center',
                   cursor: 'pointer',
                 }}
@@ -315,18 +311,18 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
                 </div>
                 <div style={{ flexGrow: 1 }} />
                 <div style={{ margin: '.25rem', width: 'intrinsic', flexShrink: 0 }}>+ Filter</div>
-              </div>
+              </Row>
             </div>
           </>
         )}
       </div>
-      <div
-        style={{ backgroundColor: '#0003', padding: '1rem', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+      <Row
+        style={{ backgroundColor: '#0003', padding: '1rem', cursor: 'pointer', alignItems: 'center' }}
         onClick={() => setShowSlider((prev) => !prev)}
       >
         {showSlider ? '-' : '+'}
-      </div>
-    </div>
+      </Row>
+    </Row>
   )
 
   const overview = showSlider ? (
@@ -343,7 +339,7 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
 
       <ContentDialog fullScreen={fullScreen} open={showCategoryModal} onClose={() => setShowCategoryModal(false)}>
         <DialogTitle>Filter by category</DialogTitle>
-        <DialogContent style={{ height: '70vh', overflowY: 'scroll', padding: '0 20px' }}>
+        <DialogContent style={{ height: '70vh', overflowY: 'auto', padding: '0 20px' }}>
           <CategoryList
             categories={categories}
             selected={categoryFilter ?? undefined}
@@ -381,6 +377,7 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
                 navigate(`${location.pathname}?${query.toString()}`)
               },
             }}
+            ItemComponent={AccountCard}
             additionalItemsProps={{}}
           />
         </DialogContent>

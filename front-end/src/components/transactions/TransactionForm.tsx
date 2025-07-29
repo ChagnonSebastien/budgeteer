@@ -17,6 +17,7 @@ import IconCapsule from '../icons/IconCapsule'
 import ContentDialog from '../shared/ContentDialog'
 import ContentWithHeader from '../shared/ContentWithHeader'
 import FormWrapper from '../shared/FormWrapper'
+import { Row } from '../shared/NoteContainer'
 
 const NoError = ''
 
@@ -262,7 +263,7 @@ const TransactionForm: FC<Props> = (props) => {
 
   return (
     <FormWrapper onSubmit={handleSubmit} submitText={submitText} isValid={isFormValid} errorMessage={showErrorToast}>
-      <div style={{ display: 'flex' }}>
+      <Row>
         <TextField
           sx={{ width: '100%' }}
           type="text"
@@ -288,14 +289,11 @@ const TransactionForm: FC<Props> = (props) => {
           labelText="Currency"
           errorText={NoError}
         />
-      </div>
+      </Row>
 
       {typeof category !== 'undefined' && (
         <>
-          <div
-            style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}
-            onClick={() => setShowCategoryModal(true)}
-          >
+          <Row style={{ alignItems: 'center', cursor: 'pointer' }} onClick={() => setShowCategoryModal(true)}>
             <IconCapsule
               flexShrink={0}
               iconName={category.iconName}
@@ -316,7 +314,7 @@ const TransactionForm: FC<Props> = (props) => {
                 ev.target.blur()
               }}
             />
-          </div>
+          </Row>
           <ContentDialog open={showParentModal} onClose={() => setShowCategoryModal(false)}>
             <ContentWithHeader title="Select Icon" button="return" onCancel={() => setShowCategoryModal(false)}>
               <CategoryList
@@ -348,7 +346,7 @@ const TransactionForm: FC<Props> = (props) => {
       )}
 
       {differentCurrency && (
-        <div style={{ display: 'flex' }}>
+        <Row>
           <TextField
             type="text"
             label="Amount of transfered currency"
@@ -373,7 +371,7 @@ const TransactionForm: FC<Props> = (props) => {
             style={{ flexShrink: 2 }}
             errorText={NoError}
           />
-        </div>
+        </Row>
       )}
 
       <DateField

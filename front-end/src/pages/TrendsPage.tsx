@@ -7,6 +7,7 @@ import CategoryPicker from '../components/categories/CategoryPicker'
 import { ControlsContainer, GraphContainer, GraphPageContainer } from '../components/graphing/GraphStyledComponents'
 import TrendsChart, { grouping } from '../components/graphing/TrendsChart'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
+import { Column, Row } from '../components/shared/NoteContainer'
 
 const YearInput = styled.input`
   width: 2rem;
@@ -98,7 +99,7 @@ const TrendsPage: FC = () => {
             if (element) setOptionsHeight(element.scrollHeight)
           }}
         >
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          <Column style={{ gap: '1.5rem' }}>
             <CategoryPicker
               selected={selectedCategories}
               onMultiSelect={(categories) => updateQuery({ categories })}
@@ -106,7 +107,7 @@ const TrendsPage: FC = () => {
               valueText={selectedCategories.length === 0 ? 'All Categories' : undefined}
             />
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <Column style={{ gap: '0.5rem' }}>
               <Typography
                 style={{
                   color: 'rgba(255, 255, 255, 0.7)',
@@ -120,7 +121,7 @@ const TrendsPage: FC = () => {
                 Time Range
               </Typography>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <Row style={{ alignItems: 'center', gap: '1rem' }}>
                 <Button
                   variant="outlined"
                   size="small"
@@ -130,9 +131,8 @@ const TrendsPage: FC = () => {
                 >
                   -
                 </Button>
-                <div
+                <Row
                   style={{
-                    display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     flex: 1,
@@ -154,7 +154,7 @@ const TrendsPage: FC = () => {
                     onFocus={(e) => e.target.select()}
                   />
                   <span style={{ marginLeft: '0.5rem' }}>{years === 1 ? 'Year' : 'Years'}</span>
-                </div>
+                </Row>
                 <Button
                   variant="outlined"
                   size="small"
@@ -163,9 +163,9 @@ const TrendsPage: FC = () => {
                 >
                   +
                 </Button>
-              </div>
+              </Row>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: 0 }}>
+              <Row style={{ alignItems: 'center', gap: '1rem', padding: 0 }}>
                 <ToggleButtonGroup
                   value={grouping}
                   exclusive
@@ -185,9 +185,9 @@ const TrendsPage: FC = () => {
                   <ToggleButton value="quarters">Quarterly</ToggleButton>
                   <ToggleButton value="years">Yearly</ToggleButton>
                 </ToggleButtonGroup>
-              </div>
-            </div>
-          </div>
+              </Row>
+            </Column>
+          </Column>
         </ControlsContainer>
       </GraphPageContainer>
     </ContentWithHeader>

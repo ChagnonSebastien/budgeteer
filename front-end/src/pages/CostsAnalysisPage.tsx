@@ -317,7 +317,7 @@ const CostsAnalysisPage: FC = () => {
         </>
       }
       contentMaxWidth={viewType === 'chart' ? '100%' : '50rem'}
-      contentOverflowY={viewType === 'chart' ? 'hidden' : 'scroll'}
+      contentOverflowY={viewType === 'chart' ? 'hidden' : 'auto'}
       contentPadding="0"
       setContentRef={setContentRef}
     >

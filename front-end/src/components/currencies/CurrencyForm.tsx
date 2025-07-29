@@ -14,6 +14,7 @@ import { darkTheme } from '../../utils'
 import CodeEditor from '../inputs/CodeEditor'
 import ContentDialog from '../shared/ContentDialog'
 import FormWrapper from '../shared/FormWrapper'
+import { Row } from '../shared/NoteContainer'
 
 const ChartContainer = styled.div`
   height: 200px;
@@ -507,7 +508,7 @@ const CurrencyForm: FC<Props> = (props) => {
       {showExchangeRate && (
         <>
           <div>
-            <div style={{ display: 'flex' }}>
+            <Row>
               <Typography
                 color="textSecondary"
                 style={{ margin: '0 1rem', transform: 'translate(0, 0.5rem)', fontSize: '.75rem' }}
@@ -515,7 +516,7 @@ const CurrencyForm: FC<Props> = (props) => {
                 Formatting example
               </Typography>
               <div style={{ borderBottom: '1px grey solid', flexGrow: 1 }} />
-            </div>
+            </Row>
             <Typography style={{ padding: '1rem', border: '1px grey solid', borderTop: 0, textAlign: 'center' }}>
               {formatExample(123.456789)} {symbol}
             </Typography>
@@ -523,11 +524,9 @@ const CurrencyForm: FC<Props> = (props) => {
           <div>
             <div style={{ height: '1rem' }} />
             <div style={{ color: 'grey' }}>Exchange Rates</div>
-            <div style={{ display: 'flex', alignItems: 'end' }}>
-              <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
-                {`1 ${symbol === '' ? '___' : symbol}`}
-              </div>
-              <div style={{ margin: '0 1rem', display: 'flex', alignItems: 'center', flexShrink: 0 }}>=</div>
+            <Row style={{ alignItems: 'end' }}>
+              <Row style={{ alignItems: 'center', flexShrink: 0 }}>{`1 ${symbol === '' ? '___' : symbol}`}</Row>
+              <Row style={{ margin: '0 1rem', alignItems: 'center', flexShrink: 0 }}>=</Row>
               <TextField
                 type="text"
                 variant="standard"
@@ -545,12 +544,11 @@ const CurrencyForm: FC<Props> = (props) => {
                   }))
                 }
               />
-              <div style={{ margin: '0 1rem', display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+              <Row style={{ margin: '0 1rem', alignItems: 'center', flexShrink: 0 }}>
                 {tentativeDefaultCurrency!.symbol} on
-              </div>
-              <div
+              </Row>
+              <Row
                 style={{
-                  display: 'flex',
                   alignItems: 'center',
                   flexShrink: 0,
                   borderBottom: '1px rgba(0, 0, 0, 0.13) solid',
@@ -581,8 +579,8 @@ const CurrencyForm: FC<Props> = (props) => {
                     }}
                   />
                 </ContentDialog>
-              </div>
-            </div>
+              </Row>
+            </Row>
           </div>
         </>
       )}
@@ -636,7 +634,7 @@ const CurrencyForm: FC<Props> = (props) => {
           </Typography>
           <CodeEditor content={getRateScript} onChange={setRateAutoupdateScript} />
           <div>
-            <div style={{ display: 'flex' }}>
+            <Row>
               <Typography
                 color="textSecondary"
                 style={{ margin: '0 1rem', transform: 'translate(0, 0.5rem)', fontSize: '.75rem' }}
@@ -644,14 +642,13 @@ const CurrencyForm: FC<Props> = (props) => {
                 Test and Submit
               </Typography>
               <div style={{ borderBottom: '1px grey solid', flexGrow: 1 }} />
-            </div>
-            <div
+            </Row>
+            <Row
               style={{
                 padding: '1rem',
                 border: '1px grey solid',
                 borderTop: 0,
                 textAlign: 'center',
-                display: 'flex',
                 justifyContent: 'space-between',
               }}
             >
@@ -671,11 +668,11 @@ const CurrencyForm: FC<Props> = (props) => {
                   Submit
                 </Button>
               )}
-            </div>
+            </Row>
           </div>
 
           <div>
-            <div style={{ display: 'flex' }}>
+            <Row>
               <Typography
                 color="textSecondary"
                 style={{ margin: '0 1rem', transform: 'translate(0, 0.5rem)', fontSize: '.75rem' }}
@@ -683,15 +680,14 @@ const CurrencyForm: FC<Props> = (props) => {
                 Rate Auto Update
               </Typography>
               <div style={{ borderBottom: '1px grey solid', flexGrow: 1 }} />
-            </div>
+            </Row>
             <div>
-              <div
+              <Row
                 style={{
                   padding: '1rem',
                   border: '1px grey solid',
                   borderTop: 0,
                   textAlign: 'center',
-                  display: 'flex',
                   justifyContent: 'space-between',
                 }}
               >
@@ -714,7 +710,7 @@ const CurrencyForm: FC<Props> = (props) => {
                   }
                   label="Enabled"
                 />
-              </div>
+              </Row>
             </div>
           </div>
         </>

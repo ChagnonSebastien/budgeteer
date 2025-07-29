@@ -1,5 +1,6 @@
 import { Box, SxProps, Theme } from '@mui/material'
 import { FC, ReactNode } from 'react'
+import { default as styled } from 'styled-components'
 
 interface Props {
   title: string
@@ -9,10 +10,10 @@ interface Props {
 
 const NoteContainer: FC<Props> = (props) => (
   <>
-    <div style={{ display: 'flex', marginTop: '1rem' }}>
+    <Row style={{ marginTop: '1rem' }}>
       <div style={{ color: 'gray', margin: '0 1rem', transform: 'translate(0, 0.5rem)' }}>{props.title}</div>
       <div style={{ borderBottom: '1px grey solid', flexGrow: 1 }} />
-    </div>
+    </Row>
     <Box
       sx={{
         ...props.sx,
@@ -25,5 +26,58 @@ const NoteContainer: FC<Props> = (props) => (
     </Box>
   </>
 )
+
+export const Column = styled.div`
+  display: flex;
+  flex-direction: column;
+`
+
+export const Row = styled.div`
+  display: flex;
+  flex-direction: row;
+`
+
+export const GradientCard = styled.div<{ $selected: boolean; $withGradientBackground: boolean }>`
+  border-radius: 0.5rem;
+  transition: all 200ms ease-in-out;
+  border-left: 3px solid transparent;
+  margin: 0.125rem 0;
+  cursor: pointer;
+
+  ${({ $withGradientBackground }) =>
+    $withGradientBackground &&
+    `
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 1rem;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    margin: 0.25rem 0;
+  `}
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+    transform: translateY(-2px);
+
+    ${({ $withGradientBackground }) =>
+      $withGradientBackground &&
+      `
+      transform: translateY(-2px) scale(1.01);
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      border-color: rgba(255, 255, 255, 0.15);
+    `}
+  }
+
+  ${({ $selected }) =>
+    $selected &&
+    `
+    background-color: rgba(200, 75, 49, 0.12);
+    border-left-color: #C84B31;
+
+    &:hover {
+      background-color: rgba(200, 75, 49, 0.16);
+    }
+  `}
+`
 
 export default NoteContainer

@@ -11,6 +11,7 @@ import IconList from '../icons/IconList'
 import ContentDialog from '../shared/ContentDialog'
 import ContentWithHeader from '../shared/ContentWithHeader'
 import FormWrapper from '../shared/FormWrapper'
+import { Row } from '../shared/NoteContainer'
 
 interface Props {
   initialCategory?: Category
@@ -121,7 +122,7 @@ const CategoryForm: FC<Props> = (props) => {
 
       <div className="flex mt-4 items-center">
         <Stack spacing=".25rem" className="flex flex-col flex-grow">
-          <div style={{ display: 'flex', alignItems: 'start' }}>
+          <Row style={{ alignItems: 'start' }}>
             <Button onClick={() => setShowIconModal(true)} color="secondary" sx={{ flexGrow: 1 }} variant="outlined">
               Select Icon
             </Button>
@@ -134,9 +135,9 @@ const CategoryForm: FC<Props> = (props) => {
               border="1px gray solid"
               flexShrink={0}
             />
-          </div>
+          </Row>
 
-          <div style={{ display: 'flex', alignItems: 'start' }}>
+          <Row style={{ alignItems: 'start' }}>
             <Button
               onClick={() => setShowOuterColorModal(true)}
               className="flex-grow"
@@ -154,9 +155,9 @@ const CategoryForm: FC<Props> = (props) => {
               border="1px gray solid"
               flexShrink={0}
             />
-          </div>
+          </Row>
 
-          <div style={{ display: 'flex', alignItems: 'start' }}>
+          <Row style={{ alignItems: 'start' }}>
             <Button
               onClick={() => setShowInnerColorModal(true)}
               className="flex-grow"
@@ -174,7 +175,7 @@ const CategoryForm: FC<Props> = (props) => {
               border="1px gray solid"
               flexShrink={0}
             />
-          </div>
+          </Row>
         </Stack>
         <ContentDialog open={showIconModal} onClose={() => setShowIconModal(false)}>
           <ContentWithHeader

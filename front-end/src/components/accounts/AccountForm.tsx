@@ -8,6 +8,7 @@ import CurrencyPicker from '../currencies/CurrencyPicker'
 import { IconToolsContext } from '../icons/IconTools'
 import { NumberInput, NumberInputFieldState } from '../inputs/NumberInput'
 import FormWrapper from '../shared/FormWrapper'
+import { Row } from '../shared/NoteContainer'
 
 const IconButton = styled.div`
   margin: 1rem 0;
@@ -200,7 +201,7 @@ const AccountForm: FC<Props> = (props) => {
         <div style={{ height: '1rem' }} />
 
         {initialAmounts.map((i) => (
-          <div key={i.uid} style={{ display: 'flex', alignItems: 'start' }}>
+          <Row key={i.uid} style={{ alignItems: 'start' }}>
             <IconButton
               onClick={() => setInitialAmount((prevState) => prevState.filter((state) => state.uid !== i.uid))}
             >
@@ -251,7 +252,7 @@ const AccountForm: FC<Props> = (props) => {
                 })
               }
             />
-          </div>
+          </Row>
         ))}
 
         {initialAmounts.length < currencies.length && (

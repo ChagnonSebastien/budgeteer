@@ -23,6 +23,7 @@ import {
 } from '../components/graphing/GraphStyledComponents'
 import useTransactionFilter from '../components/inputs/useTransactionFilter'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
+import { Column, Row } from '../components/shared/NoteContainer'
 import SplitView from '../components/shared/SplitView'
 import Account from '../domain/model/account'
 
@@ -79,10 +80,9 @@ const CurrenciesBalancePage: FC = () => {
         >
           <Suspense
             fallback={
-              <Box
-                sx={{
+              <Row
+                style={{
                   height: '100%',
-                  display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}
@@ -90,7 +90,7 @@ const CurrenciesBalancePage: FC = () => {
                 <Typography variant="body1" color="text.secondary">
                   Loading chart data...
                 </Typography>
-              </Box>
+              </Row>
             }
           >
             <CurrenciesBalanceChart
@@ -118,11 +118,11 @@ const CurrenciesBalancePage: FC = () => {
           if (element && !splitHorizontal) setOptionsHeight(element.scrollHeight)
         }}
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+        <Column style={{ gap: '1.5rem' }}>
           {!splitHorizontal && <Box sx={{ mb: 2 }}>{filterOverview}</Box>}
 
           {splitHorizontal ? (
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4, mt: 2 }}>
+            <Column style={{ gap: 4, marginTop: 2 }}>
               <FormControl>
                 <FormLabel id="group-by-label" sx={{ color: 'text.secondary', mb: 1 }}>
                   Group by
@@ -177,7 +177,7 @@ const CurrenciesBalancePage: FC = () => {
                   <FormControlLabel value="relative" control={<Radio />} label="Relative (%)" />
                 </RadioGroup>
               </FormControl>
-            </Box>
+            </Column>
           ) : (
             <Box
               sx={{
@@ -261,7 +261,7 @@ const CurrenciesBalancePage: FC = () => {
               </Box>
             </Box>
           )}
-        </div>
+        </Column>
       </ControlsContainer>
     </div>
   )

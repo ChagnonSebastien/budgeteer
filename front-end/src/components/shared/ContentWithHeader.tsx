@@ -51,7 +51,7 @@ const ContentWithHeader: FC<ContentWithHeaderProps> = (props) => {
     rightButton,
     contentPadding = '1rem',
     contentMaxWidth = '50rem',
-    contentOverflowY = 'scroll',
+    contentOverflowY = 'auto',
     setContentRef = undefined,
   } = props
   const { IconLib } = useContext(IconToolsContext)
