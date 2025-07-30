@@ -443,7 +443,18 @@ const AccountsBalanceChart: FC<Props> = (props) => {
         />
       </>
     )
-  }, [defaultCurrency, filteredAccounts, groupBy, fromDate, toDate, group, privacyMode, exchangeRateOnDay])
+  }, [
+    defaultCurrency,
+    filteredAccounts,
+    groupBy,
+    fromDate,
+    toDate,
+    group,
+    privacyMode,
+    exchangeRateOnDay,
+    baselineConfig,
+    scale,
+  ])
 }
 
 export default AccountsBalanceChart
