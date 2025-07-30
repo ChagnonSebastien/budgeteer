@@ -1,13 +1,7 @@
 import {
   Box,
   Checkbox,
-  DialogContent,
-  Divider,
   IconButton,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
   Menu,
   MenuItem,
   SpeedDial,
@@ -29,6 +23,7 @@ import useTransactionFilter from '../components/inputs/useTransactionFilter'
 import { DrawerContext } from '../components/Menu'
 import ContentDialog from '../components/shared/ContentDialog'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
+import { DetailCard, FancyModal } from '../components/shared/OverviewModalStyles'
 import SplitView from '../components/shared/SplitView'
 import TransactionCard from '../components/transactions/TransactionCard'
 import { TransactionList } from '../components/transactions/TransactionList'
@@ -37,8 +32,6 @@ import { formatAmount } from '../domain/model/currency'
 import { AugmentedTransaction } from '../domain/model/transaction'
 import MixedAugmentation from '../service/MixedAugmentation'
 import { CategoryServiceContext } from '../service/ServiceContext'
-
-import '../styles/overview-modal-tailwind.css'
 
 const GraphSectionContainer = styled.div`
   max-width: 100vh;
@@ -316,162 +309,108 @@ const TransactionPage: FC = () => {
         onClose={() => setClickedTransaction(null)}
         slotProps={{
           paper: {
-            className: 'overview-modal',
+            style: {
+              backgroundColor: 'transparent',
+              borderRadius: '24px',
+              border: '0',
+              overflow: 'hidden',
+            },
           },
         }}
       >
         {clickedTransaction !== null && (
-          <DialogContent sx={{ padding: 0 }} className="overview-modal-content">
-            <div className="overview-header">
-              <div className="overview-header-glow-1" />
-              <div className="overview-header-glow-2" />
-              <Typography variant="overline" className="overview-header-label">
-                {clickedTransaction.sender?.isMine && clickedTransaction.receiver?.isMine
+          <FancyModal
+            title={{
+              topCategory:
+                clickedTransaction.sender?.isMine && clickedTransaction.receiver?.isMine
                   ? 'Transfer'
                   : clickedTransaction.sender?.isMine
                     ? 'Expense'
-                    : 'Income'}
-              </Typography>
-              <Typography variant="h5" className="overview-header-title">
-                {clickedTransaction.note || 'No description'}
-              </Typography>
-              <Typography variant="body2" className="overview-header-subtitle">
-                <IconLib.MdCalendarToday className="opacity-50" />
-                {format(clickedTransaction.date, 'PPP')}
-              </Typography>
-            </div>
-
-            <div className="overview-content">
-              <Typography variant="subtitle2" className="overview-content-label opacity-60">
-                DETAILS
-              </Typography>
-              <div className="overview-items-container">
-                <div className="overview-item">
-                  <div className="overview-item-info">
-                    <div>
-                      <Typography variant="body2" className="overview-item-title">
-                        {clickedTransaction.currency.symbol}
-                      </Typography>
-                      <Typography variant="caption" className="overview-item-subtitle">
-                        {clickedTransaction.senderId &&
-                        clickedTransaction.receiverId &&
-                        clickedTransaction.currency.id !== clickedTransaction.receiverCurrency.id
-                          ? `Converted to ${clickedTransaction.receiverCurrency.name}`
-                          : clickedTransaction.currency.name}
-                      </Typography>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Typography variant="body1" className="overview-item-value">
-                      {formatAmount(clickedTransaction.currency, clickedTransaction.amount, privacyMode)}
-                    </Typography>
-                    {clickedTransaction.senderId &&
-                      clickedTransaction.receiverId &&
-                      clickedTransaction.currency.id !== clickedTransaction.receiverCurrency.id && (
-                        <>
-                          <IconLib.MdArrowForwardIos className="opacity-50 w-3.5" />
-                          <Typography variant="body1" className="overview-item-value">
-                            {formatAmount(
-                              clickedTransaction.receiverCurrency,
-                              clickedTransaction.receiverAmount,
-                              privacyMode,
-                            )}
-                          </Typography>
-                        </>
-                      )}
-                  </div>
-                </div>
-                {/* Category */}
-                {clickedTransaction.category && (
-                  <div className="overview-item">
-                    <div className="overview-item-info">
-                      <Typography variant="body2" className="overview-item-title">
-                        Category
-                      </Typography>
-                    </div>
-                    <Typography variant="body1" className="overview-item-value">
-                      {clickedTransaction.category.name}
-                    </Typography>
-                  </div>
-                )}
-
-                {/* Sender Account */}
-                {clickedTransaction.sender && (
-                  <div className="overview-item">
-                    <div className="overview-item-info">
-                      <Typography variant="body2" className="overview-item-title">
-                        From
-                      </Typography>
-                    </div>
-                    <Typography variant="body1" className="overview-item-value">
-                      {clickedTransaction.sender.name}
-                    </Typography>
-                  </div>
-                )}
-
-                {/* Receiver Account */}
-                {clickedTransaction.receiver && (
-                  <div className="overview-item">
-                    <div className="overview-item-info">
-                      <Typography variant="body2" className="overview-item-title">
-                        To
-                      </Typography>
-                    </div>
-                    <Typography variant="body1" className="overview-item-value">
-                      {clickedTransaction.receiver.name}
-                    </Typography>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <Divider className="opacity-10 my-2" />
-
-            <List className="overview-action-list">
-              {[
-                {
-                  icon: <IconLib.MdEdit />,
-                  label: 'Edit Transaction',
-                  color: '#64B5F6',
-                  description: 'Modify transaction details',
-                  action: (transaction: AugmentedTransaction) => {
-                    navigate(`/transactions/edit/${transaction.id}`)
-                    setClickedTransaction(null)
-                  },
-                  disabled: false,
+                    : 'Income',
+              bigTitle: clickedTransaction.note || 'No description',
+              bottomSpec: {
+                IconComponent: IconLib.MdCalendarToday,
+                text: format(clickedTransaction.date, 'PPP'),
+              },
+            }}
+            bottomMenu={[
+              {
+                Icon: IconLib.MdEdit,
+                label: 'Edit Transaction',
+                color: '#64B5F6',
+                description: 'Modify transaction details',
+                action: () => {
+                  navigate(`/transactions/edit/${clickedTransaction.id}`)
+                  setClickedTransaction(null)
                 },
-                {
-                  icon: <IconLib.MdDelete />,
-                  label: 'Delete Transaction',
-                  color: '#EF5350',
-                  description: 'Remove this transaction',
-                  action: (_transaction: AugmentedTransaction) => {},
-                  disabled: true,
-                },
-              ]
-                .filter((item) => !item.disabled)
-                .map((item) => (
-                  <ListItem
-                    key={item.label}
-                    component="div"
-                    onClick={() => item.action(clickedTransaction)}
-                    className="overview-action-item"
-                  >
-                    <ListItemIcon className="overview-action-icon" sx={{ color: item.color }}>
-                      {item.icon}
-                    </ListItemIcon>
-                    <ListItemText
-                      primary={item.label}
-                      secondary={item.description}
-                      slotProps={{
-                        primary: { className: 'overview-action-title' },
-                        secondary: { className: 'overview-action-description' },
-                      }}
-                    />
-                  </ListItem>
-                ))}
-            </List>
-          </DialogContent>
+                disabled: false,
+              },
+              {
+                Icon: IconLib.MdDelete,
+                label: 'Delete Transaction',
+                color: '#EF5350',
+                description: 'Remove this transaction',
+                action: () => {},
+                disabled: true,
+              },
+            ]}
+          >
+            <Typography
+              variant="subtitle2"
+              style={{
+                opacity: 0.6,
+                marginBottom: '16px',
+                letterSpacing: '0.05em',
+                fontSize: '0.75rem',
+              }}
+            >
+              DETAILS
+            </Typography>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {/* Amount */}
+              <DetailCard
+                delay={0}
+                title={clickedTransaction.currency.symbol}
+                subTitle={
+                  clickedTransaction.senderId &&
+                  clickedTransaction.receiverId &&
+                  clickedTransaction.currency.id !== clickedTransaction.receiverCurrency.id
+                    ? `Converted to ${clickedTransaction.receiverCurrency.name}`
+                    : clickedTransaction.currency.name
+                }
+                value={`${formatAmount(clickedTransaction.currency, clickedTransaction.amount, privacyMode)}${
+                  clickedTransaction.senderId &&
+                  clickedTransaction.receiverId &&
+                  clickedTransaction.currency.id !== clickedTransaction.receiverCurrency.id
+                    ? ` > ${formatAmount(clickedTransaction.receiverCurrency, clickedTransaction.receiverAmount, privacyMode)}`
+                    : ''
+                }`}
+              />
+
+              {/* Category */}
+              {clickedTransaction.category && (
+                <DetailCard delay={1} title="Category" value={clickedTransaction.category.name} />
+              )}
+
+              {/* Sender Account */}
+              {clickedTransaction.sender && (
+                <DetailCard
+                  delay={clickedTransaction.category ? 2 : 1}
+                  title="From"
+                  value={clickedTransaction.sender.name}
+                />
+              )}
+
+              {/* Receiver Account */}
+              {clickedTransaction.receiver && (
+                <DetailCard
+                  delay={(clickedTransaction.category ? 1 : 0) + (clickedTransaction.sender ? 1 : 0) + 1}
+                  title="To"
+                  value={clickedTransaction.receiver.name}
+                />
+              )}
+            </div>
+          </FancyModal>
         )}
       </ContentDialog>
     </ContentWithHeader>

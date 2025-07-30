@@ -1,16 +1,4 @@
-import {
-  Checkbox,
-  DialogContent,
-  Divider,
-  IconButton,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
-  Menu,
-  MenuItem,
-  Typography,
-} from '@mui/material'
+import { Checkbox, IconButton, Menu, MenuItem, Typography } from '@mui/material'
 import { ResponsiveLine } from '@nivo/line'
 import { FC, useContext, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
@@ -22,13 +10,13 @@ import { SearchOverlay } from '../components/inputs/SearchOverlay'
 import ContentDialog from '../components/shared/ContentDialog'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
 import { CustomScrollbarContainer } from '../components/shared/CustomScrollbarContainer'
+import { FancyModal } from '../components/shared/OverviewModalStyles'
 import { ChartContainer } from '../components/shared/PageStyledComponents'
 import ScrollingOverButton from '../components/shared/ScrollingOverButton'
 import Currency, { CurrencyID } from '../domain/model/currency'
 import ExchangeRate, { ExchangeRateIdentifiableFields } from '../domain/model/exchangeRate'
 import MixedAugmentation from '../service/MixedAugmentation'
 import { AccountServiceContext, CurrencyServiceContext } from '../service/ServiceContext'
-import '../styles/overview-modal-tailwind.css'
 import { darkTheme } from '../utils'
 
 const CurrenciesPage: FC = () => {
@@ -172,113 +160,92 @@ const CurrenciesPage: FC = () => {
         onClose={() => setClickedCurrency(null)}
         slotProps={{
           paper: {
-            className: 'overview-modal',
+            style: {
+              backgroundColor: 'transparent',
+              borderRadius: '24px',
+              border: '0',
+              overflow: 'hidden',
+            },
           },
         }}
       >
         {clickedCurrency !== null && (
-          <DialogContent sx={{ padding: 0 }} className="overview-modal-content">
-            <div className="overview-header">
-              <div className="overview-header-glow-1" />
-              <div className="overview-header-glow-2" />
-              <Typography variant="overline" className="overview-header-label">
-                Currency
-              </Typography>
-              <Typography variant="h5" className="overview-header-title">
-                {clickedCurrency.name}
-              </Typography>
-              <Typography variant="body2" className="overview-header-subtitle">
-                <IconLib.BsCurrencyExchange className="opacity-50" />
-                {clickedCurrency.symbol}
-              </Typography>
-            </div>
-
-            <div className="overview-content">
-              <Typography variant="subtitle2" className="overview-content-label">
-                EXCHANGE RATE HISTORY
-              </Typography>
-              <ChartContainer>
-                <ResponsiveLine
-                  margin={{ top: 0, right: 0, bottom: 30, left: 40 }}
-                  data={[
-                    {
-                      id: 'Exchange Rate',
-                      data: monthlyRates,
-                    },
-                  ]}
-                  axisBottom={{
-                    format: (f) => {
-                      const date = new Date(f)
-                      if (date.getUTCMonth() === 0) {
-                        return date.getUTCFullYear()
-                      }
-                      return ''
-                    },
-                  }}
-                  enablePoints={false}
-                  enableGridX={false}
-                  enableGridY={true}
-                  yScale={{
-                    type: 'linear',
-                    min: minRate * 0.95, // Add 5% padding below the minimum
-                    stacked: false,
-                    reverse: false,
-                  }}
-                  theme={darkTheme}
-                  colors={['#64B5F6']}
-                  curve="monotoneX"
-                  animate={true}
-                  motionConfig="gentle"
-                  enableArea={true}
-                  areaOpacity={0.1}
-                />
-              </ChartContainer>
-            </div>
-
-            <Divider className="opacity-10 my-2" />
-
-            <List className="overview-action-list">
-              {[
-                {
-                  icon: <IconLib.MdEdit />,
-                  label: 'Edit Currency',
-                  color: '#64B5F6',
-                  description: 'Modify currency details',
-                  action: (currency: Currency) => navigate(`/currencies/edit/${currency.id}`),
-                  disabled: false,
-                },
-                {
-                  icon: <IconLib.MdDelete />,
-                  label: 'Delete Currency',
-                  color: '#EF5350',
-                  description: 'Remove this currency',
-                  action: (_currency: Currency) => {},
-                  disabled: true,
-                },
-              ]
-                .filter((item) => !item.disabled)
-                .map((item) => (
-                  <ListItem
-                    key={item.label}
-                    component="div"
-                    onClick={() => item.action(clickedCurrency)}
-                    className="overview-action-item"
-                  >
-                    <ListItemIcon className="overview-action-icon" sx={{ color: item.color }}>
-                      {item.icon}
-                    </ListItemIcon>
-                    <ListItemText
-                      primary={item.label}
-                      secondary={item.description}
-                      slotProps={{
-                        primary: { className: 'overview-action-title' },
-                        secondary: { className: 'overview-action-description' },
-                      }}
-                    />
-                  </ListItem>
-                ))}
-            </List>
-          </DialogContent>
+          <FancyModal
+            title={{
+              topCategory: 'Currency',
+              bigTitle: clickedCurrency.name,
+              bottomSpec: {
+                IconComponent: IconLib.BsCurrencyExchange,
+                text: clickedCurrency.symbol,
+              },
+            }}
+            bottomMenu={[
+              {
+                Icon: IconLib.MdEdit,
+                label: 'Edit Currency',
+                color: '#64B5F6',
+                description: 'Modify currency details',
+                action: () => navigate(`/currencies/edit/${clickedCurrency.id}`),
+                disabled: false,
+              },
+              {
+                Icon: IconLib.MdDelete,
+                label: 'Delete Currency',
+                color: '#EF5350',
+                description: 'Remove this currency',
+                action: () => {},
+                disabled: true,
+              },
+            ]}
+          >
+            <Typography
+              variant="subtitle2"
+              style={{
+                opacity: 0.6,
+                marginBottom: '16px',
+                letterSpacing: '0.05em',
+                fontSize: '0.75rem',
+              }}
+            >
+              EXCHANGE RATE HISTORY
+            </Typography>
+            <ChartContainer>
+              <ResponsiveLine
+                margin={{ top: 0, right: 0, bottom: 30, left: 40 }}
+                data={[
+                  {
+                    id: 'Exchange Rate',
+                    data: monthlyRates,
+                  },
+                ]}
+                axisBottom={{
+                  format: (f) => {
+                    const date = new Date(f)
+                    if (date.getUTCMonth() === 0) {
+                      return date.getUTCFullYear()
+                    }
+                    return ''
+                  },
+                }}
+                enablePoints={false}
+                enableGridX={false}
+                enableGridY={true}
+                yScale={{
+                  type: 'linear',
+                  min: minRate * 0.95, // Add 5% padding below the minimum
+                  stacked: false,
+                  reverse: false,
+                }}
+                theme={darkTheme}
+                colors={['#64B5F6']}
+                curve="monotoneX"
+                animate={true}
+                motionConfig="gentle"
+                enableArea={true}
+                areaOpacity={0.1}
+              />
+            </ChartContainer>
+          </FancyModal>
         )}
       </ContentDialog>
     </ContentWithHeader>

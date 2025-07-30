@@ -1,16 +1,4 @@
-import {
-  Checkbox,
-  DialogContent,
-  Divider,
-  IconButton,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
-  Menu,
-  MenuItem,
-  Typography,
-} from '@mui/material'
+import { Checkbox, IconButton, Menu, MenuItem, Typography } from '@mui/material'
 import { FC, useContext, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 
@@ -20,12 +8,12 @@ import { IconToolsContext } from '../components/icons/IconTools'
 import { DrawerContext } from '../components/Menu'
 import ContentDialog from '../components/shared/ContentDialog'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
+import { DetailCard, FancyModal } from '../components/shared/OverviewModalStyles'
 import ScrollingOverButton from '../components/shared/ScrollingOverButton'
 import Account from '../domain/model/account'
 import { formatAmount } from '../domain/model/currency'
 import MixedAugmentation from '../service/MixedAugmentation'
 import { AccountServiceContext, CurrencyServiceContext } from '../service/ServiceContext'
-import '../styles/overview-modal-tailwind.css'
 
 const AccountsPage: FC = () => {
   const navigate = useNavigate()
@@ -121,108 +109,79 @@ const AccountsPage: FC = () => {
         onClose={handleClose}
         slotProps={{
           paper: {
-            className: 'overview-modal',
+            style: {
+              backgroundColor: 'transparent',
+              borderRadius: '24px',
+              border: '0',
+              overflow: 'hidden',
+            },
           },
         }}
       >
         {clickedAccount !== null && (
-          <DialogContent sx={{ padding: 0 }} className="overview-modal-content">
-            <div className="overview-header">
-              <div className="overview-header-glow-1" />
-              <div className="overview-header-glow-2" />
-              <Typography variant="overline" className="overview-header-label">
-                {clickedAccount.type || 'Account'}
-              </Typography>
-              <Typography variant="h5" className="overview-header-title">
-                {clickedAccount.name}
-              </Typography>
-              {clickedAccount.financialInstitution && (
-                <Typography variant="body2" className="overview-header-subtitle">
-                  <IconLib.MdAccountBalance className="opacity-50" />
-                  {clickedAccount.financialInstitution}
-                </Typography>
-              )}
-            </div>
-
+          <FancyModal
+            title={{
+              topCategory: clickedAccount.type || 'Account',
+              bigTitle: clickedAccount.name,
+              bottomSpec: {
+                IconComponent: IconLib.MdAccountBalance,
+                text: clickedAccount.financialInstitution,
+              },
+            }}
+            bottomMenu={[
+              {
+                Icon: IconLib.MdEdit,
+                label: 'Edit Account',
+                color: '#64B5F6',
+                description: 'Modify account details',
+                action: () => navigate(`/accounts/edit/${clickedAccount.id}`),
+                disabled: false,
+              },
+              {
+                Icon: IconLib.MdDelete,
+                label: 'Delete Account',
+                color: '#EF5350',
+                description: 'Remove this account',
+                action: () => {},
+                disabled: true,
+              },
+              {
+                Icon: IconLib.MdList,
+                label: 'View Transactions',
+                color: '#81C784',
+                description: 'See all account activity',
+                action: () => navigate(`/transactions?accounts=[${clickedAccount.id}]`),
+                disabled: false,
+              },
+            ]}
+          >
             {balanceEntries.length > 0 && (
-              <div className="overview-content">
-                <Typography variant="subtitle2" className="overview-content-label">
+              <>
+                <Typography
+                  variant="subtitle2"
+                  style={{
+                    opacity: 0.6,
+                    marginBottom: '16px',
+                    letterSpacing: '0.05em',
+                    fontSize: '0.75rem',
+                  }}
+                >
                   BALANCES
                 </Typography>
-                <div className="overview-items-container">
-                  {balanceEntries.map(({ currency, amount }) => (
-                    <div key={`currency-card-${currency.id}`} className="overview-item">
-                      <div className="overview-item-info">
-                        <div>
-                          <Typography variant="body2" className="overview-item-title">
-                            {currency.symbol}
-                          </Typography>
-                          <Typography variant="caption" className="overview-item-subtitle">
-                            {currency.name}
-                          </Typography>
-                        </div>
-                      </div>
-                      <Typography variant="body1" className="overview-item-value">
-                        {formatAmount(currency, amount, privacyMode)}
-                      </Typography>
-                    </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  {balanceEntries.map(({ currency, amount }, index) => (
+                    <DetailCard
+                      key={`currency-card-${currency.id}`}
+                      delay={index}
+                      title={currency.symbol}
+                      subTitle={currency.name}
+                      value={formatAmount(currency, amount, privacyMode)}
+                    />
                   ))}
                 </div>
-              </div>
+              </>
             )}
-
-            <Divider className="opacity-10 my-2" />
-
-            <List className="overview-action-list">
-              {[
-                {
-                  icon: <IconLib.MdEdit />,
-                  label: 'Edit Account',
-                  color: '#64B5F6',
-                  description: 'Modify account details',
-                  action: (account: Account) => navigate(`/accounts/edit/${account.id}`),
-                  disabled: false,
-                },
-                {
-                  icon: <IconLib.MdDelete />,
-                  label: 'Delete Account',
-                  color: '#EF5350',
-                  description: 'Remove this account',
-                  action: (_account: Account) => {},
-                  disabled: true,
-                },
-                {
-                  icon: <IconLib.MdList />,
-                  label: 'View Transactions',
-                  color: '#81C784',
-                  description: 'See all account activity',
-                  action: (account: Account) => navigate(`/transactions?accounts=[${account.id}]`),
-                  disabled: false,
-                },
-              ]
-                .filter((item) => !item.disabled)
-                .map((item) => (
-                  <ListItem
-                    key={`action-${item.label}`}
-                    component="div"
-                    onClick={() => item.action(clickedAccount)}
-                    className="overview-action-item"
-                  >
-                    <ListItemIcon className="overview-action-icon" sx={{ color: item.color }}>
-                      {item.icon}
-                    </ListItemIcon>
-                    <ListItemText
-                      primary={item.label}
-                      secondary={item.description}
-                      slotProps={{
-                        primary: { className: 'overview-action-title' },
-                        secondary: { className: 'overview-action-description' },
-                      }}
-                    />
-                  </ListItem>
-                ))}
-            </List>
-          </DialogContent>
+          </FancyModal>
         )}
       </ContentDialog>
     </ContentWithHeader>

@@ -1,9 +1,8 @@
 import { Button, Checkbox, FormControlLabel, TextField, Typography } from '@mui/material'
-import { DateView } from '@mui/x-date-pickers'
 import { ResponsiveLine } from '@nivo/line'
 import { startOfDay } from 'date-fns'
 import { FC, FormEvent, useCallback, useContext, useEffect, useMemo, useState } from 'react'
-import styled from 'styled-components'
+import { default as styled } from 'styled-components'
 
 import Currency, { CurrencyUpdatableFields, RateAutoupdateSettings } from '../../domain/model/currency'
 import ExchangeRate, { ExchangeRateIdentifiableFields } from '../../domain/model/exchangeRate'
@@ -82,7 +81,6 @@ const CurrencyForm: FC<Props> = (props) => {
   )
   const [initialExchangeRate, setInitialExchangeRate] = useState('1')
   const [initialExchangeRateDate, setInitialExchangeRateDate] = useState(startOfDay(new Date()))
-  const [dateView, setDateView] = useState<DateView>('day')
   const [getRateScript, setGetRateScript] = useState<string>(
     (initialCurrency?.rateAutoupdateSettings.script ?? '') === ''
       ? defaultScript
@@ -98,8 +96,6 @@ const CurrencyForm: FC<Props> = (props) => {
     initialCurrency?.rateAutoupdateSettings.enabled ?? false,
   )
   const [rateScriptError, setRateScriptError] = useState<string | null>(null)
-
-  const [showDateModal, setShowDateModal] = useState(false)
 
   const showExchangeRate = useMemo(() => {
     return typeof initialCurrency === 'undefined' && tentativeDefaultCurrency !== null
@@ -553,7 +549,15 @@ const CurrencyForm: FC<Props> = (props) => {
       )}
       {tentativeDefaultCurrency?.id !== initialCurrency?.id && initialCurrency && (
         <>
-          <Typography variant="subtitle2" className="overview-content-label">
+          <Typography
+            variant="subtitle2"
+            style={{
+              opacity: 0.6,
+              marginBottom: '16px',
+              letterSpacing: '0.05em',
+              fontSize: '0.75rem',
+            }}
+          >
             EXCHANGE RATE HISTORY
           </Typography>
           <ChartContainer>
@@ -596,7 +600,15 @@ const CurrencyForm: FC<Props> = (props) => {
       )}
       {tentativeDefaultCurrency?.id !== initialCurrency?.id && (
         <>
-          <Typography variant="subtitle2" className="overview-content-label">
+          <Typography
+            variant="subtitle2"
+            style={{
+              opacity: 0.6,
+              marginBottom: '16px',
+              letterSpacing: '0.05em',
+              fontSize: '0.75rem',
+            }}
+          >
             EXCHANGE RATE FETCHER
           </Typography>
           <CodeEditor content={getRateScript} onChange={setRateAutoupdateScript} />

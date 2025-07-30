@@ -2,7 +2,6 @@ import { Button } from '@mui/material'
 import React, { FC, ReactNode, RefObject, useEffect, useState } from 'react'
 
 import { FadingDivider, ListContentContainer, PageContainer, ScrollAreaContainer } from './PageStyledComponents'
-import '../../styles/overview-modal-tailwind.css'
 
 const ScrollingOverButton: FC<{
   button: { text: string; onClick(): void }
