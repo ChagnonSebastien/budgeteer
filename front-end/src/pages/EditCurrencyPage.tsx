@@ -1,6 +1,6 @@
 import { FC, useCallback, useContext, useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import styled from 'styled-components'
+import { default as styled } from 'styled-components'
 
 import CurrencyForm from '../components/currencies/CurrencyForm'
 import ContentWithHeader from '../components/shared/ContentWithHeader'

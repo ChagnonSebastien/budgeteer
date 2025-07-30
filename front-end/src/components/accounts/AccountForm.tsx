@@ -1,6 +1,6 @@
 import { TextField, Typography } from '@mui/material'
 import { FC, FormEvent, useCallback, useContext, useEffect, useMemo, useState } from 'react'
-import styled from 'styled-components'
+import { default as styled } from 'styled-components'
 
 import Account, { Balance } from '../../domain/model/account'
 import { AccountServiceContext, CurrencyServiceContext } from '../../service/ServiceContext'

@@ -40,6 +40,7 @@ const TransactionCard: FC<ItemProps<TransactionID, AugmentedTransaction, object>
     <GradientCard
       onClick={onClick}
       $selected={false}
+      $hoverEffect={false}
       $withGradientBackground={false}
       style={{
         display: 'flex',

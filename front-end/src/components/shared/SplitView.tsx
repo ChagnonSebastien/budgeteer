@@ -1,5 +1,5 @@
 import { FC, ReactNode } from 'react'
-import styled from 'styled-components'
+import { default as styled } from 'styled-components'
 
 export const SplitViewContainer = styled.div<{ $split: 'horizontal' | 'vertical' }>`
   height: 100%;

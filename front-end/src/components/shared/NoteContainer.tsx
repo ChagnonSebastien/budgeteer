@@ -1,5 +1,5 @@
 import { Box, SxProps, Theme } from '@mui/material'
-import { FC, ReactNode } from 'react'
+import React, { FC, ReactNode } from 'react'
 import { default as styled } from 'styled-components'
 
 interface Props {
@@ -37,7 +37,11 @@ export const Row = styled.div`
   flex-direction: row;
 `
 
-export const GradientCard = styled.div<{ $selected: boolean; $withGradientBackground: boolean }>`
+export const GradientCard = styled.div<{
+  $selected: boolean
+  $withGradientBackground: boolean
+  $hoverEffect: boolean
+}>`
   border-radius: 0.5rem;
   transition: all 200ms ease-in-out;
   border-left: 3px solid transparent;
@@ -55,16 +59,25 @@ export const GradientCard = styled.div<{ $selected: boolean; $withGradientBackgr
     margin: 0.25rem 0;
   `}
 
-  &:hover {
-    background-color: rgba(255, 255, 255, 0.08);
-    transform: translateY(-2px);
 
-    ${({ $withGradientBackground }) =>
-      $withGradientBackground &&
+    ${({ $hoverEffect }) =>
+      $hoverEffect &&
       `
-      transform: translateY(-2px) scale(1.01);
-      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-      border-color: rgba(255, 255, 255, 0.15);
+      &:hover {
+        background-color: rgba(255, 255, 255, 0.08);
+        transform: translateY(-2px);
+      }
+    `}
+
+    ${({ $withGradientBackground, $hoverEffect }) =>
+      $withGradientBackground &&
+      $hoverEffect &&
+      `
+      &:hover {
+        transform: translateY(-2px) scale(1.01);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        border-color: rgba(255, 255, 255, 0.15);
+      }
     `}
   }
 
@@ -73,7 +86,12 @@ export const GradientCard = styled.div<{ $selected: boolean; $withGradientBackgr
     `
     background-color: rgba(200, 75, 49, 0.12);
     border-left-color: #C84B31;
+  `}
 
+  ${({ $selected, $hoverEffect }) =>
+    $selected &&
+    $hoverEffect &&
+    `
     &:hover {
       background-color: rgba(200, 75, 49, 0.16);
     }

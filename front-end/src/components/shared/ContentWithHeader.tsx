@@ -1,7 +1,7 @@
 import { AppBar, Box, Button, IconButton, TextField, Toolbar, Typography } from '@mui/material'
 import { FC, ReactNode, useContext } from 'react'
 import { useNavigate } from 'react-router-dom'
-import styled from 'styled-components'
+import { default as styled } from 'styled-components'
 
 import { IconToolsContext } from '../icons/IconTools'
 import { DrawerContext } from '../Menu'

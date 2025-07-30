@@ -12,7 +12,7 @@ import {
 } from '@mui/material'
 import { createContext, FC, ReactElement, useContext, useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import styled from 'styled-components'
+import { default as styled } from 'styled-components'
 
 import { IconToolsContext, PreparedIcon } from './icons/IconTools'
 import { UserContext } from '../App'

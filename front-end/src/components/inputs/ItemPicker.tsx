@@ -1,11 +1,11 @@
 import { Button, DialogActions, DialogContent, DialogTitle, TextField } from '@mui/material'
 import React, { CSSProperties, FC, ReactNode, useEffect, useMemo, useState } from 'react'
-import styled from 'styled-components'
+import { default as styled } from 'styled-components'
 
 import NamedItem from '../../domain/model/NamedItem'
 import ItemList, { ItemListProps, ItemProps } from '../accounts/ItemList'
 import ContentDialog from '../shared/ContentDialog'
-import { CustomScrollbarContainer } from '../shared/CustomScrollbarContainer'
+import { CustomScrollbarContainer } from '../shared/ScrollingOverButton'
 
 const DialogContentContainer = styled(DialogContent)`
   height: 70vh;

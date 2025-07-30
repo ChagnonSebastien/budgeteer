@@ -1,6 +1,6 @@
 import { FC, useCallback, useContext } from 'react'
 import { useNavigate } from 'react-router-dom'
-import styled from 'styled-components'
+import { default as styled } from 'styled-components'
 
 import CategoryForm from '../components/categories/CategoryForm'
 import ContentWithHeader from '../components/shared/ContentWithHeader'

@@ -1,6 +1,6 @@
 import { TextField } from '@mui/material'
 import { FC } from 'react'
-import styled from 'styled-components'
+import { default as styled } from 'styled-components'
 
 const FullWidthTextField = styled(TextField)`
   width: 100%;

@@ -1,6 +1,6 @@
 import { FC, useCallback, useContext, useMemo } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import styled from 'styled-components'
+import { default as styled } from 'styled-components'
 
 import ContentWithHeader from '../components/shared/ContentWithHeader'
 import TransactionForm from '../components/transactions/TransactionForm'

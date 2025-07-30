@@ -19,6 +19,7 @@ const CurrencyCard = (props: ItemProps<CurrencyID, Currency, AdditionalCurrencyC
   return (
     <GradientCard
       $selected={selected}
+      $hoverEffect
       onClick={onClick}
       $withGradientBackground={true}
       style={{

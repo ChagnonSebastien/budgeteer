@@ -1,6 +1,6 @@
 import { Dialog, DialogProps } from '@mui/material'
 import { FC, useContext } from 'react'
-import styled from 'styled-components'
+import { default as styled } from 'styled-components'
 
 import { DrawerContext } from '../Menu'
 

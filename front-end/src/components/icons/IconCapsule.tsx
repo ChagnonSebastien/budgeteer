@@ -1,5 +1,5 @@
 import { CSSProperties, useContext, useMemo } from 'react'
-import styled from 'styled-components'
+import { default as styled } from 'styled-components'
 
 import { IconToolsContext } from './IconTools'
 

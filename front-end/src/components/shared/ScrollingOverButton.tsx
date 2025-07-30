@@ -1,7 +1,37 @@
 import { Button } from '@mui/material'
 import React, { FC, ReactNode, RefObject, useEffect, useState } from 'react'
+import { default as styled } from 'styled-components'
 
 import { FadingDivider, ListContentContainer, PageContainer, ScrollAreaContainer } from './PageStyledComponents'
+
+export const CustomScrollbarContainer = styled.div`
+  overflow-y: auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+
+  /* Modern scrollbar styling */
+  &::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+    transition: background-color 200ms;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+  }
+
+  /* Firefox scrollbar styling */
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+`
 
 const ScrollingOverButton: FC<{
   button: { text: string; onClick(): void }

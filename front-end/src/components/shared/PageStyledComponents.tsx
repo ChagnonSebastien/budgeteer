@@ -1,6 +1,4 @@
-import styled from 'styled-components'
-
-// Common page layout components that are reused across multiple pages
+import { default as styled } from 'styled-components'
 
 export const PageContainer = styled.div`
   height: 100%;

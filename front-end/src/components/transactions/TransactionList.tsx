@@ -199,7 +199,7 @@ export const TransactionList = (props: Props) => {
   }, [])
 
   return (
-    <div style={{ position: 'relative', margin: 'auto', height: '100%' }}>
+    <Column style={{ position: 'relative', margin: 'auto', height: '100%', gap: '0.15rem' }}>
       {displayedItems}
       <div
         style={{
@@ -212,6 +212,6 @@ export const TransactionList = (props: Props) => {
         }}
         ref={loadMoreRef}
       />
-    </div>
+    </Column>
   )
 }

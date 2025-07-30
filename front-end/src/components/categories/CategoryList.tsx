@@ -1,6 +1,6 @@
 import { Box, Button, CircularProgress } from '@mui/material'
 import { Fragment, ReactNode, useContext, useMemo, useState } from 'react'
-import styled from 'styled-components'
+import { default as styled } from 'styled-components'
 
 import Category, { CategoryID } from '../../domain/model/category'
 import MixedAugmentation from '../../service/MixedAugmentation'

@@ -37,6 +37,7 @@ const AccountCard = (props: ItemProps<AccountID, Account, AdditionalAccountCardP
     <GradientCard
       $selected={selected}
       $withGradientBackground={showBalances}
+      $hoverEffect
       onClick={onClick}
       style={{
         padding: showBalances ? '1rem 1.5rem' : '0.75rem 1rem',

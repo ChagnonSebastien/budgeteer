@@ -23,7 +23,7 @@ import useTransactionFilter from '../components/inputs/useTransactionFilter'
 import { DrawerContext } from '../components/Menu'
 import ContentDialog from '../components/shared/ContentDialog'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
-import { DetailCard, FancyModal } from '../components/shared/OverviewModalStyles'
+import { DetailCard, FancyModal } from '../components/shared/FancyModalComponents'
 import SplitView from '../components/shared/SplitView'
 import TransactionCard from '../components/transactions/TransactionCard'
 import { TransactionList } from '../components/transactions/TransactionList'
@@ -366,7 +366,7 @@ const TransactionPage: FC = () => {
             >
               DETAILS
             </Typography>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
               {/* Amount */}
               <DetailCard
                 delay={0}

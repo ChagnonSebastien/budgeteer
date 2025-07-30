@@ -1,10 +1,9 @@
 import { DialogContent, Divider, List, ListItem, ListItemText, Typography } from '@mui/material'
 import { FC, ReactNode } from 'react'
-import styled, { keyframes } from 'styled-components'
+import { default as styled, keyframes } from 'styled-components'
 
-import { Column } from './NoteContainer'
+import { Column, GradientCard } from './NoteContainer'
 
-// Animations
 const fadeIn = keyframes`
   from {
     opacity: 0;
@@ -27,7 +26,6 @@ const slideIn = keyframes`
   }
 `
 
-// Styled components for complex styles with animations and hover effects
 export const OverviewActionItem = styled.div<{ $delay?: number }>`
   display: flex;
   align-items: center;
@@ -46,7 +44,7 @@ export const OverviewActionItem = styled.div<{ $delay?: number }>`
   }
 
   &:hover .overview-action-icon {
-    transform: scale(1.1);
+    transform: scale(1.2);
   }
 `
 
@@ -55,18 +53,14 @@ export const OverviewActionIcon = styled.div`
   color: rgba(255, 255, 255, 0.7);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   transform: scale(1);
+  transform-origin: left;
 `
 
-export const OverviewItem = styled.div<{ $delay?: number }>`
+export const OverviewItem = styled(GradientCard)<{ $delay?: number }>`
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 16px;
-  border-radius: 16px;
-  background-color: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  transition: all 0.2s ease-in-out;
-  cursor: default;
   animation: ${fadeIn} 0.3s ease-out both;
   animation-delay: ${(props) => (props.$delay || 0) * 0.1}s;
 `
@@ -80,7 +74,13 @@ type DetailCardProps = {
 
 export const DetailCard: FC<DetailCardProps> = (props) => {
   return (
-    <OverviewItem $delay={props.delay} style={{ gap: '1rem' }}>
+    <OverviewItem
+      $delay={props.delay}
+      style={{ gap: '1rem' }}
+      $selected={false}
+      $withGradientBackground
+      $hoverEffect={false}
+    >
       <Column
         style={{
           display: 'flex',
@@ -221,7 +221,7 @@ export const FancyModal: FC<FancyModalProps> = (props) => {
         </Typography>
       </div>
 
-      <div style={{ padding: '24px' }}>{props.children}</div>
+      <div style={{ padding: '1.5rem' }}>{props.children}</div>
 
       <Divider style={{ opacity: 0.5 }} />
 
