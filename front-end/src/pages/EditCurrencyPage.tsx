@@ -1,16 +1,11 @@
 import { FC, useCallback, useContext, useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { default as styled } from 'styled-components'
 
 import CurrencyForm from '../components/currencies/CurrencyForm'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
+import { CrudFormContainer } from '../components/shared/CrudFormContainer'
 import { CurrencyUpdatableFields } from '../domain/model/currency'
 import { CurrencyServiceContext } from '../service/ServiceContext'
-
-const FormContainer = styled.div`
-  width: 100%;
-  margin: auto;
-`
 
 type Params = {
   currencyId: string
@@ -48,14 +43,14 @@ const EditCurrency: FC<Props> = ({ scriptRunner }: Props) => {
 
   return (
     <ContentWithHeader title="Edit currency" button="return" contentMaxWidth="">
-      <FormContainer className="p-4">
+      <CrudFormContainer className="p-4">
         <CurrencyForm
           onSubmit={onSubmit}
           submitText="Save changes"
           initialCurrency={selectedCurrency}
           scriptRunner={scriptRunner}
         />
-      </FormContainer>
+      </CrudFormContainer>
     </ContentWithHeader>
   )
 }

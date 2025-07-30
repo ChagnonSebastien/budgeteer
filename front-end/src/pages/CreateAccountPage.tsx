@@ -1,17 +1,11 @@
 import { FC, useCallback, useContext } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { default as styled } from 'styled-components'
 
 import AccountForm from '../components/accounts/AccountForm'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
+import { CrudFormContainer } from '../components/shared/CrudFormContainer'
 import Account from '../domain/model/account'
 import { AccountServiceContext } from '../service/ServiceContext'
-
-const FormContainer = styled.div`
-  width: 100%;
-  max-width: 35rem;
-  margin: auto;
-`
 
 const CreateAccountPage: FC = () => {
   const navigate = useNavigate()
@@ -37,9 +31,9 @@ const CreateAccountPage: FC = () => {
 
   return (
     <ContentWithHeader title="Create new account" button="return">
-      <FormContainer className="p-4">
+      <CrudFormContainer className="p-4">
         <AccountForm onSubmit={onSubmit} submitText="Create" />
-      </FormContainer>
+      </CrudFormContainer>
     </ContentWithHeader>
   )
 }

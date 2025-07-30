@@ -1,17 +1,11 @@
 import { FC, useCallback, useContext, useMemo } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { default as styled } from 'styled-components'
 
 import ContentWithHeader from '../components/shared/ContentWithHeader'
+import { CrudFormContainer } from '../components/shared/CrudFormContainer'
 import TransactionForm from '../components/transactions/TransactionForm'
 import Transaction from '../domain/model/transaction'
 import { TransactionServiceContext } from '../service/ServiceContext'
-
-const FormContainer = styled.div`
-  width: 100%;
-  max-width: 35rem;
-  margin: auto;
-`
 
 const CreateTransactionPage: FC = () => {
   const navigate = useNavigate()
@@ -63,9 +57,9 @@ const CreateTransactionPage: FC = () => {
 
   return (
     <ContentWithHeader title={`Record new ${type ?? 'transaction'}`} button="return">
-      <FormContainer className="p-4">
+      <CrudFormContainer className="p-4">
         <TransactionForm onSubmit={onSubmit} submitText="Record" type={type} />
-      </FormContainer>
+      </CrudFormContainer>
     </ContentWithHeader>
   )
 }

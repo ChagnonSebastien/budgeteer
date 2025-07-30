@@ -1,19 +1,13 @@
 import { Button } from '@mui/material'
 import { FC, useCallback, useContext, useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { default as styled } from 'styled-components'
 
 import ContentWithHeader from '../components/shared/ContentWithHeader'
+import { CrudFormContainer } from '../components/shared/CrudFormContainer'
 import TransactionForm from '../components/transactions/TransactionForm'
 import Transaction from '../domain/model/transaction'
 import MixedAugmentation from '../service/MixedAugmentation'
 import { TransactionServiceContext } from '../service/ServiceContext'
-
-const FormContainer = styled.div`
-  width: 100%;
-  max-width: 35rem;
-  margin: auto;
-`
 
 type Params = {
   transactionId: string
@@ -48,7 +42,7 @@ const EditTransactionPage: FC = () => {
 
   return (
     <ContentWithHeader title="Edit Transaction" button="return">
-      <FormContainer className="p-4">
+      <CrudFormContainer className="p-4">
         <TransactionForm onSubmit={onSubmit} submitText="Update" initialTransaction={selectedTransaction} />
 
         <div className="h-2" />
@@ -56,7 +50,7 @@ const EditTransactionPage: FC = () => {
         <Button color="error" onClick={() => {}}>
           Delete
         </Button>
-      </FormContainer>
+      </CrudFormContainer>
     </ContentWithHeader>
   )
 }
