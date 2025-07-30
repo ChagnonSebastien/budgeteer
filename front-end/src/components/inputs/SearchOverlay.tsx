@@ -1,26 +1,84 @@
 import { Fab, IconButton, TextField } from '@mui/material'
 import { Dispatch, SetStateAction, useContext, useEffect, useState } from 'react'
-import styled from 'styled-components'
+import { default as styled, keyframes } from 'styled-components'
 
 import { IconToolsContext } from '../icons/IconTools'
-import '../../styles/search-overlay-tailwind.css'
 
-const FloatingButton = styled(Fab)`
-  position: absolute;
-  bottom: 1rem;
-  right: 2rem;
-  z-index: 1000;
+const fadeIn = keyframes`
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 `
 
-const FilterText = styled.div`
+const slideIn = keyframes`
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+`
+
+const SearchOverlayContainer = styled.div`
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(12px);
   display: flex;
   align-items: center;
-  gap: 8px;
-  max-width: 200px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 0.9rem;
+  justify-content: center;
+  z-index: 100;
+  padding: 2rem;
+  animation: ${fadeIn} 0.2s ease-out;
+
+  /* When screen is wide enough for persistent drawer */
+  @media (min-width: 840px) {
+    left: 240px; /* Match drawer width */
+  }
+
+  /* When screen is narrow (mobile/tablet) */
+  @media (max-width: 839px) {
+    left: 0;
+  }
+
+  .MuiTextField-root {
+    width: 100%;
+    max-width: 600px;
+    background: rgba(33, 33, 33, 0.9);
+    backdrop-filter: blur(32px);
+    border-radius: 12px;
+    box-shadow:
+      0 10px 15px -3px rgba(0, 0, 0, 0.1),
+      0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    animation: ${slideIn} 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .MuiInputBase-root {
+    padding: 12px 16px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .MuiOutlinedInput-notchedOutline {
+    border: none;
+  }
+
+  .MuiInputBase-input {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 1.1rem;
+
+    &::placeholder {
+      color: rgba(255, 255, 255, 0.5);
+      opacity: 1;
+    }
+  }
 `
 
 interface Props {
@@ -52,12 +110,15 @@ export const SearchOverlay = ({ filter, setFilter, placeholder = 'Search...' }: 
   return (
     <>
       {!showSearch && (
-        <FloatingButton
+        <Fab
           color="primary"
           size="medium"
           onClick={() => setShowSearch(true)}
-          className="shadow-lg"
           sx={{
+            position: 'absolute',
+            bottom: '1rem',
+            right: '2rem',
+            zIndex: 1000,
             minWidth: filter.length > 0 ? 'auto' : '50px',
             width: filter.length > 0 ? 'auto' : '50px',
             height: '50px',
@@ -65,10 +126,22 @@ export const SearchOverlay = ({ filter, setFilter, placeholder = 'Search...' }: 
             paddingLeft: filter.length > 0 ? 1.75 : 0,
             paddingRight: filter.length > 0 ? 0.75 : 0,
             transition: 'all 0.2s ease',
+            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
           }}
         >
           {filter.length > 0 ? (
-            <FilterText>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                maxWidth: '200px',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                fontSize: '0.9rem',
+              }}
+            >
               <span>{`${filter}`}</span>
               <IconButton
                 size="medium"
@@ -86,14 +159,14 @@ export const SearchOverlay = ({ filter, setFilter, placeholder = 'Search...' }: 
               >
                 <IconLib.IoCloseCircle />
               </IconButton>
-            </FilterText>
+            </div>
           ) : (
-            <IconLib.BiSearch className="text-2xl" />
+            <IconLib.BiSearch style={{ fontSize: '1.5rem' }} />
           )}
-        </FloatingButton>
+        </Fab>
       )}
       {showSearch && (
-        <div className="search-overlay" onClick={() => setShowSearch(false)}>
+        <SearchOverlayContainer onClick={() => setShowSearch(false)}>
           <TextField
             autoFocus
             fullWidth
@@ -102,22 +175,32 @@ export const SearchOverlay = ({ filter, setFilter, placeholder = 'Search...' }: 
             value={filter}
             onChange={(ev) => setFilter(ev.target.value)}
             onClick={(e) => e.stopPropagation()}
-            InputProps={{
-              endAdornment: (
-                <IconButton
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    handleClose()
-                  }}
-                  size="medium"
-                  className="text-white/70 p-2 hover:text-white/90 hover:bg-white/10"
-                >
-                  <IconLib.IoCloseCircle className="text-[1.8rem]" />
-                </IconButton>
-              ),
+            slotProps={{
+              input: {
+                endAdornment: (
+                  <IconButton
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleClose()
+                    }}
+                    size="medium"
+                    sx={{
+                      color: 'rgba(255, 255, 255, 0.7)',
+                      padding: '8px',
+                      fontSize: '1.8rem',
+                      '&:hover': {
+                        color: 'rgba(255, 255, 255, 0.9)',
+                        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                      },
+                    }}
+                  >
+                    <IconLib.IoCloseCircle />
+                  </IconButton>
+                ),
+              },
             }}
           />
-        </div>
+        </SearchOverlayContainer>
       )}
     </>
   )

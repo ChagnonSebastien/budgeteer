@@ -221,7 +221,7 @@ const GroupedAccountList = (props: Props) => {
   }
 
   return (
-    <Column style={{ height: '100%' }}>
+    <Column style={{ position: 'relative', height: '100%' }}>
       {segments}
 
       <CustomScrollbarContainer ref={scrollingContainerRef} style={{ paddingTop: '1rem', paddingBottom: '4rem' }}>
