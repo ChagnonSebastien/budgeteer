@@ -1,5 +1,8 @@
 import React, { FC, useEffect, useMemo, useRef, useState } from 'react'
 
+export type BaseLineConfig = 'none' | 'showIndividualBaselines' | 'showGlobalBaseline'
+export type ScaleConfig = 'absolute' | 'cropped-absolute' | 'relative'
+
 // Hook to measure element size
 type Size = { width: number; height: number }
 function useResizeObserver(ref: React.RefObject<HTMLElement>): Size {

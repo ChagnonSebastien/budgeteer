@@ -108,7 +108,6 @@ export const DrawerContext = createContext<DrawerActions>({
 
 const DrawerWrapper: FC<Props> = ({ logout, children }) => {
   const location = useLocation()
-  const query = new URLSearchParams(location.search)
   const navigate = useNavigate()
 
   const { email } = useContext(UserContext)
@@ -151,6 +150,7 @@ const DrawerWrapper: FC<Props> = ({ logout, children }) => {
           <ListItemButton
             key={index}
             onClick={() => {
+              const query = new URLSearchParams(location.search)
               for (const key of [...query.keys()]) {
                 if (!appPage.keepQuery.includes(key)) query.delete(key)
               }

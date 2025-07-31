@@ -1,13 +1,14 @@
 import { Button, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material'
-import { FC, useEffect, useState } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { FC, useEffect, useMemo, useState } from 'react'
 import { default as styled } from 'styled-components'
 
 import CategoryPicker from '../components/categories/CategoryPicker'
 import { ControlsContainer, GraphContainer, GraphPageContainer } from '../components/graphing/GraphStyledComponents'
-import TrendsChart, { grouping } from '../components/graphing/TrendsChart'
+import TrendsChart, { Grouping } from '../components/graphing/TrendsChart'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
 import { Column, Row } from '../components/shared/NoteContainer'
+import useQueryParams from '../components/shared/useQueryParams'
+import { CategoryID } from '../domain/model/category'
 
 const YearInput = styled.input`
   width: 2rem;
@@ -35,36 +36,19 @@ const YearInput = styled.input`
   }
 `
 
+type QueryParams = {
+  grouping: string
+  years: string
+  categories: string
+}
+
 const TrendsPage: FC = () => {
   const [optionsHeight, setOptionsHeight] = useState(240)
 
-  const navigate = useNavigate()
-  const location = useLocation()
-  const query = new URLSearchParams(location.search)
-
-  const grouping = (query.get('grouping') as grouping) || 'months'
-  const years = parseInt(query.get('years') || '1')
-  const selectedCategories: number[] = query.get('categories') ? JSON.parse(query.get('categories')!) : []
-
-  const updateQuery = (updates: { grouping?: grouping; years?: number; categories?: number[] }) => {
-    const newQuery = new URLSearchParams(query)
-
-    if (updates.grouping) {
-      newQuery.set('grouping', updates.grouping)
-    }
-    if (updates.years !== undefined) {
-      newQuery.set('years', updates.years.toString())
-    }
-    if (updates.categories !== undefined) {
-      if (updates.categories.length === 0) {
-        newQuery.delete('categories')
-      } else {
-        newQuery.set('categories', JSON.stringify(updates.categories))
-      }
-    }
-
-    navigate(`${location.pathname}?${newQuery.toString()}`)
-  }
+  const { queryParams: qp, updateQueryParams } = useQueryParams<QueryParams>()
+  const grouping = useMemo(() => (qp.grouping || 'months') as Grouping, [qp.grouping])
+  const years = useMemo(() => parseInt(qp.years || '1'), [qp.years])
+  const selectedCategories = useMemo<CategoryID[]>(() => JSON.parse(qp.categories || '[]'), [qp.categories])
 
   const [contentRef, setContentRef] = useState<HTMLDivElement | null>(null)
   const [contentHeight, setContentHeight] = useState(600)
@@ -104,7 +88,8 @@ const TrendsPage: FC = () => {
               selectedConfig={{
                 mode: 'multi',
                 selectedItems: selectedCategories,
-                onSelectItems: (categories) => updateQuery({ categories }),
+                onSelectItems: (categories) =>
+                  updateQueryParams({ categories: categories.length === 0 ? null : JSON.stringify(categories) }),
               }}
               labelText="Filter by categories"
               valueText={selectedCategories.length === 0 ? 'All Categories' : undefined}
@@ -128,7 +113,7 @@ const TrendsPage: FC = () => {
                 <Button
                   variant="outlined"
                   size="small"
-                  onClick={() => years > 1 && updateQuery({ years: years - 1 })}
+                  onClick={() => years > 1 && updateQueryParams({ years: String(years - 1) })}
                   disabled={years <= 1}
                   style={{ minWidth: '2rem', width: '2rem', height: '2rem', padding: 0 }}
                 >
@@ -151,7 +136,7 @@ const TrendsPage: FC = () => {
                     onChange={(e) => {
                       const value = parseInt(e.target.value)
                       if (value >= 1) {
-                        updateQuery({ years: value })
+                        updateQueryParams({ years: String(value) })
                       }
                     }}
                     onFocus={(e) => e.target.select()}
@@ -161,7 +146,7 @@ const TrendsPage: FC = () => {
                 <Button
                   variant="outlined"
                   size="small"
-                  onClick={() => updateQuery({ years: years + 1 })}
+                  onClick={() => updateQueryParams({ years: String(years + 1) })}
                   style={{ minWidth: '2rem', width: '2rem', height: '2rem', padding: 0 }}
                 >
                   +
@@ -173,7 +158,7 @@ const TrendsPage: FC = () => {
               <ToggleButtonGroup
                 value={grouping}
                 exclusive
-                onChange={(_event, value) => value && updateQuery({ grouping: value as grouping })}
+                onChange={(_event, value) => value && updateQueryParams({ grouping: value })}
                 size="small"
                 sx={{
                   minHeight: '2rem',

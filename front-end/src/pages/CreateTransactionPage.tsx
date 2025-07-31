@@ -1,29 +1,21 @@
 import { FC, useCallback, useContext, useMemo } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 
 import ContentWithHeader from '../components/shared/ContentWithHeader'
 import { CrudFormContainer } from '../components/shared/CrudFormContainer'
+import useQueryParams from '../components/shared/useQueryParams'
 import TransactionForm from '../components/transactions/TransactionForm'
 import Transaction from '../domain/model/transaction'
 import { TransactionServiceContext } from '../service/ServiceContext'
 
+type QueryParams = {
+  type: string
+}
+
 const CreateTransactionPage: FC = () => {
   const navigate = useNavigate()
-  const location = useLocation()
-
-  const query = useMemo(() => new URLSearchParams(location.search), [location.search])
-  const type = useMemo(() => {
-    switch (query.get('type')) {
-      case 'expense':
-        return 'expense'
-      case 'income':
-        return 'income'
-      case 'transfer':
-        return 'transfer'
-      default:
-        return undefined
-    }
-  }, [query])
+  const { queryParams } = useQueryParams<QueryParams>()
+  const type = useMemo(() => JSON.parse(queryParams.type ?? null), [queryParams.type])
 
   const { create: createTransaction } = useContext(TransactionServiceContext)
 
@@ -50,9 +42,9 @@ const CreateTransactionPage: FC = () => {
         receiverCurrencyId: data.receiverCurrencyId,
         receiverAmount: data.receiverAmount,
       })
-      navigate(`/transactions?${query.toString()}`, { replace: true })
+      navigate(`/transactions`, { replace: true })
     },
-    [navigate, query],
+    [navigate],
   )
 
   return (

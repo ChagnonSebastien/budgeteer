@@ -11,9 +11,9 @@ import {
   Typography,
 } from '@mui/material'
 import { FC, Suspense, useEffect, useMemo, useState } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
 
 import AccountsBalanceChart, { GroupType } from '../components/graphing/AccountsBalanceChart'
+import { BaseLineConfig, ScaleConfig } from '../components/graphing/CustomChart'
 import {
   ControlsContainer,
   GraphContainer,
@@ -25,7 +25,14 @@ import useTransactionFilter from '../components/inputs/useTransactionFilter'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
 import { Column, Row } from '../components/shared/NoteContainer'
 import SplitView from '../components/shared/SplitView'
+import useQueryParams from '../components/shared/useQueryParams'
 import Account from '../domain/model/account'
+
+type QueryParams = {
+  groupBy: string
+  baselineConfig: string
+  scale: string
+}
 
 const AccountsBalancePage: FC = () => {
   const {
@@ -36,17 +43,10 @@ const AccountsBalancePage: FC = () => {
     showSlider,
   } = useTransactionFilter((account: Account) => account.isMine, false)
 
-  const location = useLocation()
-  const query = new URLSearchParams(location.search)
-  const navigate = useNavigate()
-
-  const groupBy: GroupType = (query.get('groupBy') ?? 'account') as GroupType
-  const baselineConfig: 'none' | 'showIndividualBaselines' | 'showGlobalBaseline' = (query.get('baselineConfig') ??
-    'none') as 'none' | 'showIndividualBaselines' | 'showGlobalBaseline'
-  const scale: 'absolute' | 'cropped-absolute' | 'relative' = (query.get('scale') ?? 'absolute') as
-    | 'absolute'
-    | 'cropped-absolute'
-    | 'relative'
+  const { queryParams: qp, updateQueryParams } = useQueryParams<QueryParams>()
+  const groupBy = useMemo(() => (qp.groupBy ?? 'account') as GroupType, [qp.groupBy])
+  const baselineConfig = useMemo(() => (qp.baselineConfig ?? 'none') as BaseLineConfig, [qp.baselineConfig])
+  const scale = useMemo(() => (qp.scale ?? 'absolute') as ScaleConfig, [qp.scale])
 
   const [optionsHeight, setOptionsHeight] = useState(140)
 
@@ -131,8 +131,7 @@ const AccountsBalancePage: FC = () => {
                   aria-labelledby="group-by-label"
                   value={groupBy}
                   onChange={(event) => {
-                    query.set('groupBy', event.target.value)
-                    navigate(`${location.pathname}?${query.toString()}`)
+                    updateQueryParams({ groupBy: event.target.value })
                   }}
                 >
                   <FormControlLabel value="none" control={<Radio />} label="None" />
@@ -150,8 +149,7 @@ const AccountsBalancePage: FC = () => {
                   aria-labelledby="interests-view-label"
                   value={baselineConfig}
                   onChange={(event) => {
-                    query.set('baselineConfig', event.target.value)
-                    navigate(`${location.pathname}?${query.toString()}`)
+                    updateQueryParams({ baselineConfig: event.target.value })
                   }}
                 >
                   <FormControlLabel value="none" control={<Radio />} label="None" />
@@ -168,8 +166,7 @@ const AccountsBalancePage: FC = () => {
                   aria-labelledby="scale-label"
                   value={scale}
                   onChange={(event) => {
-                    query.set('scale', event.target.value)
-                    navigate(`${location.pathname}?${query.toString()}`)
+                    updateQueryParams({ scale: event.target.value })
                   }}
                 >
                   <FormControlLabel value="absolute" control={<Radio />} label="Absolute" />
@@ -199,8 +196,7 @@ const AccountsBalancePage: FC = () => {
                     select
                     value={groupBy}
                     onChange={(event) => {
-                      query.set('groupBy', event.target.value)
-                      navigate(`${location.pathname}?${query.toString()}`)
+                      updateQueryParams({ groupBy: event.target.value })
                     }}
                     variant="standard"
                     fullWidth
@@ -225,8 +221,7 @@ const AccountsBalancePage: FC = () => {
                   select
                   value={baselineConfig}
                   onChange={(event) => {
-                    query.set('baselineConfig', event.target.value)
-                    navigate(`${location.pathname}?${query.toString()}`)
+                    updateQueryParams({ baselineConfig: event.target.value })
                   }}
                   variant="standard"
                   fullWidth
@@ -248,8 +243,7 @@ const AccountsBalancePage: FC = () => {
                   select
                   value={scale}
                   onChange={(event) => {
-                    query.set('scale', event.target.value)
-                    navigate(`${location.pathname}?${query.toString()}`)
+                    updateQueryParams({ scale: event.target.value })
                   }}
                   variant="standard"
                   fullWidth

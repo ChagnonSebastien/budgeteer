@@ -20,12 +20,12 @@ import MixedAugmentation from '../../service/MixedAugmentation'
 import { darkTheme } from '../../utils'
 import { DrawerContext } from '../Menu'
 
-export type grouping = 'years' | 'quarters' | 'months'
+export type Grouping = 'years' | 'quarters' | 'months'
 
 interface Props {
   categories: number[]
   years: number
-  grouping: grouping
+  grouping: Grouping
 }
 
 const TrendsChart: FC<Props> = (props) => {
