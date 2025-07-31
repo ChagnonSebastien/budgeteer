@@ -1,15 +1,5 @@
 import { useTheme } from '@mui/material'
-import {
-  differenceInDays,
-  differenceInMonths,
-  differenceInWeeks,
-  formatDate,
-  isBefore,
-  isSameDay,
-  subDays,
-  subMonths,
-  subWeeks,
-} from 'date-fns'
+import { formatDate, isBefore, isSameDay } from 'date-fns'
 import { FC, useCallback, useContext, useMemo } from 'react'
 
 import CustomChart from './CustomChart'
@@ -26,6 +16,7 @@ import MixedAugmentation from '../../service/MixedAugmentation'
 import { AccountServiceContext, CurrencyServiceContext } from '../../service/ServiceContext'
 import { darkColors, darkTheme } from '../../utils'
 import { DrawerContext } from '../Menu'
+import useTimerangeSegmentation from '../shared/useTimerangeSegmentation'
 
 export type GroupType = 'currency' | 'risk' | 'type' | 'none'
 
@@ -76,51 +67,10 @@ const CurrenciesBalanceChart: FC<Props> = (props) => {
     [groupBy],
   )
 
+  const { hop: subN, showLabelEveryFactor, amountHop } = useTimerangeSegmentation(fromDate, toDate, 'dense')
+
   return useMemo(() => {
-    const diffDays = differenceInDays(toDate, fromDate)
-    const diffWeeks = differenceInWeeks(toDate, fromDate)
-    const diffMonths = differenceInMonths(toDate, fromDate)
-
-    let subN = subDays
-    let showLabelEveryFactor = 1
-    let i = diffDays + 1
-
-    if (diffMonths > 5 * 12) {
-      // above 5 years
-      subN = subMonths
-      showLabelEveryFactor = 6
-      i = diffMonths
-    } else if (diffMonths > 4 * 12) {
-      // between 4 year and 5 years
-      subN = subWeeks
-      showLabelEveryFactor = 16
-      i = diffWeeks
-    } else if (diffMonths > 3 * 12) {
-      // between 3 year and 4 years
-      subN = (date, i) => subWeeks(date, i * 2)
-      showLabelEveryFactor = 8
-      i = Math.floor(diffWeeks / 2) + 1
-    } else if (diffMonths > 2 * 12) {
-      // between 2 year and 3 years
-      subN = subWeeks
-      showLabelEveryFactor = 8
-      i = diffWeeks
-    } else if (diffMonths > 12) {
-      // between 1 year and 2 years
-      subN = subWeeks
-      showLabelEveryFactor = 6
-      i = diffWeeks
-    } else if (diffWeeks > 6 * 4) {
-      // between 6 months and 1 year
-      subN = subDays
-      showLabelEveryFactor = 30
-      i = diffDays
-    } else if (diffDays > 60) {
-      // between 2 months and 6 months
-      subN = subDays
-      showLabelEveryFactor = 7
-      i = diffDays
-    }
+    let i = amountHop
 
     const Investments = filteredAccounts.reduce((totals, account) => {
       for (const initialAmount of account.initialAmounts) {
@@ -430,7 +380,19 @@ const CurrenciesBalanceChart: FC<Props> = (props) => {
         />
       </>
     )
-  }, [defaultCurrency, filteredAccounts, groupBy, fromDate, toDate, group, privacyMode, exchangeRateOnDay])
+  }, [
+    defaultCurrency,
+    filteredAccounts,
+    groupBy,
+    fromDate,
+    toDate,
+    group,
+    privacyMode,
+    exchangeRateOnDay,
+    amountHop,
+    subN,
+    showLabelEveryFactor,
+  ])
 }
 
 export default CurrenciesBalanceChart

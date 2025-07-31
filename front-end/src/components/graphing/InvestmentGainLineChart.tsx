@@ -1,16 +1,6 @@
 import { Card } from '@mui/material'
 import { ResponsiveLine } from '@nivo/line'
-import {
-  differenceInDays,
-  differenceInMonths,
-  differenceInWeeks,
-  formatDate,
-  isBefore,
-  isSameDay,
-  subDays,
-  subMonths,
-  subWeeks,
-} from 'date-fns'
+import { formatDate, isBefore, isSameDay } from 'date-fns'
 import { FC, useContext, useMemo } from 'react'
 
 import { formatFull } from '../../domain/model/currency'
@@ -18,6 +8,7 @@ import MixedAugmentation from '../../service/MixedAugmentation'
 import { AccountServiceContext } from '../../service/ServiceContext'
 import { darkColors, darkTheme } from '../../utils'
 import { DrawerContext } from '../Menu'
+import useTimerangeSegmentation from '../shared/useTimerangeSegmentation'
 
 interface GainChartProps {
   fromDate: Date
@@ -34,44 +25,10 @@ const InvestmentGainLineChart: FC<GainChartProps> = ({ fromDate, toDate }) => {
     return myOwnAccounts.filter((a) => a.type !== 'Credit Card')
   }, [myOwnAccounts])
 
-  // 2) roll your balances forward to build up `data[]`, `labels[]` and `groups`
+  const { hop: subN, amountHop } = useTimerangeSegmentation(fromDate, toDate, 'dense')
+
   const { data, labels, groups } = useMemo(() => {
-    const diffDays = differenceInDays(toDate, fromDate)
-    const diffWeeks = differenceInWeeks(toDate, fromDate)
-    const diffMonths = differenceInMonths(toDate, fromDate)
-
-    let subN = subDays
-    let i = diffDays + 1
-
-    if (diffMonths > 5 * 12) {
-      // above 5 years
-      subN = subMonths
-      i = diffMonths
-    } else if (diffMonths > 4 * 12) {
-      // between 4 year and 5 years
-      subN = subWeeks
-      i = diffWeeks
-    } else if (diffMonths > 3 * 12) {
-      // between 3 year and 4 years
-      subN = (date, i) => subWeeks(date, i * 2)
-      i = Math.floor(diffWeeks / 2) + 1
-    } else if (diffMonths > 2 * 12) {
-      // between 2 year and 3 years
-      subN = subWeeks
-      i = diffWeeks
-    } else if (diffMonths > 12) {
-      // between 1 year and 2 years
-      subN = subWeeks
-      i = diffWeeks
-    } else if (diffWeeks > 6 * 4) {
-      // between 6 months and 1 year
-      subN = subDays
-      i = diffDays
-    } else if (diffDays > 60) {
-      // between 2 months and 6 months
-      subN = subDays
-      i = diffDays
-    }
+    let i = amountHop
 
     const Investments = filteredAccounts.reduce((totals, account) => {
       const groupLabel = 'Total'
@@ -236,7 +193,7 @@ const InvestmentGainLineChart: FC<GainChartProps> = ({ fromDate, toDate }) => {
     }
 
     return { data, labels, groups }
-  }, [augmentedTransactions, filteredAccounts, exchangeRateOnDay, defaultCurrency, fromDate, toDate])
+  }, [augmentedTransactions, filteredAccounts, exchangeRateOnDay, defaultCurrency, fromDate, toDate, subN, amountHop])
 
   // 3) turn that into a Nivo‐friendly “gain above baseline” series
   const gainSeries = useMemo(
@@ -257,6 +214,7 @@ const InvestmentGainLineChart: FC<GainChartProps> = ({ fromDate, toDate }) => {
   return (
     <ResponsiveLine
       data={gainSeries}
+      animate={false}
       margin={{ top: 20, right: 20, bottom: 50, left: 50 }}
       xScale={{ type: 'time', format: 'native', precision: 'day' }}
       yScale={{ type: 'linear', min: 'auto' }}

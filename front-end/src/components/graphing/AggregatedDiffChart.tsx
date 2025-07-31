@@ -1,16 +1,6 @@
 import { Card } from '@mui/material'
 import { Datum, ResponsiveLine } from '@nivo/line'
-import {
-  differenceInDays,
-  differenceInMonths,
-  differenceInWeeks,
-  formatDate,
-  isBefore,
-  isSameDay,
-  subDays,
-  subMonths,
-  subWeeks,
-} from 'date-fns'
+import { formatDate, isBefore, isSameDay } from 'date-fns'
 import { FC, useContext, useMemo } from 'react'
 
 import { formatFull } from '../../domain/model/currency'
@@ -18,6 +8,7 @@ import { AugmentedTransaction } from '../../domain/model/transaction'
 import MixedAugmentation from '../../service/MixedAugmentation'
 import { darkColors, darkTheme } from '../../utils'
 import { DrawerContext } from '../Menu'
+import useTimerangeSegmentation from '../shared/useTimerangeSegmentation'
 
 interface Props {
   transactions: AugmentedTransaction[]
@@ -32,41 +23,10 @@ const AggregatedDiffChart: FC<Props> = (props) => {
   const { exchangeRateOnDay, defaultCurrency } = useContext(MixedAugmentation)
   const { privacyMode } = useContext(DrawerContext)
 
+  const { hop: subN, showLabelEveryFactor, amountHop } = useTimerangeSegmentation(fromDate, toDate)
+
   return useMemo(() => {
-    const diffDays = differenceInDays(toDate, fromDate)
-    const diffWeeks = differenceInWeeks(toDate, fromDate)
-    const diffMonths = differenceInMonths(toDate, fromDate)
-
-    let subN = subDays
-    let showLabelEveryFactor = 2
-    let i = diffDays + 1
-
-    if (diffMonths > 72) {
-      // Tick every 2 months, label every year
-      subN = (date, i) => subMonths(date, i * 2)
-      showLabelEveryFactor = 6
-      i = Math.floor(diffMonths / 2) + 1
-    } else if (diffMonths > 36) {
-      // Tick every month, label every 6 months
-      subN = subMonths
-      showLabelEveryFactor = 6
-      i = diffMonths + 1
-    } else if (diffMonths > 24) {
-      // Tick every month, label every 3 months
-      subN = subMonths
-      showLabelEveryFactor = 3
-      i = diffMonths + 1
-    } else if (diffWeeks > 20) {
-      // Tick every week, label every 4 weeks
-      subN = subWeeks
-      showLabelEveryFactor = 4
-      i = diffWeeks + 1
-    } else if (diffDays > 50) {
-      // Tick every day, label every week
-      subN = subDays
-      showLabelEveryFactor = 7
-      i = diffDays + 1
-    }
+    let i = amountHop
 
     let transactionIndex = transactions.length - 1
     const data: Datum[] = []
@@ -163,7 +123,7 @@ const AggregatedDiffChart: FC<Props> = (props) => {
         />
       </>
     )
-  }, [defaultCurrency, transactions, fromDate, toDate, privacyMode])
+  }, [defaultCurrency, transactions, fromDate, toDate, privacyMode, amountHop, showLabelEveryFactor, subN])
 }
 
 export default AggregatedDiffChart
