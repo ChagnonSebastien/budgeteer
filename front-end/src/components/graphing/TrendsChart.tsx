@@ -259,6 +259,7 @@ const TrendsChart: FC<Props> = (props) => {
 
       <ResponsiveBar
         margin={{ top: 20, right: 25, bottom: 60, left: 70 }}
+        valueScale={{ type: 'linear', min: 'auto', nice: false }}
         data={visibleData}
         axisBottom={{
           tickRotation: -45,
