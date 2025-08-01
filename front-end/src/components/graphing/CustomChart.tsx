@@ -1,8 +1,5 @@
 import React, { FC, useEffect, useMemo, useRef, useState } from 'react'
 
-export type BaseLineConfig = 'none' | 'showIndividualBaselines' | 'showGlobalBaseline'
-export type ScaleConfig = 'absolute' | 'cropped-absolute' | 'relative'
-
 // Hook to measure element size
 type Size = { width: number; height: number }
 function useResizeObserver(ref: React.RefObject<HTMLElement>): Size {
@@ -76,7 +73,7 @@ type Theme = {
   grid?: { line?: { stroke?: string; strokeWidth?: number } }
   background?: string
 }
-type TooltipSlice = {
+export type TooltipSlice = {
   slice: {
     index: number
     stack: {

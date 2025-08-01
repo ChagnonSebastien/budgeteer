@@ -1,6 +1,6 @@
 import { Card } from '@mui/material'
 import { Datum, ResponsiveLine } from '@nivo/line'
-import { formatDate, isBefore, isSameDay } from 'date-fns'
+import { formatDate } from 'date-fns'
 import { FC, useContext, useMemo } from 'react'
 
 import { formatFull } from '../../domain/model/currency'
@@ -18,61 +18,53 @@ interface Props {
 }
 
 const AggregatedDiffChart: FC<Props> = (props) => {
-  const { fromDate, toDate, transactions } = props
+  const { fromDate, toDate, transactions, hideFinancialIncome } = props
 
   const { exchangeRateOnDay, defaultCurrency } = useContext(MixedAugmentation)
   const { privacyMode } = useContext(DrawerContext)
 
-  const { hop: subN, showLabelEveryFactor, amountHop } = useTimerangeSegmentation(fromDate, toDate)
+  const { showLabelEveryFactor, timeseriesIteratorGenerator } = useTimerangeSegmentation(fromDate, toDate)
+
+  const timeseriesIterator = useMemo(
+    () => timeseriesIteratorGenerator(transactions),
+    [timeseriesIteratorGenerator, transactions],
+  )
 
   return useMemo(() => {
-    let i = amountHop
-
-    let transactionIndex = transactions.length - 1
     const data: Datum[] = []
     const labels: string[] = []
 
-    while (i >= 0) {
-      const upTo = subN(toDate, i)
+    for (const { items, upTo, section } of timeseriesIterator) {
+      if (section === 'before') continue
+
       labels.push(formatDate(upTo, 'MMM d, yyyy'))
       data.push({ x: data.length, y: data.length === 0 ? 0 : data[data.length - 1].y })
 
-      while (
-        transactionIndex >= 0 &&
-        (isBefore(transactions[transactionIndex].date, upTo) || isSameDay(transactions[transactionIndex].date, upTo))
-      ) {
-        const t = transactions[transactionIndex]
-        if (isBefore(t.date, fromDate) && !isSameDay(t.date, fromDate)) {
-          transactionIndex -= 1
-          continue
-        } else if (typeof t.category === 'undefined') {
-          transactionIndex -= 1
+      for (const transaction of items) {
+        if (typeof transaction.category === 'undefined') {
           continue
         }
 
-        if (props.hideFinancialIncome && t.category.name === 'Financial income') {
-          transactionIndex -= 1
+        if (hideFinancialIncome && transaction.category.name === 'Financial income') {
           continue
         }
 
-        if (t.sender?.isMine ?? false) {
-          let amount = t.amount
-          if (t.currencyId !== defaultCurrency.id) {
-            amount *= exchangeRateOnDay(t.currencyId, defaultCurrency!.id, t.date)
+        if (transaction.sender?.isMine ?? false) {
+          let amount = transaction.amount
+          if (transaction.currencyId !== defaultCurrency.id) {
+            amount *= exchangeRateOnDay(transaction.currencyId, defaultCurrency!.id, transaction.date)
           }
 
           data[data.length - 1].y = (data[data.length - 1].y as number) - amount
         }
-        if (t.receiver?.isMine ?? false) {
-          let amount = t.receiverAmount
-          if (t.receiverCurrencyId !== defaultCurrency.id) {
-            amount *= exchangeRateOnDay(t.receiverCurrencyId, defaultCurrency!.id, t.date)
+        if (transaction.receiver?.isMine ?? false) {
+          let amount = transaction.receiverAmount
+          if (transaction.receiverCurrencyId !== defaultCurrency.id) {
+            amount *= exchangeRateOnDay(transaction.receiverCurrencyId, defaultCurrency!.id, transaction.date)
           }
           data[data.length - 1].y = (data[data.length - 1].y as number) + amount
         }
-        transactionIndex -= 1
       }
-      i -= 1
     }
 
     return (
@@ -123,7 +115,7 @@ const AggregatedDiffChart: FC<Props> = (props) => {
         />
       </>
     )
-  }, [defaultCurrency, transactions, fromDate, toDate, privacyMode, amountHop, showLabelEveryFactor, subN])
+  }, [defaultCurrency, privacyMode, showLabelEveryFactor, hideFinancialIncome, timeseriesIterator])
 }
 
 export default AggregatedDiffChart

@@ -13,7 +13,6 @@ import {
 import { FC, Suspense, useEffect, useMemo, useState } from 'react'
 
 import AccountsBalanceChart, { GroupType } from '../components/graphing/AccountsBalanceChart'
-import { BaseLineConfig, ScaleConfig } from '../components/graphing/CustomChart'
 import {
   ControlsContainer,
   GraphContainer,
@@ -21,6 +20,7 @@ import {
   GraphSelectField,
   SplitViewContainer,
 } from '../components/graphing/GraphStyledComponents'
+import { BaseLineConfig, ScaleConfig } from '../components/graphing/NetWorthChart'
 import useTransactionFilter from '../components/inputs/useTransactionFilter'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
 import { Column, Row } from '../components/shared/NoteContainer'
@@ -69,44 +69,54 @@ const AccountsBalancePage: FC = () => {
 
   const splitHorizontal = useMemo(() => contentWidth > 1200, [contentWidth])
 
-  const graphSection = (
-    <SplitViewContainer>
-      <div className="flex flex-col w-full">
-        <GraphContainer
-          height={
-            splitHorizontal ? (showSlider ? contentHeight - 200 : contentHeight - 100) : contentHeight - optionsHeight
-          }
-          style={{ padding: '1rem 0 1rem 0' }}
-        >
-          <Suspense
-            fallback={
-              <Row
-                style={{
-                  height: '100%',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <Typography variant="body1" color="text.secondary">
-                  Loading chart data...
-                </Typography>
-              </Row>
-            }
-          >
-            <AccountsBalanceChart
-              fromDate={fromDate}
-              toDate={toDate}
-              filterByAccounts={accountFilter === null ? undefined : accountFilter}
-              groupBy={groupBy}
-              baselineConfig={baselineConfig}
-              scale={scale}
-            />
-          </Suspense>
-        </GraphContainer>
+  const graph = useMemo(
+    () => (
+      <AccountsBalanceChart
+        fromDate={fromDate}
+        toDate={toDate}
+        filterByAccounts={accountFilter === null ? undefined : accountFilter}
+        groupBy={groupBy}
+        baselineConfig={baselineConfig}
+        scale={scale}
+      />
+    ),
+    [fromDate, toDate, accountFilter, groupBy, baselineConfig, scale],
+  )
 
-        {splitHorizontal && <Box sx={{ padding: '0 1rem' }}>{filterOverview}</Box>}
-      </div>
-    </SplitViewContainer>
+  const graphSection = useMemo(
+    () => (
+      <SplitViewContainer>
+        <div className="flex flex-col w-full">
+          <GraphContainer
+            height={
+              splitHorizontal ? (showSlider ? contentHeight - 200 : contentHeight - 100) : contentHeight - optionsHeight
+            }
+            style={{ padding: '1rem 0 1rem 0' }}
+          >
+            <Suspense
+              fallback={
+                <Row
+                  style={{
+                    height: '100%',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <Typography variant="body1" color="text.secondary">
+                    Loading chart data...
+                  </Typography>
+                </Row>
+              }
+            >
+              {graph}
+            </Suspense>
+          </GraphContainer>
+
+          {splitHorizontal && <Box sx={{ padding: '0 1rem' }}>{filterOverview}</Box>}
+        </div>
+      </SplitViewContainer>
+    ),
+    [graph, splitHorizontal, showSlider, contentHeight, optionsHeight],
   )
 
   const controlsSection = (

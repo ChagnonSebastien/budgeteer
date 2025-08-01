@@ -13,7 +13,6 @@ import {
 import { FC, Suspense, useEffect, useMemo, useState } from 'react'
 
 import CurrenciesBalanceChart, { GroupType } from '../components/graphing/CurrenciesBalanceChart'
-import { BaseLineConfig, ScaleConfig } from '../components/graphing/CustomChart'
 import {
   ControlsContainer,
   GraphContainer,
@@ -21,6 +20,7 @@ import {
   GraphSelectField,
   SplitViewContainer,
 } from '../components/graphing/GraphStyledComponents'
+import { BaseLineConfig, ScaleConfig } from '../components/graphing/NetWorthChart'
 import useTransactionFilter from '../components/inputs/useTransactionFilter'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
 import { Column, Row } from '../components/shared/NoteContainer'
@@ -44,7 +44,7 @@ const CurrenciesBalancePage: FC = () => {
   } = useTransactionFilter((account: Account) => account.isMine, false)
 
   const { queryParams: qp, updateQueryParams } = useQueryParams<QueryParams>()
-  const groupBy = useMemo(() => (qp.groupBy ?? 'account') as GroupType, [qp.groupBy])
+  const groupBy = useMemo(() => (qp.groupBy ?? 'currency') as GroupType, [qp.groupBy])
   const baselineConfig = useMemo(() => (qp.baselineConfig ?? 'none') as BaseLineConfig, [qp.baselineConfig])
   const scale = useMemo(() => (qp.scale ?? 'absolute') as ScaleConfig, [qp.scale])
 

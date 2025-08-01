@@ -13,7 +13,7 @@ import {
 } from '@mui/material'
 import { format, isAfter, isBefore, isSameDay } from 'date-fns'
 import { FC, useContext, useEffect, useMemo, useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { default as styled } from 'styled-components'
 
 import AggregatedDiffChart from '../components/graphing/AggregatedDiffChart'
@@ -25,6 +25,7 @@ import ContentDialog from '../components/shared/ContentDialog'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
 import { DetailCard, FancyModal } from '../components/shared/FancyModalComponents'
 import SplitView from '../components/shared/SplitView'
+import useQueryParams from '../components/shared/useQueryParams'
 import TransactionCard from '../components/transactions/TransactionCard'
 import { TransactionList } from '../components/transactions/TransactionList'
 import { AugmentedCategory } from '../domain/model/category'
@@ -58,6 +59,12 @@ const SplitViewContainer = styled.div`
   justify-content: center;
 `
 
+type QueryParams = {
+  chart: string
+  hideFinancialIncome: string
+  showIncomes: string
+}
+
 const TransactionPage: FC = () => {
   const navigate = useNavigate()
   const { privacyMode } = useContext(DrawerContext)
@@ -66,11 +73,15 @@ const TransactionPage: FC = () => {
   const { augmentedTransactions, rootCategory } = useContext(MixedAugmentation)
   const { state: categories } = useContext(CategoryServiceContext)
 
-  const [searchParams, setSearchParams] = useSearchParams()
-  const [graphType, setGraphType] = useState<'line' | 'pie'>((searchParams.get('chart') as 'line' | 'pie') || 'line')
+  const { queryParams, updateQueryParams } = useQueryParams<QueryParams>()
+  const graphType = useMemo(() => (queryParams.chart ?? 'line') as 'line' | 'pie', [queryParams.chart])
+  const hideFinancialIncome = useMemo(
+    () => queryParams.hideFinancialIncome === 'true',
+    [queryParams.hideFinancialIncome],
+  )
+  const showIncomes = useMemo(() => queryParams.showIncomes === 'true', [queryParams.showIncomes])
+
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
-  const hideFinancialIncome = searchParams.get('hideFinancialIncome') === 'true'
-  const showIncomes = searchParams.get('showIncomes') === 'true'
   const open = Boolean(anchorEl)
   const { fromDate, toDate, accountFilter, categoryFilter, overview: filterOverview } = useTransactionFilter()
 
@@ -115,37 +126,50 @@ const TransactionPage: FC = () => {
 
   const splitHorizontal = useMemo(() => contentWidth > 1200, [contentWidth])
 
-  const graphSection = (
-    <GraphSectionContainer>
-      <GraphContainer>
-        {graphType === 'line' ? (
-          <AggregatedDiffChart
-            transactions={filteredTransaction}
-            toDate={toDate}
-            fromDate={fromDate}
-            hideFinancialIncome={hideFinancialIncome}
-          />
-        ) : (
-          <TransactionsPieChart
-            rootCategory={
-              categoryFilter && categoryFilter.length === 1
-                ? (categories.find((c) => c.id === categoryFilter[0]) ?? rootCategory)
-                : rootCategory
-            }
-            augmentedTransactions={filteredTransaction}
-            showIncomes={showIncomes}
-            onShowIncomesChange={(show) => {
-              setSearchParams({
-                ...Object.fromEntries(searchParams),
-                showIncomes: show.toString(),
-              })
-            }}
-          />
-        )}
-      </GraphContainer>
+  const graphSection = useMemo(
+    () => (
+      <GraphSectionContainer>
+        <GraphContainer>
+          {graphType === 'line' ? (
+            <AggregatedDiffChart
+              transactions={filteredTransaction}
+              toDate={toDate}
+              fromDate={fromDate}
+              hideFinancialIncome={hideFinancialIncome}
+            />
+          ) : (
+            <TransactionsPieChart
+              rootCategory={
+                categoryFilter && categoryFilter.length === 1
+                  ? (categories.find((c) => c.id === categoryFilter[0]) ?? rootCategory)
+                  : rootCategory
+              }
+              augmentedTransactions={filteredTransaction}
+              showIncomes={showIncomes}
+              onShowIncomesChange={(show) => {
+                updateQueryParams({
+                  showIncomes: show.toString(),
+                })
+              }}
+            />
+          )}
+        </GraphContainer>
 
-      <Box sx={{ padding: '0 1rem' }}>{filterOverview}</Box>
-    </GraphSectionContainer>
+        <Box sx={{ padding: '0 1rem' }}>{filterOverview}</Box>
+      </GraphSectionContainer>
+    ),
+    [
+      graphType,
+      filteredTransaction,
+      toDate,
+      fromDate,
+      hideFinancialIncome,
+      categoryFilter,
+      categories,
+      rootCategory,
+      showIncomes,
+      updateQueryParams,
+    ],
   )
 
   const listSection = useMemo(
@@ -190,8 +214,7 @@ const TransactionPage: FC = () => {
           {graphType === 'line' ? (
             <IconButton
               onClick={() => {
-                setGraphType('pie')
-                setSearchParams({ ...Object.fromEntries(searchParams), chart: 'pie' })
+                updateQueryParams({ chart: 'pie' })
               }}
             >
               <IconLib.FaChartPie size="1.5rem" />
@@ -199,8 +222,7 @@ const TransactionPage: FC = () => {
           ) : (
             <IconButton
               onClick={() => {
-                setGraphType('line')
-                setSearchParams({ ...Object.fromEntries(searchParams), chart: 'line' })
+                updateQueryParams({ chart: 'line' })
               }}
             >
               <IconLib.BsGraphUp size="1.5rem" />
@@ -213,10 +235,7 @@ const TransactionPage: FC = () => {
             {graphType === 'line' && (
               <MenuItem
                 onClick={() => {
-                  setSearchParams({
-                    ...Object.fromEntries(searchParams),
-                    hideFinancialIncome: (!hideFinancialIncome).toString(),
-                  })
+                  updateQueryParams({ hideFinancialIncome: (!hideFinancialIncome).toString() })
                   setAnchorEl(null)
                 }}
                 sx={{ gap: 1 }}
@@ -232,10 +251,7 @@ const TransactionPage: FC = () => {
                   exclusive
                   onChange={(_event, value) => {
                     if (value) {
-                      setSearchParams({
-                        ...Object.fromEntries(searchParams),
-                        showIncomes: (value === 'income').toString(),
-                      })
+                      updateQueryParams({ showIncomes: (value === 'income').toString() })
                     }
                   }}
                   size="small"

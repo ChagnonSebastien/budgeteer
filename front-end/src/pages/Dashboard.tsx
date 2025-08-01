@@ -12,6 +12,9 @@ import MixedAugmentation from '../service/MixedAugmentation'
 import { AccountServiceContext } from '../service/ServiceContext'
 import { darkTheme } from '../utils'
 
+const lastYear = startOfDay(subMonths(new Date(), 12))
+const today = startOfDay(new Date())
+
 interface CashFlowDataPoint {
   month: Date
   inflow: number
@@ -186,7 +189,7 @@ const Dashboard: FC = () => {
 
       <NoteContainer title="Investments Performance">
         <div style={{ height: '20rem', width: '100%' }}>
-          <InvestmentGainLineChart fromDate={startOfDay(subMonths(new Date(), 12))} toDate={startOfDay(new Date())} />
+          <InvestmentGainLineChart fromDate={lastYear} toDate={today} />
         </div>
       </NoteContainer>
 

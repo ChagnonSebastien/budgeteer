@@ -29,7 +29,6 @@ function useQueryParams<Params extends QueryParamsFormat>(): QueryParamsResult<P
     (newParams: Partial<{ [K in keyof Params]: string | null }>, replace = false) => {
       const qp = new URLSearchParams(search)
       for (const [key, value] of Object.entries(newParams)) {
-        console.log(Object.entries(newParams))
         if (value === null) {
           qp.delete(key)
         } else if (value !== undefined) {

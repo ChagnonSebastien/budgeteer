@@ -1,6 +1,6 @@
 import { Card } from '@mui/material'
 import { ResponsiveLine } from '@nivo/line'
-import { formatDate, isBefore, isSameDay } from 'date-fns'
+import { formatDate } from 'date-fns'
 import { FC, useContext, useMemo } from 'react'
 
 import { formatFull } from '../../domain/model/currency'
@@ -20,16 +20,18 @@ const InvestmentGainLineChart: FC<GainChartProps> = ({ fromDate, toDate }) => {
   const { myOwnAccounts } = useContext(AccountServiceContext)
   const { privacyMode } = useContext(DrawerContext)
 
-  // 1) filter your accounts exactly as you do elsewhere
   const filteredAccounts = useMemo(() => {
     return myOwnAccounts.filter((a) => a.type !== 'Credit Card')
   }, [myOwnAccounts])
 
-  const { hop: subN, amountHop } = useTimerangeSegmentation(fromDate, toDate, 'dense')
+  const { hop: subN, amountHop, timeseriesIteratorGenerator } = useTimerangeSegmentation(fromDate, toDate, 'dense')
+
+  const timeseriesIterator = useMemo(
+    () => timeseriesIteratorGenerator(augmentedTransactions),
+    [timeseriesIteratorGenerator, augmentedTransactions],
+  )
 
   const { data, labels, groups } = useMemo(() => {
-    let i = amountHop
-
     const Investments = filteredAccounts.reduce((totals, account) => {
       const groupLabel = 'Total'
       const groupData = totals.get(groupLabel) ?? { bookValue: 0, assets: new Map() }
@@ -43,66 +45,54 @@ const InvestmentGainLineChart: FC<GainChartProps> = ({ fromDate, toDate }) => {
       return totals
     }, new Map<string, { bookValue: number; assets: Map<number, number> }>())
 
-    let upTo = subN(toDate, i + 1)
-    let t = augmentedTransactions.length - 1
-    while (
-      t >= 0 &&
-      (isBefore(augmentedTransactions[t].date, upTo) || isSameDay(augmentedTransactions[t].date, upTo))
-    ) {
-      const transaction = augmentedTransactions[t]
-
-      if (
-        typeof transaction.receiver !== 'undefined' && // Has a Receiver
-        transaction.receiver.isMine && // I am the receiver
-        filteredAccounts.findIndex((a) => a.id === transaction.receiver?.id) >= 0 // The account respects filters
-      ) {
-        const groupLabel = 'Total'
-        const data = Investments.get(groupLabel) ?? { bookValue: 0, assets: new Map() }
-        data.assets.set(
-          transaction.receiverCurrencyId,
-          (data.assets.get(transaction.receiverCurrencyId) ?? 0) + transaction.receiverAmount,
-        )
-        Investments.set(groupLabel, data)
-      }
-      if (
-        typeof transaction.sender !== 'undefined' &&
-        transaction.sender.isMine &&
-        filteredAccounts.findIndex((a) => a.id === transaction.sender?.id) >= 0
-      ) {
-        const groupLabel = 'Total'
-        const data = Investments.get(groupLabel) ?? { bookValue: 0, assets: new Map() }
-        data.assets.set(transaction.currencyId, (data.assets.get(transaction.currencyId) ?? 0) - transaction.amount)
-        Investments.set(groupLabel, data)
-      }
-
-      t -= 1
-    }
-
-    for (const groupData of Investments.values()) {
-      let marketValue = 0
-      for (const [currencyId, amount] of groupData.assets) {
-        let factor = 1
-        if (currencyId !== defaultCurrency.id) {
-          factor = exchangeRateOnDay(currencyId, defaultCurrency.id, upTo)
-        }
-        marketValue += amount * factor
-      }
-      groupData.bookValue = marketValue
-    }
-
     const data: { baseline?: number; values: { [account: string]: { amount: number; baseline?: number } } }[] = []
     const labels: Date[] = []
     const groups = new Set<string>()
 
-    while (i >= 0) {
-      upTo = subN(toDate, i)
+    for (const { items, upTo, section } of timeseriesIterator) {
+      if (section === 'before') {
+        for (const transaction of items) {
+          if (
+            typeof transaction.receiver !== 'undefined' && // Has a Receiver
+            transaction.receiver.isMine && // I am the receiver
+            filteredAccounts.findIndex((a) => a.id === transaction.receiver?.id) >= 0 // The account respects filters
+          ) {
+            const groupLabel = 'Total'
+            const data = Investments.get(groupLabel) ?? { bookValue: 0, assets: new Map() }
+            data.assets.set(
+              transaction.receiverCurrencyId,
+              (data.assets.get(transaction.receiverCurrencyId) ?? 0) + transaction.receiverAmount,
+            )
+            Investments.set(groupLabel, data)
+          }
+          if (
+            typeof transaction.sender !== 'undefined' &&
+            transaction.sender.isMine &&
+            filteredAccounts.findIndex((a) => a.id === transaction.sender?.id) >= 0
+          ) {
+            const groupLabel = 'Total'
+            const data = Investments.get(groupLabel) ?? { bookValue: 0, assets: new Map() }
+            data.assets.set(transaction.currencyId, (data.assets.get(transaction.currencyId) ?? 0) - transaction.amount)
+            Investments.set(groupLabel, data)
+          }
+        }
 
-      while (
-        t >= 0 &&
-        (isBefore(augmentedTransactions[t].date, upTo) || isSameDay(augmentedTransactions[t].date, upTo))
-      ) {
-        const transaction = augmentedTransactions[t]
+        for (const groupData of Investments.values()) {
+          let marketValue = 0
+          for (const [currencyId, amount] of groupData.assets) {
+            let factor = 1
+            if (currencyId !== defaultCurrency.id) {
+              factor = exchangeRateOnDay(currencyId, defaultCurrency.id, upTo)
+            }
+            marketValue += amount * factor
+          }
+          groupData.bookValue = marketValue
+        }
 
+        continue
+      }
+
+      for (const transaction of items) {
         if (
           typeof transaction.receiver !== 'undefined' && // Has a Receiver
           transaction.receiver.isMine && // I am the receiver
@@ -166,8 +156,6 @@ const InvestmentGainLineChart: FC<GainChartProps> = ({ fromDate, toDate }) => {
 
           Investments.set(groupLabel, data)
         }
-
-        t -= 1
       }
 
       const todaysData: { [account: string]: { amount: number; baseline?: number } } = {}
@@ -189,11 +177,20 @@ const InvestmentGainLineChart: FC<GainChartProps> = ({ fromDate, toDate }) => {
 
       labels.push(upTo)
       data.push({ values: { ...todaysData }, baseline: todaysBookValue })
-      i -= 1
     }
 
     return { data, labels, groups }
-  }, [augmentedTransactions, filteredAccounts, exchangeRateOnDay, defaultCurrency, fromDate, toDate, subN, amountHop])
+  }, [
+    augmentedTransactions,
+    filteredAccounts,
+    exchangeRateOnDay,
+    defaultCurrency,
+    fromDate,
+    toDate,
+    subN,
+    amountHop,
+    timeseriesIterator,
+  ])
 
   // 3) turn that into a Nivo‐friendly “gain above baseline” series
   const gainSeries = useMemo(

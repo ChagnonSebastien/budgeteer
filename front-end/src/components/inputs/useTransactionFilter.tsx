@@ -37,8 +37,8 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
   const categoryFilter = useMemo<number[] | null>(() => JSON.parse(qp.categories ?? null), [qp.categories])
   const timeRange = useMemo(
     () => [
-      qp.from ? new Date(Number.parseInt(qp.from)!) : addDays(subYears(new Date(), 1), 1),
-      qp.to ? new Date(Number.parseInt(qp.to)!) : new Date(),
+      qp.from ? startOfDay(new Date(Number.parseInt(qp.from)!)) : startOfDay(addDays(subYears(new Date(), 1), 1)),
+      qp.to ? startOfDay(new Date(Number.parseInt(qp.to)!)) : startOfDay(new Date()),
     ],
     [qp.from, qp.to],
   )
