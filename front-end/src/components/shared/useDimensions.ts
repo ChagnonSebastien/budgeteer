@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
 
+type Dimensions = { height: number; width: number; boundingRect?: DOMRect }
+
 export const useElementDimensions = (defaultHeight: number, defaultWidth: number) => {
-  const [dimensions, setDimensions] = useState({ height: defaultHeight, width: defaultWidth })
+  const [dimensions, setDimensions] = useState<Dimensions>({ height: defaultHeight, width: defaultWidth })
 
   const [contentRef, setContentRef] = useState<HTMLDivElement | null>(null)
 
@@ -10,7 +12,7 @@ export const useElementDimensions = (defaultHeight: number, defaultWidth: number
     const ref = contentRef
 
     const callback = () => {
-      setDimensions({ height: ref.clientHeight, width: ref.clientWidth })
+      setDimensions({ height: ref.clientHeight, width: ref.clientWidth, boundingRect: ref.getBoundingClientRect() })
     }
     callback()
 

@@ -1,22 +1,6 @@
-import React, { FC, useEffect, useMemo, useRef, useState } from 'react'
+import React, { FC, useMemo, useState } from 'react'
 
-// Hook to measure element size
-type Size = { width: number; height: number }
-function useResizeObserver(ref: React.RefObject<HTMLElement>): Size {
-  const [size, setSize] = useState<Size>({ width: 0, height: 0 })
-  useEffect(() => {
-    if (!ref.current) return
-    const observer = new ResizeObserver((entries) => {
-      entries.forEach((entry) => {
-        const { width, height } = entry.contentRect
-        setSize({ width, height })
-      })
-    })
-    observer.observe(ref.current)
-    return () => observer.disconnect()
-  }, [ref])
-  return size
-}
+import { useElementDimensions } from '../shared/useDimensions'
 
 // Generates a monotone cubic spline from points
 function monotoneSpline(pts: [number, number][]): string {
@@ -127,8 +111,7 @@ const CustomChart: FC<Props> = ({
   minYValue = 0,
 }) => {
   const mergedTheme = useMemo<Theme>(() => ({ background: 'transparent', ...theme }), [theme])
-  const containerRef = useRef<HTMLDivElement>(null)
-  const { width: w, height: h } = useResizeObserver(containerRef)
+  const { width: w, height: h, ref: containerRef, boundingRect } = useElementDimensions(0, 0)
   const [tooltip, setTooltip] = useState<{ index: number; x: number; y: number } | null>(null)
 
   const margin = propMargin
@@ -313,7 +296,7 @@ const CustomChart: FC<Props> = ({
     })
 
   return (
-    <div ref={containerRef} style={{ position: 'relative', width: '100%', height: h ? '100%' : `${fallbackHeight}px` }}>
+    <div ref={containerRef} style={{ position: 'relative', width: '100%', height: '100%' }}>
       {w > 0 && (
         <svg
           width={w}
@@ -323,10 +306,9 @@ const CustomChart: FC<Props> = ({
             setTooltip(null)
           }}
           onMouseMove={(e) => {
-            const rect = containerRef.current?.getBoundingClientRect()
-            if (!rect) return
+            if (!boundingRect) return
 
-            const y = e.clientY - rect.top
+            const y = e.clientY - boundingRect.top
             if (y < margin.top || y > margin.top + innerH) {
               setTooltip(null)
             }
@@ -444,8 +426,8 @@ const CustomChart: FC<Props> = ({
                 height={innerH}
                 fill="transparent"
                 onMouseMove={(e) => {
-                  const rect = containerRef.current?.getBoundingClientRect()
-                  if (rect) setTooltip({ index: i, x: e.clientX - rect.left, y: e.clientY - rect.top })
+                  if (boundingRect)
+                    setTooltip({ index: i, x: e.clientX - boundingRect.left, y: e.clientY - boundingRect.top })
                 }}
               />
             )

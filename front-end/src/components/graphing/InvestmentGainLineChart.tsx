@@ -1,8 +1,8 @@
-import { Card } from '@mui/material'
 import { ResponsiveLine } from '@nivo/line'
 import { formatDate } from 'date-fns'
-import { FC, useContext, useMemo } from 'react'
+import React, { FC, useContext, useMemo } from 'react'
 
+import { GraphTooltip, GraphTooltipDate } from './GraphStyledComponents'
 import { formatFull } from '../../domain/model/currency'
 import MixedAugmentation from '../../service/MixedAugmentation'
 import { AccountServiceContext } from '../../service/ServiceContext'
@@ -214,7 +214,7 @@ const InvestmentGainLineChart: FC<GainChartProps> = ({ fromDate, toDate }) => {
       animate={false}
       margin={{ top: 20, right: 20, bottom: 50, left: 50 }}
       xScale={{ type: 'time', format: 'native', precision: 'day' }}
-      yScale={{ type: 'linear', min: 'auto' }}
+      yScale={{ type: 'linear', min: 'auto', nice: true }}
       xFormat={(i) => formatDate(i, 'MMM d, yyyy')}
       yFormat={(i) => formatFull(defaultCurrency, i as number, privacyMode)}
       axisBottom={{
@@ -231,18 +231,16 @@ const InvestmentGainLineChart: FC<GainChartProps> = ({ fromDate, toDate }) => {
               }),
       }}
       curve="monotoneX"
-      useMesh={true}
+      useMesh
       enablePoints={false}
       theme={darkTheme}
       colors={darkColors}
       tooltip={(props) => {
         return (
-          <Card>
-            <div className="p-2 flex flex-col items-center">
-              <div className="font-bold">{props.point.data.xFormatted}</div>
-              {!privacyMode && <div>{props.point.data.yFormatted}</div>}
-            </div>
-          </Card>
+          <GraphTooltip style={{ whiteSpace: 'nowrap' }}>
+            <GraphTooltipDate>{props.point.data.xFormatted}</GraphTooltipDate>
+            {!privacyMode && <div>{props.point.data.yFormatted}</div>}
+          </GraphTooltip>
         )
       }}
     />

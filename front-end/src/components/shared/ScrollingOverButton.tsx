@@ -37,7 +37,7 @@ export const CustomScrollbarContainer = styled.div`
 const ScrollingOverButton: FC<{
   button: { text: string; onClick(): void }
   children: ReactNode
-  scrollingContainerRef?: RefObject<HTMLDivElement>
+  scrollingContainerRef?: RefObject<HTMLDivElement | null>
 }> = (props) => {
   const [scrollProgress, setScrollProgress] = useState(1)
 

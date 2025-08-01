@@ -1,5 +1,5 @@
 import { GrpcWebFetchTransport } from '@protobuf-ts/grpcweb-transport'
-import React, { FC, useMemo } from 'react'
+import React, { FC, ReactNode, useMemo } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 
 import { UserContext } from './App'
@@ -71,7 +71,7 @@ const transactionLocalStore = new TransactionLocalStore(IndexedDB)
 const exchangeRateLocalStore = new ExchangeRateLocalStore(IndexedDB)
 const replayStore = new ReplayStore(IndexedDB)
 
-const MustBeConnectedToInternetOnFirstSetup: FC<{ children: React.JSX.Element; hasInternet: boolean }> = ({
+const MustBeConnectedToInternetOnFirstSetup: FC<{ children: ReactNode; hasInternet: boolean }> = ({
   children,
   hasInternet,
 }) => (hasInternet ? children : <div className="centered">Internet connection required on first use</div>)
@@ -206,7 +206,7 @@ const WaitOnInitializedData: FC<{
   </TransactionServiceContext.Consumer>
 )
 
-const PersistenceSetup: FC<{ children: React.JSX.Element; hasInternet: boolean }> = ({ children, hasInternet }) => (
+const PersistenceSetup: FC<{ children: ReactNode; hasInternet: boolean }> = ({ children, hasInternet }) => (
   <BasicCrudServiceWithPersistence
     itemName="currency"
     synced={true}

@@ -1,8 +1,9 @@
-import { Box, Card } from '@mui/material'
+import { Box } from '@mui/material'
 import { BarDatum, ResponsiveBar } from '@nivo/bar'
 import { formatDate, startOfDay, subMonths } from 'date-fns'
-import { FC, useContext, useMemo } from 'react'
+import React, { FC, useContext, useMemo } from 'react'
 
+import { GraphTooltip, GraphTooltipDate } from '../components/graphing/GraphStyledComponents'
 import InvestmentGainLineChart from '../components/graphing/InvestmentGainLineChart'
 import { DrawerContext } from '../components/Menu'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
@@ -44,27 +45,22 @@ const CashFlowBarChart: FC<{ data: CashFlowDataPoint[] }> = ({ data }) => {
       margin={{ top: 20, right: 20, bottom: 60, left: 50 }}
       padding={0.3}
       groupMode="stacked"
-      valueScale={{ type: 'linear' }}
+      valueScale={{ type: 'linear', nice: true, min: 'auto' }}
       indexScale={{ type: 'band', round: true }}
       colors={({ id }) => (id === 'Inflow' ? '#4caf50' : '#f44336')}
       colorBy="id"
       theme={darkTheme}
-      enableGridY={true}
-      isInteractive={true}
+      enableGridY
       tooltip={({ id, value, indexValue }) => (
-        <Card>
-          <div className="p-2 flex flex-col items-center">
-            <div className="font-bold">{indexValue}</div>
-            {!privacyMode && (
-              <div>
-                {formatFull(defaultCurrency, Math.abs(Number(value)), privacyMode)} {id}
-              </div>
-            )}
-          </div>
-        </Card>
+        <GraphTooltip style={{ whiteSpace: 'nowrap' }}>
+          <GraphTooltipDate>{indexValue}</GraphTooltipDate>
+          {!privacyMode && (
+            <div>
+              {formatFull(defaultCurrency, Math.abs(Number(value)), privacyMode)} {id}
+            </div>
+          )}
+        </GraphTooltip>
       )}
-      axisTop={null}
-      axisRight={null}
       axisBottom={{
         tickRotation: -45,
         tickSize: 5,

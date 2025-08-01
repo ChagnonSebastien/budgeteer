@@ -28,7 +28,7 @@ interface ReplayStore<ItemIdentifiableFields, ItemUpdatableFields> {
 export interface AugmenterProps<IdType, Item extends Unique<IdType, Item>, Augment> {
   state: Item[]
   version: number
-  augment: (b: Augment) => JSX.Element
+  augment: (b: Augment) => ReactNode
 }
 
 interface Props<IdType, Item extends Unique<IdType, Item>, ItemIdentifiableFields, ItemUpdatableFields, Augmentation> {

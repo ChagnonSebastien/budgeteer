@@ -8,7 +8,7 @@ import {
   subDays,
   subMonths,
 } from 'date-fns'
-import { useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { ReactNode, useContext, useEffect, useMemo, useRef, useState } from 'react'
 
 import TransactionCard from './TransactionCard'
 import { formatAmount, formatFull } from '../../domain/model/currency'
@@ -41,7 +41,7 @@ export const TransactionList = (props: Props) => {
     setDisplayedAmount(chunkSize)
   }, [items])
 
-  const viewWithMonthLabels: JSX.Element[] = useMemo(() => {
+  const viewWithMonthLabels: ReactNode[] = useMemo(() => {
     if (items.length === 0) return []
 
     const today = startOfDay(new Date())

@@ -1,7 +1,7 @@
 import { Button, Chip, DialogActions, DialogContent, DialogTitle, useMediaQuery, useTheme } from '@mui/material'
-import { DateCalendar, DateView } from '@mui/x-date-pickers'
+import { DateCalendar, DateView, PickerValidDate } from '@mui/x-date-pickers'
 import { addDays, formatDate, isSameDay, startOfDay, subMonths, subYears } from 'date-fns'
-import dayjs, { Dayjs } from 'dayjs'
+import dayjs from 'dayjs'
 import { ReactNode, useContext, useMemo, useState } from 'react'
 
 import TimeRange from './slider/TimeRange'
@@ -405,7 +405,8 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
           <DateCalendar
             views={['year', 'month', 'day']}
             value={dayjs(timeRange[0])}
-            onChange={(newDate: Dayjs) => {
+            onChange={(newDate: PickerValidDate | null) => {
+              if (newDate === null) return
               updateQueryParams({ from: String(newDate.toDate().getTime()) })
               if (fromView === 'day') setShowFromDateModal(false)
             }}
@@ -429,7 +430,8 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
           <DateCalendar
             views={['year', 'month', 'day']}
             value={dayjs(timeRange[1])}
-            onChange={(newDate: Dayjs) => {
+            onChange={(newDate: PickerValidDate | null) => {
+              if (newDate === null) return
               updateQueryParams({ to: String(newDate.toDate().getTime()) })
               if (toView === 'day') setShowToDateModal(false)
             }}

@@ -1,5 +1,5 @@
 import { Card } from '@mui/material'
-import { Datum, ResponsiveLine } from '@nivo/line'
+import { AllowedValue, ResponsiveLine } from '@nivo/line'
 import { formatDate } from 'date-fns'
 import { FC, useContext, useMemo } from 'react'
 
@@ -31,7 +31,10 @@ const AggregatedDiffChart: FC<Props> = (props) => {
   )
 
   return useMemo(() => {
-    const data: Datum[] = []
+    const data: {
+      x: AllowedValue
+      y: AllowedValue
+    }[] = []
     const labels: string[] = []
 
     for (const { items, upTo, section } of timeseriesIterator) {

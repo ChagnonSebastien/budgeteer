@@ -1,5 +1,5 @@
-import { DateCalendar, DateField, DateView } from '@mui/x-date-pickers'
-import dayjs, { Dayjs } from 'dayjs'
+import { DateCalendar, DateField, DateView, PickerValidDate } from '@mui/x-date-pickers'
+import dayjs from 'dayjs'
 import React, { useState } from 'react'
 
 import ContentDialog from '../shared/ContentDialog'
@@ -34,7 +34,8 @@ function DatePicker(props: Props) {
         <DateCalendar
           views={['year', 'month', 'day']}
           value={dayjs(date)}
-          onChange={(newDate: Dayjs) => {
+          onChange={(newDate: PickerValidDate | null) => {
+            if (newDate === null) return
             onChange(newDate.toDate())
             if (dateView === 'day') setShowDateModal(false)
           }}
