@@ -5,6 +5,7 @@ import { formatFull } from '../../domain/model/currency'
 import MixedAugmentation from '../../service/MixedAugmentation'
 import { darkColors, darkTheme } from '../../utils'
 import { DrawerContext } from '../Menu'
+import { GraphTooltip } from './GraphStyledComponents'
 
 interface Props {
   grossIncome: number
@@ -139,11 +140,11 @@ const EarningsBreakdownChart: FC<Props> = ({ grossIncome, netIncome, fixedCosts,
     const percentage = (value / totalIncome) * 100
 
     return (
-      <div className="bg-white text-slate-700 p-2 shadow-lg">
-        <div className="font-bold">{nodeId}</div>
+      <GraphTooltip style={{ whiteSpace: 'nowrap' }}>
+        <div style={{ fontWeight: 'bold' }}>{nodeId}</div>
         {!privacyMode && <div>{formatFull(defaultCurrency, value, privacyMode)}</div>}
         <div>{percentage.toFixed(1)}% of Income</div>
-      </div>
+      </GraphTooltip>
     )
   }
 
@@ -160,13 +161,13 @@ const EarningsBreakdownChart: FC<Props> = ({ grossIncome, netIncome, fixedCosts,
     const percentage = sourceValue > 0 ? (value / sourceValue) * 100 : 0
 
     return (
-      <div className="bg-white text-slate-700 p-2 shadow-lg">
-        <div className="font-bold">{targetId}</div>
+      <GraphTooltip style={{ whiteSpace: 'nowrap' }}>
+        <div style={{ fontWeight: 'bold' }}>{targetId}</div>
         {!privacyMode && <div>{formatFull(defaultCurrency, value, privacyMode)}</div>}
         <div>
           {percentage.toFixed(1)}% of {sourceId}
         </div>
-      </div>
+      </GraphTooltip>
     )
   }
 

@@ -8,6 +8,7 @@ import MixedAugmentation from '../../service/MixedAugmentation'
 import { CategoryServiceContext } from '../../service/ServiceContext'
 import { darkColors, darkTheme } from '../../utils'
 import { DrawerContext } from '../Menu'
+import { GraphTooltip } from './GraphStyledComponents'
 
 type LocalTree = {
   name: string
@@ -205,10 +206,10 @@ const TransactionsPieChart: FC<Props> = (props) => {
           arcLabelsSkipAngle={5}
           arcLabelsTextColor="white"
           tooltip={({ id, value }) => (
-            <div className="bg-white text-slate-700 p-2 shadow-lg">
-              <div className="font-bold">{id}</div>
+            <GraphTooltip style={{ whiteSpace: 'nowrap' }}>
+              <div style={{ fontWeight: 'bold' }}>{id}</div>
               {!privacyMode && <div>{formatFull(defaultCurrency, value, privacyMode)}</div>}
-            </div>
+            </GraphTooltip>
           )}
         />
       </>

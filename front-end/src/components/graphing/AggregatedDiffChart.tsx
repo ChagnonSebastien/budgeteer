@@ -1,8 +1,8 @@
-import { Card } from '@mui/material'
 import { AllowedValue, ResponsiveLine } from '@nivo/line'
 import { formatDate } from 'date-fns'
 import { FC, useContext, useMemo } from 'react'
 
+import { GraphTooltip } from './GraphStyledComponents'
 import { formatFull } from '../../domain/model/currency'
 import { AugmentedTransaction } from '../../domain/model/transaction'
 import MixedAugmentation from '../../service/MixedAugmentation'
@@ -101,12 +101,10 @@ const AggregatedDiffChart: FC<Props> = (props) => {
           }}
           tooltip={(props) => {
             return (
-              <Card>
-                <div className="p-2 flex flex-col items-center">
-                  <div className="font-bold">{props.point.data.xFormatted}</div>
-                  {!privacyMode && <div>{props.point.data.yFormatted}</div>}
-                </div>
-              </Card>
+              <GraphTooltip style={{ whiteSpace: 'nowrap' }}>
+                <div style={{ fontWeight: 'bold' }}>{props.point.data.xFormatted}</div>
+                {!privacyMode && <div>{props.point.data.yFormatted}</div>}
+              </GraphTooltip>
             )
           }}
           isInteractive
