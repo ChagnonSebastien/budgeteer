@@ -19,6 +19,7 @@ import { formatAmount, formatFull } from '../../domain/model/currency'
 import MixedAugmentation from '../../service/MixedAugmentation'
 import { darkTheme } from '../../utils'
 import { DrawerContext } from '../Menu'
+import { GraphTooltip, GraphTooltipDate } from './GraphStyledComponents'
 
 export type Grouping = 'years' | 'quarters' | 'months'
 
@@ -274,8 +275,8 @@ const TrendsChart: FC<Props> = (props) => {
               : formatAmount(defaultCurrency, i, privacyMode).slice(0, -((defaultCurrency?.decimalPoints ?? 2) + 1)),
         }}
         tooltip={(props) => (
-          <div className="p-2 px-3 bg-black/[0.85] rounded flex flex-col gap-1">
-            <div className="text-white/70 text-[0.9rem]">{label(new Date(props.indexValue))}</div>
+          <GraphTooltip style={{ whiteSpace: 'nowrap' }}>
+            <GraphTooltipDate>{label(new Date(props.indexValue))}</GraphTooltipDate>
             {!privacyMode && (
               <div
                 className="text-[1.1rem] font-medium"
@@ -286,7 +287,7 @@ const TrendsChart: FC<Props> = (props) => {
                 {formatFull(defaultCurrency, props.value, privacyMode)}
               </div>
             )}
-          </div>
+          </GraphTooltip>
         )}
         enableLabel={false}
         keys={['total']}
