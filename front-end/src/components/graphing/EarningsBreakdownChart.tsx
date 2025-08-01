@@ -1,5 +1,5 @@
 import { ResponsiveSankey, SankeyLinkDatum, SankeyNodeDatum } from '@nivo/sankey'
-import { FC, useContext, useEffect, useState } from 'react'
+import { FC, useContext } from 'react'
 
 import { formatFull } from '../../domain/model/currency'
 import MixedAugmentation from '../../service/MixedAugmentation'
@@ -11,26 +11,10 @@ interface Props {
   netIncome: number
   fixedCosts: Map<string, number>
   variableCosts: Map<string, number>
-  contentRef: HTMLDivElement | null
+  dimensions: { width: number; height: number }
 }
 
-const EarningsBreakdownChart: FC<Props> = ({ grossIncome, netIncome, fixedCosts, variableCosts, contentRef }) => {
-  const [dimensions, setDimensions] = useState<{ width: number; height: number }>({ width: 0, height: 0 })
-
-  useEffect(() => {
-    if (!contentRef) return
-
-    const updateDimensions = () => {
-      setDimensions({
-        width: contentRef.clientWidth,
-        height: contentRef.clientHeight,
-      })
-    }
-
-    updateDimensions()
-    window.addEventListener('resize', updateDimensions)
-    return () => window.removeEventListener('resize', updateDimensions)
-  }, [contentRef])
+const EarningsBreakdownChart: FC<Props> = ({ grossIncome, netIncome, fixedCosts, variableCosts, dimensions }) => {
   const { defaultCurrency } = useContext(MixedAugmentation)
   const { privacyMode } = useContext(DrawerContext)
 

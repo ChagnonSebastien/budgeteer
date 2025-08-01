@@ -1,5 +1,5 @@
 import { Button, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material'
-import { FC, useEffect, useMemo, useState } from 'react'
+import { FC, useMemo } from 'react'
 import { default as styled } from 'styled-components'
 
 import CategoryPicker from '../components/categories/CategoryPicker'
@@ -7,6 +7,7 @@ import { ControlsContainer, GraphContainer, GraphPageContainer } from '../compon
 import TrendsChart, { Grouping } from '../components/graphing/TrendsChart'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
 import { Column, Row } from '../components/shared/NoteContainer'
+import { useElementDimensions } from '../components/shared/useDimensions'
 import useQueryParams from '../components/shared/useQueryParams'
 import { CategoryID } from '../domain/model/category'
 
@@ -43,27 +44,14 @@ type QueryParams = {
 }
 
 const TrendsPage: FC = () => {
-  const [optionsHeight, setOptionsHeight] = useState(240)
+  const { height: optionsHeight, ref: setOptionsRef } = useElementDimensions(600, 600)
 
   const { queryParams: qp, updateQueryParams } = useQueryParams<QueryParams>()
   const grouping = useMemo(() => (qp.grouping || 'months') as Grouping, [qp.grouping])
   const years = useMemo(() => parseInt(qp.years || '1'), [qp.years])
   const selectedCategories = useMemo<CategoryID[]>(() => JSON.parse(qp.categories || '[]'), [qp.categories])
 
-  const [contentRef, setContentRef] = useState<HTMLDivElement | null>(null)
-  const [contentHeight, setContentHeight] = useState(600)
-  useEffect(() => {
-    if (contentRef === null) return
-    const ref = contentRef
-
-    const callback = () => {
-      setContentHeight(ref.clientHeight)
-    }
-    callback()
-
-    window.addEventListener('resize', callback)
-    return () => window.removeEventListener('resize', callback)
-  }, [contentRef])
+  const { height: contentHeight, ref: setContentRef } = useElementDimensions(600, 600)
 
   return (
     <ContentWithHeader
@@ -78,11 +66,7 @@ const TrendsPage: FC = () => {
           <TrendsChart categories={selectedCategories} grouping={grouping} years={years} />
         </GraphContainer>
 
-        <ControlsContainer
-          ref={(element: HTMLDivElement | null) => {
-            if (element) setOptionsHeight(element.scrollHeight)
-          }}
-        >
+        <ControlsContainer ref={setOptionsRef}>
           <Column style={{ gap: '1rem' }}>
             <CategoryPicker
               selectedConfig={{

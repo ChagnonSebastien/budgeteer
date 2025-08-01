@@ -8,6 +8,7 @@ import EarningsBreakdownChart from '../components/graphing/EarningsBreakdownChar
 import { IconToolsContext } from '../components/icons/IconTools'
 import { DrawerContext } from '../components/Menu'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
+import { useElementDimensions } from '../components/shared/useDimensions'
 import { formatAmount } from '../domain/model/currency'
 import MixedAugmentation from '../service/MixedAugmentation'
 import UserStore from '../UserStore'
@@ -120,7 +121,7 @@ const CostsAnalysisPage: FC = () => {
   const [viewType, setViewType] = useState<'table' | 'chart'>(query.get('view') === 'chart' ? 'chart' : 'table')
   const [incomeCategory, setIncomeCategory] = useState<number>(userStore.getIncomeCategoryId() ?? rootCategory.id)
   const [grossIncome, setGrossIncome] = useState<number>(userStore.getGrossIncome() ?? 0)
-  const [contentRef, setContentRef] = useState<HTMLDivElement | null>(null)
+  const { ref: setContentRef, ...dimensions } = useElementDimensions(0, 0)
 
   // Update URL when viewType changes
   const updateViewTypeInUrl = (newViewType: 'table' | 'chart') => {
@@ -346,7 +347,7 @@ const CostsAnalysisPage: FC = () => {
             netIncome={income}
             fixedCosts={fixedCosts}
             variableCosts={variableCosts}
-            contentRef={contentRef}
+            dimensions={dimensions}
           />
         ) : (
           <StyledTable>

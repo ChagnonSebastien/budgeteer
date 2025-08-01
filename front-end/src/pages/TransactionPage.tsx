@@ -12,7 +12,7 @@ import {
   Typography,
 } from '@mui/material'
 import { format, isAfter, isBefore, isSameDay } from 'date-fns'
-import { FC, useContext, useEffect, useMemo, useState } from 'react'
+import { FC, useContext, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { default as styled } from 'styled-components'
 
@@ -25,6 +25,7 @@ import ContentDialog from '../components/shared/ContentDialog'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
 import { DetailCard, FancyModal } from '../components/shared/FancyModalComponents'
 import SplitView from '../components/shared/SplitView'
+import { useElementDimensions } from '../components/shared/useDimensions'
 import useQueryParams from '../components/shared/useQueryParams'
 import TransactionCard from '../components/transactions/TransactionCard'
 import { TransactionList } from '../components/transactions/TransactionList'
@@ -109,20 +110,7 @@ const TransactionPage: FC = () => {
       })
   }, [augmentedTransactions, categoryFilter, accountFilter, toDate, fromDate])
 
-  const [contentRef, setContentRef] = useState<HTMLDivElement | null>(null)
-  const [contentWidth, setContentWidth] = useState(600)
-  useEffect(() => {
-    if (contentRef === null) return
-    const ref = contentRef
-
-    const callback = () => {
-      setContentWidth(ref.clientWidth)
-    }
-    callback()
-
-    window.addEventListener('resize', callback)
-    return () => window.removeEventListener('resize', callback)
-  }, [contentRef])
+  const { width: contentWidth, ref: setContentRef } = useElementDimensions(600, 600)
 
   const splitHorizontal = useMemo(() => contentWidth > 1200, [contentWidth])
 
@@ -169,6 +157,7 @@ const TransactionPage: FC = () => {
       rootCategory,
       showIncomes,
       updateQueryParams,
+      filterOverview,
     ],
   )
 

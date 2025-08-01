@@ -10,11 +10,12 @@ import {
   Switch,
   Typography,
 } from '@mui/material'
-import { createContext, FC, ReactElement, useContext, useEffect, useState } from 'react'
+import { createContext, FC, ReactElement, useContext, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { default as styled } from 'styled-components'
 
 import { IconToolsContext, PreparedIcon } from './icons/IconTools'
+import { useElementDimensions, useWindowDimensions } from './shared/useDimensions'
 import { UserContext } from '../App'
 import UserStore from '../UserStore'
 
@@ -119,23 +120,14 @@ const DrawerWrapper: FC<Props> = ({ logout, children }) => {
 
   const iOS = typeof navigator !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent)
 
-  const [drawerWidth, setDrawerWidth] = useState(240)
-  const [totalWidth, setTotalWidth] = useState(window.innerWidth)
+  const { width: drawerWidth, ref: setDrawerRef } = useElementDimensions(240, 240)
+
+  const { width: totalWidth } = useWindowDimensions()
   const [privacyMode, setPrivacyMode] = useState(userStore.getPrivacyMode())
   const persistentDrawer = totalWidth - drawerWidth > 600
 
-  useEffect(() => {
-    const callback = () => setTotalWidth(window.innerWidth)
-    window.addEventListener('resize', callback)
-    return () => window.removeEventListener('resize', callback)
-  }, [])
-
   const drawer = (
-    <div
-      ref={(ref) => {
-        if (ref != null) setDrawerWidth(ref.scrollWidth)
-      }}
-    >
+    <div ref={setDrawerRef}>
       <Box style={{ padding: '1.5rem' }}>
         <Typography variant="h6" sx={{ fontWeight: 600, letterSpacing: '0.05em', marginBottom: '0.25rem' }}>
           Budget App

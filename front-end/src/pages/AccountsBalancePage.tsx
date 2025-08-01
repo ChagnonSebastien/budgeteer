@@ -10,7 +10,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material'
-import { FC, Suspense, useEffect, useMemo, useState } from 'react'
+import { FC, Suspense, useMemo } from 'react'
 
 import AccountsBalanceChart, { GroupType } from '../components/graphing/AccountsBalanceChart'
 import {
@@ -25,6 +25,7 @@ import useTransactionFilter from '../components/inputs/useTransactionFilter'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
 import { Column, Row } from '../components/shared/NoteContainer'
 import SplitView from '../components/shared/SplitView'
+import { useElementDimensions } from '../components/shared/useDimensions'
 import useQueryParams from '../components/shared/useQueryParams'
 import Account from '../domain/model/account'
 
@@ -48,24 +49,9 @@ const AccountsBalancePage: FC = () => {
   const baselineConfig = useMemo(() => (qp.baselineConfig ?? 'none') as BaseLineConfig, [qp.baselineConfig])
   const scale = useMemo(() => (qp.scale ?? 'absolute') as ScaleConfig, [qp.scale])
 
-  const [optionsHeight, setOptionsHeight] = useState(140)
+  const { height: optionsHeight, ref: setOptionsRef } = useElementDimensions(600, 600)
 
-  const [contentRef, setContentRef] = useState<HTMLDivElement | null>(null)
-  const [contentHeight, setContentHeight] = useState(600)
-  const [contentWidth, setContentWidth] = useState(600)
-  useEffect(() => {
-    if (contentRef === null) return
-    const ref = contentRef
-
-    const callback = () => {
-      setContentHeight(ref.clientHeight)
-      setContentWidth(ref.clientWidth)
-    }
-    callback()
-
-    window.addEventListener('resize', callback)
-    return () => window.removeEventListener('resize', callback)
-  }, [contentRef])
+  const { ref: setContentRef, height: contentHeight, width: contentWidth } = useElementDimensions(600, 600)
 
   const splitHorizontal = useMemo(() => contentWidth > 1200, [contentWidth])
 
@@ -116,7 +102,7 @@ const AccountsBalancePage: FC = () => {
         </div>
       </SplitViewContainer>
     ),
-    [graph, splitHorizontal, showSlider, contentHeight, optionsHeight],
+    [graph, splitHorizontal, showSlider, contentHeight, optionsHeight, filterOverview],
   )
 
   const controlsSection = (
@@ -124,9 +110,7 @@ const AccountsBalancePage: FC = () => {
       <ControlsContainer
         $splitView={splitHorizontal}
         className={!splitHorizontal ? 'bg-white/[0.02]' : ''}
-        ref={(element: HTMLDivElement | null) => {
-          if (element && !splitHorizontal) setOptionsHeight(element.scrollHeight)
-        }}
+        ref={setOptionsRef}
       >
         <Column style={{ gap: '1.5rem' }}>
           {!splitHorizontal && <Box sx={{ mb: 2 }}>{filterOverview}</Box>}

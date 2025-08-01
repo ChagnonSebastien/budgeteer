@@ -3,6 +3,7 @@ import React, { FC, ReactNode, RefObject, useEffect, useState } from 'react'
 import { default as styled } from 'styled-components'
 
 import { FadingDivider, ListContentContainer, PageContainer, ScrollAreaContainer } from './PageStyledComponents'
+import { useElementDimensions } from './useDimensions'
 
 export const CustomScrollbarContainer = styled.div`
   overflow-y: auto;
@@ -38,23 +39,10 @@ const ScrollingOverButton: FC<{
   children: ReactNode
   scrollingContainerRef?: RefObject<HTMLDivElement>
 }> = (props) => {
-  const [optionsHeight, setOptionsHeight] = useState(240)
-  const [contentRef, setContentRef] = useState<HTMLDivElement | null>(null)
-  const [contentHeight, setContentHeight] = useState(600)
   const [scrollProgress, setScrollProgress] = useState(1)
 
-  useEffect(() => {
-    if (contentRef === null) return
-    const ref = contentRef
-
-    const callback = () => {
-      setContentHeight(ref.clientHeight)
-    }
-    callback()
-
-    window.addEventListener('resize', callback)
-    return () => window.removeEventListener('resize', callback)
-  }, [contentRef])
+  const { height: optionsHeight, ref: setOptionsRef } = useElementDimensions(600, 600)
+  const { height: contentHeight, ref: setContentRef } = useElementDimensions(600, 600)
 
   useEffect(() => {
     if (!setScrollProgress || !props.scrollingContainerRef || !props.scrollingContainerRef.current) return
@@ -97,12 +85,7 @@ const ScrollingOverButton: FC<{
         <ScrollAreaContainer style={{ height: `${contentHeight - optionsHeight}px` }}>
           {props.children}
         </ScrollAreaContainer>
-        <div
-          ref={(ref) => {
-            if (ref !== null) setOptionsHeight(ref.scrollHeight)
-          }}
-          className="overflow-hidden"
-        >
+        <div ref={setOptionsRef} className="overflow-hidden">
           <FadingDivider opacity={scrollProgress} />
           <Button fullWidth variant="contained" onClick={props.button.onClick}>
             {props.button.text}
