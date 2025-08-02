@@ -297,7 +297,7 @@ const CustomChart: FC<Props> = ({
 
   return (
     <div ref={containerRef} style={{ position: 'relative', width: '100%', height: '100%' }}>
-      {w > 0 && (
+      {w > 0 && h > 0 && (
         <svg
           width={w}
           height={h}
