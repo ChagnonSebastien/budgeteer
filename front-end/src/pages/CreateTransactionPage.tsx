@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
 import { CrudFormContainer } from '../components/shared/CrudFormContainer'
 import useQueryParams from '../components/shared/useQueryParams'
-import TransactionForm from '../components/transactions/TransactionForm'
+import TransactionForm, { TransactionType } from '../components/transactions/TransactionForm'
 import Transaction from '../domain/model/transaction'
 import { TransactionServiceContext } from '../service/ServiceContext'
 
@@ -15,7 +15,7 @@ type QueryParams = {
 const CreateTransactionPage: FC = () => {
   const navigate = useNavigate()
   const { queryParams } = useQueryParams<QueryParams>()
-  const type = useMemo(() => JSON.parse(queryParams.type ?? null), [queryParams.type])
+  const type = useMemo(() => (queryParams.type ?? 'expense') as TransactionType, [queryParams.type])
 
   const { create: createTransaction } = useContext(TransactionServiceContext)
 

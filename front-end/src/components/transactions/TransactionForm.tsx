@@ -49,11 +49,13 @@ interface FieldStatus {
   errorText: string
 }
 
+export type TransactionType = 'income' | 'expense' | 'transfer'
+
 interface Props {
   initialTransaction?: AugmentedTransaction
   onSubmit: (data: Partial<Omit<Transaction, 'id' | 'hasName'>>) => Promise<void>
   submitText: string
-  type?: 'income' | 'expense' | 'transfer'
+  type?: TransactionType
 }
 
 const TransactionForm: FC<Props> = (props) => {
