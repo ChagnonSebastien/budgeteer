@@ -1,6 +1,6 @@
 import { Box, SxProps, Theme } from '@mui/material'
 import React, { FC, ReactNode } from 'react'
-import { default as styled } from 'styled-components'
+import { css, default as styled } from 'styled-components'
 
 interface Props {
   title: string
@@ -50,52 +50,48 @@ export const GradientCard = styled.div<{
 
   ${({ $withGradientBackground }) =>
     $withGradientBackground &&
-    `
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 1rem;
-    backdrop-filter: blur(12px);
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    margin: 0.25rem 0;
-  `}
-
-
-    ${({ $hoverEffect }) =>
-      $hoverEffect &&
-      `
-      &:hover {
-        background-color: rgba(255, 255, 255, 0.08);
-        transform: translateY(-2px);
-      }
+    css`
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 1rem;
+      backdrop-filter: blur(12px);
+      box-shadow:
+        0 4px 6px -1px rgba(0, 0, 0, 0.1),
+        0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      margin: 0.25rem 0;
     `}
-
-    ${({ $withGradientBackground, $hoverEffect }) =>
-      $withGradientBackground &&
-      $hoverEffect &&
-      `
-      &:hover {
-        transform: translateY(-2px) scale(1.01);
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-        border-color: rgba(255, 255, 255, 0.15);
-      }
-    `}
-  }
 
   ${({ $selected }) =>
     $selected &&
-    `
-    background-color: rgba(200, 75, 49, 0.12);
-    border-left-color: #C84B31;
-  `}
+    css`
+      background-color: rgba(200, 75, 49, 0.12);
+      border-left-color: #c84b31;
+    `}
 
-  ${({ $selected, $hoverEffect }) =>
-    $selected &&
+  ${({ $hoverEffect, $withGradientBackground, $selected }) =>
     $hoverEffect &&
-    `
-    &:hover {
-      background-color: rgba(200, 75, 49, 0.16);
-    }
-  `}
+    css`
+      &:hover {
+        background-color: rgba(255, 255, 255, 0.08);
+        transform: translateY(-2px);
+
+        ${() =>
+          $withGradientBackground &&
+          css`
+            transform: translateY(-2px) scale(1.01);
+            box-shadow:
+              0 10px 15px -3px rgba(0, 0, 0, 0.1),
+              0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            border-color: rgba(255, 255, 255, 0.15);
+          `}
+
+        ${() =>
+          $selected &&
+          css`
+            background-color: rgba(200, 75, 49, 0.16);
+          `}
+      }
+    `}
 `
 
 export default NoteContainer

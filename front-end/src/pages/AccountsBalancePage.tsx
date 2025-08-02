@@ -273,7 +273,7 @@ const AccountsBalancePage: FC = () => {
             secondZoneStyling={{ grow: false, scroll: true }}
           />
         ) : (
-          <div className="h-full flex flex-col overflow-hidden">
+          <div>
             {graphSection}
             {controlsSection}
           </div>
