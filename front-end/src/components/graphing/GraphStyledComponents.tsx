@@ -1,5 +1,7 @@
 import { default as styled } from 'styled-components'
 
+import { Column, MaxSpaceNoOverflow } from '../shared/NoteContainer'
+
 export const GraphPageContainer = styled.div`
   height: 100%;
   width: 100%;
@@ -8,27 +10,24 @@ export const GraphPageContainer = styled.div`
 export const GraphContainer = styled.div<{ height: number }>`
   height: ${(props) => `${props.height}px`};
   width: 100%;
-  display: flex;
-  justify-content: center;
   padding-bottom: 1rem;
-
-  & > div {
-    max-width: 100vh;
-  }
+  margin: auto;
 `
 
-export const ControlsContainer = styled.div<{ $splitView?: boolean }>`
+export const SecondDivision = styled(Column)<{ $splitView?: boolean }>`
   padding: 1rem 2rem;
   background: rgba(255, 255, 255, 0.02);
   border-top: ${(props) => (props.$splitView ? 'none' : '1px solid rgba(255, 255, 255, 0.1)')};
+  height: ${(props) => (props.$splitView ? '100%' : 'auto')};
+  gap: 2rem;
 `
 
-export const SplitViewContainer = styled.div`
-  height: 100%;
-  width: 100%;
-  display: flex;
+export const FirstDivision = styled(MaxSpaceNoOverflow)`
+  max-width: 100vh;
+  align-items: stretch;
   flex-direction: column;
   justify-content: flex-start;
+  margin: auto;
 `
 
 export const GraphSelectField = styled.div`

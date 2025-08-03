@@ -2,7 +2,7 @@ import { DialogContent, Divider, List, ListItem, ListItemText, Typography } from
 import { FC, ReactNode } from 'react'
 import { default as styled, keyframes } from 'styled-components'
 
-import { Column, GradientCard } from './NoteContainer'
+import { GradientCard } from './NoteContainer'
 
 const fadeIn = keyframes`
   from {
@@ -43,17 +43,15 @@ export const OverviewActionItem = styled.div<{ $delay?: number }>`
     transform: translateX(8px);
   }
 
-  &:hover .overview-action-icon {
-    transform: scale(1.2);
+  &:hover > :first-child {
+    transform: scale(1.25);
   }
 `
 
 export const OverviewActionIcon = styled.div`
-  min-width: 42px;
-  color: rgba(255, 255, 255, 0.7);
+  padding: 1rem;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   transform: scale(1);
-  transform-origin: left;
 `
 
 export const OverviewItem = styled(GradientCard)<{ $delay?: number }>`
@@ -81,26 +79,14 @@ export const DetailCard: FC<DetailCardProps> = (props) => {
       $withGradientBackground
       $hoverEffect={false}
     >
-      <Column
-        style={{
-          display: 'flex',
-          gap: '0.15rem',
-          flexShrink: 1,
-          overflow: 'hidden',
+      <ListItemText
+        primary={props.title}
+        secondary={props.subTitle}
+        slotProps={{
+          primary: { style: { opacity: 0.7 } },
+          secondary: { style: { fontSize: '0.75rem', opacity: 0.5 } },
         }}
-      >
-        <Typography variant="body2" style={{ opacity: 0.7 }}>
-          {props.title}
-        </Typography>
-        {props.subTitle && (
-          <Typography
-            variant="caption"
-            style={{ opacity: 0.5, textOverflow: 'ellipsis', whiteSpace: 'nowrap', overflow: 'hidden' }}
-          >
-            {props.subTitle}
-          </Typography>
-        )}
-      </Column>
+      />
       <Typography
         variant="body1"
         style={{
@@ -231,25 +217,14 @@ export const FancyModal: FC<FancyModalProps> = (props) => {
           .map((item, index) => (
             <ListItem key={item.label} component="div" onClick={item.action} style={{ padding: 0 }}>
               <OverviewActionItem $delay={index}>
-                <OverviewActionIcon className="overview-action-icon" style={{ color: item.color }}>
+                <OverviewActionIcon style={{ color: item.color }}>
                   <item.Icon />
                 </OverviewActionIcon>
                 <ListItemText
                   primary={item.label}
                   secondary={item.description}
                   slotProps={{
-                    primary: {
-                      style: {
-                        fontWeight: 500,
-                        letterSpacing: '0.05em',
-                      },
-                    },
-                    secondary: {
-                      style: {
-                        fontSize: '0.75rem',
-                        opacity: 0.5,
-                      },
-                    },
+                    secondary: { style: { fontSize: '0.75rem', opacity: 0.5 } },
                   }}
                 />
               </OverviewActionItem>

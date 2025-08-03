@@ -1,10 +1,12 @@
 import { CircularProgress } from '@mui/material'
 import { FC } from 'react'
 
+import { Centered } from './shared/NoteContainer'
+
 const LoadingScreen: FC = () => (
-  <div className="flex items-center justify-center h-full w-full">
+  <Centered>
     <CircularProgress />
-  </div>
+  </Centered>
 )
 
 export default LoadingScreen

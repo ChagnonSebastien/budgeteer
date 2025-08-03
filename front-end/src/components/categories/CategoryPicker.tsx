@@ -68,7 +68,6 @@ const CategoryPicker: FC<Props> = (props) => {
             ev.target.blur()
           }}
           required={selectedConfig.mode === 'single'}
-          className="w-full"
         />
       </Row>
       <ContentDialog open={showModal} onClose={() => setShowModal(false)}>

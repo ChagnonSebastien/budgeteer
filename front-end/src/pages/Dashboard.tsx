@@ -159,88 +159,89 @@ const Dashboard: FC = () => {
   const savingsRate = totalInflow > 0 ? surplus / totalInflow : 0
 
   return (
-    <ContentWithHeader title="Dashboard" button="menu" contentMaxWidth="50rem" contentPadding="1rem">
-      {/* Net Worth */}
-
-      <NoteContainer
-        title="Net Worth"
-        sx={{
-          display: 'flex',
-          width: '100%',
-          justifyContent: 'center',
-        }}
-      >
-        <p
-          style={{
-            margin: 0,
-            fontSize: '2.5rem',
-            fontWeight: 'bold',
+    <ContentWithHeader title="Dashboard" action="menu" withPadding withScrolling>
+      <div style={{ maxWidth: '50rem', margin: 'auto' }}>
+        {/* Net Worth */}
+        <NoteContainer
+          title="Net Worth"
+          sx={{
+            display: 'flex',
+            width: '100%',
+            justifyContent: 'center',
           }}
         >
-          {formatFull(defaultCurrency, netWorth, privacyMode)}
-        </p>
-      </NoteContainer>
+          <p
+            style={{
+              margin: 0,
+              fontSize: '2.5rem',
+              fontWeight: 'bold',
+            }}
+          >
+            {formatFull(defaultCurrency, netWorth, privacyMode)}
+          </p>
+        </NoteContainer>
 
-      {/* Investments */}
+        {/* Investments */}
 
-      <NoteContainer title="Investments Performance">
-        <div style={{ height: '20rem', width: '100%' }}>
-          <InvestmentGainLineChart fromDate={lastYear} toDate={today} />
-        </div>
-      </NoteContainer>
+        <NoteContainer title="Investments Performance">
+          <div style={{ height: '40vh', width: '100%' }}>
+            <InvestmentGainLineChart fromDate={lastYear} toDate={today} />
+          </div>
+        </NoteContainer>
 
-      {/* Cash Flow */}
+        {/* Cash Flow */}
 
-      <NoteContainer title="Cash Flow">
-        <div style={{ height: '20rem', width: '100%' }}>
-          <CashFlowBarChart data={cashFlowData} />
-        </div>
-        <Box height="1rem" />
-        <Row
-          style={{
-            justifyContent: 'space-around',
-          }}
-        >
-          <Column>
-            <span
-              style={{
-                fontSize: '0.75rem',
-                textTransform: 'uppercase',
-                color: '#888',
-              }}
-            >
-              Savings Rate
-            </span>
-            <span
-              style={{
-                fontSize: '1.25rem',
-                fontWeight: 600,
-              }}
-            >
-              {(savingsRate * 100).toFixed(1)}%
-            </span>
-          </Column>
-          <Column>
-            <span
-              style={{
-                fontSize: '0.75rem',
-                textTransform: 'uppercase',
-                color: '#888',
-              }}
-            >
-              Surplus
-            </span>
-            <span
-              style={{
-                fontSize: '1.25rem',
-                fontWeight: 600,
-              }}
-            >
-              {formatFull(defaultCurrency, surplus, privacyMode)}
-            </span>
-          </Column>
-        </Row>
-      </NoteContainer>
+        <NoteContainer title="Cash Flow">
+          <div style={{ height: '40vh', width: '100%' }}>
+            <CashFlowBarChart data={cashFlowData} />
+          </div>
+          <Box height="1rem" />
+          <Row
+            style={{
+              justifyContent: 'space-around',
+            }}
+          >
+            <Column>
+              <span
+                style={{
+                  fontSize: '0.75rem',
+                  textTransform: 'uppercase',
+                  color: '#888',
+                }}
+              >
+                Savings Rate
+              </span>
+              <span
+                style={{
+                  fontSize: '1.25rem',
+                  fontWeight: 600,
+                }}
+              >
+                {(savingsRate * 100).toFixed(1)}%
+              </span>
+            </Column>
+            <Column>
+              <span
+                style={{
+                  fontSize: '0.75rem',
+                  textTransform: 'uppercase',
+                  color: '#888',
+                }}
+              >
+                Surplus
+              </span>
+              <span
+                style={{
+                  fontSize: '1.25rem',
+                  fontWeight: 600,
+                }}
+              >
+                {formatFull(defaultCurrency, surplus, privacyMode)}
+              </span>
+            </Column>
+          </Row>
+        </NoteContainer>
+      </div>
     </ContentWithHeader>
   )
 }

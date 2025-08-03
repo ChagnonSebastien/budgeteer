@@ -3,7 +3,6 @@ import { useNavigate, useParams } from 'react-router-dom'
 
 import CategoryForm from '../components/categories/CategoryForm'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
-import { CrudFormContainer } from '../components/shared/CrudFormContainer'
 import Category from '../domain/model/category'
 import { CategoryServiceContext } from '../service/ServiceContext'
 
@@ -37,10 +36,8 @@ const EditCategoryPage: FC = () => {
   }
 
   return (
-    <ContentWithHeader title="Edit category" button="return">
-      <CrudFormContainer className="p-4">
-        <CategoryForm onSubmit={onSubmit} submitText="Save changes" initialCategory={selectedCategory} />
-      </CrudFormContainer>
+    <ContentWithHeader title="Edit category" action="return" withPadding withScrolling>
+      <CategoryForm onSubmit={onSubmit} submitText="Save changes" initialCategory={selectedCategory} />
     </ContentWithHeader>
   )
 }

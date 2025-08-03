@@ -278,12 +278,7 @@ const TrendsChart: FC<Props> = (props) => {
           <GraphTooltip style={{ whiteSpace: 'nowrap' }}>
             <GraphTooltipDate>{label(new Date(props.indexValue))}</GraphTooltipDate>
             {!privacyMode && (
-              <div
-                className="text-[1.1rem] font-medium"
-                style={{
-                  color: props.value! < 0 ? theme.palette.error.light : theme.palette.success.light,
-                }}
-              >
+              <div style={{ color: props.value! < 0 ? theme.palette.error.light : theme.palette.success.light }}>
                 {formatFull(defaultCurrency, props.value, privacyMode)}
               </div>
             )}

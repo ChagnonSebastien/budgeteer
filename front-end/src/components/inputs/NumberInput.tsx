@@ -38,10 +38,6 @@ interface Props {
 export const NumberInput: FC<Props> = (props) => {
   const { value, setValue, label } = props
 
-  const classNameFromStatus = (status: NumberInputFieldState) => {
-    return `${!status.isValid && 'ion-invalid'} ${status.hasVisited && 'ion-touched'}`
-  }
-
   const onInput = (newValue: string) => {
     const sanitizedInput = `0${newValue.replace(',', '.')}`
     const textError = validateNumber(sanitizedInput)
@@ -59,7 +55,6 @@ export const NumberInput: FC<Props> = (props) => {
       label={label}
       variant="standard"
       value={value.value}
-      className={`w-full ${classNameFromStatus(value)}`}
       onChange={(ev) => onInput(ev.target.value as string)}
       helperText={value.hasVisited ? value.errorText : ''}
       error={value.hasVisited && !!value.errorText}

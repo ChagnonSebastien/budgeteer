@@ -21,7 +21,7 @@ const CategoryPage: FC = () => {
   const scrollingContainerRef = useRef<HTMLDivElement>(null)
 
   return (
-    <ContentWithHeader title="Categories" button="menu" contentMaxWidth="100%" contentOverflowY="hidden">
+    <ContentWithHeader title="Categories" action="menu" withPadding>
       <ScrollingOverButton
         button={{ text: 'New', onClick: () => navigate('/categories/new') }}
         scrollingContainerRef={scrollingContainerRef}

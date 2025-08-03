@@ -197,8 +197,10 @@ const TransactionPage: FC = () => {
   return (
     <ContentWithHeader
       title="Transactions"
-      button="menu"
-      rightButton={
+      withScrolling={!splitHorizontal}
+      action="menu"
+      setContentRef={setContentRef}
+      rightContent={
         <>
           {graphType === 'line' ? (
             <IconButton
@@ -253,10 +255,6 @@ const TransactionPage: FC = () => {
           </Menu>
         </>
       }
-      contentMaxWidth="100%"
-      contentOverflowY="hidden"
-      contentPadding="0"
-      setContentRef={setContentRef}
     >
       <SpeedDial
         ariaLabel="Create new transaction"
@@ -303,9 +301,9 @@ const TransactionPage: FC = () => {
           secondZoneStyling={{ grow: false, scroll: true }}
         />
       ) : (
-        <div className="h-full flex flex-col overflow-y-auto">
+        <div>
           {graphSection}
-          <div className="flex-shrink-0">{listSection}</div>
+          <div>{listSection}</div>
         </div>
       )}
 

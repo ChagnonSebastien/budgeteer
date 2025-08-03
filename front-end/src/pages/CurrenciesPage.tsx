@@ -93,8 +93,9 @@ const CurrenciesPage: FC = () => {
   return (
     <ContentWithHeader
       title="Currencies"
-      button="menu"
-      rightButton={
+      action="menu"
+      withPadding
+      rightContent={
         <>
           <IconButton onClick={(e) => setAnchorEl(e.currentTarget)}>
             <IconLib.MdSettings size="1.5rem" />
@@ -113,45 +114,35 @@ const CurrenciesPage: FC = () => {
           </Menu>
         </>
       }
-      contentMaxWidth="100%"
-      contentOverflowY="hidden"
     >
       <ScrollingOverButton
         button={{ text: 'New', onClick: () => navigate('/currencies/new') }}
         scrollingContainerRef={scrollingContainerRef}
       >
-        {currencies.length === 0 ? (
-          <div className="text-center py-8">
-            <Typography color="text.secondary">No currencies added yet</Typography>
-          </div>
-        ) : (
-          <>
-            <CustomScrollbarContainer
-              ref={scrollingContainerRef}
-              style={{
-                overflowY: 'auto',
-                flexGrow: 1,
-                paddingBottom: '4rem',
-                position: 'relative',
-              }}
-            >
-              <ItemList
-                items={currencies}
-                ItemComponent={CurrencyCard}
-                selectConfiguration={{
-                  mode: 'click',
-                  onClick: (item: Currency) => setClickedCurrency(currencies.find((c) => c.id === item.id) ?? null),
-                }}
-                additionalItemsProps={{
-                  total: getTotalForCurrency,
-                }}
-                filter={(item: Currency) => showZeroBalances || getTotalForCurrency(item.id) !== 0}
-              />
-            </CustomScrollbarContainer>
+        <CustomScrollbarContainer
+          ref={scrollingContainerRef}
+          style={{
+            overflowY: 'auto',
+            flexGrow: 1,
+            paddingBottom: '4rem',
+            position: 'relative',
+          }}
+        >
+          <ItemList
+            items={currencies}
+            ItemComponent={CurrencyCard}
+            selectConfiguration={{
+              mode: 'click',
+              onClick: (item: Currency) => setClickedCurrency(currencies.find((c) => c.id === item.id) ?? null),
+            }}
+            additionalItemsProps={{
+              total: getTotalForCurrency,
+            }}
+            filter={(item: Currency) => showZeroBalances || getTotalForCurrency(item.id) !== 0}
+          />
+        </CustomScrollbarContainer>
 
-            <SearchOverlay filter={filter} setFilter={setFilter} placeholder="Search currencies..." />
-          </>
-        )}
+        <SearchOverlay filter={filter} setFilter={setFilter} placeholder="Search currencies..." />
       </ScrollingOverButton>
 
       <ContentDialog

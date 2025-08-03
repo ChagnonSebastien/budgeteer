@@ -48,10 +48,9 @@ const AccountsPage: FC = () => {
   return (
     <ContentWithHeader
       title="Accounts"
-      button="menu"
-      contentMaxWidth="100%"
-      contentOverflowY="hidden"
-      rightButton={
+      action="menu"
+      withPadding
+      rightContent={
         <>
           <IconButton onClick={(e) => setAnchorEl(e.currentTarget)}>
             <IconLib.MdSettings size="1.5rem" />

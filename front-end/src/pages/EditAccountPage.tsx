@@ -3,7 +3,6 @@ import { useNavigate, useParams } from 'react-router-dom'
 
 import AccountForm from '../components/accounts/AccountForm'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
-import { CrudFormContainer } from '../components/shared/CrudFormContainer'
 import Account from '../domain/model/account'
 import { AccountServiceContext } from '../service/ServiceContext'
 
@@ -35,10 +34,8 @@ const EditAccountPage: FC = () => {
   }
 
   return (
-    <ContentWithHeader title="Edit account" button="return">
-      <CrudFormContainer className="p-4">
-        <AccountForm onSubmit={onSubmit} submitText="Save changes" initialAccount={selectedAccount} />
-      </CrudFormContainer>
+    <ContentWithHeader title="Edit account" action="return" withPadding withScrolling>
+      <AccountForm onSubmit={onSubmit} submitText="Save changes" initialAccount={selectedAccount} />
     </ContentWithHeader>
   )
 }

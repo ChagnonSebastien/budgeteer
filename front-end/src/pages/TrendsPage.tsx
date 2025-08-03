@@ -3,7 +3,7 @@ import { FC, useMemo } from 'react'
 import { default as styled } from 'styled-components'
 
 import CategoryPicker from '../components/categories/CategoryPicker'
-import { ControlsContainer, GraphContainer, GraphPageContainer } from '../components/graphing/GraphStyledComponents'
+import { GraphContainer, GraphPageContainer, SecondDivision } from '../components/graphing/GraphStyledComponents'
 import TrendsChart, { Grouping } from '../components/graphing/TrendsChart'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
 import { Column, Row } from '../components/shared/NoteContainer'
@@ -54,113 +54,105 @@ const TrendsPage: FC = () => {
   const { height: contentHeight, ref: setContentRef } = useElementDimensions(600, 600)
 
   return (
-    <ContentWithHeader
-      title="Trends"
-      button="menu"
-      contentMaxWidth="100%"
-      contentOverflowY="hidden"
-      contentPadding="1rem 0 0 0"
-    >
+    <ContentWithHeader title="Trends" action="menu">
       <GraphPageContainer ref={setContentRef}>
         <GraphContainer height={contentHeight - optionsHeight}>
           <TrendsChart categories={selectedCategories} grouping={grouping} years={years} />
         </GraphContainer>
 
-        <ControlsContainer ref={setOptionsRef}>
-          <Column style={{ gap: '1rem' }}>
-            <CategoryPicker
-              selectedConfig={{
-                mode: 'multi',
-                selectedItems: selectedCategories,
-                onSelectItems: (categories) =>
-                  updateQueryParams({ categories: categories.length === 0 ? null : JSON.stringify(categories) }),
+        <SecondDivision ref={setOptionsRef}>
+          <CategoryPicker
+            selectedConfig={{
+              mode: 'multi',
+              selectedItems: selectedCategories,
+              onSelectItems: (categories) =>
+                updateQueryParams({ categories: categories.length === 0 ? null : JSON.stringify(categories) }),
+            }}
+            labelText="Filter by categories"
+            valueText={selectedCategories.length === 0 ? 'All Categories' : undefined}
+          />
+
+          <Column style={{ gap: '0.5rem' }}>
+            <Typography
+              style={{
+                color: 'rgba(255, 255, 255, 0.7)',
+                fontSize: '0.75rem',
+                fontWeight: 400,
+                lineHeight: '1.4375em',
+                letterSpacing: '0.00938em',
+                fontFamily: "'Roboto', 'Helvetica', 'Arial', sans-serif",
               }}
-              labelText="Filter by categories"
-              valueText={selectedCategories.length === 0 ? 'All Categories' : undefined}
-            />
+            >
+              Time Range
+            </Typography>
 
-            <Column style={{ gap: '0.5rem' }}>
-              <Typography
-                style={{
-                  color: 'rgba(255, 255, 255, 0.7)',
-                  fontSize: '0.75rem',
-                  fontWeight: 400,
-                  lineHeight: '1.4375em',
-                  letterSpacing: '0.00938em',
-                  fontFamily: "'Roboto', 'Helvetica', 'Arial', sans-serif",
-                }}
-              >
-                Time Range
-              </Typography>
-
-              <Row style={{ alignItems: 'center', gap: '1rem' }}>
-                <Button
-                  variant="outlined"
-                  size="small"
-                  onClick={() => years > 1 && updateQueryParams({ years: String(years - 1) })}
-                  disabled={years <= 1}
-                  style={{ minWidth: '2rem', width: '2rem', height: '2rem', padding: 0 }}
-                >
-                  -
-                </Button>
-                <Row
-                  style={{
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flex: 1,
-                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                    borderRadius: '0.25rem',
-                    padding: '0 0.75rem',
-                  }}
-                >
-                  <YearInput
-                    type="number"
-                    min="1"
-                    value={years}
-                    onChange={(e) => {
-                      const value = parseInt(e.target.value)
-                      if (value >= 1) {
-                        updateQueryParams({ years: String(value) })
-                      }
-                    }}
-                    onFocus={(e) => e.target.select()}
-                  />
-                  <span style={{ marginLeft: '0.5rem' }}>{years === 1 ? 'Year' : 'Years'}</span>
-                </Row>
-                <Button
-                  variant="outlined"
-                  size="small"
-                  onClick={() => updateQueryParams({ years: String(years + 1) })}
-                  style={{ minWidth: '2rem', width: '2rem', height: '2rem', padding: 0 }}
-                >
-                  +
-                </Button>
-              </Row>
-            </Column>
-
-            <Row>
-              <ToggleButtonGroup
-                value={grouping}
-                exclusive
-                onChange={(_event, value) => value && updateQueryParams({ grouping: value })}
+            <Row style={{ alignItems: 'center', gap: '1rem' }}>
+              <Button
+                variant="outlined"
                 size="small"
-                sx={{
-                  minHeight: '2rem',
-                  width: '100%',
-                  '& .MuiToggleButton-root': {
-                    flex: 1,
-                    textTransform: 'none',
-                    fontSize: '0.9rem',
-                  },
+                onClick={() => years > 1 && updateQueryParams({ years: String(years - 1) })}
+                disabled={years <= 1}
+                style={{ minWidth: '2rem', width: '2rem', height: '2rem', padding: 0 }}
+              >
+                -
+              </Button>
+              <Row
+                style={{
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flex: 1,
+                  backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                  borderRadius: '0.25rem',
+                  padding: '0 0.75rem',
                 }}
               >
-                <ToggleButton value="months">Monthly</ToggleButton>
-                <ToggleButton value="quarters">Quarterly</ToggleButton>
-                <ToggleButton value="years">Yearly</ToggleButton>
-              </ToggleButtonGroup>
+                <YearInput
+                  type="number"
+                  min="1"
+                  value={years}
+                  onChange={(e) => {
+                    const value = parseInt(e.target.value)
+                    if (value >= 1) {
+                      updateQueryParams({ years: String(value) })
+                    }
+                  }}
+                  onFocus={(e) => e.target.select()}
+                />
+                <span style={{ marginLeft: '0.5rem' }}>{years === 1 ? 'Year' : 'Years'}</span>
+              </Row>
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={() => updateQueryParams({ years: String(years + 1) })}
+                style={{ minWidth: '2rem', width: '2rem', height: '2rem', padding: 0 }}
+              >
+                +
+              </Button>
             </Row>
           </Column>
-        </ControlsContainer>
+
+          <Row>
+            <ToggleButtonGroup
+              value={grouping}
+              exclusive
+              onChange={(_event, value) => value && updateQueryParams({ grouping: value })}
+              size="small"
+              sx={{
+                minHeight: '2rem',
+                width: '100%',
+                '& .MuiToggleButton-root': {
+                  flex: 1,
+                  textTransform: 'none',
+                  fontSize: '0.9rem',
+                },
+              }}
+            >
+              <ToggleButton value="months">Monthly</ToggleButton>
+              <ToggleButton value="quarters">Quarterly</ToggleButton>
+              <ToggleButton value="years">Yearly</ToggleButton>
+            </ToggleButtonGroup>
+          </Row>
+        </SecondDivision>
       </GraphPageContainer>
     </ContentWithHeader>
   )

@@ -1,4 +1,4 @@
-import { Box, SxProps, Theme } from '@mui/material'
+import { Box, SxProps, Theme, Typography } from '@mui/material'
 import React, { FC, ReactNode } from 'react'
 import { css, default as styled } from 'styled-components'
 
@@ -27,6 +27,18 @@ const NoteContainer: FC<Props> = (props) => (
   </>
 )
 
+export const MaxSpaceNoOverflow = styled.div`
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+`
+
+export const Centered = styled(MaxSpaceNoOverflow)`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+`
+
 export const Column = styled.div`
   display: flex;
   flex-direction: column;
@@ -35,6 +47,10 @@ export const Column = styled.div`
 export const Row = styled.div`
   display: flex;
   flex-direction: row;
+`
+
+export const TinyHeader = styled(Typography)`
+  font-size: 0.75rem;
 `
 
 export const GradientCard = styled.div<{

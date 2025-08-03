@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom'
 
 import AccountForm from '../components/accounts/AccountForm'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
-import { CrudFormContainer } from '../components/shared/CrudFormContainer'
 import Account from '../domain/model/account'
 import { AccountServiceContext } from '../service/ServiceContext'
 
@@ -30,10 +29,8 @@ const CreateAccountPage: FC = () => {
   }, [])
 
   return (
-    <ContentWithHeader title="Create new account" button="return">
-      <CrudFormContainer className="p-4">
-        <AccountForm onSubmit={onSubmit} submitText="Create" />
-      </CrudFormContainer>
+    <ContentWithHeader title="Create new account" action="return" withPadding withScrolling>
+      <AccountForm onSubmit={onSubmit} submitText="Create" />
     </ContentWithHeader>
   )
 }

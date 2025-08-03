@@ -175,7 +175,6 @@ function ItemPicker<ItemID, T extends NamedItem<ItemID, T>, AdditionalItemProps>
           setShowModal(true)
           e.target.blur()
         }}
-        className="w-full"
       />
       <ContentDialog open={showModal} onClose={() => setShowModal(false)}>
         <DialogTitle>{dialogTitle || `Select ${labelText}`}</DialogTitle>

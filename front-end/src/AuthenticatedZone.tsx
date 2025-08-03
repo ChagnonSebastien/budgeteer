@@ -7,6 +7,7 @@ import CurrencyForm from './components/currencies/CurrencyForm'
 import LoadingScreen from './components/LoadingScreen'
 import DrawerWrapper from './components/Menu'
 import ContentWithHeader from './components/shared/ContentWithHeader'
+import { Centered } from './components/shared/NoteContainer'
 import Currency, { CurrencyUpdatableFields, RateAutoupdateSettings } from './domain/model/currency'
 import { IdIdentifier } from './domain/model/Unique'
 import AccountsBalancePage from './pages/AccountsBalancePage'
@@ -74,7 +75,7 @@ const replayStore = new ReplayStore(IndexedDB)
 const MustBeConnectedToInternetOnFirstSetup: FC<{ children: ReactNode; hasInternet: boolean }> = ({
   children,
   hasInternet,
-}) => (hasInternet ? children : <div className="centered">Internet connection required on first use</div>)
+}) => (hasInternet ? children : <Centered>Internet connection required on first use</Centered>)
 
 const CreateDefaultCurrency: FC<{
   create: (data: CurrencyUpdatableFields, identity?: IdIdentifier) => Promise<Currency>
@@ -87,7 +88,7 @@ const CreateDefaultCurrency: FC<{
       {(user) =>
         user.default_currency === null ? (
           <MustBeConnectedToInternetOnFirstSetup hasInternet={hasInternet}>
-            <ContentWithHeader title="What's your main currency?" button="none">
+            <ContentWithHeader title="What's your main currency?">
               <div style={{ padding: '1rem' }}>
                 <CurrencyForm
                   onSubmit={async (currencyData: Partial<CurrencyUpdatableFields>) => {

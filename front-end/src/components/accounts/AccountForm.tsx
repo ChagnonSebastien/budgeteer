@@ -1,4 +1,4 @@
-import { TextField, Typography } from '@mui/material'
+import { TextField } from '@mui/material'
 import { FC, FormEvent, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { default as styled } from 'styled-components'
 
@@ -8,7 +8,7 @@ import CurrencyPicker from '../currencies/CurrencyPicker'
 import { IconToolsContext } from '../icons/IconTools'
 import { NumberInput, NumberInputFieldState } from '../inputs/NumberInput'
 import FormWrapper from '../shared/FormWrapper'
-import { Row } from '../shared/NoteContainer'
+import { Row, TinyHeader } from '../shared/NoteContainer'
 
 const IconButton = styled.div`
   margin: 1rem 0;
@@ -35,9 +35,7 @@ const AccountForm: FC<Props> = (props) => {
 
   const { state: accounts } = useContext(AccountServiceContext)
   const { state: currencies } = useContext(CurrencyServiceContext)
-  const { iconTypeFromName } = useContext(IconToolsContext)
-  const Plus = useMemo(() => iconTypeFromName('BsPlusCircle'), [iconTypeFromName])
-  const Minus = useMemo(() => iconTypeFromName('BsDashCircle'), [iconTypeFromName])
+  const { IconLib } = useContext(IconToolsContext)
 
   const [isMine] = useState(initialAccount?.isMine ?? true)
   const [name, setName] = useState(initialAccount?.name ?? '')
@@ -152,7 +150,6 @@ const AccountForm: FC<Props> = (props) => {
     <FormWrapper onSubmit={handleSubmit} submitText={submitText} isValid={isFormValid} errorMessage={showErrorToast}>
       <TextField
         type="text"
-        className="w-full"
         label="Account name"
         variant="standard"
         placeholder="e.g., Savings"
@@ -173,7 +170,6 @@ const AccountForm: FC<Props> = (props) => {
 
       <TextField
         type="text"
-        className="w-full"
         label="Account Type"
         variant="standard"
         placeholder="e.g., TFSA"
@@ -184,7 +180,6 @@ const AccountForm: FC<Props> = (props) => {
 
       <TextField
         type="text"
-        className="w-full"
         label="Financial Institution"
         variant="standard"
         placeholder="e.g., National Bank of Canada"
@@ -194,21 +189,17 @@ const AccountForm: FC<Props> = (props) => {
       />
 
       <div>
-        <Typography color="textSecondary" className="origin-left scale-75" style={{ maxWidth: 'calc(100% / 0.75)' }}>
-          Starting balances
-        </Typography>
+        <TinyHeader color="textSecondary">Starting balances</TinyHeader>
 
         <div style={{ height: '1rem' }} />
 
         {initialAmounts.map((i) => (
-          <Row key={i.uid} style={{ alignItems: 'start' }}>
+          <Row key={i.uid} style={{ alignItems: 'start', gap: '1rem' }}>
             <IconButton
               onClick={() => setInitialAmount((prevState) => prevState.filter((state) => state.uid !== i.uid))}
             >
-              <Minus className="text-2xl" />
+              <IconLib.BsDashCircle size="1.25rem" />
             </IconButton>
-
-            <div style={{ width: '1rem', flexShrink: 0 }} />
 
             <CurrencyPicker
               errorText={NoError}
@@ -232,8 +223,6 @@ const AccountForm: FC<Props> = (props) => {
               }}
               labelText="Currency"
             />
-
-            <div style={{ width: '1rem', flexShrink: 0 }} />
 
             <NumberInput
               label="Initial balance"
@@ -273,7 +262,7 @@ const AccountForm: FC<Props> = (props) => {
               ])
             }
           >
-            <Plus className="text-2xl" />
+            <IconLib.BsPlusCircle size="1.25rem" />
           </IconButton>
         )}
       </div>

@@ -1,17 +1,42 @@
-import { Button, Checkbox, FormControlLabel, Stack, TextField } from '@mui/material'
+import { Button, Checkbox, FormControlLabel, TextField } from '@mui/material'
 import { FC, FormEvent, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { HexColorPicker } from 'react-colorful'
+import { default as styled } from 'styled-components'
 
 import CategoryPicker from './CategoryPicker'
 import Category from '../../domain/model/category'
 import MixedAugmentation from '../../service/MixedAugmentation'
 import { CategoryServiceContext } from '../../service/ServiceContext'
-import IconCapsule from '../icons/IconCapsule'
+import IconCapsule, { IconProperties } from '../icons/IconCapsule'
 import IconList from '../icons/IconList'
+import { IconToolsContext } from '../icons/IconTools'
 import ContentDialog from '../shared/ContentDialog'
 import ContentWithHeader from '../shared/ContentWithHeader'
 import FormWrapper from '../shared/FormWrapper'
-import { Row } from '../shared/NoteContainer'
+import { Column, Row } from '../shared/NoteContainer'
+import { CustomScrollbarContainer } from '../shared/ScrollingOverButton'
+
+const SizedHexColorPicker = styled(HexColorPicker)`
+  &.react-colorful {
+    width: min(30rem, calc(100vw / 2));
+    height: min(30rem, calc(100vh / 2));
+  }
+`
+
+type IconPropertyEditorProps = {
+  buttonText: string
+  onClick(): void
+  indicatorIconProperties: IconProperties
+}
+
+const IconPropertyEditor: FC<IconPropertyEditorProps> = (props) => (
+  <Row style={{ gap: '1rem' }}>
+    <Button onClick={props.onClick} variant="outlined" color="secondary" fullWidth>
+      {props.buttonText}
+    </Button>
+    <IconCapsule size="2rem" border="1px gray solid" {...props.indicatorIconProperties} />
+  </Row>
+)
 
 interface Props {
   initialCategory?: Category
@@ -24,6 +49,7 @@ const CategoryForm: FC<Props> = (props) => {
 
   const { state: categories } = useContext(CategoryServiceContext)
   const { rootCategory } = useContext(MixedAugmentation)
+  const { IconLib } = useContext(IconToolsContext)
 
   const editingRoot = useMemo(() => initialCategory?.id === rootCategory.id, [initialCategory, rootCategory])
 
@@ -103,7 +129,6 @@ const CategoryForm: FC<Props> = (props) => {
         variant="standard"
         placeholder="e.g., Groceries"
         value={name}
-        className="w-full"
         onChange={(ev) => {
           setName(ev.target.value as string)
           setErrors({ categoryName: validateCategoryName(ev.target.value as string) })
@@ -129,84 +154,76 @@ const CategoryForm: FC<Props> = (props) => {
         label="Is a fixed cost"
       />
 
-      <div className="flex mt-4 items-center">
-        <Stack spacing=".25rem" className="flex flex-col flex-grow">
-          <Row style={{ alignItems: 'start' }}>
-            <Button onClick={() => setShowIconModal(true)} color="secondary" sx={{ flexGrow: 1 }} variant="outlined">
-              Select Icon
-            </Button>
-            <div style={{ width: '1rem', flexShrink: 0 }} />
-            <IconCapsule
-              iconName={selectedIcon}
-              size="2rem"
-              backgroundColor="transparent"
-              color="gray"
-              border="1px gray solid"
-              flexShrink={0}
-            />
-          </Row>
+      <Row style={{ alignItems: 'center', gap: '1rem' }}>
+        <Column style={{ gap: '0.25rem', flexGrow: 1 }}>
+          <IconPropertyEditor
+            buttonText="Select Icon"
+            onClick={() => setShowIconModal(true)}
+            indicatorIconProperties={{
+              iconName: selectedIcon,
+              color: 'gray',
+              backgroundColor: 'transparent',
+            }}
+          />
 
-          <Row style={{ alignItems: 'start' }}>
-            <Button
-              onClick={() => setShowOuterColorModal(true)}
-              className="flex-grow"
-              variant="outlined"
-              color="secondary"
-            >
-              Select Outer Color
-            </Button>
-            <div style={{ width: '1rem', flexShrink: 0 }} />
-            <IconCapsule
-              iconName="GrX"
-              size="2rem"
-              backgroundColor={outerColor}
-              color="transparent"
-              border="1px gray solid"
-              flexShrink={0}
-            />
-          </Row>
+          <IconPropertyEditor
+            buttonText="Select Outer Color"
+            onClick={() => setShowOuterColorModal(true)}
+            indicatorIconProperties={{
+              iconName: 'GrX',
+              color: 'transparent',
+              backgroundColor: outerColor,
+            }}
+          />
 
-          <Row style={{ alignItems: 'start' }}>
-            <Button
-              onClick={() => setShowInnerColorModal(true)}
-              className="flex-grow"
-              variant="outlined"
-              color="secondary"
-            >
-              Select Inner Color
-            </Button>
-            <div style={{ width: '1rem', flexShrink: 0 }} />
-            <IconCapsule
-              iconName="GrX"
-              size="2rem"
-              backgroundColor={innerColor}
-              color="transparent"
-              border="1px gray solid"
-              flexShrink={0}
-            />
-          </Row>
-        </Stack>
+          <IconPropertyEditor
+            buttonText="Select Inner Color"
+            onClick={() => setShowInnerColorModal(true)}
+            indicatorIconProperties={{
+              iconName: 'GrX',
+              color: 'transparent',
+              backgroundColor: innerColor,
+            }}
+          />
+        </Column>
         <ContentDialog open={showIconModal} onClose={() => setShowIconModal(false)}>
           <ContentWithHeader
             title="Select Icon"
-            button="none"
-            onSearch={setFilter}
-            onCancel={() => setShowIconModal(false)}
+            withPadding
+            action={{ Icon: IconLib.MdKeyboardBackspace, onClick: () => setShowIconModal(false) }}
           >
-            <IconList filter={filter} onSelect={onIconSelect} />
+            <TextField
+              onChange={(event) => setFilter(event.target.value ?? '')}
+              variant="standard"
+              placeholder="Search..."
+              autoFocus
+              fullWidth
+            />
+            <CustomScrollbarContainer style={{ maxHeight: 'calc(100vh - 15rem)' }}>
+              <IconList filter={filter} onSelect={onIconSelect} />
+            </CustomScrollbarContainer>
           </ContentWithHeader>
         </ContentDialog>
         <ContentDialog onClose={() => setShowOuterColorModal(false)} open={showOuterColorModal}>
-          <HexColorPicker color={outerColor} onChange={setOuterColor} className="flex-grow overflow-hidden" />
+          <ContentWithHeader
+            title="Select Outer Color"
+            action={{ Icon: IconLib.MdKeyboardBackspace, onClick: () => setShowOuterColorModal(false) }}
+          >
+            <SizedHexColorPicker color={outerColor} onChange={setOuterColor} />
+          </ContentWithHeader>
         </ContentDialog>
         <ContentDialog onClose={() => setShowInnerColorModal(false)} open={showInnerColorModal}>
-          <HexColorPicker color={innerColor} onChange={setInnerColor} className="flex-grow overflow-hidden" />
+          <ContentWithHeader
+            title="Select Inner Color"
+            action={{ Icon: IconLib.MdKeyboardBackspace, onClick: () => setShowInnerColorModal(false) }}
+          >
+            <SizedHexColorPicker color={innerColor} onChange={setInnerColor} />
+          </ContentWithHeader>
         </ContentDialog>
-        <div style={{ width: '1rem', flexShrink: 0 }} />
-        <div className="flex flex-col justify-center p-4 border border-gray-500">
+        <div style={{ padding: '1rem', border: '2px solid grey', borderRadius: '0.5rem' }}>
           <IconCapsule iconName={selectedIcon} size="5rem" color={innerColor} backgroundColor={outerColor} />
         </div>
-      </div>
+      </Row>
     </FormWrapper>
   )
 }

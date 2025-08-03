@@ -13,22 +13,6 @@ import { formatAmount } from '../domain/model/currency'
 import MixedAugmentation from '../service/MixedAugmentation'
 import UserStore from '../UserStore'
 
-const ContentContainer = styled.div<{ $viewType: 'table' | 'chart' }>`
-  height: ${(props) => (props.$viewType === 'chart' ? '100%' : 'auto')};
-  padding: ${(props) => (props.$viewType === 'chart' ? 0 : '1rem')};
-
-  ${(props) =>
-    props.$viewType === 'chart' &&
-    `
-    display: flex;
-    justify-content: center;
-    
-    & > div {
-      max-width: 100vh;
-    }
-  `}
-`
-
 const StyledTable = styled.table`
   width: 100%;
   border-collapse: separate;
@@ -290,8 +274,11 @@ const CostsAnalysisPage: FC = () => {
   return (
     <ContentWithHeader
       title="Costs Analysis"
-      button="menu"
-      rightButton={
+      action="menu"
+      withPadding
+      withScrolling={viewType === 'table'}
+      setContentRef={setContentRef}
+      rightContent={
         <>
           {viewType === 'table' ? (
             <IconButton
@@ -317,30 +304,26 @@ const CostsAnalysisPage: FC = () => {
           </IconButton>
         </>
       }
-      contentMaxWidth={viewType === 'chart' ? '100%' : '50rem'}
-      contentOverflowY={viewType === 'chart' ? 'hidden' : 'auto'}
-      contentPadding="0"
-      setContentRef={setContentRef}
     >
-      <ContentContainer $viewType={viewType}>
-        <CostsAnalysisSetup
-          open={showSetup || showOptions}
-          grossIncome={grossIncome}
-          setGrossIncome={(value) => {
-            setGrossIncome(value)
-            userStore.upsertGrossIncome(value)
-          }}
-          incomeCategory={incomeCategory}
-          setIncomeCategory={(value) => {
-            setIncomeCategory(value)
-            userStore.upsertIncomeCategoryId(value)
-          }}
-          onComplete={() => {
-            setShowSetup(false)
-            setShowOptions(false)
-          }}
-        />
+      <CostsAnalysisSetup
+        open={showSetup || showOptions}
+        grossIncome={grossIncome}
+        setGrossIncome={(value) => {
+          setGrossIncome(value)
+          userStore.upsertGrossIncome(value)
+        }}
+        incomeCategory={incomeCategory}
+        setIncomeCategory={(value) => {
+          setIncomeCategory(value)
+          userStore.upsertIncomeCategoryId(value)
+        }}
+        onComplete={() => {
+          setShowSetup(false)
+          setShowOptions(false)
+        }}
+      />
 
+      <div style={{ maxWidth: '50rem', margin: 'auto' }}>
         {viewType === 'chart' ? (
           <EarningsBreakdownChart
             grossIncome={grossIncome * Math.pow(10, defaultCurrency.decimalPoints)}
@@ -488,7 +471,7 @@ const CostsAnalysisPage: FC = () => {
             </tbody>
           </StyledTable>
         )}
-      </ContentContainer>
+      </div>
     </ContentWithHeader>
   )
 }

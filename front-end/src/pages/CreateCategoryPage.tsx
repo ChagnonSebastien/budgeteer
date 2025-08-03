@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom'
 
 import CategoryForm from '../components/categories/CategoryForm'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
-import { CrudFormContainer } from '../components/shared/CrudFormContainer'
 import Category from '../domain/model/category'
 import { CategoryServiceContext } from '../service/ServiceContext'
 
@@ -34,10 +33,8 @@ const CreateCategoryPage: FC = () => {
   }, [])
 
   return (
-    <ContentWithHeader title="Create new category" button="return">
-      <CrudFormContainer className="p-4">
-        <CategoryForm onSubmit={onSubmit} submitText="Create" />
-      </CrudFormContainer>
+    <ContentWithHeader title="Create new category" action="return" withPadding withScrolling>
+      <CategoryForm onSubmit={onSubmit} submitText="Create" />
     </ContentWithHeader>
   )
 }

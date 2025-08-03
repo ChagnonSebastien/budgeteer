@@ -4,8 +4,9 @@ import { default as styled } from 'styled-components'
 
 import NoteContainer from './NoteContainer'
 
-const FormContainer = styled.form`
-  width: 100%;
+const Form = styled.form`
+  max-width: 50rem;
+  margin: auto;
 `
 
 interface Props {
@@ -31,7 +32,7 @@ const FormWrapper: FC<Props> = (props) => {
   }
 
   return (
-    <FormContainer noValidate onSubmit={handleSubmit}>
+    <Form noValidate onSubmit={handleSubmit}>
       <NoteContainer title="Form">
         <Stack spacing="1rem">{children}</Stack>
       </NoteContainer>
@@ -46,7 +47,7 @@ const FormWrapper: FC<Props> = (props) => {
         autoHideDuration={5000}
         onClose={() => setShowErrorToast('')}
       />
-    </FormContainer>
+    </Form>
   )
 }
 

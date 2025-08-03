@@ -4,10 +4,9 @@ import { createContext, FC } from 'react'
 import AuthenticatedZone from './AuthenticatedZone'
 import { IconToolsContext, useIconTools } from './components/icons/IconTools'
 import LoadingScreen from './components/LoadingScreen'
+import { Centered } from './components/shared/NoteContainer'
 import User from './domain/model/user'
 import useAuthentication from './useAuthentication'
-
-import './App.css'
 
 export const UserContext = createContext<User>({
   name: 'name',
@@ -33,11 +32,11 @@ const App: FC = () => {
   }
 
   if (!hasInternet) {
-    return <div className="centered">Internet connection required to login</div>
+    return <Centered>Internet connection required to login</Centered>
   }
 
   if (authMethods !== null && authMethods.oidc === null) {
-    return <div className="centered">Only OIDC is supported as of now</div>
+    return <Centered>Only OIDC is supported as of now</Centered>
   }
 
   if (authMethods === null || !attemptedUserVerification) {
@@ -45,11 +44,11 @@ const App: FC = () => {
   }
 
   return (
-    <div className="centered">
-      <Button variant={'contained'} disableElevation onClick={authMethods.oidc!}>
+    <Centered>
+      <Button variant="contained" disableElevation onClick={authMethods.oidc!}>
         OIDC Login
       </Button>
-    </div>
+    </Centered>
   )
 }
 

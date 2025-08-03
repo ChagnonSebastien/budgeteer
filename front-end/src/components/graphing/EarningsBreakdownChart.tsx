@@ -15,7 +15,7 @@ interface Props {
   dimensions: { width: number; height: number }
 }
 
-const EarningsBreakdownChart: FC<Props> = ({ grossIncome, netIncome, fixedCosts, variableCosts, dimensions }) => {
+const EarningsBreakdownChart: FC<Props> = ({ grossIncome, netIncome, fixedCosts, variableCosts }) => {
   const { defaultCurrency } = useContext(MixedAugmentation)
   const { privacyMode } = useContext(DrawerContext)
 
@@ -172,53 +172,51 @@ const EarningsBreakdownChart: FC<Props> = ({ grossIncome, netIncome, fixedCosts,
   }
 
   return (
-    <div className="relative" style={{ height: dimensions.height, width: dimensions.width }}>
-      <ResponsiveSankey
-        data={data}
-        margin={{ top: 50, right: window.innerWidth / 40, bottom: 50, left: window.innerWidth / 40 }}
-        align="start"
-        colors={(node) => node.nodeColor || darkColors[0]}
-        nodeOpacity={1}
-        nodeHoverOpacity={1}
-        nodeThickness={18}
-        nodeSpacing={24}
-        nodeBorderWidth={0}
-        nodeBorderColor={{
-          from: 'color',
-          modifiers: [['darker', 0.8]],
-        }}
-        nodeBorderRadius={3}
-        linkOpacity={0.5}
-        linkHoverOpacity={0.8}
-        linkContract={3}
-        enableLinkGradient={true}
-        labelOrientation="horizontal"
-        labelPadding={16}
-        labelTextColor={{
-          from: 'color',
-          modifiers: [['brighter', 1]],
-        }}
-        label={(node) => {
-          const words = node.id.toString().split(' ')
-          const lineHeight = 15
+    <ResponsiveSankey
+      data={data}
+      margin={{ top: 50, right: window.innerWidth / 40, bottom: 50, left: window.innerWidth / 40 }}
+      align="start"
+      colors={(node) => node.nodeColor || darkColors[0]}
+      nodeOpacity={1}
+      nodeHoverOpacity={1}
+      nodeThickness={18}
+      nodeSpacing={24}
+      nodeBorderWidth={0}
+      nodeBorderColor={{
+        from: 'color',
+        modifiers: [['darker', 0.8]],
+      }}
+      nodeBorderRadius={3}
+      linkOpacity={0.5}
+      linkHoverOpacity={0.8}
+      linkContract={3}
+      enableLinkGradient={true}
+      labelOrientation="horizontal"
+      labelPadding={16}
+      labelTextColor={{
+        from: 'color',
+        modifiers: [['brighter', 1]],
+      }}
+      label={(node) => {
+        const words = node.id.toString().split(' ')
+        const lineHeight = 15
 
-          const initialOffset = words.length > 1 ? (-lineHeight * (words.length - 1)) / 2 : 0
+        const initialOffset = words.length > 1 ? (-lineHeight * (words.length - 1)) / 2 : 0
 
-          return (
-            <tspan>
-              {words.map((word, i) => (
-                <tspan key={`${i}${word}`} x="0" dy={i === 0 ? initialOffset : lineHeight}>
-                  {word}
-                </tspan>
-              ))}
-            </tspan>
-          ) as unknown as string
-        }}
-        theme={darkTheme}
-        nodeTooltip={NodeTooltip}
-        linkTooltip={LinkTooltip}
-      />
-    </div>
+        return (
+          <tspan>
+            {words.map((word, i) => (
+              <tspan key={`${i}${word}`} x="0" dy={i === 0 ? initialOffset : lineHeight}>
+                {word}
+              </tspan>
+            ))}
+          </tspan>
+        ) as unknown as string
+      }}
+      theme={darkTheme}
+      nodeTooltip={NodeTooltip}
+      linkTooltip={LinkTooltip}
+    />
   )
 }
 

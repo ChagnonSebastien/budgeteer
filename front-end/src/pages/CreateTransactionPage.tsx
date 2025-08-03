@@ -2,7 +2,6 @@ import { FC, useCallback, useContext, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import ContentWithHeader from '../components/shared/ContentWithHeader'
-import { CrudFormContainer } from '../components/shared/CrudFormContainer'
 import useQueryParams from '../components/shared/useQueryParams'
 import TransactionForm, { TransactionType } from '../components/transactions/TransactionForm'
 import Transaction from '../domain/model/transaction'
@@ -48,10 +47,8 @@ const CreateTransactionPage: FC = () => {
   )
 
   return (
-    <ContentWithHeader title={`Record new ${type ?? 'transaction'}`} button="return">
-      <CrudFormContainer className="p-4">
-        <TransactionForm onSubmit={onSubmit} submitText="Record" type={type} />
-      </CrudFormContainer>
+    <ContentWithHeader title={`Record new ${type ?? 'transaction'}`} action="return" withPadding withScrolling>
+      <TransactionForm onSubmit={onSubmit} submitText="Record" type={type} />
     </ContentWithHeader>
   )
 }

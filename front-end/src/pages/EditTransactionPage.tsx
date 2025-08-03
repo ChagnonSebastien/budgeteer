@@ -3,7 +3,6 @@ import { FC, useCallback, useContext, useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
 import ContentWithHeader from '../components/shared/ContentWithHeader'
-import { CrudFormContainer } from '../components/shared/CrudFormContainer'
 import TransactionForm from '../components/transactions/TransactionForm'
 import Transaction from '../domain/model/transaction'
 import MixedAugmentation from '../service/MixedAugmentation'
@@ -41,16 +40,12 @@ const EditTransactionPage: FC = () => {
   }
 
   return (
-    <ContentWithHeader title="Edit Transaction" button="return">
-      <CrudFormContainer className="p-4">
-        <TransactionForm onSubmit={onSubmit} submitText="Update" initialTransaction={selectedTransaction} />
+    <ContentWithHeader title="Edit Transaction" action="return" withPadding withScrolling>
+      <TransactionForm onSubmit={onSubmit} submitText="Update" initialTransaction={selectedTransaction} />
 
-        <div className="h-2" />
-
-        <Button color="error" onClick={() => {}}>
-          Delete
-        </Button>
-      </CrudFormContainer>
+      <Button color="error" onClick={() => {}}>
+        Delete
+      </Button>
     </ContentWithHeader>
   )
 }

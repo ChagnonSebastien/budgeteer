@@ -1,19 +1,24 @@
-import { CSSProperties, useContext, useMemo } from 'react'
+import { useContext, useMemo } from 'react'
 import { default as styled } from 'styled-components'
 
 import { IconToolsContext } from './IconTools'
 
 const regexp = new RegExp('^(?<comp>[0-9.]+) *(?<unit>[a-z]*)$')
 
-type Props = {
+export type IconProperties = {
   iconName: string
-  size: string | number
   color: string
   backgroundColor: string
-} & CSSProperties
+}
+
+type Props = {
+  size?: string | number
+  border?: string
+} & IconProperties
 
 const CapsuleContainer = styled.div<{ $size: string | number; $sizeNumber: number; $unit: string }>`
   display: flex;
+  flex-shrink: 0;
   align-items: center;
   justify-content: center;
   border-radius: ${(props) => `${props.$sizeNumber * 0.5}${props.$unit}`};
@@ -22,7 +27,7 @@ const CapsuleContainer = styled.div<{ $size: string | number; $sizeNumber: numbe
 `
 
 const IconCapsule = (props: Props) => {
-  const { iconName, size, color, ...style } = props
+  const { iconName, size = '1rem', color, border, backgroundColor } = props
 
   const { iconTypeFromName } = useContext(IconToolsContext)
 
@@ -43,7 +48,7 @@ const IconCapsule = (props: Props) => {
   }, [size])
 
   return (
-    <CapsuleContainer $size={size} $sizeNumber={sizeNumber} $unit={unit} style={style}>
+    <CapsuleContainer $size={size} $sizeNumber={sizeNumber} $unit={unit} style={{ border, backgroundColor }}>
       <Icon size={`${sizeNumber * 0.625}${unit}`} color={color} />
     </CapsuleContainer>
   )

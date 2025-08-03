@@ -425,7 +425,6 @@ const CurrencyForm: FC<Props> = (props) => {
 
       <TextField
         type="text"
-        className="w-full"
         label="Type"
         variant="standard"
         placeholder="e.g., Mutual Fund"
@@ -436,7 +435,6 @@ const CurrencyForm: FC<Props> = (props) => {
 
       <TextField
         type="text"
-        className="w-full"
         label="Risk"
         variant="standard"
         placeholder="e.g., High"

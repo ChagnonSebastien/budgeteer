@@ -37,17 +37,15 @@ const ExpandButton = styled.div<{ $hasSelectedChild: boolean }>`
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: background-color 200ms;
+  color: gray;
 
   &:hover {
-    background-color: rgba(255, 255, 255, 0.04);
+    color: white;
   }
 
   .rotatable {
     transition: all 200ms ease-in-out;
-    opacity: ${(props) => (props.$hasSelectedChild ? 1 : 0.7)};
     font-size: 1.1rem;
-    color: ${(props) => (props.$hasSelectedChild ? '#C84B31' : 'inherit')};
 
     &.open {
       transform: rotate(90deg);

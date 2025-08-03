@@ -1,3 +1,4 @@
+import { Typography } from '@mui/material'
 import { ResponsiveSunburst } from '@nivo/sunburst'
 import { FC, useContext, useEffect, useMemo, useState } from 'react'
 
@@ -9,6 +10,7 @@ import { CategoryServiceContext } from '../../service/ServiceContext'
 import { darkColors, darkTheme } from '../../utils'
 import { DrawerContext } from '../Menu'
 import { GraphTooltip } from './GraphStyledComponents'
+import { Centered } from '../shared/NoteContainer'
 
 type LocalTree = {
   name: string
@@ -141,18 +143,18 @@ const TransactionsPieChart: FC<Props> = (props) => {
   const sunburst = useMemo(() => {
     if (typeof data === 'undefined') {
       return (
-        <div className="h-full w-full flex items-center justify-center">
+        <Centered>
           <h4>No transaction matches your filters</h4>
-        </div>
+        </Centered>
       )
     }
 
     return (
       <>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center">
+        <Centered style={{ position: 'absolute', flexDirection: 'column' }}>
           {clickedCategory ? (
             <>
-              <div className="font-bold">{clickedCategory.name}</div>
+              <Typography fontWeight="bold">{clickedCategory.name}</Typography>
               {!privacyMode && <div>{formatFull(defaultCurrency, getCategoryTotal(clickedCategory), privacyMode)}</div>}
               <div>
                 {Math.abs(
@@ -165,7 +167,7 @@ const TransactionsPieChart: FC<Props> = (props) => {
             </>
           ) : (
             <>
-              <div className="font-bold">Total {showIncomes ? 'Income' : 'Expenses'}</div>
+              <Typography fontWeight="bold">Total {showIncomes ? 'Income' : 'Expenses'}</Typography>
               {!privacyMode && (
                 <div>
                   {formatFull(
@@ -177,7 +179,7 @@ const TransactionsPieChart: FC<Props> = (props) => {
               )}
             </>
           )}
-        </div>
+        </Centered>
         <ResponsiveSunburst
           data={data}
           margin={{ top: 20, right: 40, bottom: 20, left: 40 }}
@@ -196,7 +198,10 @@ const TransactionsPieChart: FC<Props> = (props) => {
             modifiers: [['brighter', 0.2]],
           }}
           onClick={({ id }) => {
-            setClickedCategory(categories.find((c) => c.name === id)!)
+            setClickedCategory((prev) => {
+              const clicked = categories.find((c) => c.name === id)!
+              return prev === clicked ? null : clicked
+            })
           }}
           valueFormat={(data) => {
             return formatFull(defaultCurrency, data, privacyMode)

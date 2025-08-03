@@ -85,7 +85,7 @@ const ScrollingOverButton: FC<{
         <ScrollAreaContainer style={{ height: `${contentHeight - optionsHeight}px` }}>
           {props.children}
         </ScrollAreaContainer>
-        <div ref={setOptionsRef} className="overflow-hidden">
+        <div ref={setOptionsRef}>
           <FadingDivider opacity={scrollProgress} />
           <Button fullWidth variant="contained" onClick={props.button.onClick}>
             {props.button.text}

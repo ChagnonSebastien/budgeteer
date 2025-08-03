@@ -3,7 +3,6 @@ import { useNavigate, useParams } from 'react-router-dom'
 
 import CurrencyForm from '../components/currencies/CurrencyForm'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
-import { CrudFormContainer } from '../components/shared/CrudFormContainer'
 import { CurrencyUpdatableFields } from '../domain/model/currency'
 import { CurrencyServiceContext } from '../service/ServiceContext'
 
@@ -42,15 +41,13 @@ const EditCurrency: FC<Props> = ({ scriptRunner }: Props) => {
   }
 
   return (
-    <ContentWithHeader title="Edit currency" button="return" contentMaxWidth="">
-      <CrudFormContainer className="p-4">
-        <CurrencyForm
-          onSubmit={onSubmit}
-          submitText="Save changes"
-          initialCurrency={selectedCurrency}
-          scriptRunner={scriptRunner}
-        />
-      </CrudFormContainer>
+    <ContentWithHeader title="Edit currency" action="return" withPadding withScrolling>
+      <CurrencyForm
+        onSubmit={onSubmit}
+        submitText="Save changes"
+        initialCurrency={selectedCurrency}
+        scriptRunner={scriptRunner}
+      />
     </ContentWithHeader>
   )
 }

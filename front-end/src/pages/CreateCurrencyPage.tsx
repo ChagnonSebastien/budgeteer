@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom'
 
 import CurrencyForm, { ExchangeRateConfig } from '../components/currencies/CurrencyForm'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
-import { CrudFormContainer } from '../components/shared/CrudFormContainer'
 import { CurrencyUpdatableFields } from '../domain/model/currency'
 import { ExchangeRateIdentifiableFields } from '../domain/model/exchangeRate'
 import { CurrencyServiceContext, ExchangeRateServiceContext } from '../service/ServiceContext'
@@ -52,10 +51,8 @@ const CreateCurrencyPage: FC<Props> = ({ scriptRunner }: Props) => {
   }, [])
 
   return (
-    <ContentWithHeader title="Create new currency" button="return" contentMaxWidth="">
-      <CrudFormContainer className="p-4">
-        <CurrencyForm onSubmit={onSubmit} submitText="Create" scriptRunner={scriptRunner} />
-      </CrudFormContainer>
+    <ContentWithHeader title="Create new currency" action="return" withPadding withScrolling>
+      <CurrencyForm onSubmit={onSubmit} submitText="Create" scriptRunner={scriptRunner} />
     </ContentWithHeader>
   )
 }
