@@ -189,7 +189,7 @@ const AccountForm: FC<Props> = (props) => {
       />
 
       <div>
-        <TinyHeader color="textSecondary">Starting balances</TinyHeader>
+        <TinyHeader>Starting balances</TinyHeader>
 
         <div style={{ height: '1rem' }} />
 

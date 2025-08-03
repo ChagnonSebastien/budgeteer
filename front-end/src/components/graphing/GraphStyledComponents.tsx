@@ -1,11 +1,6 @@
 import { default as styled } from 'styled-components'
 
-import { Column, MaxSpaceNoOverflow } from '../shared/Layout'
-
-export const GraphPageContainer = styled.div`
-  height: 100%;
-  width: 100%;
-`
+import { Column } from '../shared/Layout'
 
 export const GraphContainer = styled.div`
   width: 100%;
@@ -13,7 +8,8 @@ export const GraphContainer = styled.div`
   margin: auto;
 `
 
-export const FirstDivision = styled(MaxSpaceNoOverflow)`
+export const FirstDivision = styled.div`
+  width: 100%;
   max-width: 100vh;
   align-items: stretch;
   flex-direction: column;
@@ -27,6 +23,7 @@ export const SecondDivision = styled(Column)<{ $splitView?: boolean }>`
   border-top: ${(props) => (props.$splitView ? 'none' : '1px solid rgba(128,128,128,0.2)')};
   height: ${(props) => (props.$splitView ? '100%' : 'auto')};
   gap: 2rem;
+  align-self: stretch;
 `
 
 export const GraphTooltip = styled.div`
@@ -36,6 +33,7 @@ export const GraphTooltip = styled.div`
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
+  z-index: 100;
 `
 
 export const GraphTooltipDate = styled.div`

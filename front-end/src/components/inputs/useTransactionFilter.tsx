@@ -28,7 +28,6 @@ type Filters = {
   categoryFilter: number[] | null
   fromDate: Date
   toDate: Date
-  showSlider: boolean
 }
 
 export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilterByCategory = true): Filters => {
@@ -456,6 +455,5 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
     categoryFilter,
     fromDate: timeRange[0],
     toDate: timeRange[1],
-    showSlider,
   }
 }

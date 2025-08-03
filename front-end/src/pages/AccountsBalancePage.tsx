@@ -2,19 +2,14 @@ import { Box } from '@mui/material'
 import { FC, useMemo } from 'react'
 
 import AccountsBalanceChart, { GroupType } from '../components/graphing/AccountsBalanceChart'
-import {
-  FirstDivision,
-  GraphContainer,
-  GraphPageContainer,
-  SecondDivision,
-} from '../components/graphing/GraphStyledComponents'
+import { FirstDivision, GraphContainer, SecondDivision } from '../components/graphing/GraphStyledComponents'
 import { BaseLineConfig, ScaleConfig } from '../components/graphing/NetWorthChart'
 import SelectOne from '../components/inputs/SelectOne'
 import useTransactionFilter from '../components/inputs/useTransactionFilter'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
 import { Row } from '../components/shared/Layout'
 import SplitView from '../components/shared/SplitView'
-import { useElementDimensions } from '../components/shared/useDimensions'
+import { useElementDimensions, useWindowDimensions } from '../components/shared/useDimensions'
 import useQueryParams from '../components/shared/useQueryParams'
 import Account from '../domain/model/account'
 
@@ -30,7 +25,6 @@ const AccountsBalancePage: FC = () => {
     toDate,
     accountFilter,
     overview: filterOverview,
-    showSlider,
   } = useTransactionFilter((account: Account) => account.isMine, false)
 
   const { queryParams: qp, updateQueryParams } = useQueryParams<QueryParams>()
@@ -38,56 +32,42 @@ const AccountsBalancePage: FC = () => {
   const baselineConfig = useMemo(() => (qp.baselineConfig ?? 'none') as BaseLineConfig, [qp.baselineConfig])
   const scale = useMemo(() => (qp.scale ?? 'absolute') as ScaleConfig, [qp.scale])
 
+  const { height: pageHeight } = useWindowDimensions()
   const { height: optionsHeight, ref: setOptionsRef } = useElementDimensions(600, 600)
-
   const { ref: setContentRef, height: contentHeight, width: contentWidth } = useElementDimensions(600, 600)
 
-  console.log(optionsHeight, contentHeight)
-
   const splitHorizontal = useMemo(() => contentWidth > 1200, [contentWidth])
+  const contentTooTall = useMemo(
+    () => Math.max(pageHeight / 2, 300) + optionsHeight + 64 > pageHeight,
+    [optionsHeight, pageHeight],
+  )
 
-  const graphSection = useMemo(
-    () => (
-      <FirstDivision style={{ overflowY: 'auto' }}>
-        <GraphContainer
-          style={{
-            padding: '1rem 0',
-            height: splitHorizontal
-              ? showSlider
-                ? contentHeight - 240
-                : contentHeight - 100
-              : contentHeight === optionsHeight
-                ? '100vh'
-                : contentHeight - optionsHeight,
-          }}
-        >
-          <AccountsBalanceChart
-            key="AccountBalancePageFirstDivision"
-            fromDate={fromDate}
-            toDate={toDate}
-            filterByAccounts={accountFilter === null ? undefined : accountFilter}
-            groupBy={groupBy}
-            baselineConfig={baselineConfig}
-            scale={scale}
-          />
-        </GraphContainer>
+  const firstDivision = (
+    <FirstDivision>
+      <GraphContainer
+        style={{
+          padding: '1rem 0',
+          height: contentHeight - optionsHeight,
+          minHeight: 'max(50vh, 300px)',
+        }}
+      >
+        <AccountsBalanceChart
+          key="AccountsBalancePageFirstDivision"
+          fromDate={fromDate}
+          toDate={toDate}
+          filterByAccounts={accountFilter === null ? undefined : accountFilter}
+          groupBy={groupBy}
+          baselineConfig={baselineConfig}
+          scale={scale}
+        />
+      </GraphContainer>
 
-        {splitHorizontal && <Box sx={{ padding: '0 1rem' }}>{filterOverview}</Box>}
-      </FirstDivision>
-    ),
-    [
-      fromDate,
-      toDate,
-      accountFilter,
-      groupBy,
-      baselineConfig,
-      scale,
-      splitHorizontal,
-      showSlider,
-      contentHeight,
-      optionsHeight,
-      filterOverview,
-    ],
+      {splitHorizontal && (
+        <Box sx={{ padding: '1rem' }} ref={setOptionsRef}>
+          {filterOverview}
+        </Box>
+      )}
+    </FirstDivision>
   )
 
   const selectOptions = [
@@ -127,8 +107,8 @@ const AccountsBalancePage: FC = () => {
     />,
   ]
 
-  const controlsSection = (
-    <SecondDivision $splitView={splitHorizontal} ref={setOptionsRef}>
+  const secondDivision = (
+    <SecondDivision $splitView={splitHorizontal} ref={!splitHorizontal ? setOptionsRef : undefined}>
       {!splitHorizontal && filterOverview}
 
       {splitHorizontal ? selectOptions : <Row style={{ gap: '1rem', flexFlow: 'wrap' }}>{selectOptions}</Row>}
@@ -136,23 +116,26 @@ const AccountsBalancePage: FC = () => {
   )
 
   return (
-    <ContentWithHeader title="Balances" action="menu" setContentRef={setContentRef}>
-      <GraphPageContainer>
-        {splitHorizontal ? (
-          <SplitView
-            first={graphSection}
-            second={controlsSection}
-            split="horizontal"
-            firstZoneStyling={{ grow: true, scroll: true }}
-            secondZoneStyling={{ grow: false, scroll: true }}
-          />
-        ) : (
-          <div>
-            {graphSection}
-            {controlsSection}
-          </div>
-        )}
-      </GraphPageContainer>
+    <ContentWithHeader
+      title="Balances"
+      action="menu"
+      setContentRef={setContentRef}
+      withScrolling={!splitHorizontal && contentTooTall}
+    >
+      {splitHorizontal ? (
+        <SplitView
+          first={firstDivision}
+          second={secondDivision}
+          split="horizontal"
+          firstZoneStyling={{ grow: true, scroll: contentTooTall }}
+          secondZoneStyling={{ grow: false, scroll: true }}
+        />
+      ) : (
+        <>
+          {firstDivision}
+          {secondDivision}
+        </>
+      )}
     </ContentWithHeader>
   )
 }

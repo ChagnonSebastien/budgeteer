@@ -27,7 +27,12 @@ const Layout: FC<Props> = (props) => (
   </>
 )
 
-export const MaxSpaceNoOverflow = styled.div`
+export const MaxSpace = styled.div`
+  height: 100%;
+  width: 100%;
+`
+
+export const MaxSpaceNoOverflow = styled(MaxSpace)`
   height: 100%;
   width: 100%;
   overflow: hidden;
@@ -49,9 +54,18 @@ export const Row = styled.div`
   flex-direction: row;
 `
 
-export const TinyHeader = styled(Typography)`
-  font-size: 0.75rem;
-`
+export const TinyHeader = (props: { children: ReactNode }) => (
+  <Typography
+    fontSize="0.75rem"
+    color="rgba(255, 255, 255, 0.7)"
+    fontWeight={400}
+    lineHeight="1.4375em"
+    letterSpacing="0.00938em"
+    fontFamily="'Roboto', 'Helvetica', 'Arial', sans-serif"
+  >
+    {props.children}
+  </Typography>
+)
 
 export const GradientCard = styled.div<{
   $selected: boolean
