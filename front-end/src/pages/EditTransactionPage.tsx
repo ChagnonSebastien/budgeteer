@@ -1,4 +1,3 @@
-import { Button } from '@mui/material'
 import { FC, useCallback, useContext, useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
@@ -42,10 +41,6 @@ const EditTransactionPage: FC = () => {
   return (
     <ContentWithHeader title="Edit Transaction" action="return" withPadding withScrolling>
       <TransactionForm onSubmit={onSubmit} submitText="Update" initialTransaction={selectedTransaction} />
-
-      <Button color="error" onClick={() => {}}>
-        Delete
-      </Button>
     </ContentWithHeader>
   )
 }
