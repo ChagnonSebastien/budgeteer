@@ -323,7 +323,7 @@ const CostsAnalysisPage: FC = () => {
         }}
       />
 
-      <div style={{ maxWidth: '40rem', width: '100%' }}>
+      <div style={{ maxWidth: '50rem', width: '100%', height: '100%' }}>
         {viewType === 'chart' ? (
           <EarningsBreakdownChart
             grossIncome={grossIncome * Math.pow(10, defaultCurrency.decimalPoints)}
