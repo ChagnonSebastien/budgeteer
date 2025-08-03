@@ -52,7 +52,7 @@ const SelectOne: FC<Props> = (props) =>
     >
       {props.options.map((option) => (
         <MenuItem key={`${props.label}-label-${option.value}`} value={option.value}>
-          {props.label}
+          {option.label}
         </MenuItem>
       ))}
     </TextField>
