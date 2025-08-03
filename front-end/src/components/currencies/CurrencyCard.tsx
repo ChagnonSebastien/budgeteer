@@ -33,21 +33,21 @@ const CurrencyCard = (props: ItemProps<CurrencyID, Currency, AdditionalCurrencyC
         <IconLib.BsCurrencyExchange style={{ color: 'white', fontSize: '1.5rem' }} />
       </Box>
 
-      <Typography variant="h6" sx={{ flexGrow: 1 }}>
+      <Typography variant="h6" fontSize="1.1rem" sx={{ flexGrow: 1 }}>
         {item.name}
       </Typography>
 
-      {total && (
-        <Column style={{ alignItems: 'flex-end' }}>
-          <Typography variant="h6" fontFamily="monospace">
+      <Column style={{ alignItems: 'flex-end' }}>
+        {total && (
+          <Typography variant="h6" fontFamily="monospace" whiteSpace="nowrap">
             {formatAmount(item, total(item.id), privacyMode)}
           </Typography>
+        )}
 
-          <Typography variant="subtitle1" color="textDisabled">
-            {item.symbol}
-          </Typography>
-        </Column>
-      )}
+        <Typography variant="subtitle1" color="textDisabled">
+          {item.symbol}
+        </Typography>
+      </Column>
     </GradientCard>
   )
 }
