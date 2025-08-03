@@ -1,6 +1,8 @@
 import { FC, ReactNode } from 'react'
 import { default as styled } from 'styled-components'
 
+import { Row } from './Layout'
+
 export const SplitViewContainer = styled.div<{ $split: 'horizontal' | 'vertical' }>`
   height: 100%;
   width: 100%;
@@ -9,7 +11,7 @@ export const SplitViewContainer = styled.div<{ $split: 'horizontal' | 'vertical'
   flex-direction: ${(props) => (props.$split === 'horizontal' ? 'row' : 'column')};
 `
 
-export const SplitViewPanel = styled.div<{
+export const SplitViewPanel = styled(Row)<{
   $split: 'horizontal' | 'vertical'
   $grow: boolean | number
   $scroll: boolean

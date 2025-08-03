@@ -75,7 +75,6 @@ export const GradientCard = styled.div<{
   border-radius: 0.5rem;
   transition: all 200ms ease-in-out;
   border-left: 3px solid transparent;
-  margin: 0.125rem 0;
   cursor: pointer;
 
   ${({ $withGradientBackground }) =>

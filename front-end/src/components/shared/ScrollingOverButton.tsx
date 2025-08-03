@@ -5,7 +5,7 @@ import { default as styled } from 'styled-components'
 import { Column, MaxSpaceNoOverflow } from './Layout'
 import { useElementDimensions } from './useDimensions'
 
-export const CustomScrolling = styled.div`
+export const CustomScrolling = styled(Column)`
   overflow-y: auto;
   padding-left: 1rem;
   padding-right: 1rem;

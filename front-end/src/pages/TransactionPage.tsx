@@ -14,9 +14,9 @@ import {
 import { format, isAfter, isBefore, isSameDay } from 'date-fns'
 import { FC, useContext, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { default as styled } from 'styled-components'
 
 import AggregatedDiffChart from '../components/graphing/AggregatedDiffChart'
+import { FirstDivision, GraphContainer } from '../components/graphing/GraphStyledComponents'
 import TransactionsPieChart from '../components/graphing/PieChart'
 import { IconToolsContext } from '../components/icons/IconTools'
 import useTransactionFilter from '../components/inputs/useTransactionFilter'
@@ -35,30 +35,6 @@ import { formatAmount } from '../domain/model/currency'
 import { AugmentedTransaction } from '../domain/model/transaction'
 import MixedAugmentation from '../service/MixedAugmentation'
 import { CategoryServiceContext } from '../service/ServiceContext'
-
-const GraphSectionContainer = styled.div`
-  max-width: 100vh;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  margin: auto;
-  padding-bottom: 1rem;
-`
-
-const GraphContainer = styled.div`
-  height: 60vh;
-  position: relative;
-  width: 100%;
-`
-
-const SplitViewContainer = styled.div`
-  height: 100%;
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-`
 
 type QueryParams = {
   chart: string
@@ -114,92 +90,71 @@ const TransactionPage: FC = () => {
 
   const splitHorizontal = useMemo(() => contentWidth > 1200, [contentWidth])
 
-  const graphSection = useMemo(
-    () => (
-      <GraphSectionContainer>
-        <GraphContainer>
-          {graphType === 'line' ? (
-            <AggregatedDiffChart
-              transactions={filteredTransaction}
-              toDate={toDate}
-              fromDate={fromDate}
-              hideFinancialIncome={hideFinancialIncome}
-            />
-          ) : (
-            <TransactionsPieChart
-              rootCategory={
-                categoryFilter && categoryFilter.length === 1
-                  ? (categories.find((c) => c.id === categoryFilter[0]) ?? rootCategory)
-                  : rootCategory
-              }
-              augmentedTransactions={filteredTransaction}
-              showIncomes={showIncomes}
-              onShowIncomesChange={(show) => {
-                updateQueryParams({
-                  showIncomes: show.toString(),
-                })
-              }}
-            />
-          )}
-        </GraphContainer>
-
-        <Box sx={{ padding: '0 1rem' }}>{filterOverview}</Box>
-      </GraphSectionContainer>
-    ),
-    [
-      graphType,
-      filteredTransaction,
-      toDate,
-      fromDate,
-      hideFinancialIncome,
-      categoryFilter,
-      categories,
-      rootCategory,
-      showIncomes,
-      updateQueryParams,
-      filterOverview,
-    ],
-  )
-
-  const listSection = useMemo(
-    () => (
-      <Box
-        sx={{
-          height: '100%',
-          width: '100%',
-          background: 'rgba(128,128,128,0.04)',
+  const firstDivision = (
+    <FirstDivision>
+      <GraphContainer
+        style={{
+          height: '60vh',
+          minHeight: 'max(50vh, 300px)',
         }}
       >
-        <Box
-          sx={{
-            padding: '0 1rem',
-            margin: 'auto',
-            width: 'calc(min(35rem, 100vw))',
-          }}
-        >
-          <TransactionList
-            items={filteredTransaction}
-            onClick={(transactionId) => {
-              const transaction = filteredTransaction.find((t) => t.id === transactionId)
-              if (transaction) {
-                setClickedTransaction(transaction)
-              }
-            }}
-            viewAsAccounts={accountFilter === null ? undefined : accountFilter}
-            ItemComponent={TransactionCard}
-            additionalItemsProps={{}}
+        {graphType === 'line' ? (
+          <AggregatedDiffChart
+            transactions={filteredTransaction}
+            toDate={toDate}
+            fromDate={fromDate}
+            hideFinancialIncome={hideFinancialIncome}
           />
-        </Box>
-      </Box>
-    ),
-    [filteredTransaction, accountFilter],
+        ) : (
+          <TransactionsPieChart
+            rootCategory={
+              categoryFilter && categoryFilter.length === 1
+                ? (categories.find((c) => c.id === categoryFilter[0]) ?? rootCategory)
+                : rootCategory
+            }
+            augmentedTransactions={filteredTransaction}
+            showIncomes={showIncomes}
+            onShowIncomesChange={(show) => {
+              updateQueryParams({
+                showIncomes: show.toString(),
+              })
+            }}
+          />
+        )}
+      </GraphContainer>
+
+      <Box sx={{ padding: '1rem' }}>{filterOverview}</Box>
+    </FirstDivision>
+  )
+
+  const secondDivision = (
+    <Box
+      sx={{
+        alignSelf: 'stretch',
+        background: 'rgba(128,128,128,0.04)',
+        padding: '0 1rem',
+      }}
+    >
+      <TransactionList
+        items={filteredTransaction}
+        onClick={(transactionId) => {
+          const transaction = filteredTransaction.find((t) => t.id === transactionId)
+          if (transaction) {
+            setClickedTransaction(transaction)
+          }
+        }}
+        viewAsAccounts={accountFilter === null ? undefined : accountFilter}
+        ItemComponent={TransactionCard}
+        additionalItemsProps={{}}
+      />
+    </Box>
   )
 
   return (
     <ContentWithHeader
       title="Transactions"
-      withScrolling={!splitHorizontal}
       action="menu"
+      withScrolling={!splitHorizontal}
       setContentRef={setContentRef}
       rightContent={
         <>
@@ -257,6 +212,21 @@ const TransactionPage: FC = () => {
         </>
       }
     >
+      {splitHorizontal ? (
+        <SplitView
+          first={firstDivision}
+          second={secondDivision}
+          split="horizontal"
+          firstZoneStyling={{ grow: true, scroll: true }}
+          secondZoneStyling={{ grow: false, scroll: true }}
+        />
+      ) : (
+        <Column style={{ width: '100%', alignItems: 'stretch' }}>
+          {firstDivision}
+          {secondDivision}
+        </Column>
+      )}
+
       <SpeedDial
         ariaLabel="Create new transaction"
         sx={{ position: 'absolute', bottom: 16, right: 16 }}
@@ -292,21 +262,6 @@ const TransactionPage: FC = () => {
           icon={<IconLib.GrTransaction />}
         />
       </SpeedDial>
-
-      {splitHorizontal ? (
-        <SplitView
-          first={<SplitViewContainer>{graphSection}</SplitViewContainer>}
-          second={listSection}
-          split="horizontal"
-          firstZoneStyling={{ grow: true, scroll: true }}
-          secondZoneStyling={{ grow: false, scroll: true }}
-        />
-      ) : (
-        <>
-          {graphSection}
-          {listSection}
-        </>
-      )}
 
       <BasicModal
         open={clickedTransaction !== null}

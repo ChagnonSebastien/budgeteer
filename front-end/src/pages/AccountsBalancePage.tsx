@@ -46,7 +46,6 @@ const AccountsBalancePage: FC = () => {
     <FirstDivision>
       <GraphContainer
         style={{
-          padding: '1rem 0',
           height: contentHeight - optionsHeight,
           minHeight: 'max(50vh, 300px)',
         }}

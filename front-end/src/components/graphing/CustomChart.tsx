@@ -99,7 +99,7 @@ const CustomChart: FC<Props> = ({
   xLabels,
   keys: propKeys,
   valueFormat = (v) => String(v),
-  margin: propMargin = { top: 20, right: 25, bottom: 80, left: 70 },
+  margin: propMargin = { top: 20, right: 25, bottom: 65, left: 70 },
   axisBottom = {},
   enableGridY = true,
   axisLeft = {},

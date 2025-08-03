@@ -126,6 +126,7 @@ const CurrenciesPage: FC = () => {
             flexGrow: 1,
             paddingBottom: '4rem',
             position: 'relative',
+            gap: '0.05rem',
           }}
         >
           <ItemList

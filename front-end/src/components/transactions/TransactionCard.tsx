@@ -50,7 +50,7 @@ const TransactionCard: FC<ItemProps<TransactionID, AugmentedTransaction, object>
         padding: '0.5rem 0.75rem',
         border: '1px solid rgba(128,128,128,0.16)',
         gap: '0.75rem',
-        overflow: 'hidden',
+        overflowX: 'auto',
       }}
     >
       <IconCapsule

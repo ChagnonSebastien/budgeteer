@@ -4,7 +4,6 @@ import { Column } from '../shared/Layout'
 
 export const GraphContainer = styled.div`
   width: 100%;
-  padding-bottom: 1rem;
   margin: auto;
 `
 
