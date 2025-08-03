@@ -48,7 +48,6 @@ const CategoryPicker: FC<Props> = (props) => {
       <Row style={{ alignItems: 'center', gap: '1rem' }}>
         {icon && (
           <IconCapsule
-            flexShrink={0}
             iconName={icon.iconName}
             size="2rem"
             color={icon.iconColor}

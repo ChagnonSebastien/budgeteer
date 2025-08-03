@@ -58,7 +58,6 @@ const TransactionCard: FC<ItemProps<TransactionID, AugmentedTransaction, object>
         size="2.4rem"
         backgroundColor={item.category?.iconBackground ?? defaultCategory.iconBackground}
         color={item.category?.iconColor ?? defaultCategory.iconColor}
-        flexShrink={0}
       />
       <Column style={{ flexGrow: 1 }}>
         <Row style={{ justifyContent: 'space-between' }}>
