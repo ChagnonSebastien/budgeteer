@@ -94,6 +94,7 @@ const TransactionPage: FC = () => {
     <FirstDivision>
       <GraphContainer
         style={{
+          position: 'relative',
           height: '60vh',
           minHeight: 'max(50vh, 300px)',
         }}
