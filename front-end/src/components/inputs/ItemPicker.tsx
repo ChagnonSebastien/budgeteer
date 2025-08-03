@@ -4,8 +4,8 @@ import { default as styled } from 'styled-components'
 
 import NamedItem from '../../domain/model/NamedItem'
 import ItemList, { ItemListProps, ItemProps } from '../accounts/ItemList'
-import ContentDialog from '../shared/ContentDialog'
-import { CustomScrollbarContainer } from '../shared/ScrollingOverButton'
+import BasicModal from '../shared/BasicModal'
+import { CustomScrolling } from '../shared/ScrollingOverButton'
 
 const DialogContentContainer = styled(DialogContent)`
   height: 70vh;
@@ -176,7 +176,7 @@ function ItemPicker<ItemID, T extends NamedItem<ItemID, T>, AdditionalItemProps>
           e.target.blur()
         }}
       />
-      <ContentDialog open={showModal} onClose={() => setShowModal(false)}>
+      <BasicModal open={showModal} onClose={() => setShowModal(false)}>
         <DialogTitle>{dialogTitle || `Select ${labelText}`}</DialogTitle>
         <DialogContentContainer>
           <SearchContainer>
@@ -190,7 +190,7 @@ function ItemPicker<ItemID, T extends NamedItem<ItemID, T>, AdditionalItemProps>
               onKeyDown={handleKeyDown}
             />
           </SearchContainer>
-          <CustomScrollbarContainer>
+          <CustomScrolling>
             <ItemListComponent
               items={displayedItems}
               ItemComponent={ItemComponent}
@@ -204,7 +204,7 @@ function ItemPicker<ItemID, T extends NamedItem<ItemID, T>, AdditionalItemProps>
                 selectedItem: selectedItemId,
               }}
             />
-          </CustomScrollbarContainer>
+          </CustomScrolling>
         </DialogContentContainer>
         <DialogActions>
           <Button onClick={() => setShowModal(false)}>Close</Button>
@@ -215,7 +215,7 @@ function ItemPicker<ItemID, T extends NamedItem<ItemID, T>, AdditionalItemProps>
           )}
           {additionalActions}
         </DialogActions>
-      </ContentDialog>
+      </BasicModal>
     </>
   )
 }

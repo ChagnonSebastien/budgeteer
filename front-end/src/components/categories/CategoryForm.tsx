@@ -10,11 +10,11 @@ import { CategoryServiceContext } from '../../service/ServiceContext'
 import IconCapsule, { IconProperties } from '../icons/IconCapsule'
 import IconList from '../icons/IconList'
 import { IconToolsContext } from '../icons/IconTools'
-import ContentDialog from '../shared/ContentDialog'
+import BasicModal from '../shared/BasicModal'
 import ContentWithHeader from '../shared/ContentWithHeader'
 import FormWrapper from '../shared/FormWrapper'
-import { Column, Row } from '../shared/NoteContainer'
-import { CustomScrollbarContainer } from '../shared/ScrollingOverButton'
+import { Column, Row } from '../shared/Layout'
+import { CustomScrolling } from '../shared/ScrollingOverButton'
 
 const SizedHexColorPicker = styled(HexColorPicker)`
   &.react-colorful {
@@ -186,7 +186,7 @@ const CategoryForm: FC<Props> = (props) => {
             }}
           />
         </Column>
-        <ContentDialog open={showIconModal} onClose={() => setShowIconModal(false)}>
+        <BasicModal open={showIconModal} onClose={() => setShowIconModal(false)}>
           <ContentWithHeader
             title="Select Icon"
             withPadding
@@ -199,27 +199,27 @@ const CategoryForm: FC<Props> = (props) => {
               autoFocus
               fullWidth
             />
-            <CustomScrollbarContainer style={{ maxHeight: 'calc(100vh - 15rem)' }}>
+            <CustomScrolling style={{ maxHeight: 'calc(100vh - 15rem)' }}>
               <IconList filter={filter} onSelect={onIconSelect} />
-            </CustomScrollbarContainer>
+            </CustomScrolling>
           </ContentWithHeader>
-        </ContentDialog>
-        <ContentDialog onClose={() => setShowOuterColorModal(false)} open={showOuterColorModal}>
+        </BasicModal>
+        <BasicModal onClose={() => setShowOuterColorModal(false)} open={showOuterColorModal}>
           <ContentWithHeader
             title="Select Outer Color"
             action={{ Icon: IconLib.MdKeyboardBackspace, onClick: () => setShowOuterColorModal(false) }}
           >
             <SizedHexColorPicker color={outerColor} onChange={setOuterColor} />
           </ContentWithHeader>
-        </ContentDialog>
-        <ContentDialog onClose={() => setShowInnerColorModal(false)} open={showInnerColorModal}>
+        </BasicModal>
+        <BasicModal onClose={() => setShowInnerColorModal(false)} open={showInnerColorModal}>
           <ContentWithHeader
             title="Select Inner Color"
             action={{ Icon: IconLib.MdKeyboardBackspace, onClick: () => setShowInnerColorModal(false) }}
           >
             <SizedHexColorPicker color={innerColor} onChange={setInnerColor} />
           </ContentWithHeader>
-        </ContentDialog>
+        </BasicModal>
         <div style={{ padding: '1rem', border: '2px solid grey', borderRadius: '0.5rem' }}>
           <IconCapsule iconName={selectedIcon} size="5rem" color={innerColor} backgroundColor={outerColor} />
         </div>

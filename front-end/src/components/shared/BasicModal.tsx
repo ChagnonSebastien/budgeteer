@@ -22,11 +22,11 @@ const StyledDialog = styled(Dialog)<{ $isPersistentDrawer: boolean; $drawerWidth
   `}
 `
 
-const ContentDialog: FC<DialogProps> = (props) => {
+const BasicModal: FC<DialogProps> = (props) => {
   const { open, drawerWidth } = useContext(DrawerContext)
   const isPersistentDrawer = !open // If open() function doesn't exist, it means we're in persistent drawer mode
 
   return <StyledDialog {...props} $isPersistentDrawer={isPersistentDrawer} $drawerWidth={drawerWidth} />
 }
 
-export default ContentDialog
+export default BasicModal

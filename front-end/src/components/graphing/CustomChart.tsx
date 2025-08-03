@@ -39,7 +39,6 @@ function brighten(hex: string, amount = 0.4): string {
   const r = parseInt(hex.slice(1, 3), 16)
   const g = parseInt(hex.slice(3, 5), 16)
   const b = parseInt(hex.slice(5, 7), 16)
-  // Lighten by mixing with white (255,255,255)
   const lightenFactor = amount // 40% lighter
   const lr = Math.round(r + (255 - r) * lightenFactor)
   const lg = Math.round(g + (255 - g) * lightenFactor)

@@ -5,10 +5,10 @@ import { useNavigate } from 'react-router-dom'
 import { CategoryCard } from '../components/categories/CategoryCard'
 import { CategoryList } from '../components/categories/CategoryList'
 import { IconToolsContext } from '../components/icons/IconTools'
-import ContentDialog from '../components/shared/ContentDialog'
+import BasicModal from '../components/shared/BasicModal'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
-import { DetailCard, FancyModal } from '../components/shared/FancyModalComponents'
-import ScrollingOverButton, { CustomScrollbarContainer } from '../components/shared/ScrollingOverButton'
+import { DetailCard, FancyModal } from '../components/shared/FancyModal'
+import ScrollingOverButton, { CustomScrolling } from '../components/shared/ScrollingOverButton'
 import Category from '../domain/model/category'
 import { CategoryServiceContext } from '../service/ServiceContext'
 
@@ -25,8 +25,9 @@ const CategoryPage: FC = () => {
       <ScrollingOverButton
         button={{ text: 'New', onClick: () => navigate('/categories/new') }}
         scrollingContainerRef={scrollingContainerRef}
+        contentStyle={{ maxWidth: '40rem' }}
       >
-        <CustomScrollbarContainer
+        <CustomScrolling
           ref={scrollingContainerRef}
           style={{
             overflowY: 'auto',
@@ -44,9 +45,9 @@ const CategoryPage: FC = () => {
             ItemComponent={CategoryCard}
             additionalItemsProps={{}}
           />
-        </CustomScrollbarContainer>
+        </CustomScrolling>
       </ScrollingOverButton>
-      <ContentDialog
+      <BasicModal
         open={clickedCategory !== null}
         onClose={() => setClickedCategory(null)}
         slotProps={{
@@ -117,7 +118,7 @@ const CategoryPage: FC = () => {
             />
           </FancyModal>
         )}
-      </ContentDialog>
+      </BasicModal>
     </ContentWithHeader>
   )
 }

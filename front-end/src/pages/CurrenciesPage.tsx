@@ -7,11 +7,10 @@ import ItemList from '../components/accounts/ItemList'
 import CurrencyCard from '../components/currencies/CurrencyCard'
 import { IconToolsContext } from '../components/icons/IconTools'
 import { SearchOverlay } from '../components/inputs/SearchOverlay'
-import ContentDialog from '../components/shared/ContentDialog'
+import BasicModal from '../components/shared/BasicModal'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
-import { FancyModal } from '../components/shared/FancyModalComponents'
-import { ChartContainer } from '../components/shared/PageStyledComponents'
-import ScrollingOverButton, { CustomScrollbarContainer } from '../components/shared/ScrollingOverButton'
+import { FancyModal } from '../components/shared/FancyModal'
+import ScrollingOverButton, { CustomScrolling } from '../components/shared/ScrollingOverButton'
 import Currency, { CurrencyID } from '../domain/model/currency'
 import ExchangeRate, { ExchangeRateIdentifiableFields } from '../domain/model/exchangeRate'
 import MixedAugmentation from '../service/MixedAugmentation'
@@ -118,8 +117,9 @@ const CurrenciesPage: FC = () => {
       <ScrollingOverButton
         button={{ text: 'New', onClick: () => navigate('/currencies/new') }}
         scrollingContainerRef={scrollingContainerRef}
+        contentStyle={{ maxWidth: '50rem' }}
       >
-        <CustomScrollbarContainer
+        <CustomScrolling
           ref={scrollingContainerRef}
           style={{
             overflowY: 'auto',
@@ -140,12 +140,12 @@ const CurrenciesPage: FC = () => {
             }}
             filter={(item: Currency) => showZeroBalances || getTotalForCurrency(item.id) !== 0}
           />
-        </CustomScrollbarContainer>
+        </CustomScrolling>
 
         <SearchOverlay filter={filter} setFilter={setFilter} placeholder="Search currencies..." />
       </ScrollingOverButton>
 
-      <ContentDialog
+      <BasicModal
         open={clickedCurrency !== null}
         onClose={() => setClickedCurrency(null)}
         slotProps={{
@@ -199,7 +199,7 @@ const CurrenciesPage: FC = () => {
             >
               EXCHANGE RATE HISTORY
             </Typography>
-            <ChartContainer>
+            <div style={{ height: 'max(25vh, 200px)' }}>
               <ResponsiveLine
                 margin={{ top: 0, right: 0, bottom: 30, left: 40 }}
                 data={[
@@ -234,10 +234,10 @@ const CurrenciesPage: FC = () => {
                 enableArea={true}
                 areaOpacity={0.1}
               />
-            </ChartContainer>
+            </div>
           </FancyModal>
         )}
-      </ContentDialog>
+      </BasicModal>
     </ContentWithHeader>
   )
 }

@@ -2,7 +2,7 @@ import { DialogContent, Divider, List, ListItem, ListItemText, Typography } from
 import { FC, ReactNode } from 'react'
 import { default as styled, keyframes } from 'styled-components'
 
-import { GradientCard } from './NoteContainer'
+import { GradientCard } from './Layout'
 
 const fadeIn = keyframes`
   from {
@@ -39,7 +39,7 @@ export const OverviewActionItem = styled.div<{ $delay?: number }>`
   animation-delay: ${(props) => (props.$delay || 0) * 0.1}s;
 
   &:hover {
-    background-color: rgba(255, 255, 255, 0.05);
+    background-color: rgba(128, 128, 128, 0.1);
     transform: translateX(8px);
   }
 
@@ -129,7 +129,7 @@ export const FancyModal: FC<FancyModalProps> = (props) => {
         padding: 0,
         background: 'linear-gradient(to bottom, rgba(15,15,15,0.98), rgba(10,10,10,0.98))',
         backdropFilter: 'blur(48px)',
-        border: '1px solid rgba(255,255,255,0.08)',
+        border: '1px solid rgba(128,128,128,0.16)',
         minWidth: '320px',
         maxWidth: '90vw',
         boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
@@ -138,7 +138,7 @@ export const FancyModal: FC<FancyModalProps> = (props) => {
     >
       <div
         style={{
-          background: 'linear-gradient(to top right, rgba(255,255,255,0.05), rgba(255,255,255,0.1))',
+          background: 'linear-gradient(to top right, rgba(128,128,128,0.1), rgba(128,128,128,0.2))',
           padding: '40px',
           position: 'relative',
           overflow: 'hidden',
@@ -151,7 +151,7 @@ export const FancyModal: FC<FancyModalProps> = (props) => {
             left: 0,
             right: 0,
             height: '100%',
-            background: 'radial-gradient(circle at top right, rgba(255,255,255,0.12) 0%, transparent 70%)',
+            background: 'radial-gradient(circle at top right, rgba(128,128,128,0.24) 0%, transparent 70%)',
             pointerEvents: 'none',
           }}
         />
@@ -162,7 +162,7 @@ export const FancyModal: FC<FancyModalProps> = (props) => {
             left: 0,
             right: 0,
             height: '100%',
-            background: 'linear-gradient(to right, transparent, rgba(255,255,255,0.03))',
+            background: 'linear-gradient(to right, transparent, rgba(128,128,128,0.06))',
             pointerEvents: 'none',
           }}
         />

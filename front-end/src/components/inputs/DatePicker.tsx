@@ -2,7 +2,7 @@ import { DateCalendar, DateField, DateView, PickerValidDate } from '@mui/x-date-
 import dayjs from 'dayjs'
 import React, { useState } from 'react'
 
-import ContentDialog from '../shared/ContentDialog'
+import BasicModal from '../shared/BasicModal'
 
 interface Props {
   label: string
@@ -30,7 +30,7 @@ function DatePicker(props: Props) {
         sx={{ width: '100%' }}
       />
 
-      <ContentDialog open={showDateModal} onClose={() => setShowDateModal(false)}>
+      <BasicModal open={showDateModal} onClose={() => setShowDateModal(false)}>
         <DateCalendar
           views={['year', 'month', 'day']}
           value={dayjs(date)}
@@ -43,7 +43,7 @@ function DatePicker(props: Props) {
             setDateView(view)
           }}
         />
-      </ContentDialog>
+      </BasicModal>
     </>
   )
 }

@@ -63,7 +63,7 @@ const SearchOverlayContainer = styled.div`
   .MuiInputBase-root {
     padding: 12px 16px;
     border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    rgba(128, 128, 128, 0.2);
   }
 
   .MuiOutlinedInput-notchedOutline {
@@ -153,7 +153,7 @@ export const SearchOverlay = ({ filter, setFilter, placeholder = 'Search...' }: 
                   color: 'white',
                   padding: '4px',
                   '&:hover': {
-                    backgroundColor: 'rgba(255,255,255,0.1)',
+                    backgroundColor: 'rgba(128,128,128,0.2)',
                   },
                 }}
               >
@@ -190,7 +190,7 @@ export const SearchOverlay = ({ filter, setFilter, placeholder = 'Search...' }: 
                       fontSize: '1.8rem',
                       '&:hover': {
                         color: 'rgba(255, 255, 255, 0.9)',
-                        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                        backgroundColor: 'rgba(128, 128, 128, 0.2)',
                       },
                     }}
                   >

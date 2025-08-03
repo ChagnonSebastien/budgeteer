@@ -4,7 +4,7 @@ import { createContext, FC } from 'react'
 import AuthenticatedZone from './AuthenticatedZone'
 import { IconToolsContext, useIconTools } from './components/icons/IconTools'
 import LoadingScreen from './components/LoadingScreen'
-import { Centered } from './components/shared/NoteContainer'
+import { Centered } from './components/shared/Layout'
 import User from './domain/model/user'
 import useAuthentication from './useAuthentication'
 

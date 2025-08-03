@@ -1,11 +1,11 @@
 import { Button } from '@mui/material'
-import React, { FC, ReactNode, RefObject, useEffect, useState } from 'react'
+import React, { CSSProperties, FC, ReactNode, RefObject, useEffect, useState } from 'react'
 import { default as styled } from 'styled-components'
 
-import { FadingDivider, ListContentContainer, PageContainer, ScrollAreaContainer } from './PageStyledComponents'
+import { Column, MaxSpaceNoOverflow } from './Layout'
 import { useElementDimensions } from './useDimensions'
 
-export const CustomScrollbarContainer = styled.div`
+export const CustomScrolling = styled.div`
   overflow-y: auto;
   padding-left: 1rem;
   padding-right: 1rem;
@@ -21,23 +21,32 @@ export const CustomScrollbarContainer = styled.div`
   }
 
   &::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(128, 128, 128, 0.4);
     border-radius: 3px;
     transition: background-color 200ms;
   }
 
   &::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.3);
+    background: rgba(128, 128, 128, 0.6);
   }
 
   /* Firefox scrollbar styling */
-  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+  scrollbar-color: rgba(128, 128, 128, 0.4) transparent;
+`
+
+export const FadingDivider = styled.div<{ opacity: number }>`
+  height: 1rem;
+  border-top: 1px solid transparent;
+  border-image: linear-gradient(to right, transparent, #fff4 20%, #fff4 80%, transparent) 1;
+  background: radial-gradient(ellipse 100% 100% at 50% 0%, #fff2 0%, #fff0 50%, transparent 100%);
+  opacity: ${(props) => props.opacity};
 `
 
 const ScrollingOverButton: FC<{
   button: { text: string; onClick(): void }
   children: ReactNode
   scrollingContainerRef?: RefObject<HTMLDivElement | null>
+  contentStyle?: CSSProperties
 }> = (props) => {
   const [scrollProgress, setScrollProgress] = useState(1)
 
@@ -80,19 +89,15 @@ const ScrollingOverButton: FC<{
   }, [])
 
   return (
-    <PageContainer ref={setContentRef}>
-      <ListContentContainer>
-        <ScrollAreaContainer style={{ height: `${contentHeight - optionsHeight}px` }}>
-          {props.children}
-        </ScrollAreaContainer>
-        <div ref={setOptionsRef}>
-          <FadingDivider opacity={scrollProgress} />
-          <Button fullWidth variant="contained" onClick={props.button.onClick}>
-            {props.button.text}
-          </Button>
-        </div>
-      </ListContentContainer>
-    </PageContainer>
+    <MaxSpaceNoOverflow style={props.contentStyle} ref={setContentRef}>
+      <Column style={{ height: `${contentHeight - optionsHeight}px`, position: 'relative' }}>{props.children}</Column>
+      <div ref={setOptionsRef}>
+        <FadingDivider opacity={scrollProgress} />
+        <Button fullWidth variant="contained" onClick={props.button.onClick}>
+          {props.button.text}
+        </Button>
+      </div>
+    </MaxSpaceNoOverflow>
   )
 }
 

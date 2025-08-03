@@ -7,7 +7,7 @@ import { AugmentedTransaction, TransactionID } from '../../domain/model/transact
 import { ItemProps } from '../accounts/ItemList'
 import IconCapsule from '../icons/IconCapsule'
 import { DrawerContext } from '../Menu'
-import { Column, GradientCard, Row } from '../shared/NoteContainer'
+import { Column, GradientCard, Row } from '../shared/Layout'
 
 const defaultCategory = new Category(
   0,
@@ -48,7 +48,7 @@ const TransactionCard: FC<ItemProps<TransactionID, AugmentedTransaction, object>
         backgroundColor: getBackgroundColor(),
         fontSize: '0.875rem',
         padding: '0.5rem 0.75rem',
-        border: '1px solid rgba(255, 255, 255, 0.08)',
+        border: '1px solid rgba(128,128,128,0.16)',
         gap: '0.75rem',
         overflow: 'hidden',
       }}

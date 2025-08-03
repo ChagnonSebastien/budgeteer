@@ -8,7 +8,7 @@ import CurrencyPicker from '../currencies/CurrencyPicker'
 import { IconToolsContext } from '../icons/IconTools'
 import { NumberInput, NumberInputFieldState } from '../inputs/NumberInput'
 import FormWrapper from '../shared/FormWrapper'
-import { Row, TinyHeader } from '../shared/NoteContainer'
+import { Row, TinyHeader } from '../shared/Layout'
 
 const IconButton = styled.div`
   margin: 1rem 0;

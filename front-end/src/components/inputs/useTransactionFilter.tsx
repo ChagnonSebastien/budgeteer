@@ -11,8 +11,8 @@ import AccountCard from '../accounts/AccountCard'
 import GroupedAccountList from '../accounts/GroupedAccountList'
 import { CategoryCard } from '../categories/CategoryCard'
 import { CategoryList } from '../categories/CategoryList'
-import ContentDialog from '../shared/ContentDialog'
-import { Row } from '../shared/NoteContainer'
+import BasicModal from '../shared/BasicModal'
+import { Row } from '../shared/Layout'
 import useQueryParams from '../shared/useQueryParams'
 
 type QueryParams = {
@@ -52,20 +52,18 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
   const [showFilterSelection, setShowFilterSelection] = useState(false)
 
   const { state: transactions } = useContext(TransactionServiceContext)
-
+  const { state: categories } = useContext(CategoryServiceContext)
   const { state: rawAccounts } = useContext(AccountServiceContext)
+
   const accounts = useMemo(() => rawAccounts.filter(accountPreFilter), [rawAccounts, accountPreFilter])
 
   const [showAccountModal, setShowAccountModal] = useState(false)
-
-  const { state: categories } = useContext(CategoryServiceContext)
   const [showCategoryModal, setShowCategoryModal] = useState(false)
+  const [showFromDateModal, setShowFromDateModal] = useState(false)
+  const [showToDateModal, setShowToDateModal] = useState(false)
 
   const [fromView, setFromView] = useState<DateView>('day')
-  const [showFromDateModal, setShowFromDateModal] = useState(false)
-
   const [toView, setToView] = useState<DateView>('day')
-  const [showToDateModal, setShowToDateModal] = useState(false)
 
   const accountPills = useMemo(() => {
     if (accountFilter === null) return null
@@ -331,7 +329,7 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
 
   const overview = showSlider ? (
     <>
-      <ContentDialog
+      <BasicModal
         fullScreen={fullScreen}
         open={showFilterSelection && !showFromDateModal && !showToDateModal}
         onClose={() => {
@@ -339,9 +337,9 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
         }}
       >
         {form}
-      </ContentDialog>
+      </BasicModal>
 
-      <ContentDialog fullScreen={fullScreen} open={showCategoryModal} onClose={() => setShowCategoryModal(false)}>
+      <BasicModal fullScreen={fullScreen} open={showCategoryModal} onClose={() => setShowCategoryModal(false)}>
         <DialogTitle>Filter by category</DialogTitle>
         <DialogContent style={{ height: '70vh', overflowY: 'auto', padding: '0 20px' }}>
           <CategoryList
@@ -364,9 +362,9 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
         <DialogActions>
           <Button onClick={() => setShowCategoryModal(false)}>Close</Button>
         </DialogActions>
-      </ContentDialog>
+      </BasicModal>
 
-      <ContentDialog fullScreen={fullScreen} open={showAccountModal} onClose={() => setShowAccountModal(false)}>
+      <BasicModal fullScreen={fullScreen} open={showAccountModal} onClose={() => setShowAccountModal(false)}>
         <DialogTitle>Pick Account</DialogTitle>
         <DialogContent style={{ height: '70vh', overflow: 'hidden' }}>
           <GroupedAccountList
@@ -391,9 +389,9 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
         <DialogActions>
           <Button onClick={() => setShowAccountModal(false)}>Close</Button>
         </DialogActions>
-      </ContentDialog>
+      </BasicModal>
 
-      <ContentDialog
+      <BasicModal
         fullScreen={fullScreen}
         open={showFromDateModal}
         onClose={() => {
@@ -416,9 +414,9 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
         <DialogActions>
           <Button onClick={() => setShowAccountModal(false)}>Close</Button>
         </DialogActions>
-      </ContentDialog>
+      </BasicModal>
 
-      <ContentDialog
+      <BasicModal
         fullScreen={fullScreen}
         open={showToDateModal}
         onClose={() => {
@@ -441,7 +439,7 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
         <DialogActions>
           <Button onClick={() => setShowAccountModal(false)}>Close</Button>
         </DialogActions>
-      </ContentDialog>
+      </BasicModal>
     </>
   ) : null
 

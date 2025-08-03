@@ -3,7 +3,7 @@ import { Typography } from '@mui/material'
 import Category, { CategoryID } from '../../domain/model/category'
 import { ItemProps } from '../accounts/ItemList'
 import IconCapsule from '../icons/IconCapsule'
-import { Row } from '../shared/NoteContainer'
+import { Row } from '../shared/Layout'
 
 type Props = ItemProps<CategoryID, Category, unknown>
 

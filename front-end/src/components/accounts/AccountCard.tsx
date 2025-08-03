@@ -8,7 +8,7 @@ import { formatFull } from '../../domain/model/currency'
 import MixedAugmentation from '../../service/MixedAugmentation'
 import { CurrencyServiceContext } from '../../service/ServiceContext'
 import { DrawerContext } from '../Menu'
-import { GradientCard } from '../shared/NoteContainer'
+import { GradientCard } from '../shared/Layout'
 
 export type AdditionalAccountCardProps = {
   showBalances?: boolean

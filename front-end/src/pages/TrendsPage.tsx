@@ -6,7 +6,7 @@ import CategoryPicker from '../components/categories/CategoryPicker'
 import { GraphContainer, GraphPageContainer, SecondDivision } from '../components/graphing/GraphStyledComponents'
 import TrendsChart, { Grouping } from '../components/graphing/TrendsChart'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
-import { Column, Row } from '../components/shared/NoteContainer'
+import { Column, Row } from '../components/shared/Layout'
 import { useElementDimensions } from '../components/shared/useDimensions'
 import useQueryParams from '../components/shared/useQueryParams'
 import { CategoryID } from '../domain/model/category'
@@ -56,11 +56,11 @@ const TrendsPage: FC = () => {
   return (
     <ContentWithHeader title="Trends" action="menu">
       <GraphPageContainer ref={setContentRef}>
-        <GraphContainer height={contentHeight - optionsHeight}>
+        <GraphContainer style={{ height: contentHeight - optionsHeight }}>
           <TrendsChart categories={selectedCategories} grouping={grouping} years={years} />
         </GraphContainer>
 
-        <SecondDivision ref={setOptionsRef}>
+        <SecondDivision style={{ gap: '1rem' }} ref={setOptionsRef}>
           <CategoryPicker
             selectedConfig={{
               mode: 'multi',
@@ -101,7 +101,7 @@ const TrendsPage: FC = () => {
                   alignItems: 'center',
                   justifyContent: 'center',
                   flex: 1,
-                  backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                  backgroundColor: 'rgba(128,128,128,0.1)',
                   borderRadius: '0.25rem',
                   padding: '0 0.75rem',
                 }}

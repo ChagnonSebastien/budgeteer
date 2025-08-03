@@ -29,7 +29,7 @@ const StyledTable = styled.table`
 
 const HeaderRow = styled.tr`
   font-weight: 600;
-  background-color: rgba(255, 255, 255, 0.03);
+  background-color: rgba(128, 128, 128, 0.06);
 
   th {
     padding: 0.75rem 1rem;
@@ -40,14 +40,14 @@ const HeaderRow = styled.tr`
 const SectionHeader = styled.tr`
   font-weight: 600;
   color: #90caf9;
-  background-color: rgba(255, 255, 255, 0.03);
+  background-color: rgba(128, 128, 128, 0.06);
 
   th {
     padding-top: 1rem;
   }
 
   & + tr {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid rgba(128, 128, 128, 0.2);
   }
 `
 
@@ -55,7 +55,7 @@ const PercentageBar: React.FC<{ width: number; color: string }> = ({ width, colo
   <div
     style={{
       height: '3px',
-      backgroundColor: 'rgba(255, 255, 255, 0.1)',
+      backgroundColor: 'rgba(128, 128, 128, 0.2)',
       borderRadius: '2px',
       marginTop: '0.25rem',
       overflow: 'hidden',
@@ -323,7 +323,7 @@ const CostsAnalysisPage: FC = () => {
         }}
       />
 
-      <div style={{ maxWidth: '50rem', margin: 'auto' }}>
+      <div style={{ maxWidth: '40rem', width: '100%' }}>
         {viewType === 'chart' ? (
           <EarningsBreakdownChart
             grossIncome={grossIncome * Math.pow(10, defaultCurrency.decimalPoints)}

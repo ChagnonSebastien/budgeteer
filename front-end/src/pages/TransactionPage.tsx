@@ -21,9 +21,10 @@ import TransactionsPieChart from '../components/graphing/PieChart'
 import { IconToolsContext } from '../components/icons/IconTools'
 import useTransactionFilter from '../components/inputs/useTransactionFilter'
 import { DrawerContext } from '../components/Menu'
-import ContentDialog from '../components/shared/ContentDialog'
+import BasicModal from '../components/shared/BasicModal'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
-import { DetailCard, FancyModal } from '../components/shared/FancyModalComponents'
+import { DetailCard, FancyModal } from '../components/shared/FancyModal'
+import { Column } from '../components/shared/Layout'
 import SplitView from '../components/shared/SplitView'
 import { useElementDimensions } from '../components/shared/useDimensions'
 import useQueryParams from '../components/shared/useQueryParams'
@@ -43,7 +44,6 @@ const GraphSectionContainer = styled.div`
   justify-content: center;
   margin: auto;
   padding-bottom: 1rem;
-  height: 100%;
 `
 
 const GraphContainer = styled.div`
@@ -166,7 +166,8 @@ const TransactionPage: FC = () => {
       <Box
         sx={{
           height: '100%',
-          background: 'rgba(255,255,255,0.02)',
+          width: '100%',
+          background: 'rgba(128,128,128,0.04)',
         }}
       >
         <Box
@@ -301,13 +302,13 @@ const TransactionPage: FC = () => {
           secondZoneStyling={{ grow: false, scroll: true }}
         />
       ) : (
-        <div>
+        <>
           {graphSection}
-          <div>{listSection}</div>
-        </div>
+          {listSection}
+        </>
       )}
 
-      <ContentDialog
+      <BasicModal
         open={clickedTransaction !== null}
         onClose={() => setClickedTransaction(null)}
         slotProps={{
@@ -369,7 +370,7 @@ const TransactionPage: FC = () => {
             >
               DETAILS
             </Typography>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+            <Column style={{ gap: '0.2rem' }}>
               {/* Amount */}
               <DetailCard
                 delay={0}
@@ -412,10 +413,10 @@ const TransactionPage: FC = () => {
                   value={clickedTransaction.receiver.name}
                 />
               )}
-            </div>
+            </Column>
           </FancyModal>
         )}
-      </ContentDialog>
+      </BasicModal>
     </ContentWithHeader>
   )
 }

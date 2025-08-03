@@ -10,7 +10,7 @@ import { CategoryServiceContext } from '../../service/ServiceContext'
 import { darkColors, darkTheme } from '../../utils'
 import { DrawerContext } from '../Menu'
 import { GraphTooltip } from './GraphStyledComponents'
-import { Centered } from '../shared/NoteContainer'
+import { Centered } from '../shared/Layout'
 
 type LocalTree = {
   name: string

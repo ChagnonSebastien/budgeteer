@@ -7,8 +7,8 @@ import Category, { CategoryID } from '../../domain/model/category'
 import { CategoryServiceContext } from '../../service/ServiceContext'
 import { MultiSelectConfiguration, SingleSelectConfiguration } from '../accounts/ItemList'
 import IconCapsule from '../icons/IconCapsule'
-import ContentDialog from '../shared/ContentDialog'
-import { Row } from '../shared/NoteContainer'
+import BasicModal from '../shared/BasicModal'
+import { Row } from '../shared/Layout'
 
 interface Props {
   selectedConfig: MultiSelectConfiguration<CategoryID, Category> | SingleSelectConfiguration<CategoryID, Category>
@@ -69,7 +69,7 @@ const CategoryPicker: FC<Props> = (props) => {
           required={selectedConfig.mode === 'single'}
         />
       </Row>
-      <ContentDialog open={showModal} onClose={() => setShowModal(false)}>
+      <BasicModal open={showModal} onClose={() => setShowModal(false)}>
         <DialogTitle>Select Category</DialogTitle>
         <DialogContent
           sx={{
@@ -98,7 +98,7 @@ const CategoryPicker: FC<Props> = (props) => {
         <DialogActions>
           <Button onClick={() => setShowModal(false)}>Close</Button>
         </DialogActions>
-      </ContentDialog>
+      </BasicModal>
     </>
   )
 }

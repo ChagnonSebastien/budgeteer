@@ -1,41 +1,32 @@
 import { default as styled } from 'styled-components'
 
-import { Column, MaxSpaceNoOverflow } from '../shared/NoteContainer'
+import { Column, MaxSpaceNoOverflow } from '../shared/Layout'
 
 export const GraphPageContainer = styled.div`
   height: 100%;
   width: 100%;
 `
 
-export const GraphContainer = styled.div<{ height: number }>`
-  height: ${(props) => `${props.height}px`};
+export const GraphContainer = styled.div`
   width: 100%;
   padding-bottom: 1rem;
   margin: auto;
-`
-
-export const SecondDivision = styled(Column)<{ $splitView?: boolean }>`
-  padding: 1rem 2rem;
-  background: rgba(255, 255, 255, 0.02);
-  border-top: ${(props) => (props.$splitView ? 'none' : '1px solid rgba(255, 255, 255, 0.1)')};
-  height: ${(props) => (props.$splitView ? '100%' : 'auto')};
-  gap: 2rem;
 `
 
 export const FirstDivision = styled(MaxSpaceNoOverflow)`
   max-width: 100vh;
   align-items: stretch;
   flex-direction: column;
-  justify-content: flex-start;
+  justify-content: center;
   margin: auto;
 `
 
-export const GraphSelectField = styled.div`
-  transition: all 0.2s ease-in-out;
-
-  &:hover {
-    transform: translateY(-1px);
-  }
+export const SecondDivision = styled(Column)<{ $splitView?: boolean }>`
+  padding: 1rem 2rem;
+  background: rgba(128, 128, 128, 0.04);
+  border-top: ${(props) => (props.$splitView ? 'none' : '1px solid rgba(128,128,128,0.2)')};
+  height: ${(props) => (props.$splitView ? '100%' : 'auto')};
+  gap: 2rem;
 `
 
 export const GraphTooltip = styled.div`

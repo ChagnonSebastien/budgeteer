@@ -13,7 +13,7 @@ import CategoryPicker from '../categories/CategoryPicker'
 import CurrencyPicker from '../currencies/CurrencyPicker'
 import DatePicker from '../inputs/DatePicker'
 import FormWrapper from '../shared/FormWrapper'
-import { Row } from '../shared/NoteContainer'
+import { Row } from '../shared/Layout'
 
 const NoError = ''
 

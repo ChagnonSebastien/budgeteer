@@ -2,11 +2,10 @@ import { Button, Snackbar, Stack } from '@mui/material'
 import { FC, FormEvent, ReactNode, useState } from 'react'
 import { default as styled } from 'styled-components'
 
-import NoteContainer from './NoteContainer'
+import Layout from './Layout'
 
 const Form = styled.form`
   max-width: 50rem;
-  margin: auto;
 `
 
 interface Props {
@@ -33,9 +32,9 @@ const FormWrapper: FC<Props> = (props) => {
 
   return (
     <Form noValidate onSubmit={handleSubmit}>
-      <NoteContainer title="Form">
+      <Layout title="Form">
         <Stack spacing="1rem">{children}</Stack>
-      </NoteContainer>
+      </Layout>
 
       <Button fullWidth variant="contained" type="submit" style={{ marginTop: '1rem' }}>
         {submitText}

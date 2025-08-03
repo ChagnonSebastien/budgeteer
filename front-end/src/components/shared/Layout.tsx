@@ -8,7 +8,7 @@ interface Props {
   sx?: SxProps<Theme> | undefined
 }
 
-const NoteContainer: FC<Props> = (props) => (
+const Layout: FC<Props> = (props) => (
   <>
     <Row style={{ marginTop: '1rem' }}>
       <div style={{ color: 'gray', margin: '0 1rem', transform: 'translate(0, 0.5rem)' }}>{props.title}</div>
@@ -67,8 +67,8 @@ export const GradientCard = styled.div<{
   ${({ $withGradientBackground }) =>
     $withGradientBackground &&
     css`
-      background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
-      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: linear-gradient(135deg, rgba(128, 128, 128, 0.1) 0%, rgba(128, 128, 128, 0.04) 100%);
+      border: 1px solid rgba(128, 128, 128, 0.16);
       border-radius: 1rem;
       backdrop-filter: blur(12px);
       box-shadow:
@@ -88,7 +88,7 @@ export const GradientCard = styled.div<{
     $hoverEffect &&
     css`
       &:hover {
-        background-color: rgba(255, 255, 255, 0.08);
+        background-color: rgba(128, 128, 128, 0.16);
         transform: translateY(-2px);
 
         ${() =>
@@ -98,7 +98,7 @@ export const GradientCard = styled.div<{
             box-shadow:
               0 10px 15px -3px rgba(0, 0, 0, 0.1),
               0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            border-color: rgba(255, 255, 255, 0.15);
+            border-color: rgba(128, 128, 128, 0.3);
           `}
 
         ${() =>
@@ -110,4 +110,4 @@ export const GradientCard = styled.div<{
     `}
 `
 
-export default NoteContainer
+export default Layout

@@ -17,7 +17,7 @@ import MixedAugmentation from '../../service/MixedAugmentation'
 import { AccountServiceContext } from '../../service/ServiceContext'
 import { ItemListProps } from '../accounts/ItemList'
 import { DrawerContext } from '../Menu'
-import { Column, Row } from '../shared/NoteContainer'
+import { Column, Row } from '../shared/Layout'
 
 const chunkSize = 100
 

@@ -12,7 +12,7 @@ import { darkTheme } from '../../utils'
 import CodeEditor from '../inputs/CodeEditor'
 import DatePicker from '../inputs/DatePicker'
 import FormWrapper from '../shared/FormWrapper'
-import { Row } from '../shared/NoteContainer'
+import { Row } from '../shared/Layout'
 
 const ChartContainer = styled.div`
   height: 200px;

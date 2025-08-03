@@ -27,7 +27,7 @@ const CategoryListItem = styled.div<{ $isSelected: boolean; $hasSelectedChild: b
         ? 'rgba(200, 75, 49, 0.16)'
         : props.$hasSelectedChild
           ? 'rgba(200, 75, 49, 0.08)'
-          : 'rgba(255, 255, 255, 0.08)'};
+          : 'rgba(128, 128, 128, 0.16)'};
   }
 `
 
@@ -72,7 +72,7 @@ const NestedCategoryContainer = styled.div`
     top: 0;
     bottom: 0;
     width: 1px;
-    background-color: rgba(255, 255, 255, 0.12);
+    background-color: rgba(128, 128, 128, 0.24);
     border-radius: 0.125rem;
   }
 `

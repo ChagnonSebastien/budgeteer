@@ -5,7 +5,7 @@ import Currency, { CurrencyID, formatAmount } from '../../domain/model/currency'
 import { ItemProps } from '../accounts/ItemList'
 import { IconToolsContext } from '../icons/IconTools'
 import { DrawerContext } from '../Menu'
-import { Column, GradientCard } from '../shared/NoteContainer'
+import { Column, GradientCard } from '../shared/Layout'
 
 export type AdditionalCurrencyCardProps = {
   total?(id: CurrencyID): number

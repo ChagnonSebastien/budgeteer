@@ -8,8 +8,8 @@ import { formatFull } from '../../domain/model/currency'
 import MixedAugmentation from '../../service/MixedAugmentation'
 import { SearchOverlay } from '../inputs/SearchOverlay'
 import { DrawerContext } from '../Menu'
-import { Column, Row } from '../shared/NoteContainer'
-import { CustomScrollbarContainer } from '../shared/ScrollingOverButton'
+import { Column, Row } from '../shared/Layout'
+import { CustomScrolling } from '../shared/ScrollingOverButton'
 
 type tabs = 'mine' | 'others'
 const groupOther = 'Other'
@@ -224,7 +224,7 @@ const GroupedAccountList = (props: Props) => {
     <Column style={{ position: 'relative', height: '100%' }}>
       {segments}
 
-      <CustomScrollbarContainer ref={scrollingContainerRef} style={{ paddingTop: '1rem', paddingBottom: '4rem' }}>
+      <CustomScrolling ref={scrollingContainerRef} style={{ paddingTop: '1rem', paddingBottom: '4rem' }}>
         {groups.map(([type, accounts]) => (
           <Column key={`account-group-${type}`} style={{ marginBottom: '2rem', gap: '0.75rem' }}>
             {type !== groupOther && (
@@ -237,7 +237,7 @@ const GroupedAccountList = (props: Props) => {
                   <Row
                     style={{
                       paddingLeft: '0.5rem',
-                      borderLeft: '2px solid rgba(255, 255, 255, 0.1)',
+                      borderLeft: '2px solid rgba(128,128,128,0.2)',
                     }}
                   >
                     <Typography variant="subtitle2" fontFamily="monospace" color="textDisabled">
@@ -253,7 +253,7 @@ const GroupedAccountList = (props: Props) => {
                 ...(additionalItemsProps.showBalances
                   ? {
                       display: 'grid',
-                      gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))',
+                      gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
                       gap: '1rem',
                       padding: '0.25rem',
                     }
@@ -274,7 +274,7 @@ const GroupedAccountList = (props: Props) => {
             </div>
           </Column>
         ))}
-      </CustomScrollbarContainer>
+      </CustomScrolling>
 
       {filterable && <SearchOverlay filter={filter} setFilter={setFilter} placeholder="Search accounts..." />}
     </Column>

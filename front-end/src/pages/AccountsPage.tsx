@@ -6,9 +6,9 @@ import AccountCard from '../components/accounts/AccountCard'
 import GroupedAccountList from '../components/accounts/GroupedAccountList'
 import { IconToolsContext } from '../components/icons/IconTools'
 import { DrawerContext } from '../components/Menu'
-import ContentDialog from '../components/shared/ContentDialog'
+import BasicModal from '../components/shared/BasicModal'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
-import { DetailCard, FancyModal } from '../components/shared/FancyModalComponents'
+import { DetailCard, FancyModal } from '../components/shared/FancyModal'
 import ScrollingOverButton from '../components/shared/ScrollingOverButton'
 import Account from '../domain/model/account'
 import { formatAmount } from '../domain/model/currency'
@@ -86,6 +86,7 @@ const AccountsPage: FC = () => {
       <ScrollingOverButton
         button={{ text: 'New', onClick: () => navigate('/accounts/new') }}
         scrollingContainerRef={scrollingContainerRef}
+        contentStyle={{ maxWidth: '65rem' }}
       >
         <GroupedAccountList
           ItemComponent={AccountCard}
@@ -103,7 +104,7 @@ const AccountsPage: FC = () => {
         />
       </ScrollingOverButton>
 
-      <ContentDialog
+      <BasicModal
         open={clickedAccount !== null}
         onClose={handleClose}
         slotProps={{
@@ -182,7 +183,7 @@ const AccountsPage: FC = () => {
             )}
           </FancyModal>
         )}
-      </ContentDialog>
+      </BasicModal>
     </ContentWithHeader>
   )
 }

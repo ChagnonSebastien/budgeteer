@@ -12,7 +12,7 @@ import { BaseLineConfig, ScaleConfig } from '../components/graphing/NetWorthChar
 import SelectOne from '../components/inputs/SelectOne'
 import useTransactionFilter from '../components/inputs/useTransactionFilter'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
-import { Row } from '../components/shared/NoteContainer'
+import { Row } from '../components/shared/Layout'
 import SplitView from '../components/shared/SplitView'
 import { useElementDimensions } from '../components/shared/useDimensions'
 import useQueryParams from '../components/shared/useQueryParams'
@@ -42,38 +42,52 @@ const AccountsBalancePage: FC = () => {
 
   const { ref: setContentRef, height: contentHeight, width: contentWidth } = useElementDimensions(600, 600)
 
-  const splitHorizontal = useMemo(() => contentWidth > 1200, [contentWidth])
+  console.log(optionsHeight, contentHeight)
 
-  const graph = useMemo(
-    () => (
-      <AccountsBalanceChart
-        fromDate={fromDate}
-        toDate={toDate}
-        filterByAccounts={accountFilter === null ? undefined : accountFilter}
-        groupBy={groupBy}
-        baselineConfig={baselineConfig}
-        scale={scale}
-      />
-    ),
-    [fromDate, toDate, accountFilter, groupBy, baselineConfig, scale],
-  )
+  const splitHorizontal = useMemo(() => contentWidth > 1200, [contentWidth])
 
   const graphSection = useMemo(
     () => (
-      <FirstDivision>
+      <FirstDivision style={{ overflowY: 'auto' }}>
         <GraphContainer
-          height={
-            splitHorizontal ? (showSlider ? contentHeight - 200 : contentHeight - 100) : contentHeight - optionsHeight
-          }
-          style={{ padding: '1rem 0' }}
+          style={{
+            padding: '1rem 0',
+            height: splitHorizontal
+              ? showSlider
+                ? contentHeight - 240
+                : contentHeight - 100
+              : contentHeight === optionsHeight
+                ? '100vh'
+                : contentHeight - optionsHeight,
+          }}
         >
-          {graph}
+          <AccountsBalanceChart
+            key="AccountBalancePageFirstDivision"
+            fromDate={fromDate}
+            toDate={toDate}
+            filterByAccounts={accountFilter === null ? undefined : accountFilter}
+            groupBy={groupBy}
+            baselineConfig={baselineConfig}
+            scale={scale}
+          />
         </GraphContainer>
 
         {splitHorizontal && <Box sx={{ padding: '0 1rem' }}>{filterOverview}</Box>}
       </FirstDivision>
     ),
-    [graph, splitHorizontal, showSlider, contentHeight, optionsHeight, filterOverview],
+    [
+      fromDate,
+      toDate,
+      accountFilter,
+      groupBy,
+      baselineConfig,
+      scale,
+      splitHorizontal,
+      showSlider,
+      contentHeight,
+      optionsHeight,
+      filterOverview,
+    ],
   )
 
   const selectOptions = [

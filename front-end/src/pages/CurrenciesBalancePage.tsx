@@ -12,7 +12,7 @@ import { BaseLineConfig, ScaleConfig } from '../components/graphing/NetWorthChar
 import SelectOne from '../components/inputs/SelectOne'
 import useTransactionFilter from '../components/inputs/useTransactionFilter'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
-import { Row } from '../components/shared/NoteContainer'
+import { Row } from '../components/shared/Layout'
 import SplitView from '../components/shared/SplitView'
 import { useElementDimensions } from '../components/shared/useDimensions'
 import useQueryParams from '../components/shared/useQueryParams'
@@ -47,10 +47,14 @@ const CurrenciesBalancePage: FC = () => {
   const graphSection = (
     <FirstDivision>
       <GraphContainer
-        height={
-          splitHorizontal ? (showSlider ? contentHeight - 200 : contentHeight - 100) : contentHeight - optionsHeight
-        }
-        style={{ padding: '1rem 0 1rem 0' }}
+        style={{
+          padding: '1rem 0 1rem 0',
+          height: splitHorizontal
+            ? showSlider
+              ? contentHeight - 200
+              : contentHeight - 100
+            : contentHeight - optionsHeight,
+        }}
       >
         <Suspense
           fallback={

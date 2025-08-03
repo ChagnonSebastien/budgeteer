@@ -7,7 +7,7 @@ import { GraphTooltip, GraphTooltipDate } from '../components/graphing/GraphStyl
 import InvestmentGainLineChart from '../components/graphing/InvestmentGainLineChart'
 import { DrawerContext } from '../components/Menu'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
-import NoteContainer, { Column, Row } from '../components/shared/NoteContainer'
+import Layout, { Column, Row } from '../components/shared/Layout'
 import { formatFull } from '../domain/model/currency'
 import MixedAugmentation from '../service/MixedAugmentation'
 import { AccountServiceContext } from '../service/ServiceContext'
@@ -160,9 +160,9 @@ const Dashboard: FC = () => {
 
   return (
     <ContentWithHeader title="Dashboard" action="menu" withPadding withScrolling>
-      <div style={{ maxWidth: '50rem', margin: 'auto' }}>
+      <div style={{ maxWidth: '50rem', width: '100%' }}>
         {/* Net Worth */}
-        <NoteContainer
+        <Layout
           title="Net Worth"
           sx={{
             display: 'flex',
@@ -179,19 +179,19 @@ const Dashboard: FC = () => {
           >
             {formatFull(defaultCurrency, netWorth, privacyMode)}
           </p>
-        </NoteContainer>
+        </Layout>
 
         {/* Investments */}
 
-        <NoteContainer title="Investments Performance">
+        <Layout title="Investments Performance">
           <div style={{ height: '40vh', width: '100%' }}>
             <InvestmentGainLineChart fromDate={lastYear} toDate={today} />
           </div>
-        </NoteContainer>
+        </Layout>
 
         {/* Cash Flow */}
 
-        <NoteContainer title="Cash Flow">
+        <Layout title="Cash Flow">
           <div style={{ height: '40vh', width: '100%' }}>
             <CashFlowBarChart data={cashFlowData} />
           </div>
@@ -240,7 +240,7 @@ const Dashboard: FC = () => {
               </span>
             </Column>
           </Row>
-        </NoteContainer>
+        </Layout>
       </div>
     </ContentWithHeader>
   )

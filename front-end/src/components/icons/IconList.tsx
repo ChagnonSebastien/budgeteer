@@ -1,7 +1,7 @@
 import { FC, useContext, useEffect, useMemo, useRef, useState } from 'react'
 
 import { IconToolsContext } from './IconTools'
-import { Row } from '../shared/NoteContainer'
+import { Row } from '../shared/Layout'
 
 const perfectMultiplier = 4 * 3 * 5 * 7
 

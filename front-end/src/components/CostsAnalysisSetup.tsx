@@ -2,7 +2,7 @@ import { Button, DialogActions, DialogContent, DialogTitle, Stack, TextField } f
 import { FC, useContext } from 'react'
 
 import CategoryPicker from './categories/CategoryPicker'
-import ContentDialog from './shared/ContentDialog'
+import BasicModal from './shared/BasicModal'
 import { CategoryServiceContext } from '../service/ServiceContext'
 
 interface Props {
@@ -25,7 +25,7 @@ const CostsAnalysisSetup: FC<Props> = ({
   const { augmentedCategories } = useContext(CategoryServiceContext)
 
   return (
-    <ContentDialog open={open} fullWidth maxWidth="sm">
+    <BasicModal open={open} fullWidth maxWidth="sm">
       <DialogTitle>Costs Analysis Setup</DialogTitle>
       <DialogContent>
         <Stack spacing={3} sx={{ mt: 2 }}>
@@ -57,7 +57,7 @@ const CostsAnalysisSetup: FC<Props> = ({
           Complete Setup
         </Button>
       </DialogActions>
-    </ContentDialog>
+    </BasicModal>
   )
 }
 

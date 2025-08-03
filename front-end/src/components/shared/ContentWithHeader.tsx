@@ -1,12 +1,12 @@
 import { AppBar, IconButton, Toolbar, Typography } from '@mui/material'
-import { CSSProperties, FC, ReactNode, useContext } from 'react'
+import { FC, ReactNode, useContext } from 'react'
 import { IconType } from 'react-icons'
 import { useNavigate } from 'react-router-dom'
 import { css, default as styled } from 'styled-components'
 
 import { IconToolsContext } from '../icons/IconTools'
 import { DrawerContext } from '../Menu'
-import { MaxSpaceNoOverflow } from './NoteContainer'
+import { MaxSpaceNoOverflow } from './Layout'
 
 export const ContentWithHeaderContainer = styled(MaxSpaceNoOverflow)`
   display: flex;
@@ -19,7 +19,10 @@ export const Header = styled(AppBar)`
 
 export const ContentContainer = styled(MaxSpaceNoOverflow)<{ $withPadding: boolean; $withScrolling: boolean }>`
   height: calc(100% - 64px);
-  margin: auto;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 
   ${(props) =>
     props.$withPadding &&
@@ -32,16 +35,6 @@ export const ContentContainer = styled(MaxSpaceNoOverflow)<{ $withPadding: boole
     css`
       overflow: auto;
     `};
-`
-
-export const ScrollingContent = styled.div`
-  margin: auto;
-  padding: 1rem calc(1rem + min(1rem, max(0px, calc(100% - 50rem)) / 50));
-`
-
-export const FillingContent = styled.div`
-  margin: auto;
-  padding: 1rem calc(1rem + min(1rem, max(0px, calc(100% - 50rem)) / 50));
 `
 
 type CustomAction = {
@@ -60,7 +53,6 @@ export interface ContentWithHeaderProps {
   title: string
   action?: 'menu' | 'return' | CustomAction
   rightContent?: ReactNode
-  contentStyle?: CSSProperties
   setContentRef?: (value: ((prevState: HTMLDivElement | null) => HTMLDivElement | null) | HTMLDivElement | null) => void
   withPadding?: boolean
   withScrolling?: boolean
@@ -73,7 +65,6 @@ const ContentWithHeader: FC<ContentWithHeaderProps> = (props) => {
     action,
     rightContent,
     setContentRef = undefined,
-    contentStyle,
     withPadding = false,
     withScrolling = false,
   } = props
@@ -104,12 +95,7 @@ const ContentWithHeader: FC<ContentWithHeaderProps> = (props) => {
         </Toolbar>
       </Header>
 
-      <ContentContainer
-        style={contentStyle}
-        ref={setContentRef}
-        $withPadding={withPadding}
-        $withScrolling={withScrolling}
-      >
+      <ContentContainer ref={setContentRef} $withPadding={withPadding} $withScrolling={withScrolling}>
         {children}
       </ContentContainer>
     </ContentWithHeaderContainer>

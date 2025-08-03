@@ -345,7 +345,7 @@ const NetWorthChart: FC<NetWorthChartProps> = ({
             ...darkTheme.grid,
             line: {
               ...darkTheme.grid?.line,
-              stroke: 'rgba(255, 255, 255, 0.1)',
+              stroke: 'rgba(128, 128, 128, 0.2)',
               strokeWidth: 1,
             },
           },
