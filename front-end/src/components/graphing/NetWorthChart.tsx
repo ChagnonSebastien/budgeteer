@@ -300,7 +300,7 @@ const NetWorthChart: FC<NetWorthChartProps> = ({
         data={data}
         keys={[...groups.keys()].sort((a, b) => a.localeCompare(b))}
         valueFormat={(value) => `${formatFull(defaultCurrency, value, privacyMode)}`}
-        margin={{ top: 20, right: 25, bottom: 65, left: 70 }}
+        margin={{ top: 30, right: 25, bottom: 80, left: 60 }}
         showGlobalBaseline={baselineConfig === 'showGlobalBaseline'}
         showIndividualBaselines={baselineConfig === 'showIndividualBaselines'}
         minYValue={minYValue}
