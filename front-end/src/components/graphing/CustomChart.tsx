@@ -1,8 +1,8 @@
+import { Box, Typography } from '@mui/material'
 import React, { FC, useMemo, useState } from 'react'
 
-import { useElementDimensions } from '../shared/useDimensions'
+import { Column, Row } from '../shared/Layout'
 
-// Generates a monotone cubic spline from points
 function monotoneSpline(pts: [number, number][]): string {
   const n = pts.length
   if (n < 2) return ''
@@ -51,11 +51,6 @@ type Bucket = { values: Record<string, { amount: number; baseline?: number }>; b
 type Margin = { top: number; right: number; bottom: number; left: number }
 type AxisBottom = { format?: (i: number) => string; tickRotation?: number; tickSize?: number; tickPadding?: number }
 type AxisLeft = { format?: (v: number) => string; tickSize?: number; tickPadding?: number }
-type Theme = {
-  axis?: { ticks?: { text?: { fontSize?: number; fill?: string } } }
-  grid?: { line?: { stroke?: string; strokeWidth?: number } }
-  background?: string
-}
 export type TooltipSlice = {
   slice: {
     index: number
@@ -74,7 +69,6 @@ type Props = {
   data: Bucket[]
   order?: 'normal' | 'reverse'
   offsetType?: 'normal' | 'expand'
-  theme?: Partial<Theme>
   colors?: string[]
   xLabels?: string[]
   keys?: string[]
@@ -94,28 +88,25 @@ const CustomChart: FC<Props> = ({
   data,
   order = 'normal',
   offsetType = 'normal',
-  theme = {},
   colors = [],
   xLabels,
   keys: propKeys,
   valueFormat = (v) => String(v),
-  margin: propMargin = { top: 20, right: 25, bottom: 65, left: 70 },
+  margin = { top: 20, right: 25, bottom: 65, left: 70 },
   axisBottom = {},
-  enableGridY = true,
   axisLeft = {},
   stackTooltip,
-  height: fallbackHeight = 300,
   showGlobalBaseline = false,
   showIndividualBaselines = false,
   minYValue = 0,
 }) => {
-  const mergedTheme = useMemo<Theme>(() => ({ background: 'transparent', ...theme }), [theme])
-  const { width: w, height: h, ref: containerRef, boundingRect } = useElementDimensions(0, 0)
-  const [tooltip, setTooltip] = useState<{ index: number; x: number; y: number } | null>(null)
-
-  const margin = propMargin
-  const innerW = (w || 0) - margin.left - margin.right
-  const innerH = (h || fallbackHeight) - margin.top - margin.bottom
+  const [tooltip, setTooltip] = useState<{
+    index: number
+    x: number
+    y: number
+    side: 'left' | 'right'
+    slice: number
+  } | null>(null)
 
   const labels = useMemo(() => {
     if (propKeys && propKeys.length) return propKeys
@@ -185,36 +176,39 @@ const CustomChart: FC<Props> = ({
     }
   }, [data, series, layers, ordered, offsetType])
 
-  // apply minYValue floor
-  const minY = minYValue
-  const maxY = Math.max(rawMaxY, minY)
-  const domain = maxY - minY
+  const { minY, maxY, domain } = useMemo(() => {
+    const minY = minYValue
+    const maxY = Math.max(rawMaxY, minY)
+    const domain = maxY - minY
+    return {
+      minY,
+      maxY,
+      domain,
+    }
+  }, [minYValue, rawMaxY])
 
-  const xScale = (i: number) => margin.left + (i / (data.length - 1)) * innerW
+  const xScale = (i: number) => (i / (data.length - 1)) * 1000
   const yScale = (y: number) =>
     // clamp y into [minY, maxY]
-    margin.top + innerH - ((Math.max(y, minY) - minY) / domain) * innerH
+    1000 - ((Math.max(y, minY) - minY) / domain) * 1000
 
-  const {
-    format: fmtX = (i) => (xLabels && xLabels.length === data.length ? xLabels[i] : String(i)),
-    tickRotation = -45,
-    tickSize = 8,
-    tickPadding: tpX = 5,
-  } = axisBottom
-  const { format: fmtY = (v) => String(v), tickSize: tsY = 2, tickPadding: tpY = 4 } = axisLeft
+  const { format: fmtX = (i) => (xLabels && xLabels.length === data.length ? xLabels[i] : String(i)), tickSize = 8 } =
+    axisBottom
+  const { format: fmtY = (v) => String(v) } = axisLeft
 
-  const yTicks = useMemo(() => {
-    if (!layers.length) return []
+  const { step, startTick, endTick } = useMemo(() => {
     const count = 10
     const raw = (maxY - minY) / count
     const mag = 10 ** Math.floor(Math.log10(raw))
     const norm = raw / mag
     const nice = norm < 1.5 ? 1 : norm < 3 ? 2 : norm < 7 ? 5 : 10
     const step = nice * mag
-    // build ticks between minY and maxY
-    const startTick = Math.ceil(minY / step) * step
-    const endTick = Math.floor(maxY / step) * step
-    return Array.from({ length: Math.floor((endTick - startTick) / step) + 1 }, (_, i) => startTick + i * step)
+
+    return {
+      step,
+      startTick: Math.ceil(minY / step) * step,
+      endTick: Math.floor(maxY / step) * step,
+    }
   }, [layers, maxY])
 
   const getColor = (id: string) => {
@@ -260,7 +254,6 @@ const CustomChart: FC<Props> = ({
     return paths
   }, [data, ordered, layers, series, offsetType, xScale, yScale])
 
-  // Global baseline trendline (white), adjusted for "expand" mode
   const globalBaselinePath = useMemo<string>(() => {
     const pts: [number, number][] = []
     // when in expand mode, compute each column’s total so we can normalize
@@ -294,186 +287,254 @@ const CustomChart: FC<Props> = ({
       }
     })
 
+  const graph = useMemo(
+    () => (
+      <svg
+        preserveAspectRatio="none"
+        viewBox={`0 0 1000 1000`}
+        style={{
+          height: '100%',
+          width: '100%',
+          position: 'absolute',
+          zIndex: 1,
+        }}
+        onMouseMove={(e) => {
+          const boundingRect = e.currentTarget.getBoundingClientRect()
+          const sliceWidth = boundingRect.width / data.length
+          const index = Math.floor((e.clientX - boundingRect.left) / sliceWidth)
+          setTooltip({
+            index,
+            x: e.clientX,
+            y: e.clientY,
+            side: index < data.length / 2 ? 'right' : 'left',
+            slice: sliceWidth,
+          })
+        }}
+      >
+        {/* Layers */}
+        {layers.map((layer, li) => (
+          <path key={ordered[li]} d={buildPath(layer)} fill={getColor(ordered[li])} stroke="none" />
+        ))}
+
+        {/* Baselines */}
+        {showIndividualBaselines &&
+          layers.map((_, li) => {
+            const key = ordered[li]
+            const path = baselinePaths[key]
+            if (!path) return null
+            const areaColor = getColor(key)
+            const baselineColor = brighten(areaColor)
+            return (
+              <path
+                key={`${key}-baseline`}
+                d={path}
+                fill="none"
+                stroke={baselineColor}
+                strokeWidth={2}
+                strokeDasharray="10 4"
+              />
+            )
+          })}
+
+        {/* Global baseline trendline */}
+        {showGlobalBaseline && globalBaselinePath && (
+          <path d={globalBaselinePath} fill="none" stroke="#fff" strokeWidth={2} strokeDasharray="10 4" />
+        )}
+      </svg>
+    ),
+    [
+      showGlobalBaseline,
+      globalBaselinePath,
+      layers,
+      ordered,
+      buildPath,
+      getColor,
+      brighten,
+      showIndividualBaselines,
+      baselinePaths,
+    ],
+  )
+
   return (
-    <div ref={containerRef} style={{ position: 'relative', width: '100%', height: '100%' }}>
-      {w > 0 && h > 0 && (
-        <svg
-          width={w}
-          height={h}
-          style={{ background: mergedTheme.background }}
+    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+      <Column
+        style={{
+          paddingTop: margin.top,
+          height: '100%',
+          width: '100%',
+          position: 'absolute',
+        }}
+      >
+        <Row
+          style={{
+            flexGrow: 1,
+          }}
           onMouseLeave={() => {
             setTooltip(null)
           }}
-          onMouseMove={(e) => {
-            if (!boundingRect) return
-
-            const y = e.clientY - boundingRect.top
-            if (y < margin.top || y > margin.top + innerH) {
-              setTooltip(null)
-            }
-          }}
         >
-          {/* clip everything to the chart-area */}
-          <defs>
-            <clipPath id="chart-area">
-              <rect x={margin.left} y={margin.top} width={innerW} height={innerH} />
-            </clipPath>
-          </defs>
-
-          {/* Grid lines */}
-          {enableGridY &&
-            yTicks.map((yt, i) => (
-              <line
-                key={i}
-                x1={margin.left}
-                x2={margin.left + innerW}
-                y1={yScale(yt)}
-                y2={yScale(yt)}
-                stroke={mergedTheme.grid?.line?.stroke}
-                strokeWidth={mergedTheme.grid?.line?.strokeWidth}
-              />
-            ))}
-          {/* Y Axis */}
-          {yTicks.map((yt, i) => (
-            <g key={i}>
-              <line
-                x1={margin.left - tsY}
-                x2={margin.left}
-                y1={yScale(yt)}
-                y2={yScale(yt)}
-                stroke={mergedTheme.axis?.ticks?.text?.fill}
-              />
-              <text
-                x={margin.left - tsY - tpY}
-                y={yScale(yt) + 4}
-                fontSize={mergedTheme.axis?.ticks?.text?.fontSize}
-                fill={mergedTheme.axis?.ticks?.text?.fill}
-                textAnchor="end"
-              >
-                {fmtY(yt)}
-              </text>
-            </g>
-          ))}
-          {/* X Axis */}
-          {data.map((_, i) => {
-            const x = xScale(i)
-            const label = fmtX(i)
-            if (label === '') return null
-            return (
-              <g key={i} transform={`translate(${x},${margin.top + innerH})`}>
-                <line y2={tickSize} stroke={mergedTheme.axis?.ticks?.text?.fill} />
-                <text
-                  x={-tpX}
-                  y={tickSize + tpX}
-                  transform={`rotate(${tickRotation})`}
-                  fontSize={mergedTheme.axis?.ticks?.text?.fontSize}
-                  fill={mergedTheme.axis?.ticks?.text?.fill}
-                  textAnchor="end"
+          <Column
+            style={{ width: margin.left, flexDirection: 'column-reverse' }}
+            onMouseMove={(e) =>
+              setTooltip((prev) =>
+                prev
+                  ? {
+                      ...prev,
+                      index: 0,
+                      x: e.clientX,
+                      y: e.clientY,
+                      side: 'right',
+                    }
+                  : null,
+              )
+            }
+          >
+            {Array.from({ length: Math.floor((endTick - startTick) / step) + 1 }, (_, i) => (
+              <div style={{ position: 'relative', flexGrow: i === 0 ? startTick - minY : step }}>
+                <Box style={{ width: tickSize, borderTop: '1px solid white', position: 'absolute', right: 0 }} />
+                <Typography
+                  style={{
+                    transform: `translate(-${tickSize + 5}px, -50%)`,
+                    transformOrigin: 'center',
+                    position: 'absolute',
+                    top: 0,
+                    right: 0,
+                    whiteSpace: 'nowrap',
+                    fontSize: '0.75rem',
+                  }}
                 >
-                  {fmtX(i)}
-                </text>
-              </g>
-            )
-          })}
-          {/* draw all areas & baselines inside the clip */}
-          <g clipPath="url(#chart-area)">
-            {/* Layers */}
-            {layers.map((layer, li) => (
-              <path key={ordered[li]} d={buildPath(layer)} fill={getColor(ordered[li])} stroke="none" />
+                  {fmtY(startTick + i * step)}
+                </Typography>
+              </div>
             ))}
-            {/* Baselines */}
-            {/* Baselines */}
-            {/* Baseline overlays */}
-            {showIndividualBaselines &&
-              layers.map((_, li) => {
-                const key = ordered[li]
-                const path = baselinePaths[key]
-                if (!path) return null
-                const areaColor = getColor(key)
-                const baselineColor = brighten(areaColor)
-                return (
-                  <path
-                    key={`${key}-baseline`}
-                    d={path}
-                    fill="none"
-                    stroke={baselineColor}
-                    strokeWidth={2}
-                    strokeDasharray="10 4"
-                  />
-                )
-              })}
-            {/* Global baseline trendline */}
-            {showGlobalBaseline && globalBaselinePath && (
-              <path d={globalBaselinePath} fill="none" stroke="#fff" strokeWidth={2} strokeDasharray="10 4" />
-            )}
-          </g>
-          {/* Interaction zones */}
-          {data.map((_, i) => {
-            const isFirst = i === 0
-            const isLast = i === data.length - 1
+            <div style={{ flexGrow: maxY - endTick }} />
+          </Column>
 
-            const edgePad = 20
-            const x0 = isFirst ? margin.left - edgePad : xScale(i - 1)
-            const x1 = isLast ? xScale(i) + edgePad : xScale(i)
+          <div style={{ flexGrow: 1, position: 'relative' }}>
+            {graph}
 
-            return (
-              <rect
-                key={i}
-                x={x0}
-                y={margin.top}
-                width={x1 - x0}
-                height={innerH}
-                fill="transparent"
-                onMouseMove={(e) => {
-                  if (boundingRect)
-                    setTooltip({ index: i, x: e.clientX - boundingRect.left, y: e.clientY - boundingRect.top })
+            {tooltip && (
+              <div
+                style={{
+                  zIndex: 2,
+                  position: 'absolute',
+                  height: '100%',
+                  width: (tooltip.index + 1) * tooltip.slice,
+                  borderRight: '2px dashed rgba(128, 128, 128, 1)',
+                  pointerEvents: 'none',
                 }}
               />
-            )
-          })}
-          {/* Tooltip line */}
-          {tooltip && (
-            <line
-              x1={margin.left + (tooltip.index / (data.length - 1)) * innerW}
-              x2={margin.left + (tooltip.index / (data.length - 1)) * innerW}
-              y1={margin.top}
-              y2={margin.top + innerH}
-              stroke={mergedTheme.axis?.ticks?.text?.fill}
-              strokeDasharray="4 2"
-            />
-          )}
-        </svg>
-      )}
-      {/* Tooltip box */}
-      {tooltip &&
-        stackTooltip &&
-        (() => {
-          // decide which side of the chart we're on
-          const isLeftSide = tooltip.x < w / 2
+            )}
 
-          return (
-            <div
+            <Column
               style={{
-                position: 'absolute',
-                top: tooltip.y + 10,
-                // pin left or right depending on cursor position
-                ...(isLeftSide ? { left: tooltip.x + 10 } : { right: w - tooltip.x + 10 }),
-                pointerEvents: 'none',
-                whiteSpace: 'nowrap', // prevent wrapping/shrinking
-                zIndex: 100,
+                height: '100%',
+                width: '100%',
+                flexDirection: 'column-reverse',
+                alignItems: 'stretch',
+                zIndex: -1,
               }}
             >
-              {stackTooltip({
-                slice: {
-                  index: tooltip.index,
-                  stack: computeStack(tooltip.index)
-                    .reverse()
-                    .filter((s) => s.value !== 0),
-                },
-              })}
-            </div>
-          )
-        })()}
+              {Array.from({ length: Math.floor((endTick - startTick) / step) + 1 }, (_, i) => (
+                <div style={{ position: 'relative', flexGrow: i === 0 ? startTick - minY : step }}>
+                  <Box
+                    style={{ width: '100%', borderTop: '1px solid rgba(128, 128, 128, 0.2)', position: 'absolute' }}
+                  />
+                </div>
+              ))}
+              <div style={{ flexGrow: maxY - endTick }} />
+            </Column>
+          </div>
+
+          <Box
+            width={margin.right}
+            onMouseMove={(e) =>
+              setTooltip((prev) =>
+                prev
+                  ? {
+                      ...prev,
+                      index: data.length - 1,
+                      x: e.clientX,
+                      y: e.clientY,
+                      side: 'left',
+                    }
+                  : null,
+              )
+            }
+          />
+        </Row>
+
+        <Row style={{ height: margin.bottom, position: 'relative' }}>
+          <div style={{ width: margin.left }} />
+
+          <Row style={{ height: margin.bottom, flexGrow: 1 }}>
+            {data
+              .reduce<{ width: number; label: string }[]>((prev, _current, i) => {
+                if (prev.length === 0 || prev[prev.length - 1].label !== '') {
+                  prev.push({ width: 0, label: '' })
+                }
+                const label = fmtX(i)
+                if (label) {
+                  prev[prev.length - 1].label = label
+                }
+                prev[prev.length - 1].width += 1
+                return prev
+              }, [])
+              .map((element) => (
+                <div key={element.label} style={{ flexGrow: element.width, position: 'relative' }}>
+                  <Box style={{ height: tickSize, borderRight: '1px solid white' }} />
+                  <Typography
+                    style={{
+                      transform: 'rotate(-45deg)',
+                      transformOrigin: 'right',
+                      paddingRight: tickSize,
+                      position: 'absolute',
+                      top: 0,
+                      right: 0,
+                      whiteSpace: 'nowrap',
+                      fontSize: '0.75rem',
+                    }}
+                  >
+                    {element.label}
+                  </Typography>
+                </div>
+              ))}
+          </Row>
+
+          <Box width={margin.right} />
+        </Row>
+      </Column>
+
+      {/* Tooltip box */}
+      {tooltip && stackTooltip && (
+        <div
+          style={{
+            position: 'fixed',
+            top: tooltip.y,
+            left: tooltip.x,
+            zIndex: 100,
+          }}
+        >
+          <div
+            style={{
+              position: 'absolute',
+              top: -margin.top,
+              ...(tooltip.side === 'right' ? { left: '1rem' } : { right: '1rem' }),
+              pointerEvents: 'none',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {stackTooltip({
+              slice: {
+                index: tooltip.index,
+                stack: computeStack(tooltip.index)
+                  .reverse()
+                  .filter((s) => s.value !== 0),
+              },
+            })}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

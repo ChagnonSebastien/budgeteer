@@ -15,7 +15,7 @@ import Account from '../../domain/model/account'
 import { formatFull } from '../../domain/model/currency'
 import { AugmentedTransaction } from '../../domain/model/transaction'
 import MixedAugmentation from '../../service/MixedAugmentation'
-import { darkColors, darkTheme } from '../../utils'
+import { darkColors } from '../../utils'
 import { DrawerContext } from '../Menu'
 import { TimeseriesIterator } from '../shared/useTimerangeSegmentation'
 
@@ -328,29 +328,6 @@ const NetWorthChart: FC<NetWorthChartProps> = ({
         }}
         offsetType={scale == 'relative' ? 'expand' : 'normal'}
         order="reverse"
-        theme={{
-          ...darkTheme,
-          axis: {
-            ...darkTheme.axis,
-            ticks: {
-              ...darkTheme.axis?.ticks,
-              text: {
-                ...darkTheme.axis?.ticks?.text,
-                fontSize: 12,
-                fill: 'rgba(255, 255, 255, 0.7)',
-              },
-            },
-          },
-          grid: {
-            ...darkTheme.grid,
-            line: {
-              ...darkTheme.grid?.line,
-              stroke: 'rgba(128, 128, 128, 0.2)',
-              strokeWidth: 1,
-            },
-          },
-          background: 'transparent',
-        }}
         colors={darkColors}
         stackTooltip={(tooltipProps) => (
           <NetWorthTooltip tooltipProps={tooltipProps} labels={labels} baselineConfig={baselineConfig} />
