@@ -11,9 +11,11 @@ export const FirstDivision = styled.div`
   width: 100%;
   max-width: 100vh;
   align-items: stretch;
+  display: flex;
   flex-direction: column;
-  justify-content: center;
-  margin: auto;
+  justify-content: stretch;
+  margin: 0 auto;
+  flex-grow: 1;
 `
 
 export const SecondDivision = styled(Column)<{ $splitView?: boolean }>`

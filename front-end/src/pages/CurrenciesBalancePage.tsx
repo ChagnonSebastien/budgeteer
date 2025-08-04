@@ -46,8 +46,11 @@ const CurrenciesBalancePage: FC = () => {
     <FirstDivision>
       <GraphContainer
         style={{
-          height: contentHeight - optionsHeight,
           minHeight: 'max(50vh, 300px)',
+          display: 'flex',
+          alignItems: 'stretch',
+          justifyContent: 'stretch',
+          flexGrow: 1,
         }}
       >
         <CurrenciesBalanceChart
@@ -128,20 +131,13 @@ const CurrenciesBalancePage: FC = () => {
       setContentRef={setContentRef}
       withScrolling={!splitHorizontal && contentTooTall}
     >
-      {splitHorizontal ? (
-        <SplitView
-          first={firstDivision}
-          second={secondDivision}
-          split="horizontal"
-          firstZoneStyling={{ grow: true, scroll: contentTooTall }}
-          secondZoneStyling={{ grow: false, scroll: true }}
-        />
-      ) : (
-        <>
-          {firstDivision}
-          {secondDivision}
-        </>
-      )}
+      <SplitView
+        first={firstDivision}
+        second={secondDivision}
+        split={splitHorizontal ? 'horizontal' : 'vertical'}
+        firstZoneStyling={{ grow: true, scroll: contentTooTall }}
+        secondZoneStyling={{ grow: false, scroll: true }}
+      />
     </ContentWithHeader>
   )
 }

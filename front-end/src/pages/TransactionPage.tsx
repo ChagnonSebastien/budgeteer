@@ -129,12 +129,7 @@ const TransactionPage: FC = () => {
   )
 
   const secondDivision = (
-    <Box
-      sx={{
-        background: splitHorizontal ? undefined : 'rgba(128,128,128,0.04)',
-        padding: '0 1rem',
-      }}
-    >
+    <Box sx={{ background: splitHorizontal ? undefined : 'rgba(128,128,128,0.04)', padding: '0 1rem' }}>
       <TransactionList
         items={filteredTransaction}
         onClick={(transactionId) => {

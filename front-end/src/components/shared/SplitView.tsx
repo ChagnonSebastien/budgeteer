@@ -6,6 +6,7 @@ import { Column, MaxSpaceNoOverflow } from './Layout'
 export const SplitViewContainer = styled(MaxSpaceNoOverflow)<{ $split: 'horizontal' | 'vertical' }>`
   display: flex;
   flex-direction: ${(props) => (props.$split === 'horizontal' ? 'row' : 'column')};
+  overflow-y: ${(props) => (props.$split === 'vertical' ? 'visible' : 'hidden')};
 `
 
 export const SplitViewPanel = styled(Column)<{
@@ -13,11 +14,22 @@ export const SplitViewPanel = styled(Column)<{
   $grow: boolean | number
   $scroll: boolean
 }>`
-  height: ${(props) => (props.$split === 'horizontal' ? '100%' : 'auto')};
-  width: ${(props) => (props.$split === 'vertical' ? '100%' : 'auto')};
+  height: ${(props) => (props.$split === 'horizontal' ? '100%' : undefined)};
+  width: ${(props) => (props.$split === 'vertical' ? '100%' : undefined)};
   flex-grow: ${(props) => (typeof props.$grow === 'number' ? props.$grow : props.$grow ? 1 : 0)};
-  overflow-y: ${(props) => (props.$split === 'horizontal' && props.$scroll ? 'auto' : 'hidden')};
-  overflow-x: ${(props) => (props.$split === 'vertical' && props.$scroll ? 'auto' : 'hidden')};
+  flex-shrink: 0;
+  overflow-y: ${(props) =>
+    props.$split === 'horizontal' && props.$scroll
+      ? 'auto'
+      : props.$split === 'vertical' && props.$grow
+        ? 'visible'
+        : 'hidden'};
+  overflow-x: ${(props) =>
+    props.$split === 'vertical' && props.$scroll
+      ? 'auto'
+      : props.$split === 'horizontal' && props.$grow
+        ? 'visible'
+        : 'hidden'};
 `
 
 interface ZoneStyling {

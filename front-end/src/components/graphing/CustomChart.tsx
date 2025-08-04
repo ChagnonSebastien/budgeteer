@@ -194,7 +194,7 @@ const CustomChart: FC<Props> = ({
 
   const {
     format: fmtX = (i) => (xLabels && xLabels.length === data.length ? xLabels[i] : String(i)),
-    tickSize: tickSizeX = 5,
+    tickSize: tickHeightX = 5,
   } = axisBottom
   const { format: fmtY = (v) => String(v), tickSize: tickSizeY = 5 } = axisLeft
 
@@ -367,7 +367,7 @@ const CustomChart: FC<Props> = ({
   )
 
   return (
-    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+    <div style={{ position: 'relative', flexGrow: 1 }}>
       <Column
         style={{
           paddingTop: margin.top,
@@ -493,12 +493,20 @@ const CustomChart: FC<Props> = ({
               }, [])
               .map((element) => (
                 <div key={`x-label-${element.label}`} style={{ flexGrow: element.width, position: 'relative' }}>
-                  <Box style={{ height: tickSizeX, borderRight: '1px solid white' }} />
+                  <Box
+                    style={{
+                      width: 1,
+                      backgroundColor: 'white',
+                      height: tickHeightX,
+                      position: 'absolute',
+                      right: 0,
+                    }}
+                  />
                   <Typography
                     style={{
                       transform: 'rotate(-45deg)',
                       transformOrigin: 'right',
-                      paddingRight: tickSizeX,
+                      paddingRight: tickHeightX,
                       position: 'absolute',
                       top: 0,
                       right: 0,
@@ -535,14 +543,15 @@ const CustomChart: FC<Props> = ({
               whiteSpace: 'nowrap',
             }}
           >
-            {stackTooltip({
-              slice: {
-                index: tooltip.index,
-                stack: computeStack(tooltip.index)
-                  .reverse()
-                  .filter((s) => s.value !== 0),
-              },
-            })}
+            {data[tooltip.index] &&
+              stackTooltip({
+                slice: {
+                  index: tooltip.index,
+                  stack: computeStack(tooltip.index)
+                    .reverse()
+                    .filter((s) => s.value !== 0),
+                },
+              })}
           </div>
         </div>
       )}
