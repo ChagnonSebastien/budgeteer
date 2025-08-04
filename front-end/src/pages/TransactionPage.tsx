@@ -91,7 +91,7 @@ const TransactionPage: FC = () => {
   const splitHorizontal = useMemo(() => contentWidth > 1200, [contentWidth])
 
   const firstDivision = (
-    <FirstDivision>
+    <FirstDivision style={{ justifyContent: 'center' }}>
       <GraphContainer
         style={{
           position: 'relative',

@@ -46,11 +46,15 @@ function brighten(hex: string, amount = 0.4): string {
   return `#${lr.toString(16).padStart(2, '0')}${lg.toString(16).padStart(2, '0')}${lb.toString(16).padStart(2, '0')}`
 }
 
-type Bucket = { values: Record<string, { amount: number; baseline?: number }>; baseline?: number }
+type DataSetLabel = string
+export type Bucket = {
+  date: Date
+  values: Record<DataSetLabel, { amount: number; baseline?: number }>
+  baseline?: number
+}
 
-type Margin = { top: number; right: number; bottom: number; left: number }
-type AxisBottom = { format?: (i: number) => string; tickRotation?: number; tickSize?: number; tickPadding?: number }
-type AxisLeft = { format?: (v: number) => string; tickSize?: number; tickPadding?: number }
+type MarginConfig = { top: number; right: number; bottom: number; left: number }
+type AxisConfig = { format?: (i: number) => string; tickSize?: number; tickPadding?: number }
 export type TooltipSlice = {
   slice: {
     index: number
@@ -70,13 +74,12 @@ type Props = {
   order?: 'normal' | 'reverse'
   offsetType?: 'normal' | 'expand'
   colors?: string[]
-  xLabels?: string[]
-  keys?: string[]
+  datasetsLabels?: string[]
   valueFormat?: (v: number) => string
-  margin?: Margin
-  axisBottom?: AxisBottom
+  margin?: MarginConfig
+  axisBottom?: AxisConfig
   enableGridY?: boolean
-  axisLeft?: AxisLeft
+  axisLeft?: AxisConfig
   stackTooltip?: (tooltipProps: TooltipSlice) => React.ReactNode
   height?: number
   showGlobalBaseline?: boolean
@@ -84,13 +87,11 @@ type Props = {
   minYValue?: number
 }
 
-const CustomChart: FC<Props> = ({
+const AreaChart: FC<Props> = ({
   data,
-  order = 'normal',
   offsetType = 'normal',
   colors = [],
-  xLabels,
-  keys: propKeys,
+  datasetsLabels: propDatasetsLabels,
   valueFormat = (v) => String(v),
   margin = { top: 20, right: 25, bottom: 65, left: 70 },
   axisBottom = {},
@@ -108,24 +109,39 @@ const CustomChart: FC<Props> = ({
     slice: number
   } | null>(null)
 
-  const labels = useMemo(() => {
-    if (propKeys && propKeys.length) return propKeys
+  const datasetLabels = useMemo<DataSetLabel[]>(() => {
+    if (propDatasetsLabels && propDatasetsLabels.length) return propDatasetsLabels
     const s = new Set<string>()
     data.forEach((b) => Object.keys(b.values).forEach((k) => s.add(k)))
     return Array.from(s)
-  }, [data, propKeys])
-  const ordered = order === 'reverse' ? [...labels].reverse() : labels
+  }, [data, propDatasetsLabels])
 
-  const series = useMemo<number[][]>(
-    () => ordered.map((key) => data.map((b) => b.values[key]?.amount || 0)),
-    [data, ordered],
-  )
+  const datasets = useMemo<number[][]>(() => {
+    return datasetLabels.map((key) => data.map((b) => b.values[key]?.amount || 0))
+  }, [data, datasetLabels])
+
+  const datasetsStackedUpperBound = useMemo(() => {
+    const offsets = Array(data.length).fill(0)
+    return datasets.map((dataset) =>
+      dataset.map((v, i) => {
+        offsets[i] += v
+        return offsets[i]
+      }),
+    )
+  }, [data, datasets])
+
+  const datasetsBaselineStackedValue = useMemo(() => {
+    return datasetLabels.map((key, n) => {
+      const datasetJustBelow = n === 0 ? Array(data.length).fill(0) : datasetsStackedUpperBound[n - 1]
+      return data.map((b, i) => datasetJustBelow[i] + (b.values[key]?.baseline || 0))
+    })
+  }, [datasetLabels, data, datasetsStackedUpperBound])
 
   const layers = useMemo<[number, number][][]>(() => {
     const offsets = Array(data.length).fill(0)
     if (offsetType === 'expand') {
-      const totals = data.map((_, i) => series.reduce((sum, s) => sum + s[i], 0))
-      return series.map((serie) =>
+      const totals = data.map((_, i) => datasets.reduce((sum, s) => sum + s[i], 0))
+      return datasets.map((serie) =>
         serie.map((v, i) => {
           const y0 = offsets[i]
           const val = totals[i] > 0 ? v / totals[i] : 0
@@ -135,36 +151,37 @@ const CustomChart: FC<Props> = ({
         }),
       )
     }
-    return series.map((serie) =>
+    return datasets.map((serie) =>
       serie.map((v, i) => {
         const y0 = offsets[i]
         offsets[i] += v
         return [y0, offsets[i]] as [number, number]
       }),
     )
-  }, [series, offsetType, data.length])
+  }, [datasets, offsetType, data.length])
 
   const rawMaxY = useMemo(() => {
+    const totals = datasetsStackedUpperBound[datasetsStackedUpperBound.length - 1]
+
     if (offsetType === 'expand') {
-      // in expand mode, baseline may exceed total fraction; compute normalized baseline fractions
       let maxFrac = 1
-      // compute column totals
-      const totals = data.map((_, i) => series.reduce((sum, s) => sum + s[i], 0))
-      ordered.forEach((key, li) => {
-        layers[li].forEach((_, i) => {
-          const bl = data[i].values[key]?.baseline
-          if (bl != null) {
-            const frac = totals[i] ? bl / totals[i] : 0
+      if (showIndividualBaselines)
+        datasetsBaselineStackedValue.forEach((baseLineDataset) =>
+          baseLineDataset.forEach((value, i) => {
+            const frac = value / datasetsStackedUpperBound[datasetsStackedUpperBound.length - 1][i]
             if (frac > maxFrac) maxFrac = frac
-          }
+          }),
+        )
+      if (showGlobalBaseline)
+        data.forEach((bucket, i) => {
+          const frac = (bucket.baseline ?? 0) / datasetsStackedUpperBound[datasetsStackedUpperBound.length - 1][i]
+          if (frac > maxFrac) maxFrac = frac
         })
-      })
       return maxFrac
     } else {
-      // normal stacking: start from top of last layer
-      let m = layers.length > 0 ? Math.max(0, ...layers[layers.length - 1].map(([, y1]) => y1)) : 0
+      let m = Math.max(0, ...totals)
       // also consider any baseline that may sit above the stack bottom
-      ordered.forEach((key, li) => {
+      datasetLabels.forEach((key, li) => {
         layers[li].forEach(([y0], i) => {
           const bl = data[i].values[key]?.baseline
           if (bl != null) {
@@ -174,7 +191,7 @@ const CustomChart: FC<Props> = ({
       })
       return m
     }
-  }, [data, series, layers, ordered, offsetType])
+  }, [data, layers, datasetLabels, offsetType, datasetsStackedUpperBound])
 
   const { minY, maxY, domain } = useMemo(() => {
     const minY = minYValue
@@ -188,14 +205,12 @@ const CustomChart: FC<Props> = ({
   }, [minYValue, rawMaxY])
 
   const xScale = (i: number) => (i / (data.length - 1)) * 1000
-  const yScale = (y: number) =>
-    // clamp y into [minY, maxY]
-    1000 - ((Math.max(y, minY) - minY) / domain) * 1000
+  const yNormalScale = (y: number) => 1000 - ((Math.max(y, minY) - minY) / domain) * 1000
+  const yExpandedScale = (y: number, i: number) => {
+    return yNormalScale(y / datasetsStackedUpperBound[datasetsStackedUpperBound.length - 1][i])
+  }
 
-  const {
-    format: fmtX = (i) => (xLabels && xLabels.length === data.length ? xLabels[i] : String(i)),
-    tickSize: tickHeightX = 5,
-  } = axisBottom
+  const { format: fmtX = (i) => String(i), tickSize: tickHeightX = 5 } = axisBottom
   const { format: fmtY = (v) => String(v), tickSize: tickSizeY = 5 } = axisLeft
 
   const { step, startTick, endTick } = useMemo(() => {
@@ -211,71 +226,44 @@ const CustomChart: FC<Props> = ({
       startTick: Math.ceil(minY / step) * step,
       endTick: Math.floor(maxY / step) * step,
     }
-  }, [layers, maxY])
+  }, [maxY, minY])
 
   const getColor = (id: string) => {
-    return labels.indexOf(id) !== -1 ? colors[labels.indexOf(id) % colors.length] : '#ccc'
+    return datasetLabels.indexOf(id) !== -1 ? colors[datasetLabels.indexOf(id) % colors.length] : '#ccc'
   }
 
   const buildPath = (layer: [number, number][]) => {
-    const bot = layer.map(([y0], i) => [xScale(i), yScale(y0)] as [number, number])
-    const top = layer.map(([, y1], i) => [xScale(i), yScale(y1)] as [number, number])
+    const bot = layer.map(([y0], i) => [xScale(i), yNormalScale(y0)] as [number, number])
+    const top = layer.map(([, y1], i) => [xScale(i), yNormalScale(y1)] as [number, number])
     const rev = [...top].reverse() as [number, number][]
     return `${monotoneSpline(bot)} L${rev[0][0]},${rev[0][1]} ${monotoneSpline(rev).slice(1)} Z`
   }
 
-  // Baseline paths per label aligned with stacked bottom of each area
-  // Baseline paths per label aligned with stacked bottom of each area
-  // Baseline paths per label aligned with stacked bottom of each area, only where amount > 0
-  const baselinePaths = useMemo<Record<string, string>>(() => {
-    const paths: Record<string, string> = {}
-
-    // if we're in "expand" mode, precompute each column's total
-    const totals = offsetType === 'expand' ? data.map((_, i) => series.reduce((sum, s) => sum + s[i], 0)) : []
-
-    ordered.forEach((key, li) => {
-      const y0s = layers[li].map(([y0]) => y0)
+  const individualBaselineSplines = useMemo(() => {
+    return datasetsBaselineStackedValue.map((baselineStackedValues, n) => {
       const pts: [number, number][] = []
-
-      data.forEach((b, i) => {
-        const val = b.values[key]?.amount || 0
-        const bl = b.values[key]?.baseline
-        if (bl != null && val > 0 && bl !== val) {
-          // if expanded, convert baseline to a fraction of the column total
-          const offsetBaseline = offsetType === 'expand' ? bl / (totals[i] || 1) : bl
-
-          pts.push([xScale(i), yScale(y0s[i] + offsetBaseline)])
-        }
-      })
-
-      if (pts.length > 1) {
-        paths[key] = monotoneSpline(pts)
+      for (let i = 0; i < baselineStackedValues.length; i += 1) {
+        const value = baselineStackedValues[i]
+        if (datasets[n][i] === 0 || data[i].values[datasetLabels[n]].baseline === datasets[n][i]) continue
+        pts.push([xScale(i), offsetType === 'expand' ? yExpandedScale(value, i) : yNormalScale(value)])
       }
+      return monotoneSpline(pts)
     })
+  }, [data, datasets, datasetsBaselineStackedValue, offsetType, xScale, yNormalScale, yExpandedScale])
 
-    return paths
-  }, [data, ordered, layers, series, offsetType, xScale, yScale])
-
-  const globalBaselinePath = useMemo<string>(() => {
+  const globalBaselineSpline = useMemo<string>(() => {
     const pts: [number, number][] = []
-    // when in expand mode, compute each column’s total so we can normalize
-    const totals = offsetType === 'expand' ? data.map((_, i) => series.reduce((sum, s) => sum + s[i], 0)) : []
-
     data.forEach((b, i) => {
       if (b.baseline != null) {
-        // normalize baseline when spread
-        const bl = offsetType === 'expand' ? b.baseline / (totals[i] || 1) : b.baseline
-
-        pts.push([xScale(i), yScale(bl)])
+        pts.push([xScale(i), offsetType === 'expand' ? yExpandedScale(b.baseline, i) : yNormalScale(b.baseline)])
       }
     })
-
     return pts.length > 1 ? monotoneSpline(pts) : ''
-  }, [data, offsetType, series, xScale, yScale])
+  }, [data, offsetType, xScale, yNormalScale])
 
   const computeStack = (idx: number) =>
-    ordered.map((key, li) => {
-      const value = series[li][idx]
+    datasetLabels.map((key, li) => {
+      const value = datasets[li][idx]
       const rawBaseline = data[idx].values[key]?.baseline ?? 0
       const gain = rawBaseline != null ? value - rawBaseline : 0
       return {
@@ -316,14 +304,19 @@ const CustomChart: FC<Props> = ({
       >
         {/* Layers */}
         {layers.map((layer, li) => (
-          <path key={`${ordered[li]}-area`} d={buildPath(layer)} fill={getColor(ordered[li])} stroke="none" />
+          <path
+            key={`${datasetLabels[li]}-area`}
+            d={buildPath(layer)}
+            fill={getColor(datasetLabels[li])}
+            stroke="none"
+          />
         ))}
 
         {/* Baselines */}
         {showIndividualBaselines &&
           layers.map((_, li) => {
-            const key = ordered[li]
-            const path = baselinePaths[key]
+            const key = datasetLabels[li]
+            const path = individualBaselineSplines[li]
             if (!path) return null
             const areaColor = getColor(key)
             const baselineColor = brighten(areaColor)
@@ -341,9 +334,9 @@ const CustomChart: FC<Props> = ({
           })}
 
         {/* Global baseline trendline */}
-        {showGlobalBaseline && globalBaselinePath && (
+        {showGlobalBaseline && globalBaselineSpline && (
           <path
-            d={globalBaselinePath}
+            d={globalBaselineSpline}
             vectorEffect="non-scaling-stroke"
             fill="none"
             stroke="#fff"
@@ -355,14 +348,14 @@ const CustomChart: FC<Props> = ({
     ),
     [
       showGlobalBaseline,
-      globalBaselinePath,
+      globalBaselineSpline,
       layers,
-      ordered,
+      datasetLabels,
       buildPath,
       getColor,
       brighten,
       showIndividualBaselines,
-      baselinePaths,
+      individualBaselineSplines,
     ],
   )
 
@@ -559,4 +552,4 @@ const CustomChart: FC<Props> = ({
   )
 }
 
-export default CustomChart
+export default AreaChart

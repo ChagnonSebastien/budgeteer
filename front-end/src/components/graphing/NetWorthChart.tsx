@@ -2,7 +2,7 @@ import { useTheme } from '@mui/material'
 import { formatDate } from 'date-fns'
 import React, { FC, useContext, useMemo } from 'react'
 
-import CustomChart, { TooltipSlice } from './CustomChart'
+import AreaChart, { Bucket, TooltipSlice } from './AreaChart'
 import {
   GraphTooltip,
   GraphTooltipColor,
@@ -35,7 +35,7 @@ export const useNetWorthChartData = <Item extends object>(
   return useMemo(() => {
     const Investments = computeInitialInvestments()
 
-    const data: { baseline?: number; values: { [account: string]: { amount: number; baseline?: number } } }[] = []
+    const data: Bucket[] = []
     const labels: Date[] = []
     const groups = new Set<string>()
 
@@ -166,7 +166,7 @@ export const useNetWorthChartData = <Item extends object>(
       }
 
       labels.push(upTo)
-      data.push({ values: { ...todaysData }, baseline: todaysBookValue })
+      data.push({ date: upTo, values: { ...todaysData }, baseline: todaysBookValue })
     }
 
     return { data, labels, groups }
@@ -252,6 +252,7 @@ type NetWorthChartProps = {
   groups: Set<string>
   labels: Date[]
   data: {
+    date: Date
     baseline?: number
     values: {
       [p: string]: {
@@ -298,9 +299,9 @@ const NetWorthChart: FC<NetWorthChartProps> = ({
     }
 
     return (
-      <CustomChart
+      <AreaChart
         data={data}
-        keys={[...groups.keys()].sort((a, b) => a.localeCompare(b))}
+        datasetsLabels={[...groups.keys()].sort((a, b) => b.localeCompare(a))}
         valueFormat={(value) => `${formatFull(defaultCurrency, value, privacyMode)}`}
         margin={{ top: 30, right: 25, bottom: 80, left: 60 }}
         showGlobalBaseline={baselineConfig === 'showGlobalBaseline'}
@@ -309,7 +310,6 @@ const NetWorthChart: FC<NetWorthChartProps> = ({
         axisBottom={{
           format: (i) =>
             (data.length - i - 1) % showLabelEveryFactor === 0 ? labels[i] && formatDate(labels[i], 'MMM d, yyyy') : '',
-          tickRotation: -45,
           tickSize: 5,
           tickPadding: 8,
         }}
@@ -329,7 +329,6 @@ const NetWorthChart: FC<NetWorthChartProps> = ({
           },
         }}
         offsetType={scale == 'relative' ? 'expand' : 'normal'}
-        order="reverse"
         colors={darkColors}
         stackTooltip={(tooltipProps) => (
           <NetWorthTooltip tooltipProps={tooltipProps} labels={labels} baselineConfig={baselineConfig} />

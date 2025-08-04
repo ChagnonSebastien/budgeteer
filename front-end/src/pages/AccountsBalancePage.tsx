@@ -34,7 +34,7 @@ const AccountsBalancePage: FC = () => {
 
   const { height: pageHeight } = useWindowDimensions()
   const { height: optionsHeight, ref: setOptionsRef } = useElementDimensions(600, 600)
-  const { ref: setContentRef, height: contentHeight, width: contentWidth } = useElementDimensions(600, 600)
+  const { ref: setContentRef, width: contentWidth } = useElementDimensions(600, 600)
 
   const splitHorizontal = useMemo(() => contentWidth > 1200, [contentWidth])
   const contentTooTall = useMemo(

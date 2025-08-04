@@ -4,7 +4,6 @@ import { Column } from '../shared/Layout'
 
 export const GraphContainer = styled.div`
   width: 100%;
-  margin: auto;
 `
 
 export const FirstDivision = styled.div`
