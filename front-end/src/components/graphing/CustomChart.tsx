@@ -192,9 +192,11 @@ const CustomChart: FC<Props> = ({
     // clamp y into [minY, maxY]
     1000 - ((Math.max(y, minY) - minY) / domain) * 1000
 
-  const { format: fmtX = (i) => (xLabels && xLabels.length === data.length ? xLabels[i] : String(i)), tickSize = 8 } =
-    axisBottom
-  const { format: fmtY = (v) => String(v) } = axisLeft
+  const {
+    format: fmtX = (i) => (xLabels && xLabels.length === data.length ? xLabels[i] : String(i)),
+    tickSize: tickSizeX = 5,
+  } = axisBottom
+  const { format: fmtY = (v) => String(v), tickSize: tickSizeY = 5 } = axisLeft
 
   const { step, startTick, endTick } = useMemo(() => {
     const count = 10
@@ -300,8 +302,9 @@ const CustomChart: FC<Props> = ({
         }}
         onMouseMove={(e) => {
           const boundingRect = e.currentTarget.getBoundingClientRect()
-          const sliceWidth = boundingRect.width / data.length
-          const index = Math.floor((e.clientX - boundingRect.left) / sliceWidth)
+          const sliceWidth = boundingRect.width / (data.length - 1)
+          const percentage = (e.clientX - boundingRect.left) / boundingRect.width
+          const index = Math.floor(percentage * data.length)
           setTooltip({
             index,
             x: e.clientX,
@@ -313,7 +316,7 @@ const CustomChart: FC<Props> = ({
       >
         {/* Layers */}
         {layers.map((layer, li) => (
-          <path key={ordered[li]} d={buildPath(layer)} fill={getColor(ordered[li])} stroke="none" />
+          <path key={`${ordered[li]}-area`} d={buildPath(layer)} fill={getColor(ordered[li])} stroke="none" />
         ))}
 
         {/* Baselines */}
@@ -398,11 +401,11 @@ const CustomChart: FC<Props> = ({
             }
           >
             {Array.from({ length: Math.floor((endTick - startTick) / step) + 1 }, (_, i) => (
-              <div style={{ position: 'relative', flexGrow: i === 0 ? startTick - minY : step }}>
-                <Box style={{ width: tickSize, borderTop: '1px solid white', position: 'absolute', right: 0 }} />
+              <div key={`y-label-${i}`} style={{ position: 'relative', flexGrow: i === 0 ? startTick - minY : step }}>
+                <Box style={{ width: tickSizeY, borderTop: '1px solid white', position: 'absolute', right: 0 }} />
                 <Typography
                   style={{
-                    transform: `translate(-${tickSize + 5}px, -50%)`,
+                    transform: `translate(-${tickSizeY + 5}px, -50%)`,
                     transformOrigin: 'center',
                     position: 'absolute',
                     top: 0,
@@ -427,7 +430,7 @@ const CustomChart: FC<Props> = ({
                   zIndex: 2,
                   position: 'absolute',
                   height: '100%',
-                  width: (tooltip.index + 1) * tooltip.slice,
+                  width: tooltip.index * tooltip.slice,
                   borderRight: '2px dashed rgba(128, 128, 128, 1)',
                   pointerEvents: 'none',
                 }}
@@ -444,7 +447,7 @@ const CustomChart: FC<Props> = ({
               }}
             >
               {Array.from({ length: Math.floor((endTick - startTick) / step) + 1 }, (_, i) => (
-                <div style={{ position: 'relative', flexGrow: i === 0 ? startTick - minY : step }}>
+                <div key={`y-grid-${i}`} style={{ position: 'relative', flexGrow: i === 0 ? startTick - minY : step }}>
                   <Box
                     style={{ width: '100%', borderTop: '1px solid rgba(128, 128, 128, 0.2)', position: 'absolute' }}
                   />
@@ -485,17 +488,17 @@ const CustomChart: FC<Props> = ({
                 if (label) {
                   prev[prev.length - 1].label = label
                 }
-                prev[prev.length - 1].width += 1
+                if (i > 0) prev[prev.length - 1].width += 1
                 return prev
               }, [])
               .map((element) => (
-                <div key={element.label} style={{ flexGrow: element.width, position: 'relative' }}>
-                  <Box style={{ height: tickSize, borderRight: '1px solid white' }} />
+                <div key={`x-label-${element.label}`} style={{ flexGrow: element.width, position: 'relative' }}>
+                  <Box style={{ height: tickSizeX, borderRight: '1px solid white' }} />
                   <Typography
                     style={{
                       transform: 'rotate(-45deg)',
                       transformOrigin: 'right',
-                      paddingRight: tickSize,
+                      paddingRight: tickSizeX,
                       position: 'absolute',
                       top: 0,
                       right: 0,

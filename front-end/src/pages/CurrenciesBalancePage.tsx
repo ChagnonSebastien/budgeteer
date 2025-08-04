@@ -71,6 +71,7 @@ const CurrenciesBalancePage: FC = () => {
 
   const selectOptions = [
     <SelectOne
+      key="group-by-option"
       label="Group by"
       value={groupBy}
       onChange={(newValue) => updateQueryParams({ groupBy: newValue })}
@@ -83,6 +84,7 @@ const CurrenciesBalancePage: FC = () => {
       type={splitHorizontal ? 'radio' : 'dropdown'}
     />,
     <SelectOne
+      key="baseline-option"
       label="Baseline"
       value={baselineConfig}
       onChange={(newValue) => updateQueryParams({ baselineConfig: newValue })}
@@ -94,6 +96,7 @@ const CurrenciesBalancePage: FC = () => {
       type={splitHorizontal ? 'radio' : 'dropdown'}
     />,
     <SelectOne
+      key="scale-option"
       label="Scale"
       value={scale}
       onChange={(newValue) => updateQueryParams({ scale: newValue })}

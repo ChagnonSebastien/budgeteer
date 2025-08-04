@@ -334,7 +334,7 @@ const NetWorthChart: FC<NetWorthChartProps> = ({
         )}
       />
     )
-  }, [baselineConfig, showLabelEveryFactor, data, labels, groups, scale])
+  }, [baselineConfig, showLabelEveryFactor, data, labels, groups, scale, privacyMode])
 }
 
 export default NetWorthChart
