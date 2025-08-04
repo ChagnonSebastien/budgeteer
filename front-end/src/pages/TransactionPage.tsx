@@ -131,8 +131,7 @@ const TransactionPage: FC = () => {
   const secondDivision = (
     <Box
       sx={{
-        alignSelf: 'stretch',
-        background: 'rgba(128,128,128,0.04)',
+        background: splitHorizontal ? undefined : 'rgba(128,128,128,0.04)',
         padding: '0 1rem',
       }}
     >

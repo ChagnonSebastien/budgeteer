@@ -280,6 +280,8 @@ const NetWorthChart: FC<NetWorthChartProps> = ({
       minYValue = Number.MAX_SAFE_INTEGER
       const groupLabel = [...groups.keys()][0]
       for (let i = 0; i < data.length; i += 1) {
+        if (!data[i].values[groupLabel]) continue
+
         if (data[i].values[groupLabel].amount < minYValue) {
           minYValue = data[i].values[groupLabel].amount
         }

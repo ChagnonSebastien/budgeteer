@@ -39,7 +39,13 @@ const TrendsPage: FC = () => {
       </GraphContainer>
 
       <SecondDivision
-        style={{ flexDirection: 'row', columnGap: '3rem', flexWrap: 'wrap', rowGap: '1rem' }}
+        style={{
+          flexDirection: 'row',
+          columnGap: '3rem',
+          flexWrap: 'wrap',
+          rowGap: '1rem',
+          backgroundColor: 'rgba(128, 128, 128, 0.04)',
+        }}
         ref={setOptionsRef}
       >
         <Box style={{ flexGrow: 1, width: '100%' }}>

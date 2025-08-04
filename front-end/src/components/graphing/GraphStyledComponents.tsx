@@ -18,7 +18,6 @@ export const FirstDivision = styled.div`
 
 export const SecondDivision = styled(Column)<{ $splitView?: boolean }>`
   padding: 1rem 2rem;
-  background: rgba(128, 128, 128, 0.04);
   border-top: ${(props) => (props.$splitView ? 'none' : '1px solid rgba(128,128,128,0.2)')};
   height: ${(props) => (props.$splitView ? '100%' : 'auto')};
   gap: 2rem;

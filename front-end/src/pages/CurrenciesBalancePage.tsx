@@ -110,7 +110,11 @@ const CurrenciesBalancePage: FC = () => {
   ]
 
   const secondDivision = (
-    <SecondDivision $splitView={splitHorizontal} ref={!splitHorizontal ? setOptionsRef : undefined}>
+    <SecondDivision
+      $splitView={splitHorizontal}
+      ref={!splitHorizontal ? setOptionsRef : undefined}
+      style={{ background: splitHorizontal ? undefined : 'rgba(128,128,128,0.04)' }}
+    >
       {!splitHorizontal && filterOverview}
 
       {splitHorizontal ? selectOptions : <Row style={{ gap: '1rem', flexFlow: 'wrap' }}>{selectOptions}</Row>}
