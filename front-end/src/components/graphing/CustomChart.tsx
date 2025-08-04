@@ -327,6 +327,7 @@ const CustomChart: FC<Props> = ({
             return (
               <path
                 key={`${key}-baseline`}
+                vectorEffect="non-scaling-stroke"
                 d={path}
                 fill="none"
                 stroke={baselineColor}
@@ -338,7 +339,14 @@ const CustomChart: FC<Props> = ({
 
         {/* Global baseline trendline */}
         {showGlobalBaseline && globalBaselinePath && (
-          <path d={globalBaselinePath} fill="none" stroke="#fff" strokeWidth={2} strokeDasharray="10 4" />
+          <path
+            d={globalBaselinePath}
+            vectorEffect="non-scaling-stroke"
+            fill="none"
+            stroke="#fff"
+            strokeWidth={2}
+            strokeDasharray="10 4"
+          />
         )}
       </svg>
     ),
