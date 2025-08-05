@@ -17,7 +17,7 @@ export const SplitViewPanel = styled(Column)<{
   height: ${(props) => (props.$split === 'horizontal' ? '100%' : undefined)};
   width: ${(props) => (props.$split === 'vertical' ? '100%' : undefined)};
   flex-grow: ${(props) => (typeof props.$grow === 'number' ? props.$grow : props.$grow ? 1 : 0)};
-  flex-shrink: 0;
+  flex-shrink: ${(props) => (props.$split === 'horizontal' ? 1 : 0)};
   overflow-y: ${(props) =>
     props.$split === 'horizontal' && props.$scroll
       ? 'auto'
