@@ -1,23 +1,14 @@
-import { Button, Checkbox, FormControlLabel, TextField, Typography } from '@mui/material'
-import { ResponsiveLine } from '@nivo/line'
+import { Box, Button, Checkbox, FormControlLabel, TextField, Typography } from '@mui/material'
 import { startOfDay } from 'date-fns'
 import { FC, FormEvent, useCallback, useContext, useEffect, useMemo, useState } from 'react'
-import { default as styled } from 'styled-components'
 
 import Currency, { CurrencyUpdatableFields, RateAutoupdateSettings } from '../../domain/model/currency'
-import ExchangeRate, { ExchangeRateIdentifiableFields } from '../../domain/model/exchangeRate'
-import MixedAugmentation from '../../service/MixedAugmentation'
 import { CurrencyServiceContext } from '../../service/ServiceContext'
-import { darkTheme } from '../../utils'
+import ExchangeRateHistory from '../graphing/ExchangeRateHistory'
 import CodeEditor from '../inputs/CodeEditor'
 import DatePicker from '../inputs/DatePicker'
 import FormWrapper from '../shared/FormWrapper'
 import { Row } from '../shared/Layout'
-
-const ChartContainer = styled.div`
-  height: 200px;
-  margin-top: 16px;
-`
 
 const validAmount = new RegExp(`^\\d+[.,]?$`)
 const validRate = new RegExp(`^\\d*[.,]?\\d*$`)
@@ -70,7 +61,6 @@ const CurrencyForm: FC<Props> = (props) => {
   const { initialCurrency, onSubmit, submitText, scriptRunner } = props
 
   const { state: currencies, tentativeDefaultCurrency } = useContext(CurrencyServiceContext)
-  const { exchangeRates, exchangeRateOnDay, augmentedTransactions } = useContext(MixedAugmentation)
 
   const [name, setName] = useState(initialCurrency?.name ?? '')
   const [symbol, setSymbol] = useState(initialCurrency?.symbol ?? '')
@@ -99,52 +89,6 @@ const CurrencyForm: FC<Props> = (props) => {
 
   const showExchangeRate = useMemo(() => {
     return typeof initialCurrency === 'undefined' && tentativeDefaultCurrency !== null
-  }, [initialCurrency, tentativeDefaultCurrency])
-
-  const { monthlyRates, minRate } = useMemo(() => {
-    if (typeof initialCurrency === 'undefined' || tentativeDefaultCurrency === null) {
-      return { monthlyRates: [], minRate: 0 }
-    }
-
-    let rates = exchangeRates.get(initialCurrency.id)?.get(tentativeDefaultCurrency.id)
-    if (initialCurrency.id === tentativeDefaultCurrency.id) {
-      rates = [
-        new ExchangeRate(
-          new ExchangeRateIdentifiableFields(tentativeDefaultCurrency.id, tentativeDefaultCurrency.id, new Date()),
-          1,
-        ),
-      ]
-    }
-    if (typeof rates === 'undefined' || rates.length === 0) return { monthlyRates: [], minRate: 0 }
-
-    let startDate = new Date(Math.min(...rates.map((r) => new Date(r.date).getTime())))
-    if (initialCurrency.id === tentativeDefaultCurrency.id) {
-      startDate = augmentedTransactions[augmentedTransactions.length - 1].date
-    }
-    startDate.setDate(1)
-    startDate.setHours(0, 0, 0, 0)
-
-    const dataPoints = []
-    const currentDate = new Date()
-    let currentMonth = new Date(startDate)
-
-    while (currentMonth <= currentDate) {
-      const monthTime = currentMonth.getTime()
-      const closestRate =
-        initialCurrency.id === tentativeDefaultCurrency.id
-          ? 1
-          : exchangeRateOnDay(initialCurrency.id, tentativeDefaultCurrency.id, currentMonth)
-
-      dataPoints.push({
-        x: monthTime,
-        y: closestRate,
-      })
-
-      currentMonth = new Date(currentMonth.setMonth(currentMonth.getMonth() + 1))
-    }
-
-    const minRate = Math.min(...dataPoints.map((d) => d.y))
-    return { monthlyRates: dataPoints, minRate }
   }, [initialCurrency, tentativeDefaultCurrency])
 
   const [showErrorToast, setShowErrorToast] = useState('')
@@ -545,7 +489,7 @@ const CurrencyForm: FC<Props> = (props) => {
           </div>
         </>
       )}
-      {tentativeDefaultCurrency?.id !== initialCurrency?.id && initialCurrency && (
+      {tentativeDefaultCurrency?.id !== initialCurrency?.id && initialCurrency && tentativeDefaultCurrency && (
         <>
           <Typography
             variant="subtitle2"
@@ -558,42 +502,9 @@ const CurrencyForm: FC<Props> = (props) => {
           >
             EXCHANGE RATE HISTORY
           </Typography>
-          <ChartContainer>
-            <ResponsiveLine
-              margin={{ top: 0, right: 0, bottom: 30, left: 40 }}
-              data={[
-                {
-                  id: 'Exchange Rate',
-                  data: monthlyRates,
-                },
-              ]}
-              axisBottom={{
-                format: (f) => {
-                  const date = new Date(f)
-                  if (date.getUTCMonth() === 0) {
-                    return date.getUTCFullYear()
-                  }
-                  return ''
-                },
-              }}
-              enablePoints={false}
-              enableGridX={false}
-              enableGridY={true}
-              yScale={{
-                type: 'linear',
-                min: minRate * 0.95, // Add 5% padding below the minimum
-                stacked: false,
-                reverse: false,
-              }}
-              theme={darkTheme}
-              colors={['#64B5F6']}
-              curve="monotoneX"
-              animate={true}
-              motionConfig="gentle"
-              enableArea={true}
-              areaOpacity={0.1}
-            />
-          </ChartContainer>
+          <Box style={{ height: '200px', display: 'flex', justifyContent: 'stretch', alignItems: 'stretch' }}>
+            <ExchangeRateHistory currency={initialCurrency} against={tentativeDefaultCurrency} />
+          </Box>
         </>
       )}
       {tentativeDefaultCurrency?.id !== initialCurrency?.id && (

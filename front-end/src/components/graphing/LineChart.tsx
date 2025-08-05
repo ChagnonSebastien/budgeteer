@@ -107,7 +107,7 @@ const LineChart: FC<Props> = ({
     )
   }, [datasets, data.length])
 
-  const tentativeMaxY = useMemo(
+  const dataMaxY = useMemo(
     () =>
       datasets.reduce(
         (prev, dataset) =>
@@ -120,7 +120,7 @@ const LineChart: FC<Props> = ({
     [datasets],
   )
 
-  const tentativeMinY = useMemo(
+  const dataMinY = useMemo(
     () =>
       datasets.reduce(
         (prev, dataset) =>
@@ -136,26 +136,26 @@ const LineChart: FC<Props> = ({
   const { format: fmtX = (i) => String(i), tickSize: tickHeightX = 5 } = axisBottom
   const { format: fmtY = (v) => String(v), tickSize: tickSizeY = 5 } = axisLeft
 
-  const { step, minY, maxY } = useMemo(() => {
+  const { step, graphMinY, graphMaxY } = useMemo(() => {
     const count = 10
-    const raw = (tentativeMaxY - tentativeMinY) / count
+    const raw = (dataMaxY - dataMinY) / count
     const mag = 10 ** Math.floor(Math.log10(raw))
     const norm = raw / mag
     const nice = norm < 1.5 ? 1 : norm < 3 ? 2 : norm < 7 ? 5 : 10
     const step = nice * mag
 
-    const minY = Math.floor(tentativeMinY / step) * step
-    const maxY = Math.ceil(tentativeMaxY / step) * step
+    const minY = Math.floor(dataMinY / step) * step
+    const maxY = Math.ceil(dataMaxY / step) * step
 
     return {
       step,
-      minY: Math.ceil(minY / step) * step,
-      maxY: Math.floor(maxY / step) * step,
+      graphMinY: minY,
+      graphMaxY: maxY,
     }
-  }, [tentativeMinY, tentativeMaxY])
+  }, [dataMinY, dataMaxY])
 
   const xScale = (i: number) => (i / (data.length - 1)) * 1000
-  const yNormalScale = (y: number) => 1000 - ((Math.max(y, minY) - minY) / (maxY - minY)) * 1000
+  const yNormalScale = (y: number) => 1000 - ((Math.max(y, graphMinY) - graphMinY) / (graphMaxY - graphMinY)) * 1000
 
   const getColor = (id: string) => {
     return datasetLabels.indexOf(id) !== -1 ? colors[datasetLabels.indexOf(id) % colors.length] : '#ccc'
@@ -269,8 +269,11 @@ const LineChart: FC<Props> = ({
               )
             }
           >
-            {Array.from({ length: Math.floor((maxY - minY) / step) + 1 }, (_, i) => (
-              <div key={`y-label-${i}`} style={{ position: 'relative', flexGrow: i === 0 ? minY - minY : step }}>
+            {Array.from({ length: Math.round((graphMaxY - graphMinY) / step) + 1 }, (_, i) => (
+              <div
+                key={`y-label-${i}`}
+                style={{ position: 'relative', flexGrow: i === 0 ? (graphMinY * 1000) % (step * 1000) : step * 1000 }}
+              >
                 <Box style={{ width: tickSizeY, borderTop: '1px solid white', position: 'absolute', right: 0 }} />
                 <Typography
                   style={{
@@ -283,10 +286,11 @@ const LineChart: FC<Props> = ({
                     fontSize: '0.75rem',
                   }}
                 >
-                  {fmtY(minY + i * step)}
+                  {fmtY(graphMinY + i * step)}
                 </Typography>
               </div>
             ))}
+            <div style={{ flexGrow: (graphMaxY * 1000) % (step * 1000) }} />
           </Column>
 
           <div style={{ flexGrow: 1, position: 'relative' }}>
@@ -348,8 +352,11 @@ const LineChart: FC<Props> = ({
                 zIndex: -1,
               }}
             >
-              {Array.from({ length: Math.floor((maxY - minY) / step) + 1 }, (_, i) => (
-                <div key={`y-grid-${i}`} style={{ position: 'relative', flexGrow: i === 0 ? minY - minY : step }}>
+              {Array.from({ length: Math.round((graphMaxY - graphMinY) / step) + 1 }, (_, i) => (
+                <div
+                  key={`y-grid-${i}`}
+                  style={{ position: 'relative', flexGrow: i === 0 ? (graphMinY * 1000) % (step * 1000) : step * 1000 }}
+                >
                   <Box
                     style={{ width: '100%', borderTop: '1px solid rgba(128, 128, 128, 0.2)', position: 'absolute' }}
                   />
