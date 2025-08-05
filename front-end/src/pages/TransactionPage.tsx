@@ -97,6 +97,9 @@ const TransactionPage: FC = () => {
           position: 'relative',
           height: '60vh',
           minHeight: 'max(50vh, 300px)',
+          display: 'flex',
+          justifyContent: 'stretch',
+          alignItems: 'stretch',
         }}
       >
         {graphType === 'line' ? (
@@ -129,7 +132,7 @@ const TransactionPage: FC = () => {
   )
 
   const secondDivision = (
-    <Box sx={{ background: splitHorizontal ? undefined : 'rgba(128,128,128,0.04)', padding: '0 1rem' }}>
+    <Box style={{ background: splitHorizontal ? undefined : 'rgba(128,128,128,0.04)', padding: '0 1rem' }}>
       <TransactionList
         items={filteredTransaction}
         onClick={(transactionId) => {
@@ -141,6 +144,7 @@ const TransactionPage: FC = () => {
         viewAsAccounts={accountFilter === null ? undefined : accountFilter}
         ItemComponent={TransactionCard}
         additionalItemsProps={{}}
+        containerStyle={{ width: splitHorizontal ? '35rem' : undefined, maxWidth: 'min(35rem, 100%)' }}
       />
     </Box>
   )

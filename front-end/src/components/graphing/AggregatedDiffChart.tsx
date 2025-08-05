@@ -1,14 +1,57 @@
-import { AllowedValue, ResponsiveLine } from '@nivo/line'
 import { formatDate } from 'date-fns'
-import { FC, useContext, useMemo } from 'react'
+import React, { FC, useContext, useMemo } from 'react'
 
-import { GraphTooltip } from './GraphStyledComponents'
+import {
+  GraphTooltip,
+  GraphTooltipColor,
+  GraphTooltipDate,
+  GraphTooltipLabel,
+  GraphTooltipRow,
+  GraphTooltipValue,
+} from './GraphStyledComponents'
+import LineChart, { Bucket, TooltipSlice } from './LineChart'
 import { formatFull } from '../../domain/model/currency'
 import { AugmentedTransaction } from '../../domain/model/transaction'
 import MixedAugmentation from '../../service/MixedAugmentation'
-import { darkColors, darkTheme } from '../../utils'
+import { darkColors } from '../../utils'
 import { DrawerContext } from '../Menu'
 import useTimerangeSegmentation from '../shared/useTimerangeSegmentation'
+
+type TooltipProps = {
+  tooltipProps: TooltipSlice
+  labels: Date[]
+}
+
+export const Tooltip: FC<TooltipProps> = ({ tooltipProps, labels }) => {
+  const { privacyMode } = useContext(DrawerContext)
+  const date = formatDate(labels[tooltipProps.slice.index], 'MMM d, yyyy')
+
+  return (
+    <GraphTooltip>
+      <GraphTooltipDate>{date}</GraphTooltipDate>
+
+      {tooltipProps.slice.stack.map((s) => {
+        return (
+          <div key={`${date}-${s.layerLabel}`}>
+            {/* main row */}
+            <GraphTooltipRow>
+              <GraphTooltipColor style={{ backgroundColor: s.color }} />
+              <GraphTooltipLabel>{s.layerLabel}</GraphTooltipLabel>
+
+              {!privacyMode && (
+                <>
+                  <div>:</div>
+                  <div style={{ minWidth: '1rem', flexGrow: 1 }} />
+                  <GraphTooltipValue>{s.formattedValue}</GraphTooltipValue>
+                </>
+              )}
+            </GraphTooltipRow>
+          </div>
+        )
+      })}
+    </GraphTooltip>
+  )
+}
 
 interface Props {
   transactions: AugmentedTransaction[]
@@ -31,17 +74,17 @@ const AggregatedDiffChart: FC<Props> = (props) => {
   )
 
   return useMemo(() => {
-    const data: {
-      x: AllowedValue
-      y: AllowedValue
-    }[] = []
-    const labels: string[] = []
+    const data: Bucket[] = []
+    const labels: Date[] = []
 
     for (const { items, upTo, section } of timeseriesIterator) {
       if (section === 'before') continue
 
-      labels.push(formatDate(upTo, 'MMM d, yyyy'))
-      data.push({ x: data.length, y: data.length === 0 ? 0 : data[data.length - 1].y })
+      labels.push(upTo)
+      data.push({
+        date: upTo,
+        values: { Diff: { amount: data.length === 0 ? 0 : data[data.length - 1].values['Diff'].amount } },
+      })
 
       for (const transaction of items) {
         if (typeof transaction.category === 'undefined') {
@@ -58,63 +101,45 @@ const AggregatedDiffChart: FC<Props> = (props) => {
             amount *= exchangeRateOnDay(transaction.currencyId, defaultCurrency!.id, transaction.date)
           }
 
-          data[data.length - 1].y = (data[data.length - 1].y as number) - amount
+          data[data.length - 1].values['Diff'].amount -= amount
         }
         if (transaction.receiver?.isMine ?? false) {
           let amount = transaction.receiverAmount
           if (transaction.receiverCurrencyId !== defaultCurrency.id) {
             amount *= exchangeRateOnDay(transaction.receiverCurrencyId, defaultCurrency!.id, transaction.date)
           }
-          data[data.length - 1].y = (data[data.length - 1].y as number) + amount
+          data[data.length - 1].values['Diff'].amount += amount
         }
       }
     }
 
     return (
-      <>
-        <ResponsiveLine
-          data={[{ id: 'Diff', data }]}
-          margin={{ top: 20, right: 25, bottom: 65, left: 60 }}
-          axisBottom={{
-            format: (i) =>
-              (data.length - i - 1) % showLabelEveryFactor === 0
-                ? labels[i] && formatDate(labels[i], 'MMM d, yyyy')
-                : '',
-            tickRotation: -45,
-          }}
-          enableGridY={!privacyMode}
-          xFormat={(i) => labels[i as number] && formatDate(labels[i as number], 'MMM d, yyyy')}
-          axisLeft={{
-            tickSize: privacyMode ? 0 : 5,
-            format: (i) =>
-              privacyMode
-                ? ''
-                : ((i as number) / Math.pow(10, defaultCurrency.decimalPoints)).toLocaleString(undefined, {
-                    notation: 'compact',
-                  }),
-          }}
-          yFormat={(n) => formatFull(defaultCurrency, n as number, privacyMode)}
-          yScale={{
-            type: 'linear',
-            min: 'auto',
-            max: 'auto',
-          }}
-          tooltip={(props) => {
-            return (
-              <GraphTooltip style={{ whiteSpace: 'nowrap' }}>
-                <div style={{ fontWeight: 'bold' }}>{props.point.data.xFormatted}</div>
-                {!privacyMode && <div>{props.point.data.yFormatted}</div>}
-              </GraphTooltip>
-            )
-          }}
-          isInteractive
-          useMesh
-          curve="monotoneX"
-          theme={darkTheme}
-          colors={darkColors}
-          animate={false}
-        />
-      </>
+      <LineChart
+        data={data}
+        datasetsLabels={['Diff']}
+        valueFormat={(value) => `${formatFull(defaultCurrency, value, privacyMode)}`}
+        margin={{ top: 30, right: 25, bottom: 80, left: 60 }}
+        axisBottom={{
+          format: (i) =>
+            (data.length - i - 1) % showLabelEveryFactor === 0 ? labels[i] && formatDate(labels[i], 'MMM d, yyyy') : '',
+          tickSize: 5,
+          tickPadding: 8,
+        }}
+        enableGridY={!privacyMode}
+        axisLeft={{
+          tickSize: privacyMode ? 0 : 5,
+          tickPadding: 5,
+          format: (i) => {
+            return privacyMode
+              ? ''
+              : ((i as number) / Math.pow(10, defaultCurrency.decimalPoints)).toLocaleString(undefined, {
+                  notation: 'compact',
+                })
+          },
+        }}
+        colors={darkColors}
+        stackTooltip={(tooltipProps) => <Tooltip tooltipProps={tooltipProps} labels={labels} />}
+      />
     )
   }, [defaultCurrency, privacyMode, showLabelEveryFactor, hideFinancialIncome, timeseriesIterator])
 }

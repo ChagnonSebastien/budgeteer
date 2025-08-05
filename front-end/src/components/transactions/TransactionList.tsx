@@ -8,7 +8,7 @@ import {
   subDays,
   subMonths,
 } from 'date-fns'
-import { ReactNode, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { CSSProperties, ReactNode, useContext, useEffect, useMemo, useRef, useState } from 'react'
 
 import TransactionCard from './TransactionCard'
 import { formatAmount, formatFull } from '../../domain/model/currency'
@@ -25,12 +25,20 @@ interface AdditionalTransactionListProps {
   onClick: (transactionId: number) => void
   viewAsAccounts?: number[]
   includeInitialAmounts?: boolean
+  containerStyle?: CSSProperties
 }
 
 type Props = ItemListProps<TransactionID, AugmentedTransaction, object> & AdditionalTransactionListProps
 
 export const TransactionList = (props: Props) => {
-  const { items, ItemComponent = TransactionCard, onClick, viewAsAccounts, includeInitialAmounts } = props
+  const {
+    items,
+    ItemComponent = TransactionCard,
+    onClick,
+    viewAsAccounts,
+    includeInitialAmounts,
+    containerStyle,
+  } = props
 
   const { state: accounts } = useContext(AccountServiceContext)
   const { exchangeRateOnDay, defaultCurrency } = useContext(MixedAugmentation)
@@ -199,7 +207,7 @@ export const TransactionList = (props: Props) => {
   }, [])
 
   return (
-    <Column style={{ position: 'relative', margin: 'auto', gap: '0.4rem', width: '32rem' }}>
+    <Column style={{ position: 'relative', margin: 'auto', gap: '0.4rem', ...containerStyle }}>
       {displayedItems}
       <div
         style={{

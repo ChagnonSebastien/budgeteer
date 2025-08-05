@@ -32,7 +32,9 @@ export type ItemProps<ItemID, Item extends Unique<ItemID, Item>, AdditionalItemP
 
 export interface ItemListProps<ItemID, Item extends Unique<ItemID, Item>, AdditionalItemProps> {
   items: Item[]
+
   filter?(item: Item): boolean
+
   selectConfiguration?: SelectConfiguration<ItemID, Item>
   ItemComponent: FC<ItemProps<ItemID, Item, AdditionalItemProps>>
   additionalItemsProps: AdditionalItemProps
