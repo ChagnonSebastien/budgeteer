@@ -39,7 +39,7 @@ export type AxisConfig = { tickSize: number; tickPadding: number; grid: boolean 
 export type DateAxisConfig = AxisConfig & { format: (date: Date) => string }
 export type ValueAxisConfig = AxisConfig & { format: (i: number) => string; nice: boolean }
 
-export const useValueAxisConfiguration = (dataMinY: number, dataMaxY: number, nice: boolean) =>
+export const useValueAxisConfiguration = (dataMinY: number, dataMaxY: number, scaleToNice: boolean) =>
   useMemo(() => {
     const count = 10
     const raw = (dataMaxY - dataMinY) / count
@@ -48,8 +48,8 @@ export const useValueAxisConfiguration = (dataMinY: number, dataMaxY: number, ni
     const nice = norm < 1.5 ? 1 : norm < 3 ? 2 : norm < 7 ? 5 : 10
     const step = nice * mag
 
-    const graphMinY = nice ? Math.floor(dataMinY / step) * step : dataMinY
-    const graphMaxY = nice ? Math.ceil(dataMaxY / step) * step : dataMaxY
+    const graphMinY = scaleToNice ? Math.floor(dataMinY / step) * step : dataMinY
+    const graphMaxY = scaleToNice ? Math.ceil(dataMaxY / step) * step : dataMaxY
 
     return {
       step,
@@ -58,7 +58,7 @@ export const useValueAxisConfiguration = (dataMinY: number, dataMaxY: number, ni
       startTick: Math.ceil(graphMinY / step) * step,
       endTick: Math.floor(graphMaxY / step) * step,
     }
-  }, [dataMinY, dataMaxY, nice])
+  }, [dataMinY, dataMaxY, scaleToNice])
 
 const useDateSubdivisions = (range: [Date, Date], config: DateAxisConfig) =>
   useMemo(() => {
@@ -111,29 +111,33 @@ export const BottomDateAxis: FC<{ range: [Date, Date]; height: number; config: D
     <Row style={{ height: props.height, flexGrow: 1 }}>
       {xSubdivisions.map((element) => (
         <div key={`x-label-${element.label}`} style={{ flexGrow: element.width, position: 'relative' }}>
-          <Box
-            style={{
-              width: 1,
-              backgroundColor: 'white',
-              height: props.config.tickSize,
-              position: 'absolute',
-              right: 0,
-            }}
-          />
-          <Typography
-            style={{
-              transform: 'rotate(-45deg)',
-              transformOrigin: 'right',
-              paddingRight: props.config.tickSize,
-              position: 'absolute',
-              top: 0,
-              right: 0,
-              whiteSpace: 'nowrap',
-              fontSize: '0.75rem',
-            }}
-          >
-            {element.label}
-          </Typography>
+          {element.label && (
+            <>
+              <Box
+                style={{
+                  width: 1,
+                  backgroundColor: 'white',
+                  height: props.config.tickSize,
+                  position: 'absolute',
+                  right: 0,
+                }}
+              />
+              <Typography
+                style={{
+                  transform: 'rotate(-45deg)',
+                  transformOrigin: 'right',
+                  paddingRight: props.config.tickSize,
+                  position: 'absolute',
+                  top: 0,
+                  right: 0,
+                  whiteSpace: 'nowrap',
+                  fontSize: '0.75rem',
+                }}
+              >
+                {element.label}
+              </Typography>
+            </>
+          )}
         </div>
       ))}
     </Row>
@@ -278,7 +282,7 @@ export const DateBasedGraph = (props: {
                     />
                   </div>
                 ))}
-                <div style={{ flexGrow: graphMaxY - endTick }} />
+                <div style={{ flexGrow: (graphMaxY - endTick) / step }} />
               </Column>
             )}
           </div>

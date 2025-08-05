@@ -159,28 +159,26 @@ const AreaChart: FC<Props> = ({
     }
   }, [data, layers, datasetLabels, offsetType, datasetsStackedUpperBound])
 
-  const { minY, maxY, domain } = useMemo(() => {
+  const { minY, maxY } = useMemo(() => {
     const minY = minYValue
     const maxY = Math.max(rawMaxY, minY)
-    const domain = maxY - minY
     return {
       minY,
       maxY,
-      domain,
     }
   }, [minYValue, rawMaxY])
-
-  const xScale = (i: number) => (i / (data.length - 1)) * 1000
-  const yNormalScale = (y: number) => 1000 - ((Math.max(y, minY) - minY) / domain) * 1000
-  const yExpandedScale = (y: number, i: number) => {
-    return yNormalScale(y / datasetsStackedUpperBound[datasetsStackedUpperBound.length - 1][i])
-  }
 
   const { step, startTick, endTick, graphMinY, graphMaxY } = useValueAxisConfiguration(
     minY,
     maxY,
     offsetType === 'normal' && (yAxisConfig.nice || false),
   )
+
+  const xScale = (i: number) => (i / (data.length - 1)) * 1000
+  const yNormalScale = (y: number) => 1000 - ((Math.max(y, graphMinY) - graphMinY) / (graphMaxY - graphMinY)) * 1000
+  const yExpandedScale = (y: number, i: number) => {
+    return yNormalScale(y / datasetsStackedUpperBound[datasetsStackedUpperBound.length - 1][i])
+  }
 
   const buildPath = (layer: [number, number][]) => {
     const bot = layer.map(([y0], i) => [xScale(i), yNormalScale(y0)] as [number, number])

@@ -132,6 +132,7 @@ const AggregatedDiffChart: FC<Props> = (props) => {
           grid: true,
         }}
         yAxisConfig={{
+          nice: true,
           tickSize: privacyMode ? 0 : 5,
           format: (i) => {
             return privacyMode
@@ -140,7 +141,7 @@ const AggregatedDiffChart: FC<Props> = (props) => {
                   notation: 'compact',
                 })
           },
-          grid: true,
+          grid: !privacyMode,
         }}
         colors={darkColors}
         stackTooltip={(tooltipProps) => <Tooltip tooltipProps={tooltipProps} labels={labels} />}

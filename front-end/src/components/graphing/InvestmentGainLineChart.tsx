@@ -214,20 +214,21 @@ const InvestmentGainLineChart: FC<GainChartProps> = ({ fromDate, toDate }) => {
       margin={{ top: 20, right: 20, bottom: 60, left: 60 }}
       xAxisConfig={{
         format: (date) => {
-          const i = differenceInDays(date, gainSeries[0].date)
+          const i = differenceInDays(gainSeries[gainSeries.length - 1].date, date)
           return i % 73 === 0 ? labels[i] && formatDate(labels[i], 'MMM d, yyyy') : ''
         },
         grid: true,
       }}
       yAxisConfig={{
         tickSize: privacyMode ? 0 : 5,
+        nice: true,
         format: (i) =>
           privacyMode
             ? ''
             : ((i as number) / Math.pow(10, defaultCurrency.decimalPoints)).toLocaleString(undefined, {
                 notation: 'compact',
               }),
-        grid: true,
+        grid: !privacyMode,
       }}
       colors={darkColors}
       stackTooltip={(tooltipProps) => <Tooltip tooltipProps={tooltipProps} labels={labels} />}

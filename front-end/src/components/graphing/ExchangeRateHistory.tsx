@@ -65,6 +65,7 @@ const ExchangeRateHistory: FC<Props> = ({ currency, against }) => {
       }}
       yAxisConfig={{
         grid: true,
+        nice: true,
       }}
       colors={darkColors}
     />

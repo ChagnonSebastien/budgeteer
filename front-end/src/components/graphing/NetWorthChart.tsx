@@ -320,7 +320,7 @@ const NetWorthChart: FC<NetWorthChartProps> = ({
           tickPadding: 8,
         }}
         yAxisConfig={{
-          grid: true,
+          grid: !privacyMode,
           tickSize: privacyMode ? 0 : 5,
           tickPadding: 5,
           format: (i) => {
