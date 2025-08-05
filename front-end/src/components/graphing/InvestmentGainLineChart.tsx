@@ -1,12 +1,13 @@
-import { ResponsiveLine } from '@nivo/line'
 import { formatDate } from 'date-fns'
 import React, { FC, useContext, useMemo } from 'react'
 
-import { GraphTooltip, GraphTooltipDate } from './GraphStyledComponents'
+import { Tooltip } from './AggregatedDiffChart'
+import { Bucket } from './AreaChart'
+import LineChart, { Bucket as LineBucket } from './LineChart'
 import { formatFull } from '../../domain/model/currency'
 import MixedAugmentation from '../../service/MixedAugmentation'
 import { AccountServiceContext } from '../../service/ServiceContext'
-import { darkColors, darkTheme } from '../../utils'
+import { darkColors } from '../../utils'
 import { DrawerContext } from '../Menu'
 import useTimerangeSegmentation from '../shared/useTimerangeSegmentation'
 
@@ -32,8 +33,8 @@ const InvestmentGainLineChart: FC<GainChartProps> = ({ fromDate, toDate }) => {
   )
 
   const { data, labels, groups } = useMemo(() => {
+    const groupLabel = 'Total'
     const Investments = filteredAccounts.reduce((totals, account) => {
-      const groupLabel = 'Total'
       const groupData = totals.get(groupLabel) ?? { bookValue: 0, assets: new Map() }
       for (const initialAmount of account.initialAmounts) {
         groupData.assets.set(
@@ -45,7 +46,7 @@ const InvestmentGainLineChart: FC<GainChartProps> = ({ fromDate, toDate }) => {
       return totals
     }, new Map<string, { bookValue: number; assets: Map<number, number> }>())
 
-    const data: { baseline?: number; values: { [account: string]: { amount: number; baseline?: number } } }[] = []
+    const data: Bucket[] = []
     const labels: Date[] = []
     const groups = new Set<string>()
 
@@ -57,7 +58,6 @@ const InvestmentGainLineChart: FC<GainChartProps> = ({ fromDate, toDate }) => {
             transaction.receiver.isMine && // I am the receiver
             filteredAccounts.findIndex((a) => a.id === transaction.receiver?.id) >= 0 // The account respects filters
           ) {
-            const groupLabel = 'Total'
             const data = Investments.get(groupLabel) ?? { bookValue: 0, assets: new Map() }
             data.assets.set(
               transaction.receiverCurrencyId,
@@ -70,7 +70,6 @@ const InvestmentGainLineChart: FC<GainChartProps> = ({ fromDate, toDate }) => {
             transaction.sender.isMine &&
             filteredAccounts.findIndex((a) => a.id === transaction.sender?.id) >= 0
           ) {
-            const groupLabel = 'Total'
             const data = Investments.get(groupLabel) ?? { bookValue: 0, assets: new Map() }
             data.assets.set(transaction.currencyId, (data.assets.get(transaction.currencyId) ?? 0) - transaction.amount)
             Investments.set(groupLabel, data)
@@ -98,7 +97,6 @@ const InvestmentGainLineChart: FC<GainChartProps> = ({ fromDate, toDate }) => {
           transaction.receiver.isMine && // I am the receiver
           filteredAccounts.findIndex((a) => a.id === transaction.receiver?.id) >= 0 // The account respects filters
         ) {
-          const groupLabel = 'Total'
           const data = Investments.get(groupLabel) ?? { bookValue: 0, assets: new Map() }
           data.assets.set(
             transaction.receiverCurrencyId,
@@ -109,8 +107,7 @@ const InvestmentGainLineChart: FC<GainChartProps> = ({ fromDate, toDate }) => {
             !(
               (typeof transaction.sender !== 'undefined' &&
                 transaction.sender.isMine &&
-                filteredAccounts.findIndex((a) => a.id === transaction.sender?.id) >= 0 &&
-                'Total' === groupLabel) ||
+                filteredAccounts.findIndex((a) => a.id === transaction.sender?.id) >= 0) ||
               transaction.category?.name === 'Financial income'
             )
           ) {
@@ -131,7 +128,6 @@ const InvestmentGainLineChart: FC<GainChartProps> = ({ fromDate, toDate }) => {
           transaction.sender.isMine &&
           filteredAccounts.findIndex((a) => a.id === transaction.sender?.id) >= 0
         ) {
-          const groupLabel = 'Total'
           const data = Investments.get(groupLabel) ?? { bookValue: 0, assets: new Map() }
           data.assets.set(transaction.currencyId, (data.assets.get(transaction.currencyId) ?? 0) - transaction.amount)
 
@@ -139,8 +135,7 @@ const InvestmentGainLineChart: FC<GainChartProps> = ({ fromDate, toDate }) => {
             !(
               (typeof transaction.receiver !== 'undefined' &&
                 transaction.receiver.isMine &&
-                filteredAccounts.findIndex((a) => a.id === transaction.receiver?.id) >= 0 &&
-                'Total' === groupLabel) ||
+                filteredAccounts.findIndex((a) => a.id === transaction.receiver?.id) >= 0) ||
               transaction.category?.name === 'Financial income'
             )
           ) {
@@ -176,7 +171,7 @@ const InvestmentGainLineChart: FC<GainChartProps> = ({ fromDate, toDate }) => {
       }
 
       labels.push(upTo)
-      data.push({ values: { ...todaysData }, baseline: todaysBookValue })
+      data.push({ date: upTo, values: { ...todaysData }, baseline: todaysBookValue })
     }
 
     return { data, labels, groups }
@@ -192,35 +187,35 @@ const InvestmentGainLineChart: FC<GainChartProps> = ({ fromDate, toDate }) => {
     timeseriesIterator,
   ])
 
-  // 3) turn that into a Nivo‐friendly “gain above baseline” series
-  const gainSeries = useMemo(
+  const gainSeries = useMemo<LineBucket[]>(
     () =>
-      Array.from(groups).map((groupLabel) => ({
-        id: groupLabel,
-        data: labels.map((date, idx) => {
-          const { amount, baseline = 0 } = data[idx].values[groupLabel] || { amount: 0, baseline: 0 }
-          return {
-            x: date,
-            y: amount - baseline,
-          }
-        }),
+      data.map((bucket, i) => ({
+        date: labels[i],
+        values: Object.keys(bucket.values).reduce<
+          Record<
+            string,
+            {
+              amount: number
+            }
+          >
+        >((prev, key) => {
+          const { amount, baseline = 0 } = bucket.values[key] || { amount: 0, baseline: 0 }
+          prev[key] = { amount: amount - baseline }
+          return prev
+        }, {}),
       })),
     [data, labels, groups],
   )
 
   return (
-    <ResponsiveLine
+    <LineChart
       data={gainSeries}
-      animate={false}
+      valueFormat={(value) => `${formatFull(defaultCurrency, value, privacyMode)}`}
       margin={{ top: 20, right: 20, bottom: 50, left: 50 }}
-      xScale={{ type: 'time', format: 'native', precision: 'day' }}
-      yScale={{ type: 'linear', min: 'auto', nice: true }}
-      xFormat={(i) => formatDate(i, 'MMM d, yyyy')}
-      yFormat={(i) => formatFull(defaultCurrency, i as number, privacyMode)}
       axisBottom={{
-        format: (i) => formatDate(i, 'MMM d, yy'),
-        tickRotation: -45,
+        format: (i) => ((data.length - i - 1) % 73 === 0 ? labels[i] && formatDate(labels[i], 'MMM d, yyyy') : ''),
       }}
+      enableGridY={!privacyMode}
       axisLeft={{
         tickSize: privacyMode ? 0 : 5,
         format: (i) =>
@@ -230,19 +225,8 @@ const InvestmentGainLineChart: FC<GainChartProps> = ({ fromDate, toDate }) => {
                 notation: 'compact',
               }),
       }}
-      curve="monotoneX"
-      useMesh
-      enablePoints={false}
-      theme={darkTheme}
       colors={darkColors}
-      tooltip={(props) => {
-        return (
-          <GraphTooltip style={{ whiteSpace: 'nowrap' }}>
-            <GraphTooltipDate>{props.point.data.xFormatted}</GraphTooltipDate>
-            {!privacyMode && <div>{props.point.data.yFormatted}</div>}
-          </GraphTooltip>
-        )
-      }}
+      stackTooltip={(tooltipProps) => <Tooltip tooltipProps={tooltipProps} labels={labels} />}
     />
   )
 }

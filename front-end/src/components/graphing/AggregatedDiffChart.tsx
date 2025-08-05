@@ -123,12 +123,10 @@ const AggregatedDiffChart: FC<Props> = (props) => {
           format: (i) =>
             (data.length - i - 1) % showLabelEveryFactor === 0 ? labels[i] && formatDate(labels[i], 'MMM d, yyyy') : '',
           tickSize: 5,
-          tickPadding: 8,
         }}
         enableGridY={!privacyMode}
         axisLeft={{
           tickSize: privacyMode ? 0 : 5,
-          tickPadding: 5,
           format: (i) => {
             return privacyMode
               ? ''

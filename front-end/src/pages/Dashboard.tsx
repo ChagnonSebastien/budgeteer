@@ -184,9 +184,9 @@ const Dashboard: FC = () => {
         {/* Investments */}
 
         <Layout title="Investments Performance">
-          <div style={{ height: '40vh', width: '100%' }}>
+          <Column style={{ height: '40vh', width: '100%', justifyContent: 'stretch', alignItems: 'stretch' }}>
             <InvestmentGainLineChart fromDate={lastYear} toDate={today} />
-          </div>
+          </Column>
         </Layout>
 
         {/* Cash Flow */}
