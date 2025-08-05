@@ -54,16 +54,19 @@ const ExchangeRateHistory: FC<Props> = ({ currency, against }) => {
     <LineChart
       margin={{ top: 0, right: 0, bottom: 30, left: 40 }}
       data={monthlyRates}
-      axisBottom={{
-        format: (i) => {
-          if (monthlyRates[i].date.getUTCMonth() === 0) {
-            return monthlyRates[i].date.getUTCFullYear().toString()
+      xAxisConfig={{
+        format: (date) => {
+          if (date.getUTCMonth() === 0 && date.getDate() === 1) {
+            return date.getUTCFullYear().toString()
           }
           return ''
         },
+        grid: true,
+      }}
+      yAxisConfig={{
+        grid: true,
       }}
       colors={darkColors}
-      stackTooltip={(props) => props.slice.stack[0].formattedValue}
     />
   )
 }

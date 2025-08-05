@@ -50,7 +50,6 @@ const CashFlowBarChart: FC<{ data: CashFlowDataPoint[] }> = ({ data }) => {
       colors={({ id }) => (id === 'Inflow' ? '#4caf50' : '#f44336')}
       colorBy="id"
       theme={darkTheme}
-      enableGridY
       tooltip={({ id, value, indexValue }) => (
         <GraphTooltip style={{ whiteSpace: 'nowrap' }}>
           <GraphTooltipDate>{indexValue}</GraphTooltipDate>

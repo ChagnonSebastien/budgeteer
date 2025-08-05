@@ -1,4 +1,4 @@
-import { formatDate } from 'date-fns'
+import { differenceInDays, formatDate } from 'date-fns'
 import React, { FC, useContext, useMemo } from 'react'
 
 import { Tooltip } from './AggregatedDiffChart'
@@ -211,12 +211,15 @@ const InvestmentGainLineChart: FC<GainChartProps> = ({ fromDate, toDate }) => {
     <LineChart
       data={gainSeries}
       valueFormat={(value) => `${formatFull(defaultCurrency, value, privacyMode)}`}
-      margin={{ top: 20, right: 20, bottom: 50, left: 50 }}
-      axisBottom={{
-        format: (i) => ((data.length - i - 1) % 73 === 0 ? labels[i] && formatDate(labels[i], 'MMM d, yyyy') : ''),
+      margin={{ top: 20, right: 20, bottom: 60, left: 60 }}
+      xAxisConfig={{
+        format: (date) => {
+          const i = differenceInDays(date, gainSeries[0].date)
+          return i % 73 === 0 ? labels[i] && formatDate(labels[i], 'MMM d, yyyy') : ''
+        },
+        grid: true,
       }}
-      enableGridY={!privacyMode}
-      axisLeft={{
+      yAxisConfig={{
         tickSize: privacyMode ? 0 : 5,
         format: (i) =>
           privacyMode
@@ -224,6 +227,7 @@ const InvestmentGainLineChart: FC<GainChartProps> = ({ fromDate, toDate }) => {
             : ((i as number) / Math.pow(10, defaultCurrency.decimalPoints)).toLocaleString(undefined, {
                 notation: 'compact',
               }),
+        grid: true,
       }}
       colors={darkColors}
       stackTooltip={(tooltipProps) => <Tooltip tooltipProps={tooltipProps} labels={labels} />}

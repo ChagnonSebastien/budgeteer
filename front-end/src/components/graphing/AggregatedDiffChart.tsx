@@ -113,19 +113,25 @@ const AggregatedDiffChart: FC<Props> = (props) => {
       }
     }
 
+    const dateVisibility = data.reduce((map, bucket, i) => {
+      if ((data.length - i - 1) % showLabelEveryFactor === 0) {
+        map.set(bucket.date.getTime(), labels[i] && formatDate(labels[i], 'MMM d, yyyy'))
+      }
+      return map
+    }, new Map<number, string>())
+
     return (
       <LineChart
         data={data}
         datasetsLabels={['Diff']}
         valueFormat={(value) => `${formatFull(defaultCurrency, value, privacyMode)}`}
         margin={{ top: 30, right: 25, bottom: 80, left: 60 }}
-        axisBottom={{
-          format: (i) =>
-            (data.length - i - 1) % showLabelEveryFactor === 0 ? labels[i] && formatDate(labels[i], 'MMM d, yyyy') : '',
+        xAxisConfig={{
+          format: (date) => dateVisibility.get(date.getTime()) ?? '',
           tickSize: 5,
+          grid: true,
         }}
-        enableGridY={!privacyMode}
-        axisLeft={{
+        yAxisConfig={{
           tickSize: privacyMode ? 0 : 5,
           format: (i) => {
             return privacyMode
@@ -134,6 +140,7 @@ const AggregatedDiffChart: FC<Props> = (props) => {
                   notation: 'compact',
                 })
           },
+          grid: true,
         }}
         colors={darkColors}
         stackTooltip={(tooltipProps) => <Tooltip tooltipProps={tooltipProps} labels={labels} />}

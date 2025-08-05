@@ -298,6 +298,13 @@ const NetWorthChart: FC<NetWorthChartProps> = ({
       }
     }
 
+    const dateVisibility = data.reduce((map, bucket, i) => {
+      if ((data.length - i - 1) % showLabelEveryFactor === 0) {
+        map.set(bucket.date.getTime(), labels[i] && formatDate(labels[i], 'MMM d, yyyy'))
+      }
+      return map
+    }, new Map<number, string>())
+
     return (
       <AreaChart
         data={data}
@@ -307,14 +314,13 @@ const NetWorthChart: FC<NetWorthChartProps> = ({
         showGlobalBaseline={baselineConfig === 'showGlobalBaseline'}
         showIndividualBaselines={baselineConfig === 'showIndividualBaselines'}
         minYValue={minYValue}
-        axisBottom={{
-          format: (i) =>
-            (data.length - i - 1) % showLabelEveryFactor === 0 ? labels[i] && formatDate(labels[i], 'MMM d, yyyy') : '',
+        xAxisConfig={{
+          format: (date) => dateVisibility.get(date.getTime()) ?? '',
           tickSize: 5,
           tickPadding: 8,
         }}
-        enableGridY={!privacyMode}
-        axisLeft={{
+        yAxisConfig={{
+          grid: true,
           tickSize: privacyMode ? 0 : 5,
           tickPadding: 5,
           format: (i) => {

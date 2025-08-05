@@ -266,7 +266,6 @@ const TrendsChart: FC<Props> = (props) => {
           tickRotation: -45,
           format: (props) => label(new Date(props)),
         }}
-        enableGridY={!privacyMode}
         axisLeft={{
           tickSize: privacyMode ? 0 : 5,
           format: (i) =>
