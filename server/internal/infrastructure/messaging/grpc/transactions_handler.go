@@ -22,7 +22,7 @@ type transactionRepository interface {
 		currencyId, senderAccountId, receiverAccountId, categoryId int,
 		date time.Time,
 		note string,
-		receiverCurrencyId, receiverAmount int,
+		receiverCurrencyId, receiverAmount, relatedCurrency int,
 	) (model.TransactionID, error)
 	UpdateTransaction(
 		ctx context.Context,
@@ -62,6 +62,11 @@ func (s *TransactionHandler) CreateTransaction(
 		category = int(*req.Category)
 	}
 
+	var relatedCurrency int
+	if req.RelatedCurrency != nil {
+		relatedCurrency = int(*req.RelatedCurrency)
+	}
+
 	date, err := time.Parse(layout, req.Date)
 	if err != nil {
 		return nil, err
@@ -79,6 +84,7 @@ func (s *TransactionHandler) CreateTransaction(
 		req.Note,
 		int(req.ReceiverCurrency),
 		int(req.ReceiverAmount),
+		relatedCurrency,
 	)
 	if err != nil {
 		return nil, err
@@ -155,6 +161,12 @@ func (s *TransactionHandler) UpdateTransaction(
 		receiverCurrencyId = &id
 	}
 
+	var relatedCurrencyId *int
+	if req.Fields.RelatedCurrency != nil {
+		id := int(*req.Fields.RelatedCurrency)
+		relatedCurrencyId = &id
+	}
+
 	var date *time.Time
 	if req.Fields.Date != nil {
 		computedDate, err := time.Parse(layout, *req.Fields.Date)
@@ -178,6 +190,7 @@ func (s *TransactionHandler) UpdateTransaction(
 			Note:               req.Fields.Note,
 			ReceiverCurrencyId: receiverCurrencyId,
 			ReceiverAmount:     receiverAmount,
+			RelatedCurrencyId:  relatedCurrencyId,
 		},
 	)
 	if err != nil {
@@ -221,6 +234,12 @@ func (s *TransactionHandler) GetAllTransactions(
 			category = &id
 		}
 
+		var relatedCurrency *uint32
+		if financialIncomeData, ok := transaction.AdditionalData.(*model.FinancialIncomeData); ok {
+			id := uint32(financialIncomeData.RelatedCurrency)
+			relatedCurrency = &id
+		}
+
 		transactionsDto[i] = &dto.Transaction{
 			Id:               uint32(transaction.ID),
 			Amount:           uint32(transaction.Amount),
@@ -232,6 +251,7 @@ func (s *TransactionHandler) GetAllTransactions(
 			Note:             transaction.Note,
 			ReceiverCurrency: uint32(transaction.ReceiverCurrency),
 			ReceiverAmount:   uint32(transaction.ReceiverAmount),
+			RelatedCurrency:  relatedCurrency,
 		}
 	}
 

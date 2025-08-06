@@ -192,6 +192,7 @@ const LineChart: FC<Props> = ({
       }}
       graph={graph}
       range={[data[0].date, data[data.length - 1].date]}
+      datasetLength={data.length}
       xAxisConfig={xAxisConfig}
       yAxisConfig={yAxisConfig}
       Tooltip={({ def }) =>

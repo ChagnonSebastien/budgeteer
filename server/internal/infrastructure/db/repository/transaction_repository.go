@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"time"
 
 	"chagnon.dev/budget-server/internal/domain/model"
@@ -32,6 +33,13 @@ func (r *Repository) GetAllTransactions(ctx context.Context, userId string) ([]m
 			category = int(transactionDao.Category.Int32)
 		}
 
+		var additionalData any
+		if transactionDao.RelatedCurrencyID.Valid {
+			additionalData = &model.FinancialIncomeData{
+				RelatedCurrency: model.CurrencyID(transactionDao.RelatedCurrencyID.Int32),
+			}
+		}
+
 		transactions[i] = model.Transaction{
 			ID:               model.TransactionID(transactionDao.ID),
 			Amount:           int(transactionDao.Amount),
@@ -43,6 +51,7 @@ func (r *Repository) GetAllTransactions(ctx context.Context, userId string) ([]m
 			Note:             transactionDao.Note,
 			ReceiverCurrency: model.CurrencyID(transactionDao.ReceiverCurrency),
 			ReceiverAmount:   int(transactionDao.ReceiverAmount),
+			AdditionalData:   additionalData,
 		}
 	}
 
@@ -56,9 +65,14 @@ func (r *Repository) CreateTransaction(
 	currencyId, senderAccountId, receiverAccountId, categoryId int,
 	date time.Time,
 	note string,
-	receiverCurrencyId, receiverAmount int,
+	receiverCurrencyId, receiverAmount, relatedCurrencyId int,
 ) (model.TransactionID, error) {
-	transactionId, err := r.queries.CreateTransaction(
+	tx, err := r.db.BeginTx(ctx, &sql.TxOptions{})
+	if err != nil {
+		return 0, err
+	}
+
+	transactionId, err := r.queries.WithTx(tx).CreateTransaction(
 		ctx, &dao.CreateTransactionParams{
 			UserID:   userId,
 			Amount:   int32(amount),
@@ -84,7 +98,20 @@ func (r *Repository) CreateTransaction(
 	if err != nil {
 		return 0, err
 	}
-	return model.TransactionID(transactionId), nil
+
+	if relatedCurrencyId != 0 {
+		_, err := r.queries.WithTx(tx).TransactionToFinancialIncome(
+			ctx, &dao.TransactionToFinancialIncomeParams{
+				TransactionID:     transactionId,
+				RelatedCurrencyID: int32(relatedCurrencyId),
+			},
+		)
+		if err != nil {
+			return 0, err
+		}
+	}
+
+	return model.TransactionID(transactionId), tx.Commit()
 }
 
 type UpdateTransactionFields struct {
@@ -94,6 +121,7 @@ type UpdateTransactionFields struct {
 	Date                               *time.Time
 	Note                               *string
 	ReceiverCurrencyId, ReceiverAmount *int
+	RelatedCurrencyId                  *int
 }
 
 func (u *UpdateTransactionFields) nullNote() sql.NullString {
@@ -195,13 +223,29 @@ func (u *UpdateTransactionFields) nullCategoryId() sql.NullInt32 {
 	}
 }
 
+func (u *UpdateTransactionFields) nullRelatedCurrencyId() sql.NullInt32 {
+	if u.RelatedCurrencyId == nil || *u.RelatedCurrencyId == 0 {
+		return sql.NullInt32{Valid: false}
+	}
+
+	return sql.NullInt32{
+		Int32: int32(*u.RelatedCurrencyId),
+		Valid: true,
+	}
+}
+
 func (r *Repository) UpdateTransaction(
 	ctx context.Context,
 	userId string,
 	id model.TransactionID,
 	field UpdateTransactionFields,
 ) error {
-	updatedRows, err := r.queries.UpdateTransaction(
+	tx, err := r.db.BeginTx(ctx, &sql.TxOptions{})
+	if err != nil {
+		return err
+	}
+
+	updatedRows, err := r.queries.WithTx(tx).UpdateTransaction(
 		ctx, &dao.UpdateTransactionParams{
 			UserID:           userId,
 			ID:               int32(id),
@@ -223,7 +267,18 @@ func (r *Repository) UpdateTransaction(
 		return err
 	}
 	if updatedRows == 0 {
+		return fmt.Errorf("updated 0 rows")
+	}
+
+	_, err = r.queries.WithTx(tx).UpdateFinancialIncome(
+		ctx, &dao.UpdateFinancialIncomeParams{
+			RelatedCurrencyID: field.nullRelatedCurrencyId(),
+			TransactionID:     int32(id),
+		},
+	)
+	if err != nil {
 		return err
 	}
-	return nil
+
+	return tx.Commit()
 }

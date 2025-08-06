@@ -1,5 +1,5 @@
 import { Box, Typography } from '@mui/material'
-import { addDays, differenceInDays, isBefore, isSameDay } from 'date-fns'
+import { addDays, isBefore, isSameDay } from 'date-fns'
 import React, { Dispatch, FC, ReactNode, SetStateAction, useMemo } from 'react'
 
 import { Column, Row } from '../shared/Layout'
@@ -168,8 +168,20 @@ export const DateBasedGraph = (props: {
   xAxisConfig?: Partial<DateAxisConfig>
   yAxisConfig?: Partial<ValueAxisConfig>
   range: [Date, Date]
+  datasetLength: number
 }) => {
-  const { margin, yAxisValues, graph, Tooltip, tooltip, setTooltip, xAxisConfig = {}, yAxisConfig = {}, range } = props
+  const {
+    margin,
+    yAxisValues,
+    graph,
+    Tooltip,
+    tooltip,
+    setTooltip,
+    xAxisConfig = {},
+    yAxisConfig = {},
+    range,
+    datasetLength,
+  } = props
   const { step, graphMinY, graphMaxY, startTick, endTick } = yAxisValues
 
   const { format: fmtX = (i) => String(i), tickSize: tickHeightX = 5, grid: gridX = false } = xAxisConfig
@@ -243,7 +255,7 @@ export const DateBasedGraph = (props: {
                   position: 'absolute',
                   height: '100%',
                   width: tooltip.index * tooltip.slice,
-                  borderRight: '2px dashed rgba(128, 128, 128, 1)',
+                  borderRight: '2px dashed rgba(255, 255, 255, 0.5)',
                   pointerEvents: 'none',
                 }}
               />
@@ -294,7 +306,7 @@ export const DateBasedGraph = (props: {
                 prev
                   ? {
                       ...prev,
-                      index: differenceInDays(range[1], range[0]),
+                      index: datasetLength - 1,
                       x: e.clientX,
                       y: e.clientY,
                       side: 'left',

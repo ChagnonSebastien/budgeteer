@@ -1,18 +1,19 @@
 -- name: GetAllTransactions :many
 SELECT
-    id,
-    amount,
-    currency,
-    sender,
-    receiver,
-    category,
-    date,
-    note,
-    receiver_currency,
-    receiver_amount
+    t.id,
+    t.amount,
+    t.currency,
+    t.sender,
+    t.receiver,
+    t.category,
+    t.date,
+    t.note,
+    t.receiver_currency,
+    t.receiver_amount,
+    fi.related_currency_id
 FROM
-    transactions
-WHERE user_id = sqlc.arg(user_id)
+    transactions t LEFT OUTER JOIN financialincomes fi ON t.id = fi.transaction_id
+WHERE t.user_id = sqlc.arg(user_id)
 ORDER BY date DESC;
 
 -- name: CreateTransaction :one
@@ -54,3 +55,17 @@ SET
     receiver_amount = COALESCE(sqlc.narg(receiver_amount), receiver_amount)
 WHERE t.id = sqlc.arg(id)
   AND t.user_id = sqlc.arg(user_id);
+
+-- name: TransactionToFinancialIncome :one
+INSERT INTO financialincomes (transaction_id, related_currency_id)
+VALUES (
+           sqlc.arg(transaction_id),
+           sqlc.arg(related_currency_id)
+       )
+RETURNING transaction_id;
+
+-- name: UpdateFinancialIncome :execrows
+UPDATE financialincomes fi
+SET
+    related_currency_id = COALESCE(sqlc.narg(related_currency_id), related_currency_id)
+WHERE fi.transaction_id = sqlc.arg(transaction_id);

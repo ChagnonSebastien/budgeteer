@@ -17,4 +17,9 @@ type Transaction struct {
 	Note             string
 	ReceiverCurrency CurrencyID
 	ReceiverAmount   int
+	AdditionalData   any
+}
+
+type FinancialIncomeData struct {
+	RelatedCurrency CurrencyID
 }

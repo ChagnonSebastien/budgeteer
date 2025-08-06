@@ -31,3 +31,5 @@ databaseChangeLog:
       file: ./changelogs/015-currencies-exchange-rate-script-toggle.sql
   - include:
       file: ./changelogs/016-currencies-additional-properties.sql
+  - include:
+      file: ./changelogs/017-financial-income-table.sql

@@ -104,6 +104,8 @@ export const useNetWorthChartData = <Item extends object>(
               transaction.category?.name === 'Financial income'
             )
           ) {
+            // I did not send it to myself without changing category and it is not a financial income
+            // Update book value
             if (transaction.receiverCurrencyId === defaultCurrency.id) {
               data.bookValue += transaction.receiverAmount
             } else if (transaction.currencyId === defaultCurrency.id) {
@@ -117,9 +119,9 @@ export const useNetWorthChartData = <Item extends object>(
           Investments.set(groupLabel, data)
         }
         if (
-          typeof transaction.sender !== 'undefined' &&
-          transaction.sender.isMine &&
-          accounts.findIndex((a) => a.id === transaction.sender?.id) >= 0
+          typeof transaction.sender !== 'undefined' && // Has a Sender
+          transaction.sender.isMine && // I am the sender
+          accounts.findIndex((a) => a.id === transaction.sender?.id) >= 0 // The account respects filters
         ) {
           const groupLabel = group(getFromIdentifier(transaction))!
           const data = Investments.get(groupLabel) ?? { bookValue: 0, assets: new Map() }
@@ -134,6 +136,8 @@ export const useNetWorthChartData = <Item extends object>(
               transaction.category?.name === 'Financial income'
             )
           ) {
+            // I did not receive it from myself without changing category and it is not a financial income
+            // Update book value
             if (transaction.receiverCurrencyId === defaultCurrency.id) {
               data.bookValue -= transaction.receiverAmount
             } else if (transaction.currencyId === defaultCurrency.id) {

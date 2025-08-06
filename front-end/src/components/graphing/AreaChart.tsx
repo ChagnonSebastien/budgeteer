@@ -319,6 +319,7 @@ const AreaChart: FC<Props> = ({
       tooltip={tooltip}
       setTooltip={setTooltip}
       range={[data[0].date, data[data.length - 1].date]}
+      datasetLength={data.length}
       yAxisConfig={yAxisConfig}
       xAxisConfig={xAxisConfig}
       Tooltip={({ def }) =>
