@@ -12,7 +12,7 @@ import {
   GraphTooltipValue,
 } from './GraphStyledComponents'
 import Account from '../../domain/model/account'
-import { formatFull } from '../../domain/model/currency'
+import { CurrencyID, formatFull } from '../../domain/model/currency'
 import { AugmentedTransaction } from '../../domain/model/transaction'
 import MixedAugmentation from '../../service/MixedAugmentation'
 import { darkColors } from '../../utils'
@@ -24,7 +24,7 @@ export type ScaleConfig = 'absolute' | 'cropped-absolute' | 'relative'
 
 export const useNetWorthChartData = <Item extends object>(
   timeseriesIterator: TimeseriesIterator<AugmentedTransaction>,
-  computeInitialInvestments: () => Map<string, { bookValue: number; assets: Map<number, number> }>,
+  getInitialAmountIdentifier: (account: Account, currencyId: CurrencyID) => Item | undefined,
   getFromIdentifier: (transaction: AugmentedTransaction) => Item | undefined,
   getToIdentifier: (transaction: AugmentedTransaction) => Item | undefined,
   group: (account?: Item | undefined) => string | undefined,
@@ -39,7 +39,18 @@ export const useNetWorthChartData = <Item extends object>(
   )
 
   return useMemo(() => {
-    const Investments = computeInitialInvestments()
+    const Investments = accounts.reduce((totals, account) => {
+      for (const initialAmount of account.initialAmounts) {
+        const groupLabel = group(getInitialAmountIdentifier(account, initialAmount.currencyId))!
+        const groupData = totals.get(groupLabel) ?? { bookValue: 0, assets: new Map() }
+        groupData.assets.set(
+          initialAmount.currencyId,
+          (groupData.assets.get(initialAmount.currencyId) ?? 0) + initialAmount.value,
+        )
+        totals.set(groupLabel, groupData)
+      }
+      return totals
+    }, new Map<string, { bookValue: number; assets: Map<number, number> }>())
 
     const data: Bucket[] = []
     const labels: Date[] = []

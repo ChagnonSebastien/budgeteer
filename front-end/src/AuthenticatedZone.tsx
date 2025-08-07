@@ -10,15 +10,14 @@ import ContentWithHeader from './components/shared/ContentWithHeader'
 import { Centered } from './components/shared/Layout'
 import Currency, { CurrencyUpdatableFields, RateAutoupdateSettings } from './domain/model/currency'
 import { IdIdentifier } from './domain/model/Unique'
-import AccountsBalancePage from './pages/AccountsBalancePage'
 import AccountsPage from './pages/AccountsPage'
+import BalancePage from './pages/BalancePage'
 import CategoryPage from './pages/CategoryPage'
 import CostsAnalysisPage from './pages/CostsAnalysisPage'
 import CreateAccountPage from './pages/CreateAccountPage'
 import CreateCategoryPage from './pages/CreateCategoryPage'
 import CreateCurrencyPage from './pages/CreateCurrencyPage'
 import CreateTransactionPage from './pages/CreateTransactionPage'
-import CurrenciesBalancePage from './pages/CurrenciesBalancePage'
 import CurrenciesPage from './pages/CurrenciesPage'
 import Dashboard from './pages/Dashboard'
 import EditAccountPage from './pages/EditAccountPage'
@@ -298,7 +297,6 @@ const AuthenticatedZone: FC<Props> = (props) => {
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/currencies" element={<CurrenciesPage />} />
-          <Route path="/currencies/graph" element={<CurrenciesBalancePage />} />
           <Route path="/currencies/new" element={<CreateCurrencyPage scriptRunner={testGetRateScript} />} />
           <Route path="/currencies/edit/:currencyId" element={<EditCurrencyPage scriptRunner={testGetRateScript} />} />
           <Route path="/categories" element={<CategoryPage />} />
@@ -306,11 +304,11 @@ const AuthenticatedZone: FC<Props> = (props) => {
           <Route path="/categories/edit/:categoryId" element={<EditCategoryPage />} />
           <Route path="/accounts" element={<AccountsPage />} />
           <Route path="/accounts/new" element={<CreateAccountPage />} />
-          <Route path="/accounts/graph" element={<AccountsBalancePage />} />
           <Route path="/accounts/edit/:accountId" element={<EditAccountPage />} />
           <Route path="/transactions" element={<TransactionPage />} />
           <Route path="/transactions/new" element={<CreateTransactionPage />} />
           <Route path="/transactions/edit/:transactionId" element={<EditTransactionPage />} />
+          <Route path="/balances" element={<BalancePage />} />
           <Route path="/costs" element={<CostsAnalysisPage />} />
           <Route path="/trends" element={<TrendsPage />} />
           <Route path="*" element={<Navigate to="/transactions" />} />

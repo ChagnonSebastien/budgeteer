@@ -1,5 +1,6 @@
 import {
   alpha,
+  Box,
   FormControl,
   FormControlLabel,
   FormLabel,
@@ -52,26 +53,28 @@ const SelectOne: FC<Props> = (props) => {
     )
   if (props.type === 'dropdown')
     return (
-      <TextField
-        label={props.label}
-        sx={{
-          flexGrow: 1,
-          minWidth: '12.5rem',
-          '& .MuiInput-underline:before': {
-            borderBottomColor: (theme) => alpha(theme.palette.primary.main, 0.1),
-          },
-        }}
-        select
-        value={props.value}
-        onChange={(event) => props.onChange(event.target.value)}
-        variant="standard"
-      >
-        {props.options.map((option) => (
-          <MenuItem key={`${props.label}-label-${option.value}`} value={option.value}>
-            {option.label}
-          </MenuItem>
-        ))}
-      </TextField>
+      <Box sx={{ flexGrow: 1 }}>
+        <TextField
+          label={props.label}
+          fullWidth
+          sx={{
+            minWidth: '10rem',
+            '& .MuiInput-underline:before': {
+              borderBottomColor: (theme) => alpha(theme.palette.primary.main, 0.1),
+            },
+          }}
+          select
+          value={props.value}
+          onChange={(event) => props.onChange(event.target.value)}
+          variant="standard"
+        >
+          {props.options.map((option) => (
+            <MenuItem key={`${props.label}-label-${option.value}`} value={option.value}>
+              {option.label}
+            </MenuItem>
+          ))}
+        </TextField>
+      </Box>
     )
 
   return (

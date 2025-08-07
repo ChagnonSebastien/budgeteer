@@ -1,7 +1,8 @@
 import { FC, useCallback, useContext, useMemo } from 'react'
 
 import NetWorthChart, { useNetWorthChartData } from './NetWorthChart'
-import Currency from '../../domain/model/currency'
+import Account from '../../domain/model/account'
+import Currency, { CurrencyID } from '../../domain/model/currency'
 import MixedAugmentation from '../../service/MixedAugmentation'
 import { AccountServiceContext, CurrencyServiceContext } from '../../service/ServiceContext'
 import useTimerangeSegmentation from '../shared/useTimerangeSegmentation'
@@ -60,23 +61,13 @@ const CurrenciesBalanceChart: FC<Props> = (props) => {
     [timeseriesIteratorGenerator, augmentedTransactions],
   )
 
-  const computeInitialInvestments = () =>
-    accounts.reduce((totals, account) => {
-      for (const initialAmount of account.initialAmounts) {
-        const groupLabel = group(currencies.find((c) => c.id === initialAmount.currencyId))
-        const groupData = totals.get(groupLabel) ?? { bookValue: 0, assets: new Map() }
-        groupData.assets.set(
-          initialAmount.currencyId,
-          (groupData.assets.get(initialAmount.currencyId) ?? 0) + initialAmount.value,
-        )
-        totals.set(groupLabel, groupData)
-      }
-      return totals
-    }, new Map<string, { bookValue: number; assets: Map<number, number> }>())
+  const getInitialAmountIdentifier = (_account: Account, currencyId?: CurrencyID) => {
+    return currencies.find((c) => c.id === currencyId)
+  }
 
   const { data, labels, groups } = useNetWorthChartData(
     timeseriesIterator,
-    computeInitialInvestments,
+    getInitialAmountIdentifier,
     (transaction) => transaction.currency,
     (transaction) => transaction.receiverCurrency,
     group,

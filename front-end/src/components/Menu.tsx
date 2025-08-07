@@ -14,10 +14,10 @@ import { createContext, FC, ReactElement, useContext, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { default as styled } from 'styled-components'
 
-import { IconToolsContext, PreparedIcon } from './icons/IconTools'
-import { useElementDimensions, useWindowDimensions } from './shared/useDimensions'
 import { UserContext } from '../App'
 import UserStore from '../UserStore'
+import { IconToolsContext, PreparedIcon } from './icons/IconTools'
+import { useElementDimensions, useWindowDimensions } from './shared/useDimensions'
 
 const ContentContainer = styled.div<{ $persistentDrawer: boolean; $totalWidth: number; $drawerWidth: number }>`
   width: ${(props) => (props.$persistentDrawer ? `${props.$totalWidth - props.$drawerWidth}px` : '100%')};
@@ -58,20 +58,14 @@ const appPages: AppPage[] = [
     keepQuery: [],
   },
   {
-    title: 'Account Balances',
-    url: '/accounts/graph',
-    iconName: PreparedIcon.FaScaleUnbalanced,
-    keepQuery: ['from', 'to', 'accounts'],
-  },
-  {
     title: 'Currencies',
     url: '/currencies',
     iconName: PreparedIcon.BsCurrencyExchange,
     keepQuery: [],
   },
   {
-    title: 'Currency Balances',
-    url: '/currencies/graph',
+    title: 'Balances',
+    url: '/balances',
     iconName: PreparedIcon.FaScaleUnbalanced,
     keepQuery: ['from', 'to', 'accounts'],
   },

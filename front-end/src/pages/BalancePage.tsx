@@ -1,7 +1,8 @@
 import { Box } from '@mui/material'
 import { FC, useMemo } from 'react'
 
-import AccountsBalanceChart, { GroupType } from '../components/graphing/AccountsBalanceChart'
+import AccountsBalanceChart, { GroupType as AccountsGroupType } from '../components/graphing/AccountsBalanceChart'
+import CurrenciesBalanceChart, { GroupType as CurrenciesGroupType } from '../components/graphing/CurrenciesBalanceChart'
 import { FirstDivision, GraphContainer, SecondDivision } from '../components/graphing/GraphStyledComponents'
 import { BaseLineConfig, ScaleConfig } from '../components/graphing/NetWorthChart'
 import SelectOne from '../components/inputs/SelectOne'
@@ -17,9 +18,27 @@ type QueryParams = {
   groupBy: string
   baselineConfig: string
   scale: string
+  majorType: string
 }
 
-const AccountsBalancePage: FC = () => {
+const groupByOptionsConfig = {
+  accounts: [
+    { value: 'none', label: 'None' },
+    { value: 'account', label: 'Account' },
+    { value: 'financialInstitution', label: 'Financial Institution' },
+    { value: 'type', label: 'Type' },
+  ],
+  currencies: [
+    { value: 'none', label: 'None' },
+    { value: 'currency', label: 'Currency' },
+    { value: 'type', label: 'Type' },
+    { value: 'risk', label: 'Risk' },
+  ],
+}
+
+export type MajorType = 'accounts' | 'currencies'
+
+const BalancePage: FC = () => {
   const {
     fromDate,
     toDate,
@@ -28,9 +47,19 @@ const AccountsBalancePage: FC = () => {
   } = useTransactionFilter((account: Account) => account.isMine, false)
 
   const { queryParams: qp, updateQueryParams } = useQueryParams<QueryParams>()
-  const groupBy = useMemo(() => (qp.groupBy ?? 'account') as GroupType, [qp.groupBy])
+  const majorType = useMemo(() => (qp.majorType ?? 'accounts') as MajorType, [qp.majorType])
+  const groupBy = useMemo(
+    () =>
+      (qp.groupBy ?? (majorType === 'accounts' ? 'account' : 'currency')) as AccountsGroupType | CurrenciesGroupType,
+    [qp.groupBy],
+  )
+  console.log(groupBy)
   const baselineConfig = useMemo(() => (qp.baselineConfig ?? 'none') as BaseLineConfig, [qp.baselineConfig])
   const scale = useMemo(() => (qp.scale ?? 'cropped-absolute') as ScaleConfig, [qp.scale])
+
+  const groupByOptions = useMemo(() => {
+    return majorType === 'currencies' ? groupByOptionsConfig.currencies : groupByOptionsConfig.accounts
+  }, [majorType])
 
   const { height: pageHeight } = useWindowDimensions()
   const { height: optionsHeight, ref: setOptionsRef } = useElementDimensions(600, 600)
@@ -53,15 +82,27 @@ const AccountsBalancePage: FC = () => {
           flexGrow: 1,
         }}
       >
-        <AccountsBalanceChart
-          key="AccountsBalancePageFirstDivision"
-          fromDate={fromDate}
-          toDate={toDate}
-          filterByAccounts={accountFilter === null ? undefined : accountFilter}
-          groupBy={groupBy}
-          baselineConfig={baselineConfig}
-          scale={scale}
-        />
+        {majorType === 'accounts' ? (
+          <AccountsBalanceChart
+            key="AccountsBalancePageFirstDivision"
+            fromDate={fromDate}
+            toDate={toDate}
+            filterByAccounts={accountFilter === null ? undefined : accountFilter}
+            groupBy={groupBy as AccountsGroupType}
+            baselineConfig={baselineConfig}
+            scale={scale}
+          />
+        ) : (
+          <CurrenciesBalanceChart
+            key="CurrenciesBalancePageFirstDivision"
+            fromDate={fromDate}
+            toDate={toDate}
+            filterByAccounts={accountFilter === null ? undefined : accountFilter}
+            groupBy={groupBy as CurrenciesGroupType}
+            baselineConfig={baselineConfig}
+            scale={scale}
+          />
+        )}
       </GraphContainer>
 
       {splitHorizontal && (
@@ -74,16 +115,22 @@ const AccountsBalancePage: FC = () => {
 
   const selectOptions = [
     <SelectOne
+      key="majot-type-option"
+      label="Major type"
+      value={majorType}
+      onChange={(newValue) => updateQueryParams({ majorType: newValue, groupBy: null })}
+      options={[
+        { value: 'accounts', label: 'Accounts' },
+        { value: 'currencies', label: 'Currencies' },
+      ]}
+      type={splitHorizontal ? 'radio' : 'dropdown'}
+    />,
+    <SelectOne
       key="group-by-option"
       label="Group by"
       value={groupBy}
       onChange={(newValue) => updateQueryParams({ groupBy: newValue })}
-      options={[
-        { value: 'none', label: 'None' },
-        { value: 'account', label: 'Account' },
-        { value: 'financialInstitution', label: 'Financial Institution' },
-        { value: 'type', label: 'Type' },
-      ]}
+      options={groupByOptions}
       type={splitHorizontal ? 'radio' : 'dropdown'}
     />,
     <SelectOne
@@ -142,4 +189,4 @@ const AccountsBalancePage: FC = () => {
   )
 }
 
-export default AccountsBalancePage
+export default BalancePage
