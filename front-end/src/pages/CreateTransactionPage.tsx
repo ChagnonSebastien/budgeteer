@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
 import useQueryParams from '../components/shared/useQueryParams'
 import TransactionForm, { TransactionType } from '../components/transactions/TransactionForm'
-import Transaction from '../domain/model/transaction'
+import { TransactionUpdatableFields } from '../domain/model/transaction'
 import { TransactionServiceContext } from '../service/ServiceContext'
 
 type QueryParams = {
@@ -19,7 +19,7 @@ const CreateTransactionPage: FC = () => {
   const { create: createTransaction } = useContext(TransactionServiceContext)
 
   const onSubmit = useCallback(
-    async (data: Partial<Omit<Transaction, 'id' | 'hasName'>>) => {
+    async (data: Partial<TransactionUpdatableFields>) => {
       if (typeof data.amount === 'undefined') throw new Error('amount cannot be undefined')
       if (typeof data.currencyId === 'undefined') throw new Error('currencyId cannot be undefined')
       if (typeof data.categoryId === 'undefined') throw new Error('categoryId cannot be undefined')
@@ -40,6 +40,7 @@ const CreateTransactionPage: FC = () => {
         note: data.note,
         receiverCurrencyId: data.receiverCurrencyId,
         receiverAmount: data.receiverAmount,
+        financialIncomeCurrencyId: data.financialIncomeCurrencyId ?? null,
       })
       navigate(`/transactions`, { replace: true })
     },
@@ -47,7 +48,12 @@ const CreateTransactionPage: FC = () => {
   )
 
   return (
-    <ContentWithHeader title={`Record new ${type ?? 'transaction'}`} action="return" withPadding withScrolling>
+    <ContentWithHeader
+      title={`Record new ${type === 'financialIncome' ? 'financial income' : (type ?? 'transaction')}`}
+      action="return"
+      withPadding
+      withScrolling
+    >
       <TransactionForm onSubmit={onSubmit} submitText="Record" type={type} />
     </ContentWithHeader>
   )

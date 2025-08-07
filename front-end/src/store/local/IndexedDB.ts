@@ -52,6 +52,7 @@ interface Transaction {
   note: string
   receiverCurrency: number
   receiverAmount: number
+  relatedCurrency: number | null
 }
 
 export type ActionType = 'create' | 'update' | 'delete'

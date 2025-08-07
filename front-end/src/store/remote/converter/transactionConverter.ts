@@ -35,6 +35,7 @@ export class TransactionConverter
       dto.note,
       dto.receiverCurrency,
       dto.receiverAmount,
+      dto.relatedCurrency ?? null,
     )
   }
 
@@ -50,6 +51,7 @@ export class TransactionConverter
       sender: model.senderId ?? undefined,
       receiverCurrency: model.receiverCurrencyId,
       receiverAmount: model.receiverAmount,
+      relatedCurrency: model.financialIncomeCurrencyId ?? undefined,
     })
   }
 
@@ -67,6 +69,8 @@ export class TransactionConverter
       receiver: model.receiverId ?? undefined,
       receiverCurrency: model.receiverCurrencyId,
       receiverAmount: model.receiverAmount,
+      updateRelatedCurrency: typeof model.financialIncomeCurrencyId !== 'undefined',
+      relatedCurrency: model.financialIncomeCurrencyId ?? undefined,
     })
   }
 }

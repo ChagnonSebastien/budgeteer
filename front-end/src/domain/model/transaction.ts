@@ -17,6 +17,7 @@ export default class Transaction implements Unique<TransactionID, Transaction> {
     readonly note: string,
     readonly receiverCurrencyId: CurrencyID,
     readonly receiverAmount: number,
+    readonly financialIncomeCurrencyId: CurrencyID | null,
   ) {}
 
   equals(other: Transaction): boolean {
@@ -29,6 +30,7 @@ export default class Transaction implements Unique<TransactionID, Transaction> {
     if (this.receiverId !== other.receiverId) return false
     if (this.note !== other.note) return false
     if (this.receiverCurrencyId !== other.receiverCurrencyId) return false
+    if (this.financialIncomeCurrencyId !== other.financialIncomeCurrencyId) return false
     return this.receiverAmount === other.receiverAmount
   }
 }
@@ -41,6 +43,7 @@ export class AugmentedTransaction extends Transaction {
     public readonly category?: AugmentedCategory,
     public readonly sender?: Account,
     public readonly receiver?: Account,
+    public readonly financialIncomeCurrency?: Currency,
   ) {
     super(
       transaction.id,
@@ -53,6 +56,7 @@ export class AugmentedTransaction extends Transaction {
       transaction.note,
       transaction.receiverCurrencyId,
       transaction.receiverAmount,
+      transaction.financialIncomeCurrencyId,
     )
   }
 }
@@ -68,4 +72,5 @@ export type TransactionUpdatableFields = Pick<
   | 'note'
   | 'receiverCurrencyId'
   | 'receiverAmount'
+  | 'financialIncomeCurrencyId'
 >

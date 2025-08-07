@@ -30,7 +30,7 @@ const AccountsBalancePage: FC = () => {
   const { queryParams: qp, updateQueryParams } = useQueryParams<QueryParams>()
   const groupBy = useMemo(() => (qp.groupBy ?? 'account') as GroupType, [qp.groupBy])
   const baselineConfig = useMemo(() => (qp.baselineConfig ?? 'none') as BaseLineConfig, [qp.baselineConfig])
-  const scale = useMemo(() => (qp.scale ?? 'absolute') as ScaleConfig, [qp.scale])
+  const scale = useMemo(() => (qp.scale ?? 'cropped-absolute') as ScaleConfig, [qp.scale])
 
   const { height: pageHeight } = useWindowDimensions()
   const { height: optionsHeight, ref: setOptionsRef } = useElementDimensions(600, 600)

@@ -49,7 +49,7 @@ interface FieldStatus {
   errorText: string
 }
 
-export type TransactionType = 'income' | 'expense' | 'transfer'
+export type TransactionType = 'income' | 'expense' | 'transfer' | 'financialIncome'
 
 interface Props {
   initialTransaction?: AugmentedTransaction
@@ -67,8 +67,9 @@ const TransactionForm: FC<Props> = (props) => {
   const { rootCategory } = useContext(MixedAugmentation)
   const { default_currency } = useContext(UserContext)
 
-  const type: 'income' | 'expense' | 'transfer' = useMemo(() => {
+  const type: 'income' | 'expense' | 'transfer' | 'financialIncome' = useMemo(() => {
     if (typeof rawType !== 'undefined') return rawType
+    if (initialTransaction?.financialIncomeCurrencyId !== null) return 'financialIncome'
     if (initialTransaction?.categoryId === null) return 'transfer'
     return (initialTransaction?.sender?.isMine ?? false) ? 'expense' : 'income'
   }, [initialTransaction, rawType])
@@ -79,6 +80,9 @@ const TransactionForm: FC<Props> = (props) => {
   })
   const sanitizedAmount = useMemo(() => `0${amount.replace(',', '')}`, [amount])
   const [currency, setCurrency] = useState<CurrencyID>(initialTransaction?.currencyId ?? default_currency!)
+  const [investmentCurrency, setInvestmentCurrency] = useState<CurrencyID>(
+    initialTransaction?.financialIncomeCurrencyId ?? default_currency!,
+  )
   const [date, setDate] = useState(initialTransaction?.date ?? new Date())
 
   const [differentCurrency, setDifferentCurrency] = useState(() => {
@@ -248,6 +252,7 @@ const TransactionForm: FC<Props> = (props) => {
         date,
         currencyId: currency,
         receiverCurrencyId: differentCurrency ? receiverCurrency : currency,
+        financialIncomeCurrencyId: type === 'financialIncome' ? investmentCurrency : null,
       }).catch((err) => {
         setShowErrorToast('Unexpected error while submitting the category')
         console.error(err)
@@ -284,6 +289,17 @@ const TransactionForm: FC<Props> = (props) => {
         />
       </Row>
 
+      {type === 'financialIncome' && (
+        <CurrencyPicker
+          style={{ width: '100%' }}
+          currencies={currencies}
+          selectedCurrencyId={investmentCurrency}
+          setSelectedCurrencyId={setInvestmentCurrency}
+          labelText="From investment in"
+          errorText={NoError}
+        />
+      )}
+
       {typeof category !== 'undefined' && (
         <CategoryPicker
           labelText="Category"
@@ -298,8 +314,8 @@ const TransactionForm: FC<Props> = (props) => {
         onAccountSelected={setSenderAccount}
         itemDisplayText={(item) => item?.name ?? senderAccount.name}
         valueText={senderAccount.name}
-        myOwn={type !== 'income'}
-        allowNew={type === 'income'}
+        myOwn={type !== 'income' && type !== 'financialIncome'}
+        allowNew={type === 'income' || type === 'financialIncome'}
       />
 
       <FormControlLabel

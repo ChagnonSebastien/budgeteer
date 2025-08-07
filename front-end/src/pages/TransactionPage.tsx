@@ -260,6 +260,11 @@ const TransactionPage: FC = () => {
           onClick={() => navigate('/transactions/new?type=transfer')}
           icon={<IconLib.GrTransaction />}
         />
+        <SpeedDialAction
+          sx={{ backgroundColor: 'darkcyan' }}
+          onClick={() => navigate('/transactions/new?type=financialIncome')}
+          icon={<IconLib.BsGraphUp />}
+        />
       </SpeedDial>
 
       <BasicModal
@@ -365,6 +370,21 @@ const TransactionPage: FC = () => {
                   delay={(clickedTransaction.category ? 1 : 0) + (clickedTransaction.sender ? 1 : 0) + 1}
                   title="To"
                   value={clickedTransaction.receiver.name}
+                />
+              )}
+
+              {/* Financial Income */}
+              {clickedTransaction.financialIncomeCurrency && (
+                <DetailCard
+                  delay={
+                    (clickedTransaction.category ? 1 : 0) +
+                    (clickedTransaction.sender ? 1 : 0) +
+                    (clickedTransaction.receiver ? 1 : 0) +
+                    1
+                  }
+                  title="Financial Income"
+                  subTitle="From investment in"
+                  value={clickedTransaction.financialIncomeCurrency.symbol}
                 />
               )}
             </Column>

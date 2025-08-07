@@ -115,7 +115,7 @@ const Dashboard: FC = () => {
         .filter(
           (tx) =>
             typeof tx.category !== 'undefined' &&
-            tx.category?.name !== 'Financial income' &&
+            tx.financialIncomeCurrencyId != null &&
             !(tx.receiver?.isMine && tx.sender?.isMine),
         )
         .filter(
@@ -135,7 +135,7 @@ const Dashboard: FC = () => {
         .filter(
           (tx) =>
             typeof tx.category !== 'undefined' &&
-            tx.category?.name !== 'Financial income' &&
+            tx.financialIncomeCurrencyId != null &&
             !(tx.receiver?.isMine && tx.sender?.isMine),
         )
         .filter(

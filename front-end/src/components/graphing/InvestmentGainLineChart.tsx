@@ -108,7 +108,7 @@ const InvestmentGainLineChart: FC<GainChartProps> = ({ fromDate, toDate }) => {
               (typeof transaction.sender !== 'undefined' &&
                 transaction.sender.isMine &&
                 filteredAccounts.findIndex((a) => a.id === transaction.sender?.id) >= 0) ||
-              transaction.category?.name === 'Financial income'
+              transaction.financialIncomeCurrencyId != null
             )
           ) {
             if (transaction.receiverCurrencyId === defaultCurrency.id) {
@@ -136,7 +136,7 @@ const InvestmentGainLineChart: FC<GainChartProps> = ({ fromDate, toDate }) => {
               (typeof transaction.receiver !== 'undefined' &&
                 transaction.receiver.isMine &&
                 filteredAccounts.findIndex((a) => a.id === transaction.receiver?.id) >= 0) ||
-              transaction.category?.name === 'Financial income'
+              transaction.financialIncomeCurrencyId != null
             )
           ) {
             if (transaction.receiverCurrencyId === defaultCurrency.id) {
@@ -214,8 +214,10 @@ const InvestmentGainLineChart: FC<GainChartProps> = ({ fromDate, toDate }) => {
       margin={{ top: 20, right: 20, bottom: 60, left: 60 }}
       xAxisConfig={{
         format: (date) => {
-          const i = differenceInDays(gainSeries[gainSeries.length - 1].date, date)
-          return i % 73 === 0 ? labels[i] && formatDate(labels[i], 'MMM d, yyyy') : ''
+          const i = differenceInDays(date, gainSeries[0].date)
+          return (differenceInDays(gainSeries[gainSeries.length - 1].date, gainSeries[0].date) - i) % 73 === 0
+            ? labels[i] && formatDate(labels[i], 'MMM d, yyyy')
+            : ''
         },
         grid: true,
       }}

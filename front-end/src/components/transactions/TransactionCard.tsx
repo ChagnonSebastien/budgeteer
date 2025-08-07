@@ -28,11 +28,18 @@ const TransactionCard: FC<ItemProps<TransactionID, AugmentedTransaction, object>
   const fromMe = item.sender?.isMine ?? false
   const toMe = item.receiver?.isMine ?? false
 
-  const cardType = fromMe && !toMe ? 'expense' : !fromMe && toMe ? 'income' : ''
+  const cardType = item.financialIncomeCurrencyId
+    ? 'financialIncome'
+    : fromMe && !toMe
+      ? 'expense'
+      : !fromMe && toMe
+        ? 'income'
+        : ''
 
   const getBackgroundColor = () => {
     if (cardType === 'expense') return 'rgba(240, 128, 128, 0.05)'
     if (cardType === 'income') return 'rgba(128, 240, 128, 0.05)'
+    if (cardType === 'financialIncome') return 'rgba(128, 240, 240, 0.05)'
     return 'rgba(128, 128, 128, 0.05)'
   }
 

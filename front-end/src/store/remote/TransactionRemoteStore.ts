@@ -32,6 +32,7 @@ export default class TransactionRemoteStore {
         receiver: data.receiverId ?? undefined,
         receiverCurrency: data.receiverCurrencyId,
         receiverAmount: data.receiverAmount,
+        relatedCurrency: data.financialIncomeCurrencyId ?? undefined,
       }),
     ).response
     return new Transaction(
@@ -45,6 +46,7 @@ export default class TransactionRemoteStore {
       data.note,
       data.receiverCurrencyId,
       data.receiverAmount,
+      data.financialIncomeCurrencyId,
     )
   }
 

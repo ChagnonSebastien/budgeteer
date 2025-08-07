@@ -94,6 +94,7 @@ export const MixedAugmentationProvider: FC<Props> = ({ NextComponent }) => {
           categories.find((c) => c.id === transaction.categoryId),
           accounts.find((c) => c.id === transaction.senderId),
           accounts.find((c) => c.id === transaction.receiverId),
+          currencies.find((c) => c.id === transaction.financialIncomeCurrencyId),
         ),
     )
   }, [transactions, currencies, categories, accounts])

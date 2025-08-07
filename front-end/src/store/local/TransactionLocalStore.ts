@@ -24,6 +24,7 @@ export default class TransactionLocalStore {
           transaction.note,
           transaction.receiverCurrency,
           transaction.receiverAmount,
+          transaction.relatedCurrency,
         ),
     )
   }
@@ -39,6 +40,7 @@ export default class TransactionLocalStore {
       date: data.date,
       receiver: data.receiverId,
       currency: data.currencyId,
+      relatedCurrency: data.financialIncomeCurrencyId,
     })
 
     return new Transaction(
@@ -52,6 +54,7 @@ export default class TransactionLocalStore {
       data.note,
       data.receiverCurrencyId,
       data.receiverAmount,
+      data.financialIncomeCurrencyId,
     )
   }
 
@@ -67,6 +70,7 @@ export default class TransactionLocalStore {
       date: data.date,
       receiver: data.receiverId,
       currency: data.currencyId,
+      relatedCurrency: data.financialIncomeCurrencyId,
     })
   }
 
@@ -81,6 +85,7 @@ export default class TransactionLocalStore {
       date: data.date,
       receiver: data.receiverId,
       currency: data.currencyId,
+      relatedCurrency: data.financialIncomeCurrencyId,
     })
   }
 
@@ -98,6 +103,7 @@ export default class TransactionLocalStore {
         date: transaction.date,
         receiver: transaction.receiverId,
         currency: transaction.currencyId,
+        relatedCurrency: transaction.financialIncomeCurrencyId,
       })),
     )
   }

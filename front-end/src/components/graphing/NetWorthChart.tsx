@@ -101,7 +101,7 @@ export const useNetWorthChartData = <Item extends object>(
                 transaction.sender.isMine &&
                 accounts.findIndex((a) => a.id === transaction.sender?.id) >= 0 &&
                 group(getFromIdentifier(transaction)) === groupLabel) ||
-              transaction.category?.name === 'Financial income'
+              transaction.financialIncomeCurrencyId != null
             )
           ) {
             // I did not send it to myself without changing category and it is not a financial income
@@ -133,7 +133,7 @@ export const useNetWorthChartData = <Item extends object>(
                 transaction.receiver.isMine &&
                 accounts.findIndex((a) => a.id === transaction.receiver?.id) >= 0 &&
                 group(getToIdentifier(transaction)) === groupLabel) ||
-              transaction.category?.name === 'Financial income'
+              transaction.financialIncomeCurrencyId != null
             )
           ) {
             // I did not receive it from myself without changing category and it is not a financial income
