@@ -5,6 +5,8 @@ import Unique from './Unique'
 
 export type TransactionID = number
 
+export type TransactionType = 'income' | 'expense' | 'transfer' | 'financialIncome'
+
 export default class Transaction implements Unique<TransactionID, Transaction> {
   constructor(
     readonly id: TransactionID,
@@ -58,6 +60,13 @@ export class AugmentedTransaction extends Transaction {
       transaction.receiverAmount,
       transaction.financialIncomeCurrencyId,
     )
+  }
+
+  getType(): TransactionType {
+    if (this?.financialIncomeCurrencyId !== null) return 'financialIncome'
+    if (this?.categoryId === null) return 'transfer'
+    if (this?.sender?.isMine ?? false) return 'expense'
+    return 'income'
   }
 }
 

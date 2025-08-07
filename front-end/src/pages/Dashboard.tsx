@@ -112,16 +112,8 @@ const Dashboard: FC = () => {
 
       // Inflow: money coming into my accounts from external
       const inflow = augmentedTransactions
-        .filter(
-          (tx) =>
-            typeof tx.category !== 'undefined' &&
-            tx.financialIncomeCurrencyId != null &&
-            !(tx.receiver?.isMine && tx.sender?.isMine),
-        )
-        .filter(
-          (tx) =>
-            tx.receiver?.isMine && !tx.sender?.isMine && tx.date.getFullYear() === year && tx.date.getMonth() === m,
-        )
+        .filter((tx) => tx.getType() === 'income')
+        .filter((tx) => tx.date.getFullYear() === year && tx.date.getMonth() === m)
         .reduce((sum, tx) => {
           const rate =
             tx.receiverCurrencyId === defaultCurrency.id
@@ -132,16 +124,8 @@ const Dashboard: FC = () => {
 
       // Outflow: money leaving my accounts to external
       const outflow = augmentedTransactions
-        .filter(
-          (tx) =>
-            typeof tx.category !== 'undefined' &&
-            tx.financialIncomeCurrencyId != null &&
-            !(tx.receiver?.isMine && tx.sender?.isMine),
-        )
-        .filter(
-          (tx) =>
-            tx.sender?.isMine && !tx.receiver?.isMine && tx.date.getFullYear() === year && tx.date.getMonth() === m,
-        )
+        .filter((tx) => tx.getType() === 'expense')
+        .filter((tx) => tx.date.getFullYear() === year && tx.date.getMonth() === m)
         .reduce((sum, tx) => {
           const rate =
             tx.currencyId === defaultCurrency.id ? 1 : exchangeRateOnDay(tx.currencyId, defaultCurrency.id, tx.date)
