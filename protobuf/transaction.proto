@@ -15,7 +15,7 @@ message Transaction {
   string note = 8;
   uint32 receiver_currency = 9;
   uint32 receiver_amount = 10;
-  optional uint32 relatedCurrency = 11;
+  optional uint32 related_currency = 11;
 }
 
 message GetAllTransactionsRequest {
@@ -35,7 +35,7 @@ message CreateTransactionRequest {
   string note = 7;
   uint32 receiver_currency = 8;
   uint32 receiver_amount = 9;
-  optional uint32 relatedCurrency = 10;
+  optional uint32 related_currency = 10;
 }
 
 message CreateTransactionResponse {
@@ -55,7 +55,8 @@ message UpdateTransactionFields {
   optional string note = 10;
   optional uint32 receiver_currency = 11;
   optional uint32 receiver_amount = 12;
-  optional uint32 relatedCurrency = 13;
+  bool update_related_currency = 13;
+  optional uint32 related_currency = 14;
 }
 
 message UpdateTransactionRequest {

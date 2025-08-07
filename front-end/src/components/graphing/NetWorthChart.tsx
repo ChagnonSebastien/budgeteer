@@ -29,8 +29,14 @@ export const useNetWorthChartData = <Item extends object>(
   getToIdentifier: (transaction: AugmentedTransaction) => Item | undefined,
   group: (account?: Item | undefined) => string | undefined,
   accounts: Account[],
+  getFinancialIncomeToIdentifierOverwrite?: (transaction: AugmentedTransaction) => Item | undefined,
 ) => {
   const { exchangeRateOnDay, defaultCurrency } = useContext(MixedAugmentation)
+
+  const getFinancialIncomeToIdentifier = useMemo(
+    () => getFinancialIncomeToIdentifierOverwrite ?? getToIdentifier,
+    [getFinancialIncomeToIdentifierOverwrite, getToIdentifier],
+  )
 
   return useMemo(() => {
     const Investments = computeInitialInvestments()
@@ -97,22 +103,34 @@ export const useNetWorthChartData = <Item extends object>(
 
           if (
             !(
-              (typeof transaction.sender !== 'undefined' &&
-                transaction.sender.isMine &&
-                accounts.findIndex((a) => a.id === transaction.sender?.id) >= 0 &&
-                group(getFromIdentifier(transaction)) === groupLabel) ||
-              transaction.financialIncomeCurrencyId != null
+              typeof transaction.sender !== 'undefined' &&
+              transaction.sender.isMine &&
+              accounts.findIndex((a) => a.id === transaction.sender?.id) >= 0 &&
+              group(getFromIdentifier(transaction)) === groupLabel
             )
           ) {
-            // I did not send it to myself without changing category and it is not a financial income
+            // I received it from someone else OR from myself with a category change
             // Update book value
+            let bookValueChange
             if (transaction.receiverCurrencyId === defaultCurrency.id) {
-              data.bookValue += transaction.receiverAmount
+              bookValueChange = transaction.receiverAmount
             } else if (transaction.currencyId === defaultCurrency.id) {
-              data.bookValue += transaction.amount
+              bookValueChange = transaction.amount
             } else {
               const factor = exchangeRateOnDay(transaction.receiverCurrencyId, defaultCurrency.id, upTo)
-              data.bookValue += transaction.receiverAmount * factor
+              bookValueChange = transaction.receiverAmount * factor
+            }
+
+            data.bookValue += bookValueChange
+            if (transaction.financialIncomeCurrencyId !== null) {
+              const financialGroupLabel = group(getFinancialIncomeToIdentifier(transaction))!
+              if (financialGroupLabel === groupLabel) {
+                data.bookValue -= bookValueChange
+              } else {
+                const financialData = Investments.get(financialGroupLabel) ?? { bookValue: 0, assets: new Map() }
+                financialData.bookValue -= bookValueChange
+                Investments.set(financialGroupLabel, financialData)
+              }
             }
           }
 

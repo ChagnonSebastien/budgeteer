@@ -137,6 +137,17 @@ func (s *TransactionHandler) UpdateTransaction(
 		}
 	}
 
+	var relatedCurrencyId *int
+	if req.Fields.UpdateRelatedCurrency {
+		if req.Fields.RelatedCurrency != nil {
+			id := int(*req.Fields.RelatedCurrency)
+			relatedCurrencyId = &id
+		} else {
+			id := 0
+			relatedCurrencyId = &id
+		}
+	}
+
 	var amount *int
 	if req.Fields.Amount != nil {
 		value := int(*req.Fields.Amount)
@@ -159,12 +170,6 @@ func (s *TransactionHandler) UpdateTransaction(
 	if req.Fields.ReceiverCurrency != nil {
 		id := int(*req.Fields.ReceiverCurrency)
 		receiverCurrencyId = &id
-	}
-
-	var relatedCurrencyId *int
-	if req.Fields.RelatedCurrency != nil {
-		id := int(*req.Fields.RelatedCurrency)
-		relatedCurrencyId = &id
 	}
 
 	var date *time.Time

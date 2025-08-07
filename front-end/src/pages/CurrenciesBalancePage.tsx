@@ -34,7 +34,7 @@ const CurrenciesBalancePage: FC = () => {
 
   const { height: pageHeight } = useWindowDimensions()
   const { height: optionsHeight, ref: setOptionsRef } = useElementDimensions(600, 600)
-  const { width: contentWidth, height: contentHeight, ref: setContentRef } = useElementDimensions(600, 600)
+  const { width: contentWidth, ref: setContentRef } = useElementDimensions(600, 600)
 
   const splitHorizontal = useMemo(() => contentWidth > 1200, [contentWidth])
   const contentTooTall = useMemo(

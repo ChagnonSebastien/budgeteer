@@ -81,6 +81,7 @@ const CurrenciesBalanceChart: FC<Props> = (props) => {
     (transaction) => transaction.receiverCurrency,
     group,
     accounts,
+    (transaction) => transaction.financialIncomeCurrency,
   )
 
   return (
