@@ -7,7 +7,7 @@ import MixedAugmentation from '../../service/MixedAugmentation'
 import { AccountServiceContext } from '../../service/ServiceContext'
 import useTimerangeSegmentation from '../shared/useTimerangeSegmentation'
 
-export type GroupType = 'financialInstitution' | 'type' | 'account' | 'none'
+export type GroupType = 'financialInstitution' | 'accountType' | 'account' | 'none'
 
 interface Props {
   filterByAccounts?: number[]
@@ -33,7 +33,7 @@ const AccountsBalanceChart: FC<Props> = (props) => {
           return account.name
         case 'financialInstitution':
           return account.financialInstitution ?? 'Other'
-        case 'type':
+        case 'accountType':
           return account.type ?? 'Other'
         case 'none':
           return 'Total'

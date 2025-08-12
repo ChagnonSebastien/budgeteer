@@ -7,7 +7,7 @@ import MixedAugmentation from '../../service/MixedAugmentation'
 import { AccountServiceContext, CurrencyServiceContext } from '../../service/ServiceContext'
 import useTimerangeSegmentation from '../shared/useTimerangeSegmentation'
 
-export type GroupType = 'currency' | 'risk' | 'type' | 'none'
+export type GroupType = 'currency' | 'risk' | 'currencyType' | 'none'
 
 interface Props {
   filterByAccounts?: number[]
@@ -34,7 +34,7 @@ const CurrenciesBalanceChart: FC<Props> = (props) => {
           return currency.name
         case 'risk':
           return currency.risk !== '' ? currency.risk : 'Unknown'
-        case 'type':
+        case 'currencyType':
           return currency.type !== '' ? currency.type : 'Unknown'
         case 'none':
           return 'Total'

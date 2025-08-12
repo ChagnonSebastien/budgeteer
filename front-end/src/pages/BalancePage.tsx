@@ -18,23 +18,17 @@ type QueryParams = {
   groupBy: string
   baselineConfig: string
   scale: string
-  majorType: string
 }
 
-const groupByOptionsConfig = {
-  accounts: [
-    { value: 'none', label: 'None' },
-    { value: 'account', label: 'Account' },
-    { value: 'financialInstitution', label: 'Financial Institution' },
-    { value: 'type', label: 'Type' },
-  ],
-  currencies: [
-    { value: 'none', label: 'None' },
-    { value: 'currency', label: 'Currency' },
-    { value: 'type', label: 'Type' },
-    { value: 'risk', label: 'Risk' },
-  ],
-}
+const groupByOptionsConfig = [
+  { value: 'none', label: 'None', majorType: 'accounts' },
+  { value: 'account', label: 'Account', majorType: 'accounts' },
+  { value: 'accountType', label: 'Account Type', majorType: 'accounts' },
+  { value: 'financialInstitution', label: 'Financial Institution', majorType: 'accounts' },
+  { value: 'currency', label: 'Currency', majorType: 'currencies' },
+  { value: 'currencyType', label: 'Currency Type', majorType: 'currencies' },
+  { value: 'risk', label: 'Risk', majorType: 'currencies' },
+]
 
 export type MajorType = 'accounts' | 'currencies'
 
@@ -47,19 +41,14 @@ const BalancePage: FC = () => {
   } = useTransactionFilter((account: Account) => account.isMine, false)
 
   const { queryParams: qp, updateQueryParams } = useQueryParams<QueryParams>()
-  const majorType = useMemo(() => (qp.majorType ?? 'accounts') as MajorType, [qp.majorType])
-  const groupBy = useMemo(
-    () =>
-      (qp.groupBy ?? (majorType === 'accounts' ? 'account' : 'currency')) as AccountsGroupType | CurrenciesGroupType,
-    [qp.groupBy],
-  )
-  console.log(groupBy)
+  const groupBy = useMemo(() => (qp.groupBy ?? 'account') as AccountsGroupType | CurrenciesGroupType, [qp.groupBy])
   const baselineConfig = useMemo(() => (qp.baselineConfig ?? 'none') as BaseLineConfig, [qp.baselineConfig])
   const scale = useMemo(() => (qp.scale ?? 'cropped-absolute') as ScaleConfig, [qp.scale])
 
-  const groupByOptions = useMemo(() => {
-    return majorType === 'currencies' ? groupByOptionsConfig.currencies : groupByOptionsConfig.accounts
-  }, [majorType])
+  const majorType = useMemo(
+    () => (groupByOptionsConfig.find((e) => e.value === groupBy)?.majorType ?? 'accounts') as MajorType,
+    [groupBy],
+  )
 
   const { height: pageHeight } = useWindowDimensions()
   const { height: optionsHeight, ref: setOptionsRef } = useElementDimensions(600, 600)
@@ -115,22 +104,11 @@ const BalancePage: FC = () => {
 
   const selectOptions = [
     <SelectOne
-      key="majot-type-option"
-      label="Major type"
-      value={majorType}
-      onChange={(newValue) => updateQueryParams({ majorType: newValue, groupBy: null })}
-      options={[
-        { value: 'accounts', label: 'Accounts' },
-        { value: 'currencies', label: 'Currencies' },
-      ]}
-      type={splitHorizontal ? 'radio' : 'dropdown'}
-    />,
-    <SelectOne
       key="group-by-option"
       label="Group by"
       value={groupBy}
       onChange={(newValue) => updateQueryParams({ groupBy: newValue })}
-      options={groupByOptions}
+      options={groupByOptionsConfig}
       type={splitHorizontal ? 'radio' : 'dropdown'}
     />,
     <SelectOne
