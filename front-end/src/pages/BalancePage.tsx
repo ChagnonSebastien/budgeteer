@@ -18,6 +18,7 @@ type QueryParams = {
   groupBy: string
   baselineConfig: string
   scale: string
+  type: string
 }
 
 const groupByOptionsConfig = [
@@ -31,6 +32,7 @@ const groupByOptionsConfig = [
 ]
 
 export type MajorType = 'accounts' | 'currencies'
+export type ActiveOrPassive = 'active' | 'passive'
 
 const BalancePage: FC = () => {
   const {
@@ -44,6 +46,7 @@ const BalancePage: FC = () => {
   const groupBy = useMemo(() => (qp.groupBy ?? 'account') as AccountsGroupType | CurrenciesGroupType, [qp.groupBy])
   const baselineConfig = useMemo(() => (qp.baselineConfig ?? 'none') as BaseLineConfig, [qp.baselineConfig])
   const scale = useMemo(() => (qp.scale ?? 'cropped-absolute') as ScaleConfig, [qp.scale])
+  const type = useMemo(() => (qp.type ?? 'active') as ActiveOrPassive, [qp.type])
 
   const majorType = useMemo(
     () => (groupByOptionsConfig.find((e) => e.value === groupBy)?.majorType ?? 'accounts') as MajorType,
@@ -80,6 +83,7 @@ const BalancePage: FC = () => {
             groupBy={groupBy as AccountsGroupType}
             baselineConfig={baselineConfig}
             scale={scale}
+            type={type}
           />
         ) : (
           <CurrenciesBalanceChart
@@ -90,6 +94,7 @@ const BalancePage: FC = () => {
             groupBy={groupBy as CurrenciesGroupType}
             baselineConfig={baselineConfig}
             scale={scale}
+            type={type}
           />
         )}
       </GraphContainer>
@@ -103,6 +108,17 @@ const BalancePage: FC = () => {
   )
 
   const selectOptions = [
+    <SelectOne
+      key="group-by-active-passive"
+      label="Active or Passive"
+      value={type}
+      onChange={(newValue) => updateQueryParams({ type: newValue })}
+      options={[
+        { value: 'active', label: 'Actives' },
+        { value: 'passive', label: 'Passives' },
+      ]}
+      type={splitHorizontal ? 'radio' : 'dropdown'}
+    />,
     <SelectOne
       key="group-by-option"
       label="Group by"

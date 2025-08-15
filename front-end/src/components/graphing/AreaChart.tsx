@@ -145,7 +145,7 @@ const AreaChart: FC<Props> = ({
         })
       return maxFrac
     } else {
-      let m = Math.max(0, ...totals)
+      let m = Math.max(0, ...(totals ?? []))
       // also consider any baseline that may sit above the stack bottom
       datasetLabels.forEach((key, li) => {
         layers[li].forEach(([y0], i) => {

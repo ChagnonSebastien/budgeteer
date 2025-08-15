@@ -16,10 +16,19 @@ interface Props {
   groupBy: GroupType
   baselineConfig?: 'none' | 'showIndividualBaselines' | 'showGlobalBaseline'
   scale?: 'absolute' | 'cropped-absolute' | 'relative'
+  type?: 'passive' | 'active'
 }
 
 const AccountsBalanceChart: FC<Props> = (props) => {
-  const { fromDate, toDate, filterByAccounts, groupBy, baselineConfig = 'none', scale = 'absolute' } = props
+  const {
+    fromDate,
+    toDate,
+    filterByAccounts,
+    groupBy,
+    baselineConfig = 'none',
+    scale = 'absolute',
+    type = 'active',
+  } = props
 
   const { augmentedTransactions } = useContext(MixedAugmentation)
   const { myOwnAccounts } = useContext(AccountServiceContext)
@@ -43,14 +52,12 @@ const AccountsBalanceChart: FC<Props> = (props) => {
   )
 
   const accounts = useMemo(() => {
-    const prefilter = myOwnAccounts.filter((account) => account?.type !== 'Credit Card')
-
     if (typeof filterByAccounts === 'undefined') {
-      return prefilter
+      return myOwnAccounts
     }
 
-    const filtered = prefilter.filter((account) => filterByAccounts?.includes(account.id))
-    return filtered.length === 0 ? prefilter : filtered
+    const filtered = myOwnAccounts.filter((account) => filterByAccounts?.includes(account.id))
+    return filtered.length === 0 ? myOwnAccounts : filtered
   }, [myOwnAccounts, filterByAccounts])
 
   const { showLabelEveryFactor, timeseriesIteratorGenerator } = useTimerangeSegmentation(fromDate, toDate, 'dense')
@@ -71,6 +78,7 @@ const AccountsBalanceChart: FC<Props> = (props) => {
     (transaction) => transaction.receiver,
     group,
     accounts,
+    type,
   )
 
   return (

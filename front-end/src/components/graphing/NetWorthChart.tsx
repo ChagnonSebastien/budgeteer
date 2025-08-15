@@ -29,6 +29,7 @@ export const useNetWorthChartData = <Item extends object>(
   getToIdentifier: (transaction: AugmentedTransaction) => Item | undefined,
   group: (account?: Item | undefined) => string | undefined,
   accounts: Account[],
+  type: 'active' | 'passive',
   getFinancialIncomeToIdentifierOverwrite?: (transaction: AugmentedTransaction) => Item | undefined,
 ) => {
   const { exchangeRateOnDay, defaultCurrency } = useContext(MixedAugmentation)
@@ -193,9 +194,15 @@ export const useNetWorthChartData = <Item extends object>(
           marketValue += amount * factor
         }
 
-        todaysBookValue += groupData.bookValue
-        todaysData[groupLabel] = { amount: marketValue, baseline: groupData.bookValue }
-        groups.add(groupLabel)
+        if (marketValue !== 0 && marketValue > 0 === (type === 'active')) {
+          const optionalInverse = type === 'passive' ? -1 : 1
+          todaysBookValue += groupData.bookValue * optionalInverse
+          todaysData[groupLabel] = {
+            amount: marketValue * optionalInverse,
+            baseline: groupData.bookValue * optionalInverse,
+          }
+          groups.add(groupLabel)
+        }
       }
 
       labels.push(upTo)
@@ -203,7 +210,7 @@ export const useNetWorthChartData = <Item extends object>(
     }
 
     return { data, labels, groups }
-  }, [defaultCurrency, accounts, group, exchangeRateOnDay, timeseriesIterator])
+  }, [defaultCurrency, accounts, group, exchangeRateOnDay, timeseriesIterator, type])
 }
 
 type NetWorthTooltipProps = {
