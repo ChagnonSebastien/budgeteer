@@ -19,68 +19,86 @@ import UserStore from '../UserStore'
 import { IconToolsContext, PreparedIcon } from './icons/IconTools'
 import { useElementDimensions, useWindowDimensions } from './shared/useDimensions'
 
+interface MenuElement {
+  readonly Element: FC
+}
+
+class AppPage implements MenuElement {
+  constructor(
+    private title: string,
+    private url: string,
+    private iconName: string,
+    private keepQuery: string[],
+  ) {}
+
+  get Element() {
+    return () => {
+      const location = useLocation()
+      const navigate = useNavigate()
+      const { iconTypeFromName } = useContext(IconToolsContext)
+
+      const Icon = iconTypeFromName(this.iconName)
+      const selected = location.pathname === this.url
+
+      return (
+        <ListItemButton
+          key={`menu-element-${this.title}`}
+          onClick={() => {
+            const query = new URLSearchParams(location.search)
+            for (const key of [...query.keys()]) {
+              if (!this.keepQuery.includes(key)) query.delete(key)
+            }
+
+            navigate(`${this.url}?${query.toString()}`)
+          }}
+          selected={selected}
+        >
+          <ListItemIcon style={{ minWidth: '42px' }}>
+            <Icon style={{ margin: '0.5rem', fontSize: '1.3rem' }} />
+          </ListItemIcon>
+          <ListItemText primary={this.title} />
+        </ListItemButton>
+      )
+    }
+  }
+}
+
+class Subsection implements MenuElement {
+  constructor(private title: string) {}
+
+  get Element() {
+    return () => (
+      <ListItemButton disabled sx={{ paddingBottom: 0, paddingLeft: '1.5rem' }}>
+        <ListItemText primary={this.title} />
+      </ListItemButton>
+    )
+  }
+}
+
+class Separator implements MenuElement {
+  get Element() {
+    return () => <Divider sx={{ margin: '0.5rem 0' }} />
+  }
+}
+
 const ContentContainer = styled.div<{ $persistentDrawer: boolean; $totalWidth: number; $drawerWidth: number }>`
   width: ${(props) => (props.$persistentDrawer ? `${props.$totalWidth - props.$drawerWidth}px` : '100%')};
   height: 100%;
   margin-left: ${(props) => (props.$persistentDrawer ? `${props.$drawerWidth}px` : 0)};
 `
 
-interface AppPage {
-  title: string
-  url: string
-  iconName: string
-  keepQuery: string[]
-}
-
-const appPages: AppPage[] = [
-  {
-    title: 'Dashboard',
-    url: '/',
-    iconName: PreparedIcon.TbLayoutDashboardFilled,
-    keepQuery: [],
-  },
-  {
-    title: 'Transactions',
-    url: '/transactions',
-    iconName: PreparedIcon.TbArrowsExchange,
-    keepQuery: ['from', 'to', 'accounts', 'categories'],
-  },
-  {
-    title: 'Categories',
-    url: '/categories',
-    iconName: PreparedIcon.MdCategory,
-    keepQuery: [],
-  },
-  {
-    title: 'Accounts',
-    url: '/accounts',
-    iconName: PreparedIcon.MdAccountBalance,
-    keepQuery: [],
-  },
-  {
-    title: 'Currencies',
-    url: '/currencies',
-    iconName: PreparedIcon.BsCurrencyExchange,
-    keepQuery: [],
-  },
-  {
-    title: 'Balances',
-    url: '/balances',
-    iconName: PreparedIcon.FaScaleUnbalanced,
-    keepQuery: ['from', 'to', 'accounts'],
-  },
-  {
-    title: 'Trends',
-    url: '/trends',
-    iconName: PreparedIcon.BiSolidBarChartAlt2,
-    keepQuery: ['categories'],
-  },
-  {
-    title: 'Costs Analysis',
-    url: '/costs',
-    iconName: PreparedIcon.BsFileEarmarkSpreadsheet,
-    keepQuery: [],
-  },
+const appPages = [
+  new AppPage('Dashboard', '/', PreparedIcon.TbLayoutDashboardFilled, []),
+  new Subsection('Data'),
+  new AppPage('Transactions', '/transactions', PreparedIcon.TbArrowsExchange, ['from', 'to', 'accounts', 'categories']),
+  new AppPage('Categories', '/categories', PreparedIcon.MdCategory, []),
+  new AppPage('Accounts', '/accounts', PreparedIcon.MdAccountBalance, []),
+  new AppPage('Currencies', '/currencies', PreparedIcon.BsCurrencyExchange, []),
+  new Subsection('Analysis'),
+  new AppPage('Balances', '/balances', PreparedIcon.FaScaleUnbalanced, ['from', 'to', 'accounts']),
+  new AppPage('Trends', '/trends', PreparedIcon.BiSolidBarChartAlt2, ['categories']),
+  new AppPage('Costs Analysis', '/costs', PreparedIcon.BsFileEarmarkSpreadsheet, []),
+  new Separator(),
 ]
 
 const userStore = new UserStore(localStorage)
@@ -102,11 +120,8 @@ export const DrawerContext = createContext<DrawerActions>({
 })
 
 const DrawerWrapper: FC<Props> = ({ logout, children }) => {
-  const location = useLocation()
-  const navigate = useNavigate()
-
   const { email } = useContext(UserContext)
-  const { IconLib, iconTypeFromName } = useContext(IconToolsContext)
+  const { IconLib } = useContext(IconToolsContext)
 
   const [open, setOpen] = useState(false)
 
@@ -129,35 +144,10 @@ const DrawerWrapper: FC<Props> = ({ logout, children }) => {
         <Typography sx={{ color: 'gray', fontSize: '0.875rem' }}>{email}</Typography>
       </Box>
 
-      {appPages.map((appPage, index) => {
-        const Icon = iconTypeFromName(appPage.iconName)
-        const selected = location.pathname === appPage.url
-        return (
-          <ListItemButton
-            key={index}
-            onClick={() => {
-              const query = new URLSearchParams(location.search)
-              for (const key of [...query.keys()]) {
-                if (!appPage.keepQuery.includes(key)) query.delete(key)
-              }
+      {appPages.map((appPage) => (
+        <appPage.Element />
+      ))}
 
-              navigate(`${appPage.url}?${query.toString()}`)
-            }}
-            selected={selected}
-          >
-            <ListItemIcon style={{ minWidth: '42px' }}>
-              <Icon style={iconStyle} />
-            </ListItemIcon>
-            <ListItemText primary={appPage.title} />
-          </ListItemButton>
-        )
-      })}
-      <Box style={{ padding: '1rem' }}>
-        <Button fullWidth onClick={logout} variant="contained" disableElevation>
-          Logout
-        </Button>
-      </Box>
-      <Divider sx={{ margin: '1rem 0' }} />
       <div>
         <ListItemButton
           onClick={() => {
@@ -180,6 +170,11 @@ const DrawerWrapper: FC<Props> = ({ logout, children }) => {
           <Switch edge="end" checked={privacyMode} />
         </ListItemButton>
       </div>
+      <Box style={{ padding: '1rem' }}>
+        <Button fullWidth onClick={logout} variant="contained" disableElevation>
+          Logout
+        </Button>
+      </Box>
     </div>
   )
 

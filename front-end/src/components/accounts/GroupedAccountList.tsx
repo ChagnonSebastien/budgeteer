@@ -187,7 +187,7 @@ const GroupedAccountList = (props: Props) => {
         <Tab
           label={
             <Stack direction="row" spacing={1}>
-              <Typography>Third Parties</Typography>
+              <Typography>Second Parties</Typography>
               {filterable && filter && <Chip label={otherOrderedAccounts.length} color="primary" size="small" />}
             </Stack>
           }
