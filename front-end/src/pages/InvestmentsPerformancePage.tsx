@@ -1,34 +1,28 @@
 import { Box } from '@mui/material'
-import { startOfDay, startOfYear } from 'date-fns'
 import { FC, useMemo } from 'react'
 
 import ExchangeRateComparison from '../components/graphing/ExchangeRateComparison'
 import { GraphContainer, SecondDivision } from '../components/graphing/GraphStyledComponents'
+import { useDateFilter } from '../components/inputs/useTransactionFilter'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
 import { useElementDimensions, useWindowDimensions } from '../components/shared/useDimensions'
 import useQueryParams from '../components/shared/useQueryParams'
 import { CurrencyID } from '../domain/model/currency'
 
 type QueryParams = {
-  from: string
-  to: string
   currencies: string
 }
 
 const InvestmentsPerformancePage: FC = () => {
   const { queryParams: qp, updateQueryParams } = useQueryParams<QueryParams>()
   const selectedCurrencies = useMemo<CurrencyID[]>(() => JSON.parse(qp.currencies || '[]'), [qp.currencies])
-  const timeRange = useMemo(
-    () => [
-      qp.from ? startOfDay(new Date(Number.parseInt(qp.from)!)) : startOfDay(startOfYear(new Date())),
-      qp.to ? startOfDay(new Date(Number.parseInt(qp.to)!)) : startOfDay(new Date()),
-    ],
-    [qp.from, qp.to],
-  )
 
   const { height: pageHeight } = useWindowDimensions()
   const { height: contentHeight, ref: setContentRef } = useElementDimensions(600, 600)
   const { height: optionsHeight, ref: setOptionsRef } = useElementDimensions(600, 600)
+
+  const { quickFilter, toDate, fromDate, slider } = useDateFilter()
+  const timeRange = useMemo<[Date, Date]>(() => [fromDate, toDate], [fromDate, toDate])
 
   const contentTooTall = useMemo(
     () => Math.max(pageHeight / 2, 300) + optionsHeight + 64 > pageHeight,
@@ -64,7 +58,10 @@ const InvestmentsPerformancePage: FC = () => {
         }}
         ref={setOptionsRef}
       >
-        <Box style={{ flexGrow: 1, width: '100%' }}>Configuration coming soon</Box>
+        <Box style={{ flexGrow: 1, width: '100%' }}>
+          {quickFilter}
+          {slider}
+        </Box>
       </SecondDivision>
     </ContentWithHeader>
   )

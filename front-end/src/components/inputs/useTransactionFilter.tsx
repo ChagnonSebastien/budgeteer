@@ -15,25 +15,20 @@ import BasicModal from '../shared/BasicModal'
 import { Row } from '../shared/Layout'
 import useQueryParams from '../shared/useQueryParams'
 
-type QueryParams = {
-  accounts: string
-  categories: string
+type DateFiltersQueryParams = {
   from: string
   to: string
 }
 
-type Filters = {
-  overview: ReactNode
-  accountFilter: number[] | null
-  categoryFilter: number[] | null
+type DateFilters = {
+  quickFilter: ReactNode
+  slider: ReactNode
   fromDate: Date
   toDate: Date
 }
 
-export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilterByCategory = true): Filters => {
-  const { queryParams: qp, updateQueryParams } = useQueryParams<QueryParams>()
-  const accountFilter = useMemo<number[] | null>(() => JSON.parse(qp.accounts ?? null), [qp.accounts])
-  const categoryFilter = useMemo<number[] | null>(() => JSON.parse(qp.categories ?? null), [qp.categories])
+export const useDateFilter = (): DateFilters => {
+  const { queryParams: qp, updateQueryParams } = useQueryParams<DateFiltersQueryParams>()
   const timeRange = useMemo(
     () => [
       qp.from ? startOfDay(new Date(Number.parseInt(qp.from)!)) : startOfDay(addDays(subYears(new Date(), 1), 1)),
@@ -41,6 +36,133 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
     ],
     [qp.from, qp.to],
   )
+
+  const { state: transactions } = useContext(TransactionServiceContext)
+
+  const quickFilter = (
+    <Row
+      style={{
+        flexGrow: 1,
+        justifyContent: 'space-around',
+      }}
+    >
+      <div
+        style={{ padding: '.25rem 1rem', fontWeight: 'bolder', cursor: 'pointer' }}
+        onClick={() => {
+          if (transactions.length > 0) {
+            updateQueryParams({
+              from: String(startOfDay(transactions[transactions.length - 1].date).getTime()),
+              to: String(startOfDay(new Date()).getTime()),
+            })
+          }
+        }}
+      >
+        Max
+      </div>
+      <div
+        style={{ padding: '.25rem 1rem', fontWeight: 'bolder', cursor: 'pointer' }}
+        onClick={() => {
+          updateQueryParams({
+            from: String(startOfDay(addDays(subYears(new Date(), 5), 1)).getTime()),
+            to: String(startOfDay(new Date()).getTime()),
+          })
+        }}
+      >
+        5Y
+      </div>
+      <div
+        style={{ padding: '.25rem 1rem', fontWeight: 'bolder', cursor: 'pointer' }}
+        onClick={() => {
+          updateQueryParams({
+            from: String(startOfDay(addDays(subYears(new Date(), 3), 1)).getTime()),
+            to: String(startOfDay(new Date()).getTime()),
+          })
+        }}
+      >
+        3Y
+      </div>
+      <div
+        style={{ padding: '.25rem 1rem', fontWeight: 'bolder', cursor: 'pointer' }}
+        onClick={() => {
+          updateQueryParams({
+            from: String(startOfDay(addDays(subYears(new Date(), 1), 1)).getTime()),
+            to: String(startOfDay(new Date()).getTime()),
+          })
+        }}
+      >
+        1Y
+      </div>
+      <div
+        style={{ padding: '.25rem 1rem', fontWeight: 'bolder', cursor: 'pointer' }}
+        onClick={() => {
+          updateQueryParams({
+            from: String(startOfDay(addDays(subMonths(new Date(), 1), 1)).getTime()),
+            to: String(startOfDay(new Date()).getTime()),
+          })
+        }}
+      >
+        1M
+      </div>
+    </Row>
+  )
+
+  const slider = (
+    <TimeRange
+      ticksNumber={10}
+      disabledIntervals={[]}
+      selectedInterval={timeRange}
+      timelineInterval={[startOfDay(transactions[transactions.length - 1].date), startOfDay(new Date())]}
+      step={20}
+      formatTick={(a) => formatDate(new Date(a), 'MMM yyyy')}
+      onUpdateCallback={(_data: { error: boolean; time: Date[] }) => {
+        /** Ignore */
+      }}
+      onChangeCallback={(data: Date[]) => {
+        if (isSameDay(data[0], timeRange[0]) && isSameDay(data[1], timeRange[1])) {
+          return
+        }
+
+        updateQueryParams({
+          from: String(startOfDay(data[0]).getTime()),
+          to: String(startOfDay(data[1]).getTime()),
+        })
+      }}
+    />
+  )
+
+  return {
+    quickFilter: quickFilter,
+    slider: slider,
+    fromDate: timeRange[0],
+    toDate: timeRange[1],
+  }
+}
+
+type TransactionFiltersQueryParams = {
+  accounts: string
+  categories: string
+  from: string
+  to: string
+}
+
+type TransactionFilters = {
+  overview: ReactNode
+  accountFilter: number[] | null
+  categoryFilter: number[] | null
+  fromDate: Date
+  toDate: Date
+}
+
+const useTransactionFilter = (
+  accountPreFilter: (a: Account) => boolean = (_) => true,
+  canFilterByCategory = true,
+): TransactionFilters => {
+  const { queryParams: qp, updateQueryParams } = useQueryParams<TransactionFiltersQueryParams>()
+  const accountFilter = useMemo<number[] | null>(() => JSON.parse(qp.accounts ?? null), [qp.accounts])
+  const categoryFilter = useMemo<number[] | null>(() => JSON.parse(qp.categories ?? null), [qp.categories])
+
+  const { quickFilter, toDate, fromDate, slider } = useDateFilter()
+  const timeRange = useMemo<[Date, Date]>(() => [fromDate, toDate], [fromDate, toDate])
 
   const hasFilters = accountFilter !== null || categoryFilter !== null
   const [showSlider, setShowSlider] = useState(hasFilters)
@@ -50,7 +172,6 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
 
   const [showFilterSelection, setShowFilterSelection] = useState(false)
 
-  const { state: transactions } = useContext(TransactionServiceContext)
   const { state: categories } = useContext(CategoryServiceContext)
   const { state: rawAccounts } = useContext(AccountServiceContext)
 
@@ -209,93 +330,10 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
           flexGrow: 1,
         }}
       >
-        <Row
-          style={{
-            flexGrow: 1,
-            justifyContent: 'space-around',
-          }}
-        >
-          <div
-            style={{ padding: '.25rem 1rem', fontWeight: 'bolder', cursor: 'pointer' }}
-            onClick={() => {
-              if (transactions.length > 0) {
-                updateQueryParams({
-                  from: String(startOfDay(transactions[transactions.length - 1].date).getTime()),
-                  to: String(startOfDay(new Date()).getTime()),
-                })
-              }
-            }}
-          >
-            Max
-          </div>
-          <div
-            style={{ padding: '.25rem 1rem', fontWeight: 'bolder', cursor: 'pointer' }}
-            onClick={() => {
-              updateQueryParams({
-                from: String(startOfDay(addDays(subYears(new Date(), 5), 1)).getTime()),
-                to: String(startOfDay(new Date()).getTime()),
-              })
-            }}
-          >
-            5Y
-          </div>
-          <div
-            style={{ padding: '.25rem 1rem', fontWeight: 'bolder', cursor: 'pointer' }}
-            onClick={() => {
-              updateQueryParams({
-                from: String(startOfDay(addDays(subYears(new Date(), 3), 1)).getTime()),
-                to: String(startOfDay(new Date()).getTime()),
-              })
-            }}
-          >
-            3Y
-          </div>
-          <div
-            style={{ padding: '.25rem 1rem', fontWeight: 'bolder', cursor: 'pointer' }}
-            onClick={() => {
-              updateQueryParams({
-                from: String(startOfDay(addDays(subYears(new Date(), 1), 1)).getTime()),
-                to: String(startOfDay(new Date()).getTime()),
-              })
-            }}
-          >
-            1Y
-          </div>
-          <div
-            style={{ padding: '.25rem 1rem', fontWeight: 'bolder', cursor: 'pointer' }}
-            onClick={() => {
-              updateQueryParams({
-                from: String(startOfDay(addDays(subMonths(new Date(), 1), 1)).getTime()),
-                to: String(startOfDay(new Date()).getTime()),
-              })
-            }}
-          >
-            1M
-          </div>
-        </Row>
+        {quickFilter}
         {showSlider && (
           <>
-            <TimeRange
-              ticksNumber={10}
-              disabledIntervals={[]}
-              selectedInterval={timeRange}
-              timelineInterval={[startOfDay(transactions[transactions.length - 1].date), startOfDay(new Date())]}
-              step={20}
-              formatTick={(a) => formatDate(new Date(a), 'MMM yyyy')}
-              onUpdateCallback={(_data: { error: boolean; time: Date[] }) => {
-                /** Ignore */
-              }}
-              onChangeCallback={(data: Date[]) => {
-                if (isSameDay(data[0], timeRange[0]) && isSameDay(data[1], timeRange[1])) {
-                  return
-                }
-
-                updateQueryParams({
-                  from: String(startOfDay(data[0]).getTime()),
-                  to: String(startOfDay(data[1]).getTime()),
-                })
-              }}
-            />
+            {slider}
             <div style={{ marginTop: '.75rem', padding: '0 1.5rem' }}>
               <Row
                 style={{
@@ -457,3 +495,5 @@ export default (accountPreFilter: (a: Account) => boolean = (_) => true, canFilt
     toDate: timeRange[1],
   }
 }
+
+export default useTransactionFilter
