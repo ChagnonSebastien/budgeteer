@@ -62,7 +62,7 @@ const ExchangeRateHistory: FC<Props> = ({ currency, against }) => {
           }
 
           if (transaction.sender?.isMine && transaction.currencyId === currency.id) {
-            currentlyHeld -= transaction.receiverAmount
+            currentlyHeld -= transaction.amount
           }
         }
 
@@ -75,7 +75,7 @@ const ExchangeRateHistory: FC<Props> = ({ currency, against }) => {
         }
 
         if (transaction.sender?.isMine && transaction.currencyId === currency.id) {
-          currentlyHeld -= transaction.receiverAmount
+          currentlyHeld -= transaction.amount
         }
 
         if (transaction.financialIncomeCurrencyId === currency.id && transaction.receiver?.isMine) {

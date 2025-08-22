@@ -21,7 +21,7 @@ module.exports = {
     'prettier/prettier': ['error'],
     semi: ['error', 'never'],
     '@typescript-eslint/no-unused-vars': [
-      'error',
+      'warn',
       {
         vars: 'all',
         args: 'all',

@@ -24,6 +24,7 @@ import EditAccountPage from './pages/EditAccountPage'
 import EditCategoryPage from './pages/EditCategoryPage'
 import EditCurrencyPage from './pages/EditCurrencyPage'
 import EditTransactionPage from './pages/EditTransactionPage'
+import InvestmentsPerformancePage from './pages/InvestmentsPerformancePage'
 import TransactionPage from './pages/TransactionPage'
 import TrendsPage from './pages/TrendsPage'
 import { AccountPersistenceAugmenter } from './service/AccountServiceAugmenter'
@@ -311,7 +312,8 @@ const AuthenticatedZone: FC<Props> = (props) => {
           <Route path="/balances" element={<BalancePage />} />
           <Route path="/costs" element={<CostsAnalysisPage />} />
           <Route path="/trends" element={<TrendsPage />} />
-          <Route path="*" element={<Navigate to="/transactions" />} />
+          <Route path="/investments" element={<InvestmentsPerformancePage />} />
+          <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </DrawerWrapper>
     ),

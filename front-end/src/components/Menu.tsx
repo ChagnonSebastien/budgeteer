@@ -98,6 +98,7 @@ const appPages = [
   new AppPage('Balances', '/balances', PreparedIcon.FaScaleUnbalanced, ['from', 'to', 'accounts']),
   new AppPage('Trends', '/trends', PreparedIcon.BiSolidBarChartAlt2, ['categories']),
   new AppPage('Costs Analysis', '/costs', PreparedIcon.BsFileEarmarkSpreadsheet, []),
+  new AppPage('Investments', '/investments', PreparedIcon.BsGraphUp, []),
   new Separator(),
 ]
 
