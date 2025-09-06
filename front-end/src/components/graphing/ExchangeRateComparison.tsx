@@ -1,4 +1,4 @@
-import { formatDate } from 'date-fns'
+import { formatDate, isSameDay, startOfDay } from 'date-fns'
 import { FC, useCallback, useContext, useMemo } from 'react'
 
 import {
@@ -76,7 +76,11 @@ const ExchangeRateComparison: FC<Props> = (props) => {
 
   const group = useCallback((id: CurrencyID) => currencies.find((c) => c.id === id)?.name ?? 'Unknown', [currencies])
 
-  const { timeseriesIteratorGenerator, showLabelEveryFactor } = useTimerangeSegmentation(startDate, endDate, 'dense')
+  const { timeseriesIteratorGenerator, showLabelEveryFactor, hop, amountHop } = useTimerangeSegmentation(
+    startDate,
+    endDate,
+    'dense',
+  )
 
   const timeseriesIterator = useMemo(
     () => timeseriesIteratorGenerator(augmentedTransactions),
@@ -87,13 +91,12 @@ const ExchangeRateComparison: FC<Props> = (props) => {
     const currentlyHeld = new Map<CurrencyID, number>()
     const dividends = new Map<CurrencyID, number>()
     const initialRate = new Map<CurrencyID, number>()
-    const data: Bucket[] = [{ date: startDate, values: {} }]
+    const data: Bucket[] = []
     for (const currency of currencies) {
       if (!isSelected(currency.id)) continue
       currentlyHeld.set(currency.id, 0)
       dividends.set(currency.id, 1)
-      initialRate.set(currency.id, exchangeRateOnDay(currency.id, defaultCurrency.id, startDate))
-      data[0].values[group(currency.id)] = { amount: 1 }
+      initialRate.set(currency.id, exchangeRateOnDay(currency.id, defaultCurrency.id, hop(endDate, amountHop)))
     }
 
     myOwnAccounts.forEach((account) => {
@@ -114,14 +117,35 @@ const ExchangeRateComparison: FC<Props> = (props) => {
           }
 
           if (transaction.sender?.isMine && isSelected(transaction.currencyId)) {
-            currentlyHeld.set(transaction.currencyId, currentlyHeld.get(transaction.currencyId)! + transaction.amount)
+            currentlyHeld.set(transaction.currencyId, currentlyHeld.get(transaction.currencyId)! - transaction.amount)
           }
         }
 
         continue
       }
 
+      let heldYesterday = new Map(currentlyHeld.entries())
+      let gainToday = new Map<CurrencyID, number>()
+      let date = augmentedTransactions[augmentedTransactions.length - 1].date
+
+      const commitDividends = (_d: Date) => {
+        for (const [cId, gains] of gainToday) {
+          const held = heldYesterday.get(cId)!
+          const prevDividend = dividends.get(cId)!
+          dividends.set(cId, prevDividend * ((held + gains) / held))
+        }
+      }
+
       for (const transaction of items) {
+        if (!isSameDay(transaction.date, date)) {
+          commitDividends(startOfDay(date))
+
+          heldYesterday = new Map(currentlyHeld.entries())
+          gainToday = new Map<CurrencyID, number>()
+        }
+
+        date = transaction.date
+
         if (transaction.receiver?.isMine && isSelected(transaction.receiverCurrencyId)) {
           currentlyHeld.set(
             transaction.receiverCurrencyId,
@@ -130,7 +154,7 @@ const ExchangeRateComparison: FC<Props> = (props) => {
         }
 
         if (transaction.sender?.isMine && isSelected(transaction.currencyId)) {
-          currentlyHeld.set(transaction.currencyId, currentlyHeld.get(transaction.currencyId)! + transaction.amount)
+          currentlyHeld.set(transaction.currencyId, currentlyHeld.get(transaction.currencyId)! - transaction.amount)
         }
 
         if (
@@ -138,41 +162,27 @@ const ExchangeRateComparison: FC<Props> = (props) => {
           isSelected(transaction.financialIncomeCurrencyId) &&
           transaction.receiver?.isMine
         ) {
-          if (transaction.receiverCurrencyId === transaction.financialIncomeCurrencyId) {
-            dividends.set(
-              transaction.financialIncomeCurrencyId,
-              (dividends.get(transaction.financialIncomeCurrencyId)! *
-                (currentlyHeld.get(transaction.financialIncomeCurrencyId)! - transaction.receiverAmount)) /
-                currentlyHeld.get(transaction.financialIncomeCurrencyId)!,
-            )
-          } else if (transaction.currencyId === transaction.financialIncomeCurrencyId) {
-            dividends.set(
-              transaction.financialIncomeCurrencyId,
-              (dividends.get(transaction.financialIncomeCurrencyId)! *
-                (currentlyHeld.get(transaction.financialIncomeCurrencyId)! - transaction.amount)) /
-                currentlyHeld.get(transaction.financialIncomeCurrencyId)!,
-            )
+          const cId = transaction.financialIncomeCurrencyId
+          const prevGains = gainToday.get(cId) ?? 0
+
+          if (transaction.receiverCurrencyId === cId) {
+            gainToday.set(cId, prevGains + transaction.receiverAmount)
+          } else if (transaction.currencyId === cId) {
+            gainToday.set(cId, prevGains + transaction.amount)
           } else {
-            const factor = exchangeRateOnDay(
-              transaction.receiverCurrencyId,
-              transaction.financialIncomeCurrencyId,
-              transaction.date,
-            )
-            dividends.set(
-              transaction.financialIncomeCurrencyId,
-              (dividends.get(transaction.financialIncomeCurrencyId)! *
-                (currentlyHeld.get(transaction.financialIncomeCurrencyId)! - transaction.receiverAmount * factor)) /
-                currentlyHeld.get(transaction.financialIncomeCurrencyId)!,
-            )
+            const factor = exchangeRateOnDay(transaction.receiverCurrencyId, cId, transaction.date)
+            gainToday.set(cId, prevGains + transaction.receiverAmount * factor)
           }
         }
       }
+
+      commitDividends(startOfDay(date))
 
       const values: Record<string, { amount: number }> = {}
       for (const currency of currencies) {
         if (!isSelected(currency.id)) continue
         const currentRate = exchangeRateOnDay(currency.id, defaultCurrency.id, upTo)
-        const wouldBe = dividends.get(currency.id)! * initialRate.get(currency.id)!
+        const wouldBe = initialRate.get(currency.id)! / dividends.get(currency.id)!
         values[group(currency.id)] = { amount: currentRate / wouldBe }
       }
       data.push({ date: upTo, values: values })
