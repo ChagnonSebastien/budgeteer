@@ -14,3 +14,21 @@ auth:
     clientId: ""
     clientSecret: ""
     providerUrl: ""
+  guestLogin:
+    enabled: true
+    codeLength: 8
+    codeTtlMinutes: 15
+    resendCooldownSecs: 300
+    maxFailedAttempts: 3
+    brandName: "Budgeteer"
+    supportEmail: ""
+mailer:
+  host: "smtp.gmail.com"
+  port: 587
+  username: ""
+  password: ""
+  useSsl: false
+  authAuto: true
+  fromAddress: "noreply@budgeteer.app"
+  replyTo: ""
+  useMock: true

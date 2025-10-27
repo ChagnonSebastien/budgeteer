@@ -3,7 +3,9 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"time"
 
+	"chagnon.dev/budget-server/internal/logging"
 	"github.com/coreos/go-oidc"
 	"github.com/thejerf/suture/v4"
 	"golang.org/x/oauth2"
@@ -12,6 +14,7 @@ import (
 	"chagnon.dev/budget-server/internal/infrastructure/autoupdate"
 	"chagnon.dev/budget-server/internal/infrastructure/db/dao"
 	"chagnon.dev/budget-server/internal/infrastructure/db/repository"
+	"chagnon.dev/budget-server/internal/infrastructure/mailer"
 	"chagnon.dev/budget-server/internal/infrastructure/messaging/grpc"
 	"chagnon.dev/budget-server/internal/infrastructure/messaging/http"
 	"chagnon.dev/budget-server/pkg/infrastructure/postgres"
@@ -28,9 +31,32 @@ type UserPassConfig struct {
 	Enabled bool
 }
 
+type GuestLoginConfig struct {
+	Enabled            bool
+	CodeLength         int
+	CodeTTLMinutes     int
+	ResendCooldownSecs int
+	MaxFailedAttempts  int
+	BrandName          string
+	SupportEmail       string
+}
+
+type MailerConfig struct {
+	Host        string
+	Port        int
+	Username    string
+	Password    string
+	UseSSL      bool
+	AuthAuto    bool
+	FromAddress string
+	ReplyTo     string
+	UseMock     bool
+}
+
 type AuthConfig struct {
-	Oidc     OidcConfig
-	UserPass UserPassConfig
+	Oidc       OidcConfig
+	UserPass   UserPassConfig
+	GuestLogin GuestLoginConfig
 }
 
 type DatabaseConfig struct {
@@ -44,6 +70,7 @@ type DatabaseConfig struct {
 type ServerConfig struct {
 	Database  DatabaseConfig
 	Auth      AuthConfig
+	Mailer    MailerConfig
 	PublicUrl string
 }
 
@@ -76,6 +103,70 @@ func (s *Server) Serve(ctx context.Context) error {
 		}
 	}
 
+	var mailerService interface {
+		Send(ctx context.Context, to []string, subject, textBody, htmlBody string) error
+	}
+	mailerService = mailer.NewNilMailer()
+
+	if s.config.Mailer.UseMock {
+		logging.FromContext(ctx).Info("Nil mailer is enabled. Printing mails into logs.")
+	} else if s.config.Mailer.Host != "" && s.config.Mailer.Username != "" && s.config.Mailer.Password != "" {
+		mailerService = mailer.NewMailer(mailer.Config{
+			Host:        s.config.Mailer.Host,
+			Port:        s.config.Mailer.Port,
+			Username:    s.config.Mailer.Username,
+			Password:    s.config.Mailer.Password,
+			UseSSL:      s.config.Mailer.UseSSL,
+			AuthAuto:    s.config.Mailer.AuthAuto,
+			FromAddress: s.config.Mailer.FromAddress,
+			ReplyTo:     s.config.Mailer.ReplyTo,
+		})
+	} else {
+		logging.FromContext(ctx).Info("Mailer is not configured. Guest login is disabled.")
+	}
+
+	// Create guest login service from config
+	var guestLoginService *service.GuestLoginService
+	if s.config.Auth.GuestLogin.Enabled {
+		codeLength := s.config.Auth.GuestLogin.CodeLength
+		if codeLength == 0 {
+			codeLength = 8
+		}
+		codeTTLMinutes := s.config.Auth.GuestLogin.CodeTTLMinutes
+		if codeTTLMinutes == 0 {
+			codeTTLMinutes = 15
+		}
+		resendCooldownSecs := s.config.Auth.GuestLogin.ResendCooldownSecs
+		if resendCooldownSecs == 0 {
+			resendCooldownSecs = 300
+		}
+		maxFailedAttempts := s.config.Auth.GuestLogin.MaxFailedAttempts
+		if maxFailedAttempts == 0 {
+			maxFailedAttempts = 3
+		}
+		brandName := s.config.Auth.GuestLogin.BrandName
+		if brandName == "" {
+			brandName = "Budgeteer"
+		}
+
+		guestLoginService, err = service.NewGuestLoginService(
+			repos,
+			mailerService,
+			service.GuestLoginConfig{
+				CodeLength:         codeLength,
+				CodeTTL:            time.Duration(codeTTLMinutes) * time.Minute,
+				CodeResendCooldown: time.Duration(resendCooldownSecs) * time.Second,
+				MaxFailedAttempts:  maxFailedAttempts,
+				BrandName:          brandName,
+				BrandURL:           s.config.PublicUrl,
+				SupportEmail:       s.config.Auth.GuestLogin.SupportEmail,
+			},
+		)
+		if err != nil {
+			return fmt.Errorf("creating guest login service: %s", err)
+		}
+	}
+
 	webServer := http.NewServer(
 		grpc.NewServerWithHandlers(
 			grpc.Services{
@@ -87,13 +178,14 @@ func (s *Server) Serve(ctx context.Context) error {
 			},
 		),
 		http.NewAuth(
-			repos,
-			s.config.Auth.Oidc.Enabled,
-			s.config.Auth.UserPass.Enabled,
-			oidcConfig,
-			verifier,
-			s.config.PublicUrl,
-			s.config.Auth.Oidc.ProviderUrl,
+			repos,                          // userService
+			guestLoginService,              // guestLoginService
+			s.config.Auth.Oidc.Enabled,     // oidcEnabled
+			s.config.Auth.UserPass.Enabled, // userPassEnabled
+			oidcConfig,                     // oidcConfig
+			verifier,                       // verifier
+			s.config.PublicUrl,             // serverPublicUrl
+			s.config.Auth.Oidc.ProviderUrl, // oidcIssuer
 		),
 	)
 

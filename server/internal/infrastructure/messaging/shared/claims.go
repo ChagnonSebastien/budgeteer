@@ -3,9 +3,10 @@ package shared
 type ClaimsKey struct{}
 
 type Claims struct {
-	Email           string `json:"email"`
-	Sub             string `json:"sub"`
-	Username        string `json:"preferred_username"`
-	Name            string `json:"name"`
-	DefaultCurrency *int   `json:"default_currency"`
+	Email                string `json:"email"`
+	Sub                  string `json:"sub"`
+	Username             string `json:"preferred_username"`
+	Name                 string `json:"name"`
+	DefaultCurrency      *int   `json:"default_currency"`
+	HiddenDefaultAccount *int   `json:"hidden_default_account"`
 }

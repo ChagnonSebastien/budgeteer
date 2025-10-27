@@ -32,7 +32,27 @@ type Config struct {
 		UserPass struct {
 			Enabled bool `mapstructure:"enabled"`
 		} `mapstructure:"userpass"`
+		GuestLogin struct {
+			Enabled            bool   `mapstructure:"enabled"`
+			CodeLength         int    `mapstructure:"codeLength"`
+			CodeTTLMinutes     int    `mapstructure:"codeTtlMinutes"`
+			ResendCooldownSecs int    `mapstructure:"resendCooldownSecs"`
+			MaxFailedAttempts  int    `mapstructure:"maxFailedAttempts"`
+			BrandName          string `mapstructure:"brandName"`
+			SupportEmail       string `mapstructure:"supportEmail"`
+		} `mapstructure:"guestLogin"`
 	} `mapstructure:"auth"`
+	Mailer struct {
+		Host        string `mapstructure:"host"`
+		Port        int    `mapstructure:"port"`
+		Username    string `mapstructure:"username"`
+		Password    string `mapstructure:"password"`
+		UseSSL      bool   `mapstructure:"useSsl"`
+		AuthAuto    bool   `mapstructure:"authAuto"`
+		FromAddress string `mapstructure:"fromAddress"`
+		ReplyTo     string `mapstructure:"replyTo"`
+		UseMock     bool   `mapstructure:"useMock"`
+	} `mapstructure:"mailer"`
 	Server struct {
 		PublicUrl string `mapstructure:"publicUrl"`
 	} `mapstructure:"server"`
@@ -63,6 +83,26 @@ var startCmd = &cobra.Command{
 				UserPass: UserPassConfig{
 					Enabled: config.Auth.UserPass.Enabled,
 				},
+				GuestLogin: GuestLoginConfig{
+					Enabled:            config.Auth.GuestLogin.Enabled,
+					CodeLength:         config.Auth.GuestLogin.CodeLength,
+					CodeTTLMinutes:     config.Auth.GuestLogin.CodeTTLMinutes,
+					ResendCooldownSecs: config.Auth.GuestLogin.ResendCooldownSecs,
+					MaxFailedAttempts:  config.Auth.GuestLogin.MaxFailedAttempts,
+					BrandName:          config.Auth.GuestLogin.BrandName,
+					SupportEmail:       config.Auth.GuestLogin.SupportEmail,
+				},
+			},
+			Mailer: MailerConfig{
+				Host:        config.Mailer.Host,
+				Port:        config.Mailer.Port,
+				Username:    config.Mailer.Username,
+				Password:    config.Mailer.Password,
+				UseSSL:      config.Mailer.UseSSL,
+				AuthAuto:    config.Mailer.AuthAuto,
+				FromAddress: config.Mailer.FromAddress,
+				ReplyTo:     config.Mailer.ReplyTo,
+				UseMock:     config.Mailer.UseMock,
 			},
 			PublicUrl: config.Server.PublicUrl,
 		}}

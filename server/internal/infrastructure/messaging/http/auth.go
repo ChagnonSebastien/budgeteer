@@ -1,7 +1,6 @@
 package http
 
 import (
-	"chagnon.dev/budget-server/internal/domain/model"
 	"context"
 	"crypto/rand"
 	"encoding/base64"
@@ -12,6 +11,8 @@ import (
 	"net/url"
 	"os"
 	"time"
+
+	"chagnon.dev/budget-server/internal/domain/model"
 
 	"github.com/coreos/go-oidc"
 	"golang.org/x/oauth2"
@@ -30,8 +31,14 @@ type userRepository interface {
 	UserParams(ctx context.Context, id string) (*model.UserParams, error)
 }
 
+type guestLoginService interface {
+	SendLoginCode(ctx context.Context, email, name string) error
+	VerifyLoginCode(ctx context.Context, email, code string) (bool, error)
+}
+
 type Auth struct {
 	UserService       userRepository
+	GuestLoginService guestLoginService
 	OidcConfig        *oauth2.Config
 	verifier          *oidc.IDTokenVerifier
 	FrontendPublicUrl string
@@ -43,6 +50,7 @@ type Auth struct {
 
 func NewAuth(
 	userService userRepository,
+	guestLoginService guestLoginService,
 	oidcEnabled,
 	userPassEnabled bool,
 	oidcConfig *oauth2.Config,
@@ -57,6 +65,7 @@ func NewAuth(
 
 	auth := &Auth{
 		UserService:       userService,
+		GuestLoginService: guestLoginService,
 		OidcConfig:        oidcConfig,
 		verifier:          verifier,
 		OidcIssuer:        oidcIssuer,
@@ -86,6 +95,8 @@ func (auth *Auth) ServeMux() *http.ServeMux {
 	mux.HandleFunc("/callback", auth.callbackHandler)
 	mux.HandleFunc("/userinfo", auth.userInfoHandler)
 	mux.HandleFunc("/logout", auth.logoutHandler)
+	mux.HandleFunc("/guest/send-code", auth.guestSendCodeHandler)
+	mux.HandleFunc("/guest/verify-code", auth.guestVerifyCodeHandler)
 	return mux
 }
 
@@ -253,8 +264,10 @@ func (auth *Auth) userInfoHandler(resp http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	tokenClaims.HiddenDefaultAccount = (*int)(&params.HiddenDefaultAccount)
+
 	if params.DefaultCurrency != 0 {
-		tokenClaims.DefaultCurrency = &params.DefaultCurrency
+		tokenClaims.DefaultCurrency = (*int)(&params.DefaultCurrency)
 	}
 
 	if prevTokenCookie == nil || prevTokenCookie.Value != rawToken.AccessToken {
@@ -319,4 +332,95 @@ func (auth *Auth) TokenSourceFromCookies(
 			RefreshToken: refreshToken,
 		},
 	), authTokenCookie, nil
+}
+
+type guestSendCodeRequest struct {
+	Email string `json:"email"`
+	Name  string `json:"name"`
+}
+
+type guestVerifyCodeRequest struct {
+	Email string `json:"email"`
+	Code  string `json:"code"`
+}
+
+type guestVerifyCodeResponse struct {
+	Success bool   `json:"success"`
+	Message string `json:"message,omitempty"`
+}
+
+func (auth *Auth) guestSendCodeHandler(w http.ResponseWriter, r *http.Request) {
+	logger := logging.FromContext(r.Context())
+
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req guestSendCodeRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		logger.Error("decoding request", "error", err)
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	if err := auth.GuestLoginService.SendLoginCode(r.Context(), req.Email, req.Name); err != nil {
+		logger.Error("sending login code", "error", err, "email", req.Email)
+		http.Error(w, fmt.Sprintf("Failed to send code: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	logger.Info("sent guest login code", "email", req.Email)
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"message": "Code sent successfully"})
+}
+
+func (auth *Auth) guestVerifyCodeHandler(w http.ResponseWriter, r *http.Request) {
+	logger := logging.FromContext(r.Context())
+
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req guestVerifyCodeRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		logger.Error("decoding request", "error", err)
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	valid, err := auth.GuestLoginService.VerifyLoginCode(r.Context(), req.Email, req.Code)
+	if err != nil {
+		logger.Error("verifying login code", "error", err, "email", req.Email)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusUnauthorized)
+		json.NewEncoder(w).Encode(guestVerifyCodeResponse{
+			Success: false,
+			Message: err.Error(),
+		})
+		return
+	}
+
+	if !valid {
+		logger.Warn("invalid guest login code", "email", req.Email)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusUnauthorized)
+		json.NewEncoder(w).Encode(guestVerifyCodeResponse{
+			Success: false,
+			Message: "Invalid code",
+		})
+		return
+	}
+
+	logger.Info("guest login code verified successfully", "email", req.Email)
+
+	// TODO: Create a proper session/token for the guest user
+	// For now, just return success
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(guestVerifyCodeResponse{
+		Success: true,
+		Message: "Code verified successfully",
+	})
 }
