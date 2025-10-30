@@ -178,14 +178,15 @@ func (s *Server) Serve(ctx context.Context) error {
 			},
 		),
 		http.NewAuth(
-			repos,                          // userService
-			guestLoginService,              // guestLoginService
-			s.config.Auth.Oidc.Enabled,     // oidcEnabled
-			s.config.Auth.UserPass.Enabled, // userPassEnabled
-			oidcConfig,                     // oidcConfig
-			verifier,                       // verifier
-			s.config.PublicUrl,             // serverPublicUrl
-			s.config.Auth.Oidc.ProviderUrl, // oidcIssuer
+			repos,                            // userService
+			guestLoginService,                // guestLoginService
+			s.config.Auth.Oidc.Enabled,       // oidcEnabled
+			s.config.Auth.UserPass.Enabled,   // userPassEnabled
+			s.config.Auth.GuestLogin.Enabled, // guestEnabled
+			oidcConfig,                       // oidcConfig
+			verifier,                         // verifier
+			s.config.PublicUrl,               // serverPublicUrl
+			s.config.Auth.Oidc.ProviderUrl,   // oidcIssuer
 		),
 	)
 

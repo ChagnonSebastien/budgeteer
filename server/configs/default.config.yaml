@@ -8,7 +8,7 @@ database:
   name: budgetapp
 auth:
   userpass:
-    enabled: true
+    enabled: false
   oidc:
     enabled: false
     clientId: ""

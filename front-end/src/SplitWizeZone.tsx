@@ -2,38 +2,15 @@ import { GrpcWebFetchTransport } from '@protobuf-ts/grpcweb-transport'
 import React, { FC, ReactNode, useMemo } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 
-import { UserContext } from './App'
-import CurrencyForm from './components/currencies/CurrencyForm'
 import LoadingScreen from './components/LoadingScreen'
 import DrawerWrapper from './components/Menu'
-import ContentWithHeader from './components/shared/ContentWithHeader'
 import { Centered } from './components/shared/Layout'
-import Currency, { CurrencyUpdatableFields, RateAutoupdateSettings } from './domain/model/currency'
-import { IdIdentifier } from './domain/model/Unique'
-import AccountsPage from './pages/AccountsPage'
-import BalancePage from './pages/BalancePage'
-import CategoryPage from './pages/CategoryPage'
-import CostsAnalysisPage from './pages/CostsAnalysisPage'
-import CreateAccountPage from './pages/CreateAccountPage'
-import CreateCategoryPage from './pages/CreateCategoryPage'
-import CreateCurrencyPage from './pages/CreateCurrencyPage'
-import CreateTransactionPage from './pages/CreateTransactionPage'
-import CurrenciesPage from './pages/CurrenciesPage'
-import Dashboard from './pages/Dashboard'
-import EditAccountPage from './pages/EditAccountPage'
-import EditCategoryPage from './pages/EditCategoryPage'
-import EditCurrencyPage from './pages/EditCurrencyPage'
-import EditTransactionPage from './pages/EditTransactionPage'
-import InvestmentsPerformancePage from './pages/InvestmentsPerformancePage'
 import TransactionGroups from './pages/TransactionGroups'
-import TransactionPage from './pages/TransactionPage'
-import TrendsPage from './pages/TrendsPage'
 import { AccountPersistenceAugmenter } from './service/AccountServiceAugmenter'
 import { BasicCrudServiceWithPersistence } from './service/BasicCrudServiceWithPersistence'
 import { CategoryPersistenceAugmenter } from './service/CategoryServiceAugmenter'
 import { CurrencyPersistenceAugmenter } from './service/CurrencyServiceAugmenter'
 import { ExchangeRatePersistenceAugmenter } from './service/ExcahngeRateServiceAugmenter'
-import { MixedAugmentationProvider } from './service/MixedAugmentation'
 import { NilPersistenceAugmenter } from './service/NilAugmenter'
 import {
   AccountServiceContext,
@@ -78,52 +55,6 @@ const MustBeConnectedToInternetOnFirstSetup: FC<{ children: ReactNode; hasIntern
   hasInternet,
 }) => (hasInternet ? children : <Centered>Internet connection required on first use</Centered>)
 
-const CreateDefaultCurrency: FC<{
-  create: (data: CurrencyUpdatableFields, identity?: IdIdentifier) => Promise<Currency>
-  hasInternet: boolean
-  setDefaultCurrency(id: number): void
-  testGetRateScript(script: string): Promise<string>
-}> = ({ create, hasInternet, setDefaultCurrency, testGetRateScript }) => {
-  return (
-    <UserContext.Consumer>
-      {(user) =>
-        user.default_currency === null ? (
-          <MustBeConnectedToInternetOnFirstSetup hasInternet={hasInternet}>
-            <ContentWithHeader title="What's your main currency?">
-              <div style={{ padding: '1rem' }}>
-                <CurrencyForm
-                  onSubmit={async (currencyData: Partial<CurrencyUpdatableFields>) => {
-                    if (typeof currencyData.name === 'undefined') return
-                    if (typeof currencyData.symbol === 'undefined') return
-                    if (typeof currencyData.type === 'undefined') return
-                    if (typeof currencyData.risk === 'undefined') return
-                    if (typeof currencyData.decimalPoints === 'undefined') return
-
-                    const newCurrency = await create({
-                      name: currencyData.name,
-                      symbol: currencyData.symbol,
-                      type: currencyData.type,
-                      risk: currencyData.risk,
-                      decimalPoints: currencyData.decimalPoints,
-                      rateAutoupdateSettings: new RateAutoupdateSettings('', false),
-                    })
-                    await currencyRemoteStore.setDefault(newCurrency.id)
-                    setDefaultCurrency(newCurrency.id)
-                  }}
-                  submitText="Create"
-                  scriptRunner={testGetRateScript}
-                />
-              </div>
-            </ContentWithHeader>
-          </MustBeConnectedToInternetOnFirstSetup>
-        ) : (
-          <LoadingScreen />
-        )
-      }
-    </UserContext.Consumer>
-  )
-}
-
 const WaitOnAtLeastOneCategory: FC<{ NextComponent: FC; hasInternet: boolean }> = ({ NextComponent, hasInternet }) => (
   <CategoryServiceContext.Consumer>
     {(value) =>
@@ -138,36 +69,10 @@ const WaitOnAtLeastOneCategory: FC<{ NextComponent: FC; hasInternet: boolean }> 
   </CategoryServiceContext.Consumer>
 )
 
-const AssureMinimumConfig: FC<{
-  NextComponent: FC
-  hasInternet: boolean
-  setDefaultCurrency(id: number): void
-  testGetRateScript(script: string): Promise<string>
-}> = ({ NextComponent, hasInternet, setDefaultCurrency, testGetRateScript }) => (
-  <BrowserRouter>
-    <CurrencyServiceContext.Consumer>
-      {(currencyContext) =>
-        !currencyContext.tentativeDefaultCurrency ? (
-          <CreateDefaultCurrency
-            create={currencyContext.create}
-            setDefaultCurrency={setDefaultCurrency}
-            hasInternet={hasInternet}
-            testGetRateScript={testGetRateScript}
-          />
-        ) : (
-          <WaitOnAtLeastOneCategory NextComponent={NextComponent} hasInternet={hasInternet} />
-        )
-      }
-    </CurrencyServiceContext.Consumer>
-  </BrowserRouter>
-)
-
 const WaitOnInitializedData: FC<{
   NextComponent: FC
   hasInternet: boolean
-  setDefaultCurrency(id: number): void
-  testGetRateScript(script: string): Promise<string>
-}> = ({ NextComponent, hasInternet, setDefaultCurrency, testGetRateScript }) => (
+}> = ({ NextComponent, hasInternet }) => (
   <TransactionServiceContext.Consumer>
     {(transactionCtx) => (
       <ExchangeRateServiceContext.Consumer>
@@ -189,12 +94,7 @@ const WaitOnInitializedData: FC<{
                       !categoryCtx.version != !categoryCtx.augmentedVersion ? (
                         <LoadingScreen />
                       ) : (
-                        <AssureMinimumConfig
-                          NextComponent={NextComponent}
-                          setDefaultCurrency={setDefaultCurrency}
-                          hasInternet={hasInternet}
-                          testGetRateScript={testGetRateScript}
-                        />
+                        <WaitOnAtLeastOneCategory NextComponent={NextComponent} hasInternet={hasInternet} />
                       )
                     }
                   </CategoryServiceContext.Consumer>
@@ -285,58 +185,32 @@ const PersistenceSetup: FC<{ children: ReactNode; hasInternet: boolean }> = ({ c
 interface Props {
   logout(): void
   hasInternet: boolean
-  setDefaultCurrency(id: number): void
 }
 
-const AuthenticatedZone: FC<Props> = (props) => {
-  const { logout, hasInternet, setDefaultCurrency } = props
+const SplitWiseZone: FC<Props> = (props) => {
+  const { logout, hasInternet } = props
 
   const testGetRateScript = useMemo(() => exchangeRateRemoteStore.testGetRateScript(), [])
 
   const FullyAugmentedView = useMemo<FC>(
     () => () => (
-      <DrawerWrapper logout={logout}>
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/currencies" element={<CurrenciesPage />} />
-          <Route path="/currencies/new" element={<CreateCurrencyPage scriptRunner={testGetRateScript} />} />
-          <Route path="/currencies/edit/:currencyId" element={<EditCurrencyPage scriptRunner={testGetRateScript} />} />
-          <Route path="/categories" element={<CategoryPage />} />
-          <Route path="/categories/new" element={<CreateCategoryPage />} />
-          <Route path="/categories/edit/:categoryId" element={<EditCategoryPage />} />
-          <Route path="/accounts" element={<AccountsPage />} />
-          <Route path="/accounts/new" element={<CreateAccountPage />} />
-          <Route path="/accounts/edit/:accountId" element={<EditAccountPage />} />
-          <Route path="/transactions" element={<TransactionPage />} />
-          <Route path="/transactions/new" element={<CreateTransactionPage />} />
-          <Route path="/transactions/edit/:transactionId" element={<EditTransactionPage />} />
-          <Route path="/balances" element={<BalancePage />} />
-          <Route path="/costs" element={<CostsAnalysisPage />} />
-          <Route path="/trends" element={<TrendsPage />} />
-          <Route path="/investments" element={<InvestmentsPerformancePage />} />
-          <Route path="/transaction-groups" element={<TransactionGroups />} />
-          <Route path="*" element={<Navigate to="/" />} />
-        </Routes>
-      </DrawerWrapper>
+      <BrowserRouter>
+        <DrawerWrapper logout={logout} userIsGuest>
+          <Routes>
+            <Route path="/transaction-groups" element={<TransactionGroups />} />
+            <Route path="*" element={<Navigate to="/transaction-groups" />} />
+          </Routes>
+        </DrawerWrapper>
+      </BrowserRouter>
     ),
     [logout, testGetRateScript],
   )
 
-  const CompleteView = useMemo<FC>(
-    () => () => <MixedAugmentationProvider NextComponent={FullyAugmentedView} />,
-    [FullyAugmentedView],
-  )
-
   return (
     <PersistenceSetup hasInternet={hasInternet}>
-      <WaitOnInitializedData
-        NextComponent={CompleteView}
-        setDefaultCurrency={setDefaultCurrency}
-        hasInternet={hasInternet}
-        testGetRateScript={testGetRateScript}
-      />
+      <WaitOnInitializedData NextComponent={FullyAugmentedView} hasInternet={hasInternet} />
     </PersistenceSetup>
   )
 }
 
-export default AuthenticatedZone
+export default SplitWiseZone

@@ -4,8 +4,9 @@ import { createContext, FC } from 'react'
 import AuthenticatedZone from './AuthenticatedZone'
 import { IconToolsContext, useIconTools } from './components/icons/IconTools'
 import LoadingScreen from './components/LoadingScreen'
-import { Centered } from './components/shared/Layout'
+import { Centered, Column } from './components/shared/Layout'
 import User from './domain/model/user'
+import SplitWizeZone from './SplitWizeZone'
 import useAuthentication from './useAuthentication'
 
 export const UserContext = createContext<User>({
@@ -14,6 +15,8 @@ export const UserContext = createContext<User>({
   email: 'email',
   sub: 'sub',
   preferred_username: 'username',
+  hidden_default_account: 1,
+  is_guest: true,
 })
 
 const App: FC = () => {
@@ -22,6 +25,16 @@ const App: FC = () => {
   const iconTools = useIconTools()
 
   if (user !== null) {
+    if (user.is_guest) {
+      return (
+        <IconToolsContext.Provider value={iconTools}>
+          <UserContext.Provider value={user}>
+            <SplitWizeZone hasInternet={hasInternet} logout={logout} />
+          </UserContext.Provider>
+        </IconToolsContext.Provider>
+      )
+    }
+
     return (
       <IconToolsContext.Provider value={iconTools}>
         <UserContext.Provider value={user}>
@@ -45,9 +58,23 @@ const App: FC = () => {
 
   return (
     <Centered>
-      <Button variant="contained" disableElevation onClick={authMethods.oidc!}>
-        OIDC Login
-      </Button>
+      <Column style={{ gap: '1rem' }}>
+        {authMethods.oidc && (
+          <Button variant="contained" disableElevation onClick={authMethods.oidc}>
+            OIDC Login
+          </Button>
+        )}
+        {authMethods.userPass && (
+          <Button variant="contained" disableElevation onClick={authMethods.userPass}>
+            Password Login
+          </Button>
+        )}
+        {authMethods.guest && (
+          <Button variant="contained" disableElevation onClick={authMethods.guest}>
+            Guest Login
+          </Button>
+        )}
+      </Column>
     </Centered>
   )
 }

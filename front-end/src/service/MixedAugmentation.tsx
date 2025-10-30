@@ -152,6 +152,8 @@ export const MixedAugmentationProvider: FC<Props> = ({ NextComponent }) => {
     return { exchangeRates, exchangeRateOnDay }
   }, [rawExchangeRates, transactions])
 
+  console.log(tentativeRoot, tentativeDefaultCurrency)
+
   if (tentativeRoot === null || tentativeDefaultCurrency === null) {
     return <LoadingScreen />
   }

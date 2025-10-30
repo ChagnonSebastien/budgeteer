@@ -1,3 +1,5 @@
+import { resolve } from 'path'
+
 import legacy from '@vitejs/plugin-legacy'
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
@@ -34,5 +36,11 @@ export default defineConfig({
   },
   build: {
     sourcemap: true,
+    rollupOptions: {
+      input: {
+        main: resolve(__dirname, 'index.html'),
+        guest: resolve(__dirname, 'guest.html'),
+      },
+    },
   },
 })

@@ -16,6 +16,7 @@ const oidcLogin = () => {
 const oidcLogout = () => {
   IndexedDB.delete()
   userStore.clear()
+  localStorage.clear()
   window.location.href = `${serverUrl}/auth/logout`
 }
 
@@ -26,10 +27,27 @@ const userPassLogin = () => {
 const userPassLogout = () => {
   IndexedDB.delete()
   userStore.clear()
+  localStorage.clear()
   throw new Error('Not implemented')
 }
 
-type AuthMethod = 'oidc' | 'userPass'
+const guestLogin = () => {
+  window.location.href = '/guest.html'
+}
+
+const guestLogout = () => {
+  IndexedDB.delete()
+  userStore.clear()
+  localStorage.clear()
+
+  document.cookie.split(';').forEach((c) => {
+    document.cookie = c.replace(/^ +/, '').replace(/=.*/, '=;expires=' + new Date().toUTCString() + ';path=/')
+  })
+
+  window.location.href = `/`
+}
+
+type AuthMethod = 'oidc' | 'userPass' | 'guest'
 type AuthMethodStatuses = { [K in AuthMethod]: (() => void) | null }
 
 const useAuthentication = () => {
@@ -86,6 +104,7 @@ const useAuthentication = () => {
         setLoginMethods({
           oidc: authMethodsResponse.oidc ? oidcLogin : null,
           userPass: authMethodsResponse.userPass ? userPassLogin : null,
+          guest: authMethodsResponse.guest ? guestLogin : null,
         })
       })
       .catch(console.error)
@@ -97,10 +116,29 @@ const useAuthentication = () => {
     if (user !== null && user.authMethod !== 'oidc') return
     if (user === null && (loginMethods === null || !loginMethods.oidc)) return
 
+    let amountAuthMethods = 0
+    let onlyLoginMethod: () => void
+    if (loginMethods !== null) {
+      if (loginMethods.oidc) {
+        amountAuthMethods += 1
+        onlyLoginMethod = loginMethods.oidc
+      }
+      if (loginMethods.userPass) {
+        amountAuthMethods += 1
+        onlyLoginMethod = loginMethods.userPass
+      }
+      if (loginMethods.guest) {
+        amountAuthMethods += 1
+        onlyLoginMethod = loginMethods.guest
+      }
+    }
+
     fetchUserInfo()
       .then(async (user) => {
         if (user === null) {
-          loginMethods!.oidc!()
+          if (amountAuthMethods === 1) {
+            onlyLoginMethod()
+          }
           return
         }
 
@@ -113,7 +151,17 @@ const useAuthentication = () => {
 
   const logout = useMemo(() => {
     if (user === null) return () => console.error('cannot logout if not logged in')
-    return user.authMethod === 'oidc' ? oidcLogout : userPassLogout
+    switch (user.authMethod) {
+      case 'oidc':
+        return oidcLogout
+      case 'userPass':
+        return userPassLogout
+      case 'guest':
+        return guestLogout
+      default:
+        console.error('cannot logout - unsupported auth method')
+        return () => {}
+    }
   }, [user])
 
   return {
