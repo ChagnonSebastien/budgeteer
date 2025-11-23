@@ -16,7 +16,7 @@ export const UserContext = createContext<User>({
   sub: 'sub',
   preferred_username: 'username',
   hidden_default_account: 1,
-  is_guest: true,
+  authentification_method: 'oidc',
 })
 
 const App: FC = () => {
@@ -25,7 +25,7 @@ const App: FC = () => {
   const iconTools = useIconTools()
 
   if (user !== null) {
-    if (user.is_guest) {
+    if (user.authentification_method === 'guest') {
       return (
         <IconToolsContext.Provider value={iconTools}>
           <UserContext.Provider value={user}>

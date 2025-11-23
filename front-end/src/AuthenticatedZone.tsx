@@ -40,6 +40,7 @@ import {
   CategoryServiceContext,
   CurrencyServiceContext,
   ExchangeRateServiceContext,
+  TransactionGroupServiceContext,
   TransactionServiceContext,
 } from './service/ServiceContext'
 import AccountLocalStore from './store/local/AccountLocalStore'
@@ -48,11 +49,13 @@ import CurrencyLocalStore from './store/local/CurrencyLocalStore'
 import ExchangeRateLocalStore from './store/local/ExchangeRateLocalStore'
 import IndexedDB from './store/local/IndexedDB'
 import ReplayStore from './store/local/ReplayStore'
+import TransactionGroupLocalStore from './store/local/TransactionGroupLocalStore'
 import TransactionLocalStore from './store/local/TransactionLocalStore'
 import AccountRemoteStore from './store/remote/AccountRemoteStore'
 import CategoryRemoteStore from './store/remote/CategoryRemoteStore'
 import CurrencyRemoteStore from './store/remote/CurrencyRemoteStore'
 import ExchangeRateRemoteStore from './store/remote/ExchangeRateRemoteStore'
+import TransactionGroupRemoteStore from './store/remote/TransactionGroupRemoteStore'
 import TransactionRemoteStore from './store/remote/TransactionRemoteStore'
 
 const transport = new GrpcWebFetchTransport({
@@ -65,12 +68,14 @@ const categoryRemoteStore = new CategoryRemoteStore(transport)
 const accountRemoteStore = new AccountRemoteStore(transport)
 const transactionRemoteStore = new TransactionRemoteStore(transport)
 const exchangeRateRemoteStore = new ExchangeRateRemoteStore(transport)
+const transactionGroupRemoteStore = new TransactionGroupRemoteStore(transport)
 
 const currencyLocalStore = new CurrencyLocalStore(IndexedDB)
 const categoryLocalStore = new CategoryLocalStore(IndexedDB)
 const accountLocalStore = new AccountLocalStore(IndexedDB)
 const transactionLocalStore = new TransactionLocalStore(IndexedDB)
 const exchangeRateLocalStore = new ExchangeRateLocalStore(IndexedDB)
+const transactionGroupLocalStore = new TransactionGroupLocalStore(IndexedDB)
 const replayStore = new ReplayStore(IndexedDB)
 
 const MustBeConnectedToInternetOnFirstSetup: FC<{ children: ReactNode; hasInternet: boolean }> = ({
@@ -168,44 +173,49 @@ const WaitOnInitializedData: FC<{
   setDefaultCurrency(id: number): void
   testGetRateScript(script: string): Promise<string>
 }> = ({ NextComponent, hasInternet, setDefaultCurrency, testGetRateScript }) => (
-  <TransactionServiceContext.Consumer>
-    {(transactionCtx) => (
-      <ExchangeRateServiceContext.Consumer>
-        {(exchangeRateCtx) => (
-          <AccountServiceContext.Consumer>
-            {(accountCtx) => (
-              <CurrencyServiceContext.Consumer>
-                {(currencyCtx) => (
-                  <CategoryServiceContext.Consumer>
-                    {(categoryCtx) =>
-                      !transactionCtx.initialized ||
-                      !exchangeRateCtx.initialized ||
-                      !exchangeRateCtx.version != !exchangeRateCtx.augmentedVersion ||
-                      !accountCtx.initialized ||
-                      !accountCtx.version != !accountCtx.augmentedVersion ||
-                      !currencyCtx.initialized ||
-                      !currencyCtx.version != !currencyCtx.augmentedVersion ||
-                      !categoryCtx.initialized ||
-                      !categoryCtx.version != !categoryCtx.augmentedVersion ? (
-                        <LoadingScreen />
-                      ) : (
-                        <AssureMinimumConfig
-                          NextComponent={NextComponent}
-                          setDefaultCurrency={setDefaultCurrency}
-                          hasInternet={hasInternet}
-                          testGetRateScript={testGetRateScript}
-                        />
-                      )
-                    }
-                  </CategoryServiceContext.Consumer>
+  <TransactionGroupServiceContext.Consumer>
+    {(transactionGroupCtx) => (
+      <TransactionServiceContext.Consumer>
+        {(transactionCtx) => (
+          <ExchangeRateServiceContext.Consumer>
+            {(exchangeRateCtx) => (
+              <AccountServiceContext.Consumer>
+                {(accountCtx) => (
+                  <CurrencyServiceContext.Consumer>
+                    {(currencyCtx) => (
+                      <CategoryServiceContext.Consumer>
+                        {(categoryCtx) =>
+                          !transactionGroupCtx.initialized ||
+                          !transactionCtx.initialized ||
+                          !exchangeRateCtx.initialized ||
+                          !exchangeRateCtx.version != !exchangeRateCtx.augmentedVersion ||
+                          !accountCtx.initialized ||
+                          !accountCtx.version != !accountCtx.augmentedVersion ||
+                          !currencyCtx.initialized ||
+                          !currencyCtx.version != !currencyCtx.augmentedVersion ||
+                          !categoryCtx.initialized ||
+                          !categoryCtx.version != !categoryCtx.augmentedVersion ? (
+                            <LoadingScreen />
+                          ) : (
+                            <AssureMinimumConfig
+                              NextComponent={NextComponent}
+                              setDefaultCurrency={setDefaultCurrency}
+                              hasInternet={hasInternet}
+                              testGetRateScript={testGetRateScript}
+                            />
+                          )
+                        }
+                      </CategoryServiceContext.Consumer>
+                    )}
+                  </CurrencyServiceContext.Consumer>
                 )}
-              </CurrencyServiceContext.Consumer>
+              </AccountServiceContext.Consumer>
             )}
-          </AccountServiceContext.Consumer>
+          </ExchangeRateServiceContext.Consumer>
         )}
-      </ExchangeRateServiceContext.Consumer>
+      </TransactionServiceContext.Consumer>
     )}
-  </TransactionServiceContext.Consumer>
+  </TransactionGroupServiceContext.Consumer>
 )
 
 const PersistenceSetup: FC<{ children: ReactNode; hasInternet: boolean }> = ({ children, hasInternet }) => (
@@ -274,7 +284,19 @@ const PersistenceSetup: FC<{ children: ReactNode; hasInternet: boolean }> = ({ c
             }}
             hasInternet={hasInternet}
           >
-            {children}
+            <BasicCrudServiceWithPersistence
+              itemName="transactionGroup"
+              synced={true}
+              longTermStore={transactionGroupRemoteStore}
+              localStore={transactionGroupLocalStore}
+              actionStore={replayStore}
+              context={TransactionGroupServiceContext}
+              Augmenter={NilPersistenceAugmenter}
+              sorter={(a, b) => b.id - a.id}
+              hasInternet={hasInternet}
+            >
+              {children}
+            </BasicCrudServiceWithPersistence>
           </BasicCrudServiceWithPersistence>
         </BasicCrudServiceWithPersistence>
       </BasicCrudServiceWithPersistence>

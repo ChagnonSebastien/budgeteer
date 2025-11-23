@@ -10,6 +10,7 @@ import Category, { AugmentedCategory, CategoryID, CategoryUpdatableFields } from
 import Currency, { CurrencyID, CurrencyUpdatableFields } from '../domain/model/currency'
 import ExchangeRate, { ExchangeRateId, ExchangeRateIdentifiableFields } from '../domain/model/exchangeRate'
 import Transaction, { TransactionID, TransactionUpdatableFields } from '../domain/model/transaction'
+import TransactionGroup, { TransactionGroupID, TransactionGroupUpdatableFields } from '../domain/model/transactionGroup'
 import Unique, { IdIdentifier } from '../domain/model/Unique'
 import { UpdateExchangeRateFields } from '../store/remote/dto/exchangeRate'
 
@@ -83,3 +84,8 @@ export const ExchangeRateServiceContext = createContext<
 
 export const TransactionServiceContext =
   createContext<BasicCrudService<TransactionID, Transaction, IdIdentifier, TransactionUpdatableFields>>(nilPersistence)
+
+export const TransactionGroupServiceContext =
+  createContext<BasicCrudService<TransactionGroupID, TransactionGroup, IdIdentifier, TransactionGroupUpdatableFields>>(
+    nilPersistence,
+  )

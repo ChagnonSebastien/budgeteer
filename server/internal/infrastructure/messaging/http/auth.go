@@ -265,6 +265,8 @@ func (auth *Auth) userInfoHandler(resp http.ResponseWriter, req *http.Request) {
 
 	if !isGuestToken {
 		// Fall back to OIDC token verification
+		tokenClaims.AuthentificationMethod = shared.AuthMethodOidc
+
 		tokenSource, prevTokenCookie, err := auth.TokenSourceFromCookies(req.Context(), req.Cookie)
 		if err != nil {
 			http.Error(resp, "reading tokens from request", http.StatusInternalServerError)
@@ -384,8 +386,8 @@ func (auth *Auth) parseGuestToken(tokenString string, claims *shared.Claims) (bo
 	if name, ok := claimsMap["name"].(string); ok {
 		claims.Name = name
 	}
-	if isGuest, ok := claimsMap["is_guest"].(bool); ok {
-		claims.IsGuest = isGuest
+	if authMethod, ok := claimsMap["authentification_method"].(shared.AuthMethod); ok {
+		claims.AuthentificationMethod = authMethod
 	}
 
 	return true, nil
@@ -580,15 +582,15 @@ func (auth *Auth) generateGuestTokens(userID, email, username string) (accessTok
 
 	// Create claims for access token
 	accessClaimsMap := map[string]interface{}{
-		"sub":                userID,
-		"email":              email,
-		"preferred_username": username,
-		"name":               username,
-		"is_guest":           true,
-		"iss":                "budgeteer-guest",
-		"aud":                "budgeteer",
-		"exp":                expiry.Unix(),
-		"iat":                time.Now().Unix(),
+		"sub":                     userID,
+		"email":                   email,
+		"preferred_username":      username,
+		"name":                    username,
+		"authentification_method": shared.AuthMethodGuest,
+		"iss":                     "budgeteer-guest",
+		"aud":                     "budgeteer",
+		"exp":                     expiry.Unix(),
+		"iat":                     time.Now().Unix(),
 	}
 
 	// Sign access token

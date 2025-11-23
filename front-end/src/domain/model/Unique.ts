@@ -7,4 +7,4 @@ export interface IdIdentifier {
   id: number
 }
 
-export type ItemType = 'transaction' | 'currency' | 'category' | 'exchangeRate' | 'account'
+export type ItemType = 'transactionGroup' | 'transaction' | 'currency' | 'category' | 'exchangeRate' | 'account'

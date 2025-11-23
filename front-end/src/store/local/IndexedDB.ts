@@ -55,6 +55,15 @@ interface Transaction {
   relatedCurrency: number | null
 }
 
+export type SplitType = 'equal' | 'percentage' | 'share'
+
+interface TransactionGroup {
+  id: number
+  name: string
+  originalCurrency: string
+  splitType: SplitType
+}
+
 export type ActionType = 'create' | 'update' | 'delete'
 
 interface Action {
@@ -75,6 +84,7 @@ export class BudgeteerDB extends Dexie {
   exchangeRates!: Table<ExchangeRate, ExchangeRateCompositeKey, ExchangeRate>
   categories!: EntityTable<Category, 'id'>
   transactions!: EntityTable<Transaction, 'id'>
+  transactionGroups!: EntityTable<TransactionGroup, 'id'>
   replay!: EntityTable<Action, 'id'>
 
   constructor() {
@@ -85,12 +95,13 @@ export class BudgeteerDB extends Dexie {
       categories: '++id',
       exchangeRates: '[a+b+date]',
       transactions: '++id',
+      transactionGroups: '++id',
       replay: '++id,time',
     })
   }
 }
 
-export type { Currency, Account, Category, Action, Transaction, ExchangeRate }
+export type { Currency, Account, Category, Action, Transaction, TransactionGroup, ExchangeRate }
 
 const IndexedDB = new BudgeteerDB()
 export default IndexedDB

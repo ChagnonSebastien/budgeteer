@@ -1,3 +1,5 @@
+export type AuthMethod = 'oidc' | 'userPass' | 'guest'
+
 export default interface User {
   sub: string
   email: string
@@ -5,5 +7,5 @@ export default interface User {
   name: string
   default_currency: number | null
   hidden_default_account: number
-  is_guest: boolean | undefined
+  authentification_method: AuthMethod
 }
