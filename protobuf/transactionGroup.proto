@@ -12,7 +12,8 @@ enum SplitType {
 
 message TransactionGroupMember {
   string email = 1;
-  optional float splitValue = 2;
+  string name = 2;
+  optional float splitValue = 3;
 }
 
 message TransactionGroup {
@@ -21,6 +22,8 @@ message TransactionGroup {
   string initial_currency = 3;
   SplitType splitType = 4;
   repeated TransactionGroupMember members = 5;
+  optional uint32 currency = 6;
+  optional uint32 category = 7;
 
 }
 
@@ -35,6 +38,8 @@ message CreateTransactionGroupRequest {
   string name = 1;
   string initial_currency = 2;
   SplitType splitType = 3;
+  uint32 currency = 4;
+  uint32 category = 5;
 }
 
 message CreateTransactionGroupResponse {
@@ -44,6 +49,8 @@ message CreateTransactionGroupResponse {
 message UpdateTransactionGroupFields {
   optional string name = 1;
   optional SplitType splitType = 2;
+  optional uint32 currency = 3;
+  optional uint32 category = 4;
 }
 
 message UpdateTransactionGroupRequest {
@@ -62,10 +69,19 @@ message TransactionGroupMemberRequest {
 message TransactionGroupMemberResponse {
 }
 
+message UpdateTransactionGroupMembersRequest {
+  uint32 transaction_group_id = 1;
+  repeated TransactionGroupMember members = 2;
+}
+
+message UpdateTransactionGroupMembersResponse {
+}
+
 service TransactionGroupService {
   rpc GetAllTransactionGroups (GetAllTransactionGroupsRequest) returns (GetAllTransactionGroupsResponse);
   rpc CreateTransactionGroup (CreateTransactionGroupRequest) returns (CreateTransactionGroupResponse);
   rpc UpdateTransactionGroup (UpdateTransactionGroupRequest) returns (UpdateTransactionGroupResponse);
   rpc AddTransactionGroupMember (TransactionGroupMemberRequest) returns (TransactionGroupMemberResponse);
   rpc RemoveTransactionGroupMember (TransactionGroupMemberRequest) returns (TransactionGroupMemberResponse);
+  rpc UpdateTransactionGroupMembers (UpdateTransactionGroupMembersRequest) returns (UpdateTransactionGroupMembersResponse);
 }

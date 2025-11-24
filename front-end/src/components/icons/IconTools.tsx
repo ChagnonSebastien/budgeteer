@@ -7,6 +7,7 @@ type IconLibraries = Map<string, IconLibrary>
 export enum PreparedIcon {
   FaPlus = 'FaPlus',
   FaMinus = 'FaMinus',
+  FaQuestion = 'FaQuestion',
   GrTransaction = 'GrTransaction',
   MdOutput = 'MdOutput',
   MdInput = 'MdInput',

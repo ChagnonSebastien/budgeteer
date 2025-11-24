@@ -7,6 +7,7 @@ import (
 	"chagnon.dev/budget-server/internal/domain/model"
 	"chagnon.dev/budget-server/internal/infrastructure/messaging/dto"
 	"chagnon.dev/budget-server/internal/infrastructure/messaging/shared"
+	"chagnon.dev/budget-server/internal/logging"
 )
 
 type transactionGroupRepository interface {
@@ -68,14 +69,29 @@ func (h *TransactionGroupHandler) GetAllTransactionGroups(ctx context.Context, r
 		for j, member := range transactionGroup.Members {
 			var splitValue *float32
 
-			if tentativeValue, valid := member.SplitValue.Value(); valid {
+			if tentativeValue, isSome := member.SplitValue.Value(); isSome {
 				splitValue = &tentativeValue
 			}
 
+			logging.FromContext(ctx).Info(string(member.Email))
+
 			membersDto[j] = &dto.TransactionGroupMember{
 				Email:      string(member.Email),
+				Name:       member.Name,
 				SplitValue: splitValue,
 			}
+		}
+
+		var currency *uint32
+		if currencyValue, isSome := transactionGroup.Currency.Value(); isSome {
+			castedValue := uint32(currencyValue)
+			currency = &castedValue
+		}
+
+		var category *uint32
+		if categoryValue, isSome := transactionGroup.Category.Value(); isSome {
+			castedValue := uint32(categoryValue)
+			category = &castedValue
 		}
 
 		transactionGroupsDto[i] = &dto.TransactionGroup{
@@ -83,7 +99,9 @@ func (h *TransactionGroupHandler) GetAllTransactionGroups(ctx context.Context, r
 			Name:            transactionGroup.Name,
 			InitialCurrency: transactionGroup.OriginalCurrency,
 			SplitType:       splitTypeDto,
-			Members:         nil,
+			Members:         membersDto,
+			Currency:        currency,
+			Category:        category,
 		}
 	}
 

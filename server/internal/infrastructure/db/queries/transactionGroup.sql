@@ -11,10 +11,12 @@ SELECT
         SELECT json_agg(
                        json_build_object(
                                'user_email', utg2.user_email,
+                               'user_name', u.username,
                                'split_value', utg2.split_value
                        )
                )
         FROM user_transaction_group utg2
+        LEFT JOIN users u ON u.email = utg2.user_email
         WHERE utg2.transaction_group_id = tg.id
     ) AS members
 FROM transaction_group tg

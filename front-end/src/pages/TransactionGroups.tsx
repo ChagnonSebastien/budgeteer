@@ -8,14 +8,20 @@ import BasicModal from '../components/shared/BasicModal'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
 import { DetailCard, FancyModal } from '../components/shared/FancyModal'
 import ScrollingOverButton, { CustomScrolling } from '../components/shared/ScrollingOverButton'
-import { TransactionGroupCard } from '../components/transactionGroup/transactionGroupCard'
-import TransactionGroup from '../domain/model/transactionGroup'
-import { TransactionGroupServiceContext } from '../service/ServiceContext'
+import { TransactionGroupCard } from '../components/transactionGroup/TransactionGroupCard'
+import TransactionGroup, { SplitTypeToString } from '../domain/model/transactionGroup'
+import {
+  CategoryServiceContext,
+  CurrencyServiceContext,
+  TransactionGroupServiceContext,
+} from '../service/ServiceContext'
 
 const TransactionGroups: FC = () => {
   const navigate = useNavigate()
   const { IconLib } = useContext(IconToolsContext)
   const { state: transactionGroups } = useContext(TransactionGroupServiceContext)
+  const { state: currencies } = useContext(CurrencyServiceContext)
+  const { state: categories } = useContext(CategoryServiceContext)
   const [clickedTransactionGroup, setClickedTransactionGroup] = useState<TransactionGroup | null>(null)
 
   const scrollingContainerRef = useRef<HTMLDivElement>(null)
@@ -64,30 +70,14 @@ const TransactionGroups: FC = () => {
         {clickedTransactionGroup !== null && (
           <FancyModal
             title={{
-              topCategory: 'Category',
+              topCategory: 'Transaction Group',
               bigTitle: clickedTransactionGroup.name,
               bottomSpec: {
                 IconComponent: IconLib.MdArrowForwardIos,
-                text: 'tbd',
+                text: `With: ${clickedTransactionGroup.members.map((m) => m.name).join(', ')}`,
               },
             }}
             bottomMenu={[
-              {
-                Icon: IconLib.MdEdit,
-                label: 'Edit Category',
-                color: '#64B5F6',
-                description: 'Modify category details',
-                action: () => navigate(`/categories/edit/${clickedTransactionGroup.id}`),
-                disabled: false,
-              },
-              {
-                Icon: IconLib.MdDelete,
-                label: 'Delete Category',
-                color: '#EF5350',
-                description: 'Remove this category',
-                action: () => {},
-                disabled: true,
-              },
               {
                 Icon: IconLib.MdList,
                 label: 'View Transaction Group',
@@ -95,6 +85,22 @@ const TransactionGroups: FC = () => {
                 description: 'See all transactions in the group',
                 action: () => navigate(`/transactions?categories=[${clickedTransactionGroup.id}]`),
                 disabled: false,
+              },
+              {
+                Icon: IconLib.MdEdit,
+                label: 'Edit Transaction Group',
+                color: '#64B5F6',
+                description: 'Modify transaction group details',
+                action: () => navigate(`/categories/edit/${clickedTransactionGroup.id}`),
+                disabled: false,
+              },
+              {
+                Icon: IconLib.MdDelete,
+                label: 'Delete transaction group',
+                color: '#EF5350',
+                description: 'Remove this transaction group',
+                action: () => {},
+                disabled: true,
               },
             ]}
           >
@@ -110,7 +116,26 @@ const TransactionGroups: FC = () => {
               DETAILS
             </Typography>
 
-            <DetailCard delay={0} title="tbd" subTitle="tbd" value={'tbd'} />
+            <DetailCard
+              delay={0}
+              title="Split type"
+              subTitle=""
+              value={SplitTypeToString(clickedTransactionGroup.splitType)}
+            />
+
+            <DetailCard
+              delay={0}
+              title="Currency"
+              subTitle=""
+              value={currencies.find((c) => c.id === clickedTransactionGroup.currency)?.name ?? 'Undefined'}
+            />
+
+            <DetailCard
+              delay={0}
+              title="Category"
+              subTitle=""
+              value={categories.find((c) => c.id === clickedTransactionGroup.category)?.name ?? 'Undefined'}
+            />
           </FancyModal>
         )}
       </BasicModal>

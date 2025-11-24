@@ -23,7 +23,8 @@ func SplitTypeFromDao(splitType dao.GroupSplitType) (model.SplitType, error) {
 }
 
 type GroupMember struct {
-	UserID     string   `json:"user_id"`
+	UserEmail  string   `json:"user_email"`
+	UserName   string   `json:"user_name"`
 	SplitValue *float32 `json:"split_value"` // nullable
 }
 
@@ -55,9 +56,20 @@ func (r *Repository) GetUserTransactionGroups(ctx context.Context, userEmail str
 			}
 
 			members[i] = model.Member{
-				Email:      model.Email(memberDao.UserID),
+				Email:      model.Email(memberDao.UserEmail),
+				Name:       memberDao.UserName,
 				SplitValue: splitValue,
 			}
+		}
+
+		currency := model.None[model.CurrencyID]()
+		if transactionGroupDao.CurrencyID.Valid {
+			currency = model.Some(model.CurrencyID(transactionGroupDao.CurrencyID.Int32))
+		}
+
+		category := model.None[model.CategoryID]()
+		if transactionGroupDao.CategoryID.Valid {
+			category = model.Some(model.CategoryID(transactionGroupDao.CategoryID.Int32))
 		}
 
 		transactionGroups[i] = model.TransactionGroup{
@@ -65,6 +77,8 @@ func (r *Repository) GetUserTransactionGroups(ctx context.Context, userEmail str
 			Name:             transactionGroupDao.Name,
 			OriginalCurrency: transactionGroupDao.CreatorCurrency,
 			SplitType:        splitType,
+			Currency:         currency,
+			Category:         category,
 			Members:          members,
 		}
 	}

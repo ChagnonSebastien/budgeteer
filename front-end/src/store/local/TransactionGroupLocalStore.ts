@@ -1,5 +1,9 @@
 import { BudgeteerDB, SplitType as SplitTypeDto } from './IndexedDB'
-import TransactionGroup, { SplitType, TransactionGroupUpdatableFields } from '../../domain/model/transactionGroup'
+import TransactionGroup, {
+  Member,
+  SplitType,
+  TransactionGroupUpdatableFields,
+} from '../../domain/model/transactionGroup'
 import { IdIdentifier } from '../../domain/model/Unique'
 
 const splitTypeToLocalStore = (type: SplitType): SplitTypeDto => {
@@ -31,7 +35,11 @@ const splitTypeFromLocalStore = (type: SplitTypeDto): SplitType => {
 export default class TransactionGroupLocalStore {
   private db: BudgeteerDB
 
-  constructor(db: BudgeteerDB) {
+  constructor(
+    private userEmail: string,
+    private userName: string,
+    db: BudgeteerDB,
+  ) {
     this.db = db
   }
 
@@ -44,18 +52,32 @@ export default class TransactionGroupLocalStore {
           transactionGroup.name,
           transactionGroup.originalCurrency,
           splitTypeFromLocalStore(transactionGroup.splitType),
+          transactionGroup.members.map((member) => new Member(member.email, member.name, member.splitValue)),
+          transactionGroup.currency,
+          transactionGroup.category,
         ),
     )
   }
 
-  public async create(data: Omit<TransactionGroup, 'id'>): Promise<TransactionGroup> {
+  public async create(data: Omit<TransactionGroup, 'id' | 'members'>): Promise<TransactionGroup> {
     const newID = await this.db.transactionGroups.put({
       name: data.name,
       originalCurrency: data.originalCurrency,
       splitType: splitTypeToLocalStore(data.splitType),
+      members: [{ email: this.userEmail, name: this.userName, splitValue: 1 }],
+      currency: data.currency,
+      category: data.category,
     })
 
-    return new TransactionGroup(newID, data.name, data.originalCurrency, data.splitType)
+    return new TransactionGroup(
+      newID,
+      data.name,
+      data.originalCurrency,
+      data.splitType,
+      [new Member(this.userEmail, this.userName, 1)],
+      data.currency,
+      data.category,
+    )
   }
 
   public async createKnown(data: TransactionGroup): Promise<void> {
@@ -64,6 +86,9 @@ export default class TransactionGroupLocalStore {
       name: data.name,
       originalCurrency: data.originalCurrency,
       splitType: splitTypeToLocalStore(data.splitType),
+      members: data.members,
+      currency: data.currency,
+      category: data.category,
     })
   }
 
@@ -71,6 +96,8 @@ export default class TransactionGroupLocalStore {
     await this.db.transactionGroups.update(identity.id, {
       name: data.name,
       splitType: data.splitType ? splitTypeToLocalStore(data.splitType) : undefined,
+      category: data.category,
+      currency: data.currency,
     })
   }
 
@@ -82,6 +109,9 @@ export default class TransactionGroupLocalStore {
         name: transactionGroup.name,
         originalCurrency: transactionGroup.originalCurrency,
         splitType: splitTypeToLocalStore(transactionGroup.splitType),
+        members: transactionGroup.members,
+        currency: transactionGroup.currency,
+        category: transactionGroup.category,
       })),
     )
   }

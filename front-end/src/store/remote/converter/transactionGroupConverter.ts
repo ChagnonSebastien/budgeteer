@@ -1,8 +1,13 @@
 import { Converter } from './converter'
-import TransactionGroup, { SplitType, TransactionGroupUpdatableFields } from '../../../domain/model/transactionGroup'
+import TransactionGroup, {
+  Member,
+  SplitType,
+  TransactionGroupUpdatableFields,
+} from '../../../domain/model/transactionGroup'
 import {
   SplitType as SplitTypeDto,
   TransactionGroup as TransactionGroupDto,
+  TransactionGroupMember,
   UpdateTransactionGroupFields as UpdateTransactionGroupFieldsDTO,
 } from '../dto/transactionGroup'
 
@@ -37,7 +42,15 @@ export class TransactionGroupConverter
     Converter<TransactionGroup, TransactionGroupDto, TransactionGroupUpdatableFields, UpdateTransactionGroupFieldsDTO>
 {
   toModel(dto: TransactionGroupDto): TransactionGroup {
-    return new TransactionGroup(dto.id, dto.name, dto.initialCurrency, splitTypeFromDto(dto.splitType))
+    return new TransactionGroup(
+      dto.id,
+      dto.name,
+      dto.initialCurrency,
+      splitTypeFromDto(dto.splitType),
+      dto.members.map((member) => new Member(member.email, member.name, member.splitValue ?? null)),
+      dto.currency ?? null,
+      dto.category ?? null,
+    )
   }
 
   toDTO(model: TransactionGroup): TransactionGroupDto {
@@ -46,6 +59,15 @@ export class TransactionGroupConverter
       name: model.name,
       initialCurrency: model.originalCurrency,
       splitType: splitTypeToDto(model.splitType),
+      members: model.members.map((member) =>
+        TransactionGroupMember.create({
+          email: member.email,
+          name: member.name,
+          splitValue: member.splitValue ?? undefined,
+        }),
+      ),
+      currency: model.currency ?? undefined,
+      category: model.category ?? undefined,
     })
   }
 
@@ -53,6 +75,8 @@ export class TransactionGroupConverter
     return UpdateTransactionGroupFieldsDTO.create({
       name: model.name,
       splitType: model.splitType ? splitTypeToDto(model.splitType) : undefined,
+      category: model.category ?? undefined,
+      currency: model.currency ?? undefined,
     })
   }
 }

@@ -57,11 +57,20 @@ interface Transaction {
 
 export type SplitType = 'equal' | 'percentage' | 'share'
 
+interface TransactionGroupMember {
+  email: string
+  name: string
+  splitValue: number | null
+}
+
 interface TransactionGroup {
   id: number
   name: string
   originalCurrency: string
   splitType: SplitType
+  members: TransactionGroupMember[]
+  currency: number | null
+  category: number | null
 }
 
 export type ActionType = 'create' | 'update' | 'delete'

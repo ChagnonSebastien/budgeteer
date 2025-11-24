@@ -7,7 +7,7 @@ import {
   UpdateTransactionGroupRequest,
 } from './dto/transactionGroup'
 import { TransactionGroupServiceClient } from './dto/transactionGroup.client'
-import TransactionGroup from '../../domain/model/transactionGroup'
+import TransactionGroup, { Member } from '../../domain/model/transactionGroup'
 import { IdIdentifier } from '../../domain/model/Unique'
 
 const conv = new TransactionGroupConverter()
@@ -15,23 +15,36 @@ const conv = new TransactionGroupConverter()
 export default class TransactionGroupRemoteStore {
   private client: TransactionGroupServiceClient
 
-  constructor(transport: RpcTransport) {
+  constructor(
+    private userEmail: string,
+    private userName: string,
+    transport: RpcTransport,
+  ) {
     this.client = new TransactionGroupServiceClient(transport)
   }
 
   public async getAll(): Promise<TransactionGroup[]> {
     const response = await this.client.getAllTransactionGroups(GetAllTransactionGroupsRequest.create()).response
+    console.log('response', response)
     return response.transactionGroups.map<TransactionGroup>((dto) => conv.toModel(dto))
   }
 
-  public async create(data: Omit<TransactionGroup, 'id'>): Promise<TransactionGroup> {
+  public async create(data: Omit<TransactionGroup, 'id' | 'members'>): Promise<TransactionGroup> {
     const response = await this.client.createTransactionGroup(
       CreateTransactionGroupRequest.create({
         name: data.name,
         initialCurrency: data.originalCurrency,
       }),
     ).response
-    return new TransactionGroup(response.id, data.name, data.originalCurrency, data.splitType)
+    return new TransactionGroup(
+      response.id,
+      data.name,
+      data.originalCurrency,
+      data.splitType,
+      [new Member(this.userEmail, this.userName, 1)],
+      data.currency,
+      data.category,
+    )
   }
 
   public async update(identity: IdIdentifier, data: Partial<Omit<TransactionGroup, 'id'>>): Promise<void> {
