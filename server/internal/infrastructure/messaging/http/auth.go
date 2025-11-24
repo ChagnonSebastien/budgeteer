@@ -246,21 +246,11 @@ func (auth *Auth) logoutHandler(w http.ResponseWriter, r *http.Request) {
 func (auth *Auth) userInfoHandler(resp http.ResponseWriter, req *http.Request) {
 	logger := logging.FromContext(req.Context())
 
-	// Get token from cookie
-	authTokenCookie, err := req.Cookie("auth-token")
-	if err != nil {
-		logger.Error("getting auth token cookie", "error", err)
-		http.Error(resp, "authentication required", http.StatusUnauthorized)
-		return
-	}
-
-	accessToken := authTokenCookie.Value
-
 	// Try to parse as guest JWT token first
 	var tokenClaims shared.Claims
-	isGuestToken, err := auth.parseGuestToken(accessToken, &tokenClaims)
+	isGuestToken, err := auth.parseGuestToken(req.Cookie, &tokenClaims)
 	if err != nil && !errors.Is(err, jwt.ErrInvalidContentType) {
-		logger.Error("parsing guest token", "error", err)
+		logger.DebugContext(req.Context(), "parsing guest token", "error", err)
 	}
 
 	if !isGuestToken {
@@ -345,9 +335,16 @@ func (auth *Auth) userInfoHandler(resp http.ResponseWriter, req *http.Request) {
 
 // parseGuestToken attempts to parse and verify a guest JWT token
 // Returns true if the token is a valid guest token, false otherwise
-func (auth *Auth) parseGuestToken(tokenString string, claims *shared.Claims) (bool, error) {
+func (auth *Auth) parseGuestToken(getCookie func(name string) (*http.Cookie, error), claims *shared.Claims) (bool, error) {
+
+	// Get token from cookie
+	authTokenCookie, err := getCookie("auth-token")
+	if err != nil {
+		return false, fmt.Errorf("authentication required")
+	}
+
 	// Parse the JWT token
-	token, err := jwt.ParseSigned(tokenString)
+	token, err := jwt.ParseSigned(authTokenCookie.Value)
 	if err != nil {
 		return false, err
 	}

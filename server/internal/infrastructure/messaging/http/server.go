@@ -57,19 +57,9 @@ func (s *GrpcWebServer) catchAllHandler(resp http.ResponseWriter, req *http.Requ
 	if s.wrappedGrpc.IsGrpcWebRequest(req) {
 		logger := logging.FromContext(req.Context())
 
-		// Get token from cookie
-		authTokenCookie, err := req.Cookie("auth-token")
-		if err != nil {
-			logger.Error("getting auth token cookie", "error", err)
-			http.Error(resp, "authentication required", http.StatusUnauthorized)
-			return
-		}
-
-		accessToken := authTokenCookie.Value
-
 		// Try to parse as guest JWT token first
 		var tokenClaims shared.Claims
-		isGuestToken, err := s.auth.parseGuestToken(accessToken, &tokenClaims)
+		isGuestToken, err := s.auth.parseGuestToken(req.Cookie, &tokenClaims)
 		if err != nil {
 			logger.Debug("not a guest token or invalid", "error", err)
 		}
