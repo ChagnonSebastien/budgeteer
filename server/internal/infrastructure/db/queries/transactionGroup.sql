@@ -3,7 +3,7 @@ SELECT
     tg.id,
     tg.name,
     tg.split_type,
-    tg.creator_currency,
+    c.name as creator_currency,
     utg.category_id,
     utg.currency_id,
     utg.split_value,
@@ -20,23 +20,21 @@ SELECT
         WHERE utg2.transaction_group_id = tg.id
     ) AS members
 FROM transaction_group tg
-         JOIN user_transaction_group utg
-              ON utg.transaction_group_id = tg.id
+         JOIN user_transaction_group utg ON utg.transaction_group_id = tg.id
+         JOIN currencies c ON c.id = tg.creator_currency
 WHERE utg.user_email = sqlc.arg(user_email)
 ORDER BY tg.id DESC;
 
 
-
 -- name: CreateTransactionGroupWithCreator :one
 WITH new_group AS (
-    INSERT INTO transaction_group (name, split_type, creator_currency)
-        VALUES (
-                   sqlc.arg(name),
-                   sqlc.arg(split_type)::group_split_type,
-                   sqlc.arg(creator_currency)
-               )
-        RETURNING id
-),
+         INSERT INTO transaction_group (name, split_type, creator_currency)
+             SELECT
+                 sqlc.arg(name),
+                 sqlc.arg(split_type)::group_split_type,
+                 sqlc.arg(currency_id)          -- creator_currency inferred from currency_row
+             RETURNING id
+     ),
      creator_link AS (
          INSERT INTO user_transaction_group (
                                              user_email,
@@ -47,14 +45,15 @@ WITH new_group AS (
              )
              SELECT
                  sqlc.arg(user_email),
-                 id,
+                 g.id,
                  sqlc.narg(category_id),
                  sqlc.narg(currency_id),
                  sqlc.narg(split_value)
-             FROM new_group
+             FROM new_group g
      )
 SELECT id
 FROM new_group;
+
 
 
 

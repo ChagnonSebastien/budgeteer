@@ -15,7 +15,7 @@ create table transaction_group
     id serial constraint transaction_group_pk primary key,
     name text not null,
     split_type group_split_type not null,
-    creator_currency text not null
+    creator_currency integer not null constraint transaction_group_creator_currency_fk references currencies
 );
 
 -- changeset ?:1761582072000-5
@@ -25,7 +25,7 @@ create table user_transaction_group
     transaction_group_id integer not null constraint user_transaction_group_transaction_group_id_fk references transaction_group on delete cascade,
     category_id integer constraint user_transaction_group_category_id_fk references categories on delete cascade,
     currency_id integer constraint user_transaction_group_currency_id_fk references currencies on delete cascade,
-    split_value numeric,
+    split_value integer,
     constraint user_transaction_group_pk primary key (user_email, transaction_group_id)
 );
 
@@ -43,7 +43,7 @@ create table transaction_transaction_group_user_split
 (
     transaction_id integer not null,
     user_email text not null constraint transaction_transaction_group_user_split_user_email_fk references users on delete cascade,
-    split_value numeric,
+    split_value integer,
     constraint transaction_transaction_group_user_split_pk primary key (transaction_id, user_email),
     constraint transaction_transaction_group_user_split_ttg_fk foreign key (transaction_id) references transaction_transaction_group on delete cascade
 );

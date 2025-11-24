@@ -3,6 +3,12 @@ INSERT INTO currencies (name, symbol, risk, type, user_id, decimal_points, rate_
 VALUES (sqlc.arg(name), sqlc.arg(symbol), sqlc.arg(risk), sqlc.arg(type), sqlc.arg(user_id), sqlc.arg(decimal_points), sqlc.arg(rate_fetch_script), sqlc.arg(auto_update))
 RETURNING id;
 
+-- name: GetCurrency :one
+SELECT c.*, u.email
+FROM currencies c
+    JOIN users u ON c.user_id = u.id
+WHERE c.id = sqlc.arg(currency_id);
+
 -- name: GetAllCurrencies :many
 SELECT id, name, symbol, risk, type, decimal_points, rate_fetch_script, auto_update
 FROM currencies

@@ -17,6 +17,7 @@ import CostsAnalysisPage from './pages/CostsAnalysisPage'
 import CreateAccountPage from './pages/CreateAccountPage'
 import CreateCategoryPage from './pages/CreateCategoryPage'
 import CreateCurrencyPage from './pages/CreateCurrencyPage'
+import CreateTransactionGroupPage from './pages/CreateTransactionGroupPage'
 import CreateTransactionPage from './pages/CreateTransactionPage'
 import CurrenciesPage from './pages/CurrenciesPage'
 import Dashboard from './pages/Dashboard'
@@ -341,6 +342,7 @@ const AuthenticatedZone: FC<Props> = (props) => {
           <Route path="/trends" element={<TrendsPage />} />
           <Route path="/investments" element={<InvestmentsPerformancePage />} />
           <Route path="/transaction-groups" element={<TransactionGroups />} />
+          <Route path="/transaction-groups/new" element={<CreateTransactionGroupPage />} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </DrawerWrapper>

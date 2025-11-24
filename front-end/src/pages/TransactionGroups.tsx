@@ -29,7 +29,7 @@ const TransactionGroups: FC = () => {
   return (
     <ContentWithHeader title="Transaction Groups" action="menu" withPadding>
       <ScrollingOverButton
-        button={{ text: 'New', onClick: () => navigate('/transaction-group/new') }}
+        button={{ text: 'New', onClick: () => navigate('/transaction-groups/new') }}
         scrollingContainerRef={scrollingContainerRef}
         contentStyle={{ maxWidth: '40rem' }}
       >

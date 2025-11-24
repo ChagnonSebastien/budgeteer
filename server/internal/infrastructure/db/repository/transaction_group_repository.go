@@ -2,11 +2,13 @@ package repository
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 
 	"chagnon.dev/budget-server/internal/domain/model"
 	"chagnon.dev/budget-server/internal/infrastructure/db/dao"
+	"chagnon.dev/budget-server/internal/logging"
 )
 
 func SplitTypeFromDao(splitType dao.GroupSplitType) (model.SplitType, error) {
@@ -19,6 +21,19 @@ func SplitTypeFromDao(splitType dao.GroupSplitType) (model.SplitType, error) {
 		return model.SplitTypeShare, nil
 	default:
 		return model.SplitTypeEqual, fmt.Errorf("unknown SplitType %s", splitType)
+	}
+}
+
+func SplitTypeToDao(splitType model.SplitType) (dao.GroupSplitType, error) {
+	switch splitType {
+	case model.SplitTypeEqual:
+		return dao.GroupSplitTypeEQUAL, nil
+	case model.SplitTypePercentage:
+		return dao.GroupSplitTypePERCENTAGE, nil
+	case model.SplitTypeShare:
+		return dao.GroupSplitTypeSHARES, nil
+	default:
+		return dao.GroupSplitTypeEQUAL, fmt.Errorf("unknown SplitType %s", splitType)
 	}
 }
 
@@ -84,4 +99,51 @@ func (r *Repository) GetUserTransactionGroups(ctx context.Context, userEmail str
 	}
 
 	return transactionGroups, nil
+}
+
+func (r *Repository) CreateTransactionGroups(
+	ctx context.Context,
+	email, name string,
+	splitType model.SplitType,
+	currencyId model.CurrencyID,
+	categoryId model.CategoryID,
+) (model.TransactionGroupID, error) {
+	logging.FromContext(ctx).Info(fmt.Sprintf("%d, %d, %d, %s", currencyId, categoryId, splitType, name))
+
+	currency, err := r.queries.GetCurrency(ctx, int32(currencyId))
+	if err != nil {
+		return 0, fmt.Errorf("retrieving curency details")
+	}
+
+	if currency.Email != email {
+		return 0, fmt.Errorf("currency does not seem to belong to creator")
+	}
+
+	splitTypeDao, err := SplitTypeToDao(splitType)
+	if err != nil {
+		return 0, fmt.Errorf("converting split type to dao")
+	}
+
+	transactionGroupId, err := r.queries.CreateTransactionGroupWithCreator(ctx, &dao.CreateTransactionGroupWithCreatorParams{
+		Name:      name,
+		SplitType: splitTypeDao,
+		UserEmail: email,
+		CategoryID: sql.NullInt32{
+			Int32: int32(categoryId),
+			Valid: true,
+		},
+		CurrencyID: sql.NullInt32{
+			Int32: int32(currencyId),
+			Valid: true,
+		},
+		SplitValue: sql.NullInt32{
+			Valid: false,
+		},
+	})
+
+	if err != nil {
+		return 0, err
+	}
+
+	return model.TransactionGroupID(transactionGroupId), nil
 }

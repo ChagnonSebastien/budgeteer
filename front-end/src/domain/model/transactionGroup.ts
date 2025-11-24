@@ -23,6 +23,17 @@ export const SplitTypeToString = (st: SplitType) => {
   }
 }
 
+export const ParseSplitType = (st: string) => {
+  switch (st) {
+    case 'Equal':
+      return SplitType.EQUAL
+    case 'Percentage':
+      return SplitType.PERCENTAGE
+    case 'Shares':
+      return SplitType.SHARES
+  }
+}
+
 export class Member {
   constructor(
     readonly email: string,

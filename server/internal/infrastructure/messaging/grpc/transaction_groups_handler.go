@@ -12,6 +12,13 @@ import (
 
 type transactionGroupRepository interface {
 	GetUserTransactionGroups(ctx context.Context, userEmail string) ([]model.TransactionGroup, error)
+	CreateTransactionGroups(
+		ctx context.Context,
+		email, name string,
+		splitType model.SplitType,
+		id model.CurrencyID,
+		id2 model.CategoryID,
+	) (model.TransactionGroupID, error)
 }
 
 type TransactionGroupHandler struct {
@@ -62,7 +69,7 @@ func (h *TransactionGroupHandler) GetAllTransactionGroups(ctx context.Context, r
 
 		splitTypeDto, err := SplitTypeToDto(transactionGroup.SplitType)
 		if err != nil {
-			return nil, fmt.Errorf("converting split type to dto when building get all transaction groups response")
+			return nil, fmt.Errorf("converting split type to dto")
 		}
 
 		membersDto := make([]*dto.TransactionGroupMember, len(transactionGroup.Members))
@@ -108,5 +115,23 @@ func (h *TransactionGroupHandler) GetAllTransactionGroups(ctx context.Context, r
 	return &dto.GetAllTransactionGroupsResponse{
 		TransactionGroups: transactionGroupsDto,
 	}, nil
+}
 
+func (h *TransactionGroupHandler) CreateTransactionGroup(ctx context.Context, req *dto.CreateTransactionGroupRequest) (*dto.CreateTransactionGroupResponse, error) {
+	claims, ok := ctx.Value(shared.ClaimsKey{}).(shared.Claims)
+	if !ok {
+		return nil, fmt.Errorf("invalid claims")
+	}
+
+	splitType, err := SplitTypeFromDto(req.SplitType)
+	if err != nil {
+		return nil, fmt.Errorf("parsing split type from dto")
+	}
+
+	id, err := h.transactionGroupService.CreateTransactionGroups(ctx, claims.Email, req.Name, splitType, model.CurrencyID(req.Currency), model.CategoryID(req.Category))
+	if err != nil {
+		return nil, fmt.Errorf("creating transaction group for user %s: %s", claims.Email, err)
+	}
+
+	return &dto.CreateTransactionGroupResponse{Id: uint32(id)}, nil
 }

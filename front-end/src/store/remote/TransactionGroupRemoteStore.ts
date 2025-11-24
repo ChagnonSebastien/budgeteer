@@ -4,13 +4,25 @@ import { TransactionGroupConverter } from './converter/transactionGroupConverter
 import {
   CreateTransactionGroupRequest,
   GetAllTransactionGroupsRequest,
+  SplitType as SplitTypeDto,
   UpdateTransactionGroupRequest,
 } from './dto/transactionGroup'
 import { TransactionGroupServiceClient } from './dto/transactionGroup.client'
-import TransactionGroup, { Member } from '../../domain/model/transactionGroup'
+import TransactionGroup, { Member, SplitType } from '../../domain/model/transactionGroup'
 import { IdIdentifier } from '../../domain/model/Unique'
 
 const conv = new TransactionGroupConverter()
+
+const SplitTypeToDTO = (splitType: SplitType) => {
+  switch (splitType) {
+    case SplitType.EQUAL:
+      return SplitTypeDto.Equal
+    case SplitType.PERCENTAGE:
+      return SplitTypeDto.Percentage
+    case SplitType.SHARES:
+      return SplitTypeDto.Share
+  }
+}
 
 export default class TransactionGroupRemoteStore {
   private client: TransactionGroupServiceClient
@@ -25,7 +37,6 @@ export default class TransactionGroupRemoteStore {
 
   public async getAll(): Promise<TransactionGroup[]> {
     const response = await this.client.getAllTransactionGroups(GetAllTransactionGroupsRequest.create()).response
-    console.log('response', response)
     return response.transactionGroups.map<TransactionGroup>((dto) => conv.toModel(dto))
   }
 
@@ -33,7 +44,9 @@ export default class TransactionGroupRemoteStore {
     const response = await this.client.createTransactionGroup(
       CreateTransactionGroupRequest.create({
         name: data.name,
-        initialCurrency: data.originalCurrency,
+        splitType: SplitTypeToDTO(data.splitType),
+        currency: data.currency ?? undefined,
+        category: data.category ?? undefined,
       }),
     ).response
     return new TransactionGroup(
