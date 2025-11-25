@@ -5,20 +5,26 @@ import (
 	"fmt"
 
 	"chagnon.dev/budget-server/internal/domain/model"
+	"chagnon.dev/budget-server/internal/infrastructure/db/repository"
 	"chagnon.dev/budget-server/internal/infrastructure/messaging/dto"
 	"chagnon.dev/budget-server/internal/infrastructure/messaging/shared"
-	"chagnon.dev/budget-server/internal/logging"
 )
 
 type transactionGroupRepository interface {
 	GetUserTransactionGroups(ctx context.Context, userEmail string) ([]model.TransactionGroup, error)
-	CreateTransactionGroups(
+	CreateTransactionGroup(
 		ctx context.Context,
 		email, name string,
 		splitType model.SplitType,
 		id model.CurrencyID,
 		id2 model.CategoryID,
 	) (model.TransactionGroupID, error)
+	UpdateTransactionGroup(
+		ctx context.Context,
+		userId string,
+		id model.TransactionGroupID,
+		fields *repository.UpdateTransactionGroupFields,
+	) error
 }
 
 type TransactionGroupHandler struct {
@@ -80,8 +86,6 @@ func (h *TransactionGroupHandler) GetAllTransactionGroups(ctx context.Context, r
 				splitValue = &tentativeValue
 			}
 
-			logging.FromContext(ctx).Info(string(member.Email))
-
 			membersDto[j] = &dto.TransactionGroupMember{
 				Email:      string(member.Email),
 				Name:       member.Name,
@@ -128,10 +132,56 @@ func (h *TransactionGroupHandler) CreateTransactionGroup(ctx context.Context, re
 		return nil, fmt.Errorf("parsing split type from dto")
 	}
 
-	id, err := h.transactionGroupService.CreateTransactionGroups(ctx, claims.Email, req.Name, splitType, model.CurrencyID(req.Currency), model.CategoryID(req.Category))
+	id, err := h.transactionGroupService.CreateTransactionGroup(ctx, claims.Email, req.Name, splitType, model.CurrencyID(req.Currency), model.CategoryID(req.Category))
 	if err != nil {
 		return nil, fmt.Errorf("creating transaction group for user %s: %s", claims.Email, err)
 	}
 
 	return &dto.CreateTransactionGroupResponse{Id: uint32(id)}, nil
+}
+
+func (h *TransactionGroupHandler) UpdateTransactionGroup(ctx context.Context, request *dto.UpdateTransactionGroupRequest) (*dto.UpdateTransactionGroupResponse, error) {
+	claims, ok := ctx.Value(shared.ClaimsKey{}).(shared.Claims)
+	if !ok {
+		return nil, fmt.Errorf("invalid claims")
+	}
+
+	name := model.None[string]()
+	splitType := model.None[model.SplitType]()
+	currencyId := model.None[model.CurrencyID]()
+	categoryId := model.None[model.CategoryID]()
+
+	if request.Fields != nil {
+		if request.Fields.Name != nil {
+			name = model.Some(*request.Fields.Name)
+		}
+
+		if request.Fields.SplitType != nil {
+			value, err := SplitTypeFromDto(*request.Fields.SplitType)
+			if err != nil {
+				return nil, fmt.Errorf("parsing split type %s: %w", *request.Fields.SplitType, err)
+			}
+			splitType = model.Some(value)
+		}
+
+		if request.Fields.Currency != nil {
+			currencyId = model.Some(model.CurrencyID(*request.Fields.Currency))
+		}
+
+		if request.Fields.Category != nil {
+			categoryId = model.Some(model.CategoryID(*request.Fields.Category))
+		}
+	}
+
+	err := h.transactionGroupService.UpdateTransactionGroup(ctx, claims.Email, model.TransactionGroupID(request.Id), &repository.UpdateTransactionGroupFields{
+		Name:       name,
+		SplitType:  splitType,
+		CurrencyId: currencyId,
+		CategoryId: categoryId,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("updating transaction group: %w", err)
+	}
+
+	return &dto.UpdateTransactionGroupResponse{}, err
 }

@@ -101,15 +101,13 @@ func (r *Repository) GetUserTransactionGroups(ctx context.Context, userEmail str
 	return transactionGroups, nil
 }
 
-func (r *Repository) CreateTransactionGroups(
+func (r *Repository) CreateTransactionGroup(
 	ctx context.Context,
 	email, name string,
 	splitType model.SplitType,
 	currencyId model.CurrencyID,
 	categoryId model.CategoryID,
 ) (model.TransactionGroupID, error) {
-	logging.FromContext(ctx).Info(fmt.Sprintf("%d, %d, %d, %s", currencyId, categoryId, splitType, name))
-
 	currency, err := r.queries.GetCurrency(ctx, int32(currencyId))
 	if err != nil {
 		return 0, fmt.Errorf("retrieving curency details")
@@ -146,4 +144,104 @@ func (r *Repository) CreateTransactionGroups(
 	}
 
 	return model.TransactionGroupID(transactionGroupId), nil
+}
+
+type UpdateTransactionGroupFields struct {
+	Name       model.Optional[string]
+	SplitType  model.Optional[model.SplitType]
+	CurrencyId model.Optional[model.CurrencyID]
+	CategoryId model.Optional[model.CategoryID]
+}
+
+func (u *UpdateTransactionGroupFields) nullName() sql.NullString {
+	if value, ok := u.Name.Value(); ok {
+		return sql.NullString{String: value, Valid: true}
+	}
+
+	return sql.NullString{Valid: false}
+}
+
+func (u *UpdateTransactionGroupFields) nullSplitType() dao.NullGroupSplitType {
+	if value, ok := u.SplitType.Value(); ok {
+		if splitType, err := SplitTypeToDao(value); err == nil {
+			return dao.NullGroupSplitType{GroupSplitType: splitType, Valid: true}
+		}
+	}
+
+	return dao.NullGroupSplitType{Valid: false}
+}
+
+func (u *UpdateTransactionGroupFields) nullCurrencyId() sql.NullInt32 {
+	if value, ok := u.CurrencyId.Value(); ok {
+		return sql.NullInt32{Int32: int32(value), Valid: true}
+	}
+
+	return sql.NullInt32{Valid: false}
+}
+
+func (u *UpdateTransactionGroupFields) nullCategoryId() sql.NullInt32 {
+	if value, ok := u.CategoryId.Value(); ok {
+		return sql.NullInt32{Int32: int32(value), Valid: true}
+	}
+
+	return sql.NullInt32{Valid: false}
+
+}
+
+func (r *Repository) UpdateTransactionGroup(
+	ctx context.Context,
+	email string,
+	id model.TransactionGroupID,
+	fields *UpdateTransactionGroupFields,
+) (err error) {
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("beginning db transaction: %w", err)
+	}
+
+	defer func() {
+		if err != nil {
+			if rbErr := tx.Rollback(); rbErr != nil {
+				logging.FromContext(ctx).Error(fmt.Sprintf("transaction group update rollback error: %v", rbErr))
+			}
+		}
+	}()
+
+	rowsAffected, err := r.queries.WithTx(tx).UpdateTransactionGroupUser(ctx, &dao.UpdateTransactionGroupUserParams{
+		CurrencyID:         fields.nullCurrencyId(),
+		CategoryID:         fields.nullCategoryId(),
+		Name:               fields.nullName(),
+		UserEmail:          email,
+		TransactionGroupID: int32(id),
+	})
+	if err != nil {
+		err = fmt.Errorf("updating user - transaction group relationship: %w", err)
+		return
+	}
+	if rowsAffected == 0 {
+		err = fmt.Errorf("user - transaction group association returned no result")
+		return
+	}
+
+	rowsAffected, err = r.queries.WithTx(tx).UpdateTransactionGroup(ctx, &dao.UpdateTransactionGroupParams{
+		Name:               fields.nullName(),
+		UserEmail:          email,
+		SplitType:          fields.nullSplitType(),
+		TransactionGroupID: int32(id),
+	})
+	if err != nil {
+		err = fmt.Errorf("updating transaction group: %w", err)
+		return
+	}
+	if rowsAffected == 0 {
+		err = fmt.Errorf("transaction group update returned no result")
+		return
+	}
+
+	if err = tx.Commit(); err != nil {
+		err = fmt.Errorf("committing transaction: %w", err)
+		return
+	}
+
+	return
 }

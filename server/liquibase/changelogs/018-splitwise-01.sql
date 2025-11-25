@@ -25,6 +25,7 @@ create table user_transaction_group
     transaction_group_id integer not null constraint user_transaction_group_transaction_group_id_fk references transaction_group on delete cascade,
     category_id integer constraint user_transaction_group_category_id_fk references categories on delete cascade,
     currency_id integer constraint user_transaction_group_currency_id_fk references currencies on delete cascade,
+    name_override text,
     split_value integer,
     constraint user_transaction_group_pk primary key (user_email, transaction_group_id)
 );

@@ -83,7 +83,7 @@ const TransactionGroups: FC = () => {
                 label: 'View Transaction Group',
                 color: '#81C784',
                 description: 'See all transactions in the group',
-                action: () => navigate(`/transactions?categories=[${clickedTransactionGroup.id}]`),
+                action: () => navigate(`/transaction-groups/manage/${clickedTransactionGroup.id}`),
                 disabled: false,
               },
               {
@@ -91,7 +91,7 @@ const TransactionGroups: FC = () => {
                 label: 'Edit Transaction Group',
                 color: '#64B5F6',
                 description: 'Modify transaction group details',
-                action: () => navigate(`/categories/edit/${clickedTransactionGroup.id}`),
+                action: () => navigate(`/transaction-groups/edit/${clickedTransactionGroup.id}`),
                 disabled: false,
               },
               {

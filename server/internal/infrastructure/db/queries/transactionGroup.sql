@@ -54,6 +54,33 @@ WITH new_group AS (
 SELECT id
 FROM new_group;
 
+-- name: UpdateTransactionGroupUser :execrows
+ UPDATE user_transaction_group utg
+ SET
+     currency_id = COALESCE(sqlc.narg(currency_id), utg.currency_id),
+     category_id = COALESCE(sqlc.narg(category_id), utg.category_id),
+     name_override = COALESCE(sqlc.narg(name), utg.name_override)
+ WHERE utg.user_email = sqlc.arg(user_email) AND utg.transaction_group_id = sqlc.arg(transaction_group_id);
+
+-- name: UpdateTransactionGroup :execrows
+WITH tg_creator_email AS (
+    SELECT u.email
+    FROM transaction_group tg
+             JOIN currencies c
+                  ON c.id = tg.creator_currency
+             JOIN users u
+                  ON u.id = c.user_id
+    WHERE tg.id = sqlc.arg(transaction_group_id)
+    LIMIT 1
+)
+UPDATE transaction_group tg2
+SET
+    name = CASE WHEN (SELECT email FROM tg_creator_email) = sqlc.arg(user_email)
+        THEN COALESCE(sqlc.narg(name), tg2.name)
+        ELSE tg2.name
+        END,
+    split_type = COALESCE(sqlc.narg(split_type), split_type)
+WHERE tg2.id = sqlc.arg(transaction_group_id);
 
 
 
