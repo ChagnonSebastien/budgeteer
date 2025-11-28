@@ -80,16 +80,18 @@ func (h *TransactionGroupHandler) GetAllTransactionGroups(ctx context.Context, r
 
 		membersDto := make([]*dto.TransactionGroupMember, len(transactionGroup.Members))
 		for j, member := range transactionGroup.Members {
-			var splitValue *float32
+			var splitValue *uint32
 
 			if tentativeValue, isSome := member.SplitValue.Value(); isSome {
-				splitValue = &tentativeValue
+				value := uint32(tentativeValue)
+				splitValue = &value
 			}
 
 			membersDto[j] = &dto.TransactionGroupMember{
 				Email:      string(member.Email),
 				Name:       member.Name,
 				SplitValue: splitValue,
+				Joined:     member.Joined,
 			}
 		}
 
@@ -113,6 +115,7 @@ func (h *TransactionGroupHandler) GetAllTransactionGroups(ctx context.Context, r
 			Members:         membersDto,
 			Currency:        currency,
 			Category:        category,
+			Hidden:          transactionGroup.Hidden,
 		}
 	}
 
@@ -150,6 +153,8 @@ func (h *TransactionGroupHandler) UpdateTransactionGroup(ctx context.Context, re
 	splitType := model.None[model.SplitType]()
 	currencyId := model.None[model.CurrencyID]()
 	categoryId := model.None[model.CategoryID]()
+	members := model.None[[]repository.UpdateTransactionGroupMembersField]()
+	hidden := model.None[bool]()
 
 	if request.Fields != nil {
 		if request.Fields.Name != nil {
@@ -171,6 +176,27 @@ func (h *TransactionGroupHandler) UpdateTransactionGroup(ctx context.Context, re
 		if request.Fields.Category != nil {
 			categoryId = model.Some(model.CategoryID(*request.Fields.Category))
 		}
+
+		if request.Fields.Members != nil && len(request.Fields.Members) > 0 {
+			builtMembers := make([]repository.UpdateTransactionGroupMembersField, len(request.Fields.Members))
+			for i, member := range request.Fields.Members {
+				splitValue := model.None[int]()
+				if member.SplitValue != nil {
+					splitValue = model.Some(int(*member.SplitValue))
+				}
+
+				builtMembers[i] = repository.UpdateTransactionGroupMembersField{
+					Email:  model.Email(member.Email),
+					Fields: repository.UpdateTransactionGroupMemberFields{SplitValue: splitValue},
+				}
+			}
+
+			members = model.Some(builtMembers)
+		}
+
+		if request.Fields.Hidden != nil {
+			hidden = model.Some(*request.Fields.Hidden)
+		}
 	}
 
 	err := h.transactionGroupService.UpdateTransactionGroup(ctx, claims.Email, model.TransactionGroupID(request.Id), &repository.UpdateTransactionGroupFields{
@@ -178,6 +204,8 @@ func (h *TransactionGroupHandler) UpdateTransactionGroup(ctx context.Context, re
 		SplitType:  splitType,
 		CurrencyId: currencyId,
 		CategoryId: categoryId,
+		Members:    members,
+		Hidden:     hidden,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("updating transaction group: %w", err)

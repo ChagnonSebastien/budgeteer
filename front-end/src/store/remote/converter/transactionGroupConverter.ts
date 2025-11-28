@@ -1,6 +1,6 @@
 import { Converter } from './converter'
 import TransactionGroup, {
-  Member,
+  Person,
   SplitType,
   TransactionGroupUpdatableFields,
 } from '../../../domain/model/transactionGroup'
@@ -8,6 +8,7 @@ import {
   SplitType as SplitTypeDto,
   TransactionGroup as TransactionGroupDto,
   TransactionGroupMember,
+  UpdateGroupMemberFields,
   UpdateTransactionGroupFields as UpdateTransactionGroupFieldsDTO,
 } from '../dto/transactionGroup'
 
@@ -47,9 +48,10 @@ export class TransactionGroupConverter
       dto.name,
       dto.initialCurrency,
       splitTypeFromDto(dto.splitType),
-      dto.members.map((member) => new Member(member.email, member.name, member.splitValue ?? null)),
+      dto.members.map((member) => new Person(member.email, member.name, member.splitValue ?? null, member.joined)),
       dto.currency ?? null,
       dto.category ?? null,
+      dto.hidden,
     )
   }
 
@@ -68,6 +70,7 @@ export class TransactionGroupConverter
       ),
       currency: model.currency ?? undefined,
       category: model.category ?? undefined,
+      hidden: model.hidden,
     })
   }
 
@@ -77,6 +80,13 @@ export class TransactionGroupConverter
       splitType: model.splitType ? splitTypeToDto(model.splitType) : undefined,
       category: model.category ?? undefined,
       currency: model.currency ?? undefined,
+      members: model.members?.map((m) =>
+        UpdateGroupMemberFields.create({
+          email: m.email,
+          splitValue: m.splitValue ?? undefined,
+        }),
+      ),
+      hidden: model.hidden,
     })
   }
 }

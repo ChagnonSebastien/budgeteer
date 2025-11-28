@@ -1,6 +1,6 @@
 import { BudgeteerDB, SplitType as SplitTypeDto } from './IndexedDB'
 import TransactionGroup, {
-  Member,
+  Person,
   SplitType,
   TransactionGroupUpdatableFields,
 } from '../../domain/model/transactionGroup'
@@ -52,9 +52,12 @@ export default class TransactionGroupLocalStore {
           transactionGroup.name,
           transactionGroup.originalCurrency,
           splitTypeFromLocalStore(transactionGroup.splitType),
-          transactionGroup.members.map((member) => new Member(member.email, member.name, member.splitValue)),
+          transactionGroup.members.map(
+            (member) => new Person(member.email, member.name, member.splitValue, member.joined),
+          ),
           transactionGroup.currency,
           transactionGroup.category,
+          transactionGroup.hidden,
         ),
     )
   }
@@ -64,9 +67,10 @@ export default class TransactionGroupLocalStore {
       name: data.name,
       originalCurrency: data.originalCurrency,
       splitType: splitTypeToLocalStore(data.splitType),
-      members: [{ email: this.userEmail, name: this.userName, splitValue: 1 }],
+      members: [{ email: this.userEmail, name: this.userName, splitValue: null, joined: true }],
       currency: data.currency,
       category: data.category,
+      hidden: data.hidden,
     })
 
     return new TransactionGroup(
@@ -74,9 +78,10 @@ export default class TransactionGroupLocalStore {
       data.name,
       data.originalCurrency,
       data.splitType,
-      [new Member(this.userEmail, this.userName, 1)],
+      [new Person(this.userEmail, this.userName, null, true)],
       data.currency,
       data.category,
+      data.hidden,
     )
   }
 
@@ -89,16 +94,32 @@ export default class TransactionGroupLocalStore {
       members: data.members,
       currency: data.currency,
       category: data.category,
+      hidden: data.hidden,
     })
   }
 
   public async update(identity: IdIdentifier, data: Partial<TransactionGroupUpdatableFields>): Promise<void> {
-    await this.db.transactionGroups.update(identity.id, {
-      name: data.name,
-      splitType: data.splitType ? splitTypeToLocalStore(data.splitType) : undefined,
-      category: data.category,
-      currency: data.currency,
-    })
+    let updateQuery = {}
+    if (typeof data.name !== 'undefined') {
+      updateQuery = { ...updateQuery, name: data.name }
+    }
+    if (typeof data.splitType !== 'undefined') {
+      updateQuery = { ...updateQuery, splitType: splitTypeToLocalStore(data.splitType) }
+    }
+    if (typeof data.category !== 'undefined') {
+      updateQuery = { ...updateQuery, category: data.category }
+    }
+    if (typeof data.currency !== 'undefined') {
+      updateQuery = { ...updateQuery, currency: data.currency }
+    }
+    if (typeof data.members !== 'undefined') {
+      updateQuery = { ...updateQuery, members: data.members }
+    }
+    if (typeof data.hidden !== 'undefined') {
+      updateQuery = { ...updateQuery, hidden: data.hidden }
+    }
+
+    await this.db.transactionGroups.update(identity.id, updateQuery)
   }
 
   public async sync(transactionGroups: TransactionGroup[]): Promise<void> {
@@ -112,6 +133,7 @@ export default class TransactionGroupLocalStore {
         members: transactionGroup.members,
         currency: transactionGroup.currency,
         category: transactionGroup.category,
+        hidden: transactionGroup.hidden,
       })),
     )
   }

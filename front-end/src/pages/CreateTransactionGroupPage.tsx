@@ -1,15 +1,17 @@
 import { FC, useCallback, useContext } from 'react'
 import { useNavigate } from 'react-router-dom'
 
+import { UserContext } from '../App'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
 import TransactionGroupForm from '../components/transactionGroup/TransactionGroupForm'
-import { TransactionGroupUpdatableFields } from '../domain/model/transactionGroup'
+import { Person, TransactionGroupUpdatableFields } from '../domain/model/transactionGroup'
 import { TransactionGroupServiceContext } from '../service/ServiceContext'
 
 const CreateTransactionGroupPage: FC = () => {
   const navigate = useNavigate()
 
   const { create: createTransactionGroup } = useContext(TransactionGroupServiceContext)
+  const { email, preferred_username } = useContext(UserContext)
 
   const onSubmit = useCallback(
     async (data: Partial<TransactionGroupUpdatableFields>) => {
@@ -24,6 +26,8 @@ const CreateTransactionGroupPage: FC = () => {
         splitType: data.splitType,
         currency: data.currency,
         category: data.category,
+        hidden: false,
+        members: [new Person(email, preferred_username, null, true)],
       })
       navigate(`/transaction-groups`, { replace: true })
     },

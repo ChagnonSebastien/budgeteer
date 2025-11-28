@@ -21,12 +21,13 @@ create table transaction_group
 -- changeset ?:1761582072000-5
 create table user_transaction_group
 (
-    user_email text not null constraint user_transaction_group_user_email_fk references users on delete cascade,
+    user_email text not null,
     transaction_group_id integer not null constraint user_transaction_group_transaction_group_id_fk references transaction_group on delete cascade,
-    category_id integer constraint user_transaction_group_category_id_fk references categories on delete cascade,
-    currency_id integer constraint user_transaction_group_currency_id_fk references currencies on delete cascade,
+    category_id integer constraint user_transaction_group_category_id_fk references categories on delete set null,
+    currency_id integer constraint user_transaction_group_currency_id_fk references currencies on delete set null,
     name_override text,
     split_value integer,
+    hidden boolean default false not null,
     constraint user_transaction_group_pk primary key (user_email, transaction_group_id)
 );
 

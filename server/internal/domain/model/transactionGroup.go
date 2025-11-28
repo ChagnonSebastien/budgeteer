@@ -13,7 +13,8 @@ const (
 type Member struct {
 	Email      Email
 	Name       string
-	SplitValue Optional[float32]
+	SplitValue Optional[int]
+	Joined     bool
 }
 
 type TransactionGroup struct {
@@ -24,4 +25,5 @@ type TransactionGroup struct {
 	Currency         Optional[CurrencyID]
 	Category         Optional[CategoryID]
 	Members          []Member
+	Hidden           bool
 }

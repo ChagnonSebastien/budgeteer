@@ -7,12 +7,17 @@ SELECT
     utg.category_id,
     utg.currency_id,
     utg.split_value,
+    utg.hidden,
     (
         SELECT json_agg(
                        json_build_object(
                                'user_email', utg2.user_email,
                                'user_name', u.username,
-                               'split_value', utg2.split_value
+                               'split_value', utg2.split_value,
+                               'joined', CASE WHEN utg2.currency_id IS NULL
+                                    THEN false
+                                    ELSE true
+                               END
                        )
                )
         FROM user_transaction_group utg2
@@ -25,6 +30,18 @@ FROM transaction_group tg
 WHERE utg.user_email = sqlc.arg(user_email)
 ORDER BY tg.id DESC;
 
+
+-- name: GetTransactionGroupMembers :many
+SELECT utg.user_email,
+       utg.split_value,
+       CASE WHEN utg.currency_id IS NULL
+                THEN false
+                ELSE true
+       END as joined,
+    utg.hidden
+FROM user_transaction_group utg
+WHERE utg.transaction_group_id = sqlc.arg(transaction_group_id)
+  AND utg.hidden = false;
 
 -- name: CreateTransactionGroupWithCreator :one
 WITH new_group AS (
@@ -54,12 +71,13 @@ WITH new_group AS (
 SELECT id
 FROM new_group;
 
--- name: UpdateTransactionGroupUser :execrows
+-- name: UpdateTransactionGroupPersonalProperties :execrows
  UPDATE user_transaction_group utg
  SET
      currency_id = COALESCE(sqlc.narg(currency_id), utg.currency_id),
      category_id = COALESCE(sqlc.narg(category_id), utg.category_id),
-     name_override = COALESCE(sqlc.narg(name), utg.name_override)
+     name_override = COALESCE(sqlc.narg(name), utg.name_override),
+     hidden = COALESCE(sqlc.narg(hidden), utg.hidden)
  WHERE utg.user_email = sqlc.arg(user_email) AND utg.transaction_group_id = sqlc.arg(transaction_group_id);
 
 -- name: UpdateTransactionGroup :execrows
@@ -84,26 +102,26 @@ WHERE tg2.id = sqlc.arg(transaction_group_id);
 
 
 
--- name: AddUserToTransactionGroup :exec
-INSERT INTO user_transaction_group (
+-- name: UpsertTransactionGroupMember :execrows
+INSERT INTO user_transaction_group AS utg (
     user_email,
     transaction_group_id,
-    category_id,
-    currency_id,
     split_value
 )
 VALUES (
            sqlc.arg(user_email),
            sqlc.arg(transaction_group_id),
-           sqlc.narg(category_id),
-           sqlc.narg(currency_id),
            sqlc.narg(split_value)
-       );
+       )
+ON CONFLICT (user_email, transaction_group_id)
+    DO UPDATE
+    SET
+        split_value = COALESCE(EXCLUDED.split_value, utg.split_value);
+
 
 
 -- name: RemoveUserFromTransactionGroup :one
 WITH deleted_splits AS (
-    -- Remove this user's splits for any transactions in the group
     DELETE FROM transaction_transaction_group_user_split s
         USING transaction_transaction_group ttg
         WHERE
@@ -112,29 +130,28 @@ WITH deleted_splits AS (
                 AND s.user_email = sqlc.arg(user_email)
         RETURNING 1
 ),
-     deleted_user_transactions AS (
-         -- Unlink all transactions FROM this user in the group
-         -- (transactions where transactions.user_email = user_email)
-         DELETE FROM transaction_transaction_group ttg
-             USING transactions t
-             WHERE
-                 ttg.transaction_id = t.id
-                     AND t.user_id = sqlc.arg(user_id)
-                     AND ttg.transaction_group_id = sqlc.arg(transaction_group_id)
-             RETURNING ttg.transaction_id
-     ),
-     deleted_user AS (
-         -- Remove the user from the group membership
-         DELETE FROM user_transaction_group utg
-             WHERE
-                 utg.transaction_group_id = sqlc.arg(transaction_group_id)
-                     AND utg.user_email = sqlc.arg(user_email)
-             RETURNING 1
-     )
+deleted_user_transactions AS (
+    DELETE FROM transaction_transaction_group ttg
+        USING transactions t
+        JOIN users u ON u.id = t.user_id
+        WHERE
+            ttg.transaction_id = t.id
+                AND u.email = sqlc.arg(user_email)
+                AND ttg.transaction_group_id = sqlc.arg(transaction_group_id)
+        RETURNING ttg.transaction_id
+),
+deleted_user AS (
+    -- Remove the user from the group membership
+    DELETE FROM user_transaction_group utg
+        WHERE
+            utg.transaction_group_id = sqlc.arg(transaction_group_id)
+                AND utg.user_email = sqlc.arg(user_email)
+        RETURNING 1
+)
 SELECT
-    COALESCE((SELECT COUNT(*) FROM deleted_splits), 0)            AS splits_deleted,
-    COALESCE((SELECT COUNT(*) FROM deleted_user_transactions), 0) AS transactions_unlinked,
-    COALESCE((SELECT COUNT(*) FROM deleted_user), 0)              AS user_links_deleted;
+    CAST(COALESCE((SELECT COUNT(*) FROM deleted_splits), 0) AS INTEGER)            AS splits_deleted,
+    CAST(COALESCE((SELECT COUNT(*) FROM deleted_user_transactions), 0) AS INTEGER) AS transactions_unlinked,
+    CAST(COALESCE((SELECT COUNT(*) FROM deleted_user), 0) AS INTEGER)              AS user_links_deleted;
 
 
 

@@ -5,12 +5,17 @@ import { BasicCrudService } from './BasicCrudService'
 import { CategoryPersistenceAugmentation } from './CategoryServiceAugmenter'
 import { CurrencyPersistenceAugmentation } from './CurrencyServiceAugmenter'
 import { ExchangeRatePersistenceAugmentation, RateOnDate } from './ExcahngeRateServiceAugmenter'
+import { TransactionGroupPersistenceAugmentation } from './TransactionGroupServiceAugmenter'
 import Account, { AccountID, AccountUpdatableFields } from '../domain/model/account'
 import Category, { AugmentedCategory, CategoryID, CategoryUpdatableFields } from '../domain/model/category'
 import Currency, { CurrencyID, CurrencyUpdatableFields } from '../domain/model/currency'
 import ExchangeRate, { ExchangeRateId, ExchangeRateIdentifiableFields } from '../domain/model/exchangeRate'
 import Transaction, { TransactionID, TransactionUpdatableFields } from '../domain/model/transaction'
-import TransactionGroup, { TransactionGroupID, TransactionGroupUpdatableFields } from '../domain/model/transactionGroup'
+import TransactionGroup, {
+  Person,
+  TransactionGroupID,
+  TransactionGroupUpdatableFields,
+} from '../domain/model/transactionGroup'
 import Unique, { IdIdentifier } from '../domain/model/Unique'
 import { UpdateExchangeRateFields } from '../store/remote/dto/exchangeRate'
 
@@ -85,7 +90,13 @@ export const ExchangeRateServiceContext = createContext<
 export const TransactionServiceContext =
   createContext<BasicCrudService<TransactionID, Transaction, IdIdentifier, TransactionUpdatableFields>>(nilPersistence)
 
-export const TransactionGroupServiceContext =
-  createContext<BasicCrudService<TransactionGroupID, TransactionGroup, IdIdentifier, TransactionGroupUpdatableFields>>(
-    nilPersistence,
-  )
+export const TransactionGroupServiceContext = createContext<
+  BasicCrudService<TransactionGroupID, TransactionGroup, IdIdentifier, TransactionGroupUpdatableFields> &
+    TransactionGroupPersistenceAugmentation
+>({
+  ...nilPersistence,
+  augmentedVersion: -1,
+  get knownPeople(): Person[] {
+    throw new Error('knownUsers is not implemented')
+  },
+})

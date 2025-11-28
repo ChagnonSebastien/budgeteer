@@ -80,7 +80,7 @@ const TransactionGroups: FC = () => {
             bottomMenu={[
               {
                 Icon: IconLib.MdList,
-                label: 'View Transaction Group',
+                label: 'View and manage',
                 color: '#81C784',
                 description: 'See all transactions in the group',
                 action: () => navigate(`/transaction-groups/manage/${clickedTransactionGroup.id}`),
@@ -88,7 +88,7 @@ const TransactionGroups: FC = () => {
               },
               {
                 Icon: IconLib.MdEdit,
-                label: 'Edit Transaction Group',
+                label: 'Edit properties',
                 color: '#64B5F6',
                 description: 'Modify transaction group details',
                 action: () => navigate(`/transaction-groups/edit/${clickedTransactionGroup.id}`),
@@ -96,7 +96,7 @@ const TransactionGroups: FC = () => {
               },
               {
                 Icon: IconLib.MdDelete,
-                label: 'Delete transaction group',
+                label: 'Delete',
                 color: '#EF5350',
                 description: 'Remove this transaction group',
                 action: () => {},

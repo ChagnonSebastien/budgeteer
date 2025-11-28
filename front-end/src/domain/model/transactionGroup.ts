@@ -1,5 +1,6 @@
 import { CategoryID } from './category'
 import { CurrencyID } from './currency'
+import NamedItem from './NamedItem'
 import Unique from './Unique'
 
 export type TransactionGroupID = number
@@ -34,16 +35,29 @@ export const ParseSplitType = (st: string) => {
   }
 }
 
-export class Member {
+export type Email = string
+
+export class Person implements NamedItem<Email, Person> {
   constructor(
-    readonly email: string,
+    readonly email: Email,
     readonly name: string,
     readonly splitValue: number | null,
+    readonly joined: boolean,
   ) {}
 
-  equals(other: Member): boolean {
+  hasName(name: string): boolean {
+    return this.name === name
+  }
+
+  get id() {
+    return this.email
+  }
+
+  equals(other: Person): boolean {
     if (this.email !== other.email) return false
+    if (this.name !== other.name) return false
     if (this.splitValue !== other.splitValue) return false
+    if (this.joined !== other.joined) return false
     return true
   }
 }
@@ -54,9 +68,10 @@ export default class TransactionGroup implements Unique<TransactionGroupID, Tran
     readonly name: string,
     readonly originalCurrency: string,
     readonly splitType: SplitType,
-    readonly members: Member[],
+    readonly members: Person[],
     readonly currency: CurrencyID | null,
     readonly category: CategoryID | null,
+    readonly hidden: boolean,
   ) {}
 
   equals(other: TransactionGroup): boolean {
@@ -68,8 +83,12 @@ export default class TransactionGroup implements Unique<TransactionGroupID, Tran
     if (this.members.reduce((prev, m, i) => prev || !m.equals(other.members[i]), false)) return false
     if (this.currency !== other.currency) return false
     if (this.category !== other.category) return false
+    if (this.hidden !== other.hidden) return false
     return true
   }
 }
 
-export type TransactionGroupUpdatableFields = Pick<TransactionGroup, 'name' | 'splitType' | 'currency' | 'category'>
+export type TransactionGroupUpdatableFields = Pick<
+  TransactionGroup,
+  'name' | 'splitType' | 'currency' | 'category' | 'members' | 'hidden'
+>

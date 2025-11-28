@@ -61,6 +61,7 @@ interface TransactionGroupMember {
   email: string
   name: string
   splitValue: number | null
+  joined: boolean
 }
 
 interface TransactionGroup {
@@ -71,6 +72,7 @@ interface TransactionGroup {
   members: TransactionGroupMember[]
   currency: number | null
   category: number | null
+  hidden: boolean
 }
 
 export type ActionType = 'create' | 'update' | 'delete'

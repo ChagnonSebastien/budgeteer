@@ -27,6 +27,7 @@ import EditCurrencyPage from './pages/EditCurrencyPage'
 import EditTransactionGroupPage from './pages/EditTransactionGroupPage'
 import EditTransactionPage from './pages/EditTransactionPage'
 import InvestmentsPerformancePage from './pages/InvestmentsPerformancePage'
+import ManageTransactionGroup from './pages/ManageTransactionGroup'
 import TransactionGroups from './pages/TransactionGroups'
 import TransactionPage from './pages/TransactionPage'
 import TrendsPage from './pages/TrendsPage'
@@ -45,6 +46,7 @@ import {
   TransactionGroupServiceContext,
   TransactionServiceContext,
 } from './service/ServiceContext'
+import { TransactionGroupPersistenceAugmenter } from './service/TransactionGroupServiceAugmenter'
 import AccountLocalStore from './store/local/AccountLocalStore'
 import CategoryLocalStore from './store/local/CategoryLocalStore'
 import CurrencyLocalStore from './store/local/CurrencyLocalStore'
@@ -186,6 +188,7 @@ const WaitOnInitializedData: FC<{
                       <CategoryServiceContext.Consumer>
                         {(categoryCtx) =>
                           !transactionGroupCtx.initialized ||
+                          !transactionGroupCtx.version != !transactionGroupCtx.augmentedVersion ||
                           !transactionCtx.initialized ||
                           !exchangeRateCtx.initialized ||
                           !exchangeRateCtx.version != !exchangeRateCtx.augmentedVersion ||
@@ -296,7 +299,7 @@ const PersistenceSetup: FC<{ children: ReactNode; hasInternet: boolean }> = ({ c
                 localStore={transactionGroupLocalStore}
                 actionStore={replayStore}
                 context={TransactionGroupServiceContext}
-                Augmenter={NilPersistenceAugmenter}
+                Augmenter={TransactionGroupPersistenceAugmenter}
                 sorter={(a, b) => b.id - a.id}
                 hasInternet={hasInternet}
               >
@@ -345,6 +348,7 @@ const AuthenticatedZone: FC<Props> = (props) => {
           <Route path="/transaction-groups" element={<TransactionGroups />} />
           <Route path="/transaction-groups/new" element={<CreateTransactionGroupPage />} />
           <Route path="/transaction-groups/edit/:transactionGroupId" element={<EditTransactionGroupPage />} />
+          <Route path="/transaction-groups/manage/:transactionGroupId" element={<ManageTransactionGroup />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </DrawerWrapper>

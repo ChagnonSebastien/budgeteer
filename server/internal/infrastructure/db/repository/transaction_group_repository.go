@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"slices"
 
 	"chagnon.dev/budget-server/internal/domain/model"
 	"chagnon.dev/budget-server/internal/infrastructure/db/dao"
@@ -38,9 +39,10 @@ func SplitTypeToDao(splitType model.SplitType) (dao.GroupSplitType, error) {
 }
 
 type GroupMember struct {
-	UserEmail  string   `json:"user_email"`
-	UserName   string   `json:"user_name"`
-	SplitValue *float32 `json:"split_value"` // nullable
+	UserEmail  string `json:"user_email"`
+	UserName   string `json:"user_name"`
+	SplitValue *int   `json:"split_value"` // nullable
+	Joined     bool   `json:"joined"`
 }
 
 func (r *Repository) GetUserTransactionGroups(ctx context.Context, userEmail string) ([]model.TransactionGroup, error) {
@@ -65,15 +67,21 @@ func (r *Repository) GetUserTransactionGroups(ctx context.Context, userEmail str
 
 		members := make([]model.Member, len(membersDao))
 		for i, memberDao := range membersDao {
-			splitValue := model.None[float32]()
+			splitValue := model.None[int]()
 			if memberDao.SplitValue != nil {
 				splitValue = model.Some(*memberDao.SplitValue)
 			}
 
+			name := memberDao.UserName
+			if name == "" {
+				name = memberDao.UserEmail
+			}
+
 			members[i] = model.Member{
 				Email:      model.Email(memberDao.UserEmail),
-				Name:       memberDao.UserName,
+				Name:       name,
 				SplitValue: splitValue,
+				Joined:     memberDao.Joined,
 			}
 		}
 
@@ -95,6 +103,7 @@ func (r *Repository) GetUserTransactionGroups(ctx context.Context, userEmail str
 			Currency:         currency,
 			Category:         category,
 			Members:          members,
+			Hidden:           transactionGroupDao.Hidden,
 		}
 	}
 
@@ -146,11 +155,30 @@ func (r *Repository) CreateTransactionGroup(
 	return model.TransactionGroupID(transactionGroupId), nil
 }
 
+type UpdateTransactionGroupMemberFields struct {
+	SplitValue model.Optional[int]
+}
+
+func (u *UpdateTransactionGroupMemberFields) nullSplitValue() sql.NullInt32 {
+	if value, ok := u.SplitValue.Value(); ok {
+		return sql.NullInt32{Int32: int32(value), Valid: true}
+	}
+
+	return sql.NullInt32{Valid: false}
+}
+
+type UpdateTransactionGroupMembersField struct {
+	Email  model.Email
+	Fields UpdateTransactionGroupMemberFields
+}
+
 type UpdateTransactionGroupFields struct {
 	Name       model.Optional[string]
 	SplitType  model.Optional[model.SplitType]
 	CurrencyId model.Optional[model.CurrencyID]
 	CategoryId model.Optional[model.CategoryID]
+	Members    model.Optional[[]UpdateTransactionGroupMembersField]
+	Hidden     model.Optional[bool]
 }
 
 func (u *UpdateTransactionGroupFields) nullName() sql.NullString {
@@ -185,7 +213,14 @@ func (u *UpdateTransactionGroupFields) nullCategoryId() sql.NullInt32 {
 	}
 
 	return sql.NullInt32{Valid: false}
+}
 
+func (u *UpdateTransactionGroupFields) nullHidden() sql.NullBool {
+	if value, ok := u.Hidden.Value(); ok {
+		return sql.NullBool{Bool: value, Valid: true}
+	}
+
+	return sql.NullBool{Valid: false}
 }
 
 func (r *Repository) UpdateTransactionGroup(
@@ -207,10 +242,80 @@ func (r *Repository) UpdateTransactionGroup(
 		}
 	}()
 
-	rowsAffected, err := r.queries.WithTx(tx).UpdateTransactionGroupUser(ctx, &dao.UpdateTransactionGroupUserParams{
+	previousMembers, err := r.queries.WithTx(tx).GetTransactionGroupMembers(ctx, int32(id))
+	if err != nil {
+		err = fmt.Errorf("getting previous transaction group members: %w", err)
+		return
+	}
+
+	userInPreviousMembersOption := model.None[dao.GetTransactionGroupMembersRow]()
+	for _, member := range previousMembers {
+		if member.UserEmail == email {
+			userInPreviousMembersOption = model.Some(member)
+			break
+		}
+	}
+	if userInPreviousMembersOption.IsNone() {
+		err = fmt.Errorf("cannot update a transaction group you are not a part of: %w", err)
+		return
+	}
+
+	if newMembers, isSome := fields.Members.Value(); isSome {
+		//
+		// HANDLE REMOVED MEMBERS
+		//
+		for _, previousMember := range previousMembers {
+			if stillHere := slices.ContainsFunc(newMembers, func(member UpdateTransactionGroupMembersField) bool {
+				return string(member.Email) == previousMember.UserEmail
+			}); stillHere {
+				continue
+			}
+
+			if previousMember.Joined {
+				err = fmt.Errorf("cannot remove a member that has already accepted to join the transaction group: %s", previousMember.UserEmail)
+				return
+			}
+
+			removedData, removalErr := r.queries.RemoveUserFromTransactionGroup(ctx, &dao.RemoveUserFromTransactionGroupParams{
+				TransactionGroupID: int32(id),
+				UserEmail:          previousMember.UserEmail,
+			})
+			if removalErr != nil {
+				err = fmt.Errorf("removing member from transaction group: %s: %w", previousMember.UserEmail, removalErr)
+				return
+			}
+			if removedData.UserLinksDeleted != 1 {
+				err = fmt.Errorf("user did not get cleanly deleted from transaction group: %s", previousMember.UserEmail)
+				return
+			}
+		}
+
+		//
+		// HANDLE NEW AND UPDATED MEMBERS
+		//
+		for _, newMember := range newMembers {
+			rowsAffected, upsertErr := r.queries.UpsertTransactionGroupMember(ctx, &dao.UpsertTransactionGroupMemberParams{
+				SplitValue:         newMember.Fields.nullSplitValue(),
+				UserEmail:          string(newMember.Email),
+				TransactionGroupID: int32(id),
+			})
+			if upsertErr != nil {
+				err = fmt.Errorf("upserting transaction group member: %w", upsertErr)
+				return
+			}
+			if rowsAffected == 0 {
+				err = fmt.Errorf("upserting transaction group member created no entry")
+				return
+			}
+		}
+
+	}
+
+	rowsAffected, err := r.queries.WithTx(tx).UpdateTransactionGroupPersonalProperties(ctx, &dao.UpdateTransactionGroupPersonalPropertiesParams{
 		CurrencyID:         fields.nullCurrencyId(),
 		CategoryID:         fields.nullCategoryId(),
 		Name:               fields.nullName(),
+		Hidden:             fields.nullHidden(),
 		UserEmail:          email,
 		TransactionGroupID: int32(id),
 	})

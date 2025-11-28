@@ -8,7 +8,7 @@ import {
   UpdateTransactionGroupRequest,
 } from './dto/transactionGroup'
 import { TransactionGroupServiceClient } from './dto/transactionGroup.client'
-import TransactionGroup, { Member, SplitType } from '../../domain/model/transactionGroup'
+import TransactionGroup, { Person, SplitType } from '../../domain/model/transactionGroup'
 import { IdIdentifier } from '../../domain/model/Unique'
 
 const conv = new TransactionGroupConverter()
@@ -54,9 +54,10 @@ export default class TransactionGroupRemoteStore {
       data.name,
       data.originalCurrency,
       data.splitType,
-      [new Member(this.userEmail, this.userName, 1)],
+      [new Person(this.userEmail, this.userName, null, true)],
       data.currency,
       data.category,
+      data.hidden,
     )
   }
 

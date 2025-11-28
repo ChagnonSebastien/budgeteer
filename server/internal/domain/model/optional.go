@@ -21,9 +21,14 @@ func None[T any]() Optional[T] {
 	return Optional[T]{value: zero, ok: false}
 }
 
-// HasValue returns true if the Optional contains a value
-func (o Optional[T]) HasValue() bool {
+// IsSome returns true if the Optional contains a value
+func (o Optional[T]) IsSome() bool {
 	return o.ok
+}
+
+// IsNone returns true if the Optional contains no value
+func (o Optional[T]) IsNone() bool {
+	return !o.IsSome()
 }
 
 // Value returns the inner value and whether it exists
