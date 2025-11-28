@@ -15,10 +15,10 @@ import (
 	"chagnon.dev/budget-server/internal/domain/model"
 
 	"github.com/coreos/go-oidc"
+	"github.com/go-jose/go-jose/v4"
+	"github.com/go-jose/go-jose/v4/jwt"
 	"github.com/google/uuid"
 	"golang.org/x/oauth2"
-	"gopkg.in/go-jose/go-jose.v2"
-	"gopkg.in/go-jose/go-jose.v2/jwt"
 
 	"chagnon.dev/budget-server/internal/infrastructure/messaging/shared"
 	"chagnon.dev/budget-server/internal/logging"
@@ -344,7 +344,7 @@ func (auth *Auth) parseGuestToken(getCookie func(name string) (*http.Cookie, err
 	}
 
 	// Parse the JWT token
-	token, err := jwt.ParseSigned(authTokenCookie.Value)
+	token, err := jwt.ParseSigned(authTokenCookie.Value, []jose.SignatureAlgorithm{jose.HS256})
 	if err != nil {
 		return false, err
 	}
@@ -591,7 +591,7 @@ func (auth *Auth) generateGuestTokens(userID, email, username string) (accessTok
 	}
 
 	// Sign access token
-	accessToken, err = jwt.Signed(signer).Claims(accessClaimsMap).CompactSerialize()
+	accessToken, err = jwt.Signed(signer).Claims(accessClaimsMap).Serialize()
 	if err != nil {
 		return "", "", time.Time{}, fmt.Errorf("signing access token: %w", err)
 	}
@@ -610,7 +610,7 @@ func (auth *Auth) generateGuestTokens(userID, email, username string) (accessTok
 	}
 
 	// Sign refresh token
-	refreshToken, err = jwt.Signed(signer).Claims(refreshClaimsMap).CompactSerialize()
+	refreshToken, err = jwt.Signed(signer).Claims(refreshClaimsMap).Serialize()
 	if err != nil {
 		return "", "", time.Time{}, fmt.Errorf("signing refresh token: %w", err)
 	}

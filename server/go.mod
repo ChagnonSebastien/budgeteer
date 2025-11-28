@@ -6,6 +6,7 @@ toolchain go1.25.4
 
 require (
 	github.com/coreos/go-oidc v2.4.0+incompatible
+	github.com/go-jose/go-jose/v4 v4.1.2
 	github.com/go-rod/rod v0.116.2
 	github.com/go-rod/stealth v0.4.9
 	github.com/google/uuid v1.6.0
@@ -20,7 +21,6 @@ require (
 	golang.org/x/oauth2 v0.32.0
 	google.golang.org/grpc v1.76.0
 	google.golang.org/protobuf v1.36.10
-	gopkg.in/go-jose/go-jose.v2 v2.6.3
 	rogchap.com/v8go v0.9.0
 )
 
@@ -49,5 +49,6 @@ require (
 	golang.org/x/sys v0.38.0 // indirect
 	golang.org/x/text v0.31.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250804133106-a7a43d27e69b // indirect
+	gopkg.in/go-jose/go-jose.v2 v2.6.3 // indirect
 	nhooyr.io/websocket v1.8.17 // indirect
 )
