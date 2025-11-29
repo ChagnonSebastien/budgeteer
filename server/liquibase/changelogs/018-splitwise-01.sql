@@ -27,7 +27,8 @@ create table user_transaction_group
     currency_id integer constraint user_transaction_group_currency_id_fk references currencies on delete set null,
     name_override text,
     split_value integer,
-    hidden boolean default false not null,
+    locked boolean not null,
+    hidden boolean not null,
     constraint user_transaction_group_pk primary key (user_email, transaction_group_id)
 );
 
@@ -37,6 +38,7 @@ create table transaction_transaction_group
     transaction_id integer not null constraint transaction_transaction_group_transaction_id_fk references transactions on delete cascade,
     transaction_group_id integer not null constraint transaction_transaction_group_group_id_fk references transaction_group on delete cascade,
     split_type_override transaction_split_type,
+    locked boolean not null,
     constraint transaction_transaction_group_pk primary key (transaction_id)
 );
 
@@ -44,7 +46,7 @@ create table transaction_transaction_group
 create table transaction_transaction_group_user_split
 (
     transaction_id integer not null,
-    user_email text not null constraint transaction_transaction_group_user_split_user_email_fk references users on delete cascade,
+    user_email text not null,
     split_value integer,
     constraint transaction_transaction_group_user_split_pk primary key (transaction_id, user_email),
     constraint transaction_transaction_group_user_split_ttg_fk foreign key (transaction_id) references transaction_transaction_group on delete cascade

@@ -16,13 +16,14 @@ const layout = "2006-01-02 15:04:05"
 type transactionRepository interface {
 	GetAllTransactions(ctx context.Context, userId string) ([]model.Transaction, error)
 	CreateTransaction(
-		ctx context.Context,
-		userId string,
-		amount int,
-		currencyId, senderAccountId, receiverAccountId, categoryId int,
+		ctx context.Context, userId string,
+		amount, receiverAmount int,
+		currencyId, receiverCurrencyId int,
+		senderAccountId, receiverAccountId model.Optional[int],
+		categoryId model.Optional[int],
 		date time.Time,
 		note string,
-		receiverCurrencyId, receiverAmount, relatedCurrency int,
+		financialIncomeData model.Optional[repository.CreateFinancialIncomeAdditionalData],
 	) (model.TransactionID, error)
 	UpdateTransaction(
 		ctx context.Context,
@@ -47,24 +48,26 @@ func (s *TransactionHandler) CreateTransaction(
 		return nil, fmt.Errorf("invalid claims")
 	}
 
-	var sender int
+	sender := model.None[int]()
 	if req.Sender != nil {
-		sender = int(*req.Sender)
+		sender = model.Some(int(*req.Sender))
 	}
 
-	var receiver int
+	receiver := model.None[int]()
 	if req.Receiver != nil {
-		receiver = int(*req.Receiver)
+		receiver = model.Some(int(*req.Receiver))
 	}
 
-	var category int
+	category := model.None[int]()
 	if req.Category != nil {
-		category = int(*req.Category)
+		category = model.Some(int(*req.Category))
 	}
 
-	var relatedCurrency int
+	financialIncomeData := model.None[repository.CreateFinancialIncomeAdditionalData]()
 	if req.RelatedCurrency != nil {
-		relatedCurrency = int(*req.RelatedCurrency)
+		financialIncomeData = model.Some(repository.CreateFinancialIncomeAdditionalData{
+			RelatedCurrencyId: int(*req.RelatedCurrency),
+		})
 	}
 
 	date, err := time.Parse(layout, req.Date)
@@ -76,15 +79,15 @@ func (s *TransactionHandler) CreateTransaction(
 		ctx,
 		claims.Sub,
 		int(req.Amount),
+		int(req.ReceiverAmount),
 		int(req.Currency),
+		int(req.ReceiverCurrency),
 		sender,
 		receiver,
 		category,
 		date,
 		req.Note,
-		int(req.ReceiverCurrency),
-		int(req.ReceiverAmount),
-		relatedCurrency,
+		financialIncomeData,
 	)
 	if err != nil {
 		return nil, err
@@ -104,81 +107,80 @@ func (s *TransactionHandler) UpdateTransaction(
 		return nil, fmt.Errorf("invalid claims")
 	}
 
-	var sender *int
-	if req.Fields.UpdateSender {
-		if req.Fields.Sender != nil {
-			id := int(*req.Fields.Sender)
-			sender = &id
-		} else {
-			id := 0
-			sender = &id
-		}
-	}
-
-	var receiver *int
+	receiver := model.None[model.Optional[int]]()
 	if req.Fields.UpdateReceiver {
+		newValue := model.None[int]()
 		if req.Fields.Receiver != nil {
-			id := int(*req.Fields.Receiver)
-			receiver = &id
-		} else {
-			id := 0
-			receiver = &id
+			newValue = model.Some(int(*req.Fields.Receiver))
 		}
+
+		receiver = model.Some(newValue)
 	}
 
-	var category *int
+	sender := model.None[model.Optional[int]]()
+	if req.Fields.UpdateSender {
+		newValue := model.None[int]()
+		if req.Fields.Sender != nil {
+			newValue = model.Some(int(*req.Fields.Sender))
+		}
+
+		sender = model.Some(newValue)
+	}
+
+	category := model.None[model.Optional[int]]()
 	if req.Fields.UpdateCategory {
+		newValue := model.None[int]()
 		if req.Fields.Category != nil {
-			id := int(*req.Fields.Category)
-			category = &id
-		} else {
-			id := 0
-			category = &id
+			newValue = model.Some(int(*req.Fields.Category))
 		}
+
+		category = model.Some(newValue)
 	}
 
-	var relatedCurrencyId *int
+	updateFinancialIncomeAdditionalData := model.None[repository.UpdateFinancialIncomeAdditionalData]()
 	if req.Fields.UpdateRelatedCurrency {
+		relatedCurrency := model.None[int]()
 		if req.Fields.RelatedCurrency != nil {
-			id := int(*req.Fields.RelatedCurrency)
-			relatedCurrencyId = &id
-		} else {
-			id := 0
-			relatedCurrencyId = &id
+			relatedCurrency = model.Some(int(*req.Fields.RelatedCurrency))
 		}
+
+		updateFinancialIncomeAdditionalData = model.Some(repository.UpdateFinancialIncomeAdditionalData{
+			RelatedCurrencyId: relatedCurrency,
+		})
 	}
 
-	var amount *int
+	amount := model.None[int]()
 	if req.Fields.Amount != nil {
-		value := int(*req.Fields.Amount)
-		amount = &value
+		amount = model.Some(int(*req.Fields.Amount))
 	}
 
-	var currencyId *int
-	if req.Fields.Currency != nil {
-		id := int(*req.Fields.Currency)
-		currencyId = &id
-	}
-
-	var receiverAmount *int
+	receiverAmount := model.None[int]()
 	if req.Fields.ReceiverAmount != nil {
-		value := int(*req.Fields.ReceiverAmount)
-		receiverAmount = &value
+		receiverAmount = model.Some(int(*req.Fields.ReceiverAmount))
 	}
 
-	var receiverCurrencyId *int
+	currencyId := model.None[int]()
+	if req.Fields.Currency != nil {
+		currencyId = model.Some(int(*req.Fields.Currency))
+	}
+
+	receiverCurrencyId := model.None[int]()
 	if req.Fields.ReceiverCurrency != nil {
-		id := int(*req.Fields.ReceiverCurrency)
-		receiverCurrencyId = &id
+		receiverCurrencyId = model.Some(int(*req.Fields.ReceiverCurrency))
 	}
 
-	var date *time.Time
+	date := model.None[time.Time]()
 	if req.Fields.Date != nil {
 		computedDate, err := time.Parse(layout, *req.Fields.Date)
 		if err != nil {
 			return nil, err
 		}
-		date = &computedDate
+		date = model.Some(computedDate)
+	}
+
+	note := model.None[string]()
+	if req.Fields.Note != nil {
+		note = model.Some(*req.Fields.Note)
 	}
 
 	err := s.transactionService.UpdateTransaction(
@@ -186,16 +188,16 @@ func (s *TransactionHandler) UpdateTransaction(
 		claims.Sub,
 		model.TransactionID(req.Id),
 		repository.UpdateTransactionFields{
-			Amount:             amount,
-			CurrencyId:         currencyId,
-			SenderAccountId:    sender,
-			ReceiverAccountId:  receiver,
-			CategoryId:         category,
-			Date:               date,
-			Note:               req.Fields.Note,
-			ReceiverCurrencyId: receiverCurrencyId,
-			ReceiverAmount:     receiverAmount,
-			RelatedCurrencyId:  relatedCurrencyId,
+			Amount:                              amount,
+			CurrencyId:                          currencyId,
+			SenderAccountId:                     sender,
+			ReceiverAccountId:                   receiver,
+			CategoryId:                          category,
+			Date:                                date,
+			Note:                                note,
+			ReceiverCurrencyId:                  receiverCurrencyId,
+			ReceiverAmount:                      receiverAmount,
+			UpdateFinancialIncomeAdditionalData: updateFinancialIncomeAdditionalData,
 		},
 	)
 	if err != nil {
@@ -222,25 +224,25 @@ func (s *TransactionHandler) GetAllTransactions(
 	transactionsDto := make([]*dto.Transaction, len(transactions))
 	for i, transaction := range transactions {
 		var sender *uint32
-		if transaction.Sender != 0 {
-			id := uint32(transaction.Sender)
+		if value, isSome := transaction.Sender.Value(); isSome {
+			id := uint32(value)
 			sender = &id
 		}
 
 		var receiver *uint32
-		if transaction.Receiver != 0 {
-			id := uint32(transaction.Receiver)
+		if value, isSome := transaction.Receiver.Value(); isSome {
+			id := uint32(value)
 			receiver = &id
 		}
 
 		var category *uint32
-		if transaction.Category != 0 {
-			id := uint32(transaction.Category)
+		if value, isSome := transaction.Category.Value(); isSome {
+			id := uint32(value)
 			category = &id
 		}
 
 		var relatedCurrency *uint32
-		if financialIncomeData, ok := transaction.AdditionalData.(*model.FinancialIncomeData); ok {
+		if financialIncomeData, isSome := transaction.FinancialIncomeData.Value(); isSome {
 			id := uint32(financialIncomeData.RelatedCurrency)
 			relatedCurrency = &id
 		}

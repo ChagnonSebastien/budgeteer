@@ -8,6 +8,7 @@ import (
 
 	"chagnon.dev/budget-server/internal/domain/model"
 	"chagnon.dev/budget-server/internal/infrastructure/db/dao"
+	"chagnon.dev/budget-server/internal/logging"
 )
 
 func (r *Repository) GetAllTransactions(ctx context.Context, userId string) ([]model.Transaction, error) {
@@ -18,77 +19,96 @@ func (r *Repository) GetAllTransactions(ctx context.Context, userId string) ([]m
 
 	transactions := make([]model.Transaction, len(transactionsDao))
 	for i, transactionDao := range transactionsDao {
-		var sender int
+		sender := model.None[model.AccountID]()
 		if transactionDao.Sender.Valid {
-			sender = int(transactionDao.Sender.Int32)
+			sender = model.Some(model.AccountID(transactionDao.Sender.Int32))
 		}
 
-		var receiver int
+		receiver := model.None[model.AccountID]()
 		if transactionDao.Receiver.Valid {
-			receiver = int(transactionDao.Receiver.Int32)
+			receiver = model.Some(model.AccountID(transactionDao.Receiver.Int32))
 		}
 
-		var category int
+		category := model.None[model.CategoryID]()
 		if transactionDao.Category.Valid {
-			category = int(transactionDao.Category.Int32)
+			category = model.Some(model.CategoryID(transactionDao.Category.Int32))
 		}
 
-		var additionalData any
+		financialIncomeData := model.None[model.FinancialIncomeData]()
 		if transactionDao.RelatedCurrencyID.Valid {
-			additionalData = &model.FinancialIncomeData{
+			financialIncomeData = model.Some(model.FinancialIncomeData{
 				RelatedCurrency: model.CurrencyID(transactionDao.RelatedCurrencyID.Int32),
-			}
+			})
 		}
 
 		transactions[i] = model.Transaction{
-			ID:               model.TransactionID(transactionDao.ID),
-			Amount:           int(transactionDao.Amount),
-			Currency:         model.CurrencyID(transactionDao.Currency),
-			Sender:           model.AccountID(sender),
-			Receiver:         model.AccountID(receiver),
-			Category:         model.CategoryID(category),
-			Date:             transactionDao.Date,
-			Note:             transactionDao.Note,
-			ReceiverCurrency: model.CurrencyID(transactionDao.ReceiverCurrency),
-			ReceiverAmount:   int(transactionDao.ReceiverAmount),
-			AdditionalData:   additionalData,
+			ID:                  model.TransactionID(transactionDao.ID),
+			Amount:              int(transactionDao.Amount),
+			Currency:            model.CurrencyID(transactionDao.Currency),
+			Sender:              sender,
+			Receiver:            receiver,
+			Category:            category,
+			Date:                transactionDao.Date,
+			Note:                transactionDao.Note,
+			ReceiverCurrency:    model.CurrencyID(transactionDao.ReceiverCurrency),
+			ReceiverAmount:      int(transactionDao.ReceiverAmount),
+			FinancialIncomeData: financialIncomeData,
 		}
 	}
 
 	return transactions, nil
 }
 
+type CreateFinancialIncomeAdditionalData struct {
+	RelatedCurrencyId int
+}
+
 func (r *Repository) CreateTransaction(
-	ctx context.Context,
-	userId string,
-	amount int,
-	currencyId, senderAccountId, receiverAccountId, categoryId int,
+	ctx context.Context, userId string,
+	amount, receiverAmount int,
+	currencyId, receiverCurrencyId int,
+	senderAccountId, receiverAccountId model.Optional[int],
+	categoryId model.Optional[int],
 	date time.Time,
 	note string,
-	receiverCurrencyId, receiverAmount, relatedCurrencyId int,
-) (model.TransactionID, error) {
-	tx, err := r.db.BeginTx(ctx, &sql.TxOptions{})
+	financialIncomeData model.Optional[CreateFinancialIncomeAdditionalData],
+) (createdTransactionId model.TransactionID, err error) {
+	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
-		return 0, err
+		return
+	}
+
+	defer func() {
+		if err != nil {
+			if rbErr := tx.Rollback(); rbErr != nil {
+				logging.FromContext(ctx).Error(fmt.Sprintf("transaction update rollback error: %v", rbErr))
+			}
+		}
+	}()
+
+	sender := sql.NullInt32{Valid: false}
+	if value, isSome := senderAccountId.Value(); isSome {
+		sender = sql.NullInt32{Valid: true, Int32: int32(value)}
+	}
+
+	receiver := sql.NullInt32{Valid: false}
+	if value, isSome := receiverAccountId.Value(); isSome {
+		receiver = sql.NullInt32{Valid: true, Int32: int32(value)}
+	}
+
+	category := sql.NullInt32{Valid: false}
+	if value, isSome := categoryId.Value(); isSome {
+		category = sql.NullInt32{Valid: true, Int32: int32(value)}
 	}
 
 	transactionId, err := r.queries.WithTx(tx).CreateTransaction(
 		ctx, &dao.CreateTransactionParams{
-			UserID:   userId,
-			Amount:   int32(amount),
-			Currency: int32(currencyId),
-			Sender: sql.NullInt32{
-				Int32: int32(senderAccountId),
-				Valid: senderAccountId != 0,
-			},
-			Receiver: sql.NullInt32{
-				Int32: int32(receiverAccountId),
-				Valid: receiverAccountId != 0,
-			},
-			Category: sql.NullInt32{
-				Int32: int32(categoryId),
-				Valid: categoryId != 0,
-			},
+			UserID:           userId,
+			Amount:           int32(amount),
+			Currency:         int32(currencyId),
+			Sender:           sender,
+			Receiver:         receiver,
+			Category:         category,
 			Date:             date,
 			Note:             note,
 			ReceiverCurrency: int32(receiverCurrencyId),
@@ -96,142 +116,131 @@ func (r *Repository) CreateTransaction(
 		},
 	)
 	if err != nil {
-		return 0, err
+		err = fmt.Errorf("creating transaction: %w", err)
+		return
 	}
 
-	if relatedCurrencyId != 0 {
-		_, err := r.queries.WithTx(tx).TransactionToFinancialIncome(
-			ctx, &dao.TransactionToFinancialIncomeParams{
-				TransactionID:     transactionId,
-				RelatedCurrencyID: int32(relatedCurrencyId),
-			},
-		)
-		if err != nil {
-			return 0, err
+	if financialIncome, isSome := financialIncomeData.Value(); isSome {
+		updatedRows, queryErr := r.queries.WithTx(tx).TransactionToFinancialIncome(ctx, &dao.TransactionToFinancialIncomeParams{
+			TransactionID:     transactionId,
+			RelatedCurrencyID: int32(financialIncome.RelatedCurrencyId),
+		})
+		if queryErr != nil {
+			err = fmt.Errorf("creating financial income: %w", queryErr)
+			return
+		}
+		if updatedRows == 0 {
+			err = fmt.Errorf("updated 0 rows when creating financial income")
+			return
 		}
 	}
 
-	return model.TransactionID(transactionId), tx.Commit()
+	if err = tx.Commit(); err != nil {
+		err = fmt.Errorf("committing transaction: %w", err)
+		return
+	}
+
+	return model.TransactionID(transactionId), nil
+}
+
+type UpdateFinancialIncomeAdditionalData struct {
+	RelatedCurrencyId model.Optional[int]
+}
+
+func (u *UpdateFinancialIncomeAdditionalData) nullRelatedCurrencyId() sql.NullInt32 {
+	if value, isSome := u.RelatedCurrencyId.Value(); isSome && value != 0 {
+		return sql.NullInt32{Valid: true, Int32: int32(value)}
+	}
+
+	return sql.NullInt32{Valid: false}
 }
 
 type UpdateTransactionFields struct {
-	Amount                             *int
-	CurrencyId, SenderAccountId        *int
-	ReceiverAccountId, CategoryId      *int
-	Date                               *time.Time
-	Note                               *string
-	ReceiverCurrencyId, ReceiverAmount *int
-	RelatedCurrencyId                  *int
+	Amount, ReceiverAmount              model.Optional[int]
+	CurrencyId, ReceiverCurrencyId      model.Optional[int]
+	SenderAccountId, ReceiverAccountId  model.Optional[model.Optional[int]]
+	CategoryId                          model.Optional[model.Optional[int]]
+	Date                                model.Optional[time.Time]
+	Note                                model.Optional[string]
+	UpdateFinancialIncomeAdditionalData model.Optional[UpdateFinancialIncomeAdditionalData]
 }
 
 func (u *UpdateTransactionFields) nullNote() sql.NullString {
-	if u.Note == nil {
-		return sql.NullString{Valid: false}
+	if value, isSome := u.Note.Value(); isSome {
+		return sql.NullString{Valid: true, String: value}
 	}
 
-	return sql.NullString{
-		String: *u.Note,
-		Valid:  true,
-	}
+	return sql.NullString{Valid: false}
 }
 
 func (u *UpdateTransactionFields) nullDate() sql.NullTime {
-	if u.Date == nil {
-		return sql.NullTime{Valid: false}
+	if value, isSome := u.Date.Value(); isSome {
+		return sql.NullTime{Valid: true, Time: value}
 	}
 
-	return sql.NullTime{
-		Time:  *u.Date,
-		Valid: true,
-	}
+	return sql.NullTime{Valid: false}
 }
 
 func (u *UpdateTransactionFields) nullAmount() sql.NullInt32 {
-	if u.Amount == nil {
-		return sql.NullInt32{Valid: false}
+	if value, isSome := u.Amount.Value(); isSome {
+		return sql.NullInt32{Valid: true, Int32: int32(value)}
 	}
 
-	return sql.NullInt32{
-		Int32: int32(*u.Amount),
-		Valid: true,
-	}
+	return sql.NullInt32{Valid: false}
 }
 
 func (u *UpdateTransactionFields) nullReceiverAmount() sql.NullInt32 {
-	if u.ReceiverAmount == nil {
-		return sql.NullInt32{Valid: false}
+	if value, isSome := u.ReceiverAmount.Value(); isSome {
+		return sql.NullInt32{Valid: true, Int32: int32(value)}
 	}
 
-	return sql.NullInt32{
-		Int32: int32(*u.ReceiverAmount),
-		Valid: true,
-	}
+	return sql.NullInt32{Valid: false}
 }
 
 func (u *UpdateTransactionFields) nullSenderAccountId() sql.NullInt32 {
-	if u.SenderAccountId == nil || *u.SenderAccountId == 0 {
-		return sql.NullInt32{Valid: false}
+	if optionalValue, isSome := u.SenderAccountId.Value(); isSome {
+		if value, isSome := optionalValue.Value(); isSome {
+			return sql.NullInt32{Valid: true, Int32: int32(value)}
+		}
 	}
 
-	return sql.NullInt32{
-		Int32: int32(*u.SenderAccountId),
-		Valid: true,
-	}
+	return sql.NullInt32{Valid: false}
 }
 
 func (u *UpdateTransactionFields) nullReceiverAccountId() sql.NullInt32 {
-	if u.ReceiverAccountId == nil || *u.ReceiverAccountId == 0 {
-		return sql.NullInt32{Valid: false}
+	if optionalValue, isSome := u.SenderAccountId.Value(); isSome {
+		if value, isSome := optionalValue.Value(); isSome {
+			return sql.NullInt32{Valid: true, Int32: int32(value)}
+		}
 	}
 
-	return sql.NullInt32{
-		Int32: int32(*u.ReceiverAccountId),
-		Valid: true,
-	}
+	return sql.NullInt32{Valid: false}
 }
 
 func (u *UpdateTransactionFields) nullCurrencyId() sql.NullInt32 {
-	if u.CurrencyId == nil {
-		return sql.NullInt32{Valid: false}
+	if value, isSome := u.CurrencyId.Value(); isSome && value != 0 {
+		return sql.NullInt32{Valid: true, Int32: int32(value)}
 	}
 
-	return sql.NullInt32{
-		Int32: int32(*u.CurrencyId),
-		Valid: true,
-	}
+	return sql.NullInt32{Valid: false}
 }
 
 func (u *UpdateTransactionFields) nullReceiverCurrencyId() sql.NullInt32 {
-	if u.ReceiverCurrencyId == nil {
-		return sql.NullInt32{Valid: false}
+	if value, isSome := u.ReceiverCurrencyId.Value(); isSome && value != 0 {
+		return sql.NullInt32{Valid: true, Int32: int32(value)}
 	}
 
-	return sql.NullInt32{
-		Int32: int32(*u.ReceiverCurrencyId),
-		Valid: true,
-	}
+	return sql.NullInt32{Valid: false}
 }
 
 func (u *UpdateTransactionFields) nullCategoryId() sql.NullInt32 {
-	if u.CategoryId == nil || *u.CategoryId == 0 {
-		return sql.NullInt32{Valid: false}
+	if optionalValue, isSome := u.SenderAccountId.Value(); isSome {
+		if value, isSome := optionalValue.Value(); isSome {
+			return sql.NullInt32{Valid: true, Int32: int32(value)}
+		}
 	}
 
-	return sql.NullInt32{
-		Int32: int32(*u.CategoryId),
-		Valid: true,
-	}
-}
-
-func (u *UpdateTransactionFields) nullRelatedCurrencyId() sql.NullInt32 {
-	if u.RelatedCurrencyId == nil || *u.RelatedCurrencyId == 0 {
-		return sql.NullInt32{Valid: false}
-	}
-
-	return sql.NullInt32{
-		Int32: int32(*u.RelatedCurrencyId),
-		Valid: true,
-	}
+	return sql.NullInt32{Valid: false}
 }
 
 func (r *Repository) UpdateTransaction(
@@ -239,11 +248,19 @@ func (r *Repository) UpdateTransaction(
 	userId string,
 	id model.TransactionID,
 	field UpdateTransactionFields,
-) error {
+) (err error) {
 	tx, err := r.db.BeginTx(ctx, &sql.TxOptions{})
 	if err != nil {
-		return err
+		return fmt.Errorf("beginning db transaction: %w", err)
 	}
+
+	defer func() {
+		if err != nil {
+			if rbErr := tx.Rollback(); rbErr != nil {
+				logging.FromContext(ctx).Error(fmt.Sprintf("transaction update rollback error: %v", rbErr))
+			}
+		}
+	}()
 
 	updatedRows, err := r.queries.WithTx(tx).UpdateTransaction(
 		ctx, &dao.UpdateTransactionParams{
@@ -251,11 +268,11 @@ func (r *Repository) UpdateTransaction(
 			ID:               int32(id),
 			Amount:           field.nullAmount(),
 			Currency:         field.nullCurrencyId(),
-			UpdateSender:     field.SenderAccountId != nil,
+			UpdateSender:     field.SenderAccountId.IsSome(),
 			Sender:           field.nullSenderAccountId(),
-			UpdateReceiver:   field.ReceiverAccountId != nil,
+			UpdateReceiver:   field.ReceiverAccountId.IsSome(),
 			Receiver:         field.nullReceiverAccountId(),
-			UpdateCategory:   field.CategoryId != nil,
+			UpdateCategory:   field.CategoryId.IsSome(),
 			Category:         field.nullCategoryId(),
 			Date:             field.nullDate(),
 			Note:             field.nullNote(),
@@ -264,21 +281,35 @@ func (r *Repository) UpdateTransaction(
 		},
 	)
 	if err != nil {
-		return err
+		err = fmt.Errorf("updating transaction: %w", err)
+		return
 	}
 	if updatedRows == 0 {
-		return fmt.Errorf("updated 0 rows")
+		err = fmt.Errorf("updated 0 rows when updating transaction")
+		return
 	}
 
-	_, err = r.queries.WithTx(tx).UpdateFinancialIncome(
-		ctx, &dao.UpdateFinancialIncomeParams{
-			RelatedCurrencyID: field.nullRelatedCurrencyId(),
-			TransactionID:     int32(id),
-		},
-	)
-	if err != nil {
-		return err
+	if financialDataFields, isSome := field.UpdateFinancialIncomeAdditionalData.Value(); isSome {
+		updatedRows, updateErr := r.queries.WithTx(tx).UpdateFinancialIncome(
+			ctx, &dao.UpdateFinancialIncomeParams{
+				RelatedCurrencyID: financialDataFields.nullRelatedCurrencyId(),
+				TransactionID:     int32(id),
+			},
+		)
+		if updateErr != nil {
+			err = fmt.Errorf("updating financial income: %w", updateErr)
+			return
+		}
+		if updatedRows == 0 {
+			err = fmt.Errorf("updated 0 rows when updating financial income")
+			return
+		}
 	}
 
-	return tx.Commit()
+	if err = tx.Commit(); err != nil {
+		err = fmt.Errorf("committing transaction: %w", err)
+		return
+	}
+
+	return
 }

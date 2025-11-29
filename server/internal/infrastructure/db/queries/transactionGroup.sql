@@ -14,10 +14,7 @@ SELECT
                                'user_email', utg2.user_email,
                                'user_name', u.username,
                                'split_value', utg2.split_value,
-                               'joined', CASE WHEN utg2.currency_id IS NULL
-                                    THEN false
-                                    ELSE true
-                               END
+                               'joined', utg2.locked
                        )
                )
         FROM user_transaction_group utg2
@@ -34,10 +31,7 @@ ORDER BY tg.id DESC;
 -- name: GetTransactionGroupMembers :many
 SELECT utg.user_email,
        utg.split_value,
-       CASE WHEN utg.currency_id IS NULL
-                THEN false
-                ELSE true
-       END as joined,
+       utg.locked as joined,
     utg.hidden
 FROM user_transaction_group utg
 WHERE utg.transaction_group_id = sqlc.arg(transaction_group_id)
@@ -54,31 +48,36 @@ WITH new_group AS (
      ),
      creator_link AS (
          INSERT INTO user_transaction_group (
-                                             user_email,
-                                             transaction_group_id,
-                                             category_id,
-                                             currency_id,
-                                             split_value
-             )
-             SELECT
-                 sqlc.arg(user_email),
-                 g.id,
-                 sqlc.narg(category_id),
-                 sqlc.narg(currency_id),
-                 sqlc.narg(split_value)
-             FROM new_group g
+                user_email,
+                transaction_group_id,
+                category_id,
+                currency_id,
+                split_value,
+                hidden,
+                locked
+         )
+         SELECT
+             sqlc.arg(user_email),
+             g.id,
+             sqlc.narg(category_id),
+             sqlc.narg(currency_id),
+             sqlc.narg(split_value),
+             FALSE,
+             TRUE
+         FROM new_group g
      )
 SELECT id
 FROM new_group;
 
 -- name: UpdateTransactionGroupPersonalProperties :execrows
- UPDATE user_transaction_group utg
- SET
-     currency_id = COALESCE(sqlc.narg(currency_id), utg.currency_id),
-     category_id = COALESCE(sqlc.narg(category_id), utg.category_id),
-     name_override = COALESCE(sqlc.narg(name), utg.name_override),
-     hidden = COALESCE(sqlc.narg(hidden), utg.hidden)
- WHERE utg.user_email = sqlc.arg(user_email) AND utg.transaction_group_id = sqlc.arg(transaction_group_id);
+UPDATE user_transaction_group utg
+SET
+    currency_id = COALESCE(sqlc.narg(currency_id), utg.currency_id),
+    category_id = COALESCE(sqlc.narg(category_id), utg.category_id),
+    name_override = COALESCE(sqlc.narg(name), utg.name_override),
+    hidden = COALESCE(sqlc.narg(hidden), utg.hidden),
+    locked = true
+WHERE utg.user_email = sqlc.arg(user_email) AND utg.transaction_group_id = sqlc.arg(transaction_group_id);
 
 -- name: UpdateTransactionGroup :execrows
 WITH tg_creator_email AS (
@@ -106,12 +105,16 @@ WHERE tg2.id = sqlc.arg(transaction_group_id);
 INSERT INTO user_transaction_group AS utg (
     user_email,
     transaction_group_id,
-    split_value
+    split_value,
+    hidden,
+    locked
 )
 VALUES (
            sqlc.arg(user_email),
            sqlc.arg(transaction_group_id),
-           sqlc.narg(split_value)
+           sqlc.narg(split_value),
+           FALSE,
+           FALSE
        )
 ON CONFLICT (user_email, transaction_group_id)
     DO UPDATE
@@ -152,40 +155,3 @@ SELECT
     CAST(COALESCE((SELECT COUNT(*) FROM deleted_splits), 0) AS INTEGER)            AS splits_deleted,
     CAST(COALESCE((SELECT COUNT(*) FROM deleted_user_transactions), 0) AS INTEGER) AS transactions_unlinked,
     CAST(COALESCE((SELECT COUNT(*) FROM deleted_user), 0) AS INTEGER)              AS user_links_deleted;
-
-
-
-
--- name: AddTransactionToGroup :exec
-INSERT INTO transaction_transaction_group (
-    transaction_id,
-    transaction_group_id,
-    split_type_override
-)
-VALUES (
-           sqlc.arg(transaction_id),
-           sqlc.arg(transaction_group_id),
-           sqlc.narg(split_type_override)::transaction_split_type
-       );
-
-
-
--- name: RemoveTransactionFromGroup :execrows
-DELETE FROM transaction_transaction_group
-WHERE transaction_id = sqlc.arg(transaction_id);
-
-
-
--- name: UpdateTransactionGroupSplitType :execrows
-UPDATE transaction_group
-SET split_type = sqlc.arg(split_type)::group_split_type
-WHERE id = sqlc.arg(transaction_group_id);
-
-
-
--- name: UpdateUserTransactionGroupShare :execrows
-UPDATE user_transaction_group
-SET split_value = sqlc.arg(split_value)
-WHERE
-    user_email = sqlc.arg(user_email)
-  AND transaction_group_id = sqlc.arg(transaction_group_id);
