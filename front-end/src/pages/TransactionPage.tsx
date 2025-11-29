@@ -374,7 +374,7 @@ const TransactionPage: FC = () => {
               )}
 
               {/* Financial Income */}
-              {clickedTransaction.financialIncomeCurrency && (
+              {clickedTransaction.augmentedFinancialIncomeData && (
                 <DetailCard
                   delay={
                     (clickedTransaction.category ? 1 : 0) +
@@ -384,7 +384,7 @@ const TransactionPage: FC = () => {
                   }
                   title="Financial Income"
                   subTitle="From investment in"
-                  value={clickedTransaction.financialIncomeCurrency.symbol}
+                  value={clickedTransaction.augmentedFinancialIncomeData.relatedCurrency.symbol}
                 />
               )}
             </Column>

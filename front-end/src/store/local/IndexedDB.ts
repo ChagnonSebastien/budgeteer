@@ -41,6 +41,10 @@ interface ExchangeRate {
   rate: number
 }
 
+interface FinancialIncomeData {
+  relatedCurrencyId: number
+}
+
 interface Transaction {
   id: number
   amount: number
@@ -52,7 +56,7 @@ interface Transaction {
   note: string
   receiverCurrency: number
   receiverAmount: number
-  relatedCurrency: number | null
+  financialIncomeData: FinancialIncomeData | null
 }
 
 export type SplitType = 'equal' | 'percentage' | 'share'

@@ -64,9 +64,9 @@ func (s *TransactionHandler) CreateTransaction(
 	}
 
 	financialIncomeData := model.None[repository.CreateFinancialIncomeAdditionalData]()
-	if req.RelatedCurrency != nil {
+	if req.FinancialIncomeData != nil {
 		financialIncomeData = model.Some(repository.CreateFinancialIncomeAdditionalData{
-			RelatedCurrencyId: int(*req.RelatedCurrency),
+			RelatedCurrencyId: int(req.FinancialIncomeData.RelatedCurrency),
 		})
 	}
 
@@ -137,16 +137,21 @@ func (s *TransactionHandler) UpdateTransaction(
 		category = model.Some(newValue)
 	}
 
-	updateFinancialIncomeAdditionalData := model.None[repository.UpdateFinancialIncomeAdditionalData]()
-	if req.Fields.UpdateRelatedCurrency {
-		relatedCurrency := model.None[int]()
-		if req.Fields.RelatedCurrency != nil {
-			relatedCurrency = model.Some(int(*req.Fields.RelatedCurrency))
+	updateFinancialIncomeAdditionalData := model.None[model.Optional[repository.UpdateFinancialIncomeAdditionalData]]()
+	if req.Fields.UpdateFinancialIncome {
+		fields := model.None[repository.UpdateFinancialIncomeAdditionalData]()
+		if req.Fields.UpdateFinancialIncomeFields != nil {
+			relatedCurrency := model.None[int]()
+			if req.Fields.UpdateFinancialIncomeFields.RelatedCurrency != nil {
+				relatedCurrency = model.Some(int(*req.Fields.UpdateFinancialIncomeFields.RelatedCurrency))
+			}
+
+			fields = model.Some(repository.UpdateFinancialIncomeAdditionalData{
+				RelatedCurrencyId: relatedCurrency,
+			})
 		}
 
-		updateFinancialIncomeAdditionalData = model.Some(repository.UpdateFinancialIncomeAdditionalData{
-			RelatedCurrencyId: relatedCurrency,
-		})
+		updateFinancialIncomeAdditionalData = model.Some(fields)
 	}
 
 	amount := model.None[int]()
@@ -241,24 +246,25 @@ func (s *TransactionHandler) GetAllTransactions(
 			category = &id
 		}
 
-		var relatedCurrency *uint32
-		if financialIncomeData, isSome := transaction.FinancialIncomeData.Value(); isSome {
-			id := uint32(financialIncomeData.RelatedCurrency)
-			relatedCurrency = &id
+		var financialIncomeData *dto.FinancialIncomeData
+		if data, isSome := transaction.FinancialIncomeData.Value(); isSome {
+			financialIncomeData = &dto.FinancialIncomeData{
+				RelatedCurrency: uint32(data.RelatedCurrency),
+			}
 		}
 
 		transactionsDto[i] = &dto.Transaction{
-			Id:               uint32(transaction.ID),
-			Amount:           uint32(transaction.Amount),
-			Currency:         uint32(transaction.Currency),
-			Sender:           sender,
-			Receiver:         receiver,
-			Category:         category,
-			Date:             transaction.Date.Format(layout),
-			Note:             transaction.Note,
-			ReceiverCurrency: uint32(transaction.ReceiverCurrency),
-			ReceiverAmount:   uint32(transaction.ReceiverAmount),
-			RelatedCurrency:  relatedCurrency,
+			Id:                  uint32(transaction.ID),
+			Amount:              uint32(transaction.Amount),
+			Currency:            uint32(transaction.Currency),
+			Sender:              sender,
+			Receiver:            receiver,
+			Category:            category,
+			Date:                transaction.Date.Format(layout),
+			Note:                transaction.Note,
+			ReceiverCurrency:    uint32(transaction.ReceiverCurrency),
+			ReceiverAmount:      uint32(transaction.ReceiverAmount),
+			FinancialIncomeData: financialIncomeData,
 		}
 	}
 

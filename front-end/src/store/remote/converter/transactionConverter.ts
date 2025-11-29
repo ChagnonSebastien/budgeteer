@@ -1,7 +1,9 @@
 import { Converter } from './converter'
-import Transaction, { TransactionUpdatableFields } from '../../../domain/model/transaction'
+import Transaction, { FinancialIncomeData, TransactionUpdatableFields } from '../../../domain/model/transaction'
 import {
+  FinancialIncomeData as FinancialIncomeDataDto,
   Transaction as TransactionDto,
+  UpdateFinancialIncomeFields as UpdateFinancialIncomeFieldsDTO,
   UpdateTransactionFields as UpdateTransactionFieldsDTO,
 } from '../dto/transaction'
 
@@ -35,7 +37,9 @@ export class TransactionConverter
       dto.note,
       dto.receiverCurrency,
       dto.receiverAmount,
-      dto.relatedCurrency ?? null,
+      typeof dto.financialIncomeData !== 'undefined'
+        ? new FinancialIncomeData(dto.financialIncomeData.relatedCurrency)
+        : null,
     )
   }
 
@@ -51,7 +55,12 @@ export class TransactionConverter
       sender: model.senderId ?? undefined,
       receiverCurrency: model.receiverCurrencyId,
       receiverAmount: model.receiverAmount,
-      relatedCurrency: model.financialIncomeCurrencyId ?? undefined,
+      financialIncomeData:
+        model.financialIncomeData !== null
+          ? FinancialIncomeDataDto.create({
+              relatedCurrency: model.financialIncomeData.relatedCurrencyId,
+            })
+          : undefined,
     })
   }
 
@@ -69,8 +78,12 @@ export class TransactionConverter
       receiver: model.receiverId ?? undefined,
       receiverCurrency: model.receiverCurrencyId,
       receiverAmount: model.receiverAmount,
-      updateRelatedCurrency: typeof model.financialIncomeCurrencyId !== 'undefined',
-      relatedCurrency: model.financialIncomeCurrencyId ?? undefined,
+      updateFinancialIncome: typeof model.financialIncomeData !== 'undefined',
+      updateFinancialIncomeFields: model.financialIncomeData
+        ? UpdateFinancialIncomeFieldsDTO.create({
+            relatedCurrency: model.financialIncomeData.relatedCurrencyId ?? undefined,
+          })
+        : undefined,
     })
   }
 }

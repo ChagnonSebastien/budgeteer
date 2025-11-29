@@ -7,6 +7,14 @@ export type TransactionID = number
 
 export type TransactionType = 'income' | 'expense' | 'transfer' | 'financialIncome'
 
+export class FinancialIncomeData {
+  constructor(readonly relatedCurrencyId: CurrencyID) {}
+
+  equals(other: FinancialIncomeData): boolean {
+    return this.relatedCurrencyId === other.relatedCurrencyId
+  }
+}
+
 export default class Transaction implements Unique<TransactionID, Transaction> {
   constructor(
     readonly id: TransactionID,
@@ -19,7 +27,7 @@ export default class Transaction implements Unique<TransactionID, Transaction> {
     readonly note: string,
     readonly receiverCurrencyId: CurrencyID,
     readonly receiverAmount: number,
-    readonly financialIncomeCurrencyId: CurrencyID | null,
+    readonly financialIncomeData: FinancialIncomeData | null,
   ) {}
 
   equals(other: Transaction): boolean {
@@ -32,20 +40,31 @@ export default class Transaction implements Unique<TransactionID, Transaction> {
     if (this.receiverId !== other.receiverId) return false
     if (this.note !== other.note) return false
     if (this.receiverCurrencyId !== other.receiverCurrencyId) return false
-    if (this.financialIncomeCurrencyId !== other.financialIncomeCurrencyId) return false
-    return this.receiverAmount === other.receiverAmount
+    if (this.receiverAmount !== other.receiverAmount) return false
+    if ((this.financialIncomeData === null) !== (other.financialIncomeData === null)) return false
+    if (this.financialIncomeData !== null && !this.financialIncomeData.equals(other.financialIncomeData!)) return false
+    return true
+  }
+}
+
+export class AugmentedFinancialIncomeData extends FinancialIncomeData {
+  constructor(
+    financialIncomeData: FinancialIncomeData,
+    public readonly relatedCurrency: Currency,
+  ) {
+    super(financialIncomeData.relatedCurrencyId)
   }
 }
 
 export class AugmentedTransaction extends Transaction {
   constructor(
     transaction: Transaction,
+    public readonly augmentedFinancialIncomeData: AugmentedFinancialIncomeData | null,
     public readonly currency: Currency,
     public readonly receiverCurrency: Currency,
     public readonly category?: AugmentedCategory,
     public readonly sender?: Account,
     public readonly receiver?: Account,
-    public readonly financialIncomeCurrency?: Currency,
   ) {
     super(
       transaction.id,
@@ -58,12 +77,12 @@ export class AugmentedTransaction extends Transaction {
       transaction.note,
       transaction.receiverCurrencyId,
       transaction.receiverAmount,
-      transaction.financialIncomeCurrencyId,
+      transaction.financialIncomeData,
     )
   }
 
   getType(): TransactionType {
-    if (this?.financialIncomeCurrencyId !== null) return 'financialIncome'
+    if (this?.financialIncomeData !== null) return 'financialIncome'
     if (this?.categoryId === null) return 'transfer'
     if (this?.sender?.isMine ?? false) return 'expense'
     return 'income'
@@ -81,5 +100,5 @@ export type TransactionUpdatableFields = Pick<
   | 'note'
   | 'receiverCurrencyId'
   | 'receiverAmount'
-  | 'financialIncomeCurrencyId'
+  | 'financialIncomeData'
 >

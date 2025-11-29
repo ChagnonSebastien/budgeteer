@@ -134,7 +134,7 @@ export const useNetWorthChartData = <Item extends object>(
             }
 
             data.bookValue += bookValueChange
-            if (transaction.financialIncomeCurrencyId !== null) {
+            if (transaction.getType() === 'financialIncome') {
               const financialGroupLabel = group(getFinancialIncomeToIdentifier(transaction))!
               if (financialGroupLabel === groupLabel) {
                 data.bookValue -= bookValueChange
@@ -163,7 +163,7 @@ export const useNetWorthChartData = <Item extends object>(
                 transaction.receiver.isMine &&
                 accounts.findIndex((a) => a.id === transaction.receiver?.id) >= 0 &&
                 group(getToIdentifier(transaction)) === groupLabel) ||
-              transaction.financialIncomeCurrencyId != null
+              transaction.getType() === 'financialIncome'
             )
           ) {
             // I did not receive it from myself without changing category and it is not a financial income

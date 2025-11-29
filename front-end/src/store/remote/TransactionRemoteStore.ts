@@ -1,7 +1,12 @@
 import { RpcTransport } from '@protobuf-ts/runtime-rpc'
 
 import { formatDateTime, TransactionConverter } from './converter/transactionConverter'
-import { CreateTransactionRequest, GetAllTransactionsRequest, UpdateTransactionRequest } from './dto/transaction'
+import {
+  CreateTransactionRequest,
+  FinancialIncomeData,
+  GetAllTransactionsRequest,
+  UpdateTransactionRequest,
+} from './dto/transaction'
 import { TransactionServiceClient } from './dto/transaction.client'
 import Transaction from '../../domain/model/transaction'
 import { IdIdentifier } from '../../domain/model/Unique'
@@ -32,7 +37,12 @@ export default class TransactionRemoteStore {
         receiver: data.receiverId ?? undefined,
         receiverCurrency: data.receiverCurrencyId,
         receiverAmount: data.receiverAmount,
-        relatedCurrency: data.financialIncomeCurrencyId ?? undefined,
+        financialIncomeData:
+          data.financialIncomeData !== null
+            ? FinancialIncomeData.create({
+                relatedCurrency: data.financialIncomeData.relatedCurrencyId,
+              })
+            : undefined,
       }),
     ).response
     return new Transaction(
@@ -46,7 +56,7 @@ export default class TransactionRemoteStore {
       data.note,
       data.receiverCurrencyId,
       data.receiverAmount,
-      data.financialIncomeCurrencyId,
+      data.financialIncomeData,
     )
   }
 

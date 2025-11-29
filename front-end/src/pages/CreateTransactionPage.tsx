@@ -40,7 +40,7 @@ const CreateTransactionPage: FC = () => {
         note: data.note,
         receiverCurrencyId: data.receiverCurrencyId,
         receiverAmount: data.receiverAmount,
-        financialIncomeCurrencyId: data.financialIncomeCurrencyId ?? null,
+        financialIncomeData: data.financialIncomeData ?? null,
       })
       navigate(`/transactions`, { replace: true })
     },

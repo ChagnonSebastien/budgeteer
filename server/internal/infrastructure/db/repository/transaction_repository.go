@@ -121,9 +121,12 @@ func (r *Repository) CreateTransaction(
 	}
 
 	if financialIncome, isSome := financialIncomeData.Value(); isSome {
-		updatedRows, queryErr := r.queries.WithTx(tx).TransactionToFinancialIncome(ctx, &dao.TransactionToFinancialIncomeParams{
-			TransactionID:     transactionId,
-			RelatedCurrencyID: int32(financialIncome.RelatedCurrencyId),
+		updatedRows, queryErr := r.queries.WithTx(tx).UpsertFinancialIncome(ctx, &dao.UpsertFinancialIncomeParams{
+			TransactionID: transactionId,
+			RelatedCurrencyID: sql.NullInt32{
+				Int32: int32(financialIncome.RelatedCurrencyId),
+				Valid: true,
+			},
 		})
 		if queryErr != nil {
 			err = fmt.Errorf("creating financial income: %w", queryErr)
@@ -162,7 +165,7 @@ type UpdateTransactionFields struct {
 	CategoryId                          model.Optional[model.Optional[int]]
 	Date                                model.Optional[time.Time]
 	Note                                model.Optional[string]
-	UpdateFinancialIncomeAdditionalData model.Optional[UpdateFinancialIncomeAdditionalData]
+	UpdateFinancialIncomeAdditionalData model.Optional[model.Optional[UpdateFinancialIncomeAdditionalData]]
 }
 
 func (u *UpdateTransactionFields) nullNote() sql.NullString {
@@ -289,20 +292,28 @@ func (r *Repository) UpdateTransaction(
 		return
 	}
 
-	if financialDataFields, isSome := field.UpdateFinancialIncomeAdditionalData.Value(); isSome {
-		updatedRows, updateErr := r.queries.WithTx(tx).UpdateFinancialIncome(
-			ctx, &dao.UpdateFinancialIncomeParams{
-				RelatedCurrencyID: financialDataFields.nullRelatedCurrencyId(),
-				TransactionID:     int32(id),
-			},
-		)
-		if updateErr != nil {
-			err = fmt.Errorf("updating financial income: %w", updateErr)
-			return
-		}
-		if updatedRows == 0 {
-			err = fmt.Errorf("updated 0 rows when updating financial income")
-			return
+	if updatingFinancialData, isSome := field.UpdateFinancialIncomeAdditionalData.Value(); isSome {
+		if financialDataFields, isSome := updatingFinancialData.Value(); isSome {
+			updatedRows, updateErr := r.queries.WithTx(tx).UpsertFinancialIncome(
+				ctx, &dao.UpsertFinancialIncomeParams{
+					RelatedCurrencyID: financialDataFields.nullRelatedCurrencyId(),
+					TransactionID:     int32(id),
+				},
+			)
+			if updateErr != nil {
+				err = fmt.Errorf("updating financial income: %w", updateErr)
+				return
+			}
+			if updatedRows == 0 {
+				err = fmt.Errorf("updated 0 rows when updating financial income")
+				return
+			}
+		} else {
+			_, deleteErr := r.queries.WithTx(tx).RemoveFinancialIncome(ctx, int32(id))
+			if deleteErr != nil {
+				err = fmt.Errorf("deleting financial income: %w", deleteErr)
+				return
+			}
 		}
 	}
 

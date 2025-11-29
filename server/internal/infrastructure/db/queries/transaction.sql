@@ -56,16 +56,17 @@ SET
 WHERE t.id = sqlc.arg(id)
   AND t.user_id = sqlc.arg(user_id);
 
--- name: TransactionToFinancialIncome :one
+-- name: UpsertFinancialIncome :execrows
 INSERT INTO financialincomes (transaction_id, related_currency_id)
-VALUES (
-           sqlc.arg(transaction_id),
-           sqlc.arg(related_currency_id)
-       )
-RETURNING transaction_id;
+    VALUES (
+        sqlc.arg(transaction_id),
+        sqlc.arg(related_currency_id)
+    )
+    ON CONFLICT (transaction_id)
+        DO UPDATE
+        SET related_currency_id = COALESCE(sqlc.narg(related_currency_id), related_currency_id);
 
--- name: UpdateFinancialIncome :execrows
-UPDATE financialincomes fi
-SET
-    related_currency_id = COALESCE(sqlc.narg(related_currency_id), related_currency_id)
-WHERE fi.transaction_id = sqlc.arg(transaction_id);
+
+-- name: RemoveFinancialIncome :execrows
+DELETE FROM financialincomes
+WHERE transaction_id = sqlc.arg(transaction_id);

@@ -1,5 +1,5 @@
 import { BudgeteerDB } from './IndexedDB'
-import Transaction, { TransactionUpdatableFields } from '../../domain/model/transaction'
+import Transaction, { FinancialIncomeData, TransactionUpdatableFields } from '../../domain/model/transaction'
 import { IdIdentifier } from '../../domain/model/Unique'
 
 export default class TransactionLocalStore {
@@ -24,7 +24,9 @@ export default class TransactionLocalStore {
           transaction.note,
           transaction.receiverCurrency,
           transaction.receiverAmount,
-          transaction.relatedCurrency,
+          transaction.financialIncomeData
+            ? new FinancialIncomeData(transaction.financialIncomeData.relatedCurrencyId)
+            : null,
         ),
     )
   }
@@ -40,7 +42,7 @@ export default class TransactionLocalStore {
       date: data.date,
       receiver: data.receiverId,
       currency: data.currencyId,
-      relatedCurrency: data.financialIncomeCurrencyId,
+      financialIncomeData: data.financialIncomeData,
     })
 
     return new Transaction(
@@ -54,7 +56,7 @@ export default class TransactionLocalStore {
       data.note,
       data.receiverCurrencyId,
       data.receiverAmount,
-      data.financialIncomeCurrencyId,
+      data.financialIncomeData,
     )
   }
 
@@ -70,7 +72,7 @@ export default class TransactionLocalStore {
       date: data.date,
       receiver: data.receiverId,
       currency: data.currencyId,
-      relatedCurrency: data.financialIncomeCurrencyId,
+      financialIncomeData: data.financialIncomeData,
     })
   }
 
@@ -85,7 +87,7 @@ export default class TransactionLocalStore {
       date: data.date,
       receiver: data.receiverId,
       currency: data.currencyId,
-      relatedCurrency: data.financialIncomeCurrencyId,
+      financialIncomeData: data.financialIncomeData,
     })
   }
 
@@ -103,7 +105,7 @@ export default class TransactionLocalStore {
         date: transaction.date,
         receiver: transaction.receiverId,
         currency: transaction.currencyId,
-        relatedCurrency: transaction.financialIncomeCurrencyId,
+        financialIncomeData: transaction.financialIncomeData,
       })),
     )
   }

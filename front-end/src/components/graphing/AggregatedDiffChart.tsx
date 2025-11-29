@@ -91,7 +91,7 @@ const AggregatedDiffChart: FC<Props> = (props) => {
           continue
         }
 
-        if (hideFinancialIncome && transaction.financialIncomeCurrencyId != null) {
+        if (hideFinancialIncome && transaction.getType() === 'financialIncome') {
           continue
         }
 
