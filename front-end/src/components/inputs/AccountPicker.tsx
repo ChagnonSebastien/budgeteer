@@ -1,17 +1,15 @@
 import { FC, useContext, useMemo } from 'react'
 
-import AccountCard, { AdditionalAccountCardProps } from './AccountCard'
-import GroupedAccountList from './GroupedAccountList'
+import ItemPicker from './ItemPicker'
 import Account, { AccountID } from '../../domain/model/account'
 import { AccountServiceContext } from '../../service/ServiceContext'
-import ItemPicker from '../inputs/ItemPicker'
+import AccountCard, { AdditionalAccountCardProps } from '../accounts/AccountCard'
+import GroupedAccountList from '../accounts/GroupedAccountList'
 
 interface Props {
   valueText: string
   onAccountSelected?: (newAccount: { existing: boolean; id: AccountID | null; name: string }) => void
   itemDisplayText?: (item: Account | undefined) => string
-  selected?: AccountID[]
-  onMultiSelect?: (newAccounts: AccountID[]) => void
   labelText: string
   errorText?: string
   myOwn: boolean

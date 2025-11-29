@@ -1,7 +1,7 @@
 import { Network } from '@capacitor/network'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
-import User from './domain/model/user'
+import User, { AuthMethod } from './domain/model/user'
 import IndexedDB from './store/local/IndexedDB'
 import UserStore from './UserStore'
 
@@ -16,6 +16,7 @@ const oidcLogin = () => {
 const oidcLogout = () => {
   IndexedDB.delete()
   userStore.clear()
+  localStorage.clear()
   window.location.href = `${serverUrl}/auth/logout`
 }
 
@@ -26,16 +27,32 @@ const userPassLogin = () => {
 const userPassLogout = () => {
   IndexedDB.delete()
   userStore.clear()
+  localStorage.clear()
   throw new Error('Not implemented')
 }
 
-type AuthMethod = 'oidc' | 'userPass'
+const guestLogin = () => {
+  window.location.href = '/guest.html'
+}
+
+const guestLogout = () => {
+  IndexedDB.delete()
+  userStore.clear()
+  localStorage.clear()
+
+  document.cookie.split(';').forEach((c) => {
+    document.cookie = c.replace(/^ +/, '').replace(/=.*/, '=;expires=' + new Date().toUTCString() + ';path=/')
+  })
+
+  window.location.href = `/`
+}
+
 type AuthMethodStatuses = { [K in AuthMethod]: (() => void) | null }
 
 const useAuthentication = () => {
   const [loginMethods, setLoginMethods] = useState<AuthMethodStatuses | null>(null)
 
-  const [user, setUser] = useState<(User & { authMethod: AuthMethod }) | null>(userStore.getUser())
+  const [user, setUser] = useState<User | null>(userStore.getUser())
   const [userVerified, setUserVerified] = useState(false)
   const [attemptedUserVerification, setAttemptedUserVerification] = useState(false)
   const [hasInternet, setHasInternet] = useState(false)
@@ -43,7 +60,7 @@ const useAuthentication = () => {
   const setDefaultCurrency = useCallback((id: number) => {
     if (user === null) return
     setUser({ ...user, default_currency: id })
-    userStore.upsertUser({ ...user, default_currency: id }, 'oidc')
+    userStore.upsertUser({ ...user, default_currency: id })
   }, [])
 
   const fetchUserInfo = useCallback(async (): Promise<User | null> => {
@@ -86,6 +103,7 @@ const useAuthentication = () => {
         setLoginMethods({
           oidc: authMethodsResponse.oidc ? oidcLogin : null,
           userPass: authMethodsResponse.userPass ? userPassLogin : null,
+          guest: authMethodsResponse.guest ? guestLogin : null,
         })
       })
       .catch(console.error)
@@ -94,18 +112,51 @@ const useAuthentication = () => {
   useEffect(() => {
     if (!hasInternet) return
     if (userVerified) return
-    if (user !== null && user.authMethod !== 'oidc') return
     if (user === null && (loginMethods === null || !loginMethods.oidc)) return
 
+    let amountAuthMethods = 0
+    let onlyLoginMethod: () => void
+    if (loginMethods !== null) {
+      if (loginMethods.oidc) {
+        amountAuthMethods += 1
+        onlyLoginMethod = loginMethods.oidc
+      }
+      if (loginMethods.userPass) {
+        amountAuthMethods += 1
+        onlyLoginMethod = loginMethods.userPass
+      }
+      if (loginMethods.guest) {
+        amountAuthMethods += 1
+        onlyLoginMethod = loginMethods.guest
+      }
+    }
+
     fetchUserInfo()
-      .then(async (user) => {
-        if (user === null) {
-          loginMethods!.oidc!()
+      .then(async (userResponse) => {
+        if (userResponse === null) {
+          if (amountAuthMethods === 1) {
+            onlyLoginMethod()
+          }
+          if (user !== null) {
+            switch (user.authentification_method) {
+              case 'oidc':
+                oidcLogin()
+                break
+              case 'userPass':
+                userPassLogin()
+                break
+              case 'guest':
+                guestLogin()
+                break
+              default:
+                console.error('cannot login - unsupported auth method')
+            }
+          }
           return
         }
 
-        setUser({ ...user, authMethod: 'oidc' })
-        userStore.upsertUser(user, 'oidc')
+        setUser({ ...userResponse })
+        userStore.upsertUser(userResponse)
         setUserVerified(true)
       })
       .finally(() => setAttemptedUserVerification(true))
@@ -113,7 +164,17 @@ const useAuthentication = () => {
 
   const logout = useMemo(() => {
     if (user === null) return () => console.error('cannot logout if not logged in')
-    return user.authMethod === 'oidc' ? oidcLogout : userPassLogout
+    switch (user.authentification_method) {
+      case 'oidc':
+        return oidcLogout
+      case 'userPass':
+        return userPassLogout
+      case 'guest':
+        return guestLogout
+      default:
+        console.error('cannot logout - unsupported auth method')
+        return () => {}
+    }
   }, [user])
 
   return {

@@ -158,11 +158,11 @@ const ExchangeRateComparison: FC<Props> = (props) => {
         }
 
         if (
-          transaction.financialIncomeCurrencyId !== null &&
-          isSelected(transaction.financialIncomeCurrencyId) &&
+          transaction.financialIncomeData !== null &&
+          isSelected(transaction.financialIncomeData.relatedCurrencyId) &&
           transaction.receiver?.isMine
         ) {
-          const cId = transaction.financialIncomeCurrencyId
+          const cId = transaction.financialIncomeData.relatedCurrencyId
           const prevGains = gainToday.get(cId) ?? 0
 
           if (transaction.receiverCurrencyId === cId) {

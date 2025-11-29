@@ -104,7 +104,7 @@ const InvestmentGainLineChart: FC<GainChartProps> = ({ fromDate, toDate }) => {
               (typeof transaction.sender !== 'undefined' &&
                 transaction.sender.isMine &&
                 myOwnAccounts.findIndex((a) => a.id === transaction.sender?.id) >= 0) ||
-              transaction.financialIncomeCurrencyId != null
+              transaction.getType() === 'financialIncome'
             )
           ) {
             if (transaction.receiverCurrencyId === defaultCurrency.id) {
@@ -132,7 +132,7 @@ const InvestmentGainLineChart: FC<GainChartProps> = ({ fromDate, toDate }) => {
               (typeof transaction.receiver !== 'undefined' &&
                 transaction.receiver.isMine &&
                 myOwnAccounts.findIndex((a) => a.id === transaction.receiver?.id) >= 0) ||
-              transaction.financialIncomeCurrencyId != null
+              transaction.getType() === 'financialIncome'
             )
           ) {
             if (transaction.receiverCurrencyId === defaultCurrency.id) {

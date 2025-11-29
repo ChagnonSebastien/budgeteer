@@ -12,7 +12,7 @@ import {
 import LoadingScreen from '../components/LoadingScreen'
 import Category from '../domain/model/category'
 import Currency, { RateAutoupdateSettings } from '../domain/model/currency'
-import { AugmentedTransaction } from '../domain/model/transaction'
+import { AugmentedFinancialIncomeData, AugmentedTransaction } from '../domain/model/transaction'
 
 type CurrencyAmounts = Map<number, number>
 type AccountBalances = Map<number, CurrencyAmounts>
@@ -85,18 +85,25 @@ export const MixedAugmentationProvider: FC<Props> = ({ NextComponent }) => {
   }, [accounts, transactions])
 
   const augmentedTransactions = useMemo<AugmentedTransaction[]>(() => {
-    return transactions.map<AugmentedTransaction>(
-      (transaction) =>
-        new AugmentedTransaction(
-          transaction,
-          currencies.find((c) => c.id === transaction.currencyId)!,
-          currencies.find((c) => c.id === transaction.receiverCurrencyId)!,
-          categories.find((c) => c.id === transaction.categoryId),
-          accounts.find((c) => c.id === transaction.senderId),
-          accounts.find((c) => c.id === transaction.receiverId),
-          currencies.find((c) => c.id === transaction.financialIncomeCurrencyId),
-        ),
-    )
+    return transactions.map<AugmentedTransaction>((transaction) => {
+      let augmentedFinancialIncomeData = null
+      if (transaction.financialIncomeData !== null) {
+        augmentedFinancialIncomeData = new AugmentedFinancialIncomeData(
+          transaction.financialIncomeData,
+          currencies.find((c) => c.id === transaction.financialIncomeData?.relatedCurrencyId)!,
+        )
+      }
+
+      return new AugmentedTransaction(
+        transaction,
+        augmentedFinancialIncomeData,
+        currencies.find((c) => c.id === transaction.currencyId)!,
+        currencies.find((c) => c.id === transaction.receiverCurrencyId)!,
+        categories.find((c) => c.id === transaction.categoryId),
+        accounts.find((c) => c.id === transaction.senderId),
+        accounts.find((c) => c.id === transaction.receiverId),
+      )
+    })
   }, [transactions, currencies, categories, accounts])
 
   const augmentedData = useMemo(() => {

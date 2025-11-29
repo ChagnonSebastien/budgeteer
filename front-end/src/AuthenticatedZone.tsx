@@ -1,5 +1,5 @@
 import { GrpcWebFetchTransport } from '@protobuf-ts/grpcweb-transport'
-import React, { FC, ReactNode, useMemo } from 'react'
+import React, { FC, ReactNode, useContext, useMemo, useState } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 
 import { UserContext } from './App'
@@ -17,14 +17,18 @@ import CostsAnalysisPage from './pages/CostsAnalysisPage'
 import CreateAccountPage from './pages/CreateAccountPage'
 import CreateCategoryPage from './pages/CreateCategoryPage'
 import CreateCurrencyPage from './pages/CreateCurrencyPage'
+import CreateTransactionGroupPage from './pages/CreateTransactionGroupPage'
 import CreateTransactionPage from './pages/CreateTransactionPage'
 import CurrenciesPage from './pages/CurrenciesPage'
 import Dashboard from './pages/Dashboard'
 import EditAccountPage from './pages/EditAccountPage'
 import EditCategoryPage from './pages/EditCategoryPage'
 import EditCurrencyPage from './pages/EditCurrencyPage'
+import EditTransactionGroupPage from './pages/EditTransactionGroupPage'
 import EditTransactionPage from './pages/EditTransactionPage'
 import InvestmentsPerformancePage from './pages/InvestmentsPerformancePage'
+import ManageTransactionGroup from './pages/ManageTransactionGroup'
+import TransactionGroups from './pages/TransactionGroups'
 import TransactionPage from './pages/TransactionPage'
 import TrendsPage from './pages/TrendsPage'
 import { AccountPersistenceAugmenter } from './service/AccountServiceAugmenter'
@@ -39,19 +43,23 @@ import {
   CategoryServiceContext,
   CurrencyServiceContext,
   ExchangeRateServiceContext,
+  TransactionGroupServiceContext,
   TransactionServiceContext,
 } from './service/ServiceContext'
+import { TransactionGroupPersistenceAugmenter } from './service/TransactionGroupServiceAugmenter'
 import AccountLocalStore from './store/local/AccountLocalStore'
 import CategoryLocalStore from './store/local/CategoryLocalStore'
 import CurrencyLocalStore from './store/local/CurrencyLocalStore'
 import ExchangeRateLocalStore from './store/local/ExchangeRateLocalStore'
 import IndexedDB from './store/local/IndexedDB'
 import ReplayStore from './store/local/ReplayStore'
+import TransactionGroupLocalStore from './store/local/TransactionGroupLocalStore'
 import TransactionLocalStore from './store/local/TransactionLocalStore'
 import AccountRemoteStore from './store/remote/AccountRemoteStore'
 import CategoryRemoteStore from './store/remote/CategoryRemoteStore'
 import CurrencyRemoteStore from './store/remote/CurrencyRemoteStore'
 import ExchangeRateRemoteStore from './store/remote/ExchangeRateRemoteStore'
+import TransactionGroupRemoteStore from './store/remote/TransactionGroupRemoteStore'
 import TransactionRemoteStore from './store/remote/TransactionRemoteStore'
 
 const transport = new GrpcWebFetchTransport({
@@ -167,119 +175,143 @@ const WaitOnInitializedData: FC<{
   setDefaultCurrency(id: number): void
   testGetRateScript(script: string): Promise<string>
 }> = ({ NextComponent, hasInternet, setDefaultCurrency, testGetRateScript }) => (
-  <TransactionServiceContext.Consumer>
-    {(transactionCtx) => (
-      <ExchangeRateServiceContext.Consumer>
-        {(exchangeRateCtx) => (
-          <AccountServiceContext.Consumer>
-            {(accountCtx) => (
-              <CurrencyServiceContext.Consumer>
-                {(currencyCtx) => (
-                  <CategoryServiceContext.Consumer>
-                    {(categoryCtx) =>
-                      !transactionCtx.initialized ||
-                      !exchangeRateCtx.initialized ||
-                      !exchangeRateCtx.version != !exchangeRateCtx.augmentedVersion ||
-                      !accountCtx.initialized ||
-                      !accountCtx.version != !accountCtx.augmentedVersion ||
-                      !currencyCtx.initialized ||
-                      !currencyCtx.version != !currencyCtx.augmentedVersion ||
-                      !categoryCtx.initialized ||
-                      !categoryCtx.version != !categoryCtx.augmentedVersion ? (
-                        <LoadingScreen />
-                      ) : (
-                        <AssureMinimumConfig
-                          NextComponent={NextComponent}
-                          setDefaultCurrency={setDefaultCurrency}
-                          hasInternet={hasInternet}
-                          testGetRateScript={testGetRateScript}
-                        />
-                      )
-                    }
-                  </CategoryServiceContext.Consumer>
+  <TransactionGroupServiceContext.Consumer>
+    {(transactionGroupCtx) => (
+      <TransactionServiceContext.Consumer>
+        {(transactionCtx) => (
+          <ExchangeRateServiceContext.Consumer>
+            {(exchangeRateCtx) => (
+              <AccountServiceContext.Consumer>
+                {(accountCtx) => (
+                  <CurrencyServiceContext.Consumer>
+                    {(currencyCtx) => (
+                      <CategoryServiceContext.Consumer>
+                        {(categoryCtx) =>
+                          !transactionGroupCtx.initialized ||
+                          !transactionGroupCtx.version != !transactionGroupCtx.augmentedVersion ||
+                          !transactionCtx.initialized ||
+                          !exchangeRateCtx.initialized ||
+                          !exchangeRateCtx.version != !exchangeRateCtx.augmentedVersion ||
+                          !accountCtx.initialized ||
+                          !accountCtx.version != !accountCtx.augmentedVersion ||
+                          !currencyCtx.initialized ||
+                          !currencyCtx.version != !currencyCtx.augmentedVersion ||
+                          !categoryCtx.initialized ||
+                          !categoryCtx.version != !categoryCtx.augmentedVersion ? (
+                            <LoadingScreen />
+                          ) : (
+                            <AssureMinimumConfig
+                              NextComponent={NextComponent}
+                              setDefaultCurrency={setDefaultCurrency}
+                              hasInternet={hasInternet}
+                              testGetRateScript={testGetRateScript}
+                            />
+                          )
+                        }
+                      </CategoryServiceContext.Consumer>
+                    )}
+                  </CurrencyServiceContext.Consumer>
                 )}
-              </CurrencyServiceContext.Consumer>
+              </AccountServiceContext.Consumer>
             )}
-          </AccountServiceContext.Consumer>
+          </ExchangeRateServiceContext.Consumer>
         )}
-      </ExchangeRateServiceContext.Consumer>
+      </TransactionServiceContext.Consumer>
     )}
-  </TransactionServiceContext.Consumer>
+  </TransactionGroupServiceContext.Consumer>
 )
 
-const PersistenceSetup: FC<{ children: ReactNode; hasInternet: boolean }> = ({ children, hasInternet }) => (
-  <BasicCrudServiceWithPersistence
-    itemName="currency"
-    synced={true}
-    longTermStore={currencyRemoteStore}
-    localStore={currencyLocalStore}
-    actionStore={replayStore}
-    context={CurrencyServiceContext}
-    Augmenter={CurrencyPersistenceAugmenter}
-    hasInternet={hasInternet}
-    sorter={(a, b) => b.id - a.id}
-  >
+const PersistenceSetup: FC<{ children: ReactNode; hasInternet: boolean }> = ({ children, hasInternet }) => {
+  const { email, preferred_username: username } = useContext(UserContext)
+  const [transactionGroupLocalStore] = useState(new TransactionGroupLocalStore(email, username, IndexedDB))
+  const [transactionGroupRemoteStore] = useState(new TransactionGroupRemoteStore(email, username, transport))
+
+  return (
     <BasicCrudServiceWithPersistence
-      itemName="category"
+      itemName="currency"
       synced={true}
-      longTermStore={categoryRemoteStore}
-      localStore={categoryLocalStore}
+      longTermStore={currencyRemoteStore}
+      localStore={currencyLocalStore}
       actionStore={replayStore}
-      context={CategoryServiceContext}
-      Augmenter={CategoryPersistenceAugmenter}
-      sorter={(a, b) => {
-        if (b.ordering !== a.ordering) return b.ordering - a.ordering
-        return b.id - a.id
-      }}
+      context={CurrencyServiceContext}
+      Augmenter={CurrencyPersistenceAugmenter}
       hasInternet={hasInternet}
+      sorter={(a, b) => b.id - a.id}
     >
       <BasicCrudServiceWithPersistence
-        itemName="account"
+        itemName="category"
         synced={true}
-        longTermStore={accountRemoteStore}
-        localStore={accountLocalStore}
+        longTermStore={categoryRemoteStore}
+        localStore={categoryLocalStore}
         actionStore={replayStore}
-        context={AccountServiceContext}
-        Augmenter={AccountPersistenceAugmenter}
+        context={CategoryServiceContext}
+        Augmenter={CategoryPersistenceAugmenter}
+        sorter={(a, b) => {
+          if (b.ordering !== a.ordering) return b.ordering - a.ordering
+          return b.id - a.id
+        }}
         hasInternet={hasInternet}
-        sorter={(a, b) => b.id - a.id}
       >
         <BasicCrudServiceWithPersistence
-          itemName="exchangeRate"
+          itemName="account"
           synced={true}
-          longTermStore={exchangeRateRemoteStore}
-          localStore={exchangeRateLocalStore}
+          longTermStore={accountRemoteStore}
+          localStore={accountLocalStore}
           actionStore={replayStore}
-          context={ExchangeRateServiceContext}
-          Augmenter={ExchangeRatePersistenceAugmenter}
+          context={AccountServiceContext}
+          Augmenter={AccountPersistenceAugmenter}
           hasInternet={hasInternet}
-          sorter={(a, b) => {
-            if (b.date.getTime() !== a.date.getTime()) return b.date.getTime() - a.date.getTime()
-            if (b.currencyA !== a.currencyA) return b.currencyA - a.currencyA
-            return b.currencyB - a.currencyB
-          }}
+          sorter={(a, b) => b.id - a.id}
         >
           <BasicCrudServiceWithPersistence
-            itemName="transaction"
+            itemName="exchangeRate"
             synced={true}
-            longTermStore={transactionRemoteStore}
-            localStore={transactionLocalStore}
+            longTermStore={exchangeRateRemoteStore}
+            localStore={exchangeRateLocalStore}
             actionStore={replayStore}
-            context={TransactionServiceContext}
-            Augmenter={NilPersistenceAugmenter}
+            context={ExchangeRateServiceContext}
+            Augmenter={ExchangeRatePersistenceAugmenter}
+            hasInternet={hasInternet}
             sorter={(a, b) => {
               if (b.date.getTime() !== a.date.getTime()) return b.date.getTime() - a.date.getTime()
-              return b.id - a.id
+              if (b.currencyA !== a.currencyA) return b.currencyA - a.currencyA
+              return b.currencyB - a.currencyB
             }}
-            hasInternet={hasInternet}
           >
-            {children}
+            <BasicCrudServiceWithPersistence
+              itemName="transaction"
+              synced={true}
+              longTermStore={transactionRemoteStore}
+              localStore={transactionLocalStore}
+              actionStore={replayStore}
+              context={TransactionServiceContext}
+              Augmenter={NilPersistenceAugmenter}
+              sorter={(a, b) => {
+                if (b.date.getTime() !== a.date.getTime()) return b.date.getTime() - a.date.getTime()
+                return b.id - a.id
+              }}
+              hasInternet={hasInternet}
+            >
+              <BasicCrudServiceWithPersistence
+                itemName="transactionGroup"
+                synced={true}
+                longTermStore={transactionGroupRemoteStore}
+                localStore={transactionGroupLocalStore}
+                actionStore={replayStore}
+                context={TransactionGroupServiceContext}
+                Augmenter={TransactionGroupPersistenceAugmenter}
+                sorter={(a, b) => b.id - a.id}
+                hasInternet={hasInternet}
+              >
+                {children}
+              </BasicCrudServiceWithPersistence>
+            </BasicCrudServiceWithPersistence>
           </BasicCrudServiceWithPersistence>
         </BasicCrudServiceWithPersistence>
       </BasicCrudServiceWithPersistence>
     </BasicCrudServiceWithPersistence>
-  </BasicCrudServiceWithPersistence>
-)
+  )
+}
 
 interface Props {
   logout(): void
@@ -313,7 +345,11 @@ const AuthenticatedZone: FC<Props> = (props) => {
           <Route path="/costs" element={<CostsAnalysisPage />} />
           <Route path="/trends" element={<TrendsPage />} />
           <Route path="/investments" element={<InvestmentsPerformancePage />} />
-          <Route path="*" element={<Navigate to="/" />} />
+          <Route path="/transaction-groups" element={<TransactionGroups />} />
+          <Route path="/transaction-groups/new" element={<CreateTransactionGroupPage />} />
+          <Route path="/transaction-groups/edit/:transactionGroupId" element={<EditTransactionGroupPage />} />
+          <Route path="/transaction-groups/manage/:transactionGroupId" element={<ManageTransactionGroup />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </DrawerWrapper>
     ),

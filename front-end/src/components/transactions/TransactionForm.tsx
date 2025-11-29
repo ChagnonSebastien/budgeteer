@@ -5,12 +5,12 @@ import { UserContext } from '../../App'
 import Account, { AccountID } from '../../domain/model/account'
 import { CategoryID } from '../../domain/model/category'
 import { CurrencyID, formatAmount, parseAmount } from '../../domain/model/currency'
-import Transaction, { AugmentedTransaction } from '../../domain/model/transaction'
+import Transaction, { AugmentedTransaction, FinancialIncomeData } from '../../domain/model/transaction'
 import MixedAugmentation from '../../service/MixedAugmentation'
 import { AccountServiceContext, CategoryServiceContext, CurrencyServiceContext } from '../../service/ServiceContext'
-import AccountPicker from '../accounts/AccountPicker'
 import CategoryPicker from '../categories/CategoryPicker'
 import CurrencyPicker from '../currencies/CurrencyPicker'
+import AccountPicker from '../inputs/AccountPicker'
 import DatePicker from '../inputs/DatePicker'
 import FormWrapper from '../shared/FormWrapper'
 import { Row } from '../shared/Layout'
@@ -69,7 +69,7 @@ const TransactionForm: FC<Props> = (props) => {
 
   const type: 'income' | 'expense' | 'transfer' | 'financialIncome' = useMemo(() => {
     if (typeof rawType !== 'undefined') return rawType
-    if (initialTransaction?.financialIncomeCurrencyId !== null) return 'financialIncome'
+    if (initialTransaction?.financialIncomeData) return 'financialIncome'
     if (initialTransaction?.categoryId === null) return 'transfer'
     return (initialTransaction?.sender?.isMine ?? false) ? 'expense' : 'income'
   }, [initialTransaction, rawType])
@@ -81,7 +81,7 @@ const TransactionForm: FC<Props> = (props) => {
   const sanitizedAmount = useMemo(() => `0${amount.replace(',', '')}`, [amount])
   const [currency, setCurrency] = useState<CurrencyID>(initialTransaction?.currencyId ?? default_currency!)
   const [investmentCurrency, setInvestmentCurrency] = useState<CurrencyID>(
-    initialTransaction?.financialIncomeCurrencyId ?? default_currency!,
+    initialTransaction?.financialIncomeData?.relatedCurrencyId ?? default_currency!,
   )
   const [date, setDate] = useState(initialTransaction?.date ?? new Date())
 
@@ -252,7 +252,7 @@ const TransactionForm: FC<Props> = (props) => {
         date,
         currencyId: currency,
         receiverCurrencyId: differentCurrency ? receiverCurrency : currency,
-        financialIncomeCurrencyId: type === 'financialIncome' ? investmentCurrency : null,
+        financialIncomeData: type === 'financialIncome' ? new FinancialIncomeData(investmentCurrency) : null,
       }).catch((err) => {
         setShowErrorToast('Unexpected error while submitting the category')
         console.error(err)

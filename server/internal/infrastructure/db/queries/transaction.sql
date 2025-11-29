@@ -1,6 +1,7 @@
 -- name: GetAllTransactions :many
 SELECT
     t.id,
+    COALESCE(u.email, 'TBD') as owner,
     t.amount,
     t.currency,
     t.sender,
@@ -10,9 +11,31 @@ SELECT
     t.note,
     t.receiver_currency,
     t.receiver_amount,
-    fi.related_currency_id
-FROM
-    transactions t LEFT OUTER JOIN financialincomes fi ON t.id = fi.transaction_id
+    fi.related_currency_id,
+    ttg.transaction_group_id,
+    ttg.split_type_override as transaction_group_split_type_override,
+    (
+        CASE WHEN ttg.split_type_override IS NOT NULL
+            THEN (
+                SELECT COALESCE(
+                               json_agg(
+                                       json_build_object(
+                                               'user_email', ttgus.user_email,
+                                               'split_value', ttgus.split_value
+                                       )
+                               )::jsonb,
+                               '[]'::jsonb
+                       )
+                FROM transaction_transaction_group_user_split ttgus
+                WHERE ttgus.transaction_id = t.id
+            )
+            ELSE '[]'::jsonb
+        END
+    ) AS transaction_group_member_values
+FROM transactions t
+    LEFT OUTER JOIN financialincomes fi ON t.id = fi.transaction_id
+    LEFT OUTER JOIN transaction_transaction_group ttg ON t.id = ttg.transaction_id
+    LEFT OUTER JOIN users u ON u.id = t.user_id
 WHERE t.user_id = sqlc.arg(user_id)
 ORDER BY date DESC;
 
@@ -56,16 +79,17 @@ SET
 WHERE t.id = sqlc.arg(id)
   AND t.user_id = sqlc.arg(user_id);
 
--- name: TransactionToFinancialIncome :one
+-- name: UpsertFinancialIncome :execrows
 INSERT INTO financialincomes (transaction_id, related_currency_id)
-VALUES (
-           sqlc.arg(transaction_id),
-           sqlc.arg(related_currency_id)
-       )
-RETURNING transaction_id;
+    VALUES (
+        sqlc.arg(transaction_id),
+        sqlc.arg(related_currency_id)
+    )
+    ON CONFLICT (transaction_id)
+        DO UPDATE
+        SET related_currency_id = COALESCE(sqlc.narg(related_currency_id), related_currency_id);
 
--- name: UpdateFinancialIncome :execrows
-UPDATE financialincomes fi
-SET
-    related_currency_id = COALESCE(sqlc.narg(related_currency_id), related_currency_id)
-WHERE fi.transaction_id = sqlc.arg(transaction_id);
+
+-- name: RemoveFinancialIncome :execrows
+DELETE FROM financialincomes
+WHERE transaction_id = sqlc.arg(transaction_id);

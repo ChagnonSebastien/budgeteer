@@ -5,8 +5,6 @@ const KEY_GROSS_INCOME = 'gross_income'
 const KEY_INCOME_CATEGORY = 'incomeCategory'
 const KEY_PRIVACY_MODE = 'privacyMode'
 
-export type AuthMethod = 'oidc' | 'userPass'
-
 export default class UserStore {
   constructor(private storage: Storage) {}
 
@@ -19,8 +17,8 @@ export default class UserStore {
     return JSON.parse(userString)
   }
 
-  public upsertUser(user: User, authMethod: AuthMethod) {
-    this.storage.setItem(KEY_USER, JSON.stringify({ ...user, authMethod }))
+  public upsertUser(user: User) {
+    this.storage.setItem(KEY_USER, JSON.stringify({ ...user }))
   }
 
   public getGrossIncome() {

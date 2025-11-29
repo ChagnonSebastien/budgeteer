@@ -1,5 +1,8 @@
 package model
 
+type Email string
+
 type UserParams struct {
-	DefaultCurrency int
+	DefaultCurrency      CurrencyID
+	HiddenDefaultAccount AccountID
 }

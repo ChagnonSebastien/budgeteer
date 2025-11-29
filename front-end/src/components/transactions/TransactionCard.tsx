@@ -25,16 +25,7 @@ const TransactionCard: FC<ItemProps<TransactionID, AugmentedTransaction, object>
 
   const { privacyMode } = useContext(DrawerContext)
 
-  const fromMe = item.sender?.isMine ?? false
-  const toMe = item.receiver?.isMine ?? false
-
-  const cardType = item.financialIncomeCurrencyId
-    ? 'financialIncome'
-    : fromMe && !toMe
-      ? 'expense'
-      : !fromMe && toMe
-        ? 'income'
-        : ''
+  const cardType = item.getType()
 
   const getBackgroundColor = () => {
     if (cardType === 'expense') return 'rgba(240, 128, 128, 0.05)'

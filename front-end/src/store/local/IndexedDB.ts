@@ -1,5 +1,8 @@
 import Dexie, { type EntityTable, Table } from 'dexie'
 
+import { SplitTypeOverride } from '../../domain/model/transaction'
+import { SplitType } from '../../domain/model/transactionGroup'
+
 interface Currency {
   id: number
   name: string
@@ -41,6 +44,25 @@ interface ExchangeRate {
   rate: number
 }
 
+interface FinancialIncomeData {
+  relatedCurrencyId: number
+}
+
+interface MemberValue {
+  email: string
+  value: number | null
+}
+
+interface SplitOverride {
+  splitTypeOverride: SplitTypeOverride
+  memberValues: MemberValue[]
+}
+
+interface TransactionGroupData {
+  transactionGroupId: number
+  splitOverride: SplitOverride | null
+}
+
 interface Transaction {
   id: number
   amount: number
@@ -52,7 +74,26 @@ interface Transaction {
   note: string
   receiverCurrency: number
   receiverAmount: number
-  relatedCurrency: number | null
+  financialIncomeData: FinancialIncomeData | null
+  transactionGroupData: TransactionGroupData | null
+}
+
+interface TransactionGroupMember {
+  email: string
+  name: string
+  splitValue: number | null
+  joined: boolean
+}
+
+interface TransactionGroup {
+  id: number
+  name: string
+  originalCurrency: string
+  splitType: SplitType
+  members: TransactionGroupMember[]
+  currency: number | null
+  category: number | null
+  hidden: boolean
 }
 
 export type ActionType = 'create' | 'update' | 'delete'
@@ -75,6 +116,7 @@ export class BudgeteerDB extends Dexie {
   exchangeRates!: Table<ExchangeRate, ExchangeRateCompositeKey, ExchangeRate>
   categories!: EntityTable<Category, 'id'>
   transactions!: EntityTable<Transaction, 'id'>
+  transactionGroups!: EntityTable<TransactionGroup, 'id'>
   replay!: EntityTable<Action, 'id'>
 
   constructor() {
@@ -85,12 +127,13 @@ export class BudgeteerDB extends Dexie {
       categories: '++id',
       exchangeRates: '[a+b+date]',
       transactions: '++id',
+      transactionGroups: '++id',
       replay: '++id,time',
     })
   }
 }
 
-export type { Currency, Account, Category, Action, Transaction, ExchangeRate }
+export type { Currency, Account, Category, Action, Transaction, TransactionGroup, ExchangeRate }
 
 const IndexedDB = new BudgeteerDB()
 export default IndexedDB

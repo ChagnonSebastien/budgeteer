@@ -88,25 +88,38 @@ const ContentContainer = styled.div<{ $persistentDrawer: boolean; $totalWidth: n
 `
 
 const appPages = [
-  new AppPage('Dashboard', '/', PreparedIcon.TbLayoutDashboardFilled, []),
-  new Subsection('Data'),
-  new AppPage('Transactions', '/transactions', PreparedIcon.TbArrowsExchange, ['from', 'to', 'accounts', 'categories']),
-  new AppPage('Categories', '/categories', PreparedIcon.MdCategory, []),
-  new AppPage('Accounts', '/accounts', PreparedIcon.MdAccountBalance, []),
-  new AppPage('Currencies', '/currencies', PreparedIcon.BsCurrencyExchange, []),
-  new Subsection('Analysis'),
-  new AppPage('Balances', '/balances', PreparedIcon.FaScaleUnbalanced, ['from', 'to', 'accounts']),
-  new AppPage('Trends', '/trends', PreparedIcon.BiSolidBarChartAlt2, ['categories']),
-  new AppPage('Costs Analysis', '/costs', PreparedIcon.BsFileEarmarkSpreadsheet, []),
-  new AppPage('Investments', '/investments', PreparedIcon.BsGraphUp, []),
-  new Separator(),
+  { guestView: false, element: new AppPage('Dashboard', '/', PreparedIcon.TbLayoutDashboardFilled, []) },
+  { guestView: false, element: new Subsection('Data') },
+  {
+    guestView: false,
+    element: new AppPage('Transactions', '/transactions', PreparedIcon.TbArrowsExchange, [
+      'from',
+      'to',
+      'accounts',
+      'categories',
+    ]),
+  },
+  { guestView: false, element: new AppPage('Categories', '/categories', PreparedIcon.MdCategory, []) },
+  { guestView: false, element: new AppPage('Accounts', '/accounts', PreparedIcon.MdAccountBalance, []) },
+  { guestView: false, element: new AppPage('Currencies', '/currencies', PreparedIcon.BsCurrencyExchange, []) },
+  { guestView: false, element: new Subsection('Analysis') },
+  {
+    guestView: false,
+    element: new AppPage('Balances', '/balances', PreparedIcon.FaScaleUnbalanced, ['from', 'to', 'accounts']),
+  },
+  { guestView: false, element: new AppPage('Trends', '/trends', PreparedIcon.BiSolidBarChartAlt2, ['categories']) },
+  { guestView: false, element: new AppPage('Costs Analysis', '/costs', PreparedIcon.BsFileEarmarkSpreadsheet, []) },
+  { guestView: false, element: new AppPage('Investments', '/investments', PreparedIcon.BsGraphUp, []) },
+  { guestView: false, element: new Subsection('SplitWise') },
+  { guestView: true, element: new AppPage('Groups', '/transaction-groups', PreparedIcon.BsGraphUp, []) },
+  { guestView: true, element: new Separator() },
 ]
 
 const userStore = new UserStore(localStorage)
 
 interface Props {
   children: ReactElement
-
+  userIsGuest?: boolean
   logout(): void
 }
 
@@ -120,7 +133,7 @@ export const DrawerContext = createContext<DrawerActions>({
   drawerWidth: 0,
 })
 
-const DrawerWrapper: FC<Props> = ({ logout, children }) => {
+const DrawerWrapper: FC<Props> = ({ logout, children, userIsGuest = false }) => {
   const { email } = useContext(UserContext)
   const { IconLib } = useContext(IconToolsContext)
 
@@ -140,37 +153,41 @@ const DrawerWrapper: FC<Props> = ({ logout, children }) => {
     <div ref={setDrawerRef}>
       <Box style={{ padding: '1.5rem' }}>
         <Typography variant="h6" sx={{ fontWeight: 600, letterSpacing: '0.05em', marginBottom: '0.25rem' }}>
-          Budget App
+          {userIsGuest ? 'Split Wise' : 'Budget App'}
         </Typography>
         <Typography sx={{ color: 'gray', fontSize: '0.875rem' }}>{email}</Typography>
       </Box>
 
-      {appPages.map((appPage) => (
-        <appPage.Element />
-      ))}
+      {appPages
+        .filter((appPage) => !userIsGuest || appPage.guestView)
+        .map((appPage) => (
+          <appPage.element.Element />
+        ))}
 
-      <div>
-        <ListItemButton
-          onClick={() => {
-            const newValue = !privacyMode
-            setPrivacyMode(newValue)
-            userStore.upsertPrivacyMode(newValue)
-          }}
-          disableRipple
-          sx={{
-            padding: '0.5rem 1rem',
-            '&:hover': {
-              backgroundColor: 'transparent',
-            },
-          }}
-        >
-          <ListItemIcon>
-            {privacyMode ? <IconLib.MdVisibilityOff style={iconStyle} /> : <IconLib.MdVisibility style={iconStyle} />}
-          </ListItemIcon>
-          <ListItemText primary="Privacy Mode" />
-          <Switch edge="end" checked={privacyMode} />
-        </ListItemButton>
-      </div>
+      {!userIsGuest && (
+        <div>
+          <ListItemButton
+            onClick={() => {
+              const newValue = !privacyMode
+              setPrivacyMode(newValue)
+              userStore.upsertPrivacyMode(newValue)
+            }}
+            disableRipple
+            sx={{
+              padding: '0.5rem 1rem',
+              '&:hover': {
+                backgroundColor: 'transparent',
+              },
+            }}
+          >
+            <ListItemIcon>
+              {privacyMode ? <IconLib.MdVisibilityOff style={iconStyle} /> : <IconLib.MdVisibility style={iconStyle} />}
+            </ListItemIcon>
+            <ListItemText primary="Privacy Mode" />
+            <Switch edge="end" checked={privacyMode} />
+          </ListItemButton>
+        </div>
+      )}
       <Box style={{ padding: '1rem' }}>
         <Button fullWidth onClick={logout} variant="contained" disableElevation>
           Logout

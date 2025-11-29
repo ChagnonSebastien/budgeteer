@@ -8,10 +8,11 @@
   outputs = { self, nixpkgs }: let
     system = "x86_64-linux";
     pkgs = import nixpkgs { inherit system; };
+    go = pkgs.go_1_25;
   in {
     devShells.${system}.default = pkgs.mkShell {
       buildInputs = [
-        pkgs.go
+        go
         pkgs.sqlc
         pkgs.grpc-tools
         pkgs.nodejs

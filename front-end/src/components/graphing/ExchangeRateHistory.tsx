@@ -78,7 +78,7 @@ const ExchangeRateHistory: FC<Props> = ({ currency, against }) => {
           currentlyHeld -= transaction.amount
         }
 
-        if (transaction.financialIncomeCurrencyId === currency.id && transaction.receiver?.isMine) {
+        if (transaction.financialIncomeData?.relatedCurrencyId === currency.id && transaction.receiver?.isMine) {
           if (transaction.receiverCurrencyId === currency.id) {
             dividends *= (currentlyHeld - transaction.receiverAmount) / currentlyHeld
           } else if (transaction.currencyId === currency.id) {
