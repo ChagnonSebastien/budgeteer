@@ -2,13 +2,15 @@ import { Chip, IconButton, Typography } from '@mui/material'
 import React, { FC, useCallback, useContext, useMemo } from 'react'
 import { useParams } from 'react-router-dom'
 
-import { UserContext } from '../App'
 import { IconToolsContext } from '../components/icons/IconTools'
 import PersonPicker from '../components/inputs/PersonPicker'
 import LoadingScreen from '../components/LoadingScreen'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
 import { Row } from '../components/shared/Layout'
+import TransactionCard from '../components/transactions/TransactionCard'
+import { TransactionList } from '../components/transactions/TransactionList'
 import { Email, Person } from '../domain/model/transactionGroup'
+import MixedAugmentation from '../service/MixedAugmentation'
 import { TransactionGroupServiceContext } from '../service/ServiceContext'
 
 const emailRegex =
@@ -21,13 +23,18 @@ type Params = {
 const ManageTransactionGroup: FC = () => {
   const { transactionGroupId } = useParams<Params>()
 
-  const { email: myEmail } = useContext(UserContext)
   const { IconLib } = useContext(IconToolsContext)
   const { state: transactionGroups, update: updateTransactionGroup } = useContext(TransactionGroupServiceContext)
+  const { augmentedTransactions: transactions } = useContext(MixedAugmentation)
 
   const selectedTransactionGroup = useMemo(
     () => transactionGroups.find((t) => t.id === parseInt(transactionGroupId!)),
     [transactionGroups, transactionGroupId],
+  )
+
+  const groupTransactions = useMemo(
+    () => transactions.filter((t) => t.transactionGroupData?.transactionGroupId === selectedTransactionGroup?.id),
+    [selectedTransactionGroup?.id, transactions],
   )
 
   const addUserToGroup = useCallback(
@@ -94,6 +101,12 @@ const ManageTransactionGroup: FC = () => {
           />
         ))}
       </Row>
+      <TransactionList
+        items={groupTransactions}
+        ItemComponent={TransactionCard}
+        additionalItemsProps={{}}
+        onClick={console.log}
+      />
     </ContentWithHeader>
   )
 }

@@ -4,8 +4,30 @@ package transaction;
 
 option go_package = "server/internal/infrastructure/messaging/dto";
 
+enum SplitTypeOverride {
+  OverrideEqual = 0;
+  OverridePercentage = 1;
+  OverrideShare = 2;
+  OverrideExactAmount = 3;
+}
+
 message FinancialIncomeData {
   uint32 related_currency = 1;
+}
+
+message MemberSplitValue {
+  string email = 1;
+  optional uint32 split_value = 2;
+}
+
+message SplitOverride {
+  SplitTypeOverride split_type_override = 1;
+  repeated MemberSplitValue member_split_values = 2;
+}
+
+message TransactionGroupData {
+  uint32 transaction_group = 1;
+  optional SplitOverride split_override = 2;
 }
 
 message Transaction {
@@ -20,6 +42,7 @@ message Transaction {
   uint32 receiver_currency = 9;
   uint32 receiver_amount = 10;
   optional FinancialIncomeData financial_income_data = 11;
+  optional TransactionGroupData transaction_group_data = 12;
 }
 
 message GetAllTransactionsRequest {

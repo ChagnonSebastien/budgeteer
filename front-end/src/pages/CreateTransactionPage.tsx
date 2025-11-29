@@ -41,6 +41,7 @@ const CreateTransactionPage: FC = () => {
         receiverCurrencyId: data.receiverCurrencyId,
         receiverAmount: data.receiverAmount,
         financialIncomeData: data.financialIncomeData ?? null,
+        transactionGroupData: data.transactionGroupData ?? null,
       })
       navigate(`/transactions`, { replace: true })
     },

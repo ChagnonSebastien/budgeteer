@@ -1,11 +1,60 @@
 import Account, { AccountID } from './account'
 import { AugmentedCategory, CategoryID } from './category'
 import Currency, { CurrencyID } from './currency'
+import TransactionGroup, { Email, TransactionGroupID } from './transactionGroup'
 import Unique from './Unique'
 
 export type TransactionID = number
 
 export type TransactionType = 'income' | 'expense' | 'transfer' | 'financialIncome'
+
+export enum SplitTypeOverride {
+  EQUAL,
+  PERCENTAGE,
+  SHARES,
+  EXACT_AMOUNT,
+}
+
+export class MemberValue {
+  constructor(
+    readonly email: Email,
+    readonly value: number | null,
+  ) {}
+
+  equals(other: MemberValue): boolean {
+    if (this.email !== other.email) return false
+    if (this.value !== other.value) return false
+    return true
+  }
+}
+
+export class SplitOverride {
+  constructor(
+    readonly splitTypeOverride: SplitTypeOverride,
+    readonly memberValues: MemberValue[],
+  ) {}
+
+  equals(other: SplitOverride): boolean {
+    if (this.splitTypeOverride !== other.splitTypeOverride) return false
+    if (this.memberValues.length !== other.memberValues.length) return false
+    if (this.memberValues.reduce((prev, m, i) => prev || !m.equals(other.memberValues[i]), false)) return false
+    return true
+  }
+}
+
+export class TransactionGroupData {
+  constructor(
+    readonly transactionGroupId: TransactionGroupID,
+    readonly splitOverride: SplitOverride | null,
+  ) {}
+
+  equals(other: TransactionGroupData): boolean {
+    if (this.transactionGroupId !== other.transactionGroupId) return false
+    if ((this.splitOverride === null) !== (other.splitOverride === null)) return false
+    if (this.splitOverride !== null && !this.splitOverride.equals(other.splitOverride!)) return false
+    return true
+  }
+}
 
 export class FinancialIncomeData {
   constructor(readonly relatedCurrencyId: CurrencyID) {}
@@ -28,6 +77,7 @@ export default class Transaction implements Unique<TransactionID, Transaction> {
     readonly receiverCurrencyId: CurrencyID,
     readonly receiverAmount: number,
     readonly financialIncomeData: FinancialIncomeData | null,
+    readonly transactionGroupData: TransactionGroupData | null,
   ) {}
 
   equals(other: Transaction): boolean {
@@ -43,7 +93,19 @@ export default class Transaction implements Unique<TransactionID, Transaction> {
     if (this.receiverAmount !== other.receiverAmount) return false
     if ((this.financialIncomeData === null) !== (other.financialIncomeData === null)) return false
     if (this.financialIncomeData !== null && !this.financialIncomeData.equals(other.financialIncomeData!)) return false
+    if ((this.transactionGroupData === null) !== (other.transactionGroupData === null)) return false
+    if (this.transactionGroupData !== null && !this.transactionGroupData.equals(other.transactionGroupData!))
+      return false
     return true
+  }
+}
+
+export class AugmentedTransactionGroupData extends TransactionGroupData {
+  constructor(
+    transactionGroupData: TransactionGroupData,
+    public readonly transactionGroup: TransactionGroup,
+  ) {
+    super(transactionGroupData.transactionGroupId, transactionGroupData.splitOverride)
   }
 }
 
@@ -78,6 +140,7 @@ export class AugmentedTransaction extends Transaction {
       transaction.receiverCurrencyId,
       transaction.receiverAmount,
       transaction.financialIncomeData,
+      transaction.transactionGroupData,
     )
   }
 
@@ -101,4 +164,5 @@ export type TransactionUpdatableFields = Pick<
   | 'receiverCurrencyId'
   | 'receiverAmount'
   | 'financialIncomeData'
+  | 'transactionGroupData'
 >

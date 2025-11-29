@@ -33,6 +33,36 @@ type transactionRepository interface {
 	) error
 }
 
+func SplitTypeOverrideFromDto(splitType dto.SplitTypeOverride) (model.SplitTypeOverride, error) {
+	switch splitType {
+	case dto.SplitTypeOverride_OverrideEqual:
+		return model.SplitTypeOverrideEqual, nil
+	case dto.SplitTypeOverride_OverridePercentage:
+		return model.SplitTypeOverridePercentage, nil
+	case dto.SplitTypeOverride_OverrideShare:
+		return model.SplitTypeOverrideShare, nil
+	case dto.SplitTypeOverride_OverrideExactAmount:
+		return model.SplitTypeOverrideExactAmount, nil
+	default:
+		return model.SplitTypeOverrideEqual, fmt.Errorf("unknown SplitType %s", splitType)
+	}
+}
+
+func SplitTypeOverrideToDto(splitType model.SplitTypeOverride) (dto.SplitTypeOverride, error) {
+	switch splitType {
+	case model.SplitTypeOverrideEqual:
+		return dto.SplitTypeOverride_OverrideEqual, nil
+	case model.SplitTypeOverridePercentage:
+		return dto.SplitTypeOverride_OverridePercentage, nil
+	case model.SplitTypeOverrideShare:
+		return dto.SplitTypeOverride_OverrideShare, nil
+	case model.SplitTypeOverrideExactAmount:
+		return dto.SplitTypeOverride_OverrideExactAmount, nil
+	default:
+		return dto.SplitTypeOverride_OverrideEqual, fmt.Errorf("unknown SplitType %s", splitType)
+	}
+}
+
 type TransactionHandler struct {
 	dto.UnimplementedTransactionServiceServer
 
@@ -253,18 +283,54 @@ func (s *TransactionHandler) GetAllTransactions(
 			}
 		}
 
+		var transactionGroupData *dto.TransactionGroupData
+		if data, isSome := transaction.GroupedTransactionData.Value(); isSome {
+			var splitOverride *dto.SplitOverride
+			if splitOverrideData, isSome := data.SplitOverride.Value(); isSome {
+				splitTypeOverride, err := SplitTypeOverrideToDto(splitOverrideData.SplitTypeOverride)
+				if err != nil {
+					return nil, err
+				}
+
+				members := make([]*dto.MemberSplitValue, len(splitOverrideData.Members))
+				for j, member := range splitOverrideData.Members {
+					var splitValue *uint32
+					if value, isSome := member.SplitValue.Value(); isSome {
+						v := uint32(value)
+						splitValue = &v
+					}
+
+					members[j] = &dto.MemberSplitValue{
+						Email:      string(member.Email),
+						SplitValue: splitValue,
+					}
+				}
+
+				splitOverride = &dto.SplitOverride{
+					SplitTypeOverride: splitTypeOverride,
+					MemberSplitValues: members,
+				}
+			}
+
+			transactionGroupData = &dto.TransactionGroupData{
+				TransactionGroup: uint32(data.TransactionGroup),
+				SplitOverride:    splitOverride,
+			}
+		}
+
 		transactionsDto[i] = &dto.Transaction{
-			Id:                  uint32(transaction.ID),
-			Amount:              uint32(transaction.Amount),
-			Currency:            uint32(transaction.Currency),
-			Sender:              sender,
-			Receiver:            receiver,
-			Category:            category,
-			Date:                transaction.Date.Format(layout),
-			Note:                transaction.Note,
-			ReceiverCurrency:    uint32(transaction.ReceiverCurrency),
-			ReceiverAmount:      uint32(transaction.ReceiverAmount),
-			FinancialIncomeData: financialIncomeData,
+			Id:                   uint32(transaction.ID),
+			Amount:               uint32(transaction.Amount),
+			Currency:             uint32(transaction.Currency),
+			Sender:               sender,
+			Receiver:             receiver,
+			Category:             category,
+			Date:                 transaction.Date.Format(layout),
+			Note:                 transaction.Note,
+			ReceiverCurrency:     uint32(transaction.ReceiverCurrency),
+			ReceiverAmount:       uint32(transaction.ReceiverAmount),
+			FinancialIncomeData:  financialIncomeData,
+			TransactionGroupData: transactionGroupData,
 		}
 	}
 

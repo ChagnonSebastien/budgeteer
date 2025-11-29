@@ -30,12 +30,13 @@ type SplitOverride struct {
 }
 
 type GroupedTransactionData struct {
-	TransactionGroup  TransactionGroupID
-	SplitTypeOverride Optional[SplitOverride]
+	TransactionGroup TransactionGroupID
+	SplitOverride    Optional[SplitOverride]
 }
 
 type Transaction struct {
 	ID                     TransactionID
+	Owner                  Email
 	Amount                 int
 	Currency               CurrencyID
 	Sender                 Optional[AccountID]

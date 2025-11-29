@@ -57,6 +57,7 @@ export default class TransactionRemoteStore {
       data.receiverCurrencyId,
       data.receiverAmount,
       data.financialIncomeData,
+      data.transactionGroupData,
     )
   }
 

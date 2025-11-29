@@ -1,36 +1,6 @@
-import { BudgeteerDB, SplitType as SplitTypeDto } from './IndexedDB'
-import TransactionGroup, {
-  Person,
-  SplitType,
-  TransactionGroupUpdatableFields,
-} from '../../domain/model/transactionGroup'
+import { BudgeteerDB } from './IndexedDB'
+import TransactionGroup, { Person, TransactionGroupUpdatableFields } from '../../domain/model/transactionGroup'
 import { IdIdentifier } from '../../domain/model/Unique'
-
-const splitTypeToLocalStore = (type: SplitType): SplitTypeDto => {
-  switch (type) {
-    case SplitType.EQUAL:
-      return 'equal'
-    case SplitType.PERCENTAGE:
-      return 'percentage'
-    case SplitType.SHARES:
-      return 'share'
-    default:
-      throw Error(`Invalid Split type: ${type}`)
-  }
-}
-
-const splitTypeFromLocalStore = (type: SplitTypeDto): SplitType => {
-  switch (type) {
-    case 'equal':
-      return SplitType.EQUAL
-    case 'percentage':
-      return SplitType.PERCENTAGE
-    case 'share':
-      return SplitType.SHARES
-    default:
-      throw Error(`Invalid Split type: ${type}`)
-  }
-}
 
 export default class TransactionGroupLocalStore {
   private db: BudgeteerDB
@@ -51,7 +21,7 @@ export default class TransactionGroupLocalStore {
           transactionGroup.id,
           transactionGroup.name,
           transactionGroup.originalCurrency,
-          splitTypeFromLocalStore(transactionGroup.splitType),
+          transactionGroup.splitType,
           transactionGroup.members.map(
             (member) => new Person(member.email, member.name, member.splitValue, member.joined),
           ),
@@ -66,7 +36,7 @@ export default class TransactionGroupLocalStore {
     const newID = await this.db.transactionGroups.put({
       name: data.name,
       originalCurrency: data.originalCurrency,
-      splitType: splitTypeToLocalStore(data.splitType),
+      splitType: data.splitType,
       members: [{ email: this.userEmail, name: this.userName, splitValue: null, joined: true }],
       currency: data.currency,
       category: data.category,
@@ -90,7 +60,7 @@ export default class TransactionGroupLocalStore {
       id: data.id,
       name: data.name,
       originalCurrency: data.originalCurrency,
-      splitType: splitTypeToLocalStore(data.splitType),
+      splitType: data.splitType,
       members: data.members,
       currency: data.currency,
       category: data.category,
@@ -104,7 +74,7 @@ export default class TransactionGroupLocalStore {
       updateQuery = { ...updateQuery, name: data.name }
     }
     if (typeof data.splitType !== 'undefined') {
-      updateQuery = { ...updateQuery, splitType: splitTypeToLocalStore(data.splitType) }
+      updateQuery = { ...updateQuery, splitType: data.splitType }
     }
     if (typeof data.category !== 'undefined') {
       updateQuery = { ...updateQuery, category: data.category }
@@ -129,7 +99,7 @@ export default class TransactionGroupLocalStore {
         id: transactionGroup.id,
         name: transactionGroup.name,
         originalCurrency: transactionGroup.originalCurrency,
-        splitType: splitTypeToLocalStore(transactionGroup.splitType),
+        splitType: transactionGroup.splitType,
         members: transactionGroup.members,
         currency: transactionGroup.currency,
         category: transactionGroup.category,

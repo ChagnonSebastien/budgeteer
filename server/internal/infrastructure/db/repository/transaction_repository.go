@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -10,6 +11,41 @@ import (
 	"chagnon.dev/budget-server/internal/infrastructure/db/dao"
 	"chagnon.dev/budget-server/internal/logging"
 )
+
+func SplitTypeOverrideFromDao(splitType dao.TransactionSplitType) (value model.SplitTypeOverride, err error) {
+	switch splitType {
+	case dao.TransactionSplitTypeEQUAL:
+		return model.SplitTypeOverrideEqual, nil
+	case dao.TransactionSplitTypePERCENTAGE:
+		return model.SplitTypeOverridePercentage, nil
+	case dao.TransactionSplitTypeSHARES:
+		return model.SplitTypeOverrideShare, nil
+	case dao.TransactionSplitTypeEXACTAMOUNT:
+		return model.SplitTypeOverrideExactAmount, nil
+	default:
+		return value, fmt.Errorf("unknown SplitTypeOverride %s", splitType)
+	}
+}
+
+func SplitTypeOverrideToDao(splitType model.SplitTypeOverride) (value dao.TransactionSplitType, err error) {
+	switch splitType {
+	case model.SplitTypeOverrideEqual:
+		return dao.TransactionSplitTypeEQUAL, nil
+	case model.SplitTypeOverridePercentage:
+		return dao.TransactionSplitTypeSHARES, nil
+	case model.SplitTypeOverrideShare:
+		return dao.TransactionSplitTypeEXACTAMOUNT, nil
+	case model.SplitTypeOverrideExactAmount:
+		return dao.TransactionSplitTypeEXACTAMOUNT, nil
+	default:
+		return value, fmt.Errorf("unknown SplitType %s", splitType)
+	}
+}
+
+type MemberValueOverride struct {
+	UserEmail  string `json:"user_email"`
+	SplitValue *int   `json:"split_value"`
+}
 
 func (r *Repository) GetAllTransactions(ctx context.Context, userId string) ([]model.Transaction, error) {
 	transactionsDao, err := r.queries.GetAllTransactions(ctx, userId)
@@ -41,18 +77,61 @@ func (r *Repository) GetAllTransactions(ctx context.Context, userId string) ([]m
 			})
 		}
 
+		transactionGroupData := model.None[model.GroupedTransactionData]()
+		if transactionDao.TransactionGroupID.Valid {
+			splitOverride := model.None[model.SplitOverride]()
+			if transactionDao.TransactionGroupSplitTypeOverride.Valid {
+				splitTypeOverride, err := SplitTypeOverrideFromDao(transactionDao.TransactionGroupSplitTypeOverride.TransactionSplitType)
+				if err != nil {
+					return nil, err
+				}
+
+				var membersDao []MemberValueOverride
+				if transactionDao.TransactionGroupMemberValues != nil {
+					if err := json.Unmarshal(transactionDao.TransactionGroupMemberValues, &membersDao); err != nil {
+						return nil, fmt.Errorf("parsing members while assembling transaction split override values for members: %s", err)
+					}
+				}
+
+				members := make([]model.MemberSplitValue, len(membersDao))
+				for i, memberDao := range membersDao {
+					splitValue := model.None[int]()
+					if memberDao.SplitValue != nil {
+						splitValue = model.Some(*memberDao.SplitValue)
+					}
+
+					members[i] = model.MemberSplitValue{
+						Email:      model.Email(memberDao.UserEmail),
+						SplitValue: splitValue,
+					}
+				}
+
+				splitOverride = model.Some(model.SplitOverride{
+					SplitTypeOverride: splitTypeOverride,
+					Members:           members,
+				})
+			}
+
+			transactionGroupData = model.Some(model.GroupedTransactionData{
+				TransactionGroup: model.TransactionGroupID(transactionDao.TransactionGroupID.Int32),
+				SplitOverride:    splitOverride,
+			})
+		}
+
 		transactions[i] = model.Transaction{
-			ID:                  model.TransactionID(transactionDao.ID),
-			Amount:              int(transactionDao.Amount),
-			Currency:            model.CurrencyID(transactionDao.Currency),
-			Sender:              sender,
-			Receiver:            receiver,
-			Category:            category,
-			Date:                transactionDao.Date,
-			Note:                transactionDao.Note,
-			ReceiverCurrency:    model.CurrencyID(transactionDao.ReceiverCurrency),
-			ReceiverAmount:      int(transactionDao.ReceiverAmount),
-			FinancialIncomeData: financialIncomeData,
+			ID:                     model.TransactionID(transactionDao.ID),
+			Owner:                  model.Email(transactionDao.Owner),
+			Amount:                 int(transactionDao.Amount),
+			Currency:               model.CurrencyID(transactionDao.Currency),
+			Sender:                 sender,
+			Receiver:               receiver,
+			Category:               category,
+			Date:                   transactionDao.Date,
+			Note:                   transactionDao.Note,
+			ReceiverCurrency:       model.CurrencyID(transactionDao.ReceiverCurrency),
+			ReceiverAmount:         int(transactionDao.ReceiverAmount),
+			FinancialIncomeData:    financialIncomeData,
+			GroupedTransactionData: transactionGroupData,
 		}
 	}
 

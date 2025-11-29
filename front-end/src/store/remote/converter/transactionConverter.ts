@@ -1,7 +1,15 @@
 import { Converter } from './converter'
-import Transaction, { FinancialIncomeData, TransactionUpdatableFields } from '../../../domain/model/transaction'
+import Transaction, {
+  FinancialIncomeData,
+  MemberValue,
+  SplitOverride,
+  SplitTypeOverride,
+  TransactionGroupData,
+  TransactionUpdatableFields,
+} from '../../../domain/model/transaction'
 import {
   FinancialIncomeData as FinancialIncomeDataDto,
+  SplitTypeOverride as SplitTypeOverrideDto,
   Transaction as TransactionDto,
   UpdateFinancialIncomeFields as UpdateFinancialIncomeFieldsDTO,
   UpdateTransactionFields as UpdateTransactionFieldsDTO,
@@ -9,6 +17,35 @@ import {
 
 function padToTwoDigits(num: number) {
   return num.toString().padStart(2, '0')
+}
+const splitTypeOverrideToDto = (type: SplitTypeOverride): SplitTypeOverrideDto => {
+  switch (type) {
+    case SplitTypeOverride.EQUAL:
+      return SplitTypeOverrideDto.OverrideEqual
+    case SplitTypeOverride.PERCENTAGE:
+      return SplitTypeOverrideDto.OverridePercentage
+    case SplitTypeOverride.SHARES:
+      return SplitTypeOverrideDto.OverrideShare
+    case SplitTypeOverride.EXACT_AMOUNT:
+      return SplitTypeOverrideDto.OverrideExactAmount
+    default:
+      throw Error(`Invalid Split type: ${type}`)
+  }
+}
+
+const splitTypeFromDto = (type: SplitTypeOverrideDto): SplitTypeOverride => {
+  switch (type) {
+    case SplitTypeOverrideDto.OverrideEqual:
+      return SplitTypeOverride.EQUAL
+    case SplitTypeOverrideDto.OverridePercentage:
+      return SplitTypeOverride.PERCENTAGE
+    case SplitTypeOverrideDto.OverrideShare:
+      return SplitTypeOverride.SHARES
+    case SplitTypeOverrideDto.OverrideExactAmount:
+      return SplitTypeOverride.EXACT_AMOUNT
+    default:
+      throw Error(`Invalid Split type: ${type}`)
+  }
 }
 
 export const formatDateTime = (date: Date): string => {
@@ -39,6 +76,19 @@ export class TransactionConverter
       dto.receiverAmount,
       typeof dto.financialIncomeData !== 'undefined'
         ? new FinancialIncomeData(dto.financialIncomeData.relatedCurrency)
+        : null,
+      typeof dto.transactionGroupData !== 'undefined'
+        ? new TransactionGroupData(
+            dto.transactionGroupData.transactionGroup,
+            typeof dto.transactionGroupData.splitOverride !== 'undefined'
+              ? new SplitOverride(
+                  splitTypeFromDto(dto.transactionGroupData.splitOverride.splitTypeOverride),
+                  dto.transactionGroupData.splitOverride.memberSplitValues.map(
+                    (mv) => new MemberValue(mv.email, mv.splitValue ?? null),
+                  ),
+                )
+              : null,
+          )
         : null,
     )
   }

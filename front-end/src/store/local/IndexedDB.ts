@@ -1,5 +1,8 @@
 import Dexie, { type EntityTable, Table } from 'dexie'
 
+import { SplitTypeOverride } from '../../domain/model/transaction'
+import { SplitType } from '../../domain/model/transactionGroup'
+
 interface Currency {
   id: number
   name: string
@@ -45,6 +48,21 @@ interface FinancialIncomeData {
   relatedCurrencyId: number
 }
 
+interface MemberValue {
+  email: string
+  value: number | null
+}
+
+interface SplitOverride {
+  splitTypeOverride: SplitTypeOverride
+  memberValues: MemberValue[]
+}
+
+interface TransactionGroupData {
+  transactionGroupId: number
+  splitOverride: SplitOverride | null
+}
+
 interface Transaction {
   id: number
   amount: number
@@ -57,9 +75,8 @@ interface Transaction {
   receiverCurrency: number
   receiverAmount: number
   financialIncomeData: FinancialIncomeData | null
+  transactionGroupData: TransactionGroupData | null
 }
-
-export type SplitType = 'equal' | 'percentage' | 'share'
 
 interface TransactionGroupMember {
   email: string
