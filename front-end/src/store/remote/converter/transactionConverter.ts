@@ -65,6 +65,7 @@ export class TransactionConverter
   toModel(dto: TransactionDto): Transaction {
     return new Transaction(
       dto.id,
+      dto.owner,
       dto.amount,
       dto.currency,
       dto.category ?? null,
@@ -96,6 +97,7 @@ export class TransactionConverter
   toDTO(model: Transaction): TransactionDto {
     return TransactionDto.create({
       id: model.id,
+      owner: model.owner,
       amount: model.amount,
       category: model.categoryId ?? undefined,
       currency: model.currencyId,

@@ -7,7 +7,7 @@ import PersonPicker from '../components/inputs/PersonPicker'
 import LoadingScreen from '../components/LoadingScreen'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
 import { Row } from '../components/shared/Layout'
-import TransactionCard from '../components/transactions/TransactionCard'
+import GroupTransactionCard from '../components/transactions/GroupTransactionCard'
 import { TransactionList } from '../components/transactions/TransactionList'
 import { Email, Person } from '../domain/model/transactionGroup'
 import MixedAugmentation from '../service/MixedAugmentation'
@@ -33,7 +33,10 @@ const ManageTransactionGroup: FC = () => {
   )
 
   const groupTransactions = useMemo(
-    () => transactions.filter((t) => t.transactionGroupData?.transactionGroupId === selectedTransactionGroup?.id),
+    () =>
+      transactions.filter(
+        (t) => t.transactionGroupData?.transactionGroupId === selectedTransactionGroup?.id && t.getType() === 'expense',
+      ),
     [selectedTransactionGroup?.id, transactions],
   )
 
@@ -103,7 +106,7 @@ const ManageTransactionGroup: FC = () => {
       </Row>
       <TransactionList
         items={groupTransactions}
-        ItemComponent={TransactionCard}
+        ItemComponent={GroupTransactionCard}
         additionalItemsProps={{}}
         onClick={console.log}
       />

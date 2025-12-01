@@ -7,18 +7,25 @@ import {
   CategoryServiceContext,
   CurrencyServiceContext,
   ExchangeRateServiceContext,
+  TransactionGroupServiceContext,
   TransactionServiceContext,
 } from './ServiceContext'
 import LoadingScreen from '../components/LoadingScreen'
 import Category from '../domain/model/category'
 import Currency, { RateAutoupdateSettings } from '../domain/model/currency'
-import { AugmentedFinancialIncomeData, AugmentedTransaction } from '../domain/model/transaction'
+import {
+  AugmentedFinancialIncomeData,
+  AugmentedTransaction,
+  AugmentedTransactionGroupData,
+} from '../domain/model/transaction'
+import { AugmentedTransactionGroup } from '../domain/model/transactionGroup'
 
 type CurrencyAmounts = Map<number, number>
 type AccountBalances = Map<number, CurrencyAmounts>
 
 type MixedAugmentationContext = {
   accountBalances: AccountBalances
+  augmentedTransactionGroups: AugmentedTransactionGroup[]
   augmentedTransactions: AugmentedTransaction[]
   exchangeRates: Map<number, Map<number, RateOnDate[]>>
   exchangeRateOnDay(from: number, to: number, date: Date): number
@@ -29,6 +36,7 @@ type MixedAugmentationContext = {
 const MixedAugmentation = createContext<MixedAugmentationContext>({
   accountBalances: new Map(),
   augmentedTransactions: [],
+  augmentedTransactionGroups: [],
   exchangeRates: new Map(),
   exchangeRateOnDay: (_from: number, _to: number, _date: Date) => 1,
   defaultCurrency: new Currency(0, 'zero', '', '', '.', 0, new RateAutoupdateSettings('', false)),
@@ -41,6 +49,7 @@ export interface Props {
 
 export const MixedAugmentationProvider: FC<Props> = ({ NextComponent }) => {
   const { state: transactions } = useContext(TransactionServiceContext)
+  const { state: transactionGroups } = useContext(TransactionGroupServiceContext)
   const { state: currencies, tentativeDefaultCurrency } = useContext(CurrencyServiceContext)
   const { augmentedCategories: categories, tentativeRoot } = useContext(CategoryServiceContext)
   const { state: accounts } = useContext(AccountServiceContext)
@@ -84,6 +93,16 @@ export const MixedAugmentationProvider: FC<Props> = ({ NextComponent }) => {
     return accountAmounts
   }, [accounts, transactions])
 
+  const augmentedTransactionGroups = useMemo(() => {
+    return transactionGroups.map((transactionGroup) => {
+      return new AugmentedTransactionGroup(
+        transactionGroup,
+        currencies.find((c) => c.id === transactionGroup.currency),
+        categories.find((c) => c.id === transactionGroup.category),
+      )
+    })
+  }, [transactionGroups, categories, currencies])
+
   const augmentedTransactions = useMemo<AugmentedTransaction[]>(() => {
     return transactions.map<AugmentedTransaction>((transaction) => {
       let augmentedFinancialIncomeData = null
@@ -94,9 +113,18 @@ export const MixedAugmentationProvider: FC<Props> = ({ NextComponent }) => {
         )
       }
 
+      let augmentedTransactionGroupData = null
+      if (transaction.transactionGroupData !== null) {
+        augmentedTransactionGroupData = new AugmentedTransactionGroupData(
+          transaction.transactionGroupData,
+          augmentedTransactionGroups.find((tg) => tg.id === transaction.transactionGroupData?.transactionGroupId)!,
+        )
+      }
+
       return new AugmentedTransaction(
         transaction,
         augmentedFinancialIncomeData,
+        augmentedTransactionGroupData,
         currencies.find((c) => c.id === transaction.currencyId)!,
         currencies.find((c) => c.id === transaction.receiverCurrencyId)!,
         categories.find((c) => c.id === transaction.categoryId),
@@ -104,7 +132,7 @@ export const MixedAugmentationProvider: FC<Props> = ({ NextComponent }) => {
         accounts.find((c) => c.id === transaction.receiverId),
       )
     })
-  }, [transactions, currencies, categories, accounts])
+  }, [transactions, currencies, categories, accounts, augmentedTransactionGroups])
 
   const augmentedData = useMemo(() => {
     const exchangeRates = new Map<number, Map<number, RateOnDate[]>>()
@@ -169,6 +197,7 @@ export const MixedAugmentationProvider: FC<Props> = ({ NextComponent }) => {
         rootCategory: tentativeRoot,
         defaultCurrency: tentativeDefaultCurrency,
         accountBalances,
+        augmentedTransactionGroups,
         augmentedTransactions,
         ...augmentedData,
       }}

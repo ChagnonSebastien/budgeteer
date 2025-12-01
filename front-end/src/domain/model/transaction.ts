@@ -1,7 +1,7 @@
 import Account, { AccountID } from './account'
 import { AugmentedCategory, CategoryID } from './category'
 import Currency, { CurrencyID } from './currency'
-import TransactionGroup, { Email, TransactionGroupID } from './transactionGroup'
+import { AugmentedTransactionGroup, Email, TransactionGroupID } from './transactionGroup'
 import Unique from './Unique'
 
 export type TransactionID = number
@@ -67,6 +67,7 @@ export class FinancialIncomeData {
 export default class Transaction implements Unique<TransactionID, Transaction> {
   constructor(
     readonly id: TransactionID,
+    readonly owner: Email,
     readonly amount: number,
     readonly currencyId: CurrencyID,
     readonly categoryId: CategoryID | null,
@@ -103,7 +104,7 @@ export default class Transaction implements Unique<TransactionID, Transaction> {
 export class AugmentedTransactionGroupData extends TransactionGroupData {
   constructor(
     transactionGroupData: TransactionGroupData,
-    public readonly transactionGroup: TransactionGroup,
+    public readonly transactionGroup: AugmentedTransactionGroup,
   ) {
     super(transactionGroupData.transactionGroupId, transactionGroupData.splitOverride)
   }
@@ -122,6 +123,7 @@ export class AugmentedTransaction extends Transaction {
   constructor(
     transaction: Transaction,
     public readonly augmentedFinancialIncomeData: AugmentedFinancialIncomeData | null,
+    public readonly augmentedTransactionGroupData: AugmentedTransactionGroupData | null,
     public readonly currency: Currency,
     public readonly receiverCurrency: Currency,
     public readonly category?: AugmentedCategory,
@@ -130,6 +132,7 @@ export class AugmentedTransaction extends Transaction {
   ) {
     super(
       transaction.id,
+      transaction.owner,
       transaction.amount,
       transaction.currencyId,
       transaction.categoryId,
@@ -165,4 +168,5 @@ export type TransactionUpdatableFields = Pick<
   | 'receiverAmount'
   | 'financialIncomeData'
   | 'transactionGroupData'
+  | 'owner'
 >

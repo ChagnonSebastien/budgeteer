@@ -141,6 +141,7 @@ const TransactionPage: FC = () => {
             setClickedTransaction(transaction)
           }
         }}
+        displayMonthlySummaries
         viewAsAccounts={accountFilter === null ? undefined : accountFilter}
         ItemComponent={TransactionCard}
         additionalItemsProps={{}}

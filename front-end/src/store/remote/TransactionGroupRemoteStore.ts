@@ -1,28 +1,16 @@
 import { RpcTransport } from '@protobuf-ts/runtime-rpc'
 
-import { TransactionGroupConverter } from './converter/transactionGroupConverter'
+import { splitTypeToDto, TransactionGroupConverter } from './converter/transactionGroupConverter'
 import {
   CreateTransactionGroupRequest,
   GetAllTransactionGroupsRequest,
-  SplitType as SplitTypeDto,
   UpdateTransactionGroupRequest,
 } from './dto/transactionGroup'
 import { TransactionGroupServiceClient } from './dto/transactionGroup.client'
-import TransactionGroup, { Person, SplitType } from '../../domain/model/transactionGroup'
+import TransactionGroup, { Person } from '../../domain/model/transactionGroup'
 import { IdIdentifier } from '../../domain/model/Unique'
 
 const conv = new TransactionGroupConverter()
-
-const SplitTypeToDTO = (splitType: SplitType) => {
-  switch (splitType) {
-    case SplitType.EQUAL:
-      return SplitTypeDto.Equal
-    case SplitType.PERCENTAGE:
-      return SplitTypeDto.Percentage
-    case SplitType.SHARES:
-      return SplitTypeDto.Share
-  }
-}
 
 export default class TransactionGroupRemoteStore {
   private client: TransactionGroupServiceClient
@@ -44,7 +32,7 @@ export default class TransactionGroupRemoteStore {
     const response = await this.client.createTransactionGroup(
       CreateTransactionGroupRequest.create({
         name: data.name,
-        splitType: SplitTypeToDTO(data.splitType),
+        splitType: splitTypeToDto(data.splitType),
         currency: data.currency ?? undefined,
         category: data.category ?? undefined,
       }),

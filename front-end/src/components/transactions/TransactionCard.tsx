@@ -1,4 +1,4 @@
-import { Typography } from '@mui/material'
+import { Typography, useTheme } from '@mui/material'
 import { FC, memo, useContext } from 'react'
 
 import Category from '../../domain/model/category'
@@ -7,7 +7,7 @@ import { AugmentedTransaction, TransactionID } from '../../domain/model/transact
 import { ItemProps } from '../accounts/ItemList'
 import IconCapsule from '../icons/IconCapsule'
 import { DrawerContext } from '../Menu'
-import { Column, GradientCard, Row } from '../shared/Layout'
+import { Column, Row } from '../shared/Layout'
 
 const defaultCategory = new Category(
   0,
@@ -24,6 +24,7 @@ const TransactionCard: FC<ItemProps<TransactionID, AugmentedTransaction, object>
   const { item, onClick } = props
 
   const { privacyMode } = useContext(DrawerContext)
+  const theme = useTheme()
 
   const cardType = item.getType()
 
@@ -35,79 +36,93 @@ const TransactionCard: FC<ItemProps<TransactionID, AugmentedTransaction, object>
   }
 
   return (
-    <GradientCard
-      onClick={onClick}
-      $selected={false}
-      $hoverEffect={false}
-      $withGradientBackground={false}
+    <Column
       style={{
-        display: 'flex',
-        alignItems: 'center',
-        backgroundColor: getBackgroundColor(),
-        fontSize: '0.875rem',
-        padding: '0.5rem 0.75rem',
+        backgroundColor: 'rgba(128,128,128,.16)',
         border: '1px solid rgba(128,128,128,0.16)',
-        gap: '0.75rem',
-        overflowX: 'auto',
+        borderRadius: '0.5rem',
       }}
     >
-      <IconCapsule
-        iconName={item.category?.iconName ?? defaultCategory.iconName}
-        size="2.4rem"
-        backgroundColor={item.category?.iconBackground ?? defaultCategory.iconBackground}
-        color={item.category?.iconColor ?? defaultCategory.iconColor}
-      />
-      <Column style={{ flexGrow: 1 }}>
-        <Row style={{ justifyContent: 'space-between' }}>
-          <Typography letterSpacing="0.01rem" fontSize="0.95rem" fontWeight="600">
-            {formatFull(item.currency, item.amount, privacyMode)}
-
-            {item.currency.id !== item.receiverCurrency.id &&
-              ` ➜ ${formatFull(item.receiverCurrency, item.receiverAmount, privacyMode)}`}
-          </Typography>
-
-          <Typography color="textDisabled" fontSize="0.9rem">
-            {item.date.toDateString()}
+      {item.augmentedTransactionGroupData && (
+        <Row style={{ justifyContent: 'center', padding: '0.16rem', gap: '.5rem' }}>
+          <Typography fontSize="0.9rem" fontWeight="500" textOverflow={'ellipsis'} overflow={'hidden'}>
+            {item.augmentedTransactionGroupData.transactionGroup.name}
           </Typography>
         </Row>
+      )}
+      <div style={{ backgroundColor: theme.palette.background.default, borderRadius: '0.5rem', overflow: 'hidden' }}>
+        <div
+          onClick={onClick}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            backgroundColor: getBackgroundColor(),
+            fontSize: '0.875rem',
+            padding: '0.5rem 0.75rem',
 
-        <Row style={{ justifyContent: 'space-between', gap: '0.75rem' }}>
-          <Column style={{ overflow: 'hidden', whiteSpace: 'nowrap' }}>
-            <Row style={{ gap: '0.5rem' }}>
-              <Typography fontSize="0.9rem" color="textDisabled">
-                From:
+            gap: '0.75rem',
+            overflowX: 'auto',
+          }}
+        >
+          <IconCapsule
+            iconName={item.category?.iconName ?? defaultCategory.iconName}
+            size="2.4rem"
+            backgroundColor={item.category?.iconBackground ?? defaultCategory.iconBackground}
+            color={item.category?.iconColor ?? defaultCategory.iconColor}
+          />
+          <Column style={{ flexGrow: 1 }}>
+            <Row style={{ justifyContent: 'space-between' }}>
+              <Typography letterSpacing="0.01rem" fontSize="0.95rem" fontWeight="600">
+                {formatFull(item.currency, item.amount, privacyMode)}
+
+                {item.currency.id !== item.receiverCurrency.id &&
+                  ` ➜ ${formatFull(item.receiverCurrency, item.receiverAmount, privacyMode)}`}
               </Typography>
 
-              <Typography fontSize="0.9rem" fontWeight="500" textOverflow={'ellipsis'} overflow={'hidden'}>
-                {item.sender?.name ?? '-'}
+              <Typography color="textDisabled" fontSize="0.9rem">
+                {item.date.toDateString()}
               </Typography>
             </Row>
 
-            <Row style={{ gap: '0.5rem' }}>
-              <Typography fontSize="0.9rem" color="textDisabled">
-                To:
-              </Typography>
+            <Row style={{ justifyContent: 'space-between', gap: '0.75rem' }}>
+              <Column style={{ overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                <Row style={{ gap: '0.5rem' }}>
+                  <Typography fontSize="0.9rem" color="textDisabled">
+                    From:
+                  </Typography>
 
-              <Typography fontSize="0.9rem" fontWeight="500" textOverflow={'ellipsis'} overflow={'hidden'}>
-                {item.receiver?.name ?? '-'}
+                  <Typography fontSize="0.9rem" fontWeight="500" textOverflow={'ellipsis'} overflow={'hidden'}>
+                    {item.sender?.name ?? '-'}
+                  </Typography>
+                </Row>
+
+                <Row style={{ gap: '0.5rem' }}>
+                  <Typography fontSize="0.9rem" color="textDisabled">
+                    To:
+                  </Typography>
+
+                  <Typography fontSize="0.9rem" fontWeight="500" textOverflow={'ellipsis'} overflow={'hidden'}>
+                    {item.receiver?.name ?? '-'}
+                  </Typography>
+                </Row>
+              </Column>
+
+              <Typography
+                fontSize="0.9rem"
+                alignSelf="stretch"
+                align="right"
+                textOverflow="ellipsis"
+                flexShrink={4}
+                minWidth={0}
+                overflow={'hidden'}
+              >
+                {item.note}
               </Typography>
             </Row>
           </Column>
-
-          <Typography
-            fontSize="0.9rem"
-            alignSelf="stretch"
-            align="right"
-            textOverflow="ellipsis"
-            flexShrink={4}
-            minWidth={0}
-            overflow={'hidden'}
-          >
-            {item.note}
-          </Typography>
-        </Row>
-      </Column>
-    </GradientCard>
+        </div>
+      </div>
+    </Column>
   )
 })
 

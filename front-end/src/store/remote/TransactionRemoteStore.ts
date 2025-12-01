@@ -47,6 +47,7 @@ export default class TransactionRemoteStore {
     ).response
     return new Transaction(
       response.id,
+      data.owner,
       data.amount,
       data.currencyId,
       data.categoryId,

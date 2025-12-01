@@ -43,6 +43,7 @@ message Transaction {
   uint32 receiver_amount = 10;
   optional FinancialIncomeData financial_income_data = 11;
   optional TransactionGroupData transaction_group_data = 12;
+  string owner = 13;
 }
 
 message GetAllTransactionsRequest {

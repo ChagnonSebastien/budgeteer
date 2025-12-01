@@ -1,7 +1,6 @@
-import { CategoryID } from './category'
-import { CurrencyID } from './currency'
+import Category, { CategoryID } from './category'
+import Currency, { CurrencyID } from './currency'
 import NamedItem from './NamedItem'
-import Unique from './Unique'
 
 export type TransactionGroupID = number
 
@@ -62,7 +61,7 @@ export class Person implements NamedItem<Email, Person> {
   }
 }
 
-export default class TransactionGroup implements Unique<TransactionGroupID, TransactionGroup> {
+export default class TransactionGroup implements NamedItem<TransactionGroupID, TransactionGroup> {
   constructor(
     readonly id: TransactionGroupID,
     readonly name: string,
@@ -73,6 +72,10 @@ export default class TransactionGroup implements Unique<TransactionGroupID, Tran
     readonly category: CategoryID | null,
     readonly hidden: boolean,
   ) {}
+
+  hasName(name: string): boolean {
+    return this.name === name
+  }
 
   equals(other: TransactionGroup): boolean {
     if (this.id !== other.id) return false
@@ -85,6 +88,29 @@ export default class TransactionGroup implements Unique<TransactionGroupID, Tran
     if (this.category !== other.category) return false
     if (this.hidden !== other.hidden) return false
     return true
+  }
+
+  hasJoined(email: Email): boolean {
+    return this.members.find((m) => m.email === email)?.joined ?? false
+  }
+}
+
+export class AugmentedTransactionGroup extends TransactionGroup {
+  constructor(
+    transactionGroup: TransactionGroup,
+    public readonly augmentedCurrency?: Currency,
+    public readonly augmentedCategory?: Category,
+  ) {
+    super(
+      transactionGroup.id,
+      transactionGroup.name,
+      transactionGroup.originalCurrency,
+      transactionGroup.splitType,
+      transactionGroup.members,
+      transactionGroup.currency,
+      transactionGroup.category,
+      transactionGroup.hidden,
+    )
   }
 }
 

@@ -320,6 +320,7 @@ func (s *TransactionHandler) GetAllTransactions(
 
 		transactionsDto[i] = &dto.Transaction{
 			Id:                   uint32(transaction.ID),
+			Owner:                string(transaction.Owner),
 			Amount:               uint32(transaction.Amount),
 			Currency:             uint32(transaction.Currency),
 			Sender:               sender,

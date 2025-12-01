@@ -21,6 +21,7 @@ export default class TransactionLocalStore {
       (transaction) =>
         new Transaction(
           transaction.id,
+          transaction.owner,
           transaction.amount,
           transaction.currency,
           transaction.category,
@@ -52,6 +53,7 @@ export default class TransactionLocalStore {
 
   public async create(data: TransactionUpdatableFields): Promise<Transaction> {
     const newID = await this.db.transactions.put({
+      owner: data.owner,
       receiverCurrency: data.receiverCurrencyId,
       category: data.categoryId,
       amount: data.amount,
@@ -67,6 +69,7 @@ export default class TransactionLocalStore {
 
     return new Transaction(
       newID,
+      data.owner,
       data.amount,
       data.currencyId,
       data.categoryId,
@@ -84,6 +87,7 @@ export default class TransactionLocalStore {
   public async createKnown(data: Transaction): Promise<void> {
     await this.db.transactions.put({
       id: data.id,
+      owner: data.owner,
       receiverCurrency: data.receiverCurrencyId,
       category: data.categoryId,
       amount: data.amount,
@@ -100,6 +104,7 @@ export default class TransactionLocalStore {
 
   public async update(identity: IdIdentifier, data: Partial<TransactionUpdatableFields>): Promise<void> {
     await this.db.transactions.update(identity.id, {
+      owner: data.owner,
       receiverCurrency: data.receiverCurrencyId,
       category: data.categoryId,
       amount: data.amount,
@@ -118,6 +123,7 @@ export default class TransactionLocalStore {
     await this.db.transactions.bulkPut(
       transactions.map((transaction) => ({
         id: transaction.id,
+        owner: transaction.owner,
         receiverCurrency: transaction.receiverCurrencyId,
         category: transaction.categoryId,
         amount: transaction.amount,

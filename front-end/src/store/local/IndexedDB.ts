@@ -65,6 +65,7 @@ interface TransactionGroupData {
 
 interface Transaction {
   id: number
+  owner: string
   amount: number
   currency: number
   sender: number | null

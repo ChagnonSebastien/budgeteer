@@ -25,6 +25,7 @@ interface AdditionalTransactionListProps {
   onClick: (transactionId: number) => void
   viewAsAccounts?: number[]
   includeInitialAmounts?: boolean
+  displayMonthlySummaries?: boolean
   containerStyle?: CSSProperties
 }
 
@@ -36,8 +37,9 @@ export const TransactionList = (props: Props) => {
     ItemComponent = TransactionCard,
     onClick,
     viewAsAccounts,
-    includeInitialAmounts,
+    includeInitialAmounts = false,
     containerStyle,
+    displayMonthlySummaries = false,
   } = props
 
   const { state: accounts } = useContext(AccountServiceContext)
@@ -146,7 +148,7 @@ export const TransactionList = (props: Props) => {
           >
             {formatDate(date, 'MMMM yyyy')}
           </div>
-          {!privacyMode && (
+          {!privacyMode && displayMonthlySummaries && (
             <div>
               <Row>{formatFull(defaultCurrency, Total, privacyMode)}</Row>
               {diff !== 0 && (

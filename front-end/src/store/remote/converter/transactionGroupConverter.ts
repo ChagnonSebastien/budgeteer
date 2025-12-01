@@ -12,7 +12,7 @@ import {
   UpdateTransactionGroupFields as UpdateTransactionGroupFieldsDTO,
 } from '../dto/transactionGroup'
 
-const splitTypeToDto = (type: SplitType): SplitTypeDto => {
+export const splitTypeToDto = (type: SplitType): SplitTypeDto => {
   switch (type) {
     case SplitType.EQUAL:
       return SplitTypeDto.Equal
