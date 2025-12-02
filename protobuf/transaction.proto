@@ -64,6 +64,8 @@ message CreateTransactionRequest {
   uint32 receiver_currency = 8;
   uint32 receiver_amount = 9;
   optional FinancialIncomeData financial_income_data = 10;
+  optional TransactionGroupData transaction_group_data = 11;
+  string owner = 12;
 }
 
 message CreateTransactionResponse {
@@ -72,6 +74,21 @@ message CreateTransactionResponse {
 
 message UpdateFinancialIncomeFields {
   optional uint32 related_currency = 1;
+}
+
+message UpdateMemberSplitValue {
+  repeated MemberSplitValue member_split_values = 1;
+}
+
+message UpdateSplitOverride {
+  optional SplitTypeOverride split_type_override = 1;
+  optional UpdateMemberSplitValue update_member_split_values = 2;
+}
+
+message UpdateGroupedTransactionFields {
+  optional uint32 transaction_group_id = 1;
+  bool update_split_override = 2;
+  optional UpdateSplitOverride update_split_override_fields = 3;
 }
 
 message UpdateTransactionFields {
@@ -89,6 +106,8 @@ message UpdateTransactionFields {
   optional uint32 receiver_amount = 12;
   bool update_financial_income = 13;
   optional UpdateFinancialIncomeFields update_financial_income_fields = 14;
+  bool update_transaction_group = 15;
+  optional UpdateGroupedTransactionFields update_transaction_group_fields = 16;
 }
 
 message UpdateTransactionRequest {

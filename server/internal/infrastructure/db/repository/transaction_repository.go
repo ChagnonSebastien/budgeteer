@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"slices"
 	"time"
 
 	"chagnon.dev/budget-server/internal/domain/model"
@@ -138,20 +139,24 @@ func (r *Repository) GetAllTransactions(ctx context.Context, userId string) ([]m
 	return transactions, nil
 }
 
-type CreateFinancialIncomeAdditionalData struct {
-	RelatedCurrencyId int
-}
-
 func (r *Repository) CreateTransaction(
-	ctx context.Context, userId string,
+	ctx context.Context,
+	userId, userEmail string,
+	ownerEmail string,
 	amount, receiverAmount int,
 	currencyId, receiverCurrencyId int,
 	senderAccountId, receiverAccountId model.Optional[int],
 	categoryId model.Optional[int],
 	date time.Time,
 	note string,
-	financialIncomeData model.Optional[CreateFinancialIncomeAdditionalData],
+	financialIncomeData model.Optional[model.FinancialIncomeData],
+	transactionGroupData model.Optional[model.GroupedTransactionData],
 ) (createdTransactionId model.TransactionID, err error) {
+	if userEmail != ownerEmail {
+		err = fmt.Errorf("can only create a transaction for self for now")
+		return
+	}
+
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
 		return
@@ -200,10 +205,10 @@ func (r *Repository) CreateTransaction(
 	}
 
 	if financialIncome, isSome := financialIncomeData.Value(); isSome {
-		updatedRows, queryErr := r.queries.WithTx(tx).UpsertFinancialIncome(ctx, &dao.UpsertFinancialIncomeParams{
+		_, queryErr := r.queries.WithTx(tx).UpsertFinancialIncome(ctx, &dao.UpsertFinancialIncomeParams{
 			TransactionID: transactionId,
 			RelatedCurrencyID: sql.NullInt32{
-				Int32: int32(financialIncome.RelatedCurrencyId),
+				Int32: int32(financialIncome.RelatedCurrency),
 				Valid: true,
 			},
 		})
@@ -211,9 +216,45 @@ func (r *Repository) CreateTransaction(
 			err = fmt.Errorf("creating financial income: %w", queryErr)
 			return
 		}
-		if updatedRows == 0 {
-			err = fmt.Errorf("updated 0 rows when creating financial income")
+	}
+
+	if transactionGroup, isSome := transactionGroupData.Value(); isSome {
+		splitOverride, hasSplitOverride := transactionGroup.SplitOverride.Value()
+		var splitOverrideDao dao.TransactionSplitType
+		if hasSplitOverride {
+			splitOverrideDao, err = SplitTypeOverrideToDao(splitOverride.SplitTypeOverride)
+			if err != nil {
+				err = fmt.Errorf("converting split type override to dao: %w", err)
+				return
+			}
+		}
+
+		_, upsertErr := r.queries.WithTx(tx).UpsertGroupedTransaction(ctx, &dao.UpsertGroupedTransactionParams{
+			TransactionID:           transactionId,
+			TransactionGroupID:      sql.NullInt32{Valid: true, Int32: int32(transactionGroup.TransactionGroup)},
+			SplitTypeOverride:       dao.NullTransactionSplitType{Valid: hasSplitOverride, TransactionSplitType: splitOverrideDao},
+			TriggeredByOwner:        userEmail == ownerEmail,
+			UpdateSplitTypeOverride: hasSplitOverride,
+		})
+		if err != nil {
+			err = fmt.Errorf("upserting grouped transaction: %w", upsertErr)
 			return
+		}
+
+		if hasSplitOverride {
+			for _, member := range splitOverride.Members {
+				splitValue, hasSplitValue := member.SplitValue.Value()
+
+				_, upsertErr := r.queries.WithTx(tx).UpsertGroupedTransactionMemberSplitValue(ctx, &dao.UpsertGroupedTransactionMemberSplitValueParams{
+					TransactionID: transactionId,
+					UserEmail:     string(member.Email),
+					SplitValue:    sql.NullInt32{Valid: hasSplitValue, Int32: int32(splitValue)},
+				})
+				if err != nil {
+					err = fmt.Errorf("upserting grouped transaction member split value: %w", upsertErr)
+					return
+				}
+			}
 		}
 	}
 
@@ -237,14 +278,43 @@ func (u *UpdateFinancialIncomeAdditionalData) nullRelatedCurrencyId() sql.NullIn
 	return sql.NullInt32{Valid: false}
 }
 
+type UpdateTransactionGroupSplitOverride struct {
+	SplitTypeOverride model.Optional[model.SplitTypeOverride]
+	Members           model.Optional[[]model.MemberSplitValue]
+}
+
+func (u *UpdateTransactionGroupSplitOverride) nullSplitTypeOverride() dao.NullTransactionSplitType {
+	if value, isSome := u.SplitTypeOverride.Value(); isSome {
+		if splitTypeOverride, err := SplitTypeOverrideToDao(value); err == nil {
+			return dao.NullTransactionSplitType{Valid: true, TransactionSplitType: splitTypeOverride}
+		}
+	}
+
+	return dao.NullTransactionSplitType{Valid: false}
+}
+
+type UpdateTransactionGroupAdditionalData struct {
+	TransactionGroupId model.Optional[int]
+	SplitOverride      model.Optional[model.Optional[UpdateTransactionGroupSplitOverride]]
+}
+
+func (u *UpdateTransactionGroupAdditionalData) nullTransactionGroupId() sql.NullInt32 {
+	if value, isSome := u.TransactionGroupId.Value(); isSome {
+		return sql.NullInt32{Valid: true, Int32: int32(value)}
+	}
+
+	return sql.NullInt32{Valid: false}
+}
+
 type UpdateTransactionFields struct {
-	Amount, ReceiverAmount              model.Optional[int]
-	CurrencyId, ReceiverCurrencyId      model.Optional[int]
-	SenderAccountId, ReceiverAccountId  model.Optional[model.Optional[int]]
-	CategoryId                          model.Optional[model.Optional[int]]
-	Date                                model.Optional[time.Time]
-	Note                                model.Optional[string]
-	UpdateFinancialIncomeAdditionalData model.Optional[model.Optional[UpdateFinancialIncomeAdditionalData]]
+	Amount, ReceiverAmount               model.Optional[int]
+	CurrencyId, ReceiverCurrencyId       model.Optional[int]
+	SenderAccountId, ReceiverAccountId   model.Optional[model.Optional[int]]
+	CategoryId                           model.Optional[model.Optional[int]]
+	Date                                 model.Optional[time.Time]
+	Note                                 model.Optional[string]
+	UpdateFinancialIncomeAdditionalData  model.Optional[model.Optional[UpdateFinancialIncomeAdditionalData]]
+	UpdateTransactionGroupAdditionalData model.Optional[model.Optional[UpdateTransactionGroupAdditionalData]]
 }
 
 func (u *UpdateTransactionFields) nullNote() sql.NullString {
@@ -290,7 +360,7 @@ func (u *UpdateTransactionFields) nullSenderAccountId() sql.NullInt32 {
 }
 
 func (u *UpdateTransactionFields) nullReceiverAccountId() sql.NullInt32 {
-	if optionalValue, isSome := u.SenderAccountId.Value(); isSome {
+	if optionalValue, isSome := u.ReceiverAccountId.Value(); isSome {
 		if value, isSome := optionalValue.Value(); isSome {
 			return sql.NullInt32{Valid: true, Int32: int32(value)}
 		}
@@ -316,7 +386,7 @@ func (u *UpdateTransactionFields) nullReceiverCurrencyId() sql.NullInt32 {
 }
 
 func (u *UpdateTransactionFields) nullCategoryId() sql.NullInt32 {
-	if optionalValue, isSome := u.SenderAccountId.Value(); isSome {
+	if optionalValue, isSome := u.CategoryId.Value(); isSome {
 		if value, isSome := optionalValue.Value(); isSome {
 			return sql.NullInt32{Valid: true, Int32: int32(value)}
 		}
@@ -344,7 +414,7 @@ func (r *Repository) UpdateTransaction(
 		}
 	}()
 
-	updatedRows, err := r.queries.WithTx(tx).UpdateTransaction(
+	_, err = r.queries.WithTx(tx).UpdateTransaction(
 		ctx, &dao.UpdateTransactionParams{
 			UserID:           userId,
 			ID:               int32(id),
@@ -366,14 +436,10 @@ func (r *Repository) UpdateTransaction(
 		err = fmt.Errorf("updating transaction: %w", err)
 		return
 	}
-	if updatedRows == 0 {
-		err = fmt.Errorf("updated 0 rows when updating transaction")
-		return
-	}
 
 	if updatingFinancialData, isSome := field.UpdateFinancialIncomeAdditionalData.Value(); isSome {
 		if financialDataFields, isSome := updatingFinancialData.Value(); isSome {
-			updatedRows, updateErr := r.queries.WithTx(tx).UpsertFinancialIncome(
+			_, updateErr := r.queries.WithTx(tx).UpsertFinancialIncome(
 				ctx, &dao.UpsertFinancialIncomeParams{
 					RelatedCurrencyID: financialDataFields.nullRelatedCurrencyId(),
 					TransactionID:     int32(id),
@@ -383,14 +449,120 @@ func (r *Repository) UpdateTransaction(
 				err = fmt.Errorf("updating financial income: %w", updateErr)
 				return
 			}
-			if updatedRows == 0 {
-				err = fmt.Errorf("updated 0 rows when updating financial income")
-				return
-			}
 		} else {
 			_, deleteErr := r.queries.WithTx(tx).RemoveFinancialIncome(ctx, int32(id))
 			if deleteErr != nil {
 				err = fmt.Errorf("deleting financial income: %w", deleteErr)
+				return
+			}
+		}
+	}
+
+	if updatingTransactionGroupData, isSome := field.UpdateTransactionGroupAdditionalData.Value(); isSome {
+		if transactionGroupData, isSome := updatingTransactionGroupData.Value(); isSome {
+			previousTransaction, getTransactionError := r.queries.WithTx(tx).GetTransaction(ctx, int32(id))
+			if getTransactionError != nil {
+				err = fmt.Errorf("getting previous transaction: %w", getTransactionError)
+				return
+			}
+
+			transactionGroupId := transactionGroupData.nullTransactionGroupId()
+
+			updateSplitOverrideData, updateSplitOverride := transactionGroupData.SplitOverride.Value()
+			updateSplitTypeOverride := false
+			splitTypeOverrideDao := dao.NullTransactionSplitType{Valid: false}
+
+			if updateSplitOverride {
+				if splitOverride, isSome := updateSplitOverrideData.Value(); isSome {
+					updateSplitTypeOverride = splitOverride.SplitTypeOverride.IsSome()
+					splitTypeOverrideDao = splitOverride.nullSplitTypeOverride()
+				}
+			}
+
+			_, upsertErr := r.queries.WithTx(tx).UpsertGroupedTransaction(ctx, &dao.UpsertGroupedTransactionParams{
+				TransactionID:           int32(id),
+				TransactionGroupID:      transactionGroupId,
+				SplitTypeOverride:       splitTypeOverrideDao,
+				TriggeredByOwner:        previousTransaction.UserID == userId,
+				UpdateSplitTypeOverride: updateSplitTypeOverride,
+			})
+			if upsertErr != nil {
+				err = fmt.Errorf("upserting grouped transaction: %w", upsertErr)
+				return
+			}
+
+			if updateSplitOverride {
+				var previousMembers []MemberValueOverride
+				if marshalErr := json.Unmarshal(previousTransaction.TransactionGroupMemberValues, &previousMembers); marshalErr != nil {
+					err = fmt.Errorf("parsing members while assembling previous transaction split override values for members: %s", marshalErr)
+					return
+				}
+
+				var newMembers = make([]model.MemberSplitValue, 0)
+
+				if splitOverride, isSome := updateSplitOverrideData.Value(); isSome {
+					if newMembersData, isSome := splitOverride.Members.Value(); isSome {
+						newMembers = newMembersData
+					} else {
+						// members stay the same
+						newMembers = make([]model.MemberSplitValue, len(previousMembers))
+						for i, member := range previousMembers {
+							splitValue := model.None[int]()
+							if member.SplitValue != nil {
+								splitValue = model.Some(*member.SplitValue)
+							}
+							newMembers[i] = model.MemberSplitValue{
+								Email:      model.Email(member.UserEmail),
+								SplitValue: splitValue,
+							}
+						}
+					}
+				}
+
+				//
+				// HANDLE REMOVED MEMBERS
+				//
+				for _, previousMember := range previousMembers {
+					if stillHere := slices.ContainsFunc(newMembers, func(member model.MemberSplitValue) bool {
+						return string(member.Email) == previousMember.UserEmail
+					}); stillHere {
+						continue
+					}
+
+					_, removalErr := r.queries.RemoveGroupedTransactionMember(ctx, &dao.RemoveGroupedTransactionMemberParams{
+						TransactionID: int32(id),
+						UserEmail:     previousMember.UserEmail,
+					})
+					if removalErr != nil {
+						err = fmt.Errorf("removing member split value from transaction: %s: %w", previousMember.UserEmail, removalErr)
+						return
+					}
+				}
+
+				//
+				// HANDLE NEW AND UPDATED MEMBERS
+				//
+				for _, newMember := range newMembers {
+					splitValue := sql.NullInt32{Valid: false}
+					if value, isSome := newMember.SplitValue.Value(); isSome {
+						splitValue = sql.NullInt32{Valid: true, Int32: int32(value)}
+					}
+
+					_, upsertErr := r.queries.UpsertGroupedTransactionMemberSplitValue(ctx, &dao.UpsertGroupedTransactionMemberSplitValueParams{
+						SplitValue:    splitValue,
+						UserEmail:     string(newMember.Email),
+						TransactionID: int32(id),
+					})
+					if upsertErr != nil {
+						err = fmt.Errorf("upserting member split value from transaction: %w", upsertErr)
+						return
+					}
+				}
+			}
+		} else {
+			_, deleteErr := r.queries.DeleteGroupedTransaction(ctx, int32(id))
+			if deleteErr != nil {
+				err = fmt.Errorf("deleting grouped transaction data: %w", err)
 				return
 			}
 		}

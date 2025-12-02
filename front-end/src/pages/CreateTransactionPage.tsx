@@ -1,6 +1,7 @@
 import { FC, useCallback, useContext, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 
+import { UserContext } from '../App'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
 import useQueryParams from '../components/shared/useQueryParams'
 import TransactionForm, { TransactionType } from '../components/transactions/TransactionForm'
@@ -17,6 +18,7 @@ const CreateTransactionPage: FC = () => {
   const type = useMemo(() => (queryParams.type ?? 'expense') as TransactionType, [queryParams.type])
 
   const { create: createTransaction } = useContext(TransactionServiceContext)
+  const { email } = useContext(UserContext)
 
   const onSubmit = useCallback(
     async (data: Partial<TransactionUpdatableFields>) => {
@@ -31,6 +33,7 @@ const CreateTransactionPage: FC = () => {
       if (typeof data.receiverAmount === 'undefined') throw new Error('receiverAmount cannot be undefined')
 
       await createTransaction({
+        owner: email,
         amount: data.amount,
         currencyId: data.currencyId,
         categoryId: data.categoryId,

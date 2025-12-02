@@ -9,16 +9,22 @@ import Transaction, {
 } from '../../../domain/model/transaction'
 import {
   FinancialIncomeData as FinancialIncomeDataDto,
+  MemberSplitValue as MemberSplitValueDTO,
+  SplitOverride as SplitOverrideDTO,
   SplitTypeOverride as SplitTypeOverrideDto,
   Transaction as TransactionDto,
+  TransactionGroupData as TransactionGroupDataDTO,
   UpdateFinancialIncomeFields as UpdateFinancialIncomeFieldsDTO,
+  UpdateGroupedTransactionFields,
+  UpdateMemberSplitValue,
+  UpdateSplitOverride,
   UpdateTransactionFields as UpdateTransactionFieldsDTO,
 } from '../dto/transaction'
 
 function padToTwoDigits(num: number) {
   return num.toString().padStart(2, '0')
 }
-const splitTypeOverrideToDto = (type: SplitTypeOverride): SplitTypeOverrideDto => {
+export const splitTypeOverrideToDto = (type: SplitTypeOverride): SplitTypeOverrideDto => {
   switch (type) {
     case SplitTypeOverride.EQUAL:
       return SplitTypeOverrideDto.OverrideEqual
@@ -113,6 +119,25 @@ export class TransactionConverter
               relatedCurrency: model.financialIncomeData.relatedCurrencyId,
             })
           : undefined,
+      transactionGroupData:
+        model.transactionGroupData !== null
+          ? TransactionGroupDataDTO.create({
+              transactionGroup: model.transactionGroupData.transactionGroupId,
+              splitOverride: model.transactionGroupData.splitOverride
+                ? SplitOverrideDTO.create({
+                    splitTypeOverride: splitTypeOverrideToDto(
+                      model.transactionGroupData.splitOverride.splitTypeOverride,
+                    ),
+                    memberSplitValues: model.transactionGroupData.splitOverride.memberValues.map((m) =>
+                      MemberSplitValueDTO.create({
+                        email: m.email,
+                        splitValue: m.value ?? undefined,
+                      }),
+                    ),
+                  })
+                : undefined,
+            })
+          : undefined,
     })
   }
 
@@ -134,6 +159,26 @@ export class TransactionConverter
       updateFinancialIncomeFields: model.financialIncomeData
         ? UpdateFinancialIncomeFieldsDTO.create({
             relatedCurrency: model.financialIncomeData.relatedCurrencyId ?? undefined,
+          })
+        : undefined,
+      updateTransactionGroup: typeof model.transactionGroupData !== 'undefined',
+      updateTransactionGroupFields: model.transactionGroupData
+        ? UpdateGroupedTransactionFields.create({
+            transactionGroupId: model.transactionGroupData.transactionGroupId,
+            updateSplitOverride: typeof model.transactionGroupData.splitOverride !== 'undefined',
+            updateSplitOverrideFields: model.transactionGroupData.splitOverride
+              ? UpdateSplitOverride.create({
+                  splitTypeOverride: splitTypeOverrideToDto(model.transactionGroupData.splitOverride.splitTypeOverride),
+                  updateMemberSplitValues: UpdateMemberSplitValue.create({
+                    memberSplitValues: model.transactionGroupData.splitOverride.memberValues.map((m) =>
+                      MemberSplitValueDTO.create({
+                        email: m.email,
+                        splitValue: m.value ?? undefined,
+                      }),
+                    ),
+                  }),
+                })
+              : undefined,
           })
         : undefined,
     })

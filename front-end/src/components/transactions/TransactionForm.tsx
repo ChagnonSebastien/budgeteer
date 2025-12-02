@@ -1,19 +1,28 @@
-import { Checkbox, FormControlLabel, TextField } from '@mui/material'
+import { Checkbox, FormControlLabel, IconButton, TextField } from '@mui/material'
 import { FC, useContext, useEffect, useMemo, useState } from 'react'
 
 import { UserContext } from '../../App'
 import Account, { AccountID } from '../../domain/model/account'
 import { CategoryID } from '../../domain/model/category'
 import { CurrencyID, formatAmount, parseAmount } from '../../domain/model/currency'
-import Transaction, { AugmentedTransaction, FinancialIncomeData } from '../../domain/model/transaction'
+import Transaction, {
+  AugmentedTransaction,
+  FinancialIncomeData,
+  TransactionGroupData,
+} from '../../domain/model/transaction'
+import { TransactionGroupID } from '../../domain/model/transactionGroup'
 import MixedAugmentation from '../../service/MixedAugmentation'
 import { AccountServiceContext, CategoryServiceContext, CurrencyServiceContext } from '../../service/ServiceContext'
 import CategoryPicker from '../categories/CategoryPicker'
 import CurrencyPicker from '../currencies/CurrencyPicker'
+import IconCapsule from '../icons/IconCapsule'
+import { IconToolsContext } from '../icons/IconTools'
 import AccountPicker from '../inputs/AccountPicker'
 import DatePicker from '../inputs/DatePicker'
+import ItemPicker from '../inputs/ItemPicker'
 import FormWrapper from '../shared/FormWrapper'
 import { Row } from '../shared/Layout'
+import { TransactionGroupCard } from '../transactionGroup/TransactionGroupCard'
 
 const NoError = ''
 
@@ -64,8 +73,9 @@ const TransactionForm: FC<Props> = (props) => {
   const { create: createAccount } = useContext(AccountServiceContext)
   const { state: categories } = useContext(CategoryServiceContext)
   const { state: currencies } = useContext(CurrencyServiceContext)
-  const { rootCategory } = useContext(MixedAugmentation)
-  const { default_currency } = useContext(UserContext)
+  const { rootCategory, augmentedTransactionGroups: transactionGroups } = useContext(MixedAugmentation)
+  const { default_currency, email } = useContext(UserContext)
+  const { IconLib } = useContext(IconToolsContext)
 
   const type: 'income' | 'expense' | 'transfer' | 'financialIncome' = useMemo(() => {
     if (typeof rawType !== 'undefined') return rawType
@@ -121,6 +131,17 @@ const TransactionForm: FC<Props> = (props) => {
   const category = useMemo(() => {
     return categories.find((c) => c.id === parent)
   }, [categories, parent])
+
+  const [transactionGroupId, setTransactionGroupId] = useState<TransactionGroupID | null>(
+    initialTransaction?.transactionGroupData?.transactionGroupId ?? null,
+  )
+  const visibleTransactionGroups = useMemo(() => {
+    return transactionGroups.filter((tg) => tg.hasJoined(email) && !tg.hidden)
+  }, [transactionGroups])
+
+  const transactionGroup = useMemo(() => {
+    return transactionGroups.find((c) => c.id === transactionGroupId)
+  }, [transactionGroups, transactionGroupId])
 
   const [showErrorToast, setShowErrorToast] = useState('')
   const [errors, setErrors] = useState<{
@@ -239,13 +260,13 @@ const TransactionForm: FC<Props> = (props) => {
     }
 
     accountCreations.then((newAccount) => {
-      onSubmit({
+      console.log({
         amount: parseAmount(currencies.find((c) => c.id === currency)!, sanitizedAmount),
         receiverAmount: parseAmount(
           currencies.find((c) => c.id === (differentCurrency ? receiverCurrency : currency))!,
           differentCurrency ? sanitizedReceiverAmount : sanitizedAmount,
         ),
-        categoryId: parent,
+        categoryId: transactionGroup?.category ?? parent,
         receiverId: receiverAccount.id ?? (type === 'expense' ? (newAccount?.id ?? null) : null),
         senderId: senderAccount.id ?? (type === 'income' ? (newAccount?.id ?? null) : null),
         note,
@@ -253,6 +274,23 @@ const TransactionForm: FC<Props> = (props) => {
         currencyId: currency,
         receiverCurrencyId: differentCurrency ? receiverCurrency : currency,
         financialIncomeData: type === 'financialIncome' ? new FinancialIncomeData(investmentCurrency) : null,
+        transactionGroupData: transactionGroupId !== null ? new TransactionGroupData(transactionGroupId, null) : null,
+      })
+      onSubmit({
+        amount: parseAmount(currencies.find((c) => c.id === currency)!, sanitizedAmount),
+        receiverAmount: parseAmount(
+          currencies.find((c) => c.id === (differentCurrency ? receiverCurrency : currency))!,
+          differentCurrency ? sanitizedReceiverAmount : sanitizedAmount,
+        ),
+        categoryId: transactionGroup?.category ?? parent,
+        receiverId: receiverAccount.id ?? (type === 'expense' ? (newAccount?.id ?? null) : null),
+        senderId: senderAccount.id ?? (type === 'income' ? (newAccount?.id ?? null) : null),
+        note,
+        date,
+        currencyId: currency,
+        receiverCurrencyId: differentCurrency ? receiverCurrency : currency,
+        financialIncomeData: type === 'financialIncome' ? new FinancialIncomeData(investmentCurrency) : null,
+        transactionGroupData: transactionGroupId !== null ? new TransactionGroupData(transactionGroupId, null) : null,
       }).catch((err) => {
         setShowErrorToast('Unexpected error while submitting the category')
         console.error(err)
@@ -300,7 +338,33 @@ const TransactionForm: FC<Props> = (props) => {
         />
       )}
 
-      {typeof category !== 'undefined' && (
+      {(type === 'expense' || type === 'income') && (
+        <Row style={{ justifyContent: 'stretch', alignItems: 'center', gap: '1rem' }}>
+          {transactionGroup?.augmentedCategory && (
+            <IconCapsule
+              iconName={transactionGroup.augmentedCategory.iconName}
+              size="2rem"
+              color={transactionGroup.augmentedCategory.iconColor}
+              backgroundColor={transactionGroup.augmentedCategory.iconBackground}
+            />
+          )}
+          <ItemPicker
+            style={{ flexGrow: 1 }}
+            items={visibleTransactionGroups}
+            labelText="Transaction Group"
+            itemDisplayText={(item) => item?.name ?? 'None'}
+            selectedItemId={transactionGroupId}
+            onSelectItem={setTransactionGroupId}
+            ItemComponent={TransactionGroupCard}
+            additionalItemProps={{}}
+          />
+          <IconButton onClick={() => setTransactionGroupId(null)}>
+            <IconLib.IoCloseCircle />
+          </IconButton>
+        </Row>
+      )}
+
+      {transactionGroupId === null && typeof category !== 'undefined' && (
         <CategoryPicker
           labelText="Category"
           icon={category}

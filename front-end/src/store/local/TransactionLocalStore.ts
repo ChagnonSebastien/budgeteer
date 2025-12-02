@@ -115,6 +115,7 @@ export default class TransactionLocalStore {
       receiver: data.receiverId,
       currency: data.currencyId,
       financialIncomeData: data.financialIncomeData,
+      transactionGroupData: data.transactionGroupData,
     })
   }
 

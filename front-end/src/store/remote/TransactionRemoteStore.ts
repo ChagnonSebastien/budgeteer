@@ -1,10 +1,13 @@
 import { RpcTransport } from '@protobuf-ts/runtime-rpc'
 
-import { formatDateTime, TransactionConverter } from './converter/transactionConverter'
+import { formatDateTime, splitTypeOverrideToDto, TransactionConverter } from './converter/transactionConverter'
 import {
   CreateTransactionRequest,
   FinancialIncomeData,
   GetAllTransactionsRequest,
+  MemberSplitValue,
+  SplitOverride,
+  TransactionGroupData,
   UpdateTransactionRequest,
 } from './dto/transaction'
 import { TransactionServiceClient } from './dto/transaction.client'
@@ -28,6 +31,7 @@ export default class TransactionRemoteStore {
   public async create(data: Omit<Transaction, 'id' | 'hasName'>): Promise<Transaction> {
     const response = await this.client.createTransaction(
       CreateTransactionRequest.create({
+        owner: data.owner,
         amount: data.amount,
         category: data.categoryId ?? undefined,
         date: formatDateTime(data.date),
@@ -41,6 +45,25 @@ export default class TransactionRemoteStore {
           data.financialIncomeData !== null
             ? FinancialIncomeData.create({
                 relatedCurrency: data.financialIncomeData.relatedCurrencyId,
+              })
+            : undefined,
+        transactionGroupData:
+          data.transactionGroupData !== null
+            ? TransactionGroupData.create({
+                transactionGroup: data.transactionGroupData.transactionGroupId,
+                splitOverride: data.transactionGroupData.splitOverride
+                  ? SplitOverride.create({
+                      splitTypeOverride: splitTypeOverrideToDto(
+                        data.transactionGroupData.splitOverride.splitTypeOverride,
+                      ),
+                      memberSplitValues: data.transactionGroupData.splitOverride.memberValues.map((m) =>
+                        MemberSplitValue.create({
+                          email: m.email,
+                          splitValue: m.value ?? undefined,
+                        }),
+                      ),
+                    })
+                  : undefined,
               })
             : undefined,
       }),

@@ -16,14 +16,17 @@ const layout = "2006-01-02 15:04:05"
 type transactionRepository interface {
 	GetAllTransactions(ctx context.Context, userId string) ([]model.Transaction, error)
 	CreateTransaction(
-		ctx context.Context, userId string,
+		ctx context.Context,
+		userId, userEmail string,
+		ownerEmail string,
 		amount, receiverAmount int,
 		currencyId, receiverCurrencyId int,
 		senderAccountId, receiverAccountId model.Optional[int],
 		categoryId model.Optional[int],
 		date time.Time,
 		note string,
-		financialIncomeData model.Optional[repository.CreateFinancialIncomeAdditionalData],
+		financialIncomeData model.Optional[model.FinancialIncomeData],
+		transactionGroupData model.Optional[model.GroupedTransactionData],
 	) (model.TransactionID, error)
 	UpdateTransaction(
 		ctx context.Context,
@@ -93,10 +96,44 @@ func (s *TransactionHandler) CreateTransaction(
 		category = model.Some(int(*req.Category))
 	}
 
-	financialIncomeData := model.None[repository.CreateFinancialIncomeAdditionalData]()
+	financialIncomeData := model.None[model.FinancialIncomeData]()
 	if req.FinancialIncomeData != nil {
-		financialIncomeData = model.Some(repository.CreateFinancialIncomeAdditionalData{
-			RelatedCurrencyId: int(req.FinancialIncomeData.RelatedCurrency),
+		financialIncomeData = model.Some(model.FinancialIncomeData{
+			RelatedCurrency: model.CurrencyID(req.FinancialIncomeData.RelatedCurrency),
+		})
+	}
+
+	transactionGroupData := model.None[model.GroupedTransactionData]()
+	if req.TransactionGroupData != nil {
+		splitOverride := model.None[model.SplitOverride]()
+		if req.TransactionGroupData.SplitOverride != nil {
+			splitTypeOverride, err := SplitTypeOverrideFromDto(req.TransactionGroupData.SplitOverride.SplitTypeOverride)
+			if err != nil {
+				return nil, err
+			}
+
+			members := make([]model.MemberSplitValue, len(req.TransactionGroupData.SplitOverride.MemberSplitValues))
+			for i, member := range req.TransactionGroupData.SplitOverride.MemberSplitValues {
+				splitValue := model.None[int]()
+				if member.SplitValue != nil {
+					splitValue = model.Some(int(*member.SplitValue))
+				}
+
+				members[i] = model.MemberSplitValue{
+					Email:      model.Email(member.Email),
+					SplitValue: splitValue,
+				}
+			}
+
+			splitOverride = model.Some(model.SplitOverride{
+				SplitTypeOverride: splitTypeOverride,
+				Members:           members,
+			})
+		}
+
+		transactionGroupData = model.Some(model.GroupedTransactionData{
+			TransactionGroup: model.TransactionGroupID(req.TransactionGroupData.TransactionGroup),
+			SplitOverride:    splitOverride,
 		})
 	}
 
@@ -108,6 +145,8 @@ func (s *TransactionHandler) CreateTransaction(
 	newId, err := s.transactionService.CreateTransaction(
 		ctx,
 		claims.Sub,
+		claims.Email,
+		req.Owner,
 		int(req.Amount),
 		int(req.ReceiverAmount),
 		int(req.Currency),
@@ -118,6 +157,7 @@ func (s *TransactionHandler) CreateTransaction(
 		date,
 		req.Note,
 		financialIncomeData,
+		transactionGroupData,
 	)
 	if err != nil {
 		return nil, err
@@ -184,6 +224,62 @@ func (s *TransactionHandler) UpdateTransaction(
 		updateFinancialIncomeAdditionalData = model.Some(fields)
 	}
 
+	updateTransactionGroupAdditionalData := model.None[model.Optional[repository.UpdateTransactionGroupAdditionalData]]()
+	if req.Fields.UpdateTransactionGroup {
+		fields := model.None[repository.UpdateTransactionGroupAdditionalData]()
+		if req.Fields.UpdateTransactionGroupFields != nil {
+			transactionGroupId := model.None[int]()
+			if req.Fields.UpdateTransactionGroupFields.TransactionGroupId != nil {
+				transactionGroupId = model.Some(int(*req.Fields.UpdateTransactionGroupFields.TransactionGroupId))
+			}
+
+			splitOverride := model.None[model.Optional[repository.UpdateTransactionGroupSplitOverride]]()
+			if req.Fields.UpdateTransactionGroupFields.UpdateSplitOverride {
+				splitOverrideFields := model.None[repository.UpdateTransactionGroupSplitOverride]()
+				if req.Fields.UpdateTransactionGroupFields.UpdateSplitOverrideFields != nil {
+					updateFields := req.Fields.UpdateTransactionGroupFields.UpdateSplitOverrideFields
+
+					splitTypeOverride := model.None[model.SplitTypeOverride]()
+					if updateFields.SplitTypeOverride != nil {
+						if value, err := SplitTypeOverrideFromDto(*updateFields.SplitTypeOverride); err == nil {
+							splitTypeOverride = model.Some(value)
+						}
+					}
+
+					members := model.None[[]model.MemberSplitValue]()
+					if updateFields.UpdateMemberSplitValues != nil {
+						memberList := make([]model.MemberSplitValue, len(updateFields.UpdateMemberSplitValues.MemberSplitValues))
+						for i, member := range updateFields.UpdateMemberSplitValues.MemberSplitValues {
+							splitValue := model.None[int]()
+							if member.SplitValue != nil {
+								splitValue = model.Some(int(*member.SplitValue))
+							}
+
+							memberList[i] = model.MemberSplitValue{
+								Email:      model.Email(member.Email),
+								SplitValue: splitValue,
+							}
+						}
+					}
+
+					splitOverrideFields = model.Some(repository.UpdateTransactionGroupSplitOverride{
+						SplitTypeOverride: splitTypeOverride,
+						Members:           members,
+					})
+				}
+
+				splitOverride = model.Some(splitOverrideFields)
+			}
+
+			fields = model.Some(repository.UpdateTransactionGroupAdditionalData{
+				TransactionGroupId: transactionGroupId,
+				SplitOverride:      splitOverride,
+			})
+		}
+
+		updateTransactionGroupAdditionalData = model.Some(fields)
+	}
+
 	amount := model.None[int]()
 	if req.Fields.Amount != nil {
 		amount = model.Some(int(*req.Fields.Amount))
@@ -223,16 +319,17 @@ func (s *TransactionHandler) UpdateTransaction(
 		claims.Sub,
 		model.TransactionID(req.Id),
 		repository.UpdateTransactionFields{
-			Amount:                              amount,
-			CurrencyId:                          currencyId,
-			SenderAccountId:                     sender,
-			ReceiverAccountId:                   receiver,
-			CategoryId:                          category,
-			Date:                                date,
-			Note:                                note,
-			ReceiverCurrencyId:                  receiverCurrencyId,
-			ReceiverAmount:                      receiverAmount,
-			UpdateFinancialIncomeAdditionalData: updateFinancialIncomeAdditionalData,
+			Amount:                               amount,
+			CurrencyId:                           currencyId,
+			SenderAccountId:                      sender,
+			ReceiverAccountId:                    receiver,
+			CategoryId:                           category,
+			Date:                                 date,
+			Note:                                 note,
+			ReceiverCurrencyId:                   receiverCurrencyId,
+			ReceiverAmount:                       receiverAmount,
+			UpdateFinancialIncomeAdditionalData:  updateFinancialIncomeAdditionalData,
+			UpdateTransactionGroupAdditionalData: updateTransactionGroupAdditionalData,
 		},
 	)
 	if err != nil {
