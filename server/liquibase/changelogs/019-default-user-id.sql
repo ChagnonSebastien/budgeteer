@@ -10,3 +10,19 @@ ALTER TABLE users
 -- changeset ?:1764769682000-3
 ALTER TABLE users
     ALTER COLUMN id TYPE uuid USING id::uuid;
+
+-- changeset ?:1764769682000-3
+ALTER TABLE transactions
+    ALTER COLUMN user_id TYPE uuid USING user_id::uuid;
+
+-- changeset ?:1764769682000-3
+ALTER TABLE currencies
+    ALTER COLUMN user_id TYPE uuid USING user_id::uuid;
+
+-- changeset ?:1764769682000-3
+ALTER TABLE categories
+    ALTER COLUMN user_id TYPE uuid USING user_id::uuid;
+
+-- changeset ?:1764769682000-3
+ALTER TABLE accounts
+    ALTER COLUMN user_id TYPE uuid USING user_id::uuid;

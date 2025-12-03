@@ -8,13 +8,14 @@ import (
 	"chagnon.dev/budget-server/internal/infrastructure/db/repository"
 	"chagnon.dev/budget-server/internal/infrastructure/messaging/dto"
 	"chagnon.dev/budget-server/internal/infrastructure/messaging/shared"
+	"github.com/google/uuid"
 )
 
 type accountRepository interface {
-	GetAllAccountsWithCurrencyIDs(ctx context.Context, userId string) ([]model.Account, error)
+	GetAllAccountsWithCurrencyIDs(ctx context.Context, userId uuid.UUID) ([]model.Account, error)
 	CreateAccount(
 		ctx context.Context,
-		userId string,
+		userId uuid.UUID,
 		name string,
 		balances []model.Balance,
 		isMine bool,
@@ -22,7 +23,7 @@ type accountRepository interface {
 	) (model.AccountID, error)
 	UpdateAccount(
 		ctx context.Context,
-		userId string,
+		userId uuid.UUID,
 		id model.AccountID,
 		fields repository.UpdateAccountFields,
 	) error
@@ -38,9 +39,9 @@ func (s *AccountHandler) CreateAccount(ctx context.Context, req *dto.CreateAccou
 	*dto.CreateAccountResponse,
 	error,
 ) {
-	claims, ok := ctx.Value(shared.ClaimsKey{}).(shared.Claims)
+	user, ok := shared.FromContext(ctx)
 	if !ok {
-		return nil, fmt.Errorf("invalid claims")
+		return nil, fmt.Errorf("getting user from context")
 	}
 
 	balances := make([]model.Balance, 0, len(req.Balances))
@@ -55,7 +56,7 @@ func (s *AccountHandler) CreateAccount(ctx context.Context, req *dto.CreateAccou
 
 	newId, err := s.accountService.CreateAccount(
 		ctx,
-		claims.Sub,
+		user.ID,
 		req.Name,
 		balances,
 		req.IsMine,
@@ -75,9 +76,9 @@ func (s *AccountHandler) UpdateAccount(
 	ctx context.Context,
 	req *dto.UpdateAccountRequest,
 ) (*dto.UpdateAccountResponse, error) {
-	claims, ok := ctx.Value(shared.ClaimsKey{}).(shared.Claims)
+	user, ok := shared.FromContext(ctx)
 	if !ok {
-		return nil, fmt.Errorf("invalid claims")
+		return nil, fmt.Errorf("getting user from context")
 	}
 
 	var initialAmounts *[]model.Balance
@@ -96,7 +97,7 @@ func (s *AccountHandler) UpdateAccount(
 
 	err := s.accountService.UpdateAccount(
 		ctx,
-		claims.Sub,
+		user.ID,
 		model.AccountID(req.Id),
 		repository.UpdateAccountFields{
 			Name:                 req.Fields.Name,
@@ -116,12 +117,12 @@ func (s *AccountHandler) GetAllAccounts(ctx context.Context, _ *dto.GetAllAccoun
 	*dto.GetAllAccountsResponse,
 	error,
 ) {
-	claims, ok := ctx.Value(shared.ClaimsKey{}).(shared.Claims)
+	user, ok := shared.FromContext(ctx)
 	if !ok {
-		return nil, fmt.Errorf("invalid claims")
+		return nil, fmt.Errorf("getting user from context")
 	}
 
-	accounts, err := s.accountService.GetAllAccountsWithCurrencyIDs(ctx, claims.Sub)
+	accounts, err := s.accountService.GetAllAccountsWithCurrencyIDs(ctx, user.ID)
 	if err != nil {
 		return nil, err
 	}

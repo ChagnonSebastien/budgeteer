@@ -7,9 +7,10 @@ import (
 
 	"chagnon.dev/budget-server/internal/domain/model"
 	"chagnon.dev/budget-server/internal/infrastructure/db/dao"
+	"github.com/google/uuid"
 )
 
-func (r *Repository) GetAllExchangeRate(ctx context.Context, userId string) ([]model.ExchangeRate, error) {
+func (r *Repository) GetAllExchangeRate(ctx context.Context, userId uuid.UUID) ([]model.ExchangeRate, error) {
 	exchangeRatesDao, err := r.queries.GetAllExchangeRates(ctx, userId)
 	if err != nil {
 		return nil, err
@@ -36,7 +37,7 @@ type InitialExchangeRate struct {
 
 func (r *Repository) CreateExchangeRate(
 	ctx context.Context,
-	userId string,
+	userId uuid.UUID,
 	currencyA, currencyB model.CurrencyID,
 	date time.Time,
 	rate float64,
@@ -69,7 +70,7 @@ func (u *UpdateExchangeRateFields) nullRate() sql.NullFloat64 {
 
 func (r *Repository) UpsertExchangeRate(
 	ctx context.Context,
-	userId string,
+	userId uuid.UUID,
 	currencyA, currencyB model.CurrencyID,
 	date time.Time,
 	rate float64,

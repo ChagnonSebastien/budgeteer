@@ -2,6 +2,8 @@ package grpc
 
 import (
 	"chagnon.dev/budget-server/internal/domain/model"
+	"github.com/google/uuid"
+
 	"context"
 	"fmt"
 
@@ -11,10 +13,10 @@ import (
 )
 
 type categoryRepository interface {
-	GetAllCategories(ctx context.Context, userId string) ([]model.Category, error)
+	GetAllCategories(ctx context.Context, userId uuid.UUID) ([]model.Category, error)
 	CreateCategory(
 		ctx context.Context,
-		userId string,
+		userId uuid.UUID,
 		name, iconName, iconColor, iconBackground string,
 		parentId int,
 		fixedCosts bool,
@@ -22,7 +24,7 @@ type categoryRepository interface {
 	) (model.CategoryID, error)
 	UpdateCategory(
 		ctx context.Context,
-		userId string,
+		userId uuid.UUID,
 		id model.CategoryID,
 		fields repository.UpdateCategoryFields,
 	) error
@@ -38,14 +40,14 @@ func (s *CategoryHandler) CreateCategory(
 	ctx context.Context,
 	req *dto.CreateCategoryRequest,
 ) (*dto.CreateCategoryResponse, error) {
-	claims, ok := ctx.Value(shared.ClaimsKey{}).(shared.Claims)
+	user, ok := shared.FromContext(ctx)
 	if !ok {
-		return nil, fmt.Errorf("invalid claims")
+		return nil, fmt.Errorf("getting user from context")
 	}
 
 	newId, err := s.categoryService.CreateCategory(
 		ctx,
-		claims.Sub,
+		user.ID,
 		req.Name,
 		req.IconName,
 		req.IconColor,
@@ -67,9 +69,9 @@ func (s *CategoryHandler) UpdateCategory(
 	ctx context.Context,
 	req *dto.UpdateCategoryRequest,
 ) (*dto.UpdateCategoryResponse, error) {
-	claims, ok := ctx.Value(shared.ClaimsKey{}).(shared.Claims)
+	user, ok := shared.FromContext(ctx)
 	if !ok {
-		return nil, fmt.Errorf("invalid claims")
+		return nil, fmt.Errorf("getting user from context")
 	}
 
 	var parentId *int
@@ -85,7 +87,7 @@ func (s *CategoryHandler) UpdateCategory(
 
 	err := s.categoryService.UpdateCategory(
 		ctx,
-		claims.Sub,
+		user.ID,
 		model.CategoryID(req.Id),
 		repository.UpdateCategoryFields{
 			Name:           req.Fields.Name,
@@ -108,12 +110,12 @@ func (s *CategoryHandler) GetAllCategories(
 	ctx context.Context,
 	_ *dto.GetAllCategoriesRequest,
 ) (*dto.GetAllCategoriesResponse, error) {
-	claims, ok := ctx.Value(shared.ClaimsKey{}).(shared.Claims)
+	user, ok := shared.FromContext(ctx)
 	if !ok {
-		return nil, fmt.Errorf("invalid claims")
+		return nil, fmt.Errorf("getting user from context")
 	}
 
-	categories, err := s.categoryService.GetAllCategories(ctx, claims.Sub)
+	categories, err := s.categoryService.GetAllCategories(ctx, user.ID)
 	if err != nil {
 		return nil, err
 	}

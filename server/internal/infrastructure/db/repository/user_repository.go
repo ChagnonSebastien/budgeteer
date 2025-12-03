@@ -2,34 +2,59 @@ package repository
 
 import (
 	"context"
+	"database/sql"
 	"time"
 
 	"chagnon.dev/budget-server/internal/domain/model"
 	"chagnon.dev/budget-server/internal/infrastructure/db/dao"
+	"github.com/google/uuid"
 )
 
-func (r *Repository) UpsertUser(ctx context.Context, id, username, email string) error {
+func (r *Repository) UpsertOidcUser(ctx context.Context, oidcSub, email, username string) (uuid.UUID, error) {
+	return r.queries.UpsertOidcUser(ctx, &dao.UpsertOidcUserParams{
+		Username: username,
+		Email:    email,
+		OidcSub: sql.NullString{
+			Valid:  true,
+			String: oidcSub,
+		},
+	})
+}
+
+func (r *Repository) UpsertUser(ctx context.Context, username, email string, oidcSub model.Optional[string]) error {
 	return r.queries.UpsertUser(
 		ctx, &dao.UpsertUserParams{
-			ID:       id,
 			Username: username,
 			Email:    email,
+			OidcSub: sql.NullString{
+				Valid:  oidcSub.IsSome(),
+				String: oidcSub.ValueOr(""),
+			},
 		},
 	)
 }
 
-func (r *Repository) UserParams(ctx context.Context, id string) (*model.UserParams, error) {
-	defaultCurrencyDao, err := r.queries.GetUserParams(ctx, id)
+func (r *Repository) UserParams(ctx context.Context, id uuid.UUID) (*model.UserParams, error) {
+	userParams, err := r.queries.GetUserParams(ctx, id)
 	if err != nil {
 		return nil, err
 	}
 
 	defaultCurrency := 0
-	if defaultCurrencyDao.Valid {
-		defaultCurrency = int(defaultCurrencyDao.Int32)
+	if userParams.DefaultCurrency.Valid {
+		defaultCurrency = int(userParams.DefaultCurrency.Int32)
 	}
 
-	return &model.UserParams{DefaultCurrency: model.CurrencyID(defaultCurrency)}, nil
+	hiddenDefaultAccount := 0
+	if userParams.HiddenDefaultAccount.Valid {
+		hiddenDefaultAccount = int(userParams.HiddenDefaultAccount.Int32)
+	}
+
+	return &model.UserParams{
+		Name:                 userParams.Username,
+		DefaultCurrency:      model.CurrencyID(defaultCurrency),
+		HiddenDefaultAccount: model.AccountID(hiddenDefaultAccount),
+	}, nil
 }
 
 func (r *Repository) CanIssueGuestLoginNow(ctx context.Context, email string, ttl, cooldown time.Duration) (allowed bool, nextAllowedAt *time.Time, err error) {

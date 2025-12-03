@@ -3,12 +3,14 @@ package repository
 import (
 	"chagnon.dev/budget-server/internal/domain/model"
 	"chagnon.dev/budget-server/internal/infrastructure/db/dao"
+	"github.com/google/uuid"
+
 	"context"
 	"database/sql"
 	"fmt"
 )
 
-func (r *Repository) GetAllCurrencies(ctx context.Context, userId string) ([]model.Currency, error) {
+func (r *Repository) GetAllCurrencies(ctx context.Context, userId uuid.UUID) ([]model.Currency, error) {
 	currenciesDao, err := r.queries.GetAllCurrencies(ctx, userId)
 	if err != nil {
 		return nil, err
@@ -35,7 +37,7 @@ func (r *Repository) GetAllCurrencies(ctx context.Context, userId string) ([]mod
 
 func (r *Repository) CreateCurrency(
 	ctx context.Context,
-	userId string,
+	userId uuid.UUID,
 	name, symbol, risk, cType string,
 	decimalPoints int,
 	rateAutoUpdateScript string,
@@ -145,7 +147,7 @@ func (u *UpdateCurrencyFields) nullRateAutoUpdateEnabled() sql.NullBool {
 
 func (r *Repository) UpdateCurrency(
 	ctx context.Context,
-	userId string,
+	userId uuid.UUID,
 	id model.CurrencyID,
 	fields UpdateCurrencyFields,
 ) error {
@@ -166,7 +168,7 @@ func (r *Repository) UpdateCurrency(
 
 func (r *Repository) SetDefaultCurrency(
 	ctx context.Context,
-	userId string,
+	userId uuid.UUID,
 	currencyId model.CurrencyID,
 ) error {
 	i, err := r.queries.SetDefaultCurrency(

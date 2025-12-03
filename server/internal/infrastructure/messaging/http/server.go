@@ -57,71 +57,14 @@ func (s *GrpcWebServer) catchAllHandler(resp http.ResponseWriter, req *http.Requ
 	if s.wrappedGrpc.IsGrpcWebRequest(req) {
 		logger := logging.FromContext(req.Context())
 
-		// Try to parse as guest JWT token first
-		var tokenClaims shared.Claims
-		isGuestToken, err := s.auth.parseGuestToken(req.Cookie, &tokenClaims)
+		user, err := s.auth.parseSessionToken(req.Cookie)
 		if err != nil {
 			logger.Debug("not a guest token or invalid", "error", err)
 		}
 
-		if !isGuestToken {
-			// Fall back to OIDC token verification
-			tokenSource, prevTokenCookie, err := s.auth.TokenSourceFromCookies(req.Context(), req.Cookie)
-			if err != nil {
-				logger.Error("reading tokens from request", "error", err)
-				http.Error(resp, "reading tokens from request", http.StatusInternalServerError)
-				return
-			}
+		logger = logger.With("user", user.Email)
 
-			rawToken, err := tokenSource.Token()
-			if err != nil {
-				logger.Error("getting valid access token", "error", err)
-				http.Error(resp, "getting valid access token", http.StatusUnauthorized)
-				return
-			}
-
-			token, err := s.auth.verifier.Verify(req.Context(), rawToken.AccessToken)
-			if err != nil {
-				logger.Error("verifying access token", "error", err)
-				http.Error(resp, "verifying access token", http.StatusUnauthorized)
-				return
-			}
-
-			if err := token.Claims(&tokenClaims); err != nil {
-				logger.Error("parsing claims", "error", err)
-				http.Error(resp, "parsing claims", http.StatusInternalServerError)
-				return
-			}
-
-			// Refresh cookies if token was refreshed
-			if prevTokenCookie == nil || prevTokenCookie.Value != rawToken.AccessToken {
-				http.SetCookie(
-					resp, &http.Cookie{
-						Name:     "auth-token",
-						Value:    rawToken.AccessToken,
-						Path:     "/",
-						Expires:  rawToken.Expiry,
-						HttpOnly: true,
-						Secure:   true,
-					},
-				)
-
-				http.SetCookie(
-					resp, &http.Cookie{
-						Name:     "refresh-token",
-						Value:    rawToken.RefreshToken,
-						Path:     "/",
-						Expires:  time.Now().Add(7 * 24 * time.Hour),
-						HttpOnly: true,
-						Secure:   true,
-					},
-				)
-			}
-		}
-
-		logger = logger.With("user", tokenClaims.Email)
-
-		augmentedCtx := context.WithValue(req.Context(), shared.ClaimsKey{}, tokenClaims)
+		augmentedCtx := shared.NewContext(req.Context(), user)
 		augmentedReq := req.WithContext(logging.WithLogger(augmentedCtx, logger))
 		s.wrappedGrpc.ServeHTTP(resp, augmentedReq)
 		return

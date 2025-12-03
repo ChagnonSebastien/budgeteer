@@ -9,15 +9,17 @@ import (
 	"chagnon.dev/budget-server/internal/infrastructure/db/repository"
 	"chagnon.dev/budget-server/internal/infrastructure/messaging/dto"
 	"chagnon.dev/budget-server/internal/infrastructure/messaging/shared"
+	"github.com/google/uuid"
 )
 
 const layout = "2006-01-02 15:04:05"
 
 type transactionRepository interface {
-	GetAllTransactions(ctx context.Context, userId string) ([]model.Transaction, error)
+	GetAllTransactions(ctx context.Context, userId uuid.UUID) ([]model.Transaction, error)
 	CreateTransaction(
 		ctx context.Context,
-		userId, userEmail string,
+		userId uuid.UUID,
+		userEmail string,
 		ownerEmail string,
 		amount, receiverAmount int,
 		currencyId, receiverCurrencyId int,
@@ -30,7 +32,7 @@ type transactionRepository interface {
 	) (model.TransactionID, error)
 	UpdateTransaction(
 		ctx context.Context,
-		userId string,
+		userId uuid.UUID,
 		id model.TransactionID,
 		fields repository.UpdateTransactionFields,
 	) error
@@ -76,9 +78,9 @@ func (s *TransactionHandler) CreateTransaction(
 	ctx context.Context,
 	req *dto.CreateTransactionRequest,
 ) (*dto.CreateTransactionResponse, error) {
-	claims, ok := ctx.Value(shared.ClaimsKey{}).(shared.Claims)
+	user, ok := shared.FromContext(ctx)
 	if !ok {
-		return nil, fmt.Errorf("invalid claims")
+		return nil, fmt.Errorf("getting user from context")
 	}
 
 	sender := model.None[int]()
@@ -144,8 +146,8 @@ func (s *TransactionHandler) CreateTransaction(
 
 	newId, err := s.transactionService.CreateTransaction(
 		ctx,
-		claims.Sub,
-		claims.Email,
+		user.ID,
+		user.Email,
 		req.Owner,
 		int(req.Amount),
 		int(req.ReceiverAmount),
@@ -172,9 +174,9 @@ func (s *TransactionHandler) UpdateTransaction(
 	ctx context.Context,
 	req *dto.UpdateTransactionRequest,
 ) (*dto.UpdateTransactionResponse, error) {
-	claims, ok := ctx.Value(shared.ClaimsKey{}).(shared.Claims)
+	user, ok := shared.FromContext(ctx)
 	if !ok {
-		return nil, fmt.Errorf("invalid claims")
+		return nil, fmt.Errorf("getting user from context")
 	}
 
 	receiver := model.None[model.Optional[int]]()
@@ -316,7 +318,7 @@ func (s *TransactionHandler) UpdateTransaction(
 
 	err := s.transactionService.UpdateTransaction(
 		ctx,
-		claims.Sub,
+		user.ID,
 		model.TransactionID(req.Id),
 		repository.UpdateTransactionFields{
 			Amount:                               amount,
@@ -343,12 +345,12 @@ func (s *TransactionHandler) GetAllTransactions(
 	ctx context.Context,
 	_ *dto.GetAllTransactionsRequest,
 ) (*dto.GetAllTransactionsResponse, error) {
-	claims, ok := ctx.Value(shared.ClaimsKey{}).(shared.Claims)
+	user, ok := shared.FromContext(ctx)
 	if !ok {
-		return nil, fmt.Errorf("invalid claims")
+		return nil, fmt.Errorf("getting user from context")
 	}
 
-	transactions, err := s.transactionService.GetAllTransactions(ctx, claims.Sub)
+	transactions, err := s.transactionService.GetAllTransactions(ctx, user.ID)
 	if err != nil {
 		return nil, err
 	}

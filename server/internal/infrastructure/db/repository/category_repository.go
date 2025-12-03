@@ -6,9 +6,10 @@ import (
 
 	"chagnon.dev/budget-server/internal/domain/model"
 	"chagnon.dev/budget-server/internal/infrastructure/db/dao"
+	"github.com/google/uuid"
 )
 
-func (r *Repository) GetAllCategories(ctx context.Context, userId string) ([]model.Category, error) {
+func (r *Repository) GetAllCategories(ctx context.Context, userId uuid.UUID) ([]model.Category, error) {
 	categoriesDao, err := r.queries.GetAllCategories(ctx, userId)
 	if err != nil {
 		return nil, err
@@ -38,7 +39,7 @@ func (r *Repository) GetAllCategories(ctx context.Context, userId string) ([]mod
 
 func (r *Repository) CreateCategory(
 	ctx context.Context,
-	userId string,
+	userId uuid.UUID,
 	name, iconName, iconColor, iconBackground string,
 	parentId int,
 	fixedCosts bool,
@@ -152,7 +153,7 @@ func (u *UpdateCategoryFields) nullOrdering() sql.NullFloat64 {
 
 func (r *Repository) UpdateCategory(
 	ctx context.Context,
-	userId string,
+	userId uuid.UUID,
 	id model.CategoryID,
 	fields UpdateCategoryFields,
 ) error {

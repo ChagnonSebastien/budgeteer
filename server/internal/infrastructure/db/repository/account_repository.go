@@ -7,9 +7,10 @@ import (
 
 	"chagnon.dev/budget-server/internal/domain/model"
 	"chagnon.dev/budget-server/internal/infrastructure/db/dao"
+	"github.com/google/uuid"
 )
 
-func (r *Repository) GetAllAccountsWithCurrencyIDs(ctx context.Context, userId string) ([]model.Account, error) {
+func (r *Repository) GetAllAccountsWithCurrencyIDs(ctx context.Context, userId uuid.UUID) ([]model.Account, error) {
 	tx, err := r.db.BeginTx(ctx, &sql.TxOptions{ReadOnly: true})
 	if err != nil {
 		return nil, err
@@ -71,7 +72,7 @@ func (r *Repository) GetAllAccountsWithCurrencyIDs(ctx context.Context, userId s
 
 func (r *Repository) CreateAccount(
 	ctx context.Context,
-	userId string,
+	userId uuid.UUID,
 	name string,
 	initialsAmounts []model.Balance,
 	isMine bool,
@@ -185,7 +186,7 @@ func (u *UpdateAccountFields) nullFinancialInstitution() sql.NullString {
 
 func (r *Repository) UpdateAccount(
 	ctx context.Context,
-	userId string,
+	userId uuid.UUID,
 	id model.AccountID,
 	fields UpdateAccountFields,
 ) error {

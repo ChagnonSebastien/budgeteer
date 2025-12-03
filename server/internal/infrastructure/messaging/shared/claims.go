@@ -1,6 +1,12 @@
 package shared
 
-type ClaimsKey struct{}
+import (
+	"context"
+
+	"github.com/google/uuid"
+)
+
+type userKey struct{}
 
 type AuthMethod string
 
@@ -10,17 +16,21 @@ const (
 	AuthMethodGuest               = "guest"
 )
 
-type Claims struct {
-	Email                  string     `json:"email"`
-	Sub                    string     `json:"sub"`
-	Username               string     `json:"preferred_username"`
-	Name                   string     `json:"name"`
-	DefaultCurrency        *int       `json:"default_currency"`
-	HiddenDefaultAccount   *int       `json:"hidden_default_account"`
-	AuthentificationMethod AuthMethod `json:"authentification_method"`
+type User struct {
+	ID         uuid.UUID
+	Email      string
+	AuthMethod AuthMethod
 }
 
-// IsGuestUser returns true if this is a guest user account
-func (c *Claims) IsGuestUser() bool {
-	return c.AuthentificationMethod == AuthMethodGuest
+func (u *User) IsGuestUser() bool {
+	return u.AuthMethod == AuthMethodGuest
+}
+
+func NewContext(ctx context.Context, u *User) context.Context {
+	return context.WithValue(ctx, userKey{}, u)
+}
+
+func FromContext(ctx context.Context) (*User, bool) {
+	u, ok := ctx.Value(userKey{}).(*User)
+	return u, ok
 }

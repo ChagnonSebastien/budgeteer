@@ -6,13 +6,14 @@ import (
 
 	"chagnon.dev/budget-server/internal/domain/model"
 	"chagnon.dev/budget-server/internal/infrastructure/db/repository"
+	"github.com/google/uuid"
 )
 
 type categoryRepository interface {
-	GetAllCategories(ctx context.Context, userId string) ([]model.Category, error)
+	GetAllCategories(ctx context.Context, userId uuid.UUID) ([]model.Category, error)
 	CreateCategory(
 		ctx context.Context,
-		userId string,
+		userId uuid.UUID,
 		name, iconName, iconColor, iconBackground string,
 		parentId int,
 		fixedCosts bool,
@@ -20,7 +21,7 @@ type categoryRepository interface {
 	) (model.CategoryID, error)
 	UpdateCategory(
 		ctx context.Context,
-		userId string,
+		userId uuid.UUID,
 		id model.CategoryID,
 		fields repository.UpdateCategoryFields,
 	) error
@@ -34,7 +35,7 @@ func NewCategoryService(categoryRepository categoryRepository) *CategoryService 
 	return &CategoryService{categoryRepository}
 }
 
-func (a *CategoryService) GetAllCategories(ctx context.Context, userId string) ([]model.Category, error) {
+func (a *CategoryService) GetAllCategories(ctx context.Context, userId uuid.UUID) ([]model.Category, error) {
 	categories, err := a.categoryRepository.GetAllCategories(ctx, userId)
 	if err != nil {
 		return nil, err
@@ -77,7 +78,7 @@ func (a *CategoryService) GetAllCategories(ctx context.Context, userId string) (
 
 func (a *CategoryService) CreateCategory(
 	ctx context.Context,
-	userId string,
+	userId uuid.UUID,
 	name, iconName, iconColor, iconBackground string,
 	parentId int,
 	fixedCosts bool,
@@ -102,7 +103,7 @@ func (a *CategoryService) CreateCategory(
 
 func (a *CategoryService) UpdateCategory(
 	ctx context.Context,
-	userId string,
+	userId uuid.UUID,
 	id model.CategoryID,
 	fields repository.UpdateCategoryFields,
 ) error {

@@ -2,6 +2,8 @@ package grpc
 
 import (
 	"chagnon.dev/budget-server/internal/domain/model"
+	"github.com/google/uuid"
+
 	"context"
 	"fmt"
 	"time"
@@ -13,13 +15,13 @@ import (
 type scriptRunner func(context.Context, string) (string, error)
 
 type exchangeRateRepository interface {
-	GetAllExchangeRate(ctx context.Context, userId string) ([]model.ExchangeRate, error)
+	GetAllExchangeRate(ctx context.Context, userId uuid.UUID) ([]model.ExchangeRate, error)
 	CreateExchangeRate(
-		ctx context.Context, userId string,
+		ctx context.Context, userId uuid.UUID,
 		currencyA, currencyB model.CurrencyID, Date time.Time, Rate float64,
 	) error
 	UpsertExchangeRate(
-		ctx context.Context, userId string,
+		ctx context.Context, userId uuid.UUID,
 		currencyA, currencyB model.CurrencyID, Date time.Time, Rate float64,
 	) error
 }
@@ -32,9 +34,9 @@ type ExchangeRateHandler struct {
 }
 
 func (s *ExchangeRateHandler) CreateExchangeRate(ctx context.Context, req *dto.CreateExchangeRateRequest) (*dto.CreateExchangeRateResponse, error) {
-	claims, ok := ctx.Value(shared.ClaimsKey{}).(shared.Claims)
+	user, ok := shared.FromContext(ctx)
 	if !ok {
-		return nil, fmt.Errorf("invalid claims")
+		return nil, fmt.Errorf("getting user from context")
 	}
 
 	date, err := time.Parse(layout, req.Date)
@@ -42,7 +44,7 @@ func (s *ExchangeRateHandler) CreateExchangeRate(ctx context.Context, req *dto.C
 		return nil, fmt.Errorf("parsing exchange rate date: %s", err)
 	}
 
-	err = s.exchangeRateService.CreateExchangeRate(ctx, claims.Sub, model.CurrencyID(req.CurrencyA), model.CurrencyID(req.CurrencyB), date, req.Rate)
+	err = s.exchangeRateService.CreateExchangeRate(ctx, user.ID, model.CurrencyID(req.CurrencyA), model.CurrencyID(req.CurrencyB), date, req.Rate)
 	if err != nil {
 		return nil, fmt.Errorf("creating exchange rate: %s", err)
 	}
@@ -51,9 +53,9 @@ func (s *ExchangeRateHandler) CreateExchangeRate(ctx context.Context, req *dto.C
 }
 
 func (s *ExchangeRateHandler) UpdateExchangeRate(ctx context.Context, req *dto.UpdateExchangeRateRequest) (*dto.UpdateExchangeRateResponse, error) {
-	claims, ok := ctx.Value(shared.ClaimsKey{}).(shared.Claims)
+	user, ok := shared.FromContext(ctx)
 	if !ok {
-		return nil, fmt.Errorf("invalid claims")
+		return nil, fmt.Errorf("getting user from context")
 	}
 
 	date, err := time.Parse(layout, req.Date)
@@ -61,7 +63,7 @@ func (s *ExchangeRateHandler) UpdateExchangeRate(ctx context.Context, req *dto.U
 		return nil, fmt.Errorf("parsing exchange rate date: %s", err)
 	}
 
-	err = s.exchangeRateService.UpsertExchangeRate(ctx, claims.Sub, model.CurrencyID(req.CurrencyA), model.CurrencyID(req.CurrencyB), date, req.Fields.Rate)
+	err = s.exchangeRateService.UpsertExchangeRate(ctx, user.ID, model.CurrencyID(req.CurrencyA), model.CurrencyID(req.CurrencyB), date, req.Fields.Rate)
 	if err != nil {
 		return nil, fmt.Errorf("upserting exchange rate: %s", err)
 	}
@@ -70,12 +72,12 @@ func (s *ExchangeRateHandler) UpdateExchangeRate(ctx context.Context, req *dto.U
 }
 
 func (s *ExchangeRateHandler) GetAllExchangeRate(ctx context.Context, _ *dto.GetAllExchangeRateRequest) (*dto.GetAllExchangeRateResponse, error) {
-	claims, ok := ctx.Value(shared.ClaimsKey{}).(shared.Claims)
+	user, ok := shared.FromContext(ctx)
 	if !ok {
-		return nil, fmt.Errorf("invalid claims")
+		return nil, fmt.Errorf("getting user from context")
 	}
 
-	exchangeRates, err := s.exchangeRateService.GetAllExchangeRate(ctx, claims.Sub)
+	exchangeRates, err := s.exchangeRateService.GetAllExchangeRate(ctx, user.ID)
 	if err != nil {
 		return nil, fmt.Errorf("getting exchange rates: %s", err)
 	}

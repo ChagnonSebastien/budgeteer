@@ -5,15 +5,17 @@ import (
 	"chagnon.dev/budget-server/internal/infrastructure/db/repository"
 	"chagnon.dev/budget-server/internal/infrastructure/messaging/dto"
 	"chagnon.dev/budget-server/internal/infrastructure/messaging/shared"
+	"github.com/google/uuid"
+
 	"context"
 	"fmt"
 )
 
 type currencyRepository interface {
-	GetAllCurrencies(ctx context.Context, userId string) ([]model.Currency, error)
+	GetAllCurrencies(ctx context.Context, userId uuid.UUID) ([]model.Currency, error)
 	CreateCurrency(
 		ctx context.Context,
-		userId string,
+		userId uuid.UUID,
 		name, symbol, risk, cType string,
 		decimalPoints int,
 		rateAutoUpdateScript string,
@@ -22,8 +24,8 @@ type currencyRepository interface {
 		model.CurrencyID,
 		error,
 	)
-	UpdateCurrency(ctx context.Context, userId string, id model.CurrencyID, fields repository.UpdateCurrencyFields) error
-	SetDefaultCurrency(ctx context.Context, userId string, currencyId model.CurrencyID) error
+	UpdateCurrency(ctx context.Context, userId uuid.UUID, id model.CurrencyID, fields repository.UpdateCurrencyFields) error
+	SetDefaultCurrency(ctx context.Context, userId uuid.UUID, currencyId model.CurrencyID) error
 }
 
 type CurrencyHandler struct {
@@ -36,13 +38,13 @@ func (s *CurrencyHandler) CreateCurrency(
 	ctx context.Context,
 	req *dto.CreateCurrencyRequest,
 ) (*dto.CreateCurrencyResponse, error) {
-	claims, ok := ctx.Value(shared.ClaimsKey{}).(shared.Claims)
+	user, ok := shared.FromContext(ctx)
 	if !ok {
-		return nil, fmt.Errorf("invalid claims")
+		return nil, fmt.Errorf("getting user from context")
 	}
 
 	newCurrencyId, err := s.currencyService.CreateCurrency(
-		ctx, claims.Sub, req.Name, req.Symbol, req.Risk, req.Type, int(req.DecimalPoints),
+		ctx, user.ID, req.Name, req.Symbol, req.Risk, req.Type, int(req.DecimalPoints),
 		req.AutoUpdateSettingsScript, req.AutoUpdateSettingsEnabled,
 	)
 	if err != nil {
@@ -58,9 +60,9 @@ func (s *CurrencyHandler) UpdateCurrency(
 	ctx context.Context,
 	req *dto.UpdateCurrencyRequest,
 ) (*dto.UpdateCurrencyResponse, error) {
-	claims, ok := ctx.Value(shared.ClaimsKey{}).(shared.Claims)
+	user, ok := shared.FromContext(ctx)
 	if !ok {
-		return nil, fmt.Errorf("invalid claims")
+		return nil, fmt.Errorf("getting user from context")
 	}
 
 	var decimalPoints *int
@@ -71,7 +73,7 @@ func (s *CurrencyHandler) UpdateCurrency(
 
 	err := s.currencyService.UpdateCurrency(
 		ctx,
-		claims.Sub,
+		user.ID,
 		model.CurrencyID(req.Id),
 		repository.UpdateCurrencyFields{
 			Name:                  req.Fields.Name,
@@ -94,12 +96,12 @@ func (s *CurrencyHandler) GetAllCurrencies(
 	ctx context.Context,
 	_ *dto.GetAllCurrenciesRequest,
 ) (*dto.GetAllCurrenciesResponse, error) {
-	claims, ok := ctx.Value(shared.ClaimsKey{}).(shared.Claims)
+	user, ok := shared.FromContext(ctx)
 	if !ok {
-		return nil, fmt.Errorf("invalid claims")
+		return nil, fmt.Errorf("getting user from context")
 	}
 
-	currencies, err := s.currencyService.GetAllCurrencies(ctx, claims.Sub)
+	currencies, err := s.currencyService.GetAllCurrencies(ctx, user.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -128,12 +130,12 @@ func (s *CurrencyHandler) SetDefaultCurrency(
 	ctx context.Context,
 	req *dto.SetDefaultCurrencyRequest,
 ) (*dto.SetDefaultCurrencyResponse, error) {
-	claims, ok := ctx.Value(shared.ClaimsKey{}).(shared.Claims)
+	user, ok := shared.FromContext(ctx)
 	if !ok {
-		return nil, fmt.Errorf("invalid claims")
+		return nil, fmt.Errorf("getting user from context")
 	}
 
-	err := s.currencyService.SetDefaultCurrency(ctx, claims.Sub, model.CurrencyID(req.CurrencyId))
+	err := s.currencyService.SetDefaultCurrency(ctx, user.ID, model.CurrencyID(req.CurrencyId))
 	if err != nil {
 		return nil, err
 	}

@@ -30,9 +30,17 @@ type AuthMethods struct {
 	Guest    bool `json:"guest"`
 }
 
+type Claims struct {
+	Email    string `json:"email"`
+	Sub      string `json:"sub"`
+	Username string `json:"preferred_username"`
+	Name     string `json:"name"`
+}
+
 type userRepository interface {
-	UpsertUser(ctx context.Context, id, username, email string) error
-	UserParams(ctx context.Context, id string) (*model.UserParams, error)
+	UpsertUser(ctx context.Context, username, email string, oidcSub model.Optional[string]) error
+	UserParams(ctx context.Context, userId uuid.UUID) (*model.UserParams, error)
+	UpsertOidcUser(ctx context.Context, oidcSub, email, username string) (uuid.UUID, error)
 }
 
 type guestLoginService interface {
@@ -166,7 +174,7 @@ func (auth *Auth) callbackHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var tokenClaims shared.Claims
+	var tokenClaims Claims
 	if err := token.Claims(&tokenClaims); err != nil {
 		logger.Error("parsing claims", "error", err)
 		http.Error(w, "parsing claims", http.StatusInternalServerError)
@@ -176,9 +184,9 @@ func (auth *Auth) callbackHandler(w http.ResponseWriter, r *http.Request) {
 
 	if err := auth.UserService.UpsertUser(
 		r.Context(),
-		tokenClaims.Sub,
 		tokenClaims.Username,
 		tokenClaims.Email,
+		model.Some(tokenClaims.Sub),
 	); err != nil {
 		logger.Error("syncing user with database", "error", err)
 		http.Error(w, "syncing user with database", http.StatusInternalServerError)
@@ -207,6 +215,30 @@ func (auth *Auth) callbackHandler(w http.ResponseWriter, r *http.Request) {
 		},
 	)
 
+	userId, err := auth.UserService.UpsertOidcUser(r.Context(), tokenClaims.Sub, tokenClaims.Email, tokenClaims.Username)
+	if err != nil {
+		logger.Error("upserting oidc user", "error", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	sessionToken, err := auth.generateSessionToken(userId, tokenClaims.Email, shared.AuthMethodGuest)
+	if err != nil {
+		logger.Error("generating session token", "error", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     "session-token",
+		Value:    sessionToken,
+		Path:     "/",
+		Expires:  time.Now().Add(7 * 24 * time.Hour),
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteStrictMode,
+	})
+
 	http.Redirect(w, r, auth.FrontendPublicUrl, http.StatusTemporaryRedirect)
 }
 
@@ -233,6 +265,17 @@ func (auth *Auth) logoutHandler(w http.ResponseWriter, r *http.Request) {
 		},
 	)
 
+	http.SetCookie(
+		w, &http.Cookie{
+			Name:     "session-token",
+			Value:    "",
+			Path:     "/",
+			MaxAge:   -1,
+			HttpOnly: true,
+			Secure:   true,
+		},
+	)
+
 	logoutURL := fmt.Sprintf(
 		"%s/protocol/openid-connect/logout?client_id=%s&post_logout_redirect_uri=%s",
 		auth.OidcIssuer,
@@ -243,151 +286,85 @@ func (auth *Auth) logoutHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, logoutURL, http.StatusTemporaryRedirect)
 }
 
+type userInfoResponse struct {
+	Email                  string            `json:"email"`
+	Name                   string            `json:"name"`
+	DefaultCurrency        *int              `json:"default_currency"`
+	HiddenDefaultAccount   *int              `json:"hidden_default_account"`
+	AuthentificationMethod shared.AuthMethod `json:"authentification_method"`
+}
+
 func (auth *Auth) userInfoHandler(resp http.ResponseWriter, req *http.Request) {
 	logger := logging.FromContext(req.Context())
 
-	// Try to parse as guest JWT token first
-	var tokenClaims shared.Claims
-	isGuestToken, err := auth.parseGuestToken(req.Cookie, &tokenClaims)
+	// Try to parse JWT token
+	user, err := auth.parseSessionToken(req.Cookie)
 	if err != nil && !errors.Is(err, jwt.ErrInvalidContentType) {
 		logger.DebugContext(req.Context(), "parsing guest token", "error", err)
 	}
 
-	if !isGuestToken {
-		// Fall back to OIDC token verification
-		tokenClaims.AuthentificationMethod = shared.AuthMethodOidc
-
-		tokenSource, prevTokenCookie, err := auth.TokenSourceFromCookies(req.Context(), req.Cookie)
-		if err != nil {
-			http.Error(resp, "reading tokens from request", http.StatusInternalServerError)
-			return
-		}
-
-		rawToken, err := tokenSource.Token()
-		if err != nil {
-			logger.Error("getting valid access token", "error", err)
-			http.Error(resp, "getting valid access token", http.StatusUnauthorized)
-			return
-		}
-
-		token, err := auth.verifier.Verify(req.Context(), rawToken.AccessToken)
-		if err != nil {
-			logger.Error("verifying access token", "error", err)
-			http.Error(resp, "verifying access token", http.StatusUnauthorized)
-			return
-		}
-
-		if err := token.Claims(&tokenClaims); err != nil {
-			logger.Error("parsing claims", "error", err)
-			http.Error(resp, "parsing claims", http.StatusInternalServerError)
-			return
-		}
-
-		// Refresh cookies if token was refreshed
-		if prevTokenCookie == nil || prevTokenCookie.Value != rawToken.AccessToken {
-			http.SetCookie(
-				resp, &http.Cookie{
-					Name:     "auth-token",
-					Value:    rawToken.AccessToken,
-					Path:     "/",
-					Expires:  rawToken.Expiry,
-					HttpOnly: true,
-					Secure:   true,
-				},
-			)
-
-			http.SetCookie(
-				resp, &http.Cookie{
-					Name:     "refresh-token",
-					Value:    rawToken.RefreshToken,
-					Path:     "/",
-					Expires:  time.Now().Add(7 * 24 * time.Hour),
-					HttpOnly: true,
-					Secure:   true,
-				},
-			)
-		}
-	}
-
-	logger = logger.With("user", tokenClaims.Email)
+	logger = logger.With("user", user.Email)
 
 	// Get user parameters from database
-	params, err := auth.UserService.UserParams(req.Context(), tokenClaims.Sub)
+	params, err := auth.UserService.UserParams(req.Context(), user.ID)
 	if err != nil {
 		logger.Error("getting user from db", "error", err)
 		http.Error(resp, "getting user from db", http.StatusInternalServerError)
 		return
 	}
 
-	tokenClaims.HiddenDefaultAccount = (*int)(&params.HiddenDefaultAccount)
+	defaultCurrency := int(params.DefaultCurrency)
+	hiddenDefaultAccount := int(params.HiddenDefaultAccount)
 
-	if params.DefaultCurrency != 0 {
-		tokenClaims.DefaultCurrency = (*int)(&params.DefaultCurrency)
+	response := userInfoResponse{
+		Email:                  user.Email,
+		Name:                   params.Name,
+		DefaultCurrency:        &defaultCurrency,
+		HiddenDefaultAccount:   &hiddenDefaultAccount,
+		AuthentificationMethod: shared.AuthMethodOidc,
 	}
 
 	resp.Header().Set("Content-Type", "application/json")
-	if err = json.NewEncoder(resp).Encode(tokenClaims); err != nil {
+	if err = json.NewEncoder(resp).Encode(&response); err != nil {
 		logger.Error("encoding response", "error", err)
 		http.Error(resp, "encoding response", http.StatusInternalServerError)
 		return
 	}
 }
 
-// parseGuestToken attempts to parse and verify a guest JWT token
-// Returns true if the token is a valid guest token, false otherwise
-func (auth *Auth) parseGuestToken(getCookie func(name string) (*http.Cookie, error), claims *shared.Claims) (bool, error) {
-
-	// Get token from cookie
-	authTokenCookie, err := getCookie("auth-token")
+// parseSessionToken attempts to parse and verify a session JWT token
+// Returns user data if the token is a valid session token, false otherwise
+func (auth *Auth) parseSessionToken(getCookie func(name string) (*http.Cookie, error)) (*shared.User, error) {
+	authTokenCookie, err := getCookie("session-token")
 	if err != nil {
-		return false, fmt.Errorf("authentication required")
+		return nil, fmt.Errorf("no session token")
 	}
 
-	// Parse the JWT token
 	token, err := jwt.ParseSigned(authTokenCookie.Value, []jose.SignatureAlgorithm{jose.HS256})
 	if err != nil {
-		return false, err
+		return nil, fmt.Errorf("parsing session token: %w", err)
 	}
 
-	// Extract claims into a map first
-	var claimsMap map[string]interface{}
-	if err := token.Claims(auth.guestJWTSecret, &claimsMap); err != nil {
-		return false, err
+	var tokenMap map[string]interface{}
+	if err := token.Claims(auth.guestJWTSecret, &tokenMap); err != nil {
+		return nil, err
 	}
 
-	// Check if this is a guest token by looking at the issuer
-	issuer, ok := claimsMap["iss"].(string)
-	if !ok || issuer != "budgeteer-guest" {
-		return false, nil
-	}
-
-	// Verify expiry
-	if exp, ok := claimsMap["exp"].(float64); ok {
-		if time.Now().Unix() > int64(exp) {
-			return false, fmt.Errorf("token expired")
+	var user shared.User
+	if id, ok := tokenMap["id"].(string); ok {
+		user.ID, err = uuid.Parse(id)
+		if err != nil {
+			return nil, fmt.Errorf("parsing id [%s] from claims map: %w", id, err)
 		}
-	} else {
-		return false, fmt.Errorf("missing expiry claim")
+	}
+	if email, ok := tokenMap["email"].(string); ok {
+		user.Email = email
+	}
+	if authMethod, ok := tokenMap["authentification_method"].(shared.AuthMethod); ok {
+		user.AuthMethod = authMethod
 	}
 
-	// Map the claims to the shared.Claims structure
-	if sub, ok := claimsMap["sub"].(string); ok {
-		claims.Sub = sub
-	}
-	if email, ok := claimsMap["email"].(string); ok {
-		claims.Email = email
-	}
-	if username, ok := claimsMap["preferred_username"].(string); ok {
-		claims.Username = username
-	}
-	if name, ok := claimsMap["name"].(string); ok {
-		claims.Name = name
-	}
-	if authMethod, ok := claimsMap["authentification_method"].(shared.AuthMethod); ok {
-		claims.AuthentificationMethod = authMethod
-	}
-
-	return true, nil
+	return &user, nil
 }
 
 func (auth *Auth) TokenSourceFromCookies(
@@ -504,11 +481,11 @@ func (auth *Auth) guestVerifyCodeHandler(w http.ResponseWriter, r *http.Request)
 	logger.Info("guest login code verified successfully", "email", req.Email)
 
 	// Generate user ID for guest user (using UUID derived from email for consistency)
-	userID := "guest-" + uuid.NewSHA1(uuid.NameSpaceOID, []byte(req.Email)).String()
+	userID := uuid.NewSHA1(uuid.NameSpaceOID, []byte(req.Email))
 
 	// Create or update the guest user in the database
 	username := req.Email // Use email as username for guest users
-	if err := auth.UserService.UpsertUser(r.Context(), userID, username, req.Email); err != nil {
+	if err := auth.UserService.UpsertUser(r.Context(), username, req.Email, model.None[string]()); err != nil {
 		logger.Error("upserting guest user", "error", err, "email", req.Email)
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -519,10 +496,10 @@ func (auth *Auth) guestVerifyCodeHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// Generate JWT tokens for the guest user
-	accessToken, refreshToken, expiry, err := auth.generateGuestTokens(userID, req.Email, username)
+	// Generate session token for the guest user
+	sessionToken, err := auth.generateSessionToken(userID, req.Email, shared.AuthMethodGuest)
 	if err != nil {
-		logger.Error("generating guest tokens", "error", err, "email", req.Email)
+		logger.Error("generating guest token", "error", err, "email", req.Email)
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(guestVerifyCodeResponse{
@@ -532,25 +509,14 @@ func (auth *Auth) guestVerifyCodeHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// Set authentication cookies
 	http.SetCookie(w, &http.Cookie{
-		Name:     "auth-token",
-		Value:    accessToken,
-		Path:     "/",
-		Expires:  expiry,
-		HttpOnly: true,
-		Secure:   true,
-		SameSite: http.SameSiteLaxMode,
-	})
-
-	http.SetCookie(w, &http.Cookie{
-		Name:     "refresh-token",
-		Value:    refreshToken,
+		Name:     "session-token",
+		Value:    sessionToken,
 		Path:     "/",
 		Expires:  time.Now().Add(7 * 24 * time.Hour),
 		HttpOnly: true,
 		Secure:   true,
-		SameSite: http.SameSiteLaxMode,
+		SameSite: http.SameSiteStrictMode,
 	})
 
 	logger.Info("guest user authenticated successfully", "email", req.Email, "userID", userID)
@@ -563,57 +529,25 @@ func (auth *Auth) guestVerifyCodeHandler(w http.ResponseWriter, r *http.Request)
 	})
 }
 
-// generateGuestTokens creates JWT access and refresh tokens for guest users
-func (auth *Auth) generateGuestTokens(userID, email, username string) (accessToken, refreshToken string, expiry time.Time, err error) {
-	// Create signer for JWT tokens
+func (auth *Auth) generateSessionToken(userID uuid.UUID, email string, authMethod shared.AuthMethod) (sessionToken string, err error) {
 	signer, err := jose.NewSigner(
 		jose.SigningKey{Algorithm: jose.HS256, Key: auth.guestJWTSecret},
 		(&jose.SignerOptions{}).WithType("JWT"),
 	)
 	if err != nil {
-		return "", "", time.Time{}, fmt.Errorf("creating JWT signer: %w", err)
+		return "", fmt.Errorf("creating JWT signer: %w", err)
 	}
 
-	// Access token expires in 1 hour
-	expiry = time.Now().Add(1 * time.Hour)
-
-	// Create claims for access token
-	accessClaimsMap := map[string]interface{}{
-		"sub":                     userID,
+	sessionTokenMap := map[string]interface{}{
+		"id":                      userID,
 		"email":                   email,
-		"preferred_username":      username,
-		"name":                    username,
-		"authentification_method": shared.AuthMethodGuest,
-		"iss":                     "budgeteer-guest",
-		"aud":                     "budgeteer",
-		"exp":                     expiry.Unix(),
-		"iat":                     time.Now().Unix(),
+		"authentification_method": authMethod,
 	}
 
-	// Sign access token
-	accessToken, err = jwt.Signed(signer).Claims(accessClaimsMap).Serialize()
+	sessionToken, err = jwt.Signed(signer).Claims(sessionTokenMap).Serialize()
 	if err != nil {
-		return "", "", time.Time{}, fmt.Errorf("signing access token: %w", err)
+		return "", fmt.Errorf("signing session token: %w", err)
 	}
 
-	// Refresh token expires in 7 days
-	refreshExpiry := time.Now().Add(7 * 24 * time.Hour)
-
-	// Create claims for refresh token
-	refreshClaimsMap := map[string]interface{}{
-		"sub":  userID,
-		"type": "refresh",
-		"iss":  "budgeteer-guest",
-		"aud":  "budgeteer",
-		"exp":  refreshExpiry.Unix(),
-		"iat":  time.Now().Unix(),
-	}
-
-	// Sign refresh token
-	refreshToken, err = jwt.Signed(signer).Claims(refreshClaimsMap).Serialize()
-	if err != nil {
-		return "", "", time.Time{}, fmt.Errorf("signing refresh token: %w", err)
-	}
-
-	return accessToken, refreshToken, expiry, nil
+	return sessionToken, nil
 }

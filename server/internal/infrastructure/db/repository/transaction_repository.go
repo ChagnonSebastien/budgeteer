@@ -11,6 +11,7 @@ import (
 	"chagnon.dev/budget-server/internal/domain/model"
 	"chagnon.dev/budget-server/internal/infrastructure/db/dao"
 	"chagnon.dev/budget-server/internal/logging"
+	"github.com/google/uuid"
 )
 
 func SplitTypeOverrideFromDao(splitType dao.TransactionSplitType) (value model.SplitTypeOverride, err error) {
@@ -48,7 +49,7 @@ type MemberValueOverride struct {
 	SplitValue *int   `json:"split_value"`
 }
 
-func (r *Repository) GetAllTransactions(ctx context.Context, userId string) ([]model.Transaction, error) {
+func (r *Repository) GetAllTransactions(ctx context.Context, userId uuid.UUID) ([]model.Transaction, error) {
 	transactionsDao, err := r.queries.GetAllTransactions(ctx, userId)
 	if err != nil {
 		return nil, err
@@ -141,7 +142,8 @@ func (r *Repository) GetAllTransactions(ctx context.Context, userId string) ([]m
 
 func (r *Repository) CreateTransaction(
 	ctx context.Context,
-	userId, userEmail string,
+	userId uuid.UUID,
+	userEmail string,
 	ownerEmail string,
 	amount, receiverAmount int,
 	currencyId, receiverCurrencyId int,
@@ -397,7 +399,7 @@ func (u *UpdateTransactionFields) nullCategoryId() sql.NullInt32 {
 
 func (r *Repository) UpdateTransaction(
 	ctx context.Context,
-	userId string,
+	userId uuid.UUID,
 	id model.TransactionID,
 	field UpdateTransactionFields,
 ) (err error) {
