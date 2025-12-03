@@ -35,3 +35,5 @@ databaseChangeLog:
       file: ./changelogs/017-financial-income-table.sql
   - include:
       file: ./changelogs/018-splitwise-01.sql
+  - include:
+      file: ./changelogs/019-default-user-id.sql
