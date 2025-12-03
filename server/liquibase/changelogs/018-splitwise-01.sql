@@ -66,3 +66,11 @@ create table guest_logins
 ALTER TABLE guest_logins
     ALTER COLUMN code_expiry TYPE timestamptz
         USING code_expiry AT TIME ZONE 'UTC';
+
+-- changeset ?:1761582072000-10
+ALTER TABLE users
+    ADD COLUMN oidc_sub TEXT;
+
+-- changeset ?:1761582072000-11
+UPDATE users
+    SET oidc_sub = id::text;
