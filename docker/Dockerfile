@@ -56,7 +56,8 @@ FROM alpine:latest AS liquibase
 WORKDIR /liquibase
 RUN apk add --no-cache openjdk11-jre wget bash \
     && wget https://github.com/liquibase/liquibase/releases/download/v5.0.1/liquibase-5.0.1.tar.gz \
-    && tar -xzf liquibase-5.0.1.tar.gz
+    && tar -xzf liquibase-5.0.1.tar.gz \
+    && curl -L -o /liquibase/lib/postgresql-42.7.4.jar https://jdbc.postgresql.org/download/postgresql-42.7.4.jar
 
 
 FROM debian:bookworm
