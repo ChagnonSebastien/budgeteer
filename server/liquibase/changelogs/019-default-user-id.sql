@@ -46,3 +46,7 @@ ALTER TABLE currencies
 ALTER TABLE categories
     ADD CONSTRAINT categories_user_id_fkey
         FOREIGN KEY (user_id) REFERENCES users(id);
+
+-- changeset ?:1764769682000-7
+ALTER TABLE users
+    ADD CONSTRAINT users_oidc_sub_key UNIQUE (oidc_sub);

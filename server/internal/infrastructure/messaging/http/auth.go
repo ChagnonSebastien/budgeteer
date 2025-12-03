@@ -297,10 +297,95 @@ type userInfoResponse struct {
 func (auth *Auth) userInfoHandler(resp http.ResponseWriter, req *http.Request) {
 	logger := logging.FromContext(req.Context())
 
-	// Try to parse JWT token
 	user, err := auth.parseSessionToken(req.Cookie)
-	if err != nil && !errors.Is(err, jwt.ErrInvalidContentType) {
-		logger.DebugContext(req.Context(), "parsing guest token", "error", err)
+	if err != nil {
+		if !errors.Is(err, jwt.ErrInvalidContentType) {
+			logger.DebugContext(req.Context(), "parsing session token", "error", err)
+		}
+
+		// Fall back to OIDC token verification
+		tokenSource, prevTokenCookie, err := auth.TokenSourceFromCookies(req.Context(), req.Cookie)
+		if err != nil {
+			logger.Error("reading tokens from request", "error", err)
+			http.Error(resp, "reading tokens from request", http.StatusInternalServerError)
+			return
+		}
+
+		rawToken, err := tokenSource.Token()
+		if err != nil {
+			logger.Error("getting valid access token", "error", err)
+			http.Error(resp, "getting valid access token", http.StatusUnauthorized)
+			return
+		}
+
+		token, err := auth.verifier.Verify(req.Context(), rawToken.AccessToken)
+		if err != nil {
+			logger.Error("verifying access token", "error", err)
+			http.Error(resp, "verifying access token", http.StatusUnauthorized)
+			return
+		}
+
+		var tokenClaims Claims
+		if err := token.Claims(&tokenClaims); err != nil {
+			logger.Error("parsing claims", "error", err)
+			http.Error(resp, "parsing claims", http.StatusInternalServerError)
+			return
+		}
+
+		// Refresh cookies if token was refreshed
+		if prevTokenCookie == nil || prevTokenCookie.Value != rawToken.AccessToken {
+			http.SetCookie(
+				resp, &http.Cookie{
+					Name:     "auth-token",
+					Value:    rawToken.AccessToken,
+					Path:     "/",
+					Expires:  rawToken.Expiry,
+					HttpOnly: true,
+					Secure:   true,
+				},
+			)
+
+			http.SetCookie(
+				resp, &http.Cookie{
+					Name:     "refresh-token",
+					Value:    rawToken.RefreshToken,
+					Path:     "/",
+					Expires:  time.Now().Add(7 * 24 * time.Hour),
+					HttpOnly: true,
+					Secure:   true,
+				},
+			)
+		}
+
+		userId, err := auth.UserService.UpsertOidcUser(req.Context(), tokenClaims.Sub, tokenClaims.Email, tokenClaims.Username)
+		if err != nil {
+			logger.Error("upserting oidc user", "error", err)
+			resp.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		sessionToken, err := auth.generateSessionToken(userId, tokenClaims.Email, shared.AuthMethodGuest)
+		if err != nil {
+			logger.Error("generating session token", "error", err)
+			resp.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		http.SetCookie(resp, &http.Cookie{
+			Name:     "session-token",
+			Value:    sessionToken,
+			Path:     "/",
+			Expires:  time.Now().Add(7 * 24 * time.Hour),
+			HttpOnly: true,
+			Secure:   true,
+			SameSite: http.SameSiteStrictMode,
+		})
+
+		user = &shared.User{
+			ID:         userId,
+			Email:      tokenClaims.Email,
+			AuthMethod: shared.AuthMethodOidc,
+		}
 	}
 
 	logger = logger.With("user", user.Email)
