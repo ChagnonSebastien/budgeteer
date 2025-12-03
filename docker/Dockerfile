@@ -55,8 +55,8 @@ RUN go build -o budget-server .
 FROM alpine:latest AS liquibase
 WORKDIR /liquibase
 RUN apk add --no-cache openjdk11-jre wget bash \
-    && wget https://github.com/liquibase/liquibase/releases/download/v4.7.1/liquibase-4.7.1.tar.gz \
-    && tar -xzf liquibase-4.7.1.tar.gz
+    && wget https://github.com/liquibase/liquibase/releases/download/v5.0.1/liquibase-5.0.1.tar.gz \
+    && tar -xzf liquibase-5.0.1.tar.gz
 
 
 FROM debian:bookworm
