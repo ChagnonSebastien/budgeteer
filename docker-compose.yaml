@@ -13,12 +13,13 @@ services:
       DATABASE_USER: postgres
       DATABASE_PASSWORD: changeme
       DATABASE_NAME: budgetapp
+    restart: always
     depends_on:
       postgres:
         condition: service_healthy
 
   postgres:
-    image: postgres:latest
+    image: postgres:16
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: changeme
@@ -33,6 +34,7 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
+    restart: always
 
 volumes:
   postgres_data:
