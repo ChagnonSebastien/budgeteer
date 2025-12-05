@@ -201,6 +201,7 @@ func (auth *Auth) callbackHandler(w http.ResponseWriter, r *http.Request) {
 			Expires:  rawToken.Expiry,
 			HttpOnly: true,
 			Secure:   true,
+			SameSite: http.SameSiteStrictMode,
 		},
 	)
 
@@ -212,6 +213,7 @@ func (auth *Auth) callbackHandler(w http.ResponseWriter, r *http.Request) {
 			Expires:  time.Now().Add(7 * 24 * time.Hour),
 			HttpOnly: true,
 			Secure:   true,
+			SameSite: http.SameSiteStrictMode,
 		},
 	)
 
@@ -342,6 +344,7 @@ func (auth *Auth) userInfoHandler(resp http.ResponseWriter, req *http.Request) {
 					Expires:  rawToken.Expiry,
 					HttpOnly: true,
 					Secure:   true,
+					SameSite: http.SameSiteStrictMode,
 				},
 			)
 
@@ -353,6 +356,7 @@ func (auth *Auth) userInfoHandler(resp http.ResponseWriter, req *http.Request) {
 					Expires:  time.Now().Add(7 * 24 * time.Hour),
 					HttpOnly: true,
 					Secure:   true,
+					SameSite: http.SameSiteStrictMode,
 				},
 			)
 		}

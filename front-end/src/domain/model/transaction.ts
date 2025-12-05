@@ -1,18 +1,36 @@
 import Account, { AccountID } from './account'
 import { AugmentedCategory, CategoryID } from './category'
 import Currency, { CurrencyID } from './currency'
-import { AugmentedTransactionGroup, Email, TransactionGroupID } from './transactionGroup'
+import {
+  AugmentedTransactionGroup,
+  Email,
+  SplitType as TransactionGroupSplitType,
+  TransactionGroupID,
+} from './transactionGroup'
 import Unique from './Unique'
 
 export type TransactionID = number
 
 export type TransactionType = 'income' | 'expense' | 'transfer' | 'financialIncome'
 
-export enum SplitTypeOverride {
+export enum SplitType {
   EQUAL,
   PERCENTAGE,
   SHARES,
   EXACT_AMOUNT,
+}
+
+function transactionGroupSplitTypeToInternal(splitType: TransactionGroupSplitType): SplitType {
+  switch (splitType) {
+    case TransactionGroupSplitType.EQUAL:
+      return SplitType.EQUAL
+    case TransactionGroupSplitType.PERCENTAGE:
+      return SplitType.PERCENTAGE
+    case TransactionGroupSplitType.SHARES:
+      return SplitType.SHARES
+    default:
+      return SplitType.EQUAL
+  }
 }
 
 export class MemberValue {
@@ -30,7 +48,7 @@ export class MemberValue {
 
 export class SplitOverride {
   constructor(
-    readonly splitTypeOverride: SplitTypeOverride,
+    readonly splitTypeOverride: SplitType,
     readonly memberValues: MemberValue[],
   ) {}
 
@@ -152,6 +170,31 @@ export class AugmentedTransaction extends Transaction {
     if (this?.categoryId === null) return 'transfer'
     if (this?.sender?.isMine ?? false) return 'expense'
     return 'income'
+  }
+
+  getUserContribution(user: string): number {
+    if (this.augmentedTransactionGroupData === null) {
+      return this.amount
+    }
+
+    let splitType = this.augmentedTransactionGroupData.splitOverride?.splitTypeOverride
+    let memberSpecificValues = this.augmentedTransactionGroupData.splitOverride?.memberValues ?? []
+    if (typeof splitType === 'undefined') {
+      splitType = transactionGroupSplitTypeToInternal(this.augmentedTransactionGroupData.transactionGroup.splitType)
+      memberSpecificValues = this.augmentedTransactionGroupData.transactionGroup.members.map(
+        (m) => new MemberValue(m.email, m.splitValue),
+      )
+    }
+
+    switch (splitType) {
+      case SplitType.EQUAL:
+        return (
+          (this.amount * (this.augmentedTransactionGroupData.transactionGroup.members.length - 1)) /
+          this.augmentedTransactionGroupData.transactionGroup.members.length
+        )
+      default:
+        throw new Error('not implemented')
+    }
   }
 }
 

@@ -1,7 +1,7 @@
 import Dexie, { type EntityTable, Table } from 'dexie'
 
-import { SplitTypeOverride } from '../../domain/model/transaction'
-import { SplitType } from '../../domain/model/transactionGroup'
+import { SplitType } from '../../domain/model/transaction'
+import { SplitType as TransactionGroupSplitType } from '../../domain/model/transactionGroup'
 
 interface Currency {
   id: number
@@ -54,7 +54,7 @@ interface MemberValue {
 }
 
 interface SplitOverride {
-  splitTypeOverride: SplitTypeOverride
+  splitTypeOverride: SplitType
   memberValues: MemberValue[]
 }
 
@@ -90,7 +90,7 @@ interface TransactionGroup {
   id: number
   name: string
   originalCurrency: string
-  splitType: SplitType
+  splitType: TransactionGroupSplitType
   members: TransactionGroupMember[]
   currency: number | null
   category: number | null

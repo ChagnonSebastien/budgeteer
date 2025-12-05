@@ -104,6 +104,7 @@ func (s *GrpcWebServer) catchAllHandler(resp http.ResponseWriter, req *http.Requ
 						Expires:  rawToken.Expiry,
 						HttpOnly: true,
 						Secure:   true,
+						SameSite: http.SameSiteStrictMode,
 					},
 				)
 
@@ -115,6 +116,7 @@ func (s *GrpcWebServer) catchAllHandler(resp http.ResponseWriter, req *http.Requ
 						Expires:  time.Now().Add(7 * 24 * time.Hour),
 						HttpOnly: true,
 						Secure:   true,
+						SameSite: http.SameSiteStrictMode,
 					},
 				)
 			}

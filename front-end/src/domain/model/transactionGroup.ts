@@ -98,8 +98,8 @@ export default class TransactionGroup implements NamedItem<TransactionGroupID, T
 export class AugmentedTransactionGroup extends TransactionGroup {
   constructor(
     transactionGroup: TransactionGroup,
-    public readonly augmentedCurrency?: Currency,
-    public readonly augmentedCategory?: Category,
+    public readonly augmentedCurrency: Currency,
+    public readonly augmentedCategory: Category,
   ) {
     super(
       transactionGroup.id,

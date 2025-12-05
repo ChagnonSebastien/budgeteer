@@ -10,6 +10,7 @@ import {
   TransactionGroupServiceContext,
   TransactionServiceContext,
 } from './ServiceContext'
+import { UserContext } from '../App'
 import LoadingScreen from '../components/LoadingScreen'
 import Category from '../domain/model/category'
 import Currency, { RateAutoupdateSettings } from '../domain/model/currency'
@@ -48,6 +49,7 @@ export interface Props {
 }
 
 export const MixedAugmentationProvider: FC<Props> = ({ NextComponent }) => {
+  const { email } = useContext(UserContext)
   const { state: transactions } = useContext(TransactionServiceContext)
   const { state: transactionGroups } = useContext(TransactionGroupServiceContext)
   const { state: currencies, tentativeDefaultCurrency } = useContext(CurrencyServiceContext)
@@ -94,13 +96,20 @@ export const MixedAugmentationProvider: FC<Props> = ({ NextComponent }) => {
   }, [accounts, transactions])
 
   const augmentedTransactionGroups = useMemo(() => {
-    return transactionGroups.map((transactionGroup) => {
-      return new AugmentedTransactionGroup(
-        transactionGroup,
-        currencies.find((c) => c.id === transactionGroup.currency),
-        categories.find((c) => c.id === transactionGroup.category),
-      )
-    })
+    return transactionGroups
+      .map((transactionGroup) => {
+        if (!transactionGroup.hasJoined(email)) return null
+
+        const currency = currencies.find((c) => c.id === transactionGroup.currency) ?? null
+        const category = categories.find((c) => c.id === transactionGroup.category) ?? null
+
+        if (currency === null || category === null) {
+          return null
+        }
+
+        return new AugmentedTransactionGroup(transactionGroup, currency, category)
+      })
+      .filter((atg) => atg !== null)
   }, [transactionGroups, categories, currencies])
 
   const augmentedTransactions = useMemo<AugmentedTransaction[]>(() => {

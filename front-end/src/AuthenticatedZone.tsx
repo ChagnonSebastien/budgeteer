@@ -24,7 +24,6 @@ import Dashboard from './pages/Dashboard'
 import EditAccountPage from './pages/EditAccountPage'
 import EditCategoryPage from './pages/EditCategoryPage'
 import EditCurrencyPage from './pages/EditCurrencyPage'
-import EditTransactionGroupPage from './pages/EditTransactionGroupPage'
 import EditTransactionPage from './pages/EditTransactionPage'
 import InvestmentsPerformancePage from './pages/InvestmentsPerformancePage'
 import ManageTransactionGroup from './pages/ManageTransactionGroup'
@@ -347,7 +346,6 @@ const AuthenticatedZone: FC<Props> = (props) => {
           <Route path="/investments" element={<InvestmentsPerformancePage />} />
           <Route path="/transaction-groups" element={<TransactionGroups />} />
           <Route path="/transaction-groups/new" element={<CreateTransactionGroupPage />} />
-          <Route path="/transaction-groups/edit/:transactionGroupId" element={<EditTransactionGroupPage />} />
           <Route path="/transaction-groups/manage/:transactionGroupId" element={<ManageTransactionGroup />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

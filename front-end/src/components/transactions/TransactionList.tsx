@@ -10,7 +10,6 @@ import {
 } from 'date-fns'
 import { CSSProperties, ReactNode, useContext, useEffect, useMemo, useRef, useState } from 'react'
 
-import TransactionCard from './TransactionCard'
 import { formatAmount, formatFull } from '../../domain/model/currency'
 import { AugmentedTransaction, TransactionID } from '../../domain/model/transaction'
 import MixedAugmentation from '../../service/MixedAugmentation'
@@ -29,17 +28,18 @@ interface AdditionalTransactionListProps {
   containerStyle?: CSSProperties
 }
 
-type Props = ItemListProps<TransactionID, AugmentedTransaction, object> & AdditionalTransactionListProps
+type Props<T> = ItemListProps<TransactionID, AugmentedTransaction, T> & AdditionalTransactionListProps
 
-export const TransactionList = (props: Props) => {
+export const TransactionList = <T,>(props: Props<T>) => {
   const {
     items,
-    ItemComponent = TransactionCard,
+    ItemComponent,
     onClick,
     viewAsAccounts,
     includeInitialAmounts = false,
     containerStyle,
     displayMonthlySummaries = false,
+    additionalItemsProps,
   } = props
 
   const { state: accounts } = useContext(AccountServiceContext)
@@ -175,7 +175,14 @@ export const TransactionList = (props: Props) => {
         previousTransactionDate = data[j].date
         j -= 1
       }
-      view.push(<ItemComponent key={transaction.id} item={transaction} onClick={() => onClick(transaction.id)} />)
+      view.push(
+        <ItemComponent
+          key={transaction.id}
+          item={transaction}
+          onClick={() => onClick(transaction.id)}
+          {...additionalItemsProps}
+        />,
+      )
     }
 
     view.push(wrap(data[j]))

@@ -3,7 +3,7 @@ import Transaction, {
   FinancialIncomeData,
   MemberValue,
   SplitOverride,
-  SplitTypeOverride,
+  SplitType,
   TransactionGroupData,
   TransactionUpdatableFields,
 } from '../../../domain/model/transaction'
@@ -24,31 +24,31 @@ import {
 function padToTwoDigits(num: number) {
   return num.toString().padStart(2, '0')
 }
-export const splitTypeOverrideToDto = (type: SplitTypeOverride): SplitTypeOverrideDto => {
+export const splitTypeOverrideToDto = (type: SplitType): SplitTypeOverrideDto => {
   switch (type) {
-    case SplitTypeOverride.EQUAL:
+    case SplitType.EQUAL:
       return SplitTypeOverrideDto.OverrideEqual
-    case SplitTypeOverride.PERCENTAGE:
+    case SplitType.PERCENTAGE:
       return SplitTypeOverrideDto.OverridePercentage
-    case SplitTypeOverride.SHARES:
+    case SplitType.SHARES:
       return SplitTypeOverrideDto.OverrideShare
-    case SplitTypeOverride.EXACT_AMOUNT:
+    case SplitType.EXACT_AMOUNT:
       return SplitTypeOverrideDto.OverrideExactAmount
     default:
       throw Error(`Invalid Split type: ${type}`)
   }
 }
 
-const splitTypeFromDto = (type: SplitTypeOverrideDto): SplitTypeOverride => {
+const splitTypeFromDto = (type: SplitTypeOverrideDto): SplitType => {
   switch (type) {
     case SplitTypeOverrideDto.OverrideEqual:
-      return SplitTypeOverride.EQUAL
+      return SplitType.EQUAL
     case SplitTypeOverrideDto.OverridePercentage:
-      return SplitTypeOverride.PERCENTAGE
+      return SplitType.PERCENTAGE
     case SplitTypeOverrideDto.OverrideShare:
-      return SplitTypeOverride.SHARES
+      return SplitType.SHARES
     case SplitTypeOverrideDto.OverrideExactAmount:
-      return SplitTypeOverride.EXACT_AMOUNT
+      return SplitType.EXACT_AMOUNT
     default:
       throw Error(`Invalid Split type: ${type}`)
   }

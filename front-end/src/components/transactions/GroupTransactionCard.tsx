@@ -1,6 +1,7 @@
 import { Box, Typography } from '@mui/material'
-import { FC, memo, useContext } from 'react'
+import { FC, memo, useContext, useMemo } from 'react'
 
+import { UserContext } from '../../App'
 import { formatFull } from '../../domain/model/currency'
 import { AugmentedTransaction, TransactionID } from '../../domain/model/transaction'
 import { ItemProps } from '../accounts/ItemList'
@@ -11,12 +12,15 @@ const GroupTransactionCard: FC<ItemProps<TransactionID, AugmentedTransaction, ob
   const { item, onClick } = props
 
   const { privacyMode } = useContext(DrawerContext)
+  const { email } = useContext(UserContext)
 
   if (item.augmentedTransactionGroupData === null) {
     return <p>Transaction is not part of a group</p>
   }
 
   const payedBy = item.augmentedTransactionGroupData.transactionGroup.members.find((m) => m.email === item.owner)
+
+  const userContribution = useMemo(() => item.getUserContribution(email), [item.getUserContribution, email])
 
   return (
     <GradientCard
@@ -31,7 +35,7 @@ const GroupTransactionCard: FC<ItemProps<TransactionID, AugmentedTransaction, ob
         fontSize: '0.875rem',
         padding: '0.5rem 0.75rem',
         border: '1px solid rgba(128,128,128,0.16)',
-        gap: '0.75rem',
+        gap: '2rem',
         overflowX: 'auto',
       }}
     >
@@ -67,6 +71,22 @@ const GroupTransactionCard: FC<ItemProps<TransactionID, AugmentedTransaction, ob
             For: {item.note}
           </Typography>
         </Row>
+      </Column>
+      <Column style={{ alignItems: 'center' }}>
+        {userContribution === 0 ? (
+          <Typography fontSize="0.9rem" fontWeight="500" textOverflow={'ellipsis'} overflow={'hidden'}>
+            'Not involved'
+          </Typography>
+        ) : (
+          <>
+            <Typography fontSize="0.9rem" fontWeight="500" textOverflow={'ellipsis'} overflow={'hidden'}>
+              {userContribution > 0 ? 'You lent to the group' : 'You owe to the group'}
+            </Typography>
+            <Typography fontSize="0.9rem" fontWeight="bold" textOverflow={'ellipsis'} overflow={'hidden'}>
+              {formatFull(item.augmentedTransactionGroupData.transactionGroup.augmentedCurrency, userContribution)}
+            </Typography>
+          </>
+        )}
       </Column>
     </GradientCard>
   )
