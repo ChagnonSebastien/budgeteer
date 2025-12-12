@@ -8,7 +8,7 @@ VALUES (
 ON CONFLICT (email)
     DO UPDATE SET
                   username = sqlc.arg(username),
-                  oidc_sub = COALESCE(sqlc.narg(oidc_sub), oidc_sub)
+                  oidc_sub = COALESCE(sqlc.narg(oidc_sub), u.oidc_sub)
 RETURNING u.*;
 
 -- name: SetDefaultCurrency :execrows
