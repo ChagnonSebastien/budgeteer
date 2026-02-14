@@ -73,6 +73,7 @@ func (r *Runner) NewRunner(ctx context.Context) func() error {
 				}
 
 				logger.Info("auto updated exchange rate for currency")
+				time.Sleep(5 * time.Second)
 			}
 
 			if !hasMore {
