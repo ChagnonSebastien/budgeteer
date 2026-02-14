@@ -1,6 +1,6 @@
 import { useTheme } from '@mui/material'
 import { formatDate } from 'date-fns'
-import React, { FC, useContext, useMemo } from 'react'
+import React, { FC, Fragment, useContext, useMemo } from 'react'
 
 import AreaChart, { Bucket, TooltipSlice } from './AreaChart'
 import {
@@ -21,6 +21,12 @@ import { TimeseriesIterator } from '../shared/useTimerangeSegmentation'
 
 export type BaseLineConfig = 'none' | 'showIndividualBaselines' | 'showGlobalBaseline'
 export type ScaleConfig = 'absolute' | 'cropped-absolute' | 'relative'
+
+const shortenLabel = (label: string, maxLength: number = 25): string => {
+  if (label.length <= maxLength) return label
+  const charsToKeep = Math.floor((maxLength - 3) / 2) // Reserve 3 chars for "..."
+  return `${label.slice(0, charsToKeep)}...${label.slice(-charsToKeep)}`
+}
 
 export const useNetWorthChartData = <Item extends object>(
   timeseriesIterator: TimeseriesIterator<AugmentedTransaction>,
@@ -217,56 +223,86 @@ type NetWorthTooltipProps = {
   tooltipProps: TooltipSlice
   labels: Date[]
   baselineConfig: BaseLineConfig
+  scaleConfig: ScaleConfig
 }
 
-export const NetWorthTooltip: FC<NetWorthTooltipProps> = ({ tooltipProps, labels, baselineConfig }) => {
+export const NetWorthTooltip: FC<NetWorthTooltipProps> = ({ tooltipProps, labels, baselineConfig, scaleConfig }) => {
   const theme = useTheme()
   const { privacyMode } = useContext(DrawerContext)
   const { defaultCurrency } = useContext(MixedAugmentation)
   const date = formatDate(labels[tooltipProps.slice.index], 'MMM d, yyyy')
   const totalGain = tooltipProps.slice.stack.map((s) => s.gain ?? 0).reduce((sum, g) => sum + g, 0)
   const showGlobalGain = !privacyMode && totalGain !== 0 && baselineConfig === 'showGlobalBaseline'
+  const totalValue = tooltipProps.slice.stack.map((s) => s.value).reduce((sum, v) => sum + v, 0)
 
   return (
     <GraphTooltip>
       <GraphTooltipDate>{date}</GraphTooltipDate>
 
-      {tooltipProps.slice.stack
-        .filter((s) => s.value !== 0)
-        .map((s) => {
-          const showGain = !privacyMode && s.gain !== 0 && baselineConfig === 'showIndividualBaselines'
-          return (
-            <div key={`${date}-${s.layerLabel}`}>
-              {/* main row */}
-              <GraphTooltipRow>
-                <GraphTooltipColor style={{ backgroundColor: s.color }} />
-                <GraphTooltipLabel>{s.layerLabel}</GraphTooltipLabel>
+      <table>
+        {tooltipProps.slice.stack
+          .filter((s) => s.value !== 0)
+          .map((s) => {
+            const showGain = !privacyMode && s.gain !== 0 && baselineConfig === 'showIndividualBaselines'
+            return (
+              <Fragment key={`${date}-${s.layerLabel}`}>
+                {/* main row */}
+                <tr>
+                  <td>
+                    <GraphTooltipColor style={{ backgroundColor: s.color }} />
+                  </td>
+                  <td>
+                    <GraphTooltipLabel>{shortenLabel(s.layerLabel)}</GraphTooltipLabel>
+                  </td>
 
-                {!privacyMode && (
-                  <>
-                    <div>:</div>
-                    <div style={{ minWidth: '1rem', flexGrow: 1 }} />
-                    <GraphTooltipValue>{s.formattedValue}</GraphTooltipValue>
-                  </>
+                  {!privacyMode && (
+                    <td style={{ textAlign: 'end', paddingLeft: '1rem' }}>
+                      <GraphTooltipValue>{s.formattedValue}</GraphTooltipValue>
+                    </td>
+                  )}
+
+                  {scaleConfig === 'relative' && (
+                    <td style={{ paddingLeft: '1rem', textAlign: 'end' }}>
+                      <GraphTooltipLabel>
+                        {totalValue !== 0 ? `${((s.value / totalValue) * 100).toFixed(1)}%` : '0.0%'}
+                      </GraphTooltipLabel>
+                    </td>
+                  )}
+                </tr>
+
+                {/* indented gain row */}
+                {showGain && (
+                  <tr>
+                    <td />
+                    <td />
+                    <td style={{ textAlign: 'end' }}>
+                      <GraphTooltipValue
+                        style={{
+                          fontSize: 'small',
+                          color: s.gain < 0 ? theme.palette.error.light : theme.palette.success.light,
+                        }}
+                      >
+                        {s.gainFormatted}
+                      </GraphTooltipValue>
+                    </td>
+
+                    {scaleConfig === 'relative' && (
+                      <td style={{ paddingLeft: '1rem', textAlign: 'end' }}>
+                        <GraphTooltipValue
+                          style={{ color: s.gain < 0 ? theme.palette.error.light : theme.palette.success.light }}
+                        >
+                          {s.baseline !== undefined && s.baseline !== 0
+                            ? `${s.gain >= 0 ? '+' : ''}${((s.gain / s.baseline) * 100).toFixed(1)}%`
+                            : '+0.0%'}
+                        </GraphTooltipValue>
+                      </td>
+                    )}
+                  </tr>
                 )}
-              </GraphTooltipRow>
-
-              {/* indented gain row */}
-              {showGain && (
-                <GraphTooltipRow>
-                  <GraphTooltipValue
-                    style={{
-                      fontSize: 'small',
-                      color: s.gain < 0 ? theme.palette.error.light : theme.palette.success.light,
-                    }}
-                  >
-                    {s.gainFormatted}
-                  </GraphTooltipValue>
-                </GraphTooltipRow>
-              )}
-            </div>
-          )
-        })}
+              </Fragment>
+            )
+          })}
+      </table>
 
       {showGlobalGain && (
         <div>
@@ -377,7 +413,12 @@ const NetWorthChart: FC<NetWorthChartProps> = ({
         offsetType={scale == 'relative' ? 'expand' : 'normal'}
         colors={darkColors}
         stackTooltip={(tooltipProps) => (
-          <NetWorthTooltip tooltipProps={tooltipProps} labels={labels} baselineConfig={baselineConfig} />
+          <NetWorthTooltip
+            tooltipProps={tooltipProps}
+            labels={labels}
+            baselineConfig={baselineConfig}
+            scaleConfig={scale}
+          />
         )}
       />
     )

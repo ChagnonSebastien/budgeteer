@@ -36,6 +36,7 @@ export type TooltipSlice = {
       value: number
       color: string
       formattedValue: string
+      baseline: number
       gain: number
       gainFormatted: string
     }[]
