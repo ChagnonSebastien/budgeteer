@@ -17,22 +17,19 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-
       - name: Build Docker image
         run: |
           docker build -f docker/Dockerfile -t ${{ secrets.DOCKERHUB_USERNAME }}/budgeteer:latest .
+
+      - name: Save Docker image to a tarball
+        run: docker save ${{ secrets.DOCKERHUB_USERNAME }}/budgeteer:latest -o budgeteer-image.tar
 
       - name: Upload Docker image as artifact
         uses: actions/upload-artifact@v4
         with:
           name: built-image
-          path: |
-            .
-            !node_modules/
-    outputs:
-      artifact_path: built-image
+          path: budgeteer-image.tar
+          retention-days: 1
 
   publish:
     needs: build
@@ -46,6 +43,9 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: built-image
+
+      - name: Load Docker image
+        run: docker load -i budgeteer-image.tar
 
       - name: Set up Node.js
         uses: actions/setup-node@v3
@@ -68,7 +68,7 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Load and Tag Docker image with Semantic Version
+      - name: Tag and push Docker image with semantic version
         run: |
           version=$(cat version.txt | grep "Next release version" | sed -E 's/.*Next release version: (.*)/\1/')
           docker tag ${{ secrets.DOCKERHUB_USERNAME }}/budgeteer:latest ${{ secrets.DOCKERHUB_USERNAME }}/budgeteer:$version
