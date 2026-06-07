@@ -1,4 +1,4 @@
--- name: UpsertUser :exec
+-- name: UpsertUser :one
 INSERT INTO users as u (username, email, oidc_sub)
 VALUES (
         sqlc.arg(username),
@@ -9,7 +9,7 @@ ON CONFLICT (email)
     DO UPDATE SET
                   username = sqlc.arg(username),
                   oidc_sub = COALESCE(sqlc.narg(oidc_sub), u.oidc_sub)
-RETURNING u.*;
+RETURNING u.id;
 
 -- name: SetDefaultCurrency :execrows
 UPDATE users u

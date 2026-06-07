@@ -42,7 +42,7 @@ type Claims struct {
 }
 
 type userRepository interface {
-	UpsertUser(ctx context.Context, username, email string, oidcSub model.Optional[string]) error
+	UpsertUser(ctx context.Context, username, email string, oidcSub model.Optional[string]) (uuid.UUID, error)
 	UserParams(ctx context.Context, userId uuid.UUID) (*model.UserParams, error)
 	UpsertOidcUser(ctx context.Context, oidcSub, email, username string) (uuid.UUID, error)
 }
@@ -220,7 +220,7 @@ func (auth *Auth) callbackHandler(w http.ResponseWriter, r *http.Request) {
 
 	logger = logger.With("user", tokenClaims.Email)
 
-	if err := auth.UserService.UpsertUser(
+	if _, err := auth.UserService.UpsertUser(
 		r.Context(),
 		tokenClaims.Username,
 		tokenClaims.Email,
@@ -626,12 +626,11 @@ func (auth *Auth) guestVerifyCodeHandler(w http.ResponseWriter, r *http.Request)
 
 	logger.Info("guest login code verified successfully", "email", req.Email)
 
-	// Generate user ID for guest user (using UUID derived from email for consistency)
-	userID := uuid.NewSHA1(uuid.NameSpaceOID, []byte(req.Email))
-
-	// Create or update the guest user in the database
+	// Create or update the guest user, using the database-assigned id so the
+	// session token and the persisted rows reference the same user.
 	username := req.Email // Use email as username for guest users
-	if err := auth.UserService.UpsertUser(r.Context(), username, req.Email, model.None[string]()); err != nil {
+	userID, err := auth.UserService.UpsertUser(r.Context(), username, req.Email, model.None[string]())
+	if err != nil {
 		logger.Error("upserting guest user", "error", err, "email", req.Email)
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)

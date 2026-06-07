@@ -21,7 +21,7 @@ func (r *Repository) UpsertOidcUser(ctx context.Context, oidcSub, email, usernam
 	})
 }
 
-func (r *Repository) UpsertUser(ctx context.Context, username, email string, oidcSub model.Optional[string]) error {
+func (r *Repository) UpsertUser(ctx context.Context, username, email string, oidcSub model.Optional[string]) (uuid.UUID, error) {
 	return r.queries.UpsertUser(
 		ctx, &dao.UpsertUserParams{
 			Username: username,
