@@ -12,8 +12,8 @@ type AuthMethod string
 
 const (
 	AuthMethodOidc     AuthMethod = "oidc"
-	AuthMethodUserPass            = "userPass"
-	AuthMethodGuest               = "guest"
+	AuthMethodUserPass AuthMethod = "userPass"
+	AuthMethodGuest    AuthMethod = "guest"
 )
 
 type User struct {

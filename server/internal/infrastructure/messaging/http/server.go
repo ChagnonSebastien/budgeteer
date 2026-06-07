@@ -128,7 +128,7 @@ func (s *GrpcWebServer) catchAllHandler(resp http.ResponseWriter, req *http.Requ
 				return
 			}
 
-			sessionToken, err := s.auth.generateSessionToken(userId, tokenClaims.Email, shared.AuthMethodGuest)
+			sessionToken, err := s.auth.generateSessionToken(userId, tokenClaims.Email, shared.AuthMethodOidc)
 			if err != nil {
 				logger.Error("generating session token", "error", err)
 				resp.WriteHeader(http.StatusInternalServerError)

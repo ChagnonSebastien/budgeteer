@@ -100,6 +100,15 @@ func (s *ExchangeRateHandler) GetAllExchangeRate(ctx context.Context, _ *dto.Get
 }
 
 func (s *ExchangeRateHandler) TestGetCurrencyRate(ctx context.Context, req *dto.TestGetCurrencyRateRequest) (*dto.TestGetCurrencyRateResponse, error) {
+	user, ok := shared.FromContext(ctx)
+	if !ok {
+		return nil, fmt.Errorf("getting user from context")
+	}
+
+	if user.IsGuestUser() {
+		return nil, fmt.Errorf("running currency rate scripts is not available to guest users")
+	}
+
 	returnedValue, err := s.javascriptRunner(ctx, req.Script)
 	if err != nil {
 		returnedValue = fmt.Sprintf("Error running script: %s", err)

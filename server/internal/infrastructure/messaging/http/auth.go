@@ -224,7 +224,7 @@ func (auth *Auth) callbackHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sessionToken, err := auth.generateSessionToken(userId, tokenClaims.Email, shared.AuthMethodGuest)
+	sessionToken, err := auth.generateSessionToken(userId, tokenClaims.Email, shared.AuthMethodOidc)
 	if err != nil {
 		logger.Error("generating session token", "error", err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -368,7 +368,7 @@ func (auth *Auth) userInfoHandler(resp http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		sessionToken, err := auth.generateSessionToken(userId, tokenClaims.Email, shared.AuthMethodGuest)
+		sessionToken, err := auth.generateSessionToken(userId, tokenClaims.Email, shared.AuthMethodOidc)
 		if err != nil {
 			logger.Error("generating session token", "error", err)
 			resp.WriteHeader(http.StatusInternalServerError)
@@ -449,8 +449,8 @@ func (auth *Auth) parseSessionToken(getCookie func(name string) (*http.Cookie, e
 	if email, ok := tokenMap["email"].(string); ok {
 		user.Email = email
 	}
-	if authMethod, ok := tokenMap["authentification_method"].(shared.AuthMethod); ok {
-		user.AuthMethod = authMethod
+	if authMethod, ok := tokenMap["authentification_method"].(string); ok {
+		user.AuthMethod = shared.AuthMethod(authMethod)
 	}
 
 	return &user, nil
