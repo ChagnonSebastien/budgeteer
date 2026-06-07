@@ -16,11 +16,12 @@ import (
 
 type Config struct {
 	Database struct {
-		Host string `mapstructure:"host"`
-		Port int    `mapstructure:"port"`
-		User string `mapstructure:"user"`
-		Pass string `mapstructure:"password"`
-		Name string `mapstructure:"name"`
+		Host    string `mapstructure:"host"`
+		Port    int    `mapstructure:"port"`
+		User    string `mapstructure:"user"`
+		Pass    string `mapstructure:"password"`
+		Name    string `mapstructure:"name"`
+		SslMode string `mapstructure:"sslmode"`
 	} `mapstructure:"database"`
 	Auth struct {
 		Oidc struct {
@@ -67,11 +68,12 @@ var startCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		server := &Server{config: ServerConfig{
 			Database: DatabaseConfig{
-				Host: config.Database.Host,
-				User: config.Database.User,
-				Pass: config.Database.Pass,
-				Name: config.Database.Name,
-				Port: config.Database.Port,
+				Host:    config.Database.Host,
+				User:    config.Database.User,
+				Pass:    config.Database.Pass,
+				Name:    config.Database.Name,
+				Port:    config.Database.Port,
+				SslMode: config.Database.SslMode,
 			},
 			Auth: AuthConfig{
 				Oidc: OidcConfig{

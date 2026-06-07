@@ -3,6 +3,7 @@ package http
 import (
 	"context"
 	"crypto/rand"
+	"crypto/subtle"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -23,6 +24,9 @@ import (
 	"chagnon.dev/budget-server/internal/infrastructure/messaging/shared"
 	"chagnon.dev/budget-server/internal/logging"
 )
+
+// sessionTokenTTL is how long an issued session JWT remains valid.
+const sessionTokenTTL = 7 * 24 * time.Hour
 
 type AuthMethods struct {
 	OIDC     bool `json:"oidc"`
@@ -57,7 +61,6 @@ type Auth struct {
 	OidcIssuer        string
 	AuthMethods       AuthMethods
 
-	stateToken     string
 	guestJWTSecret []byte
 }
 
@@ -113,7 +116,6 @@ func generateStateToken() string {
 }
 
 func (auth *Auth) ServeMux() *http.ServeMux {
-	auth.stateToken = generateStateToken()
 	mux := http.NewServeMux()
 	mux.HandleFunc("/info", auth.infoHandler)
 	mux.HandleFunc("/login", auth.loginHandler)
@@ -136,8 +138,23 @@ func (auth *Auth) infoHandler(w http.ResponseWriter, req *http.Request) {
 }
 
 func (auth *Auth) loginHandler(w http.ResponseWriter, r *http.Request) {
+	state := generateStateToken()
+
+	// Bind the state to this login attempt via a short-lived cookie so the
+	// callback can verify it. SameSite=Lax (not Strict) so the cookie still
+	// accompanies the top-level redirect back from the identity provider.
+	http.SetCookie(w, &http.Cookie{
+		Name:     "oauth-state",
+		Value:    state,
+		Path:     "/",
+		MaxAge:   int((10 * time.Minute).Seconds()),
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteLaxMode,
+	})
+
 	authCodeURL := auth.OidcConfig.AuthCodeURL(
-		auth.stateToken,
+		state,
 		oauth2.AccessTypeOnline,
 		oauth2.SetAuthURLParam("audience", "budgeteer"),
 	)
@@ -147,7 +164,26 @@ func (auth *Auth) loginHandler(w http.ResponseWriter, r *http.Request) {
 func (auth *Auth) callbackHandler(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 
-	if r.URL.Query().Get("state") != auth.stateToken {
+	stateCookie, err := r.Cookie("oauth-state")
+	if err != nil || stateCookie.Value == "" {
+		logger.Error("missing oauth state cookie")
+		http.Error(w, "invalid state parameter", http.StatusBadRequest)
+		return
+	}
+
+	// The state cookie is single-use; clear it regardless of the outcome.
+	http.SetCookie(w, &http.Cookie{
+		Name:     "oauth-state",
+		Value:    "",
+		Path:     "/",
+		MaxAge:   -1,
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteLaxMode,
+	})
+
+	queryState := r.URL.Query().Get("state")
+	if queryState == "" || subtle.ConstantTimeCompare([]byte(queryState), []byte(stateCookie.Value)) != 1 {
 		logger.Error("invalid state parameter")
 		http.Error(w, "invalid state parameter", http.StatusBadRequest)
 		return
@@ -410,7 +446,7 @@ func (auth *Auth) userInfoHandler(resp http.ResponseWriter, req *http.Request) {
 		Name:                   params.Name,
 		DefaultCurrency:        &defaultCurrency,
 		HiddenDefaultAccount:   &hiddenDefaultAccount,
-		AuthentificationMethod: shared.AuthMethodOidc,
+		AuthentificationMethod: user.AuthMethod,
 	}
 
 	resp.Header().Set("Content-Type", "application/json")
@@ -434,23 +470,35 @@ func (auth *Auth) parseSessionToken(getCookie func(name string) (*http.Cookie, e
 		return nil, fmt.Errorf("parsing session token: %w", err)
 	}
 
-	var tokenMap map[string]interface{}
-	if err := token.Claims(auth.guestJWTSecret, &tokenMap); err != nil {
+	var standardClaims jwt.Claims
+	var sessionClaims struct {
+		ID         string `json:"id"`
+		Email      string `json:"email"`
+		AuthMethod string `json:"authentification_method"`
+	}
+	if err := token.Claims(auth.guestJWTSecret, &standardClaims, &sessionClaims); err != nil {
 		return nil, err
 	}
 
-	var user shared.User
-	if id, ok := tokenMap["id"].(string); ok {
-		user.ID, err = uuid.Parse(id)
+	// Validate only enforces exp when the claim is present, so reject tokens
+	// without one outright — otherwise legacy never-expiring tokens (and any
+	// future token that drops exp) would remain valid indefinitely.
+	if standardClaims.Expiry == nil {
+		return nil, fmt.Errorf("session token missing exp claim")
+	}
+	if err := standardClaims.Validate(jwt.Expected{Time: time.Now()}); err != nil {
+		return nil, fmt.Errorf("validating session token: %w", err)
+	}
+
+	user := shared.User{
+		Email:      sessionClaims.Email,
+		AuthMethod: shared.AuthMethod(sessionClaims.AuthMethod),
+	}
+	if sessionClaims.ID != "" {
+		user.ID, err = uuid.Parse(sessionClaims.ID)
 		if err != nil {
-			return nil, fmt.Errorf("parsing id [%s] from claims map: %w", id, err)
+			return nil, fmt.Errorf("parsing id [%s] from session token: %w", sessionClaims.ID, err)
 		}
-	}
-	if email, ok := tokenMap["email"].(string); ok {
-		user.Email = email
-	}
-	if authMethod, ok := tokenMap["authentification_method"].(string); ok {
-		user.AuthMethod = shared.AuthMethod(authMethod)
 	}
 
 	return &user, nil
@@ -627,10 +675,13 @@ func (auth *Auth) generateSessionToken(userID uuid.UUID, email string, authMetho
 		return "", fmt.Errorf("creating JWT signer: %w", err)
 	}
 
+	now := time.Now()
 	sessionTokenMap := map[string]interface{}{
 		"id":                      userID,
 		"email":                   email,
 		"authentification_method": authMethod,
+		"iat":                     jwt.NewNumericDate(now),
+		"exp":                     jwt.NewNumericDate(now.Add(sessionTokenTTL)),
 	}
 
 	sessionToken, err = jwt.Signed(signer).Claims(sessionTokenMap).Serialize()

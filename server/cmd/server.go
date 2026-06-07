@@ -60,11 +60,12 @@ type AuthConfig struct {
 }
 
 type DatabaseConfig struct {
-	Host string
-	User string
-	Pass string
-	Name string
-	Port int
+	Host    string
+	User    string
+	Pass    string
+	Name    string
+	Port    int
+	SslMode string
 }
 
 type ServerConfig struct {
@@ -87,6 +88,7 @@ func (s *Server) Serve(ctx context.Context) error {
 		s.config.Database.Pass,
 		s.config.Database.Name,
 		s.config.Database.Port,
+		s.config.Database.SslMode,
 	)
 	if err != nil {
 		return fmt.Errorf("creating connection to database: %s", err)
