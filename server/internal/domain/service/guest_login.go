@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"errors"
 	"fmt"
+	"html"
 	"math"
 	"strings"
 	"time"
@@ -145,6 +146,8 @@ func (s *GuestLoginService) makePlain(name, code string, ttl time.Duration) stri
 }
 
 func (s *GuestLoginService) makeHTML(name, code string, ttl time.Duration) string {
+	// name is user-supplied and embedded into HTML; escape to prevent injection.
+	name = html.EscapeString(name)
 	return fmt.Sprintf(
 		`<!DOCTYPE html>
 <html>

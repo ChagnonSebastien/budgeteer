@@ -67,6 +67,10 @@ RUN apt-get update && \
       default-jre-headless \
       chromium && \
     rm -rf /var/lib/apt/lists/*
+# Run as a non-root user. The container mounts no volumes, binds an
+# unprivileged port (8080), and Chromium runs better unprivileged than as root.
+RUN useradd --create-home --uid 10001 appuser
+ENV HOME=/home/appuser
 COPY --from=server-build /app/budget-server .
 COPY --from=server-build /app/configs configs
 COPY --from=web-build /app/dist static/web
@@ -77,6 +81,8 @@ ENV PATH="/liquibase:${PATH}"
 COPY docker/entrypoint.sh entrypoint.sh
 RUN chmod +x budget-server
 RUN chmod +x entrypoint.sh
+RUN chown -R appuser:appuser /app /liquibase
+USER appuser
 EXPOSE 8080
 CMD ["/bin/bash", "entrypoint.sh"]
 

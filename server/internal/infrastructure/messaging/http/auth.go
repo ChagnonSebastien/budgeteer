@@ -61,7 +61,8 @@ type Auth struct {
 	OidcIssuer        string
 	AuthMethods       AuthMethods
 
-	guestJWTSecret []byte
+	guestJWTSecret  []byte
+	sendCodeLimiter *rateLimiter
 }
 
 func NewAuth(
@@ -101,7 +102,8 @@ func NewAuth(
 			UserPass: userPassEnabled,
 			Guest:    guestLoginEnabled,
 		},
-		guestJWTSecret: jwtSecret,
+		guestJWTSecret:  jwtSecret,
+		sendCodeLimiter: newRateLimiter(5, 15*time.Minute),
 	}
 	return auth
 }
@@ -131,8 +133,8 @@ func (auth *Auth) infoHandler(w http.ResponseWriter, req *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	if err := json.NewEncoder(w).Encode(auth.AuthMethods); err != nil {
-		logging.FromContext(req.Context()).Error("encoding response")
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		logging.FromContext(req.Context()).Error("encoding response", "error", err)
+		http.Error(w, "internal error", http.StatusInternalServerError)
 		return
 	}
 }
@@ -559,6 +561,13 @@ func (auth *Auth) guestSendCodeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	clientIP := getClientIP(r)
+	if !auth.sendCodeLimiter.allow(clientIP) {
+		logger.Warn("guest send-code rate limited", "ip", clientIP)
+		http.Error(w, "Too many requests, please try again later", http.StatusTooManyRequests)
+		return
+	}
+
 	var req guestSendCodeRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		logger.Error("decoding request", "error", err)
@@ -568,7 +577,7 @@ func (auth *Auth) guestSendCodeHandler(w http.ResponseWriter, r *http.Request) {
 
 	if err := auth.GuestLoginService.SendLoginCode(r.Context(), req.Email, req.Name); err != nil {
 		logger.Error("sending login code", "error", err, "email", req.Email)
-		http.Error(w, fmt.Sprintf("Failed to send code: %v", err), http.StatusInternalServerError)
+		http.Error(w, "Failed to send code", http.StatusInternalServerError)
 		return
 	}
 
@@ -599,7 +608,7 @@ func (auth *Auth) guestVerifyCodeHandler(w http.ResponseWriter, r *http.Request)
 		w.WriteHeader(http.StatusUnauthorized)
 		json.NewEncoder(w).Encode(guestVerifyCodeResponse{
 			Success: false,
-			Message: err.Error(),
+			Message: "Invalid or expired code",
 		})
 		return
 	}
