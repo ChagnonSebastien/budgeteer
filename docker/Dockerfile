@@ -1,6 +1,6 @@
-FROM golang:1.25-alpine AS sqlc
+FROM golang:1.26-alpine AS sqlc
 WORKDIR /app
-RUN go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
+RUN go install github.com/sqlc-dev/sqlc/cmd/sqlc@v1.31.1
 COPY server/internal/infrastructure/db/queries internal/infrastructure/db/queries
 COPY server/liquibase/changelogs liquibase/changelogs
 COPY server/sqlc.yaml sqlc.yaml
