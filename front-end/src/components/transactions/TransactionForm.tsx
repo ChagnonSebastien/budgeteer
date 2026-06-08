@@ -330,61 +330,6 @@ const TransactionForm: FC<Props> = (props) => {
         />
       </Row>
 
-      {type === 'financialIncome' && (
-        <CurrencyPicker
-          style={{ width: '100%' }}
-          currencies={currencies}
-          selectedCurrencyId={investmentCurrency}
-          setSelectedCurrencyId={setInvestmentCurrency}
-          labelText="From investment in"
-          errorText={NoError}
-        />
-      )}
-
-      {useTransactionGroup && (
-        <Row style={{ justifyContent: 'stretch', alignItems: 'center', gap: '1rem' }}>
-          {transactionGroup?.augmentedCategory && (
-            <IconCapsule
-              iconName={transactionGroup.augmentedCategory.iconName}
-              size="2rem"
-              color={transactionGroup.augmentedCategory.iconColor}
-              backgroundColor={transactionGroup.augmentedCategory.iconBackground}
-            />
-          )}
-          <ItemPicker
-            style={{ flexGrow: 1 }}
-            items={visibleTransactionGroups}
-            labelText="Transaction Group"
-            itemDisplayText={(item) => item?.name ?? 'None'}
-            selectedItemId={transactionGroupId}
-            onSelectItem={setTransactionGroupId}
-            ItemComponent={TransactionGroupCard}
-            additionalItemProps={{}}
-          />
-          <IconButton onClick={() => setTransactionGroupId(null)}>
-            <IconLib.IoCloseCircle />
-          </IconButton>
-        </Row>
-      )}
-
-      {transactionGroupId === null && typeof category !== 'undefined' && (
-        <CategoryPicker
-          labelText="Category"
-          icon={category}
-          selectedConfig={{ mode: 'single', onSelectItem: setParent, selectedItem: parent }}
-        />
-      )}
-
-      <AccountPicker
-        labelText="From"
-        errorText={errors.sender.hasVisited ? errors.sender.errorText : ''}
-        onAccountSelected={setSenderAccount}
-        itemDisplayText={(item) => item?.name ?? senderAccount.name}
-        valueText={senderAccount.name}
-        myOwn={type !== 'income' && type !== 'financialIncome'}
-        allowNew={type === 'income' || type === 'financialIncome'}
-      />
-
       <FormControlLabel
         control={<Checkbox onChange={(ev) => setDifferentCurrency(ev.target.checked)} />}
         label="Receive in a different Currency"
@@ -421,6 +366,16 @@ const TransactionForm: FC<Props> = (props) => {
       <DatePicker label="Date" date={date} onChange={setDate} />
 
       <AccountPicker
+        labelText="From"
+        errorText={errors.sender.hasVisited ? errors.sender.errorText : ''}
+        onAccountSelected={setSenderAccount}
+        itemDisplayText={(item) => item?.name ?? senderAccount.name}
+        valueText={senderAccount.name}
+        myOwn={type !== 'income' && type !== 'financialIncome'}
+        allowNew={type === 'income' || type === 'financialIncome'}
+      />
+
+      <AccountPicker
         labelText="To"
         errorText={errors.receiver.hasVisited ? errors.receiver.errorText : ''}
         itemDisplayText={(item) => item?.name ?? receiverAccount.name}
@@ -429,6 +384,14 @@ const TransactionForm: FC<Props> = (props) => {
         myOwn={type !== 'expense'}
         allowNew={type === 'expense'}
       />
+
+      {transactionGroupId === null && typeof category !== 'undefined' && (
+        <CategoryPicker
+          labelText="Category"
+          icon={category}
+          selectedConfig={{ mode: 'single', onSelectItem: setParent, selectedItem: parent }}
+        />
+      )}
 
       <TextField
         type="text"
@@ -449,6 +412,7 @@ const TransactionForm: FC<Props> = (props) => {
               variant={isFinancialIncome ? 'filled' : 'outlined'}
               color={isFinancialIncome ? 'primary' : 'default'}
               onClick={toggleFinancialIncome}
+              sx={{ pl: 1, '& .MuiChip-icon': { marginLeft: 0 } }}
             />
           )}
           <Chip
@@ -457,7 +421,45 @@ const TransactionForm: FC<Props> = (props) => {
             variant={useTransactionGroup ? 'filled' : 'outlined'}
             color={useTransactionGroup ? 'primary' : 'default'}
             onClick={toggleTransactionGroup}
+            sx={{ pl: 1, '& .MuiChip-icon': { marginLeft: 0 } }}
           />
+        </Row>
+      )}
+
+      {type === 'financialIncome' && (
+        <CurrencyPicker
+          style={{ width: '100%' }}
+          currencies={currencies}
+          selectedCurrencyId={investmentCurrency}
+          setSelectedCurrencyId={setInvestmentCurrency}
+          labelText="From investment in"
+          errorText={NoError}
+        />
+      )}
+
+      {useTransactionGroup && (
+        <Row style={{ justifyContent: 'stretch', alignItems: 'center', gap: '1rem' }}>
+          {transactionGroup?.augmentedCategory && (
+            <IconCapsule
+              iconName={transactionGroup.augmentedCategory.iconName}
+              size="2rem"
+              color={transactionGroup.augmentedCategory.iconColor}
+              backgroundColor={transactionGroup.augmentedCategory.iconBackground}
+            />
+          )}
+          <ItemPicker
+            style={{ flexGrow: 1 }}
+            items={visibleTransactionGroups}
+            labelText="Transaction Group"
+            itemDisplayText={(item) => item?.name ?? 'None'}
+            selectedItemId={transactionGroupId}
+            onSelectItem={setTransactionGroupId}
+            ItemComponent={TransactionGroupCard}
+            additionalItemProps={{}}
+          />
+          <IconButton onClick={() => setTransactionGroupId(null)}>
+            <IconLib.IoCloseCircle />
+          </IconButton>
         </Row>
       )}
     </FormWrapper>
