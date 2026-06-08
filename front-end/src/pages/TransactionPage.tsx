@@ -253,24 +253,19 @@ const TransactionPage: FC = () => {
         }
       >
         <SpeedDialAction
-          sx={{ backgroundColor: 'green' }}
-          onClick={() => navigate('/transactions/new?type=income')}
-          icon={<IconLib.MdInput />}
-        />
-        <SpeedDialAction
           sx={{ backgroundColor: 'red' }}
           onClick={() => navigate('/transactions/new?type=expense')}
           icon={<IconLib.MdOutput />}
         />
         <SpeedDialAction
+          sx={{ backgroundColor: 'green' }}
+          onClick={() => navigate('/transactions/new?type=income')}
+          icon={<IconLib.MdInput />}
+        />
+        <SpeedDialAction
           sx={{ backgroundColor: 'darkgrey' }}
           onClick={() => navigate('/transactions/new?type=transfer')}
           icon={<IconLib.GrTransaction />}
-        />
-        <SpeedDialAction
-          sx={{ backgroundColor: 'darkcyan' }}
-          onClick={() => navigate('/transactions/new?type=financialIncome')}
-          icon={<IconLib.BsGraphUp />}
         />
       </SpeedDial>
 

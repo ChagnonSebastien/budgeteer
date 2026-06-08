@@ -35,6 +35,7 @@ export enum PreparedIcon {
   MdEdit = 'MdEdit',
   MdDelete = 'MdDelete',
   MdList = 'MdList',
+  MdGroups = 'MdGroups',
   MdCalendarToday = 'MdCalendarToday',
   TbChartSankey = 'TbChartSankey',
   TbLayoutDashboardFilled = 'TbLayoutDashboardFilled',

@@ -1,4 +1,4 @@
-import { Checkbox, FormControlLabel, IconButton, TextField } from '@mui/material'
+import { Checkbox, Chip, FormControlLabel, IconButton, TextField } from '@mui/material'
 import { FC, useContext, useEffect, useMemo, useState } from 'react'
 
 import { UserContext } from '../../App'
@@ -69,12 +69,23 @@ const TransactionForm: FC<Props> = (props) => {
   const { default_currency, email } = useContext(UserContext)
   const { IconLib } = useContext(IconToolsContext)
 
-  const type: 'income' | 'expense' | 'transfer' | 'financialIncome' = useMemo(() => {
-    if (typeof rawType !== 'undefined') return rawType
-    if (initialTransaction?.financialIncomeData) return 'financialIncome'
+  // Financial income and transaction-group membership are now opt-in toggles within
+  // the form (mutually exclusive), so the base type is only income/expense/transfer.
+  const baseType: 'income' | 'expense' | 'transfer' = useMemo(() => {
+    if (rawType === 'income' || rawType === 'expense' || rawType === 'transfer') return rawType
+    if (rawType === 'financialIncome' || initialTransaction?.financialIncomeData) return 'income'
     if (initialTransaction?.categoryId === null) return 'transfer'
     return (initialTransaction?.sender?.isMine ?? false) ? 'expense' : 'income'
   }, [initialTransaction, rawType])
+
+  const [isFinancialIncome, setIsFinancialIncome] = useState(
+    () => rawType === 'financialIncome' || !!initialTransaction?.financialIncomeData,
+  )
+  const [useTransactionGroup, setUseTransactionGroup] = useState(
+    () => (initialTransaction?.transactionGroupData ?? null) !== null,
+  )
+
+  const type: 'income' | 'expense' | 'transfer' | 'financialIncome' = isFinancialIncome ? 'financialIncome' : baseType
 
   const [amount, setAmount] = useState<number>(() => initialTransaction?.amount ?? 0)
   const [currency, setCurrency] = useState<CurrencyID>(initialTransaction?.currencyId ?? default_currency!)
@@ -185,7 +196,7 @@ const TransactionForm: FC<Props> = (props) => {
         errorText: receiverError,
       },
     }))
-  }, [amount, senderAccount.id, receiverAccount.id])
+  }, [amount, senderAccount.id, receiverAccount.id, type])
 
   useEffect(() => {
     const receiverAmountError = validateAmount(receiverAmount)
@@ -202,6 +213,26 @@ const TransactionForm: FC<Props> = (props) => {
   const isFormValid = useMemo(() => {
     return Object.values(errors).every((value) => value.isValid)
   }, [errors])
+
+  const toggleFinancialIncome = () => {
+    if (isFinancialIncome) {
+      setIsFinancialIncome(false)
+    } else {
+      setIsFinancialIncome(true)
+      setUseTransactionGroup(false)
+      setTransactionGroupId(null)
+    }
+  }
+
+  const toggleTransactionGroup = () => {
+    if (useTransactionGroup) {
+      setUseTransactionGroup(false)
+      setTransactionGroupId(null)
+    } else {
+      setUseTransactionGroup(true)
+      setIsFinancialIncome(false)
+    }
+  }
 
   const handleSubmit = () => {
     if (!isFormValid) {
@@ -310,7 +341,7 @@ const TransactionForm: FC<Props> = (props) => {
         />
       )}
 
-      {(type === 'expense' || type === 'income') && (
+      {useTransactionGroup && (
         <Row style={{ justifyContent: 'stretch', alignItems: 'center', gap: '1rem' }}>
           {transactionGroup?.augmentedCategory && (
             <IconCapsule
@@ -408,6 +439,27 @@ const TransactionForm: FC<Props> = (props) => {
         value={note}
         onChange={(ev) => setNote(ev.target.value as string)}
       />
+
+      {baseType !== 'transfer' && (
+        <Row style={{ gap: '0.75rem', flexWrap: 'wrap' }}>
+          {baseType === 'income' && (
+            <Chip
+              icon={<IconLib.BsGraphUp />}
+              label="Financial income"
+              variant={isFinancialIncome ? 'filled' : 'outlined'}
+              color={isFinancialIncome ? 'primary' : 'default'}
+              onClick={toggleFinancialIncome}
+            />
+          )}
+          <Chip
+            icon={<IconLib.MdGroups />}
+            label="Part of a transaction group"
+            variant={useTransactionGroup ? 'filled' : 'outlined'}
+            color={useTransactionGroup ? 'primary' : 'default'}
+            onClick={toggleTransactionGroup}
+          />
+        </Row>
+      )}
     </FormWrapper>
   )
 }
