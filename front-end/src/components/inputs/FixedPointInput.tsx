@@ -49,7 +49,7 @@ export const FixedPointInput: FC<Props> = (props) => {
     }
   }, [display])
 
-  const handleChange = (input: HTMLInputElement) => {
+  const handleChange = (input: HTMLInputElement | HTMLTextAreaElement) => {
     const digits = input.value.replace(/\D/g, '').slice(0, MAX_DIGITS)
     const newValue = digits === '' ? 0 : parseInt(digits, 10)
 
