@@ -126,7 +126,7 @@ const AccountForm: FC<Props> = (props) => {
       return
     }
 
-    onSubmit({
+    return onSubmit({
       name,
       initialAmounts: initialAmounts.map((ia) => new Balance(ia.currencyId!, ia.value)),
       isMine,

@@ -249,7 +249,7 @@ const TransactionForm: FC<Props> = (props) => {
       }
     }
 
-    accountCreations.then((newAccount) => {
+    return accountCreations.then((newAccount) =>
       onSubmit({
         amount,
         receiverAmount: differentCurrency ? receiverAmount : amount,
@@ -265,8 +265,8 @@ const TransactionForm: FC<Props> = (props) => {
       }).catch((err) => {
         setShowErrorToast('Unexpected error while submitting the category')
         console.error(err)
-      })
-    })
+      }),
+    )
   }
 
   return (

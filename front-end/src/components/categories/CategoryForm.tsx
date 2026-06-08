@@ -107,7 +107,7 @@ const CategoryForm: FC<Props> = (props) => {
       return
     }
 
-    onSubmit({
+    return onSubmit({
       name,
       iconName: selectedIcon,
       parentId: initialCategory?.id === rootCategory.id ? null : parent!,

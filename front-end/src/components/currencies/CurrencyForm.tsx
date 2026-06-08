@@ -9,6 +9,7 @@ import CodeEditor from '../inputs/CodeEditor'
 import DatePicker from '../inputs/DatePicker'
 import FormWrapper from '../shared/FormWrapper'
 import { Row } from '../shared/Layout'
+import { SecureButton } from '../shared/SecureButton'
 
 const validAmount = new RegExp(`^\\d+[.,]?$`)
 const validRate = new RegExp(`^\\d*[.,]?\\d*$`)
@@ -306,7 +307,7 @@ const CurrencyForm: FC<Props> = (props) => {
       return
     }
 
-    onSubmit(
+    return onSubmit(
       {
         name,
         decimalPoints: parseInt(decimalPoints),
@@ -540,9 +541,9 @@ const CurrencyForm: FC<Props> = (props) => {
                 justifyContent: 'space-between',
               }}
             >
-              <Button variant="contained" onClick={testScript}>
+              <SecureButton variant="contained" onClick={testScript}>
                 Test Run
-              </Button>
+              </SecureButton>
               <Typography color={rateScriptError === null ? 'success' : 'error'}>
                 {rateScriptError === null && scriptOutput !== null && (
                   <>

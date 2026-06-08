@@ -1,8 +1,9 @@
-import { Button, Snackbar, Stack } from '@mui/material'
+import { Snackbar, Stack } from '@mui/material'
 import { FC, FormEvent, ReactNode, useState } from 'react'
 import { default as styled } from 'styled-components'
 
 import Layout from './Layout'
+import { SecureButton } from './SecureButton'
 
 const Form = styled.form`
   max-width: 50rem;
@@ -10,7 +11,7 @@ const Form = styled.form`
 
 interface Props {
   children: ReactNode
-  onSubmit: (e: FormEvent<HTMLFormElement>) => void
+  onSubmit: (e: FormEvent<HTMLFormElement>) => void | Promise<void>
   submitText: string
   isValid?: boolean
   errorMessage?: string
@@ -19,15 +20,21 @@ interface Props {
 const FormWrapper: FC<Props> = (props) => {
   const { children, onSubmit, submitText, isValid = true, errorMessage } = props
   const [showErrorToast, setShowErrorToast] = useState(errorMessage || '')
+  const [submitting, setSubmitting] = useState(false)
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
 
-    if (!isValid) {
+    if (!isValid || submitting) {
       return
     }
 
-    onSubmit(e)
+    try {
+      setSubmitting(true)
+      await onSubmit(e)
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -36,9 +43,16 @@ const FormWrapper: FC<Props> = (props) => {
         <Stack spacing="1rem">{children}</Stack>
       </Layout>
 
-      <Button fullWidth variant="contained" type="submit" style={{ marginTop: '1rem' }}>
+      <SecureButton
+        fullWidth
+        variant="contained"
+        type="submit"
+        style={{ marginTop: '1rem' }}
+        loading={submitting}
+        disabled={!isValid}
+      >
         {submitText}
-      </Button>
+      </SecureButton>
 
       <Snackbar
         open={showErrorToast !== ''}
