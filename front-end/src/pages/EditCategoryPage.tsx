@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 
 import CategoryForm from '../components/categories/CategoryForm'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
+import { useToast } from '../components/shared/ToastProvider'
 import Category from '../domain/model/category'
 import { CategoryServiceContext } from '../service/ServiceContext'
 
@@ -14,6 +15,7 @@ const EditCategoryPage: FC = () => {
   const navigate = useNavigate()
   const { categoryId } = useParams<Params>()
   const { state: categories, update: updateCategory } = useContext(CategoryServiceContext)
+  const { showToast } = useToast()
   const selectedCategory = useMemo(
     () => categories.find((c) => c.id === parseInt(categoryId!)),
     [categories, categoryId],
@@ -25,9 +27,10 @@ const EditCategoryPage: FC = () => {
 
       await updateCategory({ id: selectedCategory!.id }, data)
 
+      showToast('Category updated')
       navigate(-1)
     },
-    [updateCategory, selectedCategory],
+    [updateCategory, selectedCategory, navigate, showToast],
   )
 
   if (typeof selectedCategory === 'undefined') {

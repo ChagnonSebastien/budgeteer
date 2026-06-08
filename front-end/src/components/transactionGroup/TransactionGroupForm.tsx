@@ -8,6 +8,7 @@ import CategoryPicker from '../categories/CategoryPicker'
 import CurrencyPicker from '../currencies/CurrencyPicker'
 import SelectOne from '../inputs/SelectOne'
 import FormWrapper from '../shared/FormWrapper'
+import { useToast } from '../shared/ToastProvider'
 
 const NoError = ''
 
@@ -44,7 +45,7 @@ const TransactionGroupForm: FC<Props> = (props) => {
   const augmentedCategory = useMemo(() => categories.find((c) => c.id === category), [category, categories])
   const [currency, setCurrency] = useState(initialTransactionGroup?.currency ?? defaultCurrency.id)
 
-  const [showErrorToast, setShowErrorToast] = useState('')
+  const { showToast } = useToast()
   const [errors, setErrors] = useState<{
     name: FieldStatus
   }>({
@@ -82,19 +83,19 @@ const TransactionGroupForm: FC<Props> = (props) => {
       return
     }
 
-    onSubmit({
+    return onSubmit({
       name: note,
       splitType: ParseSplitType(splitType),
       currency: currency,
       category: category,
     }).catch((err) => {
-      setShowErrorToast('Unexpected error while submitting the transaction group')
+      showToast('Unexpected error while submitting the transaction group', 'error')
       console.error(err)
     })
   }
 
   return (
-    <FormWrapper onSubmit={handleSubmit} submitText={submitText} isValid={isFormValid} errorMessage={showErrorToast}>
+    <FormWrapper onSubmit={handleSubmit} submitText={submitText} isValid={isFormValid}>
       <TextField
         type="text"
         label="Name"

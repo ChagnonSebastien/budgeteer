@@ -2,6 +2,7 @@ import { FC, useCallback, useContext, useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
 import ContentWithHeader from '../components/shared/ContentWithHeader'
+import { useToast } from '../components/shared/ToastProvider'
 import TransactionForm from '../components/transactions/TransactionForm'
 import Transaction from '../domain/model/transaction'
 import MixedAugmentation from '../service/MixedAugmentation'
@@ -17,6 +18,7 @@ const EditTransactionPage: FC = () => {
   const { transactionId } = useParams<Params>()
   const { update: updateTransaction } = useContext(TransactionServiceContext)
   const { augmentedTransactions } = useContext(MixedAugmentation)
+  const { showToast } = useToast()
   const selectedTransaction = useMemo(
     () => augmentedTransactions.find((t) => t.id === parseInt(transactionId!)),
     [augmentedTransactions, transactionId],
@@ -28,9 +30,10 @@ const EditTransactionPage: FC = () => {
 
       await updateTransaction({ id: selectedTransaction.id }, data)
 
+      showToast('Transaction updated')
       navigate(-1)
     },
-    [updateTransaction, selectedTransaction],
+    [updateTransaction, selectedTransaction, navigate, showToast],
   )
 
   if (typeof selectedTransaction === 'undefined') {

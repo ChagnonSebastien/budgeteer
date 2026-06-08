@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 
 import { UserContext } from '../App'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
+import { useToast } from '../components/shared/ToastProvider'
 import useQueryParams from '../components/shared/useQueryParams'
 import TransactionForm, { TransactionType } from '../components/transactions/TransactionForm'
 import { TransactionUpdatableFields } from '../domain/model/transaction'
@@ -19,6 +20,7 @@ const CreateTransactionPage: FC = () => {
 
   const { create: createTransaction } = useContext(TransactionServiceContext)
   const { email } = useContext(UserContext)
+  const { showToast } = useToast()
 
   const onSubmit = useCallback(
     async (data: Partial<TransactionUpdatableFields>) => {
@@ -46,9 +48,10 @@ const CreateTransactionPage: FC = () => {
         financialIncomeData: data.financialIncomeData ?? null,
         transactionGroupData: data.transactionGroupData ?? null,
       })
+      showToast('Transaction recorded')
       navigate(`/transactions`, { replace: true })
     },
-    [navigate],
+    [navigate, showToast],
   )
 
   return (

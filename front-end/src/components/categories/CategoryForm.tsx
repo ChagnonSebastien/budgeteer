@@ -15,6 +15,7 @@ import ContentWithHeader from '../shared/ContentWithHeader'
 import FormWrapper from '../shared/FormWrapper'
 import { Column, Row } from '../shared/Layout'
 import { CustomScrolling } from '../shared/ScrollingOverButton'
+import { useToast } from '../shared/ToastProvider'
 
 const SizedHexColorPicker = styled(HexColorPicker)`
   &.react-colorful {
@@ -65,7 +66,7 @@ const CategoryForm: FC<Props> = (props) => {
   const [showInnerColorModal, setShowInnerColorModal] = useState(false)
   const [showOuterColorModal, setShowOuterColorModal] = useState(false)
 
-  const [showErrorToast, setShowErrorToast] = useState('')
+  const { showToast } = useToast()
   const [errors, setErrors] = useState<{ categoryName?: string }>({})
   const [isTouched, setIsTouched] = useState(false)
 
@@ -116,13 +117,13 @@ const CategoryForm: FC<Props> = (props) => {
       fixedCosts: fixedCost,
       ordering: initialCategory?.ordering ?? 0,
     }).catch((err) => {
-      setShowErrorToast('Unexpected error while submitting the category')
+      showToast('Unexpected error while submitting the category', 'error')
       console.error(err)
     })
   }
 
   return (
-    <FormWrapper onSubmit={handleSubmit} submitText={submitText} isValid={isFormValid} errorMessage={showErrorToast}>
+    <FormWrapper onSubmit={handleSubmit} submitText={submitText} isValid={isFormValid}>
       <TextField
         type="text"
         label="Account name"

@@ -23,6 +23,7 @@ import { FixedPointInput } from '../inputs/FixedPointInput'
 import ItemPicker from '../inputs/ItemPicker'
 import FormWrapper from '../shared/FormWrapper'
 import { Row } from '../shared/Layout'
+import { useToast } from '../shared/ToastProvider'
 import { TransactionGroupCard } from '../transactionGroup/TransactionGroupCard'
 
 const NoError = ''
@@ -133,7 +134,7 @@ const TransactionForm: FC<Props> = (props) => {
     return transactionGroups.find((c) => c.id === transactionGroupId)
   }, [transactionGroups, transactionGroupId])
 
-  const [showErrorToast, setShowErrorToast] = useState('')
+  const { showToast } = useToast()
   const [errors, setErrors] = useState<{
     amount: FieldStatus
     sender: FieldStatus
@@ -263,14 +264,14 @@ const TransactionForm: FC<Props> = (props) => {
         financialIncomeData: type === 'financialIncome' ? new FinancialIncomeData(investmentCurrency) : null,
         transactionGroupData: transactionGroupId !== null ? new TransactionGroupData(transactionGroupId, null) : null,
       }).catch((err) => {
-        setShowErrorToast('Unexpected error while submitting the category')
+        showToast('Unexpected error while submitting the transaction', 'error')
         console.error(err)
       }),
     )
   }
 
   return (
-    <FormWrapper onSubmit={handleSubmit} submitText={submitText} isValid={isFormValid} errorMessage={showErrorToast}>
+    <FormWrapper onSubmit={handleSubmit} submitText={submitText} isValid={isFormValid}>
       <Row style={{ gap: '1rem' }}>
         <FixedPointInput
           sx={{ width: '100%' }}

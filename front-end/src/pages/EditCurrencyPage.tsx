@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 
 import CurrencyForm from '../components/currencies/CurrencyForm'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
+import { useToast } from '../components/shared/ToastProvider'
 import { CurrencyUpdatableFields } from '../domain/model/currency'
 import { CurrencyServiceContext } from '../service/ServiceContext'
 
@@ -19,6 +20,7 @@ const EditCurrency: FC<Props> = ({ scriptRunner }: Props) => {
 
   const { currencyId } = useParams<Params>()
   const { state: currencies, update: updateCurrencies } = useContext(CurrencyServiceContext)
+  const { showToast } = useToast()
   const selectedCurrency = useMemo(
     () => currencies.find((c) => c.id === parseInt(currencyId!)),
     [currencies, currencyId],
@@ -30,9 +32,10 @@ const EditCurrency: FC<Props> = ({ scriptRunner }: Props) => {
 
       await updateCurrencies({ id: selectedCurrency!.id }, data)
 
+      showToast('Currency updated')
       navigate(-1)
     },
-    [updateCurrencies, selectedCurrency],
+    [updateCurrencies, selectedCurrency, navigate, showToast],
   )
 
   if (typeof selectedCurrency === 'undefined') {

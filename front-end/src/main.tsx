@@ -6,6 +6,7 @@ import React from 'react'
 import { createRoot } from 'react-dom/client'
 
 import App from './App'
+import { ToastProvider } from './components/shared/ToastProvider'
 import { darkTheme } from './theme'
 
 const container = document.getElementById('root')
@@ -24,7 +25,9 @@ root.render(
   <ThemeProvider theme={darkTheme}>
     <CssBaseline />
     <LocalizationProvider dateAdapter={AdapterDayjs}>
-      <App />
+      <ToastProvider>
+        <App />
+      </ToastProvider>
     </LocalizationProvider>
   </ThemeProvider>,
 )

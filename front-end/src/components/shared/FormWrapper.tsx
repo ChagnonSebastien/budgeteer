@@ -1,4 +1,4 @@
-import { Snackbar, Stack } from '@mui/material'
+import { Stack } from '@mui/material'
 import { FC, FormEvent, ReactNode, useState } from 'react'
 import { default as styled } from 'styled-components'
 
@@ -14,12 +14,10 @@ interface Props {
   onSubmit: (e: FormEvent<HTMLFormElement>) => void | Promise<void>
   submitText: string
   isValid?: boolean
-  errorMessage?: string
 }
 
 const FormWrapper: FC<Props> = (props) => {
-  const { children, onSubmit, submitText, isValid = true, errorMessage } = props
-  const [showErrorToast, setShowErrorToast] = useState(errorMessage || '')
+  const { children, onSubmit, submitText, isValid = true } = props
   const [submitting, setSubmitting] = useState(false)
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
@@ -53,13 +51,6 @@ const FormWrapper: FC<Props> = (props) => {
       >
         {submitText}
       </SecureButton>
-
-      <Snackbar
-        open={showErrorToast !== ''}
-        message={showErrorToast}
-        autoHideDuration={5000}
-        onClose={() => setShowErrorToast('')}
-      />
     </Form>
   )
 }

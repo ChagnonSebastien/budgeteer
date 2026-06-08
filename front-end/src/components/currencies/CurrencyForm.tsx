@@ -10,6 +10,7 @@ import DatePicker from '../inputs/DatePicker'
 import FormWrapper from '../shared/FormWrapper'
 import { Row } from '../shared/Layout'
 import { SecureButton } from '../shared/SecureButton'
+import { useToast } from '../shared/ToastProvider'
 
 const validAmount = new RegExp(`^\\d+[.,]?$`)
 const validRate = new RegExp(`^\\d*[.,]?\\d*$`)
@@ -92,7 +93,7 @@ const CurrencyForm: FC<Props> = (props) => {
     return typeof initialCurrency === 'undefined' && tentativeDefaultCurrency !== null
   }, [initialCurrency, tentativeDefaultCurrency])
 
-  const [showErrorToast, setShowErrorToast] = useState('')
+  const { showToast } = useToast()
   const [errors, setErrors] = useState<{
     accountName: FieldStatus
     symbol: FieldStatus
@@ -328,7 +329,7 @@ const CurrencyForm: FC<Props> = (props) => {
           ]
         : undefined,
     ).catch((err) => {
-      setShowErrorToast('Unexpected error while submitting the currency')
+      showToast('Unexpected error while submitting the currency', 'error')
       console.error(err)
     })
   }
@@ -346,7 +347,7 @@ const CurrencyForm: FC<Props> = (props) => {
   }
 
   return (
-    <FormWrapper onSubmit={handleSubmit} submitText={submitText} errorMessage={showErrorToast}>
+    <FormWrapper onSubmit={handleSubmit} submitText={submitText}>
       <TextField
         type="text"
         label="Currency name"

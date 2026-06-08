@@ -9,6 +9,7 @@ import { IconToolsContext } from '../icons/IconTools'
 import { FixedPointInput } from '../inputs/FixedPointInput'
 import FormWrapper from '../shared/FormWrapper'
 import { Row, TinyHeader } from '../shared/Layout'
+import { useToast } from '../shared/ToastProvider'
 
 const IconButton = styled.div`
   margin: 1rem 0;
@@ -61,7 +62,7 @@ const AccountForm: FC<Props> = (props) => {
     return currencies.filter((cur) => initialAmounts.findIndex((ia) => ia.currencyId === cur.id) === -1)
   }, [currencies, initialAmounts])
 
-  const [showErrorToast, setShowErrorToast] = useState('')
+  const { showToast } = useToast()
   const [errors, setErrors] = useState<{ accountName: FieldStatus }>({
     accountName: {
       hasVisited: false,
@@ -133,13 +134,13 @@ const AccountForm: FC<Props> = (props) => {
       type: type.trim(),
       financialInstitution: financialInstitution.trim(),
     }).catch((err) => {
-      setShowErrorToast('Unexpected error while submitting')
+      showToast('Unexpected error while submitting the account', 'error')
       console.error(err)
     })
   }
 
   return (
-    <FormWrapper onSubmit={handleSubmit} submitText={submitText} isValid={isFormValid} errorMessage={showErrorToast}>
+    <FormWrapper onSubmit={handleSubmit} submitText={submitText} isValid={isFormValid}>
       <TextField
         type="text"
         label="Account name"

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 
 import { UserContext } from '../App'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
+import { useToast } from '../components/shared/ToastProvider'
 import TransactionGroupForm from '../components/transactionGroup/TransactionGroupForm'
 import { Person, TransactionGroupUpdatableFields } from '../domain/model/transactionGroup'
 import { TransactionGroupServiceContext } from '../service/ServiceContext'
@@ -12,6 +13,7 @@ const CreateTransactionGroupPage: FC = () => {
 
   const { create: createTransactionGroup } = useContext(TransactionGroupServiceContext)
   const { email, preferred_username } = useContext(UserContext)
+  const { showToast } = useToast()
 
   const onSubmit = useCallback(
     async (data: Partial<TransactionGroupUpdatableFields>) => {
@@ -29,9 +31,10 @@ const CreateTransactionGroupPage: FC = () => {
         hidden: false,
         members: [new Person(email, preferred_username, null, true)],
       })
+      showToast('Transaction group created')
       navigate(`/transaction-groups`, { replace: true })
     },
-    [navigate],
+    [navigate, showToast],
   )
 
   return (

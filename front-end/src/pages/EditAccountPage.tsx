@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 
 import AccountForm from '../components/accounts/AccountForm'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
+import { useToast } from '../components/shared/ToastProvider'
 import Account from '../domain/model/account'
 import { AccountServiceContext } from '../service/ServiceContext'
 
@@ -15,6 +16,7 @@ const EditAccountPage: FC = () => {
 
   const { accountId } = useParams<Params>()
   const { state: accounts, update: updateAccount } = useContext(AccountServiceContext)
+  const { showToast } = useToast()
   const selectedAccount = useMemo(() => accounts.find((c) => c.id === parseInt(accountId!)), [accounts, accountId])
 
   const onSubmit = useCallback(
@@ -23,9 +25,10 @@ const EditAccountPage: FC = () => {
 
       await updateAccount({ id: selectedAccount!.id }, data)
 
+      showToast('Account updated')
       navigate(-1)
     },
-    [updateAccount, selectedAccount],
+    [updateAccount, selectedAccount, navigate, showToast],
   )
 
   if (typeof selectedAccount === 'undefined') {
