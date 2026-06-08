@@ -8,6 +8,8 @@ interface Store<IdType, Item extends Unique<IdType, Item>, ItemIdentifiableField
   getAll(): Promise<Item[]>
   create(data: ItemUpdatableFields, identifier?: ItemIdentifiableFields): Promise<Item>
   update(identity: ItemIdentifiableFields, data: Partial<ItemUpdatableFields>): Promise<void>
+  // Optional: only entities that support deletion implement this.
+  delete?(identity: ItemIdentifiableFields): Promise<void>
 }
 
 interface LocalStore<IdType, Item extends Unique<IdType, Item>, ItemIdentifiableFields, ItemUpdatableFields>
@@ -140,8 +142,23 @@ export const BasicCrudServiceWithPersistence = <
   )
 
   const deleteItem = useCallback(
-    async (_uid: string): Promise<void> => {
-      throw new Error('not yet supported')
+    async (identity: ItemIdentifiableFields): Promise<void> => {
+      if (!longTermStore.delete || !localStore.delete) {
+        throw new Error(`deletion is not supported for ${itemName}`)
+      }
+
+      if (hasInternet) {
+        await longTermStore.delete(identity)
+        await localStore.delete(identity)
+      } else {
+        await localStore.delete(identity)
+        await actionStore.saveAction(itemName, 'delete', identity)
+      }
+
+      setState((prevState) => ({
+        data: prevState.data.filter((item) => item.id !== identity.id),
+        version: prevState.version + 1,
+      }))
     },
     [hasInternet],
   )

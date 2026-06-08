@@ -109,6 +109,10 @@ WHERE t.id = sqlc.arg(id)
   AND t.user_id = sqlc.arg(user_id)
 RETURNING t.id;
 
+-- name: DeleteTransaction :execrows
+DELETE FROM transactions
+WHERE id = sqlc.arg(id) AND user_id = sqlc.arg(user_id);
+
 -- name: UpsertFinancialIncome :one
 INSERT INTO financialincomes as fi (transaction_id, related_currency_id)
     VALUES (

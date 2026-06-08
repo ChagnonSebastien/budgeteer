@@ -6,5 +6,5 @@ export interface BasicCrudService<IdType, Item extends Unique<IdType, Item>, Ite
   version: number
   create(data: UpdatableFields, identity?: ItemIdentifiableFields): Promise<Item>
   update(identity: ItemIdentifiableFields, data: Partial<UpdatableFields>): Promise<void>
-  delete(uid: string): Promise<void>
+  delete(identity: ItemIdentifiableFields): Promise<void>
 }

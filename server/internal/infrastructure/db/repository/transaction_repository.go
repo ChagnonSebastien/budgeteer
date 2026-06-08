@@ -577,3 +577,17 @@ func (r *Repository) UpdateTransaction(
 
 	return
 }
+
+func (r *Repository) DeleteTransaction(ctx context.Context, userId uuid.UUID, id model.TransactionID) error {
+	// Child rows in financialincomes and transaction_transaction_group (and its
+	// user-split table) are removed by ON DELETE CASCADE.
+	_, err := r.queries.DeleteTransaction(ctx, &dao.DeleteTransactionParams{
+		ID:     int32(id),
+		UserID: userId,
+	})
+	if err != nil {
+		return fmt.Errorf("deleting transaction: %w", err)
+	}
+
+	return nil
+}

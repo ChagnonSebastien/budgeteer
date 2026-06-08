@@ -119,6 +119,10 @@ export default class TransactionLocalStore {
     })
   }
 
+  public async delete(identity: IdIdentifier): Promise<void> {
+    await this.db.transactions.delete(identity.id)
+  }
+
   public async sync(transactions: Transaction[]): Promise<void> {
     await this.db.transactions.clear()
     await this.db.transactions.bulkPut(

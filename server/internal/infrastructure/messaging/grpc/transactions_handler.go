@@ -36,6 +36,11 @@ type transactionRepository interface {
 		id model.TransactionID,
 		fields repository.UpdateTransactionFields,
 	) error
+	DeleteTransaction(
+		ctx context.Context,
+		userId uuid.UUID,
+		id model.TransactionID,
+	) error
 }
 
 func SplitTypeOverrideFromDto(splitType dto.SplitTypeOverride) (model.SplitTypeOverride, error) {
@@ -339,6 +344,22 @@ func (s *TransactionHandler) UpdateTransaction(
 	}
 
 	return &dto.UpdateTransactionResponse{}, nil
+}
+
+func (s *TransactionHandler) DeleteTransaction(
+	ctx context.Context,
+	req *dto.DeleteTransactionRequest,
+) (*dto.DeleteTransactionResponse, error) {
+	user, ok := shared.FromContext(ctx)
+	if !ok {
+		return nil, fmt.Errorf("getting user from context")
+	}
+
+	if err := s.transactionService.DeleteTransaction(ctx, user.ID, model.TransactionID(req.Id)); err != nil {
+		return nil, err
+	}
+
+	return &dto.DeleteTransactionResponse{}, nil
 }
 
 func (s *TransactionHandler) GetAllTransactions(

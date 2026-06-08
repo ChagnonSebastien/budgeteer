@@ -119,8 +119,17 @@ message UpdateTransactionResponse {
 
 }
 
+message DeleteTransactionRequest {
+  uint32 id = 1;
+}
+
+message DeleteTransactionResponse {
+
+}
+
 service TransactionService {
   rpc GetAllTransactions (GetAllTransactionsRequest) returns (GetAllTransactionsResponse);
   rpc CreateTransaction (CreateTransactionRequest) returns (CreateTransactionResponse);
   rpc UpdateTransaction (UpdateTransactionRequest) returns (UpdateTransactionResponse);
+  rpc DeleteTransaction (DeleteTransactionRequest) returns (DeleteTransactionResponse);
 }

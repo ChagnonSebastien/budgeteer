@@ -1,5 +1,6 @@
 import {
   Box,
+  Button,
   Checkbox,
   IconButton,
   Menu,
@@ -24,8 +25,10 @@ import { DrawerContext } from '../components/Menu'
 import BasicModal from '../components/shared/BasicModal'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
 import { DetailCard, FancyModal } from '../components/shared/FancyModal'
-import { Column } from '../components/shared/Layout'
+import { Column, Row } from '../components/shared/Layout'
+import { SecureButton } from '../components/shared/SecureButton'
 import SplitView from '../components/shared/SplitView'
+import { useToast } from '../components/shared/ToastProvider'
 import { useElementDimensions } from '../components/shared/useDimensions'
 import useQueryParams from '../components/shared/useQueryParams'
 import TransactionCard from '../components/transactions/TransactionCard'
@@ -34,7 +37,7 @@ import { AugmentedCategory } from '../domain/model/category'
 import { formatAmount } from '../domain/model/currency'
 import { AugmentedTransaction } from '../domain/model/transaction'
 import MixedAugmentation from '../service/MixedAugmentation'
-import { CategoryServiceContext } from '../service/ServiceContext'
+import { CategoryServiceContext, TransactionServiceContext } from '../service/ServiceContext'
 
 type QueryParams = {
   chart: string
@@ -46,9 +49,12 @@ const TransactionPage: FC = () => {
   const navigate = useNavigate()
   const { privacyMode } = useContext(DrawerContext)
   const [clickedTransaction, setClickedTransaction] = useState<AugmentedTransaction | null>(null)
+  const [transactionToDelete, setTransactionToDelete] = useState<AugmentedTransaction | null>(null)
 
   const { augmentedTransactions, rootCategory } = useContext(MixedAugmentation)
   const { state: categories } = useContext(CategoryServiceContext)
+  const { delete: deleteTransaction } = useContext(TransactionServiceContext)
+  const { showToast } = useToast()
 
   const { queryParams, updateQueryParams } = useQueryParams<QueryParams>()
   const graphType = useMemo(() => (queryParams.chart ?? 'line') as 'line' | 'pie', [queryParams.chart])
@@ -314,8 +320,10 @@ const TransactionPage: FC = () => {
                 label: 'Delete Transaction',
                 color: '#EF5350',
                 description: 'Remove this transaction',
-                action: () => {},
-                disabled: true,
+                action: () => {
+                  setTransactionToDelete(clickedTransaction)
+                },
+                disabled: false,
               },
             ]}
           >
@@ -391,6 +399,42 @@ const TransactionPage: FC = () => {
             </Column>
           </FancyModal>
         )}
+      </BasicModal>
+
+      <BasicModal open={transactionToDelete !== null} onClose={() => setTransactionToDelete(null)}>
+        <Column style={{ padding: '1.5rem', gap: '1rem', maxWidth: '22rem' }}>
+          <Typography variant="h6">Delete transaction?</Typography>
+          <Typography color="text.secondary">
+            This permanently removes
+            {transactionToDelete?.note ? ` "${transactionToDelete.note}"` : ' this transaction'}. This cannot be undone.
+          </Typography>
+          <Row style={{ gap: '1rem', justifyContent: 'end' }}>
+            <Button variant="text" color="inherit" onClick={() => setTransactionToDelete(null)}>
+              Cancel
+            </Button>
+            <SecureButton
+              variant="contained"
+              color="error"
+              onClick={() => {
+                const target = transactionToDelete
+                if (target === null) return Promise.resolve()
+                return deleteTransaction({ id: target.id }).then(
+                  () => {
+                    setTransactionToDelete(null)
+                    setClickedTransaction(null)
+                    showToast('Transaction deleted')
+                  },
+                  (err) => {
+                    showToast('Failed to delete transaction', 'error')
+                    console.error(err)
+                  },
+                )
+              }}
+            >
+              Delete
+            </SecureButton>
+          </Row>
+        </Column>
       </BasicModal>
     </ContentWithHeader>
   )

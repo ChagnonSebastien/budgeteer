@@ -3,6 +3,7 @@ import { RpcTransport } from '@protobuf-ts/runtime-rpc'
 import { formatDateTime, splitTypeOverrideToDto, TransactionConverter } from './converter/transactionConverter'
 import {
   CreateTransactionRequest,
+  DeleteTransactionRequest,
   FinancialIncomeData,
   GetAllTransactionsRequest,
   MemberSplitValue,
@@ -90,6 +91,14 @@ export default class TransactionRemoteStore {
       UpdateTransactionRequest.create({
         id: identity.id,
         fields: conv.toUpdateDTO(data),
+      }),
+    ).response
+  }
+
+  public async delete(identity: IdIdentifier): Promise<void> {
+    await this.client.deleteTransaction(
+      DeleteTransactionRequest.create({
+        id: identity.id,
       }),
     ).response
   }

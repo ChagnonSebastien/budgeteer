@@ -37,3 +37,5 @@ databaseChangeLog:
       file: ./changelogs/018-splitwise-01.sql
   - include:
       file: ./changelogs/019-default-user-id.sql
+  - include:
+      file: ./changelogs/020-transaction-delete-cascade.sql
