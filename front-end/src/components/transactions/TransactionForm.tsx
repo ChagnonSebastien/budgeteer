@@ -4,7 +4,7 @@ import { FC, useContext, useEffect, useMemo, useState } from 'react'
 import { UserContext } from '../../App'
 import Account, { AccountID } from '../../domain/model/account'
 import { CategoryID } from '../../domain/model/category'
-import { CurrencyID, formatAmount, parseAmount } from '../../domain/model/currency'
+import { CurrencyID } from '../../domain/model/currency'
 import Transaction, {
   AugmentedTransaction,
   FinancialIncomeData,
@@ -19,6 +19,7 @@ import IconCapsule from '../icons/IconCapsule'
 import { IconToolsContext } from '../icons/IconTools'
 import AccountPicker from '../inputs/AccountPicker'
 import DatePicker from '../inputs/DatePicker'
+import { FixedPointInput } from '../inputs/FixedPointInput'
 import ItemPicker from '../inputs/ItemPicker'
 import FormWrapper from '../shared/FormWrapper'
 import { Row } from '../shared/Layout'
@@ -26,18 +27,8 @@ import { TransactionGroupCard } from '../transactionGroup/TransactionGroupCard'
 
 const NoError = ''
 
-const validAmount = new RegExp(`^\\d*[.,]?\\d*$`)
-
-const validateAmount = (value: string) => {
+const validateAmount = (value: number) => {
   if (!value) {
-    return 'Amount is required'
-  }
-
-  if (!validAmount.test(value)) {
-    return 'Invalid amount. Enter a number'
-  }
-
-  if (parseFloat(value) === 0) {
     return 'Amount is required'
   }
 
@@ -84,11 +75,7 @@ const TransactionForm: FC<Props> = (props) => {
     return (initialTransaction?.sender?.isMine ?? false) ? 'expense' : 'income'
   }, [initialTransaction, rawType])
 
-  const [amount, setAmount] = useState<string>(() => {
-    if (typeof initialTransaction === 'undefined') return ''
-    return `${formatAmount(initialTransaction.currency, initialTransaction.amount)}`
-  })
-  const sanitizedAmount = useMemo(() => `0${amount.replace(',', '')}`, [amount])
+  const [amount, setAmount] = useState<number>(() => initialTransaction?.amount ?? 0)
   const [currency, setCurrency] = useState<CurrencyID>(initialTransaction?.currencyId ?? default_currency!)
   const [investmentCurrency, setInvestmentCurrency] = useState<CurrencyID>(
     initialTransaction?.financialIncomeData?.relatedCurrencyId ?? default_currency!,
@@ -99,12 +86,15 @@ const TransactionForm: FC<Props> = (props) => {
     if (typeof initialTransaction === 'undefined') return false
     return initialTransaction.receiverCurrencyId !== initialTransaction.currencyId
   })
-  const [receiverAmount, setReceiverAmount] = useState<string>(
-    `${typeof initialTransaction === 'undefined' ? '' : formatAmount(initialTransaction.receiverCurrency, initialTransaction.receiverAmount)}`,
-  )
-  const sanitizedReceiverAmount = useMemo(() => `0${receiverAmount.replace(',', '')}`, [receiverAmount])
+  const [receiverAmount, setReceiverAmount] = useState<number>(() => initialTransaction?.receiverAmount ?? 0)
   const [receiverCurrency, setReceiverCurrency] = useState<CurrencyID>(
     initialTransaction?.receiverCurrencyId ?? currencies[0].id,
+  )
+
+  const selectedCurrency = useMemo(() => currencies.find((c) => c.id === currency)!, [currencies, currency])
+  const selectedReceiverCurrency = useMemo(
+    () => currencies.find((c) => c.id === receiverCurrency)!,
+    [currencies, receiverCurrency],
   )
 
   const [parent, setParent] = useState<CategoryID | null>(
@@ -173,7 +163,7 @@ const TransactionForm: FC<Props> = (props) => {
   })
 
   useEffect(() => {
-    const amountError = validateAmount(sanitizedAmount)
+    const amountError = validateAmount(amount)
     const senderError = validateAccount(senderAccount.name, type === 'expense' || type === 'transfer')
     const receiverError = validateAccount(senderAccount.name, type === 'income' || type === 'transfer')
     setErrors((prevState) => ({
@@ -194,10 +184,10 @@ const TransactionForm: FC<Props> = (props) => {
         errorText: receiverError,
       },
     }))
-  }, [sanitizedAmount, senderAccount.id, receiverAccount.id])
+  }, [amount, senderAccount.id, receiverAccount.id])
 
   useEffect(() => {
-    const receiverAmountError = validateAmount(sanitizedReceiverAmount)
+    const receiverAmountError = validateAmount(receiverAmount)
     setErrors((prevState) => ({
       ...prevState,
       receiverAmount: {
@@ -206,7 +196,7 @@ const TransactionForm: FC<Props> = (props) => {
         errorText: receiverAmountError,
       },
     }))
-  }, [sanitizedReceiverAmount, differentCurrency])
+  }, [receiverAmount, differentCurrency])
 
   const isFormValid = useMemo(() => {
     return Object.values(errors).every((value) => value.isValid)
@@ -260,28 +250,9 @@ const TransactionForm: FC<Props> = (props) => {
     }
 
     accountCreations.then((newAccount) => {
-      console.log({
-        amount: parseAmount(currencies.find((c) => c.id === currency)!, sanitizedAmount),
-        receiverAmount: parseAmount(
-          currencies.find((c) => c.id === (differentCurrency ? receiverCurrency : currency))!,
-          differentCurrency ? sanitizedReceiverAmount : sanitizedAmount,
-        ),
-        categoryId: transactionGroup?.category ?? parent,
-        receiverId: receiverAccount.id ?? (type === 'expense' ? (newAccount?.id ?? null) : null),
-        senderId: senderAccount.id ?? (type === 'income' ? (newAccount?.id ?? null) : null),
-        note,
-        date,
-        currencyId: currency,
-        receiverCurrencyId: differentCurrency ? receiverCurrency : currency,
-        financialIncomeData: type === 'financialIncome' ? new FinancialIncomeData(investmentCurrency) : null,
-        transactionGroupData: transactionGroupId !== null ? new TransactionGroupData(transactionGroupId, null) : null,
-      })
       onSubmit({
-        amount: parseAmount(currencies.find((c) => c.id === currency)!, sanitizedAmount),
-        receiverAmount: parseAmount(
-          currencies.find((c) => c.id === (differentCurrency ? receiverCurrency : currency))!,
-          differentCurrency ? sanitizedReceiverAmount : sanitizedAmount,
-        ),
+        amount,
+        receiverAmount: differentCurrency ? receiverAmount : amount,
         categoryId: transactionGroup?.category ?? parent,
         receiverId: receiverAccount.id ?? (type === 'expense' ? (newAccount?.id ?? null) : null),
         senderId: senderAccount.id ?? (type === 'income' ? (newAccount?.id ?? null) : null),
@@ -301,13 +272,13 @@ const TransactionForm: FC<Props> = (props) => {
   return (
     <FormWrapper onSubmit={handleSubmit} submitText={submitText} isValid={isFormValid} errorMessage={showErrorToast}>
       <Row style={{ gap: '1rem' }}>
-        <TextField
+        <FixedPointInput
           sx={{ width: '100%' }}
           label={`Amount${differentCurrency ? ' Sent' : ''}`}
-          variant="standard"
           autoFocus
           value={amount}
-          onChange={(ev) => setAmount(ev.target.value as string)}
+          onChange={setAmount}
+          decimalPoints={selectedCurrency.decimalPoints}
           error={errors.amount.hasVisited && !!errors.amount.errorText}
           helperText={errors.amount.hasVisited ? errors.amount.errorText : ''}
           onBlur={() => {
@@ -389,13 +360,12 @@ const TransactionForm: FC<Props> = (props) => {
 
       {differentCurrency && (
         <Row style={{ gap: '1rem' }}>
-          <TextField
+          <FixedPointInput
             sx={{ width: '100%' }}
-            type="text"
             label="Amount Received"
-            variant="standard"
             value={receiverAmount}
-            onChange={(ev) => setReceiverAmount(ev.target.value as string)}
+            onChange={setReceiverAmount}
+            decimalPoints={selectedReceiverCurrency.decimalPoints}
             helperText={errors.receiverAmount.hasVisited ? errors.receiverAmount.errorText : ''}
             error={errors.receiverAmount.hasVisited && !!errors.receiverAmount.errorText}
             onBlur={() =>

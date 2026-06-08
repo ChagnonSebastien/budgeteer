@@ -6,7 +6,7 @@ import Account, { Balance } from '../../domain/model/account'
 import { AccountServiceContext, CurrencyServiceContext } from '../../service/ServiceContext'
 import CurrencyPicker from '../currencies/CurrencyPicker'
 import { IconToolsContext } from '../icons/IconTools'
-import { NumberInput, NumberInputFieldState } from '../inputs/NumberInput'
+import { FixedPointInput } from '../inputs/FixedPointInput'
 import FormWrapper from '../shared/FormWrapper'
 import { Row, TinyHeader } from '../shared/Layout'
 
@@ -45,18 +45,15 @@ const AccountForm: FC<Props> = (props) => {
     {
       uid: number
       currencyId: number | null
-      value: NumberInputFieldState
+      value: number
+      hasVisited: boolean
     }[]
   >(
     initialAccount?.initialAmounts.map((balance) => ({
       uid: Math.random(),
       currencyId: balance.currencyId,
-      value: {
-        value: `${balance.value / 100}`,
-        isValid: false,
-        hasVisited: false,
-        errorText: NoError,
-      },
+      value: balance.value,
+      hasVisited: false,
     })) ?? [],
   )
 
@@ -103,7 +100,7 @@ const AccountForm: FC<Props> = (props) => {
     let valid = Object.values(errors).every((value) => value.isValid)
     if (valid) {
       for (const state of initialAmounts) {
-        if (state.value.errorText !== NoError || state.currencyId === null) {
+        if (state.currencyId === null || state.value === 0) {
           valid = false
           break
         }
@@ -123,10 +120,7 @@ const AccountForm: FC<Props> = (props) => {
       setInitialAmount((prevState) =>
         prevState.map((ps) => ({
           ...ps,
-          value: {
-            ...ps.value,
-            hasVisited: true,
-          },
+          hasVisited: true,
         })),
       )
       return
@@ -134,9 +128,7 @@ const AccountForm: FC<Props> = (props) => {
 
     onSubmit({
       name,
-      initialAmounts: initialAmounts.map(
-        (ia) => new Balance(ia.currencyId!, Math.floor(parseFloat(`0${ia.value.value.replace(',', '.')}`) * 100)),
-      ),
+      initialAmounts: initialAmounts.map((ia) => new Balance(ia.currencyId!, ia.value)),
       isMine,
       type: type.trim(),
       financialInstitution: financialInstitution.trim(),
@@ -224,21 +216,20 @@ const AccountForm: FC<Props> = (props) => {
               labelText="Currency"
             />
 
-            <NumberInput
+            <FixedPointInput
+              sx={{ width: '100%' }}
               label="Initial balance"
-              key={i.uid}
               value={i.value}
-              setValue={(updater) =>
-                setInitialAmount((prevState) => {
-                  return prevState.map((ia) => {
-                    if (ia.uid !== i.uid) return ia
-
-                    return {
-                      ...ia,
-                      value: updater(ia.value),
-                    }
-                  })
-                })
+              onChange={(value) =>
+                setInitialAmount((prevState) => prevState.map((ia) => (ia.uid === i.uid ? { ...ia, value } : ia)))
+              }
+              decimalPoints={currencies.find((c) => c.id === i.currencyId)?.decimalPoints ?? 2}
+              error={i.hasVisited && i.value === 0}
+              helperText={i.hasVisited && i.value === 0 ? 'Amount is required' : NoError}
+              onBlur={() =>
+                setInitialAmount((prevState) =>
+                  prevState.map((ia) => (ia.uid === i.uid ? { ...ia, hasVisited: true } : ia)),
+                )
               }
             />
           </Row>
@@ -252,12 +243,8 @@ const AccountForm: FC<Props> = (props) => {
                 {
                   uid: Math.random(),
                   currencyId: availableCurrencies[0].id,
-                  value: {
-                    value: '',
-                    errorText: 'Amount is required',
-                    hasVisited: false,
-                    isValid: false,
-                  },
+                  value: 0,
+                  hasVisited: false,
                 },
               ])
             }
