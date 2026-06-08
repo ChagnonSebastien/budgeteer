@@ -1,3 +1,4 @@
+import { Alert, Box, Button, Divider, Paper, Stack, TextField, Typography } from '@mui/material'
 import { useState } from 'react'
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL + '/'
@@ -81,191 +82,97 @@ export function GuestLogin() {
   }
 
   return (
-    <div
-      style={{
+    <Box
+      sx={{
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
         minHeight: '100vh',
-        padding: '20px',
-        backgroundColor: '#f0f0f0',
+        p: 2.5,
+        bgcolor: 'background.default',
       }}
     >
-      <div
-        style={{
-          background: 'white',
-          borderRadius: '8px',
-          padding: '30px',
-          boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-          maxWidth: '400px',
-          width: '100%',
-        }}
-      >
-        <h1 style={{ margin: '0 0 8px 0', textAlign: 'center' }}>Budgeteer</h1>
-        <h2 style={{ margin: '0 0 24px 0', fontSize: '18px', fontWeight: 'normal', textAlign: 'center' }}>
+      <Paper elevation={3} sx={{ p: 4, maxWidth: 400, width: '100%' }}>
+        <Typography variant="h4" align="center" gutterBottom>
+          Budgeteer
+        </Typography>
+        <Typography variant="h6" align="center" color="text.secondary" sx={{ fontWeight: 'normal', mb: 3 }}>
           Guest Login
-        </h2>
+        </Typography>
 
         {error && (
-          <div
-            style={{
-              backgroundColor: '#fee',
-              color: '#c33',
-              padding: '12px',
-              borderRadius: '4px',
-              marginBottom: '16px',
-            }}
-          >
+          <Alert severity="error" sx={{ mb: 2 }}>
             {error}
-          </div>
+          </Alert>
         )}
         {message && (
-          <div
-            style={{
-              backgroundColor: '#efe',
-              color: '#3c3',
-              padding: '12px',
-              borderRadius: '4px',
-              marginBottom: '16px',
-            }}
-          >
+          <Alert severity="success" sx={{ mb: 2 }}>
             {message}
-          </div>
+          </Alert>
         )}
 
         {step === 'email' ? (
-          <form onSubmit={handleSendCode}>
-            <div style={{ marginBottom: '16px' }}>
-              <label htmlFor="name" style={{ display: 'block', marginBottom: '4px' }}>
-                Name
-              </label>
-              <input
-                type="text"
+          <Box component="form" onSubmit={handleSendCode}>
+            <Stack spacing={2}>
+              <TextField
                 id="name"
+                label="Name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Your name"
                 required
                 disabled={loading}
-                style={{
-                  width: '100%',
-                  padding: '8px',
-                  border: '1px solid #ccc',
-                  borderRadius: '4px',
-                  boxSizing: 'border-box',
-                }}
+                fullWidth
               />
-            </div>
-
-            <div style={{ marginBottom: '16px' }}>
-              <label htmlFor="email" style={{ display: 'block', marginBottom: '4px' }}>
-                Email
-              </label>
-              <input
-                type="email"
+              <TextField
                 id="email"
+                type="email"
+                label="Email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="your@email.com"
                 required
                 disabled={loading}
-                style={{
-                  width: '100%',
-                  padding: '8px',
-                  border: '1px solid #ccc',
-                  borderRadius: '4px',
-                  boxSizing: 'border-box',
-                }}
+                fullWidth
               />
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              style={{
-                width: '100%',
-                padding: '10px',
-                backgroundColor: '#007bff',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-              }}
-            >
-              {loading ? 'Sending...' : 'Send Login Code'}
-            </button>
-          </form>
+              <Button type="submit" variant="contained" disabled={loading} fullWidth>
+                {loading ? 'Sending...' : 'Send Login Code'}
+              </Button>
+            </Stack>
+          </Box>
         ) : (
-          <form onSubmit={handleVerifyCode}>
-            <div style={{ marginBottom: '16px' }}>
-              <label htmlFor="code" style={{ display: 'block', marginBottom: '4px' }}>
-                Verification Code
-              </label>
-              <input
-                type="text"
+          <Box component="form" onSubmit={handleVerifyCode}>
+            <Stack spacing={2}>
+              <TextField
                 id="code"
+                label="Verification Code"
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
                 placeholder="Enter 6-digit code"
                 required
                 disabled={loading}
-                maxLength={8}
+                slotProps={{ htmlInput: { maxLength: 8 } }}
                 autoFocus
-                style={{
-                  width: '100%',
-                  padding: '8px',
-                  border: '1px solid #ccc',
-                  borderRadius: '4px',
-                  boxSizing: 'border-box',
-                }}
+                fullWidth
               />
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              style={{
-                width: '100%',
-                padding: '10px',
-                backgroundColor: '#007bff',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                marginBottom: '8px',
-              }}
-            >
-              {loading ? 'Verifying...' : 'Verify & Login'}
-            </button>
-
-            <button
-              type="button"
-              onClick={handleBackToEmail}
-              disabled={loading}
-              style={{
-                width: '100%',
-                padding: '10px',
-                backgroundColor: 'white',
-                color: '#007bff',
-                border: '1px solid #007bff',
-                borderRadius: '4px',
-                cursor: 'pointer',
-              }}
-            >
-              Back
-            </button>
-          </form>
+              <Button type="submit" variant="contained" disabled={loading} fullWidth>
+                {loading ? 'Verifying...' : 'Verify & Login'}
+              </Button>
+              <Button type="button" variant="outlined" onClick={handleBackToEmail} disabled={loading} fullWidth>
+                Back
+              </Button>
+            </Stack>
+          </Box>
         )}
 
-        <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px solid #e0e0e0' }}>
-          <p style={{ margin: '8px 0', fontSize: '13px', color: '#666', textAlign: 'center' }}>
-            A verification code will be sent to your email address.
-          </p>
-          <p style={{ margin: '8px 0', fontSize: '13px', color: '#666', textAlign: 'center' }}>
-            Guest accounts have limited access to features.
-          </p>
-        </div>
-      </div>
-    </div>
+        <Divider sx={{ mt: 2.5, mb: 2 }} />
+        <Typography variant="caption" component="p" align="center" color="text.secondary" sx={{ mb: 1 }}>
+          A verification code will be sent to your email address.
+        </Typography>
+        <Typography variant="caption" component="p" align="center" color="text.secondary">
+          Guest accounts have limited access to features.
+        </Typography>
+      </Paper>
+    </Box>
   )
 }
