@@ -216,6 +216,7 @@ func (auth *Auth) callbackHandler(w http.ResponseWriter, r *http.Request) {
 	if err := token.Claims(&tokenClaims); err != nil {
 		logger.Error("parsing claims", "error", err)
 		http.Error(w, "parsing claims", http.StatusInternalServerError)
+		return
 	}
 
 	logger = logger.With("user", tokenClaims.Email)
