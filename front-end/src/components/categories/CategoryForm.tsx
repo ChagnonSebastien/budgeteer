@@ -123,7 +123,7 @@ const CategoryForm: FC<Props> = (props) => {
   }
 
   return (
-    <FormWrapper onSubmit={handleSubmit} submitText={submitText} isValid={isFormValid}>
+    <FormWrapper onSubmit={handleSubmit} submitText={submitText}>
       <TextField
         type="text"
         label="Account name"

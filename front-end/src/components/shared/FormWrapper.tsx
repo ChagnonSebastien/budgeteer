@@ -13,17 +13,18 @@ interface Props {
   children: ReactNode
   onSubmit: (e: FormEvent<HTMLFormElement>) => void | Promise<void>
   submitText: string
-  isValid?: boolean
 }
 
 const FormWrapper: FC<Props> = (props) => {
-  const { children, onSubmit, submitText, isValid = true } = props
+  const { children, onSubmit, submitText } = props
   const [submitting, setSubmitting] = useState(false)
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
 
-    if (!isValid || submitting) {
+    // Always delegate to the form's onSubmit, even when the form is incomplete:
+    // each form reveals its own validation errors on an invalid submit attempt.
+    if (submitting) {
       return
     }
 
@@ -47,7 +48,6 @@ const FormWrapper: FC<Props> = (props) => {
         type="submit"
         style={{ marginTop: '1rem' }}
         loading={submitting}
-        disabled={!isValid}
       >
         {submitText}
       </SecureButton>

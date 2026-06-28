@@ -364,7 +364,7 @@ const TransactionForm: FC<Props> = (props) => {
   }
 
   return (
-    <FormWrapper onSubmit={handleSubmit} submitText={submitText} isValid={isFormValid}>
+    <FormWrapper onSubmit={handleSubmit} submitText={submitText}>
       <Row style={{ gap: '1rem' }}>
         <FixedPointInput
           sx={{ width: '100%' }}

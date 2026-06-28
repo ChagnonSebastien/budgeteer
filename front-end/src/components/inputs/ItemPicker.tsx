@@ -106,6 +106,11 @@ function ItemPicker<ItemID, T extends NamedItem<ItemID, T>, AdditionalItemProps>
 
   const anchorRef = useRef<HTMLDivElement>(null)
   const focusedItemRef = useRef<HTMLLIElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  // Drop focus from the field once a value has been picked, so the input no
+  // longer looks selected/active after a selection.
+  const blurInput = () => inputRef.current?.blur()
 
   const displayedItems = useMemo(() => {
     if (filter === '') return items
@@ -137,6 +142,7 @@ function ItemPicker<ItemID, T extends NamedItem<ItemID, T>, AdditionalItemProps>
     if (focusedItemId !== null) {
       onSelectItem(focusedItemId)
       setShowModal(false)
+      blurInput()
       return
     }
 
@@ -150,6 +156,7 @@ function ItemPicker<ItemID, T extends NamedItem<ItemID, T>, AdditionalItemProps>
       // If there's an exact match, select it
       onSelectItem(exactMatch[0].id)
       setShowModal(false)
+      blurInput()
       return
     }
 
@@ -158,6 +165,7 @@ function ItemPicker<ItemID, T extends NamedItem<ItemID, T>, AdditionalItemProps>
       if (filterAsNewValueValidation.isOk()) {
         onNewItemSelected(cleanedValue)
         setShowModal(false)
+        blurInput()
       } else {
         setFailedCreatingOnce(true)
       }
@@ -216,6 +224,7 @@ function ItemPicker<ItemID, T extends NamedItem<ItemID, T>, AdditionalItemProps>
       onNewItemSelected(trimmedFilter)
       setShowModal(false)
       setFilter('')
+      blurInput()
     } else {
       setFailedCreatingOnce(true)
     }
@@ -230,6 +239,7 @@ function ItemPicker<ItemID, T extends NamedItem<ItemID, T>, AdditionalItemProps>
             variant="standard"
             label={labelText}
             placeholder="None"
+            inputRef={inputRef}
             value={showModal ? filter : itemDisplayText(selectedItem)}
             error={!!errorText || (failedCreatingOnce && filterAsNewValueValidation.isErr())}
             helperText={
@@ -270,6 +280,7 @@ function ItemPicker<ItemID, T extends NamedItem<ItemID, T>, AdditionalItemProps>
                       onSelectItem(item.id)
                       setShowModal(false)
                       setFilter('')
+                      blurInput()
                     }}
                   >
                     {itemDisplayText(item)}
@@ -300,6 +311,7 @@ function ItemPicker<ItemID, T extends NamedItem<ItemID, T>, AdditionalItemProps>
           variant="standard"
           label={labelText}
           placeholder={'None'}
+          inputRef={inputRef}
           value={itemDisplayText(selectedItem)}
           helperText={errorText}
           onFocus={(e) => {
@@ -334,6 +346,7 @@ function ItemPicker<ItemID, T extends NamedItem<ItemID, T>, AdditionalItemProps>
                 onSelectItem: (item: ItemID) => {
                   setShowModal(false)
                   onSelectItem(item)
+                  blurInput()
                 },
                 selectedItem: selectedItemId,
               }}

@@ -1,7 +1,22 @@
 import { SxProps, TextField, Theme } from '@mui/material'
-import { FC, useLayoutEffect, useRef } from 'react'
+import { FC, useLayoutEffect, useRef, useState } from 'react'
 
 const MAX_DIGITS = 15
+
+/** Keys that mean "I want to type the fractional part now". */
+const SEPARATOR_KEYS = ['.', ',', 'Decimal']
+
+/** The locale's decimal separator (e.g. "." for en-US, "," for fr-CA). */
+const DECIMAL_SEPARATOR = ((): string => {
+  try {
+    const part = new Intl.NumberFormat(undefined).formatToParts(1.1).find((p) => p.type === 'decimal')
+    return part?.value ?? '.'
+  } catch {
+    return '.'
+  }
+})()
+
+const isDigit = (ch: string) => ch >= '0' && ch <= '9'
 
 /**
  * Formats a scaled integer (e.g. 1256) into its fixed-point representation for a
@@ -14,17 +29,64 @@ function formatScaled(value: number, decimalPoints: number): string {
   })
 }
 
-/** Caret index in `formatted` that sits just after the first `digitCount` digits. */
-function caretAfterDigits(formatted: string, digitCount: number): number {
-  if (digitCount <= 0) return 0
+/** Number of digit characters to the right of `caret` in `str`. */
+function digitsRightOf(str: string, caret: number): number {
+  let n = 0
+  for (let i = caret; i < str.length; i++) if (isDigit(str[i])) n++
+  return n
+}
+
+/**
+ * Caret index in `str` that leaves exactly `count` digits to its right. Counting from
+ * the right keeps the caret stable across reformatting even as the leading "0" pad
+ * appears/disappears (which is what breaks left-counting for values below 1).
+ */
+function caretLeavingDigitsRight(str: string, count: number): number {
+  if (count <= 0) return str.length
   let seen = 0
-  for (let i = 0; i < formatted.length; i++) {
-    if (formatted[i] >= '0' && formatted[i] <= '9') {
+  for (let i = str.length - 1; i >= 0; i--) {
+    if (isDigit(str[i])) {
       seen++
-      if (seen === digitCount) return i + 1
+      if (seen === count) return i
     }
   }
-  return formatted.length
+  return 0
+}
+
+/** Keeps only digits and at most one decimal separator from free-typed text. */
+function sanitize(input: string): string {
+  let seenSeparator = false
+  let out = ''
+  for (const ch of input) {
+    if (isDigit(ch)) {
+      out += ch
+    } else if (ch === DECIMAL_SEPARATOR && !seenSeparator) {
+      out += ch
+      seenSeparator = true
+    }
+  }
+  return out
+}
+
+/**
+ * Parses a literal draft (digits + at most one separator) into a scaled integer.
+ * "12.3" with 2 decimals -> 1230; the fraction is padded/truncated to the currency's decimals.
+ */
+function parseLiteral(input: string, decimalPoints: number): number {
+  const separatorIndex = input.indexOf(DECIMAL_SEPARATOR)
+  if (separatorIndex === -1) {
+    const digits = input.replace(/\D/g, '').slice(0, MAX_DIGITS)
+    return digits === '' ? 0 : parseInt(digits, 10)
+  }
+
+  const intDigits = input.slice(0, separatorIndex).replace(/\D/g, '')
+  const fracDigits = input
+    .slice(separatorIndex + 1)
+    .replace(/\D/g, '')
+    .slice(0, decimalPoints)
+    .padEnd(decimalPoints, '0')
+  const combined = (intDigits + fracDigits).slice(0, MAX_DIGITS)
+  return combined === '' ? 0 : parseInt(combined, 10)
 }
 
 interface Props {
@@ -42,22 +104,31 @@ interface Props {
 }
 
 /**
- * Calculator-style amount input: the user only types digits and they fill in from
- * the right, with the decimal point placed according to the currency's decimals.
- * Typing 1, 2, 5, 6 with two decimals shows "0.01", "0.12", "1.25", "12.56".
+ * Amount input with two entry styles that converge on the same value:
  *
- * Editing in the middle keeps the caret where the user is working (it tracks the
- * number of digits to its left), rather than jumping to the end on every keystroke.
+ *  - By default it is calculator style: you type digits and they fill in from the right,
+ *    reformatting live ("1", "12", "123" -> "0.01", "0.12", "1.23"). Editing in the middle
+ *    works -- the caret tracks the number of digits to its right, so backspace/delete/insert
+ *    land where expected even as the leading "0" pad comes and goes.
+ *  - Pressing the decimal key switches (for the rest of that focus) to literal entry: the
+ *    digits typed so far become the integer part and you type the fraction ("12" "." "3").
+ *
+ * Both "1230" and "12.3" yield "12.30" at two decimals.
  */
 export const FixedPointInput: FC<Props> = (props) => {
   const { value, onChange, decimalPoints, label, error, helperText, onBlur, autoFocus, sx } = props
 
+  // While `literal`, the field shows `draft` (raw text); otherwise it shows the live
+  // formatted value. Both reset on focus so each editing session starts in calculator mode.
+  const [literal, setLiteral] = useState(false)
+  const [draft, setDraft] = useState('')
+  const display = literal ? draft : formatScaled(value, decimalPoints)
+
   const inputRef = useRef<HTMLInputElement>(null)
   const pendingCaret = useRef<number | null>(null)
-  const display = formatScaled(value, decimalPoints)
 
-  // After React re-renders with the reformatted value it would reset the caret to
-  // the end; restore the position we computed during the edit instead.
+  // After React re-renders the reformatted value it would push the caret to the end;
+  // restore the position we computed during the edit instead.
   useLayoutEffect(() => {
     const input = inputRef.current
     if (input && pendingCaret.current !== null && document.activeElement === input) {
@@ -66,25 +137,26 @@ export const FixedPointInput: FC<Props> = (props) => {
     pendingCaret.current = null
   }, [display])
 
-  const handleChange = (input: HTMLInputElement | HTMLTextAreaElement) => {
-    const raw = input.value
-    const caretRaw = input.selectionStart ?? raw.length
-    // How many digits sit to the left of the caret in the user's edited text.
-    const digitsLeft = raw.slice(0, caretRaw).replace(/\D/g, '').length
-
-    const digits = raw.replace(/\D/g, '').slice(0, MAX_DIGITS)
+  const handleCalcChange = (input: HTMLInputElement | HTMLTextAreaElement) => {
+    const digitsRight = digitsRightOf(input.value, input.selectionStart ?? input.value.length)
+    const digits = input.value.replace(/\D/g, '').slice(0, MAX_DIGITS)
     const newValue = digits === '' ? 0 : parseInt(digits, 10)
     const formatted = formatScaled(newValue, decimalPoints)
-    const caret = caretAfterDigits(formatted, digitsLeft)
+    const caret = caretLeavingDigitsRight(formatted, digitsRight)
 
-    // Apply immediately (covers the case where the numeric value is unchanged and
-    // React skips the re-render, so a non-digit keystroke can't linger) and
-    // remember the position to reapply after the re-render.
+    // Apply immediately (covers the case where the numeric value is unchanged, so React
+    // skips the re-render) and remember the caret to reapply after the re-render.
     input.value = formatted
     input.setSelectionRange(caret, caret)
     pendingCaret.current = caret
 
     onChange(newValue)
+  }
+
+  const handleLiteralChange = (input: HTMLInputElement | HTMLTextAreaElement) => {
+    const next = sanitize(input.value)
+    setDraft(next)
+    onChange(parseLiteral(next, decimalPoints))
   }
 
   return (
@@ -95,19 +167,31 @@ export const FixedPointInput: FC<Props> = (props) => {
       variant="standard"
       autoFocus={autoFocus}
       value={display}
-      onChange={(ev) => handleChange(ev.target)}
-      onFocus={(ev) => {
-        // A fresh (empty) amount starts at the end so digits append; an existing
-        // amount respects where the user clicked so they can edit in place.
-        if (value === 0) {
-          const end = ev.target.value.length
-          ev.target.setSelectionRange(end, end)
-        }
+      onKeyDown={(ev) => {
+        if (literal || !SEPARATOR_KEYS.includes(ev.key)) return
+        // Switch to literal entry: the digits typed so far are the integer part.
+        ev.preventDefault()
+        const next = `${value}${DECIMAL_SEPARATOR}`
+        pendingCaret.current = next.length
+        setLiteral(true)
+        setDraft(next)
+        onChange(parseLiteral(next, decimalPoints))
       }}
-      onBlur={onBlur}
+      onChange={(ev) => (literal ? handleLiteralChange(ev.target) : handleCalcChange(ev.target))}
+      onFocus={(ev) => {
+        setLiteral(false)
+        setDraft('')
+        const end = ev.target.value.length
+        ev.target.setSelectionRange(end, end)
+      }}
+      onBlur={() => {
+        setLiteral(false)
+        setDraft('')
+        onBlur?.()
+      }}
       error={error}
       helperText={helperText}
-      slotProps={{ htmlInput: { inputMode: 'numeric' } }}
+      slotProps={{ htmlInput: { inputMode: 'decimal' } }}
     />
   )
 }
