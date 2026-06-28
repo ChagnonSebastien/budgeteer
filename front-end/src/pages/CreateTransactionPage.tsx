@@ -1,5 +1,5 @@
 import { FC, useCallback, useContext, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 
 import { UserContext } from '../App'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
@@ -15,6 +15,8 @@ type QueryParams = {
 
 const CreateTransactionPage: FC = () => {
   const navigate = useNavigate()
+  const location = useLocation()
+  const returnTo = (location.state as { from?: string } | null)?.from ?? '/transactions'
   const { queryParams } = useQueryParams<QueryParams>()
   const type = useMemo(() => (queryParams.type ?? 'expense') as TransactionType, [queryParams.type])
 
@@ -49,9 +51,9 @@ const CreateTransactionPage: FC = () => {
         transactionGroupData: data.transactionGroupData ?? null,
       })
       showToast('Transaction recorded')
-      navigate(`/transactions`, { replace: true })
+      navigate(returnTo, { replace: true })
     },
-    [navigate, showToast],
+    [navigate, showToast, returnTo],
   )
 
   return (

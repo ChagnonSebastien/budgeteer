@@ -14,7 +14,7 @@ import {
 } from '@mui/material'
 import { format, isAfter, isBefore, isSameDay } from 'date-fns'
 import { FC, useContext, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 
 import AggregatedDiffChart from '../components/graphing/AggregatedDiffChart'
 import { FirstDivision, GraphContainer } from '../components/graphing/GraphStyledComponents'
@@ -47,6 +47,8 @@ type QueryParams = {
 
 const TransactionPage: FC = () => {
   const navigate = useNavigate()
+  const location = useLocation()
+  const currentUrl = `${location.pathname}${location.search}`
   const { privacyMode } = useContext(DrawerContext)
   const [clickedTransaction, setClickedTransaction] = useState<AugmentedTransaction | null>(null)
   const [transactionToDelete, setTransactionToDelete] = useState<AugmentedTransaction | null>(null)
@@ -254,17 +256,17 @@ const TransactionPage: FC = () => {
       >
         <SpeedDialAction
           sx={{ backgroundColor: 'red' }}
-          onClick={() => navigate('/transactions/new?type=expense')}
+          onClick={() => navigate('/transactions/new?type=expense', { state: { from: currentUrl } })}
           icon={<IconLib.MdOutput />}
         />
         <SpeedDialAction
           sx={{ backgroundColor: 'green' }}
-          onClick={() => navigate('/transactions/new?type=income')}
+          onClick={() => navigate('/transactions/new?type=income', { state: { from: currentUrl } })}
           icon={<IconLib.MdInput />}
         />
         <SpeedDialAction
           sx={{ backgroundColor: 'darkgrey' }}
-          onClick={() => navigate('/transactions/new?type=transfer')}
+          onClick={() => navigate('/transactions/new?type=transfer', { state: { from: currentUrl } })}
           icon={<IconLib.GrTransaction />}
         />
       </SpeedDial>
