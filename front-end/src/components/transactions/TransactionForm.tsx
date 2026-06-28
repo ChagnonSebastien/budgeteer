@@ -65,7 +65,11 @@ const TransactionForm: FC<Props> = (props) => {
   const { create: createAccount } = useContext(AccountServiceContext)
   const { state: categories } = useContext(CategoryServiceContext)
   const { state: currencies } = useContext(CurrencyServiceContext)
-  const { rootCategory, augmentedTransactionGroups: transactionGroups } = useContext(MixedAugmentation)
+  const {
+    rootCategory,
+    augmentedTransactionGroups: transactionGroups,
+    augmentedTransactions,
+  } = useContext(MixedAugmentation)
   const { default_currency, email } = useContext(UserContext)
   const { IconLib } = useContext(IconToolsContext)
 
@@ -209,6 +213,39 @@ const TransactionForm: FC<Props> = (props) => {
       },
     }))
   }, [receiverAmount, differentCurrency])
+
+  useEffect(() => {
+    if (typeof initialTransaction !== 'undefined') return
+    if (type === 'transfer') return
+    if (parent !== rootCategory.id) return
+
+    const inferFromSender = type === 'income' || type === 'financialIncome'
+    const partyId = inferFromSender ? senderAccount.id : receiverAccount.id
+    if (partyId === null) return
+
+    let latest: AugmentedTransaction | undefined
+    for (const transaction of augmentedTransactions) {
+      const matches = inferFromSender ? transaction.senderId === partyId : transaction.receiverId === partyId
+      if (matches && transaction.categoryId !== null) {
+        latest = transaction
+        break
+      }
+    }
+
+    if (typeof latest === 'undefined' || latest.categoryId === null || latest.categoryId === parent) return
+
+    setParent(latest.categoryId)
+    showToast('Category autofilled from past behavior', 'info')
+  }, [
+    type,
+    senderAccount.id,
+    receiverAccount.id,
+    parent,
+    augmentedTransactions,
+    initialTransaction,
+    rootCategory.id,
+    showToast,
+  ])
 
   const isFormValid = useMemo(() => {
     return Object.values(errors).every((value) => value.isValid)
