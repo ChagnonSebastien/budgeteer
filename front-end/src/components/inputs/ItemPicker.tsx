@@ -1,5 +1,16 @@
-import { Button, DialogActions, DialogContent, DialogTitle, TextField } from '@mui/material'
-import React, { CSSProperties, FC, ReactNode, useEffect, useMemo, useState } from 'react'
+import {
+  Button,
+  ClickAwayListener,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  MenuItem,
+  MenuList,
+  Paper,
+  Popper,
+  TextField,
+} from '@mui/material'
+import React, { CSSProperties, FC, ReactNode, useEffect, useMemo, useRef, useState } from 'react'
 import { default as styled } from 'styled-components'
 
 import { NotEmptyValidator, Validator } from './Validator'
@@ -23,6 +34,8 @@ const SearchContainer = styled.div`
 
 const defaultValidator = new NotEmptyValidator()
 
+export type ItemPickerVariant = 'modal' | 'dropdown'
+
 export interface ItemPickerProps<ItemID, T extends NamedItem<ItemID, T>, AdditionalItemProps> {
   items: T[]
 
@@ -31,6 +44,8 @@ export interface ItemPickerProps<ItemID, T extends NamedItem<ItemID, T>, Additio
   searchPlaceholder?: string
   style?: CSSProperties
   errorText?: string
+
+  variant?: ItemPickerVariant
 
   itemDisplayText?: (item: T | undefined) => string
 
@@ -62,6 +77,7 @@ function ItemPicker<ItemID, T extends NamedItem<ItemID, T>, AdditionalItemProps>
     searchPlaceholder,
     style,
     errorText,
+    variant = 'modal',
     itemDisplayText = (item: T | undefined) => item?.name ?? '',
     allowNew = false,
     newItemStringValidator = defaultValidator,
@@ -88,6 +104,9 @@ function ItemPicker<ItemID, T extends NamedItem<ItemID, T>, AdditionalItemProps>
   const [focusedItemId, setFocusedItemId] = useState<ItemID | null>(null)
   const [failedCreatingOnce, setFailedCreatingOnce] = useState(false)
 
+  const anchorRef = useRef<HTMLDivElement>(null)
+  const focusedItemRef = useRef<HTMLLIElement>(null)
+
   const displayedItems = useMemo(() => {
     if (filter === '') return items
     return items.filter((i) => doesStringMatchItem(filter, i))
@@ -108,6 +127,10 @@ function ItemPicker<ItemID, T extends NamedItem<ItemID, T>, AdditionalItemProps>
       setFailedCreatingOnce(false)
     }
   }, [cleanFilterOnModalOpen, showModal])
+
+  useEffect(() => {
+    focusedItemRef.current?.scrollIntoView({ block: 'nearest' })
+  }, [focusedItemId])
 
   const handleConfirmClick = () => {
     // If there's a focused item, select it
@@ -141,7 +164,7 @@ function ItemPicker<ItemID, T extends NamedItem<ItemID, T>, AdditionalItemProps>
     }
   }
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLElement>) => {
     if (e.key === 'Enter') {
       handleConfirmClick()
       e.preventDefault()
@@ -182,6 +205,89 @@ function ItemPicker<ItemID, T extends NamedItem<ItemID, T>, AdditionalItemProps>
 
   // Determine if we should show the confirm button
   const showConfirmButton = allowNew && onNewItemSelected && filter.trim().length > 0
+
+  const trimmedFilter = filter.trim()
+  const hasExactMatch = items.some((item) => doesStringMatchItemPerfectly(trimmedFilter, item))
+  const showCreateRow = allowNew && !!onNewItemSelected && trimmedFilter.length > 0 && !hasExactMatch
+
+  const createNew = () => {
+    if (!onNewItemSelected) return
+    if (filterAsNewValueValidation.isOk()) {
+      onNewItemSelected(trimmedFilter)
+      setShowModal(false)
+      setFilter('')
+    } else {
+      setFailedCreatingOnce(true)
+    }
+  }
+
+  if (variant === 'dropdown') {
+    return (
+      <ClickAwayListener onClickAway={() => setShowModal(false)}>
+        <div ref={anchorRef} style={{ ...style, width: '100%' }}>
+          <TextField
+            fullWidth
+            variant="standard"
+            label={labelText}
+            placeholder="None"
+            value={showModal ? filter : itemDisplayText(selectedItem)}
+            error={!!errorText || (failedCreatingOnce && filterAsNewValueValidation.isErr())}
+            helperText={
+              failedCreatingOnce && filterAsNewValueValidation.isErr() ? filterAsNewValueValidation.error : errorText
+            }
+            onFocus={(e) => {
+              setShowModal(true)
+              setFilter('')
+              e.target.select()
+            }}
+            onChange={(e) => {
+              setFilter(e.target.value)
+              setShowModal(true)
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') {
+                setShowModal(false)
+                return
+              }
+              handleKeyDown(e)
+            }}
+          />
+          <Popper
+            open={showModal}
+            anchorEl={anchorRef.current}
+            placement="bottom-start"
+            style={{ zIndex: 1300, width: anchorRef.current?.clientWidth }}
+          >
+            <Paper elevation={3} style={{ maxHeight: '40vh', overflowY: 'auto' }}>
+              <MenuList dense>
+                {displayedItems.map((item) => (
+                  <MenuItem
+                    key={`dropdown-item-${item.id}`}
+                    ref={item.id === focusedItemId ? focusedItemRef : undefined}
+                    selected={item.id === focusedItemId || item.id === selectedItemId}
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => {
+                      onSelectItem(item.id)
+                      setShowModal(false)
+                      setFilter('')
+                    }}
+                  >
+                    {itemDisplayText(item)}
+                  </MenuItem>
+                ))}
+                {showCreateRow && (
+                  <MenuItem onMouseDown={(e) => e.preventDefault()} onClick={createNew}>
+                    Create &quot;{trimmedFilter}&quot;
+                  </MenuItem>
+                )}
+                {displayedItems.length === 0 && !showCreateRow && <MenuItem disabled>No matches</MenuItem>}
+              </MenuList>
+            </Paper>
+          </Popper>
+        </div>
+      </ClickAwayListener>
+    )
+  }
 
   return (
     <>
