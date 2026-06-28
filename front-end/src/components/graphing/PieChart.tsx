@@ -54,12 +54,17 @@ const TransactionsPieChart: FC<Props> = (props) => {
     })
 
     return diffs
-  }, [categories, augmentedTransactions])
+  }, [categories, augmentedTransactions, exchangeRateOnDay, defaultCurrency])
 
+  // Non-negative magnitude of a category's subtree in the currently-shown
+  // direction. Income contributions count only in income view and expense
+  // contributions only in expense view, so this always matches the value the
+  // sunburst renders for the corresponding arc.
   const getCategoryTotal = (category: Category): number => {
     const selfAmount = differences.get(category.id) ?? 0
+    const self = showIncomes ? Math.max(0, selfAmount) : Math.max(0, -selfAmount)
     const childrenAmount = (subCategories[category.id] ?? []).map(getCategoryTotal).reduce((a, b) => a + b, 0)
-    return selfAmount + childrenAmount
+    return self + childrenAmount
   }
 
   const crunchedData = useMemo(() => {
@@ -77,24 +82,30 @@ const TransactionsPieChart: FC<Props> = (props) => {
       let incomeTotal = childrenWithIncome.map((s) => s.incomeTotal).reduce((a, b) => a + b, 0)
       let expenseTotal = childrenWithExpense.map((s) => s.expenseTotal).reduce((a, b) => a + b, 0)
 
+      // Split the category's own net into non-negative income and expense
+      // parts. A category that nets to an income (e.g. a reimbursement) must
+      // not contribute a negative slice to the expense tree, and vice versa —
+      // negative loc values make children overflow their parent arc.
       const selfAmount = differences.get(category.id) ?? 0
+      const selfIncome = Math.max(0, selfAmount)
+      const selfExpense = Math.max(0, -selfAmount)
       let incomeTree: LocalTree | undefined = undefined
       let expenseTree: LocalTree | undefined = undefined
 
-      if (selfAmount > 0 || childrenWithIncome.length > 0) {
-        incomeTotal += selfAmount
+      if (selfIncome > 0 || childrenWithIncome.length > 0) {
+        incomeTotal += selfIncome
         incomeTree = {
           name: category.name,
-          loc: selfAmount,
+          loc: selfIncome,
           children: childrenWithIncome.map((s) => s.incomeTree!),
         }
       }
 
-      if (selfAmount < 0 || childrenWithExpense.length > 0) {
-        expenseTotal -= selfAmount
+      if (selfExpense > 0 || childrenWithExpense.length > 0) {
+        expenseTotal += selfExpense
         expenseTree = {
           name: category.name,
-          loc: 0 - selfAmount,
+          loc: selfExpense,
           children: childrenWithExpense.map((s) => s.expenseTree!),
         }
       }
@@ -108,7 +119,7 @@ const TransactionsPieChart: FC<Props> = (props) => {
     }
 
     return buildGraph(root)
-  }, [augmentedTransactions])
+  }, [augmentedTransactions, differences, subCategories, root])
 
   useEffect(() => {
     if (
@@ -129,13 +140,17 @@ const TransactionsPieChart: FC<Props> = (props) => {
 
   const data = useMemo(() => {
     const current = showIncomes ? crunchedData.incomeTree : crunchedData.expenseTree
-    if ((current?.loc ?? 0) > 0) {
-      current?.children.push({
-        children: [],
-        loc: current!.loc,
-        name: current!.name,
-      })
-      current!.loc = 0
+    if (typeof current === 'undefined') return undefined
+    // A node with both its own value and children can't be rendered by the
+    // sunburst, so move the root's own amount into a synthetic child. Build a
+    // fresh object instead of mutating the memoized tree, which would
+    // double-count on re-runs.
+    if ((current.loc ?? 0) > 0) {
+      return {
+        ...current,
+        loc: 0,
+        children: [...current.children, { children: [], loc: current.loc, name: current.name }],
+      }
     }
     return current
   }, [crunchedData, showIncomes])
@@ -155,13 +170,16 @@ const TransactionsPieChart: FC<Props> = (props) => {
           {clickedCategory ? (
             <>
               <Typography fontWeight="bold">{clickedCategory.name}</Typography>
-              {!privacyMode && <div>{formatFull(defaultCurrency, getCategoryTotal(clickedCategory), privacyMode)}</div>}
+              {!privacyMode && (
+                <div>
+                  {formatFull(defaultCurrency, (showIncomes ? 1 : -1) * getCategoryTotal(clickedCategory), privacyMode)}
+                </div>
+              )}
               <div>
-                {Math.abs(
-                  (getCategoryTotal(clickedCategory) /
-                    (showIncomes ? crunchedData.incomeTotal : crunchedData.expenseTotal)) *
-                    100,
-                ).toFixed(1)}
+                {(() => {
+                  const total = showIncomes ? crunchedData.incomeTotal : crunchedData.expenseTotal
+                  return total === 0 ? '0.0' : ((getCategoryTotal(clickedCategory) / total) * 100).toFixed(1)
+                })()}
                 %
               </div>
             </>
@@ -219,7 +237,7 @@ const TransactionsPieChart: FC<Props> = (props) => {
         />
       </>
     )
-  }, [data, clickedCategory, privacyMode])
+  }, [data, clickedCategory, privacyMode, showIncomes, crunchedData, defaultCurrency])
 
   return <>{sunburst}</>
 }
