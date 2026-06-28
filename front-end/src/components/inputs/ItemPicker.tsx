@@ -320,7 +320,7 @@ function ItemPicker<ItemID, T extends NamedItem<ItemID, T>, AdditionalItemProps>
           }}
         />
       )}
-      <BasicModal open={showModal} onClose={() => setShowModal(false)}>
+      <BasicModal open={showModal} onClose={() => setShowModal(false)} disableRestoreFocus>
         <DialogTitle>{dialogTitle || `Select ${labelText}`}</DialogTitle>
         <DialogContentContainer>
           <SearchContainer>

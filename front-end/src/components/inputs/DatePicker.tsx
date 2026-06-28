@@ -30,7 +30,7 @@ function DatePicker(props: Props) {
         sx={{ width: '100%' }}
       />
 
-      <BasicModal open={showDateModal} onClose={() => setShowDateModal(false)}>
+      <BasicModal open={showDateModal} onClose={() => setShowDateModal(false)} disableRestoreFocus>
         <DateCalendar
           views={['year', 'month', 'day']}
           value={dayjs(date)}

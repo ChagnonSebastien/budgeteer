@@ -69,7 +69,7 @@ const CategoryPicker: FC<Props> = (props) => {
           required={selectedConfig.mode === 'single'}
         />
       </Row>
-      <BasicModal open={showModal} onClose={() => setShowModal(false)}>
+      <BasicModal open={showModal} onClose={() => setShowModal(false)} disableRestoreFocus>
         <DialogTitle>Select Category</DialogTitle>
         <DialogContent
           sx={{
