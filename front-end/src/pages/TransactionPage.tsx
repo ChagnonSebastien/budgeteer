@@ -69,6 +69,7 @@ const TransactionPage: FC = () => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
   const open = Boolean(anchorEl)
   const { fromDate, toDate, accountFilter, categoryFilter, overview: filterOverview } = useTransactionFilter()
+  const prefillAccountId = accountFilter?.length === 1 ? accountFilter[0] : null
 
   const { IconLib } = useContext(IconToolsContext)
 
@@ -256,17 +257,17 @@ const TransactionPage: FC = () => {
       >
         <SpeedDialAction
           sx={{ backgroundColor: 'red' }}
-          onClick={() => navigate('/transactions/new?type=expense', { state: { from: currentUrl } })}
+          onClick={() => navigate('/transactions/new?type=expense', { state: { from: currentUrl, prefillAccountId } })}
           icon={<IconLib.MdOutput />}
         />
         <SpeedDialAction
           sx={{ backgroundColor: 'green' }}
-          onClick={() => navigate('/transactions/new?type=income', { state: { from: currentUrl } })}
+          onClick={() => navigate('/transactions/new?type=income', { state: { from: currentUrl, prefillAccountId } })}
           icon={<IconLib.MdInput />}
         />
         <SpeedDialAction
           sx={{ backgroundColor: 'darkgrey' }}
-          onClick={() => navigate('/transactions/new?type=transfer', { state: { from: currentUrl } })}
+          onClick={() => navigate('/transactions/new?type=transfer', { state: { from: currentUrl, prefillAccountId } })}
           icon={<IconLib.GrTransaction />}
         />
       </SpeedDial>

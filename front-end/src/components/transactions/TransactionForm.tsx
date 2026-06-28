@@ -57,12 +57,13 @@ interface Props {
   onSubmit: (data: Partial<Omit<Transaction, 'id' | 'hasName'>>) => Promise<void>
   submitText: string
   type?: TransactionType
+  prefillAccountId?: AccountID | null
 }
 
 const TransactionForm: FC<Props> = (props) => {
-  const { initialTransaction, onSubmit, submitText, type: rawType } = props
+  const { initialTransaction, onSubmit, submitText, type: rawType, prefillAccountId } = props
 
-  const { create: createAccount } = useContext(AccountServiceContext)
+  const { create: createAccount, state: accounts } = useContext(AccountServiceContext)
   const { state: categories } = useContext(CategoryServiceContext)
   const { state: currencies } = useContext(CurrencyServiceContext)
   const {
@@ -118,9 +119,30 @@ const TransactionForm: FC<Props> = (props) => {
       ? null
       : (initialTransaction?.categoryId ?? rootCategory.id),
   )
+  // Prefill an account from the single selected account filter we came from: the
+  // own slot for an own account (sender on expense, receiver on income), or the
+  // second-party slot otherwise (receiver on expense, sender on income).
+  const prefillAccount =
+    typeof initialTransaction === 'undefined' && prefillAccountId != null
+      ? (accounts.find((a) => a.id === prefillAccountId) ?? null)
+      : null
+  const prefillSenderAccount =
+    prefillAccount !== null &&
+    ((baseType === 'expense' && prefillAccount.isMine) || (baseType === 'income' && !prefillAccount.isMine))
+      ? prefillAccount
+      : null
+  const prefillReceiverAccount =
+    prefillAccount !== null &&
+    ((baseType === 'expense' && !prefillAccount.isMine) || (baseType === 'income' && prefillAccount.isMine))
+      ? prefillAccount
+      : null
+
   const [senderAccount, setSenderAccount] = useState<{ existing: boolean; id: AccountID | null; name: string }>(() => {
-    if (typeof initialTransaction?.sender?.id === 'undefined') return { existing: false, id: null, name: '' }
-    return { existing: true, id: initialTransaction.sender.id, name: initialTransaction.sender.name }
+    if (typeof initialTransaction?.sender?.id !== 'undefined')
+      return { existing: true, id: initialTransaction.sender.id, name: initialTransaction.sender.name }
+    if (prefillSenderAccount !== null)
+      return { existing: true, id: prefillSenderAccount.id, name: prefillSenderAccount.name }
+    return { existing: false, id: null, name: '' }
   })
 
   const [receiverAccount, setReceiverAccount] = useState<{
@@ -128,8 +150,11 @@ const TransactionForm: FC<Props> = (props) => {
     id: AccountID | null
     name: string
   }>(() => {
-    if (typeof initialTransaction?.receiver?.id === 'undefined') return { existing: false, id: null, name: '' }
-    return { existing: true, id: initialTransaction.receiver.id, name: initialTransaction.receiver.name }
+    if (typeof initialTransaction?.receiver?.id !== 'undefined')
+      return { existing: true, id: initialTransaction.receiver.id, name: initialTransaction.receiver.name }
+    if (prefillReceiverAccount !== null)
+      return { existing: true, id: prefillReceiverAccount.id, name: prefillReceiverAccount.name }
+    return { existing: false, id: null, name: '' }
   })
 
   const [note, setNote] = useState(initialTransaction?.note ?? '')
