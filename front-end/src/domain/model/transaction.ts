@@ -190,13 +190,30 @@ export class AugmentedTransaction extends Transaction {
     return paid - this.userShare(user, splitType, memberSpecificValues)
   }
 
+  // Others' shares round down to whole cents and the payer takes the rest, so shares always sum to the amount.
   private userShare(user: string, splitType: SplitType, memberValues: MemberValue[]): number {
+    const participants =
+      splitType === SplitType.EQUAL
+        ? this.augmentedTransactionGroupData!.transactionGroup.members.map((m) => m.email)
+        : memberValues.map((m) => m.email)
+    const share = (email: string) => Math.floor(this.exactShare(email, splitType, memberValues, participants.length))
+
+    if (user !== this.owner) return share(user)
+    return participants
+      .filter((email) => email !== this.owner)
+      .reduce((rest, email) => rest - share(email), this.amount)
+  }
+
+  private exactShare(
+    user: string,
+    splitType: SplitType,
+    memberValues: MemberValue[],
+    participantCount: number,
+  ): number {
     const userValue = memberValues.find((m) => m.email === user)?.value ?? 0
     switch (splitType) {
-      case SplitType.EQUAL: {
-        const memberCount = this.augmentedTransactionGroupData!.transactionGroup.members.length
-        return memberCount === 0 ? 0 : this.amount / memberCount
-      }
+      case SplitType.EQUAL:
+        return participantCount === 0 ? 0 : this.amount / participantCount
       case SplitType.EXACT_AMOUNT:
         return userValue
       case SplitType.PERCENTAGE:

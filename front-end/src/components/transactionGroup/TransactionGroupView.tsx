@@ -2,7 +2,7 @@ import { Typography } from '@mui/material'
 import { FC, ReactNode, useCallback, useContext, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-import { FirstDivision, GroupLedgerEntry, GroupPaidTable, SecondDivision } from './GroupLedger'
+import { FirstDivision, GroupPaidTable, SecondDivision } from './GroupLedger'
 import GroupMembers from './GroupMembers'
 import { AugmentedTransaction } from '../../domain/model/transaction'
 import { AugmentedTransactionGroup } from '../../domain/model/transactionGroup'
@@ -23,6 +23,7 @@ const TransactionGroupView: FC<{
   const navigate = useNavigate()
   const { state: unconfirmedTransactions } = useContext(UnconfirmedTransactionServiceContext)
 
+  // Unconfirmed count toward totals: a guest's expenses can never be promoted.
   const groupTransactions = useMemo(
     () =>
       [
@@ -35,21 +36,6 @@ const TransactionGroupView: FC<{
         return b.id - a.id
       }),
     [confirmedTransactions, unconfirmedTransactions, transactionGroup],
-  )
-
-  // Unconfirmed count toward totals: a guest's expenses can never be promoted.
-  const paidEntries = useMemo<GroupLedgerEntry[]>(
-    () =>
-      groupTransactions.map((t) => ({
-        key: `transaction-${t.id}`,
-        id: t.id,
-        owner: t.owner,
-        amount: t.amount,
-        date: t.date,
-        note: t.note,
-        unconfirmed: t instanceof UnconfirmedAugmentedTransaction,
-      })),
-    [groupTransactions],
   )
 
   const openTransaction = useCallback(
@@ -77,7 +63,7 @@ const TransactionGroupView: FC<{
             <GroupMembers transactionGroup={transactionGroup} style={{ justifyContent: 'end', alignSelf: 'stretch' }} />
             <GroupPaidTable
               members={transactionGroup.members}
-              entries={paidEntries}
+              transactions={groupTransactions}
               currency={transactionGroup.augmentedCurrency}
             />
             <Row style={{ marginTop: '1rem', gap: '.5rem' }}>{actions}</Row>

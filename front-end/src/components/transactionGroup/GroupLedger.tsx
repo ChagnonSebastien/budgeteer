@@ -1,8 +1,11 @@
-import { FC, useMemo } from 'react'
+import { Typography } from '@mui/material'
+import { FC, useContext, useMemo } from 'react'
 import { default as styled } from 'styled-components'
 
 import Currency, { formatFull, RateAutoupdateSettings } from '../../domain/model/currency'
+import { AugmentedTransaction } from '../../domain/model/transaction'
 import TransactionGroup, { Email, Person } from '../../domain/model/transactionGroup'
+import { DrawerContext } from '../Menu'
 import { Column } from '../shared/Layout'
 
 export const FirstDivision = styled.div`
@@ -33,10 +36,10 @@ export const Table = styled.table`
   }
 
   & > * > * > * {
-    padding: 0.5rem 2rem;
+    padding: 0.5rem 1rem;
   }
 
-  & > tbody > * > :last-child {
+  & > tbody > * > :nth-child(2) {
     text-align: end;
     font-family: monospace;
   }
@@ -61,31 +64,27 @@ export const groupCurrency = (group: TransactionGroup): Currency =>
 export const memberName = (members: Person[], email: Email): string =>
   members.find((m) => m.email === email)?.name ?? email
 
-export interface GroupLedgerEntry {
-  key: string
-  id: number
-  owner: Email
-  amount: number
-  date: Date
-  note: string
-  unconfirmed: boolean
-}
-
-export const GroupPaidTable: FC<{ members: Person[]; entries: GroupLedgerEntry[]; currency: Currency }> = ({
+export const GroupPaidTable: FC<{ members: Person[]; transactions: AugmentedTransaction[]; currency: Currency }> = ({
   members,
-  entries,
+  transactions,
   currency,
 }) => {
-  const paid = useMemo(() => {
-    const values = new Map<Email, number>()
-    members.forEach((m) => values.set(m.email, 0))
-    for (const entry of entries) {
-      values.set(entry.owner, (values.get(entry.owner) ?? 0) + entry.amount)
+  const { privacyMode } = useContext(DrawerContext)
+
+  const { paid, balances } = useMemo(() => {
+    const paid = new Map<Email, number>(members.map((m) => [m.email, 0]))
+    const balances = new Map<Email, number>(members.map((m) => [m.email, 0]))
+    for (const transaction of transactions) {
+      paid.set(transaction.owner, (paid.get(transaction.owner) ?? 0) + transaction.amount)
+      for (const member of members) {
+        balances.set(member.email, balances.get(member.email)! + transaction.getUserContribution(member.email))
+      }
     }
-    return values
-  }, [members, entries])
+    return { paid, balances }
+  }, [members, transactions])
 
   const total = useMemo(() => [...paid.values()].reduce((a, b) => a + b, 0), [paid])
+  const format = (amount: number) => formatFull(currency, amount, privacyMode)
 
   return (
     <Table>
@@ -93,18 +92,33 @@ export const GroupPaidTable: FC<{ members: Person[]; entries: GroupLedgerEntry[]
         <tr>
           <th>User</th>
           <th>Payed</th>
+          <th />
         </tr>
       </thead>
       <tbody>
-        {[...paid.entries()].map(([email, amount]) => (
-          <tr key={`table-user-${email}`}>
-            <td>{memberName(members, email)}</td>
-            <td>{formatFull(currency, amount)}</td>
-          </tr>
-        ))}
+        {members.map((member) => {
+          const balance = balances.get(member.email)!
+          return (
+            <tr key={`table-user-${member.email}`}>
+              <td>{member.name}</td>
+              <td>{format(paid.get(member.email)!)}</td>
+              <td>
+                <Typography
+                  component="span"
+                  fontSize="inherit"
+                  whiteSpace="nowrap"
+                  color={balance > 0 ? 'success.main' : balance < 0 ? 'error.main' : 'textDisabled'}
+                >
+                  {balance > 0 ? `Is owed ${format(balance)}` : balance < 0 ? `Owes ${format(-balance)}` : 'Settled'}
+                </Typography>
+              </td>
+            </tr>
+          )
+        })}
         <tr>
           <td />
-          <td>{formatFull(currency, total)}</td>
+          <td>{format(total)}</td>
+          <td />
         </tr>
       </tbody>
     </Table>
