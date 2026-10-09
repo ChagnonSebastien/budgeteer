@@ -28,6 +28,7 @@ type MixedAugmentationContext = {
   accountBalances: AccountBalances
   augmentedTransactionGroups: AugmentedTransactionGroup[]
   augmentedTransactions: AugmentedTransaction[]
+  augmentedTransactionsFromGroupMembers: AugmentedTransaction[]
   exchangeRates: Map<number, Map<number, RateOnDate[]>>
   exchangeRateOnDay(from: number, to: number, date: Date): number
   defaultCurrency: Currency
@@ -37,6 +38,7 @@ type MixedAugmentationContext = {
 const MixedAugmentation = createContext<MixedAugmentationContext>({
   accountBalances: new Map(),
   augmentedTransactions: [],
+  augmentedTransactionsFromGroupMembers: [],
   augmentedTransactionGroups: [],
   exchangeRates: new Map(),
   exchangeRateOnDay: (_from: number, _to: number, _date: Date) => 1,
@@ -50,7 +52,7 @@ export interface Props {
 
 export const MixedAugmentationProvider: FC<Props> = ({ NextComponent }) => {
   const { email } = useContext(UserContext)
-  const { state: transactions } = useContext(TransactionServiceContext)
+  const { state: transactions, transactionsFromGroupMembers } = useContext(TransactionServiceContext)
   const { state: transactionGroups } = useContext(TransactionGroupServiceContext)
   const { state: currencies, tentativeDefaultCurrency } = useContext(CurrencyServiceContext)
   const { augmentedCategories: categories, tentativeRoot } = useContext(CategoryServiceContext)
@@ -143,6 +145,28 @@ export const MixedAugmentationProvider: FC<Props> = ({ NextComponent }) => {
     })
   }, [transactions, currencies, categories, accounts, augmentedTransactionGroups])
 
+  // Other members' transactions are stripped of their owner's accounts, category and
+  // financial income data, and carry this user's currency for the group.
+  const augmentedTransactionsFromGroupMembers = useMemo<AugmentedTransaction[]>(() => {
+    return transactionsFromGroupMembers.flatMap<AugmentedTransaction>((transaction) => {
+      const transactionGroup = augmentedTransactionGroups.find(
+        (tg) => tg.id === transaction.transactionGroupData?.transactionGroupId,
+      )
+      const currency = currencies.find((c) => c.id === transaction.currencyId)
+      if (transaction.transactionGroupData === null || !transactionGroup || !currency) return []
+
+      return [
+        new AugmentedTransaction(
+          transaction,
+          null,
+          new AugmentedTransactionGroupData(transaction.transactionGroupData, transactionGroup),
+          currency,
+          currency,
+        ),
+      ]
+    })
+  }, [transactionsFromGroupMembers, currencies, augmentedTransactionGroups])
+
   const augmentedData = useMemo(() => {
     const exchangeRates = new Map<number, Map<number, RateOnDate[]>>()
     rawExchangeRates.forEach((value, key) => {
@@ -208,6 +232,7 @@ export const MixedAugmentationProvider: FC<Props> = ({ NextComponent }) => {
         accountBalances,
         augmentedTransactionGroups,
         augmentedTransactions,
+        augmentedTransactionsFromGroupMembers,
         ...augmentedData,
       }}
     >

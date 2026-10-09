@@ -11,7 +11,6 @@ import { BasicCrudServiceWithPersistence } from './service/BasicCrudServiceWithP
 import { CategoryPersistenceAugmenter } from './service/CategoryServiceAugmenter'
 import { CurrencyPersistenceAugmenter } from './service/CurrencyServiceAugmenter'
 import { ExchangeRatePersistenceAugmenter } from './service/ExcahngeRateServiceAugmenter'
-import { NilPersistenceAugmenter } from './service/NilAugmenter'
 import {
   AccountServiceContext,
   CategoryServiceContext,
@@ -19,6 +18,7 @@ import {
   ExchangeRateServiceContext,
   TransactionServiceContext,
 } from './service/ServiceContext'
+import { TransactionPersistenceAugmenter } from './service/TransactionServiceAugmenter'
 import AccountLocalStore from './store/local/AccountLocalStore'
 import CategoryLocalStore from './store/local/CategoryLocalStore'
 import CurrencyLocalStore from './store/local/CurrencyLocalStore'
@@ -167,7 +167,7 @@ const PersistenceSetup: FC<{ children: ReactNode; hasInternet: boolean }> = ({ c
             localStore={transactionLocalStore}
             actionStore={replayStore}
             context={TransactionServiceContext}
-            Augmenter={NilPersistenceAugmenter}
+            Augmenter={TransactionPersistenceAugmenter}
             sorter={(a, b) => {
               if (b.date.getTime() !== a.date.getTime()) return b.date.getTime() - a.date.getTime()
               return b.id - a.id

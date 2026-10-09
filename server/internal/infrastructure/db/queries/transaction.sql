@@ -68,6 +68,49 @@ FROM transactions t
 WHERE t.user_id = sqlc.arg(user_id)
 ORDER BY date DESC;
 
+-- name: GetGroupTransactionsFromOtherMembers :many
+-- Transactions other users recorded in groups the requesting user has joined. The
+-- owner's accounts, category and financial income data are private and omitted;
+-- group members share a currency configuration, so the requesting user's own
+-- currency for the group stands in for the owner's.
+SELECT
+    t.id,
+    u.email AS owner,
+    t.amount,
+    viewer.currency_id AS viewer_currency,
+    t.date,
+    t.note,
+    ttg.transaction_group_id,
+    ttg.split_type_override as transaction_group_split_type_override,
+    (
+        CASE WHEN ttg.split_type_override IS NOT NULL
+            THEN (
+                SELECT COALESCE(
+                               json_agg(
+                                       json_build_object(
+                                               'user_email', ttgus.user_email,
+                                               'split_value', ttgus.split_value
+                                       )
+                               )::jsonb,
+                               '[]'::jsonb
+                       )
+                FROM transaction_transaction_group_user_split ttgus
+                WHERE ttgus.transaction_id = t.id
+            )
+            ELSE '[]'::jsonb
+        END
+    ) AS transaction_group_member_values
+FROM transactions t
+    JOIN transaction_transaction_group ttg ON t.id = ttg.transaction_id
+    JOIN users u ON u.id = t.user_id
+    JOIN user_transaction_group viewer ON viewer.transaction_group_id = ttg.transaction_group_id
+    JOIN users vu ON vu.email = viewer.user_email
+WHERE vu.id = sqlc.arg(user_id)
+  AND t.user_id <> sqlc.arg(user_id)
+  AND viewer.locked = true
+  AND viewer.currency_id IS NOT NULL
+ORDER BY t.date DESC;
+
 -- name: CreateTransaction :one
 INSERT INTO transactions (user_id, amount, currency, sender, receiver, category, date, note, receiver_currency, receiver_amount)
 VALUES (

@@ -70,8 +70,11 @@ const ManageTransactionGroup: FC = () => {
 
   const { IconLib } = useContext(IconToolsContext)
   const { update: updateTransactionGroup } = useContext(TransactionGroupServiceContext)
-  const { augmentedTransactions: transactions, augmentedTransactionGroups: transactionGroups } =
-    useContext(MixedAugmentation)
+  const {
+    augmentedTransactions: transactions,
+    augmentedTransactionsFromGroupMembers: transactionsFromGroupMembers,
+    augmentedTransactionGroups: transactionGroups,
+  } = useContext(MixedAugmentation)
 
   const selectedTransactionGroup = useMemo(
     () => transactionGroups.find((t) => t.id === parseInt(transactionGroupId!)),
@@ -80,10 +83,20 @@ const ManageTransactionGroup: FC = () => {
 
   const groupTransactions = useMemo(
     () =>
-      transactions.filter(
-        (t) => t.transactionGroupData?.transactionGroupId === selectedTransactionGroup?.id && t.getType() === 'expense',
-      ),
-    [selectedTransactionGroup?.id, transactions],
+      [
+        ...transactions.filter(
+          (t) =>
+            t.transactionGroupData?.transactionGroupId === selectedTransactionGroup?.id && t.getType() === 'expense',
+        ),
+        // Other members' transactions have no category or accounts, so getType() can't classify them.
+        ...transactionsFromGroupMembers.filter(
+          (t) => t.transactionGroupData?.transactionGroupId === selectedTransactionGroup?.id,
+        ),
+      ].sort((a, b) => {
+        if (b.date.getTime() !== a.date.getTime()) return b.date.getTime() - a.date.getTime()
+        return b.id - a.id
+      }),
+    [selectedTransactionGroup?.id, transactions, transactionsFromGroupMembers],
   )
 
   const { width: contentWidth, ref: setContentRef } = useElementDimensions(600, 600)

@@ -81,43 +81,15 @@ func (r *Repository) GetAllTransactions(ctx context.Context, userId uuid.UUID) (
 
 		transactionGroupData := model.None[model.GroupedTransactionData]()
 		if transactionDao.TransactionGroupID.Valid {
-			splitOverride := model.None[model.SplitOverride]()
-			if transactionDao.TransactionGroupSplitTypeOverride.Valid {
-				splitTypeOverride, err := SplitTypeOverrideFromDao(transactionDao.TransactionGroupSplitTypeOverride.TransactionSplitType)
-				if err != nil {
-					return nil, err
-				}
-
-				var membersDao []MemberValueOverride
-				if transactionDao.TransactionGroupMemberValues != nil {
-					if err := json.Unmarshal(transactionDao.TransactionGroupMemberValues, &membersDao); err != nil {
-						return nil, fmt.Errorf("parsing members while assembling transaction split override values for members: %s", err)
-					}
-				}
-
-				members := make([]model.MemberSplitValue, len(membersDao))
-				for i, memberDao := range membersDao {
-					splitValue := model.None[int]()
-					if memberDao.SplitValue != nil {
-						splitValue = model.Some(*memberDao.SplitValue)
-					}
-
-					members[i] = model.MemberSplitValue{
-						Email:      model.Email(memberDao.UserEmail),
-						SplitValue: splitValue,
-					}
-				}
-
-				splitOverride = model.Some(model.SplitOverride{
-					SplitTypeOverride: splitTypeOverride,
-					Members:           members,
-				})
+			groupedTransactionData, err := groupedTransactionDataFromDao(
+				transactionDao.TransactionGroupID.Int32,
+				transactionDao.TransactionGroupSplitTypeOverride,
+				transactionDao.TransactionGroupMemberValues,
+			)
+			if err != nil {
+				return nil, err
 			}
-
-			transactionGroupData = model.Some(model.GroupedTransactionData{
-				TransactionGroup: model.TransactionGroupID(transactionDao.TransactionGroupID.Int32),
-				SplitOverride:    splitOverride,
-			})
+			transactionGroupData = model.Some(groupedTransactionData)
 		}
 
 		transactions[i] = model.Transaction{
@@ -137,7 +109,83 @@ func (r *Repository) GetAllTransactions(ctx context.Context, userId uuid.UUID) (
 		}
 	}
 
+	groupTransactionsDao, err := r.queries.GetGroupTransactionsFromOtherMembers(ctx, userId)
+	if err != nil {
+		return nil, fmt.Errorf("getting group transactions from other members: %w", err)
+	}
+
+	for _, transactionDao := range groupTransactionsDao {
+		groupedTransactionData, err := groupedTransactionDataFromDao(
+			transactionDao.TransactionGroupID,
+			transactionDao.TransactionGroupSplitTypeOverride,
+			transactionDao.TransactionGroupMemberValues,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		transactions = append(transactions, model.Transaction{
+			ID:                     model.TransactionID(transactionDao.ID),
+			Owner:                  model.Email(transactionDao.Owner),
+			Amount:                 int(transactionDao.Amount),
+			Currency:               model.CurrencyID(transactionDao.ViewerCurrency.Int32),
+			Sender:                 model.None[model.AccountID](),
+			Receiver:               model.None[model.AccountID](),
+			Category:               model.None[model.CategoryID](),
+			Date:                   transactionDao.Date,
+			Note:                   transactionDao.Note,
+			ReceiverCurrency:       model.CurrencyID(transactionDao.ViewerCurrency.Int32),
+			ReceiverAmount:         int(transactionDao.Amount),
+			FinancialIncomeData:    model.None[model.FinancialIncomeData](),
+			GroupedTransactionData: model.Some(groupedTransactionData),
+		})
+	}
+
 	return transactions, nil
+}
+
+func groupedTransactionDataFromDao(
+	transactionGroupId int32,
+	splitTypeOverrideDao dao.NullTransactionSplitType,
+	memberValuesDao []byte,
+) (model.GroupedTransactionData, error) {
+	splitOverride := model.None[model.SplitOverride]()
+	if splitTypeOverrideDao.Valid {
+		splitTypeOverride, err := SplitTypeOverrideFromDao(splitTypeOverrideDao.TransactionSplitType)
+		if err != nil {
+			return model.GroupedTransactionData{}, err
+		}
+
+		var membersDao []MemberValueOverride
+		if memberValuesDao != nil {
+			if err := json.Unmarshal(memberValuesDao, &membersDao); err != nil {
+				return model.GroupedTransactionData{}, fmt.Errorf("parsing members while assembling transaction split override values for members: %s", err)
+			}
+		}
+
+		members := make([]model.MemberSplitValue, len(membersDao))
+		for i, memberDao := range membersDao {
+			splitValue := model.None[int]()
+			if memberDao.SplitValue != nil {
+				splitValue = model.Some(*memberDao.SplitValue)
+			}
+
+			members[i] = model.MemberSplitValue{
+				Email:      model.Email(memberDao.UserEmail),
+				SplitValue: splitValue,
+			}
+		}
+
+		splitOverride = model.Some(model.SplitOverride{
+			SplitTypeOverride: splitTypeOverride,
+			Members:           members,
+		})
+	}
+
+	return model.GroupedTransactionData{
+		TransactionGroup: model.TransactionGroupID(transactionGroupId),
+		SplitOverride:    splitOverride,
+	}, nil
 }
 
 func (r *Repository) CreateTransaction(

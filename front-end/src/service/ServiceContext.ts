@@ -6,6 +6,7 @@ import { CategoryPersistenceAugmentation } from './CategoryServiceAugmenter'
 import { CurrencyPersistenceAugmentation } from './CurrencyServiceAugmenter'
 import { ExchangeRatePersistenceAugmentation, RateOnDate } from './ExcahngeRateServiceAugmenter'
 import { TransactionGroupPersistenceAugmentation } from './TransactionGroupServiceAugmenter'
+import { TransactionPersistenceAugmentation } from './TransactionServiceAugmenter'
 import Account, { AccountID, AccountUpdatableFields } from '../domain/model/account'
 import Category, { AugmentedCategory, CategoryID, CategoryUpdatableFields } from '../domain/model/category'
 import Currency, { CurrencyID, CurrencyUpdatableFields } from '../domain/model/currency'
@@ -87,8 +88,13 @@ export const ExchangeRateServiceContext = createContext<
   },
 })
 
-export const TransactionServiceContext =
-  createContext<BasicCrudService<TransactionID, Transaction, IdIdentifier, TransactionUpdatableFields>>(nilPersistence)
+export const TransactionServiceContext = createContext<
+  BasicCrudService<TransactionID, Transaction, IdIdentifier, TransactionUpdatableFields> &
+    TransactionPersistenceAugmentation
+>({
+  ...nilPersistence,
+  transactionsFromGroupMembers: [],
+})
 
 export const TransactionGroupServiceContext = createContext<
   BasicCrudService<TransactionGroupID, TransactionGroup, IdIdentifier, TransactionGroupUpdatableFields> &
