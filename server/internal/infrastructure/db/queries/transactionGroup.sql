@@ -1,7 +1,7 @@
 -- name: GetUserTransactionGroups :many
 SELECT
     tg.id,
-    tg.name,
+    COALESCE(utg.name_override, tg.name)::text AS name,
     tg.split_type,
     c.name as creator_currency,
     utg.category_id,
@@ -34,8 +34,17 @@ SELECT utg.user_email,
        utg.locked as joined,
     utg.hidden
 FROM user_transaction_group utg
-WHERE utg.transaction_group_id = sqlc.arg(transaction_group_id)
-  AND utg.hidden = false;
+WHERE utg.transaction_group_id = sqlc.arg(transaction_group_id);
+
+-- name: IsJoinedTransactionGroupMember :one
+SELECT EXISTS (
+    SELECT 1
+    FROM user_transaction_group utg
+             JOIN users u ON u.email = utg.user_email
+    WHERE u.id = sqlc.arg(user_id)
+      AND utg.transaction_group_id = sqlc.arg(transaction_group_id)
+      AND utg.locked = true
+)::boolean AS is_member;
 
 -- name: CreateTransactionGroupWithCreator :one
 WITH new_group AS (

@@ -221,6 +221,10 @@ func (r *Repository) CreateTransaction(
 	}
 
 	if transactionGroup, isSome := transactionGroupData.Value(); isSome {
+		if err = ensureJoinedTransactionGroupMember(ctx, r.queries.WithTx(tx), userId, int32(transactionGroup.TransactionGroup)); err != nil {
+			return
+		}
+
 		splitOverride, hasSplitOverride := transactionGroup.SplitOverride.Value()
 		var splitOverrideDao dao.TransactionSplitType
 		if hasSplitOverride {
@@ -266,6 +270,21 @@ func (r *Repository) CreateTransaction(
 	}
 
 	return model.TransactionID(transactionId), nil
+}
+
+func ensureJoinedTransactionGroupMember(ctx context.Context, queries *dao.Queries, userId uuid.UUID, transactionGroupId int32) error {
+	isMember, err := queries.IsJoinedTransactionGroupMember(ctx, &dao.IsJoinedTransactionGroupMemberParams{
+		UserID:             userId,
+		TransactionGroupID: transactionGroupId,
+	})
+	if err != nil {
+		return fmt.Errorf("checking transaction group membership: %w", err)
+	}
+	if !isMember {
+		return fmt.Errorf("user is not a joined member of transaction group %d", transactionGroupId)
+	}
+
+	return nil
 }
 
 type UpdateFinancialIncomeAdditionalData struct {
@@ -469,6 +488,11 @@ func (r *Repository) UpdateTransaction(
 			}
 
 			transactionGroupId := transactionGroupData.nullTransactionGroupId()
+			if transactionGroupId.Valid {
+				if err = ensureJoinedTransactionGroupMember(ctx, r.queries.WithTx(tx), userId, transactionGroupId.Int32); err != nil {
+					return
+				}
+			}
 
 			updateSplitOverrideData, updateSplitOverride := transactionGroupData.SplitOverride.Value()
 			updateSplitTypeOverride := false
