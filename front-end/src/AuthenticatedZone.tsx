@@ -48,7 +48,7 @@ import {
   TransactionServiceContext,
   UnconfirmedTransactionServiceContext,
 } from './service/ServiceContext'
-import { TransactionGroupPersistenceAugmenter } from './service/TransactionGroupServiceAugmenter'
+import { makeTransactionGroupPersistenceAugmenter } from './service/TransactionGroupServiceAugmenter'
 import { TransactionPersistenceAugmenter } from './service/TransactionServiceAugmenter'
 import { makeUnconfirmedTransactionPersistenceAugmenter } from './service/UnconfirmedTransactionServiceAugmenter'
 import AccountLocalStore from './store/local/AccountLocalStore'
@@ -237,6 +237,9 @@ const PersistenceSetup: FC<{ children: ReactNode; hasInternet: boolean }> = ({ c
   const { email, name: username } = useContext(UserContext)
   const [transactionGroupLocalStore] = useState(new TransactionGroupLocalStore(email, username, IndexedDB))
   const [transactionGroupRemoteStore] = useState(new TransactionGroupRemoteStore(email, username, transport))
+  const [TransactionGroupPersistenceAugmenter] = useState(() =>
+    makeTransactionGroupPersistenceAugmenter(transactionGroupRemoteStore),
+  )
 
   return (
     <BasicCrudServiceWithPersistence

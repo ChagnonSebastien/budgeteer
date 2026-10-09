@@ -34,7 +34,15 @@ export const ParseSplitType = (st: string) => {
   }
 }
 
+export enum SplitChangeScope {
+  ALL_TRANSACTIONS,
+  TRANSACTIONS_WITHOUT_CUSTOM_SPLIT,
+  FUTURE_TRANSACTIONS,
+}
+
 export type Email = string
+
+export type MemberSplitValues = Map<Email, number | null>
 
 export class Person implements NamedItem<Email, Person> {
   constructor(

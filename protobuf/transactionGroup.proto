@@ -71,8 +71,25 @@ message UpdateTransactionGroupRequest {
 message UpdateTransactionGroupResponse {
 }
 
+enum SplitChangeScope {
+  AllTransactions = 0;
+  TransactionsWithoutCustomSplit = 1;
+  FutureTransactions = 2;
+}
+
+message ChangeTransactionGroupSplitRequest {
+  uint32 id = 1;
+  SplitType splitType = 2;
+  repeated UpdateGroupMemberFields members = 3;
+  SplitChangeScope scope = 4;
+}
+
+message ChangeTransactionGroupSplitResponse {
+}
+
 service TransactionGroupService {
   rpc GetAllTransactionGroups (GetAllTransactionGroupsRequest) returns (GetAllTransactionGroupsResponse);
   rpc CreateTransactionGroup (CreateTransactionGroupRequest) returns (CreateTransactionGroupResponse);
   rpc UpdateTransactionGroup (UpdateTransactionGroupRequest) returns (UpdateTransactionGroupResponse);
+  rpc ChangeTransactionGroupSplit (ChangeTransactionGroupSplitRequest) returns (ChangeTransactionGroupSplitResponse);
 }

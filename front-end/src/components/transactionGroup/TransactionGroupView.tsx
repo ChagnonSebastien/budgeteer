@@ -1,11 +1,12 @@
-import { Typography } from '@mui/material'
-import { FC, ReactNode, useCallback, useContext, useMemo } from 'react'
+import { Button, Typography } from '@mui/material'
+import { FC, ReactNode, useCallback, useContext, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
+import ChangeSplitDialog from './ChangeSplitDialog'
 import { FirstDivision, GroupPaidTable, SecondDivision } from './GroupLedger'
 import GroupMembers from './GroupMembers'
 import { AugmentedTransaction } from '../../domain/model/transaction'
-import { AugmentedTransactionGroup } from '../../domain/model/transactionGroup'
+import { AugmentedTransactionGroup, SplitTypeToString } from '../../domain/model/transactionGroup'
 import { UnconfirmedAugmentedTransaction } from '../../domain/model/unconfirmedTransaction'
 import { UnconfirmedTransactionServiceContext } from '../../service/ServiceContext'
 import ContentWithHeader from '../shared/ContentWithHeader'
@@ -21,6 +22,7 @@ const TransactionGroupView: FC<{
   actions: ReactNode
 }> = ({ transactionGroup, confirmedTransactions, actions }) => {
   const navigate = useNavigate()
+  const [changingSplit, setChangingSplit] = useState(false)
   const { state: unconfirmedTransactions } = useContext(UnconfirmedTransactionServiceContext)
 
   // Unconfirmed count toward totals: a guest's expenses can never be promoted.
@@ -61,6 +63,14 @@ const TransactionGroupView: FC<{
               {transactionGroup.name}
             </Typography>
             <GroupMembers transactionGroup={transactionGroup} style={{ justifyContent: 'end', alignSelf: 'stretch' }} />
+            <Row style={{ alignItems: 'center', gap: '0.5rem' }}>
+              <Typography fontSize="0.95rem">
+                Default split: <b>{SplitTypeToString(transactionGroup.splitType)}</b>
+              </Typography>
+              <Button size="small" onClick={() => setChangingSplit(true)}>
+                Change
+              </Button>
+            </Row>
             <GroupPaidTable
               members={transactionGroup.members}
               transactions={groupTransactions}
@@ -89,6 +99,14 @@ const TransactionGroupView: FC<{
         }
         secondZoneStyling={{ scroll: true, grow: true }}
       />
+      {changingSplit && (
+        <ChangeSplitDialog
+          open
+          onClose={() => setChangingSplit(false)}
+          transactionGroup={transactionGroup}
+          transactions={groupTransactions}
+        />
+      )}
     </ContentWithHeader>
   )
 }

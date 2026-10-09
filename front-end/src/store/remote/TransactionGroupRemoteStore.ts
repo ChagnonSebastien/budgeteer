@@ -2,15 +2,34 @@ import { RpcTransport } from '@protobuf-ts/runtime-rpc'
 
 import { splitTypeToDto, TransactionGroupConverter } from './converter/transactionGroupConverter'
 import {
+  ChangeTransactionGroupSplitRequest,
   CreateTransactionGroupRequest,
   GetAllTransactionGroupsRequest,
+  SplitChangeScope as SplitChangeScopeDto,
   UpdateTransactionGroupRequest,
 } from './dto/transactionGroup'
 import { TransactionGroupServiceClient } from './dto/transactionGroup.client'
-import TransactionGroup, { Person } from '../../domain/model/transactionGroup'
+import TransactionGroup, {
+  MemberSplitValues,
+  Person,
+  SplitChangeScope,
+  SplitType,
+  TransactionGroupID,
+} from '../../domain/model/transactionGroup'
 import { IdIdentifier } from '../../domain/model/Unique'
 
 const conv = new TransactionGroupConverter()
+
+const splitChangeScopeToDto = (scope: SplitChangeScope): SplitChangeScopeDto => {
+  switch (scope) {
+    case SplitChangeScope.ALL_TRANSACTIONS:
+      return SplitChangeScopeDto.AllTransactions
+    case SplitChangeScope.TRANSACTIONS_WITHOUT_CUSTOM_SPLIT:
+      return SplitChangeScopeDto.TransactionsWithoutCustomSplit
+    case SplitChangeScope.FUTURE_TRANSACTIONS:
+      return SplitChangeScopeDto.FutureTransactions
+  }
+}
 
 export default class TransactionGroupRemoteStore {
   private client: TransactionGroupServiceClient
@@ -47,6 +66,22 @@ export default class TransactionGroupRemoteStore {
       data.category,
       data.hidden,
     )
+  }
+
+  public async changeSplit(
+    id: TransactionGroupID,
+    splitType: SplitType,
+    memberValues: MemberSplitValues,
+    scope: SplitChangeScope,
+  ): Promise<void> {
+    await this.client.changeTransactionGroupSplit(
+      ChangeTransactionGroupSplitRequest.create({
+        id,
+        splitType: splitTypeToDto(splitType),
+        members: [...memberValues].map(([email, value]) => ({ email, splitValue: value ?? undefined })),
+        scope: splitChangeScopeToDto(scope),
+      }),
+    ).response
   }
 
   public async update(identity: IdIdentifier, data: Partial<Omit<TransactionGroup, 'id'>>): Promise<void> {

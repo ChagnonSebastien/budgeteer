@@ -352,3 +352,74 @@ func (r *Repository) UpdateTransactionGroup(
 
 	return
 }
+
+func (r *Repository) ChangeTransactionGroupSplit(
+	ctx context.Context,
+	userEmail string,
+	id model.TransactionGroupID,
+	splitType model.SplitType,
+	members []model.MemberSplitValue,
+	scope model.SplitChangeScope,
+) error {
+	daoSplitType, err := SplitTypeToDao(splitType)
+	if err != nil {
+		return err
+	}
+	groupId := int32(id)
+
+	return r.inTx(ctx, func(queries *dao.Queries) error {
+		if err := ensureTransactionGroupMember(ctx, queries, userEmail, groupId, true); err != nil {
+			return err
+		}
+
+		// Must run before the new values land: pinning copies the previous default onto past transactions.
+		var pastTransactionSteps []func(context.Context, int32) error
+		switch scope {
+		case model.SplitChangeAllTransactions:
+			pastTransactionSteps = []func(context.Context, int32) error{
+				queries.ClearGroupedTransactionsMemberSplits,
+				queries.ClearGroupedTransactionsSplitType,
+				queries.ClearUnconfirmedTransactionsMemberSplits,
+				queries.ClearUnconfirmedTransactionsSplitType,
+			}
+		case model.SplitChangeFutureTransactions:
+			pastTransactionSteps = []func(context.Context, int32) error{
+				queries.ClearDefaultGroupedTransactionsMemberSplits,
+				queries.CopyGroupMemberSplitsToDefaultGroupedTransactions,
+				queries.PinDefaultGroupedTransactionsSplitType,
+				queries.ClearDefaultUnconfirmedTransactionsMemberSplits,
+				queries.CopyGroupMemberSplitsToDefaultUnconfirmedTransactions,
+				queries.PinDefaultUnconfirmedTransactionsSplitType,
+			}
+		}
+		for _, step := range pastTransactionSteps {
+			if err := step(ctx, groupId); err != nil {
+				return fmt.Errorf("applying split change to past transactions: %w", err)
+			}
+		}
+
+		for _, member := range members {
+			splitValue, hasSplitValue := member.SplitValue.Value()
+			updated, err := queries.SetTransactionGroupMemberSplitValue(ctx, &dao.SetTransactionGroupMemberSplitValueParams{
+				SplitValue:         sql.NullInt32{Int32: int32(splitValue), Valid: hasSplitValue},
+				TransactionGroupID: groupId,
+				UserEmail:          string(member.Email),
+			})
+			if err != nil {
+				return fmt.Errorf("setting split value of %s: %w", member.Email, err)
+			}
+			if updated != 1 {
+				return fmt.Errorf("%s is not a member of transaction group %d", member.Email, id)
+			}
+		}
+
+		if _, err := queries.SetTransactionGroupSplitType(ctx, &dao.SetTransactionGroupSplitTypeParams{
+			SplitType:          daoSplitType,
+			TransactionGroupID: groupId,
+		}); err != nil {
+			return fmt.Errorf("setting transaction group split type: %w", err)
+		}
+
+		return nil
+	})
+}

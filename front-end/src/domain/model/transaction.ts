@@ -20,7 +20,7 @@ export enum SplitType {
   EXACT_AMOUNT,
 }
 
-function transactionGroupSplitTypeToInternal(splitType: TransactionGroupSplitType): SplitType {
+export function transactionGroupSplitTypeToInternal(splitType: TransactionGroupSplitType): SplitType {
   switch (splitType) {
     case TransactionGroupSplitType.EQUAL:
       return SplitType.EQUAL
@@ -192,11 +192,15 @@ export class AugmentedTransaction extends Transaction {
 
   // Others' shares round down to whole cents and the payer takes the rest, so shares always sum to the amount.
   private userShare(user: string, splitType: SplitType, memberValues: MemberValue[]): number {
+    // A pinned split lists who was in the group then; members who joined later aren't part of it.
     const participants =
-      splitType === SplitType.EQUAL
-        ? this.augmentedTransactionGroupData!.transactionGroup.members.map((m) => m.email)
-        : memberValues.map((m) => m.email)
-    const share = (email: string) => Math.floor(this.exactShare(email, splitType, memberValues, participants.length))
+      memberValues.length > 0
+        ? memberValues.map((m) => m.email)
+        : this.augmentedTransactionGroupData!.transactionGroup.members.map((m) => m.email)
+    const share = (email: string) =>
+      participants.includes(email)
+        ? Math.floor(this.exactShare(email, splitType, memberValues, participants.length))
+        : 0
 
     if (user !== this.owner) return share(user)
     return participants

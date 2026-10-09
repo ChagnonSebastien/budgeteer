@@ -8,6 +8,8 @@ import (
 	"chagnon.dev/budget-server/internal/infrastructure/db/repository"
 	"chagnon.dev/budget-server/internal/infrastructure/messaging/dto"
 	"chagnon.dev/budget-server/internal/infrastructure/messaging/shared"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type transactionGroupRepository interface {
@@ -24,6 +26,14 @@ type transactionGroupRepository interface {
 		userEmail string,
 		id model.TransactionGroupID,
 		fields *repository.UpdateTransactionGroupFields,
+	) error
+	ChangeTransactionGroupSplit(
+		ctx context.Context,
+		userEmail string,
+		id model.TransactionGroupID,
+		splitType model.SplitType,
+		members []model.MemberSplitValue,
+		scope model.SplitChangeScope,
 	) error
 }
 
@@ -214,4 +224,55 @@ func (h *TransactionGroupHandler) UpdateTransactionGroup(ctx context.Context, re
 	}
 
 	return &dto.UpdateTransactionGroupResponse{}, err
+}
+
+func (h *TransactionGroupHandler) ChangeTransactionGroupSplit(ctx context.Context, request *dto.ChangeTransactionGroupSplitRequest) (*dto.ChangeTransactionGroupSplitResponse, error) {
+	user, ok := shared.FromContext(ctx)
+	if !ok {
+		return nil, fmt.Errorf("getting user from context")
+	}
+
+	splitType, err := SplitTypeFromDto(request.SplitType)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, "unknown split type")
+	}
+
+	var scope model.SplitChangeScope
+	switch request.Scope {
+	case dto.SplitChangeScope_AllTransactions:
+		scope = model.SplitChangeAllTransactions
+	case dto.SplitChangeScope_TransactionsWithoutCustomSplit:
+		scope = model.SplitChangeTransactionsWithoutCustomSplit
+	case dto.SplitChangeScope_FutureTransactions:
+		scope = model.SplitChangeFutureTransactions
+	default:
+		return nil, status.Error(codes.InvalidArgument, "unknown split change scope")
+	}
+
+	members := make([]model.MemberSplitValue, len(request.Members))
+	total := 0
+	for i, member := range request.Members {
+		splitValue := model.None[int]()
+		if member.SplitValue != nil {
+			splitValue = model.Some(int(*member.SplitValue))
+			total += int(*member.SplitValue)
+		} else if splitType != model.SplitTypeEqual {
+			return nil, status.Error(codes.InvalidArgument, "every member needs a split value")
+		}
+		members[i] = model.MemberSplitValue{Email: model.Email(member.Email), SplitValue: splitValue}
+	}
+	if splitType == model.SplitTypePercentage && total != 100 {
+		return nil, status.Error(codes.InvalidArgument, "percentages must add up to 100")
+	}
+	if splitType == model.SplitTypeShare && total == 0 {
+		return nil, status.Error(codes.InvalidArgument, "shares must add up to more than 0")
+	}
+
+	if err := h.transactionGroupService.ChangeTransactionGroupSplit(
+		ctx, user.Email, model.TransactionGroupID(request.Id), splitType, members, scope,
+	); err != nil {
+		return nil, fmt.Errorf("changing transaction group split: %w", err)
+	}
+
+	return &dto.ChangeTransactionGroupSplitResponse{}, nil
 }

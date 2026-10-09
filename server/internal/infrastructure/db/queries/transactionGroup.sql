@@ -173,3 +173,78 @@ SELECT
     CAST(COALESCE((SELECT COUNT(*) FROM deleted_splits), 0) AS INTEGER)            AS splits_deleted,
     CAST(COALESCE((SELECT COUNT(*) FROM deleted_user_transactions), 0) AS INTEGER) AS transactions_unlinked,
     CAST(COALESCE((SELECT COUNT(*) FROM deleted_user), 0) AS INTEGER)              AS user_links_deleted;
+
+
+-- name: SetTransactionGroupMemberSplitValue :execrows
+UPDATE user_transaction_group
+SET split_value = sqlc.narg(split_value)
+WHERE transaction_group_id = sqlc.arg(transaction_group_id) AND user_email = sqlc.arg(user_email);
+
+-- name: SetTransactionGroupSplitType :execrows
+UPDATE transaction_group
+SET split_type = sqlc.arg(split_type)
+WHERE id = sqlc.arg(transaction_group_id);
+
+-- name: ClearDefaultGroupedTransactionsMemberSplits :exec
+DELETE FROM transaction_transaction_group_user_split ttgus
+USING transaction_transaction_group ttg
+WHERE ttgus.transaction_id = ttg.transaction_id
+  AND ttg.transaction_group_id = sqlc.arg(transaction_group_id)
+  AND ttg.split_type_override IS NULL;
+
+-- name: CopyGroupMemberSplitsToDefaultGroupedTransactions :exec
+INSERT INTO transaction_transaction_group_user_split (transaction_id, user_email, split_value)
+SELECT ttg.transaction_id, utg.user_email, utg.split_value
+FROM transaction_transaction_group ttg
+JOIN user_transaction_group utg ON utg.transaction_group_id = ttg.transaction_group_id
+WHERE ttg.transaction_group_id = sqlc.arg(transaction_group_id) AND ttg.split_type_override IS NULL;
+
+-- name: PinDefaultGroupedTransactionsSplitType :exec
+UPDATE transaction_transaction_group ttg
+SET split_type_override = tg.split_type::text::transaction_split_type
+FROM transaction_group tg
+WHERE tg.id = ttg.transaction_group_id
+  AND ttg.transaction_group_id = sqlc.arg(transaction_group_id)
+  AND ttg.split_type_override IS NULL;
+
+-- name: ClearDefaultUnconfirmedTransactionsMemberSplits :exec
+DELETE FROM unconfirmed_transaction_user_split utus
+USING unconfirmed_transactions ut
+WHERE utus.unconfirmed_transaction_id = ut.id
+  AND ut.transaction_group_id = sqlc.arg(transaction_group_id)
+  AND ut.split_type_override IS NULL;
+
+-- name: CopyGroupMemberSplitsToDefaultUnconfirmedTransactions :exec
+INSERT INTO unconfirmed_transaction_user_split (unconfirmed_transaction_id, user_email, split_value)
+SELECT ut.id, utg.user_email, utg.split_value
+FROM unconfirmed_transactions ut
+JOIN user_transaction_group utg ON utg.transaction_group_id = ut.transaction_group_id
+WHERE ut.transaction_group_id = sqlc.arg(transaction_group_id) AND ut.split_type_override IS NULL;
+
+-- name: PinDefaultUnconfirmedTransactionsSplitType :exec
+UPDATE unconfirmed_transactions ut
+SET split_type_override = tg.split_type::text::transaction_split_type
+FROM transaction_group tg
+WHERE tg.id = ut.transaction_group_id
+  AND ut.transaction_group_id = sqlc.arg(transaction_group_id)
+  AND ut.split_type_override IS NULL;
+
+-- name: ClearGroupedTransactionsMemberSplits :exec
+DELETE FROM transaction_transaction_group_user_split ttgus
+USING transaction_transaction_group ttg
+WHERE ttgus.transaction_id = ttg.transaction_id AND ttg.transaction_group_id = sqlc.arg(transaction_group_id);
+
+-- name: ClearGroupedTransactionsSplitType :exec
+UPDATE transaction_transaction_group
+SET split_type_override = NULL
+WHERE transaction_group_id = sqlc.arg(transaction_group_id);
+
+-- name: ClearUnconfirmedTransactionsMemberSplits :exec
+DELETE FROM unconfirmed_transaction_user_split utus
+USING unconfirmed_transactions ut
+WHERE utus.unconfirmed_transaction_id = ut.id AND ut.transaction_group_id = sqlc.arg(transaction_group_id);
+
+-- name: ClearUnconfirmedTransactionsSplitType :exec
+UPDATE unconfirmed_transactions
+SET split_type_override = NULL
+WHERE transaction_group_id = sqlc.arg(transaction_group_id);

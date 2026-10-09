@@ -10,6 +10,14 @@ const (
 	SplitTypeShare
 )
 
+type SplitChangeScope int
+
+const (
+	SplitChangeAllTransactions SplitChangeScope = iota
+	SplitChangeTransactionsWithoutCustomSplit
+	SplitChangeFutureTransactions
+)
+
 type Member struct {
 	Email      Email
 	Name       string
