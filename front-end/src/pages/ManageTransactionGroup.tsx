@@ -1,10 +1,8 @@
-import { Button, Chip, IconButton, Typography } from '@mui/material'
+import { Button, Typography } from '@mui/material'
 import React, { FC, useCallback, useContext, useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
 import { UserContext } from '../App'
-import { IconToolsContext } from '../components/icons/IconTools'
-import PersonPicker from '../components/inputs/PersonPicker'
 import LoadingScreen from '../components/LoadingScreen'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
 import { Row } from '../components/shared/Layout'
@@ -16,16 +14,13 @@ import {
   GroupPaidTable,
   SecondDivision,
 } from '../components/transactionGroup/GroupLedger'
+import GroupMembers from '../components/transactionGroup/GroupMembers'
 import JoinTransactionGroup from '../components/transactionGroup/JoinTransactionGroup'
 import GroupTransactionCard from '../components/transactions/GroupTransactionCard'
 import { TransactionList } from '../components/transactions/TransactionList'
-import { Email, Person } from '../domain/model/transactionGroup'
 import { UnconfirmedAugmentedTransaction } from '../domain/model/unconfirmedTransaction'
 import MixedAugmentation from '../service/MixedAugmentation'
 import { TransactionGroupServiceContext, UnconfirmedTransactionServiceContext } from '../service/ServiceContext'
-
-const emailRegex =
-  /^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/
 
 type Params = {
   transactionGroupId: string
@@ -36,8 +31,7 @@ const ManageTransactionGroup: FC = () => {
   const navigate = useNavigate()
 
   const { email } = useContext(UserContext)
-  const { IconLib } = useContext(IconToolsContext)
-  const { state: rawTransactionGroups, update: updateTransactionGroup } = useContext(TransactionGroupServiceContext)
+  const { state: rawTransactionGroups } = useContext(TransactionGroupServiceContext)
   const { state: unconfirmedTransactions } = useContext(UnconfirmedTransactionServiceContext)
   const {
     augmentedTransactions: transactions,
@@ -101,36 +95,6 @@ const ManageTransactionGroup: FC = () => {
   const { width: contentWidth, ref: setContentRef } = useElementDimensions(600, 600)
   const splitHorizontal = useMemo(() => contentWidth > 1200, [contentWidth])
 
-  const addUserToGroup = useCallback(
-    ({ existing, id, name }: { existing: boolean; id: Email | null; name: string }) => {
-      if (typeof selectedTransactionGroup === 'undefined') return
-      const currentMembers = selectedTransactionGroup.members
-      const email = existing ? id! : name
-      const personAlreadyIsMember = currentMembers.findIndex((m) => m.email === email) !== -1
-      if (personAlreadyIsMember) {
-        throw new Error(`${email} already is a member of this transaction group`)
-      }
-
-      updateTransactionGroup(
-        { id: selectedTransactionGroup!.id },
-        { members: [...currentMembers, new Person(email, name, null, false)] },
-      )
-    },
-    [selectedTransactionGroup, updateTransactionGroup],
-  )
-
-  const removeUserFromGroup = useCallback(
-    (email: string) => {
-      if (typeof selectedTransactionGroup === 'undefined') return
-
-      updateTransactionGroup(
-        { id: selectedTransactionGroup!.id },
-        { members: selectedTransactionGroup.members.filter((m) => m.email !== email) },
-      )
-    },
-    [selectedTransactionGroup, updateTransactionGroup],
-  )
-
   if (rawTransactionGroup && !rawTransactionGroup.members.find((m) => m.email === email)?.joined) {
     return (
       <ContentWithHeader title="Join transaction group" action="menu" withPadding withScrolling>
@@ -152,27 +116,10 @@ const ManageTransactionGroup: FC = () => {
             <Typography variant="h1" fontSize="2rem">
               {selectedTransactionGroup.name}
             </Typography>
-            <Row style={{ justifyContent: 'end', alignSelf: 'stretch', alignItems: 'center', gap: '.5rem' }}>
-              <PersonPicker
-                onPersonSelected={addUserToGroup}
-                OverrideTextLabel={({ onClick }) => (
-                  <IconButton aria-label="add someone to transaction group" onClick={onClick}>
-                    <IconLib.BsPlusCircle />
-                  </IconButton>
-                )}
-                allowNew
-                value={null}
-                labelText={''}
-                validateNewItemString={(s: string) => emailRegex.test(s)}
-              />
-              {selectedTransactionGroup.members.map((member) => (
-                <Chip
-                  key={member.email}
-                  label={member.name}
-                  onDelete={member.joined ? undefined : () => removeUserFromGroup(member.email)}
-                />
-              ))}
-            </Row>
+            <GroupMembers
+              transactionGroup={selectedTransactionGroup}
+              style={{ justifyContent: 'end', alignSelf: 'stretch' }}
+            />
             <GroupPaidTable
               members={selectedTransactionGroup.members}
               entries={paidEntries}

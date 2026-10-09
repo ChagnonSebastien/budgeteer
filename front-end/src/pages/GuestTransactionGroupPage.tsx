@@ -1,11 +1,10 @@
-import { Button, Chip, Typography } from '@mui/material'
+import { Button, Typography } from '@mui/material'
 import { FC, useContext, useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
 import { UserContext } from '../App'
 import LoadingScreen from '../components/LoadingScreen'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
-import { Row } from '../components/shared/Layout'
 import {
   FirstDivision,
   GroupLedgerEntry,
@@ -13,6 +12,7 @@ import {
   groupCurrency,
   SecondDivision,
 } from '../components/transactionGroup/GroupLedger'
+import GroupMembers from '../components/transactionGroup/GroupMembers'
 import JoinTransactionGroup from '../components/transactionGroup/JoinTransactionGroup'
 import GroupTransactionCard from '../components/transactions/GroupTransactionCard'
 import { TransactionList } from '../components/transactions/TransactionList'
@@ -110,11 +110,7 @@ const GuestTransactionGroupPage: FC = () => {
   return (
     <ContentWithHeader title={transactionGroup.name} action="menu" withScrolling>
       <FirstDivision>
-        <Row style={{ flexWrap: 'wrap', gap: '.5rem', justifyContent: 'center' }}>
-          {transactionGroup.members.map((member) => (
-            <Chip key={member.email} label={member.name} variant={member.joined ? 'filled' : 'outlined'} />
-          ))}
-        </Row>
+        <GroupMembers transactionGroup={transactionGroup} style={{ justifyContent: 'center' }} />
         <GroupPaidTable
           members={transactionGroup.members}
           entries={entries}
