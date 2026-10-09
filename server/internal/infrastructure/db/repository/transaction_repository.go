@@ -34,9 +34,9 @@ func SplitTypeOverrideToDao(splitType model.SplitTypeOverride) (value dao.Transa
 	case model.SplitTypeOverrideEqual:
 		return dao.TransactionSplitTypeEQUAL, nil
 	case model.SplitTypeOverridePercentage:
-		return dao.TransactionSplitTypeSHARES, nil
+		return dao.TransactionSplitTypePERCENTAGE, nil
 	case model.SplitTypeOverrideShare:
-		return dao.TransactionSplitTypeEXACTAMOUNT, nil
+		return dao.TransactionSplitTypeSHARES, nil
 	case model.SplitTypeOverrideExactAmount:
 		return dao.TransactionSplitTypeEXACTAMOUNT, nil
 	default:
@@ -238,7 +238,7 @@ func (r *Repository) CreateTransaction(
 			TriggeredByOwner:        userEmail == ownerEmail,
 			UpdateSplitTypeOverride: hasSplitOverride,
 		})
-		if err != nil {
+		if upsertErr != nil {
 			err = fmt.Errorf("upserting grouped transaction: %w", upsertErr)
 			return
 		}
@@ -252,7 +252,7 @@ func (r *Repository) CreateTransaction(
 					UserEmail:     string(member.Email),
 					SplitValue:    sql.NullInt32{Valid: hasSplitValue, Int32: int32(splitValue)},
 				})
-				if err != nil {
+				if upsertErr != nil {
 					err = fmt.Errorf("upserting grouped transaction member split value: %w", upsertErr)
 					return
 				}
@@ -531,7 +531,7 @@ func (r *Repository) UpdateTransaction(
 						continue
 					}
 
-					_, removalErr := r.queries.RemoveGroupedTransactionMember(ctx, &dao.RemoveGroupedTransactionMemberParams{
+					_, removalErr := r.queries.WithTx(tx).RemoveGroupedTransactionMember(ctx, &dao.RemoveGroupedTransactionMemberParams{
 						TransactionID: int32(id),
 						UserEmail:     previousMember.UserEmail,
 					})
@@ -550,7 +550,7 @@ func (r *Repository) UpdateTransaction(
 						splitValue = sql.NullInt32{Valid: true, Int32: int32(value)}
 					}
 
-					_, upsertErr := r.queries.UpsertGroupedTransactionMemberSplitValue(ctx, &dao.UpsertGroupedTransactionMemberSplitValueParams{
+					_, upsertErr := r.queries.WithTx(tx).UpsertGroupedTransactionMemberSplitValue(ctx, &dao.UpsertGroupedTransactionMemberSplitValueParams{
 						SplitValue:    splitValue,
 						UserEmail:     string(newMember.Email),
 						TransactionID: int32(id),
@@ -562,9 +562,9 @@ func (r *Repository) UpdateTransaction(
 				}
 			}
 		} else {
-			_, deleteErr := r.queries.DeleteGroupedTransaction(ctx, int32(id))
+			_, deleteErr := r.queries.WithTx(tx).DeleteGroupedTransaction(ctx, int32(id))
 			if deleteErr != nil {
-				err = fmt.Errorf("deleting grouped transaction data: %w", err)
+				err = fmt.Errorf("deleting grouped transaction data: %w", deleteErr)
 				return
 			}
 		}

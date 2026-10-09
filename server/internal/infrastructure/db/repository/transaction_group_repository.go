@@ -276,7 +276,7 @@ func (r *Repository) UpdateTransactionGroup(
 				return
 			}
 
-			removedData, removalErr := r.queries.RemoveUserFromTransactionGroup(ctx, &dao.RemoveUserFromTransactionGroupParams{
+			removedData, removalErr := r.queries.WithTx(tx).RemoveUserFromTransactionGroup(ctx, &dao.RemoveUserFromTransactionGroupParams{
 				TransactionGroupID: int32(id),
 				UserEmail:          previousMember.UserEmail,
 			})
@@ -294,7 +294,7 @@ func (r *Repository) UpdateTransactionGroup(
 		// HANDLE NEW AND UPDATED MEMBERS
 		//
 		for _, newMember := range newMembers {
-			rowsAffected, upsertErr := r.queries.UpsertTransactionGroupMember(ctx, &dao.UpsertTransactionGroupMemberParams{
+			rowsAffected, upsertErr := r.queries.WithTx(tx).UpsertTransactionGroupMember(ctx, &dao.UpsertTransactionGroupMemberParams{
 				SplitValue:         newMember.Fields.nullSplitValue(),
 				UserEmail:          string(newMember.Email),
 				TransactionGroupID: int32(id),
