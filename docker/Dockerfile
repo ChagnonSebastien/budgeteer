@@ -15,7 +15,7 @@ RUN go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
 RUN npm install -D @protobuf-ts/plugin
 ENV PATH="$PATH:$GOPATH/bin:/app/node_modules/.bin"
 COPY protobuf protobuf
-RUN protoc --go_out=. --go-grpc_out=. protobuf/*
+RUN protoc -I protobuf --go_out=. --go-grpc_out=. protobuf/*
 RUN mkdir -p front-end/src/store/remote/dto
 RUN npx protoc --ts_out ./front-end/src/store/remote/dto --proto_path protobuf protobuf/*
 

@@ -41,6 +41,7 @@ export enum PreparedIcon {
   TbLayoutDashboardFilled = 'TbLayoutDashboardFilled',
   BsPlusCircle = 'BsPlusCircle',
   BsDashCircle = 'BsDashCircle',
+  MdCheckCircle = 'MdCheckCircle',
 }
 
 type PreparedIconLib = {

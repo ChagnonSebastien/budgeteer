@@ -96,14 +96,16 @@ func (r *Repository) GetUserTransactionGroups(ctx context.Context, userEmail str
 		}
 
 		transactionGroups[i] = model.TransactionGroup{
-			ID:               model.TransactionGroupID(transactionGroupDao.ID),
-			Name:             transactionGroupDao.Name,
-			OriginalCurrency: transactionGroupDao.CreatorCurrency,
-			SplitType:        splitType,
-			Currency:         currency,
-			Category:         category,
-			Members:          members,
-			Hidden:           transactionGroupDao.Hidden,
+			ID:                            model.TransactionGroupID(transactionGroupDao.ID),
+			Name:                          transactionGroupDao.Name,
+			OriginalCurrency:              transactionGroupDao.CreatorCurrency,
+			OriginalCurrencySymbol:        transactionGroupDao.CreatorCurrencySymbol,
+			OriginalCurrencyDecimalPoints: int(transactionGroupDao.CreatorCurrencyDecimalPoints),
+			SplitType:                     splitType,
+			Currency:                      currency,
+			Category:                      category,
+			Members:                       members,
+			Hidden:                        transactionGroupDao.Hidden,
 		}
 	}
 

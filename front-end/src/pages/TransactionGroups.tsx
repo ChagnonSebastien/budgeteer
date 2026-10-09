@@ -7,39 +7,52 @@ import ScrollingOverButton, { CustomScrolling } from '../components/shared/Scrol
 import { TransactionGroupCard } from '../components/transactionGroup/TransactionGroupCard'
 import { TransactionGroupServiceContext } from '../service/ServiceContext'
 
-const TransactionGroups: FC = () => {
+interface Props {
+  // Guests have no currencies or categories, so they can join groups but not create them.
+  canCreate?: boolean
+}
+
+const TransactionGroups: FC<Props> = ({ canCreate = true }) => {
   const navigate = useNavigate()
   const { state: transactionGroups } = useContext(TransactionGroupServiceContext)
 
   const scrollingContainerRef = useRef<HTMLDivElement>(null)
 
+  const list = (
+    <CustomScrolling
+      ref={scrollingContainerRef}
+      style={{
+        overflowY: 'auto',
+        flexGrow: 1,
+        paddingBottom: '4rem',
+        position: 'relative',
+      }}
+    >
+      <ItemList
+        items={transactionGroups}
+        selectConfiguration={{
+          mode: 'click',
+          onClick: (clicked) => navigate(`/transaction-groups/manage/${clicked.id}`),
+        }}
+        ItemComponent={TransactionGroupCard}
+        additionalItemsProps={{}}
+      />
+    </CustomScrolling>
+  )
+
   return (
     <ContentWithHeader title="Transaction Groups" action="menu" withPadding>
-      <ScrollingOverButton
-        button={{ text: 'New', onClick: () => navigate('/transaction-groups/new') }}
-        scrollingContainerRef={scrollingContainerRef}
-        contentStyle={{ maxWidth: '40rem' }}
-      >
-        <CustomScrolling
-          ref={scrollingContainerRef}
-          style={{
-            overflowY: 'auto',
-            flexGrow: 1,
-            paddingBottom: '4rem',
-            position: 'relative',
-          }}
+      {canCreate ? (
+        <ScrollingOverButton
+          button={{ text: 'New', onClick: () => navigate('/transaction-groups/new') }}
+          scrollingContainerRef={scrollingContainerRef}
+          contentStyle={{ maxWidth: '40rem' }}
         >
-          <ItemList
-            items={transactionGroups}
-            selectConfiguration={{
-              mode: 'click',
-              onClick: (clicked) => navigate(`/transaction-groups/manage/${clicked.id}`),
-            }}
-            ItemComponent={TransactionGroupCard}
-            additionalItemsProps={{}}
-          />
-        </CustomScrolling>
-      </ScrollingOverButton>
+          {list}
+        </ScrollingOverButton>
+      ) : (
+        list
+      )}
     </ContentWithHeader>
   )
 }

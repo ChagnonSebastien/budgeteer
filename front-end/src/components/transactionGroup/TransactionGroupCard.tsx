@@ -1,6 +1,7 @@
 import { Typography } from '@mui/material'
 import { useContext, useMemo } from 'react'
 
+import { UserContext } from '../../App'
 import TransactionGroup, { TransactionGroupID } from '../../domain/model/transactionGroup'
 import { CategoryServiceContext } from '../../service/ServiceContext'
 import { ItemProps } from '../accounts/ItemList'
@@ -14,6 +15,9 @@ export const TransactionGroupCard = (props: Props) => {
   const { item, selected = false, onClick } = props
 
   const { state: categories } = useContext(CategoryServiceContext)
+  const { email } = useContext(UserContext)
+
+  const invited = !item.hasJoined(email)
 
   const tgCategory = useMemo(
     () => categories.find((category) => category.id === item.category),
@@ -42,6 +46,11 @@ export const TransactionGroupCard = (props: Props) => {
       <Typography flexGrow={1} variant="subtitle1">
         {item.name}
       </Typography>
+      {invited && (
+        <Typography variant="caption" color="warning">
+          Invited
+        </Typography>
+      )}
     </GradientCard>
   )
 }

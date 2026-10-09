@@ -20,7 +20,8 @@ export const UserContext = createContext<User>({
 })
 
 const App: FC = () => {
-  const { user, attemptedUserVerification, hasInternet, authMethods, logout, setDefaultCurrency } = useAuthentication()
+  const { user, attemptedUserVerification, hasInternet, authMethods, logout, setDefaultCurrency, setDisplayName } =
+    useAuthentication()
 
   const iconTools = useIconTools()
 
@@ -29,7 +30,7 @@ const App: FC = () => {
       return (
         <IconToolsContext.Provider value={iconTools}>
           <UserContext.Provider value={user}>
-            <SplitWizeZone hasInternet={hasInternet} logout={logout} />
+            <SplitWizeZone hasInternet={hasInternet} logout={logout} setDisplayName={setDisplayName} />
           </UserContext.Provider>
         </IconToolsContext.Provider>
       )

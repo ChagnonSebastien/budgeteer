@@ -71,6 +71,8 @@ export default class TransactionGroup implements NamedItem<TransactionGroupID, T
     readonly currency: CurrencyID | null,
     readonly category: CategoryID | null,
     readonly hidden: boolean,
+    readonly originalCurrencySymbol: string = '',
+    readonly originalCurrencyDecimalPoints: number = 2,
   ) {}
 
   hasName(name: string): boolean {
@@ -87,6 +89,8 @@ export default class TransactionGroup implements NamedItem<TransactionGroupID, T
     if (this.currency !== other.currency) return false
     if (this.category !== other.category) return false
     if (this.hidden !== other.hidden) return false
+    if (this.originalCurrencySymbol !== other.originalCurrencySymbol) return false
+    if (this.originalCurrencyDecimalPoints !== other.originalCurrencyDecimalPoints) return false
     return true
   }
 
@@ -110,6 +114,8 @@ export class AugmentedTransactionGroup extends TransactionGroup {
       transactionGroup.currency,
       transactionGroup.category,
       transactionGroup.hidden,
+      transactionGroup.originalCurrencySymbol,
+      transactionGroup.originalCurrencyDecimalPoints,
     )
   }
 }

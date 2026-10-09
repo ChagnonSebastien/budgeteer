@@ -128,13 +128,13 @@ func (r *Repository) GetAllTransactions(ctx context.Context, userId uuid.UUID) (
 			ID:                     model.TransactionID(transactionDao.ID),
 			Owner:                  model.Email(transactionDao.Owner),
 			Amount:                 int(transactionDao.Amount),
-			Currency:               model.CurrencyID(transactionDao.ViewerCurrency.Int32),
+			Currency:               model.CurrencyID(transactionDao.ViewerCurrency),
 			Sender:                 model.None[model.AccountID](),
 			Receiver:               model.None[model.AccountID](),
 			Category:               model.None[model.CategoryID](),
 			Date:                   transactionDao.Date,
 			Note:                   transactionDao.Note,
-			ReceiverCurrency:       model.CurrencyID(transactionDao.ViewerCurrency.Int32),
+			ReceiverCurrency:       model.CurrencyID(transactionDao.ViewerCurrency),
 			ReceiverAmount:         int(transactionDao.Amount),
 			FinancialIncomeData:    model.None[model.FinancialIncomeData](),
 			GroupedTransactionData: model.Some(groupedTransactionData),
@@ -220,6 +220,44 @@ func (r *Repository) CreateTransaction(
 		}
 	}()
 
+	createdTransactionId, err = insertTransaction(
+		ctx,
+		r.queries.WithTx(tx),
+		userId,
+		amount, receiverAmount,
+		currencyId, receiverCurrencyId,
+		senderAccountId, receiverAccountId,
+		categoryId,
+		date,
+		note,
+		financialIncomeData,
+		transactionGroupData,
+	)
+	if err != nil {
+		return
+	}
+
+	if err = tx.Commit(); err != nil {
+		err = fmt.Errorf("committing transaction: %w", err)
+		return
+	}
+
+	return
+}
+
+func insertTransaction(
+	ctx context.Context,
+	queries *dao.Queries,
+	userId uuid.UUID,
+	amount, receiverAmount int,
+	currencyId, receiverCurrencyId int,
+	senderAccountId, receiverAccountId model.Optional[int],
+	categoryId model.Optional[int],
+	date time.Time,
+	note string,
+	financialIncomeData model.Optional[model.FinancialIncomeData],
+	transactionGroupData model.Optional[model.GroupedTransactionData],
+) (model.TransactionID, error) {
 	sender := sql.NullInt32{Valid: false}
 	if value, isSome := senderAccountId.Value(); isSome {
 		sender = sql.NullInt32{Valid: true, Int32: int32(value)}
@@ -235,7 +273,7 @@ func (r *Repository) CreateTransaction(
 		category = sql.NullInt32{Valid: true, Int32: int32(value)}
 	}
 
-	transactionId, err := r.queries.WithTx(tx).CreateTransaction(
+	transactionId, err := queries.CreateTransaction(
 		ctx, &dao.CreateTransactionParams{
 			UserID:           userId,
 			Amount:           int32(amount),
@@ -250,27 +288,25 @@ func (r *Repository) CreateTransaction(
 		},
 	)
 	if err != nil {
-		err = fmt.Errorf("creating transaction: %w", err)
-		return
+		return 0, fmt.Errorf("creating transaction: %w", err)
 	}
 
 	if financialIncome, isSome := financialIncomeData.Value(); isSome {
-		_, queryErr := r.queries.WithTx(tx).UpsertFinancialIncome(ctx, &dao.UpsertFinancialIncomeParams{
+		_, err := queries.UpsertFinancialIncome(ctx, &dao.UpsertFinancialIncomeParams{
 			TransactionID: transactionId,
 			RelatedCurrencyID: sql.NullInt32{
 				Int32: int32(financialIncome.RelatedCurrency),
 				Valid: true,
 			},
 		})
-		if queryErr != nil {
-			err = fmt.Errorf("creating financial income: %w", queryErr)
-			return
+		if err != nil {
+			return 0, fmt.Errorf("creating financial income: %w", err)
 		}
 	}
 
 	if transactionGroup, isSome := transactionGroupData.Value(); isSome {
-		if err = ensureJoinedTransactionGroupMember(ctx, r.queries.WithTx(tx), userId, int32(transactionGroup.TransactionGroup)); err != nil {
-			return
+		if err := ensureJoinedTransactionGroupMember(ctx, queries, userId, int32(transactionGroup.TransactionGroup)); err != nil {
+			return 0, err
 		}
 
 		splitOverride, hasSplitOverride := transactionGroup.SplitOverride.Value()
@@ -278,43 +314,35 @@ func (r *Repository) CreateTransaction(
 		if hasSplitOverride {
 			splitOverrideDao, err = SplitTypeOverrideToDao(splitOverride.SplitTypeOverride)
 			if err != nil {
-				err = fmt.Errorf("converting split type override to dao: %w", err)
-				return
+				return 0, fmt.Errorf("converting split type override to dao: %w", err)
 			}
 		}
 
-		_, upsertErr := r.queries.WithTx(tx).UpsertGroupedTransaction(ctx, &dao.UpsertGroupedTransactionParams{
+		_, err := queries.UpsertGroupedTransaction(ctx, &dao.UpsertGroupedTransactionParams{
 			TransactionID:           transactionId,
 			TransactionGroupID:      sql.NullInt32{Valid: true, Int32: int32(transactionGroup.TransactionGroup)},
 			SplitTypeOverride:       dao.NullTransactionSplitType{Valid: hasSplitOverride, TransactionSplitType: splitOverrideDao},
-			TriggeredByOwner:        userEmail == ownerEmail,
+			TriggeredByOwner:        true,
 			UpdateSplitTypeOverride: hasSplitOverride,
 		})
-		if upsertErr != nil {
-			err = fmt.Errorf("upserting grouped transaction: %w", upsertErr)
-			return
+		if err != nil {
+			return 0, fmt.Errorf("upserting grouped transaction: %w", err)
 		}
 
 		if hasSplitOverride {
 			for _, member := range splitOverride.Members {
 				splitValue, hasSplitValue := member.SplitValue.Value()
 
-				_, upsertErr := r.queries.WithTx(tx).UpsertGroupedTransactionMemberSplitValue(ctx, &dao.UpsertGroupedTransactionMemberSplitValueParams{
+				_, err := queries.UpsertGroupedTransactionMemberSplitValue(ctx, &dao.UpsertGroupedTransactionMemberSplitValueParams{
 					TransactionID: transactionId,
 					UserEmail:     string(member.Email),
 					SplitValue:    sql.NullInt32{Valid: hasSplitValue, Int32: int32(splitValue)},
 				})
-				if upsertErr != nil {
-					err = fmt.Errorf("upserting grouped transaction member split value: %w", upsertErr)
-					return
+				if err != nil {
+					return 0, fmt.Errorf("upserting grouped transaction member split value: %w", err)
 				}
 			}
 		}
-	}
-
-	if err = tx.Commit(); err != nil {
-		err = fmt.Errorf("committing transaction: %w", err)
-		return
 	}
 
 	return model.TransactionID(transactionId), nil

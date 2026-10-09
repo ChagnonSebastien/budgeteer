@@ -1,11 +1,10 @@
 import { Alert, Box, Button, Divider, Paper, Stack, TextField, Typography } from '@mui/material'
 import { useState } from 'react'
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL + '/'
+const BACKEND_URL = (import.meta.env.VITE_BACKEND_URL || window.location.origin) + '/'
 
 export function GuestLogin() {
   const [email, setEmail] = useState('')
-  const [name, setName] = useState('')
   const [code, setCode] = useState('')
   const [step, setStep] = useState<'email' | 'code'>('email')
   const [loading, setLoading] = useState(false)
@@ -24,7 +23,7 @@ export function GuestLogin() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, name }),
+        body: JSON.stringify({ email }),
       })
 
       if (response.ok) {
@@ -114,16 +113,6 @@ export function GuestLogin() {
         {step === 'email' ? (
           <Box component="form" onSubmit={handleSendCode}>
             <Stack spacing={2}>
-              <TextField
-                id="name"
-                label="Name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Your name"
-                required
-                disabled={loading}
-                fullWidth
-              />
               <TextField
                 id="email"
                 type="email"

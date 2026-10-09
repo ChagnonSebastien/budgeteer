@@ -58,10 +58,11 @@ interface Props {
   submitText: string
   type?: TransactionType
   prefillAccountId?: AccountID | null
+  prefillTransactionGroupId?: TransactionGroupID | null
 }
 
 const TransactionForm: FC<Props> = (props) => {
-  const { initialTransaction, onSubmit, submitText, type: rawType, prefillAccountId } = props
+  const { initialTransaction, onSubmit, submitText, type: rawType, prefillAccountId, prefillTransactionGroupId } = props
 
   const { create: createAccount, state: accounts } = useContext(AccountServiceContext)
   const { state: categories } = useContext(CategoryServiceContext)
@@ -87,7 +88,7 @@ const TransactionForm: FC<Props> = (props) => {
     () => rawType === 'financialIncome' || !!initialTransaction?.financialIncomeData,
   )
   const [useTransactionGroup, setUseTransactionGroup] = useState(
-    () => (initialTransaction?.transactionGroupData ?? null) !== null,
+    () => (initialTransaction?.transactionGroupData?.transactionGroupId ?? prefillTransactionGroupId ?? null) !== null,
   )
 
   const type: 'income' | 'expense' | 'transfer' | 'financialIncome' = isFinancialIncome ? 'financialIncome' : baseType
@@ -164,7 +165,7 @@ const TransactionForm: FC<Props> = (props) => {
   }, [categories, parent])
 
   const [transactionGroupId, setTransactionGroupId] = useState<TransactionGroupID | null>(
-    initialTransaction?.transactionGroupData?.transactionGroupId ?? null,
+    initialTransaction?.transactionGroupData?.transactionGroupId ?? prefillTransactionGroupId ?? null,
   )
   const visibleTransactionGroups = useMemo(() => {
     return transactionGroups.filter((tg) => tg.hasJoined(email) && !tg.hidden)

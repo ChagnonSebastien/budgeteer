@@ -69,15 +69,12 @@ WHERE t.user_id = sqlc.arg(user_id)
 ORDER BY date DESC;
 
 -- name: GetGroupTransactionsFromOtherMembers :many
--- Transactions other users recorded in groups the requesting user has joined. The
--- owner's accounts, category and financial income data are private and omitted;
--- group members share a currency configuration, so the requesting user's own
--- currency for the group stands in for the owner's.
+-- currency_id is the requester's own currency for the group (the creator's for guests), not the owner's.
 SELECT
     t.id,
     u.email AS owner,
     t.amount,
-    viewer.currency_id AS viewer_currency,
+    COALESCE(viewer.currency_id, tg.creator_currency)::integer AS viewer_currency,
     t.date,
     t.note,
     ttg.transaction_group_id,
@@ -103,12 +100,12 @@ SELECT
 FROM transactions t
     JOIN transaction_transaction_group ttg ON t.id = ttg.transaction_id
     JOIN users u ON u.id = t.user_id
+    JOIN transaction_group tg ON tg.id = ttg.transaction_group_id
     JOIN user_transaction_group viewer ON viewer.transaction_group_id = ttg.transaction_group_id
     JOIN users vu ON vu.email = viewer.user_email
 WHERE vu.id = sqlc.arg(user_id)
   AND t.user_id <> sqlc.arg(user_id)
   AND viewer.locked = true
-  AND viewer.currency_id IS NOT NULL
 ORDER BY t.date DESC;
 
 -- name: CreateTransaction :one

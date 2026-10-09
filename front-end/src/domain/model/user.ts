@@ -5,6 +5,7 @@ export default interface User {
   email: string
   preferred_username: string
   name: string
+  display_name?: string | null
   default_currency: number | null
   hidden_default_account: number
   authentification_method: AuthMethod

@@ -11,7 +11,9 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
 	"time"
+	"unicode/utf8"
 
 	"chagnon.dev/budget-server/internal/domain/model"
 
@@ -45,6 +47,8 @@ type userRepository interface {
 	UpsertUser(ctx context.Context, username, email string, oidcSub model.Optional[string]) (uuid.UUID, error)
 	UserParams(ctx context.Context, userId uuid.UUID) (*model.UserParams, error)
 	UpsertOidcUser(ctx context.Context, oidcSub, email, username string) (uuid.UUID, error)
+	EnsureGuestUser(ctx context.Context, email string) (uuid.UUID, error)
+	SetDisplayName(ctx context.Context, userId uuid.UUID, displayName string) error
 }
 
 type guestLoginService interface {
@@ -126,6 +130,7 @@ func (auth *Auth) ServeMux() *http.ServeMux {
 	mux.HandleFunc("/logout", auth.logoutHandler)
 	mux.HandleFunc("/guest/send-code", auth.guestSendCodeHandler)
 	mux.HandleFunc("/guest/verify-code", auth.guestVerifyCodeHandler)
+	mux.HandleFunc("/display-name", auth.displayNameHandler)
 	return mux
 }
 
@@ -317,6 +322,11 @@ func (auth *Auth) logoutHandler(w http.ResponseWriter, r *http.Request) {
 		},
 	)
 
+	if user, err := auth.parseSessionToken(r.Cookie); (err == nil && user.IsGuestUser()) || auth.OidcConfig == nil {
+		http.Redirect(w, r, auth.FrontendPublicUrl, http.StatusTemporaryRedirect)
+		return
+	}
+
 	logoutURL := fmt.Sprintf(
 		"%s/protocol/openid-connect/logout?client_id=%s&post_logout_redirect_uri=%s",
 		auth.OidcIssuer,
@@ -330,6 +340,7 @@ func (auth *Auth) logoutHandler(w http.ResponseWriter, r *http.Request) {
 type userInfoResponse struct {
 	Email                  string            `json:"email"`
 	Name                   string            `json:"name"`
+	DisplayName            *string           `json:"display_name"`
 	DefaultCurrency        *int              `json:"default_currency"`
 	HiddenDefaultAccount   *int              `json:"hidden_default_account"`
 	AuthentificationMethod shared.AuthMethod `json:"authentification_method"`
@@ -441,13 +452,18 @@ func (auth *Auth) userInfoHandler(resp http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	defaultCurrency := int(params.DefaultCurrency)
+	var defaultCurrency *int
+	if params.DefaultCurrency != nil {
+		id := int(*params.DefaultCurrency)
+		defaultCurrency = &id
+	}
 	hiddenDefaultAccount := int(params.HiddenDefaultAccount)
 
 	response := userInfoResponse{
 		Email:                  user.Email,
 		Name:                   params.Name,
-		DefaultCurrency:        &defaultCurrency,
+		DisplayName:            params.DisplayName,
+		DefaultCurrency:        defaultCurrency,
 		HiddenDefaultAccount:   &hiddenDefaultAccount,
 		AuthentificationMethod: user.AuthMethod,
 	}
@@ -627,10 +643,8 @@ func (auth *Auth) guestVerifyCodeHandler(w http.ResponseWriter, r *http.Request)
 
 	logger.Info("guest login code verified successfully", "email", req.Email)
 
-	// Create or update the guest user, using the database-assigned id so the
-	// session token and the persisted rows reference the same user.
-	username := req.Email // Use email as username for guest users
-	userID, err := auth.UserService.UpsertUser(r.Context(), username, req.Email, model.None[string]())
+	// The DB-assigned id, so the session token and persisted rows name the same user.
+	userID, err := auth.UserService.EnsureGuestUser(r.Context(), req.Email)
 	if err != nil {
 		logger.Error("upserting guest user", "error", err, "email", req.Email)
 		w.Header().Set("Content-Type", "application/json")
@@ -673,6 +687,46 @@ func (auth *Auth) guestVerifyCodeHandler(w http.ResponseWriter, r *http.Request)
 		Success: true,
 		Message: "Authentication successful",
 	})
+}
+
+const maxDisplayNameLength = 64
+
+type displayNameRequest struct {
+	Name string `json:"name"`
+}
+
+func (auth *Auth) displayNameHandler(w http.ResponseWriter, r *http.Request) {
+	logger := logging.FromContext(r.Context())
+
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	user, err := auth.parseSessionToken(r.Cookie)
+	if err != nil {
+		http.Error(w, "unauthenticated", http.StatusUnauthorized)
+		return
+	}
+
+	var req displayNameRequest
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 4096)).Decode(&req); err != nil {
+		http.Error(w, "invalid request body", http.StatusBadRequest)
+		return
+	}
+	name := strings.TrimSpace(req.Name)
+	if name == "" || utf8.RuneCountInString(name) > maxDisplayNameLength {
+		http.Error(w, "invalid name", http.StatusBadRequest)
+		return
+	}
+
+	if err := auth.UserService.SetDisplayName(r.Context(), user.ID, name); err != nil {
+		logger.Error("setting display name", "error", err, "user", user.Email)
+		http.Error(w, "internal error", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (auth *Auth) generateSessionToken(userID uuid.UUID, email string, authMethod shared.AuthMethod) (sessionToken string, err error) {

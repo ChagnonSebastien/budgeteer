@@ -2,7 +2,7 @@ PROTO_FILES := protobuf/*
 
 
 generate-proto:
-	protoc --go_out=. --go-grpc_out=. $(PROTO_FILES)
+	protoc -I protobuf --go_out=. --go-grpc_out=. $(PROTO_FILES)
 	npx protoc --ts_out ./front-end/src/store/remote/dto --proto_path protobuf $(PROTO_FILES)
 
 dev-front-end:

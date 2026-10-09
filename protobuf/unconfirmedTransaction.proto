@@ -1,0 +1,87 @@
+syntax = "proto3";
+
+package transaction;
+
+option go_package = "server/internal/infrastructure/messaging/dto";
+
+import "transaction.proto";
+
+message UnconfirmedTransaction {
+  uint32 id = 1;
+  uint32 transaction_group = 2;
+  string owner = 3;
+  string created_by = 4;
+  uint32 amount = 5; // in the group currency
+  string date = 6;
+  string note = 7;
+  optional SplitOverride split_override = 8;
+}
+
+message GetAllUnconfirmedTransactionsRequest {
+}
+
+message GetAllUnconfirmedTransactionsResponse {
+  repeated UnconfirmedTransaction unconfirmed_transactions = 1;
+}
+
+message CreateUnconfirmedTransactionRequest {
+  uint32 transaction_group = 1;
+  string owner = 2;
+  uint32 amount = 3;
+  string date = 4;
+  string note = 5;
+  optional SplitOverride split_override = 6;
+}
+
+message CreateUnconfirmedTransactionResponse {
+  uint32 id = 1;
+}
+
+message UpdateUnconfirmedTransactionFields {
+  optional string owner = 1;
+  optional uint32 amount = 2;
+  optional string date = 3;
+  optional string note = 4;
+  bool update_split_override = 5;
+  optional SplitOverride split_override = 6;
+}
+
+message UpdateUnconfirmedTransactionRequest {
+  uint32 id = 1;
+  UpdateUnconfirmedTransactionFields fields = 2;
+}
+
+message UpdateUnconfirmedTransactionResponse {
+}
+
+message DeleteUnconfirmedTransactionRequest {
+  uint32 id = 1;
+}
+
+message DeleteUnconfirmedTransactionResponse {
+}
+
+message PromoteUnconfirmedTransactionRequest {
+  uint32 id = 1;
+  uint32 amount = 2;
+  uint32 currency = 3;
+  optional uint32 sender = 4;
+  optional uint32 receiver = 5;
+  optional uint32 category = 6;
+  string date = 7;
+  string note = 8;
+  uint32 receiver_currency = 9;
+  uint32 receiver_amount = 10;
+}
+
+message PromoteUnconfirmedTransactionResponse {
+  uint32 transaction_id = 1;
+}
+
+service UnconfirmedTransactionService {
+  rpc GetAllUnconfirmedTransactions (GetAllUnconfirmedTransactionsRequest) returns (GetAllUnconfirmedTransactionsResponse);
+  rpc CreateUnconfirmedTransaction (CreateUnconfirmedTransactionRequest) returns (CreateUnconfirmedTransactionResponse);
+  rpc UpdateUnconfirmedTransaction (UpdateUnconfirmedTransactionRequest) returns (UpdateUnconfirmedTransactionResponse);
+  rpc DeleteUnconfirmedTransaction (DeleteUnconfirmedTransactionRequest) returns (DeleteUnconfirmedTransactionResponse);
+  rpc PromoteUnconfirmedTransaction (PromoteUnconfirmedTransactionRequest) returns (PromoteUnconfirmedTransactionResponse);
+}

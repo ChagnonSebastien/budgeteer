@@ -39,12 +39,7 @@ const guestLogout = () => {
   IndexedDB.delete()
   userStore.clear()
   localStorage.clear()
-
-  document.cookie.split(';').forEach((c) => {
-    document.cookie = c.replace(/^ +/, '').replace(/=.*/, '=;expires=' + new Date().toUTCString() + ';path=/')
-  })
-
-  window.location.href = `/`
+  window.location.href = `${serverUrl}/auth/logout`
 }
 
 type AuthMethodStatuses = { [K in AuthMethod]: (() => void) | null }
@@ -61,6 +56,23 @@ const useAuthentication = () => {
     if (user === null) return
     setUser({ ...user, default_currency: id })
     userStore.upsertUser({ ...user, default_currency: id })
+  }, [])
+
+  const setDisplayName = useCallback(async (name: string) => {
+    const response = await fetch(`${serverUrl}/auth/display-name`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ name }),
+    })
+    if (!response.ok) throw new Error('could not save your name')
+
+    setUser((prev) => {
+      if (prev === null) return prev
+      const updated = { ...prev, name, display_name: name }
+      userStore.upsertUser(updated)
+      return updated
+    })
   }, [])
 
   const fetchUserInfo = useCallback(async (): Promise<User | null> => {
@@ -185,6 +197,7 @@ const useAuthentication = () => {
     hasInternet,
     logout,
     setDefaultCurrency,
+    setDisplayName,
   }
 }
 

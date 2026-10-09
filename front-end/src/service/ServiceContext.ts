@@ -7,6 +7,7 @@ import { CurrencyPersistenceAugmentation } from './CurrencyServiceAugmenter'
 import { ExchangeRatePersistenceAugmentation, RateOnDate } from './ExcahngeRateServiceAugmenter'
 import { TransactionGroupPersistenceAugmentation } from './TransactionGroupServiceAugmenter'
 import { TransactionPersistenceAugmentation } from './TransactionServiceAugmenter'
+import { UnconfirmedTransactionPersistenceAugmentation } from './UnconfirmedTransactionServiceAugmenter'
 import Account, { AccountID, AccountUpdatableFields } from '../domain/model/account'
 import Category, { AugmentedCategory, CategoryID, CategoryUpdatableFields } from '../domain/model/category'
 import Currency, { CurrencyID, CurrencyUpdatableFields } from '../domain/model/currency'
@@ -17,6 +18,10 @@ import TransactionGroup, {
   TransactionGroupID,
   TransactionGroupUpdatableFields,
 } from '../domain/model/transactionGroup'
+import UnconfirmedTransaction, {
+  UnconfirmedTransactionID,
+  UnconfirmedTransactionUpdatableFields,
+} from '../domain/model/unconfirmedTransaction'
 import Unique, { IdIdentifier } from '../domain/model/Unique'
 import { UpdateExchangeRateFields } from '../store/remote/dto/exchangeRate'
 
@@ -34,6 +39,9 @@ const nilPersistence = {
     return Promise.reject(new Error('nilPersistence'))
   },
   delete<IdentifiableFields>(_identity: IdentifiableFields): Promise<void> {
+    return Promise.reject(new Error('nilPersistence'))
+  },
+  refresh(): Promise<void> {
     return Promise.reject(new Error('nilPersistence'))
   },
 }
@@ -94,6 +102,21 @@ export const TransactionServiceContext = createContext<
 >({
   ...nilPersistence,
   transactionsFromGroupMembers: [],
+})
+
+export const UnconfirmedTransactionServiceContext = createContext<
+  BasicCrudService<
+    UnconfirmedTransactionID,
+    UnconfirmedTransaction,
+    IdIdentifier,
+    UnconfirmedTransactionUpdatableFields
+  > &
+    UnconfirmedTransactionPersistenceAugmentation
+>({
+  ...nilPersistence,
+  promote(): Promise<number> {
+    return Promise.reject(new Error('nilPersistence'))
+  },
 })
 
 export const TransactionGroupServiceContext = createContext<

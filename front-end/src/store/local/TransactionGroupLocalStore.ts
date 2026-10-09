@@ -28,6 +28,8 @@ export default class TransactionGroupLocalStore {
           transactionGroup.currency,
           transactionGroup.category,
           transactionGroup.hidden,
+          transactionGroup.originalCurrencySymbol,
+          transactionGroup.originalCurrencyDecimalPoints,
         ),
     )
   }
@@ -65,6 +67,8 @@ export default class TransactionGroupLocalStore {
       currency: data.currency,
       category: data.category,
       hidden: data.hidden,
+      originalCurrencySymbol: data.originalCurrencySymbol,
+      originalCurrencyDecimalPoints: data.originalCurrencyDecimalPoints,
     })
   }
 
@@ -104,6 +108,8 @@ export default class TransactionGroupLocalStore {
         currency: transactionGroup.currency,
         category: transactionGroup.category,
         hidden: transactionGroup.hidden,
+        originalCurrencySymbol: transactionGroup.originalCurrencySymbol,
+        originalCurrencyDecimalPoints: transactionGroup.originalCurrencyDecimalPoints,
       })),
     )
   }

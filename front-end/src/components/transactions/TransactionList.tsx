@@ -25,6 +25,7 @@ interface AdditionalTransactionListProps {
   viewAsAccounts?: number[]
   includeInitialAmounts?: boolean
   displayMonthlySummaries?: boolean
+  skipEmptyMonths?: boolean
   containerStyle?: CSSProperties
 }
 
@@ -39,6 +40,7 @@ export const TransactionList = <T,>(props: Props<T>) => {
     includeInitialAmounts = false,
     containerStyle,
     displayMonthlySummaries = false,
+    skipEmptyMonths = true,
     additionalItemsProps,
   } = props
 
@@ -170,7 +172,7 @@ export const TransactionList = <T,>(props: Props<T>) => {
     let previousTransactionDate = addMonths(today, 1)
     for (const transaction of items) {
       while (j >= 0 && !isSameMonth(previousTransactionDate, transaction.date)) {
-        view.push(wrap(data[j]))
+        if (!skipEmptyMonths || isSameMonth(data[j].date, transaction.date)) view.push(wrap(data[j]))
 
         previousTransactionDate = data[j].date
         j -= 1
@@ -185,10 +187,10 @@ export const TransactionList = <T,>(props: Props<T>) => {
       )
     }
 
-    view.push(wrap(data[j]))
+    if (!skipEmptyMonths) view.push(wrap(data[j]))
 
     return view
-  }, [items, viewAsAccounts, includeInitialAmounts, privacyMode])
+  }, [items, viewAsAccounts, includeInitialAmounts, privacyMode, skipEmptyMonths])
 
   const displayedItems = useMemo(
     () => viewWithMonthLabels.slice(0, displayedAmount),

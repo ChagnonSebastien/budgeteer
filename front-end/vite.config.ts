@@ -6,10 +6,17 @@ import { defineConfig } from 'vite'
 import { VitePWA } from 'vite-plugin-pwa'
 import { viteStaticCopy } from 'vite-plugin-static-copy'
 
+const devBackend = process.env.DEV_BACKEND_URL ?? 'http://localhost:8080'
+
 // https://vitejs.dev/config/
 export default defineConfig({
   server: {
     port: 8000,
+    // Keeps the API same-origin in dev: the server has no CORS, and session cookies must stay first-party.
+    proxy: {
+      '/auth': devBackend,
+      '^/[a-z]+\\.[A-Za-z]+Service/': devBackend,
+    },
   },
   plugins: [
     react(),

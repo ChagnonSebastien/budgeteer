@@ -4,6 +4,7 @@ type Email string
 
 type UserParams struct {
 	Name                 string
-	DefaultCurrency      CurrencyID
+	DisplayName          *string
+	DefaultCurrency      *CurrencyID
 	HiddenDefaultAccount AccountID
 }

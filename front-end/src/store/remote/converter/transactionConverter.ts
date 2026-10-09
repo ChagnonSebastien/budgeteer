@@ -39,7 +39,7 @@ export const splitTypeOverrideToDto = (type: SplitType): SplitTypeOverrideDto =>
   }
 }
 
-const splitTypeFromDto = (type: SplitTypeOverrideDto): SplitType => {
+export const splitTypeFromDto = (type: SplitTypeOverrideDto): SplitType => {
   switch (type) {
     case SplitTypeOverrideDto.OverrideEqual:
       return SplitType.EQUAL

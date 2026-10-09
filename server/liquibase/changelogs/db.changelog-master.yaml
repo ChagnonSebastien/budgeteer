@@ -39,3 +39,7 @@ databaseChangeLog:
       file: ./changelogs/019-default-user-id.sql
   - include:
       file: ./changelogs/020-transaction-delete-cascade.sql
+  - include:
+      file: ./changelogs/021-unconfirmed-transactions.sql
+  - include:
+      file: ./changelogs/022-user-display-name.sql

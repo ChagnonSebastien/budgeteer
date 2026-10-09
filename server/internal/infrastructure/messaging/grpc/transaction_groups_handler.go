@@ -108,14 +108,16 @@ func (h *TransactionGroupHandler) GetAllTransactionGroups(ctx context.Context, r
 		}
 
 		transactionGroupsDto[i] = &dto.TransactionGroup{
-			Id:              uint32(transactionGroup.ID),
-			Name:            transactionGroup.Name,
-			InitialCurrency: transactionGroup.OriginalCurrency,
-			SplitType:       splitTypeDto,
-			Members:         membersDto,
-			Currency:        currency,
-			Category:        category,
-			Hidden:          transactionGroup.Hidden,
+			Id:                           uint32(transactionGroup.ID),
+			Name:                         transactionGroup.Name,
+			InitialCurrency:              transactionGroup.OriginalCurrency,
+			InitialCurrencySymbol:        transactionGroup.OriginalCurrencySymbol,
+			InitialCurrencyDecimalPoints: uint32(transactionGroup.OriginalCurrencyDecimalPoints),
+			SplitType:                    splitTypeDto,
+			Members:                      membersDto,
+			Currency:                     currency,
+			Category:                     category,
+			Hidden:                       transactionGroup.Hidden,
 		}
 	}
 

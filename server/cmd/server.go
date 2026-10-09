@@ -172,12 +172,13 @@ func (s *Server) Serve(ctx context.Context) error {
 	webServer := http.NewServer(
 		grpc.NewServerWithHandlers(
 			grpc.Services{
-				Account:          repos,
-				Category:         service.NewCategoryService(repos),
-				Currency:         repos,
-				Transaction:      repos,
-				ExchangeRate:     repos,
-				TransactionGroup: repos,
+				Account:                repos,
+				Category:               service.NewCategoryService(repos),
+				Currency:               repos,
+				Transaction:            repos,
+				ExchangeRate:           repos,
+				TransactionGroup:       repos,
+				UnconfirmedTransaction: repos,
 			},
 		),
 		http.NewAuth(

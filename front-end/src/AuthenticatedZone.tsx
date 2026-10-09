@@ -19,14 +19,17 @@ import CreateCategoryPage from './pages/CreateCategoryPage'
 import CreateCurrencyPage from './pages/CreateCurrencyPage'
 import CreateTransactionGroupPage from './pages/CreateTransactionGroupPage'
 import CreateTransactionPage from './pages/CreateTransactionPage'
+import CreateUnconfirmedTransactionPage from './pages/CreateUnconfirmedTransactionPage'
 import CurrenciesPage from './pages/CurrenciesPage'
 import Dashboard from './pages/Dashboard'
 import EditAccountPage from './pages/EditAccountPage'
 import EditCategoryPage from './pages/EditCategoryPage'
 import EditCurrencyPage from './pages/EditCurrencyPage'
 import EditTransactionPage from './pages/EditTransactionPage'
+import EditUnconfirmedTransactionPage from './pages/EditUnconfirmedTransactionPage'
 import InvestmentsPerformancePage from './pages/InvestmentsPerformancePage'
 import ManageTransactionGroup from './pages/ManageTransactionGroup'
+import PromoteUnconfirmedTransactionPage from './pages/PromoteUnconfirmedTransactionPage'
 import TransactionGroups from './pages/TransactionGroups'
 import TransactionPage from './pages/TransactionPage'
 import TrendsPage from './pages/TrendsPage'
@@ -43,9 +46,11 @@ import {
   ExchangeRateServiceContext,
   TransactionGroupServiceContext,
   TransactionServiceContext,
+  UnconfirmedTransactionServiceContext,
 } from './service/ServiceContext'
 import { TransactionGroupPersistenceAugmenter } from './service/TransactionGroupServiceAugmenter'
 import { TransactionPersistenceAugmenter } from './service/TransactionServiceAugmenter'
+import { makeUnconfirmedTransactionPersistenceAugmenter } from './service/UnconfirmedTransactionServiceAugmenter'
 import AccountLocalStore from './store/local/AccountLocalStore'
 import CategoryLocalStore from './store/local/CategoryLocalStore'
 import CurrencyLocalStore from './store/local/CurrencyLocalStore'
@@ -54,12 +59,14 @@ import IndexedDB from './store/local/IndexedDB'
 import ReplayStore from './store/local/ReplayStore'
 import TransactionGroupLocalStore from './store/local/TransactionGroupLocalStore'
 import TransactionLocalStore from './store/local/TransactionLocalStore'
+import UnconfirmedTransactionLocalStore from './store/local/UnconfirmedTransactionLocalStore'
 import AccountRemoteStore from './store/remote/AccountRemoteStore'
 import CategoryRemoteStore from './store/remote/CategoryRemoteStore'
 import CurrencyRemoteStore from './store/remote/CurrencyRemoteStore'
 import ExchangeRateRemoteStore from './store/remote/ExchangeRateRemoteStore'
 import TransactionGroupRemoteStore from './store/remote/TransactionGroupRemoteStore'
 import TransactionRemoteStore from './store/remote/TransactionRemoteStore'
+import UnconfirmedTransactionRemoteStore from './store/remote/UnconfirmedTransactionRemoteStore'
 
 const transport = new GrpcWebFetchTransport({
   baseUrl: import.meta.env.VITE_BACKEND_URL || '/',
@@ -71,13 +78,19 @@ const categoryRemoteStore = new CategoryRemoteStore(transport)
 const accountRemoteStore = new AccountRemoteStore(transport)
 const transactionRemoteStore = new TransactionRemoteStore(transport)
 const exchangeRateRemoteStore = new ExchangeRateRemoteStore(transport)
+const unconfirmedTransactionRemoteStore = new UnconfirmedTransactionRemoteStore(transport)
 
 const currencyLocalStore = new CurrencyLocalStore(IndexedDB)
 const categoryLocalStore = new CategoryLocalStore(IndexedDB)
 const accountLocalStore = new AccountLocalStore(IndexedDB)
 const transactionLocalStore = new TransactionLocalStore(IndexedDB)
 const exchangeRateLocalStore = new ExchangeRateLocalStore(IndexedDB)
+const unconfirmedTransactionLocalStore = new UnconfirmedTransactionLocalStore(IndexedDB)
 const replayStore = new ReplayStore(IndexedDB)
+
+const UnconfirmedTransactionPersistenceAugmenter = makeUnconfirmedTransactionPersistenceAugmenter(
+  unconfirmedTransactionRemoteStore,
+)
 
 const MustBeConnectedToInternetOnFirstSetup: FC<{ children: ReactNode; hasInternet: boolean }> = ({
   children,
@@ -302,7 +315,22 @@ const PersistenceSetup: FC<{ children: ReactNode; hasInternet: boolean }> = ({ c
                 sorter={(a, b) => b.id - a.id}
                 hasInternet={hasInternet}
               >
-                {children}
+                <BasicCrudServiceWithPersistence
+                  itemName="unconfirmedTransaction"
+                  synced={true}
+                  longTermStore={unconfirmedTransactionRemoteStore}
+                  localStore={unconfirmedTransactionLocalStore}
+                  actionStore={replayStore}
+                  context={UnconfirmedTransactionServiceContext}
+                  Augmenter={UnconfirmedTransactionPersistenceAugmenter}
+                  sorter={(a, b) => {
+                    if (b.date.getTime() !== a.date.getTime()) return b.date.getTime() - a.date.getTime()
+                    return b.id - a.id
+                  }}
+                  hasInternet={hasInternet}
+                >
+                  {children}
+                </BasicCrudServiceWithPersistence>
               </BasicCrudServiceWithPersistence>
             </BasicCrudServiceWithPersistence>
           </BasicCrudServiceWithPersistence>
@@ -347,6 +375,18 @@ const AuthenticatedZone: FC<Props> = (props) => {
           <Route path="/transaction-groups" element={<TransactionGroups />} />
           <Route path="/transaction-groups/new" element={<CreateTransactionGroupPage />} />
           <Route path="/transaction-groups/manage/:transactionGroupId" element={<ManageTransactionGroup />} />
+          <Route
+            path="/transaction-groups/manage/:transactionGroupId/unconfirmed/new"
+            element={<CreateUnconfirmedTransactionPage />}
+          />
+          <Route
+            path="/transaction-groups/manage/:transactionGroupId/unconfirmed/:unconfirmedTransactionId"
+            element={<EditUnconfirmedTransactionPage />}
+          />
+          <Route
+            path="/transaction-groups/manage/:transactionGroupId/unconfirmed/:unconfirmedTransactionId/promote"
+            element={<PromoteUnconfirmedTransactionPage />}
+          />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </DrawerWrapper>

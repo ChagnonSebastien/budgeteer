@@ -18,12 +18,14 @@ type Member struct {
 }
 
 type TransactionGroup struct {
-	ID               TransactionGroupID
-	Name             string
-	OriginalCurrency string
-	SplitType        SplitType
-	Currency         Optional[CurrencyID]
-	Category         Optional[CategoryID]
-	Members          []Member
-	Hidden           bool
+	ID                            TransactionGroupID
+	Name                          string
+	OriginalCurrency              string
+	OriginalCurrencySymbol        string
+	OriginalCurrencyDecimalPoints int
+	SplitType                     SplitType
+	Currency                      Optional[CurrencyID]
+	Category                      Optional[CategoryID]
+	Members                       []Member
+	Hidden                        bool
 }

@@ -52,6 +52,8 @@ export class TransactionGroupConverter
       dto.currency ?? null,
       dto.category ?? null,
       dto.hidden,
+      dto.initialCurrencySymbol,
+      dto.initialCurrencyDecimalPoints,
     )
   }
 
@@ -71,6 +73,8 @@ export class TransactionGroupConverter
       currency: model.currency ?? undefined,
       category: model.category ?? undefined,
       hidden: model.hidden,
+      initialCurrencySymbol: model.originalCurrencySymbol,
+      initialCurrencyDecimalPoints: model.originalCurrencyDecimalPoints,
     })
   }
 

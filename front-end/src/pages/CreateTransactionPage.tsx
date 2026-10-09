@@ -16,9 +16,14 @@ type QueryParams = {
 const CreateTransactionPage: FC = () => {
   const navigate = useNavigate()
   const location = useLocation()
-  const navigationState = location.state as { from?: string; prefillAccountId?: number | null } | null
+  const navigationState = location.state as {
+    from?: string
+    prefillAccountId?: number | null
+    prefillTransactionGroupId?: number | null
+  } | null
   const returnTo = navigationState?.from ?? '/transactions'
   const prefillAccountId = navigationState?.prefillAccountId ?? null
+  const prefillTransactionGroupId = navigationState?.prefillTransactionGroupId ?? null
   const { queryParams } = useQueryParams<QueryParams>()
   const type = useMemo(() => (queryParams.type ?? 'expense') as TransactionType, [queryParams.type])
 
@@ -65,7 +70,13 @@ const CreateTransactionPage: FC = () => {
       withPadding
       withScrolling
     >
-      <TransactionForm onSubmit={onSubmit} submitText="Record" type={type} prefillAccountId={prefillAccountId} />
+      <TransactionForm
+        onSubmit={onSubmit}
+        submitText="Record"
+        type={type}
+        prefillAccountId={prefillAccountId}
+        prefillTransactionGroupId={prefillTransactionGroupId}
+      />
     </ContentWithHeader>
   )
 }

@@ -1,10 +1,15 @@
+import { Alert, Box, Button, Stack, TextField, Typography } from '@mui/material'
 import { GrpcWebFetchTransport } from '@protobuf-ts/grpcweb-transport'
-import React, { FC, ReactNode, useMemo } from 'react'
+import React, { FC, ReactNode, useContext, useMemo, useState } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 
+import { UserContext } from './App'
 import LoadingScreen from './components/LoadingScreen'
 import DrawerWrapper from './components/Menu'
 import { Centered } from './components/shared/Layout'
+import CreateUnconfirmedTransactionPage from './pages/CreateUnconfirmedTransactionPage'
+import EditUnconfirmedTransactionPage from './pages/EditUnconfirmedTransactionPage'
+import GuestTransactionGroupPage from './pages/GuestTransactionGroupPage'
 import TransactionGroups from './pages/TransactionGroups'
 import { AccountPersistenceAugmenter } from './service/AccountServiceAugmenter'
 import { BasicCrudServiceWithPersistence } from './service/BasicCrudServiceWithPersistence'
@@ -16,21 +21,29 @@ import {
   CategoryServiceContext,
   CurrencyServiceContext,
   ExchangeRateServiceContext,
+  TransactionGroupServiceContext,
   TransactionServiceContext,
+  UnconfirmedTransactionServiceContext,
 } from './service/ServiceContext'
+import { TransactionGroupPersistenceAugmenter } from './service/TransactionGroupServiceAugmenter'
 import { TransactionPersistenceAugmenter } from './service/TransactionServiceAugmenter'
+import { makeUnconfirmedTransactionPersistenceAugmenter } from './service/UnconfirmedTransactionServiceAugmenter'
 import AccountLocalStore from './store/local/AccountLocalStore'
 import CategoryLocalStore from './store/local/CategoryLocalStore'
 import CurrencyLocalStore from './store/local/CurrencyLocalStore'
 import ExchangeRateLocalStore from './store/local/ExchangeRateLocalStore'
 import IndexedDB from './store/local/IndexedDB'
 import ReplayStore from './store/local/ReplayStore'
+import TransactionGroupLocalStore from './store/local/TransactionGroupLocalStore'
 import TransactionLocalStore from './store/local/TransactionLocalStore'
+import UnconfirmedTransactionLocalStore from './store/local/UnconfirmedTransactionLocalStore'
 import AccountRemoteStore from './store/remote/AccountRemoteStore'
 import CategoryRemoteStore from './store/remote/CategoryRemoteStore'
 import CurrencyRemoteStore from './store/remote/CurrencyRemoteStore'
 import ExchangeRateRemoteStore from './store/remote/ExchangeRateRemoteStore'
+import TransactionGroupRemoteStore from './store/remote/TransactionGroupRemoteStore'
 import TransactionRemoteStore from './store/remote/TransactionRemoteStore'
+import UnconfirmedTransactionRemoteStore from './store/remote/UnconfirmedTransactionRemoteStore'
 
 const transport = new GrpcWebFetchTransport({
   baseUrl: import.meta.env.VITE_BACKEND_URL || '/',
@@ -42,13 +55,19 @@ const categoryRemoteStore = new CategoryRemoteStore(transport)
 const accountRemoteStore = new AccountRemoteStore(transport)
 const transactionRemoteStore = new TransactionRemoteStore(transport)
 const exchangeRateRemoteStore = new ExchangeRateRemoteStore(transport)
+const unconfirmedTransactionRemoteStore = new UnconfirmedTransactionRemoteStore(transport)
 
 const currencyLocalStore = new CurrencyLocalStore(IndexedDB)
 const categoryLocalStore = new CategoryLocalStore(IndexedDB)
 const accountLocalStore = new AccountLocalStore(IndexedDB)
 const transactionLocalStore = new TransactionLocalStore(IndexedDB)
 const exchangeRateLocalStore = new ExchangeRateLocalStore(IndexedDB)
+const unconfirmedTransactionLocalStore = new UnconfirmedTransactionLocalStore(IndexedDB)
 const replayStore = new ReplayStore(IndexedDB)
+
+const UnconfirmedTransactionPersistenceAugmenter = makeUnconfirmedTransactionPersistenceAugmenter(
+  unconfirmedTransactionRemoteStore,
+)
 
 const MustBeConnectedToInternetOnFirstSetup: FC<{ children: ReactNode; hasInternet: boolean }> = ({
   children,
@@ -107,6 +126,43 @@ const WaitOnInitializedData: FC<{
     )}
   </TransactionServiceContext.Consumer>
 )
+
+const GroupPersistenceSetup: FC<{ children: ReactNode; hasInternet: boolean }> = ({ children, hasInternet }) => {
+  const { email, preferred_username: username } = useContext(UserContext)
+  const [transactionGroupLocalStore] = useState(new TransactionGroupLocalStore(email, username, IndexedDB))
+  const [transactionGroupRemoteStore] = useState(new TransactionGroupRemoteStore(email, username, transport))
+
+  return (
+    <BasicCrudServiceWithPersistence
+      itemName="transactionGroup"
+      synced={true}
+      longTermStore={transactionGroupRemoteStore}
+      localStore={transactionGroupLocalStore}
+      actionStore={replayStore}
+      context={TransactionGroupServiceContext}
+      Augmenter={TransactionGroupPersistenceAugmenter}
+      sorter={(a, b) => b.id - a.id}
+      hasInternet={hasInternet}
+    >
+      <BasicCrudServiceWithPersistence
+        itemName="unconfirmedTransaction"
+        synced={true}
+        longTermStore={unconfirmedTransactionRemoteStore}
+        localStore={unconfirmedTransactionLocalStore}
+        actionStore={replayStore}
+        context={UnconfirmedTransactionServiceContext}
+        Augmenter={UnconfirmedTransactionPersistenceAugmenter}
+        sorter={(a, b) => {
+          if (b.date.getTime() !== a.date.getTime()) return b.date.getTime() - a.date.getTime()
+          return b.id - a.id
+        }}
+        hasInternet={hasInternet}
+      >
+        {children}
+      </BasicCrudServiceWithPersistence>
+    </BasicCrudServiceWithPersistence>
+  )
+}
 
 const PersistenceSetup: FC<{ children: ReactNode; hasInternet: boolean }> = ({ children, hasInternet }) => (
   <BasicCrudServiceWithPersistence
@@ -174,7 +230,7 @@ const PersistenceSetup: FC<{ children: ReactNode; hasInternet: boolean }> = ({ c
             }}
             hasInternet={hasInternet}
           >
-            {children}
+            <GroupPersistenceSetup hasInternet={hasInternet}>{children}</GroupPersistenceSetup>
           </BasicCrudServiceWithPersistence>
         </BasicCrudServiceWithPersistence>
       </BasicCrudServiceWithPersistence>
@@ -182,13 +238,57 @@ const PersistenceSetup: FC<{ children: ReactNode; hasInternet: boolean }> = ({ c
   </BasicCrudServiceWithPersistence>
 )
 
+const AskDisplayName: FC<{ setDisplayName(name: string): Promise<void> }> = ({ setDisplayName }) => {
+  const [name, setName] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setSaving(true)
+    setError('')
+    try {
+      await setDisplayName(name.trim())
+    } catch {
+      setError('Could not save your name. Please try again.')
+      setSaving(false)
+    }
+  }
+
+  return (
+    <Centered>
+      <Box component="form" onSubmit={submit} sx={{ p: 2, maxWidth: 400, width: '100%' }}>
+        <Stack spacing={2}>
+          <Typography variant="h6">What should the group call you?</Typography>
+          {error && <Alert severity="error">{error}</Alert>}
+          <TextField
+            label="Name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            slotProps={{ htmlInput: { maxLength: 64 } }}
+            required
+            autoFocus
+            disabled={saving}
+            fullWidth
+          />
+          <Button type="submit" variant="contained" disabled={saving || name.trim() === ''}>
+            Continue
+          </Button>
+        </Stack>
+      </Box>
+    </Centered>
+  )
+}
+
 interface Props {
   logout(): void
   hasInternet: boolean
+  setDisplayName(name: string): Promise<void>
 }
 
 const SplitWiseZone: FC<Props> = (props) => {
-  const { logout, hasInternet } = props
+  const { logout, hasInternet, setDisplayName } = props
+  const { display_name } = useContext(UserContext)
 
   const testGetRateScript = useMemo(() => exchangeRateRemoteStore.testGetRateScript(), [])
 
@@ -197,7 +297,16 @@ const SplitWiseZone: FC<Props> = (props) => {
       <BrowserRouter>
         <DrawerWrapper logout={logout} userIsGuest>
           <Routes>
-            <Route path="/transaction-groups" element={<TransactionGroups />} />
+            <Route path="/transaction-groups" element={<TransactionGroups canCreate={false} />} />
+            <Route path="/transaction-groups/manage/:transactionGroupId" element={<GuestTransactionGroupPage />} />
+            <Route
+              path="/transaction-groups/manage/:transactionGroupId/unconfirmed/new"
+              element={<CreateUnconfirmedTransactionPage />}
+            />
+            <Route
+              path="/transaction-groups/manage/:transactionGroupId/unconfirmed/:unconfirmedTransactionId"
+              element={<EditUnconfirmedTransactionPage />}
+            />
             <Route path="*" element={<Navigate to="/transaction-groups" />} />
           </Routes>
         </DrawerWrapper>
@@ -205,6 +314,11 @@ const SplitWiseZone: FC<Props> = (props) => {
     ),
     [logout, testGetRateScript],
   )
+
+  // Only a server-confirmed null prompts: a user cached before display names existed has none.
+  if (display_name === null) {
+    return <AskDisplayName setDisplayName={setDisplayName} />
+  }
 
   return (
     <PersistenceSetup hasInternet={hasInternet}>

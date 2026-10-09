@@ -26,6 +26,8 @@ message TransactionGroup {
   optional uint32 currency = 6;
   optional uint32 category = 7;
   bool hidden = 8;
+  string initial_currency_symbol = 9;
+  uint32 initial_currency_decimal_points = 10;
 }
 
 message GetAllTransactionGroupsRequest {

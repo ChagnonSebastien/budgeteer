@@ -33,7 +33,19 @@ ON CONFLICT (oidc_sub)
                   email = sqlc.arg(email)
 RETURNING u.id;
 
+-- name: EnsureGuestUser :one
+INSERT INTO users as u (username, email)
+VALUES (sqlc.arg(email), sqlc.arg(email))
+ON CONFLICT (email)
+    DO UPDATE SET email = u.email
+RETURNING u.id;
+
+-- name: SetDisplayName :exec
+UPDATE users
+SET display_name = sqlc.arg(display_name)
+WHERE id = sqlc.arg(user_id);
+
 -- name: GetUserParams :one
-SELECT default_currency, hidden_default_account, username
+SELECT default_currency, hidden_default_account, username, display_name
 FROM users
 WHERE id = sqlc.arg(user_id);

@@ -34,15 +34,27 @@ func (r *Repository) UpsertUser(ctx context.Context, username, email string, oid
 	)
 }
 
+func (r *Repository) EnsureGuestUser(ctx context.Context, email string) (uuid.UUID, error) {
+	return r.queries.EnsureGuestUser(ctx, email)
+}
+
+func (r *Repository) SetDisplayName(ctx context.Context, id uuid.UUID, displayName string) error {
+	return r.queries.SetDisplayName(ctx, &dao.SetDisplayNameParams{
+		DisplayName: sql.NullString{Valid: true, String: displayName},
+		UserID:      id,
+	})
+}
+
 func (r *Repository) UserParams(ctx context.Context, id uuid.UUID) (*model.UserParams, error) {
 	userParams, err := r.queries.GetUserParams(ctx, id)
 	if err != nil {
 		return nil, err
 	}
 
-	defaultCurrency := 0
+	var defaultCurrency *model.CurrencyID
 	if userParams.DefaultCurrency.Valid {
-		defaultCurrency = int(userParams.DefaultCurrency.Int32)
+		id := model.CurrencyID(userParams.DefaultCurrency.Int32)
+		defaultCurrency = &id
 	}
 
 	hiddenDefaultAccount := 0
@@ -50,9 +62,17 @@ func (r *Repository) UserParams(ctx context.Context, id uuid.UUID) (*model.UserP
 		hiddenDefaultAccount = int(userParams.HiddenDefaultAccount.Int32)
 	}
 
+	name := userParams.Username
+	var displayName *string
+	if userParams.DisplayName.Valid {
+		name = userParams.DisplayName.String
+		displayName = &userParams.DisplayName.String
+	}
+
 	return &model.UserParams{
-		Name:                 userParams.Username,
-		DefaultCurrency:      model.CurrencyID(defaultCurrency),
+		Name:                 name,
+		DisplayName:          displayName,
+		DefaultCurrency:      defaultCurrency,
 		HiddenDefaultAccount: model.AccountID(hiddenDefaultAccount),
 	}, nil
 }

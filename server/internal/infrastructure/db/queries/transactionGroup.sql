@@ -4,6 +4,8 @@ SELECT
     COALESCE(utg.name_override, tg.name)::text AS name,
     tg.split_type,
     c.name as creator_currency,
+    c.symbol as creator_currency_symbol,
+    c.decimal_points as creator_currency_decimal_points,
     utg.category_id,
     utg.currency_id,
     utg.split_value,
@@ -12,7 +14,7 @@ SELECT
         SELECT json_agg(
                        json_build_object(
                                'user_email', utg2.user_email,
-                               'user_name', u.username,
+                               'user_name', COALESCE(u.display_name, u.username),
                                'split_value', utg2.split_value,
                                'joined', utg2.locked
                        )
@@ -151,6 +153,13 @@ deleted_user_transactions AS (
                 AND u.email = sqlc.arg(user_email)
                 AND ttg.transaction_group_id = sqlc.arg(transaction_group_id)
         RETURNING ttg.transaction_id
+),
+deleted_unconfirmed_transactions AS (
+    DELETE FROM unconfirmed_transactions ut
+        WHERE
+            ut.transaction_group_id = sqlc.arg(transaction_group_id)
+                AND ut.owner_email = sqlc.arg(user_email)
+        RETURNING 1
 ),
 deleted_user AS (
     -- Remove the user from the group membership

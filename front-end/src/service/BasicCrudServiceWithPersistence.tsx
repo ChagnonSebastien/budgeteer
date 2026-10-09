@@ -1,4 +1,4 @@
-import { Context, FC, ReactNode, useCallback, useEffect, useState } from 'react'
+import { Context, FC, ReactNode, useCallback, useEffect, useRef, useState } from 'react'
 
 import { BasicCrudService } from './BasicCrudService'
 import Unique, { ItemType } from '../domain/model/Unique'
@@ -72,9 +72,13 @@ export const BasicCrudServiceWithPersistence = <
 
   const [state, setState] = useState<{ version: number; data: Item[] }>({ version: 0, data: initialState ?? [] })
   const [initialized, setInitialized] = useState<boolean>(typeof initialState !== 'undefined')
+  // A fresh IndexedDB can resolve after the remote fetch; its stale read must not overwrite it.
+  const remoteLoaded = useRef(false)
 
   useEffect(() => {
     localStore.getAll().then((items) => {
+      setInitialized(true)
+      if (remoteLoaded.current) return
       setState((prev) => {
         const ordered = items.sort(sorter)
         if (prev.data.length != ordered.length) return { version: prev.version + 1, data: ordered }
@@ -83,24 +87,27 @@ export const BasicCrudServiceWithPersistence = <
         }
         return prev
       })
-      setInitialized(true)
     })
+  }, [])
+
+  const refresh = useCallback(async (): Promise<void> => {
+    const items = await longTermStore.getAll()
+    remoteLoaded.current = true
+    setState((prev) => {
+      const ordered = items.sort(sorter)
+      if (prev.data.length != ordered.length) return { version: prev.version + 1, data: ordered }
+      for (let i = 0; i < ordered.length; i += 1) {
+        if (!prev.data[i].equals(ordered[i])) return { version: prev.version + 1, data: ordered }
+      }
+      return prev
+    })
+    await localStore.sync(items)
   }, [])
 
   useEffect(() => {
     if (!hasInternet || !synced) return
 
-    longTermStore.getAll().then(async (items) => {
-      setState((prev) => {
-        const ordered = items.sort(sorter)
-        if (prev.data.length != ordered.length) return { version: prev.version + 1, data: ordered }
-        for (let i = 0; i < ordered.length; i += 1) {
-          if (!prev.data[i].equals(ordered[i])) return { version: prev.version + 1, data: ordered }
-        }
-        return prev
-      })
-      await localStore.sync(items)
-    })
+    refresh()
   }, [synced, hasInternet])
 
   const create = useCallback(
@@ -134,7 +141,10 @@ export const BasicCrudServiceWithPersistence = <
       }
 
       setState((prevState) => ({
-        data: prevState.data.map((c) => (c.id === identity.id ? { ...c, ...data } : c)).sort(sorter),
+        // Keep the prototype: a spread would drop methods like equals and hasJoined.
+        data: prevState.data
+          .map((c) => (c.id === identity.id ? Object.assign(Object.create(Object.getPrototypeOf(c)), c, data) : c))
+          .sort(sorter),
         version: prevState.version + 1,
       }))
     },
@@ -169,7 +179,16 @@ export const BasicCrudServiceWithPersistence = <
       state={state.data}
       augment={(b) => (
         <context.Provider
-          value={{ initialized, version: state.version, state: state.data, create, update, delete: deleteItem, ...b }}
+          value={{
+            initialized,
+            version: state.version,
+            state: state.data,
+            create,
+            update,
+            delete: deleteItem,
+            refresh,
+            ...b,
+          }}
         >
           {children}
         </context.Provider>

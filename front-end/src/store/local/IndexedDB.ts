@@ -95,6 +95,19 @@ interface TransactionGroup {
   currency: number | null
   category: number | null
   hidden: boolean
+  originalCurrencySymbol?: string
+  originalCurrencyDecimalPoints?: number
+}
+
+interface UnconfirmedTransaction {
+  id: number
+  transactionGroupId: number
+  owner: string
+  createdBy: string
+  amount: number
+  date: Date
+  note: string
+  splitOverride: SplitOverride | null
 }
 
 export type ActionType = 'create' | 'update' | 'delete'
@@ -118,6 +131,7 @@ export class BudgeteerDB extends Dexie {
   categories!: EntityTable<Category, 'id'>
   transactions!: EntityTable<Transaction, 'id'>
   transactionGroups!: EntityTable<TransactionGroup, 'id'>
+  unconfirmedTransactions!: EntityTable<UnconfirmedTransaction, 'id'>
   replay!: EntityTable<Action, 'id'>
 
   constructor() {
@@ -131,10 +145,13 @@ export class BudgeteerDB extends Dexie {
       transactionGroups: '++id',
       replay: '++id,time',
     })
+    this.version(2).stores({
+      unconfirmedTransactions: '++id',
+    })
   }
 }
 
-export type { Currency, Account, Category, Action, Transaction, TransactionGroup, ExchangeRate }
+export type { Currency, Account, Category, Action, Transaction, TransactionGroup, UnconfirmedTransaction, ExchangeRate }
 
 const IndexedDB = new BudgeteerDB()
 export default IndexedDB

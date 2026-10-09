@@ -9,12 +9,13 @@ import (
 )
 
 type Services struct {
-	Account          accountRepository
-	Category         *service.CategoryService
-	Currency         currencyRepository
-	Transaction      transactionRepository
-	ExchangeRate     exchangeRateRepository
-	TransactionGroup transactionGroupRepository
+	Account                accountRepository
+	Category               *service.CategoryService
+	Currency               currencyRepository
+	Transaction            transactionRepository
+	ExchangeRate           exchangeRateRepository
+	TransactionGroup       transactionGroupRepository
+	UnconfirmedTransaction unconfirmedTransactionRepository
 }
 
 func NewServerWithHandlers(services Services) *grpc.Server {
@@ -25,6 +26,7 @@ func NewServerWithHandlers(services Services) *grpc.Server {
 	dto.RegisterTransactionServiceServer(grpcServer, &TransactionHandler{transactionService: services.Transaction})
 	dto.RegisterExchangeRateServiceServer(grpcServer, &ExchangeRateHandler{exchangeRateService: services.ExchangeRate, javascriptRunner: autoupdate.RunJavascript})
 	dto.RegisterTransactionGroupServiceServer(grpcServer, &TransactionGroupHandler{transactionGroupService: services.TransactionGroup})
+	dto.RegisterUnconfirmedTransactionServiceServer(grpcServer, &UnconfirmedTransactionHandler{unconfirmedTransactionService: services.UnconfirmedTransaction})
 
 	return grpcServer
 }

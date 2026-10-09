@@ -186,14 +186,24 @@ export class AugmentedTransaction extends Transaction {
       )
     }
 
+    const paid = this.owner === user ? this.amount : 0
+    return paid - this.userShare(user, splitType, memberSpecificValues)
+  }
+
+  private userShare(user: string, splitType: SplitType, memberValues: MemberValue[]): number {
+    const userValue = memberValues.find((m) => m.email === user)?.value ?? 0
     switch (splitType) {
-      case SplitType.EQUAL:
-        return (
-          (this.amount * (this.augmentedTransactionGroupData.transactionGroup.members.length - 1)) /
-          this.augmentedTransactionGroupData.transactionGroup.members.length
-        )
-      default:
-        throw new Error('not implemented')
+      case SplitType.EQUAL: {
+        const memberCount = this.augmentedTransactionGroupData!.transactionGroup.members.length
+        return memberCount === 0 ? 0 : this.amount / memberCount
+      }
+      case SplitType.EXACT_AMOUNT:
+        return userValue
+      case SplitType.PERCENTAGE:
+      case SplitType.SHARES: {
+        const total = memberValues.reduce((sum, m) => sum + (m.value ?? 0), 0)
+        return total === 0 ? 0 : (this.amount * userValue) / total
+      }
     }
   }
 }
