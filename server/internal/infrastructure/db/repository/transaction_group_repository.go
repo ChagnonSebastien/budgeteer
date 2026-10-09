@@ -423,3 +423,65 @@ func (r *Repository) ChangeTransactionGroupSplit(
 		return nil
 	})
 }
+
+func (r *Repository) SetGroupedTransactionSplit(
+	ctx context.Context,
+	userEmail string,
+	transactionId model.TransactionID,
+	splitOverride model.Optional[model.SplitOverride],
+) error {
+	splitType, err := nullSplitTypeOverride(splitOverride)
+	if err != nil {
+		return err
+	}
+
+	return r.inTx(ctx, func(queries *dao.Queries) error {
+		grouped, err := queries.GetGroupedTransactionForSplit(ctx, int32(transactionId))
+		if err != nil {
+			return fmt.Errorf("getting grouped transaction: %w", err)
+		}
+		if err := ensureTransactionGroupMember(ctx, queries, userEmail, grouped.TransactionGroupID, true); err != nil {
+			return err
+		}
+
+		override, hasOverride := splitOverride.Value()
+		if hasOverride && override.SplitTypeOverride == model.SplitTypeOverrideExactAmount {
+			total := 0
+			for _, member := range override.Members {
+				total += member.SplitValue.ValueOr(0)
+			}
+			if total != int(grouped.Amount) {
+				return fmt.Errorf("exact split amounts add up to %d, not the transaction amount %d", total, grouped.Amount)
+			}
+		}
+
+		if err := queries.ClearGroupedTransactionMemberSplits(ctx, int32(transactionId)); err != nil {
+			return fmt.Errorf("clearing transaction split values: %w", err)
+		}
+		if err := queries.SetGroupedTransactionSplitType(ctx, &dao.SetGroupedTransactionSplitTypeParams{
+			SplitTypeOverride: splitType,
+			TransactionID:     int32(transactionId),
+		}); err != nil {
+			return fmt.Errorf("setting transaction split type: %w", err)
+		}
+
+		if !hasOverride {
+			return nil
+		}
+		for _, member := range override.Members {
+			if err := ensureTransactionGroupMember(ctx, queries, string(member.Email), grouped.TransactionGroupID, false); err != nil {
+				return err
+			}
+			splitValue, hasSplitValue := member.SplitValue.Value()
+			if _, err := queries.UpsertGroupedTransactionMemberSplitValue(ctx, &dao.UpsertGroupedTransactionMemberSplitValueParams{
+				TransactionID: int32(transactionId),
+				UserEmail:     string(member.Email),
+				SplitValue:    sql.NullInt32{Int32: int32(splitValue), Valid: hasSplitValue},
+			}); err != nil {
+				return fmt.Errorf("setting split value of %s: %w", member.Email, err)
+			}
+		}
+
+		return nil
+	})
+}

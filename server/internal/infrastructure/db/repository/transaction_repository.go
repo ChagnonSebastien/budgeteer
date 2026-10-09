@@ -578,6 +578,8 @@ func (r *Repository) UpdateTransaction(
 				if splitOverride, isSome := updateSplitOverrideData.Value(); isSome {
 					updateSplitTypeOverride = splitOverride.SplitTypeOverride.IsSome()
 					splitTypeOverrideDao = splitOverride.nullSplitTypeOverride()
+				} else {
+					updateSplitTypeOverride = true
 				}
 			}
 

@@ -1,10 +1,10 @@
 import { Button, Typography } from '@mui/material'
-import { FC, ReactNode, useCallback, useContext, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { FC, ReactNode, useContext, useMemo, useState } from 'react'
 
 import ChangeSplitDialog from './ChangeSplitDialog'
 import { FirstDivision, GroupPaidTable, SecondDivision } from './GroupLedger'
 import GroupMembers from './GroupMembers'
+import GroupTransactionModal from './GroupTransactionModal'
 import { AugmentedTransaction } from '../../domain/model/transaction'
 import { AugmentedTransactionGroup, SplitTypeToString } from '../../domain/model/transactionGroup'
 import { UnconfirmedAugmentedTransaction } from '../../domain/model/unconfirmedTransaction'
@@ -21,7 +21,6 @@ const TransactionGroupView: FC<{
   confirmedTransactions: AugmentedTransaction[]
   actions: ReactNode
 }> = ({ transactionGroup, confirmedTransactions, actions }) => {
-  const navigate = useNavigate()
   const [changingSplit, setChangingSplit] = useState(false)
   const { state: unconfirmedTransactions } = useContext(UnconfirmedTransactionServiceContext)
 
@@ -40,15 +39,8 @@ const TransactionGroupView: FC<{
     [confirmedTransactions, unconfirmedTransactions, transactionGroup],
   )
 
-  const openTransaction = useCallback(
-    (transactionId: number) => {
-      const transaction = groupTransactions.find((t) => t.id === transactionId)
-      if (transaction instanceof UnconfirmedAugmentedTransaction) {
-        navigate(`/transaction-groups/manage/${transactionGroup.id}/unconfirmed/${transaction.unconfirmed.id}`)
-      }
-    },
-    [groupTransactions, navigate, transactionGroup.id],
-  )
+  const [clickedTransactionId, setClickedTransactionId] = useState<number | null>(null)
+  const clickedTransaction = groupTransactions.find((t) => t.id === clickedTransactionId) ?? null
 
   const { width: contentWidth, ref: setContentRef } = useElementDimensions(600, 600)
   const splitHorizontal = contentWidth > 1200
@@ -91,7 +83,7 @@ const TransactionGroupView: FC<{
                 items={groupTransactions}
                 ItemComponent={GroupTransactionCard}
                 additionalItemsProps={{}}
-                onClick={openTransaction}
+                onClick={setClickedTransactionId}
                 containerStyle={{ width: '100%', maxWidth: '32rem' }}
               />
             )}
@@ -99,6 +91,7 @@ const TransactionGroupView: FC<{
         }
         secondZoneStyling={{ scroll: true, grow: true }}
       />
+      <GroupTransactionModal transaction={clickedTransaction} onClose={() => setClickedTransactionId(null)} />
       {changingSplit && (
         <ChangeSplitDialog
           open

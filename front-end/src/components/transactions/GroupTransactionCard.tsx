@@ -27,7 +27,9 @@ const GroupTransactionCard: FC<ItemProps<TransactionID, AugmentedTransaction, ob
     return <p>Transaction is not part of a group</p>
   }
 
-  const payedBy = item.augmentedTransactionGroupData.transactionGroup.members.find((m) => m.email === item.owner)
+  const members = item.augmentedTransactionGroupData.transactionGroup.members
+  const payedBy = members.find((m) => m.email === item.owner)
+  const splitSummary = item.splitSummary(email)
   const isUnconfirmed = item instanceof UnconfirmedAugmentedTransaction
   const promotable =
     item instanceof UnconfirmedAugmentedTransaction && !isGuest && item.owner === email ? item.unconfirmed : null
@@ -102,6 +104,27 @@ const GroupTransactionCard: FC<ItemProps<TransactionID, AugmentedTransaction, ob
               )}
             </Typography>
           </>
+        )}
+        {splitSummary && (
+          <Tooltip
+            enterTouchDelay={0}
+            title={item.memberParts().map(({ email: memberEmail, part }) => (
+              <div key={memberEmail}>
+                {members.find((m) => m.email === memberEmail)?.name ?? memberEmail}:{' '}
+                {formatFull(item.currency, part, privacyMode)}
+              </div>
+            ))}
+          >
+            <Typography
+              fontSize="0.75rem"
+              color="textDisabled"
+              lineHeight={1.2}
+              marginTop="0.15rem"
+              sx={{ textDecoration: 'underline dotted' }}
+            >
+              {splitSummary}
+            </Typography>
+          </Tooltip>
         )}
       </Column>
     </GradientCard>

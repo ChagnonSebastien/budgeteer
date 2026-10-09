@@ -112,30 +112,9 @@ func (s *TransactionHandler) CreateTransaction(
 
 	transactionGroupData := model.None[model.GroupedTransactionData]()
 	if req.TransactionGroupData != nil {
-		splitOverride := model.None[model.SplitOverride]()
-		if req.TransactionGroupData.SplitOverride != nil {
-			splitTypeOverride, err := SplitTypeOverrideFromDto(req.TransactionGroupData.SplitOverride.SplitTypeOverride)
-			if err != nil {
-				return nil, err
-			}
-
-			members := make([]model.MemberSplitValue, len(req.TransactionGroupData.SplitOverride.MemberSplitValues))
-			for i, member := range req.TransactionGroupData.SplitOverride.MemberSplitValues {
-				splitValue := model.None[int]()
-				if member.SplitValue != nil {
-					splitValue = model.Some(int(*member.SplitValue))
-				}
-
-				members[i] = model.MemberSplitValue{
-					Email:      model.Email(member.Email),
-					SplitValue: splitValue,
-				}
-			}
-
-			splitOverride = model.Some(model.SplitOverride{
-				SplitTypeOverride: splitTypeOverride,
-				Members:           members,
-			})
+		splitOverride, err := splitOverrideFromDto(req.TransactionGroupData.SplitOverride)
+		if err != nil {
+			return nil, err
 		}
 
 		transactionGroupData = model.Some(model.GroupedTransactionData{

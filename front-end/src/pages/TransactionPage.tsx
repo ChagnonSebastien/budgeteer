@@ -1,6 +1,5 @@
 import {
   Box,
-  Button,
   Checkbox,
   IconButton,
   Menu,
@@ -23,10 +22,10 @@ import { IconToolsContext } from '../components/icons/IconTools'
 import useTransactionFilter from '../components/inputs/useTransactionFilter'
 import { DrawerContext } from '../components/Menu'
 import BasicModal from '../components/shared/BasicModal'
+import ConfirmDeleteModal from '../components/shared/ConfirmDeleteModal'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
 import { DetailCard, FancyModal } from '../components/shared/FancyModal'
-import { Column, Row } from '../components/shared/Layout'
-import { SecureButton } from '../components/shared/SecureButton'
+import { Column } from '../components/shared/Layout'
 import SplitView from '../components/shared/SplitView'
 import { useToast } from '../components/shared/ToastProvider'
 import { useElementDimensions } from '../components/shared/useDimensions'
@@ -399,41 +398,29 @@ const TransactionPage: FC = () => {
         )}
       </BasicModal>
 
-      <BasicModal open={transactionToDelete !== null} onClose={() => setTransactionToDelete(null)}>
-        <Column style={{ padding: '1.5rem', gap: '1rem', maxWidth: '22rem' }}>
-          <Typography variant="h6">Delete transaction?</Typography>
-          <Typography color="text.secondary">
-            This permanently removes
-            {transactionToDelete?.note ? ` "${transactionToDelete.note}"` : ' this transaction'}. This cannot be undone.
-          </Typography>
-          <Row style={{ gap: '1rem', justifyContent: 'end' }}>
-            <Button variant="text" color="inherit" onClick={() => setTransactionToDelete(null)}>
-              Cancel
-            </Button>
-            <SecureButton
-              variant="contained"
-              color="error"
-              onClick={() => {
-                const target = transactionToDelete
-                if (target === null) return Promise.resolve()
-                return deleteTransaction({ id: target.id }).then(
-                  () => {
-                    setTransactionToDelete(null)
-                    setClickedTransaction(null)
-                    showToast('Transaction deleted')
-                  },
-                  (err) => {
-                    showToast('Failed to delete transaction', 'error')
-                    console.error(err)
-                  },
-                )
-              }}
-            >
-              Delete
-            </SecureButton>
-          </Row>
-        </Column>
-      </BasicModal>
+      <ConfirmDeleteModal
+        open={transactionToDelete !== null}
+        title="Delete transaction?"
+        description={`This permanently removes${
+          transactionToDelete?.note ? ` "${transactionToDelete.note}"` : ' this transaction'
+        }. This cannot be undone.`}
+        onCancel={() => setTransactionToDelete(null)}
+        onConfirm={() => {
+          const target = transactionToDelete
+          if (target === null) return Promise.resolve()
+          return deleteTransaction({ id: target.id }).then(
+            () => {
+              setTransactionToDelete(null)
+              setClickedTransaction(null)
+              showToast('Transaction deleted')
+            },
+            (err) => {
+              showToast('Failed to delete transaction', 'error')
+              console.error(err)
+            },
+          )
+        }}
+      />
     </ContentWithHeader>
   )
 }

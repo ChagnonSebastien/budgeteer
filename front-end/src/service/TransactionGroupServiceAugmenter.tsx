@@ -1,6 +1,7 @@
 import { FC, useMemo } from 'react'
 
 import { AugmenterProps } from './BasicCrudServiceWithPersistence'
+import { SplitOverride, TransactionID } from '../domain/model/transaction'
 import TransactionGroup, {
   MemberSplitValues,
   Person,
@@ -10,6 +11,7 @@ import TransactionGroup, {
 } from '../domain/model/transactionGroup'
 
 interface SplitChanger {
+  setTransactionSplit(transactionId: TransactionID, splitOverride: SplitOverride | null): Promise<void>
   changeSplit(
     id: TransactionGroupID,
     splitType: SplitType,
@@ -49,6 +51,8 @@ export const makeTransactionGroupPersistenceAugmenter = (
         knownPeople: knownPeople,
         augmentedVersion: version,
         // Online only; callers must refresh the group, transaction and unconfirmed contexts after.
+        setTransactionSplit: (transactionId: TransactionID, splitOverride: SplitOverride | null) =>
+          splitChanger.setTransactionSplit(transactionId, splitOverride),
         changeSplit: (
           id: TransactionGroupID,
           splitType: SplitType,

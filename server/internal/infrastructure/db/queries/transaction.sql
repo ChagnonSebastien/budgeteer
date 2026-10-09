@@ -226,3 +226,19 @@ returning transaction_id;
 DELETE FROM transaction_transaction_group_user_split
 WHERE transaction_id = sqlc.arg(transaction_id) AND user_email = sqlc.arg(user_email)
 returning user_email;
+
+-- name: GetGroupedTransactionForSplit :one
+SELECT ttg.transaction_group_id, t.amount
+FROM transaction_transaction_group ttg
+JOIN transactions t ON t.id = ttg.transaction_id
+WHERE ttg.transaction_id = sqlc.arg(transaction_id)
+FOR UPDATE OF ttg;
+
+-- name: ClearGroupedTransactionMemberSplits :exec
+DELETE FROM transaction_transaction_group_user_split
+WHERE transaction_id = sqlc.arg(transaction_id);
+
+-- name: SetGroupedTransactionSplitType :exec
+UPDATE transaction_transaction_group
+SET split_type_override = sqlc.narg(split_type_override)
+WHERE transaction_id = sqlc.arg(transaction_id);

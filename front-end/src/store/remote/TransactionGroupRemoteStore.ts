@@ -1,14 +1,18 @@
 import { RpcTransport } from '@protobuf-ts/runtime-rpc'
 
+import { splitTypeOverrideToDto } from './converter/transactionConverter'
 import { splitTypeToDto, TransactionGroupConverter } from './converter/transactionGroupConverter'
+import { MemberSplitValue as MemberSplitValueDto, SplitOverride as SplitOverrideDto } from './dto/transaction'
 import {
   ChangeTransactionGroupSplitRequest,
   CreateTransactionGroupRequest,
   GetAllTransactionGroupsRequest,
+  SetGroupedTransactionSplitRequest,
   SplitChangeScope as SplitChangeScopeDto,
   UpdateTransactionGroupRequest,
 } from './dto/transactionGroup'
 import { TransactionGroupServiceClient } from './dto/transactionGroup.client'
+import { SplitOverride, TransactionID } from '../../domain/model/transaction'
 import TransactionGroup, {
   MemberSplitValues,
   Person,
@@ -80,6 +84,22 @@ export default class TransactionGroupRemoteStore {
         splitType: splitTypeToDto(splitType),
         members: [...memberValues].map(([email, value]) => ({ email, splitValue: value ?? undefined })),
         scope: splitChangeScopeToDto(scope),
+      }),
+    ).response
+  }
+
+  public async setTransactionSplit(transactionId: TransactionID, splitOverride: SplitOverride | null): Promise<void> {
+    await this.client.setGroupedTransactionSplit(
+      SetGroupedTransactionSplitRequest.create({
+        transactionId,
+        splitOverride: splitOverride
+          ? SplitOverrideDto.create({
+              splitTypeOverride: splitTypeOverrideToDto(splitOverride.splitTypeOverride),
+              memberSplitValues: splitOverride.memberValues.map((m) =>
+                MemberSplitValueDto.create({ email: m.email, splitValue: m.value ?? undefined }),
+              ),
+            })
+          : undefined,
       }),
     ).response
   }

@@ -35,6 +35,12 @@ type transactionGroupRepository interface {
 		members []model.MemberSplitValue,
 		scope model.SplitChangeScope,
 	) error
+	SetGroupedTransactionSplit(
+		ctx context.Context,
+		userEmail string,
+		transactionId model.TransactionID,
+		splitOverride model.Optional[model.SplitOverride],
+	) error
 }
 
 type TransactionGroupHandler struct {
@@ -275,4 +281,44 @@ func (h *TransactionGroupHandler) ChangeTransactionGroupSplit(ctx context.Contex
 	}
 
 	return &dto.ChangeTransactionGroupSplitResponse{}, nil
+}
+
+func (h *TransactionGroupHandler) SetGroupedTransactionSplit(ctx context.Context, request *dto.SetGroupedTransactionSplitRequest) (*dto.SetGroupedTransactionSplitResponse, error) {
+	user, ok := shared.FromContext(ctx)
+	if !ok {
+		return nil, fmt.Errorf("getting user from context")
+	}
+
+	splitOverride, err := splitOverrideFromDto(request.SplitOverride)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, "unknown split type")
+	}
+	if parsed, isSome := splitOverride.Value(); isSome {
+		if len(parsed.Members) == 0 {
+			return nil, status.Error(codes.InvalidArgument, "a custom split needs at least one member")
+		}
+
+		total := 0
+		for _, member := range parsed.Members {
+			value, hasValue := member.SplitValue.Value()
+			if !hasValue && parsed.SplitTypeOverride != model.SplitTypeOverrideEqual {
+				return nil, status.Error(codes.InvalidArgument, "every member needs a split value")
+			}
+			total += value
+		}
+		if parsed.SplitTypeOverride == model.SplitTypeOverridePercentage && total != 100 {
+			return nil, status.Error(codes.InvalidArgument, "percentages must add up to 100")
+		}
+		if parsed.SplitTypeOverride == model.SplitTypeOverrideShare && total == 0 {
+			return nil, status.Error(codes.InvalidArgument, "shares must add up to more than 0")
+		}
+	}
+
+	if err := h.transactionGroupService.SetGroupedTransactionSplit(
+		ctx, user.Email, model.TransactionID(request.TransactionId), splitOverride,
+	); err != nil {
+		return nil, fmt.Errorf("setting grouped transaction split: %w", err)
+	}
+
+	return &dto.SetGroupedTransactionSplitResponse{}, nil
 }

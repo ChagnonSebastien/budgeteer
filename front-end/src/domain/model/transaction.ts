@@ -20,6 +20,19 @@ export enum SplitType {
   EXACT_AMOUNT,
 }
 
+export const SplitTypeOverrideToString = (splitType: SplitType) => {
+  switch (splitType) {
+    case SplitType.EQUAL:
+      return 'Equal'
+    case SplitType.PERCENTAGE:
+      return 'Percentage'
+    case SplitType.SHARES:
+      return 'Shares'
+    case SplitType.EXACT_AMOUNT:
+      return 'Exact amounts'
+  }
+}
+
 export function transactionGroupSplitTypeToInternal(splitType: TransactionGroupSplitType): SplitType {
   switch (splitType) {
     case TransactionGroupSplitType.EQUAL:
@@ -177,26 +190,62 @@ export class AugmentedTransaction extends Transaction {
       return this.amount
     }
 
-    let splitType = this.augmentedTransactionGroupData.splitOverride?.splitTypeOverride
-    let memberSpecificValues = this.augmentedTransactionGroupData.splitOverride?.memberValues ?? []
-    if (typeof splitType === 'undefined') {
-      splitType = transactionGroupSplitTypeToInternal(this.augmentedTransactionGroupData.transactionGroup.splitType)
-      memberSpecificValues = this.augmentedTransactionGroupData.transactionGroup.members.map(
-        (m) => new MemberValue(m.email, m.splitValue),
-      )
-    }
-
+    const { splitType, memberValues } = this.resolvedSplit()
     const paid = this.owner === user ? this.amount : 0
-    return paid - this.userShare(user, splitType, memberSpecificValues)
+    return paid - this.userShare(user, splitType, memberValues)
+  }
+
+  memberParts(): { email: string; part: number }[] {
+    return this.augmentedTransactionGroupData!.transactionGroup.members.map((m) => ({
+      email: m.email,
+      part: (m.email === this.owner ? this.amount : 0) - this.getUserContribution(m.email),
+    }))
+  }
+
+  splitSummary(user: string): string | null {
+    const { splitType, memberValues } = this.resolvedSplit()
+    const memberCount = this.augmentedTransactionGroupData!.transactionGroup.members.length
+    const userValue = memberValues.find((m) => m.email === user)?.value ?? 0
+    switch (splitType) {
+      case SplitType.EQUAL: {
+        const participantCount = this.participants(memberValues).length
+        return participantCount >= memberCount ? null : `Between ${participantCount} of ${memberCount} members`
+      }
+      case SplitType.PERCENTAGE:
+        return `Your portion: ${userValue}%`
+      case SplitType.SHARES: {
+        const total = memberValues.reduce((sum, m) => sum + (m.value ?? 0), 0)
+        return `Your portion: ${userValue} of ${total} shares`
+      }
+      case SplitType.EXACT_AMOUNT:
+        return 'Fixed amounts'
+    }
+  }
+
+  private resolvedSplit(): { splitType: SplitType; memberValues: MemberValue[] } {
+    const groupData = this.augmentedTransactionGroupData!
+    if (groupData.splitOverride) {
+      return {
+        splitType: groupData.splitOverride.splitTypeOverride,
+        memberValues: groupData.splitOverride.memberValues,
+      }
+    }
+    return {
+      splitType: transactionGroupSplitTypeToInternal(groupData.transactionGroup.splitType),
+      memberValues: groupData.transactionGroup.members.map((m) => new MemberValue(m.email, m.splitValue)),
+    }
+  }
+
+  // A pinned split lists who was in the group then; members who joined later aren't part of it.
+  private participants(memberValues: MemberValue[]): string[] {
+    return memberValues.length > 0
+      ? memberValues.map((m) => m.email)
+      : this.augmentedTransactionGroupData!.transactionGroup.members.map((m) => m.email)
   }
 
   // Others' shares round down to whole cents and the payer takes the rest, so shares always sum to the amount.
   private userShare(user: string, splitType: SplitType, memberValues: MemberValue[]): number {
-    // A pinned split lists who was in the group then; members who joined later aren't part of it.
-    const participants =
-      memberValues.length > 0
-        ? memberValues.map((m) => m.email)
-        : this.augmentedTransactionGroupData!.transactionGroup.members.map((m) => m.email)
+    const participants = this.participants(memberValues)
     const share = (email: string) =>
       participants.includes(email)
         ? Math.floor(this.exactShare(email, splitType, memberValues, participants.length))

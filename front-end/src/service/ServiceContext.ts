@@ -128,6 +128,9 @@ export const TransactionGroupServiceContext = createContext<
   get knownPeople(): Person[] {
     throw new Error('knownUsers is not implemented')
   },
+  setTransactionSplit(): Promise<void> {
+    return Promise.reject(new Error('nilPersistence'))
+  },
   changeSplit(): Promise<void> {
     return Promise.reject(new Error('nilPersistence'))
   },

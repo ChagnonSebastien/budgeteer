@@ -1,4 +1,4 @@
-import { TextField, Typography } from '@mui/material'
+import { Checkbox, TextField, Typography } from '@mui/material'
 import { FC } from 'react'
 
 import Currency, { formatFull } from '../../domain/model/currency'
@@ -6,12 +6,13 @@ import { MemberSplitValues, Person } from '../../domain/model/transactionGroup'
 import { FixedPointInput } from '../inputs/FixedPointInput'
 import { Column, Row } from '../shared/Layout'
 
-export type SplitValueKind = 'percentage' | 'shares' | 'amount'
+export type SplitValueKind = 'participants' | 'percentage' | 'shares' | 'amount'
 
 export const splitValuesError = (kind: SplitValueKind, values: MemberSplitValues, amount?: number): string | null => {
   const total = [...values.values()].reduce<number>((sum, v) => sum + (v ?? 0), 0)
   if (kind === 'percentage' && total !== 100) return `Percentages add up to ${total}%, not 100%`
   if (kind === 'shares' && total === 0) return 'At least one member needs a share'
+  if (kind === 'participants' && values.size === 0) return 'At least one member must take part'
   if (kind === 'amount' && typeof amount !== 'undefined' && total !== amount) return 'Amounts must add up to the total'
   return null
 }
@@ -35,7 +36,17 @@ const SplitValuesEditor: FC<{
           <Typography fontSize="0.95rem" textOverflow="ellipsis" overflow="hidden">
             {member.name}
           </Typography>
-          {kind === 'amount' && currency ? (
+          {kind === 'participants' ? (
+            <Checkbox
+              checked={values.has(member.email)}
+              onChange={(e) => {
+                const next = new Map(values)
+                if (e.target.checked) next.set(member.email, null)
+                else next.delete(member.email)
+                onChange(next)
+              }}
+            />
+          ) : kind === 'amount' && currency ? (
             <FixedPointInput
               value={values.get(member.email) ?? 0}
               onChange={(value) => setValue(member.email, value)}
@@ -62,7 +73,9 @@ const SplitValuesEditor: FC<{
       ))}
       <Typography fontSize="0.9rem" color={error ? 'error' : 'textDisabled'} alignSelf="end">
         {error ??
-          `Total: ${kind === 'amount' && currency ? formatFull(currency, total) : total}${kind === 'percentage' ? '%' : ''}`}
+          (kind === 'participants'
+            ? `${values.size} of ${members.length} taking part`
+            : `Total: ${kind === 'amount' && currency ? formatFull(currency, total) : total}${kind === 'percentage' ? '%' : ''}`)}
       </Typography>
     </Column>
   )
