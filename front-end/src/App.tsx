@@ -14,7 +14,6 @@ export const UserContext = createContext<User>({
   default_currency: null,
   email: 'email',
   sub: 'sub',
-  preferred_username: 'username',
   hidden_default_account: 1,
   authentification_method: 'oidc',
 })

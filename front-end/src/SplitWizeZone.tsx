@@ -128,7 +128,7 @@ const WaitOnInitializedData: FC<{
 )
 
 const GroupPersistenceSetup: FC<{ children: ReactNode; hasInternet: boolean }> = ({ children, hasInternet }) => {
-  const { email, preferred_username: username } = useContext(UserContext)
+  const { email, name: username } = useContext(UserContext)
   const [transactionGroupLocalStore] = useState(new TransactionGroupLocalStore(email, username, IndexedDB))
   const [transactionGroupRemoteStore] = useState(new TransactionGroupRemoteStore(email, username, transport))
 

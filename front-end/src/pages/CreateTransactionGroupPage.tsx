@@ -12,7 +12,7 @@ const CreateTransactionGroupPage: FC = () => {
   const navigate = useNavigate()
 
   const { create: createTransactionGroup } = useContext(TransactionGroupServiceContext)
-  const { email, preferred_username } = useContext(UserContext)
+  const { email, name } = useContext(UserContext)
   const { showToast } = useToast()
 
   const onSubmit = useCallback(
@@ -29,7 +29,7 @@ const CreateTransactionGroupPage: FC = () => {
         currency: data.currency,
         category: data.category,
         hidden: false,
-        members: [new Person(email, preferred_username, null, true)],
+        members: [new Person(email, name, null, true)],
       })
       showToast('Transaction group created')
       navigate(`/transaction-groups`, { replace: true })
