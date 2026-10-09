@@ -125,7 +125,7 @@ const PromoteUnconfirmedTransactionPage: FC = () => {
   }
 
   return (
-    <ContentWithHeader title="Add to my transactions" action="return" withPadding withScrolling>
+    <ContentWithHeader title="Confirm and add to my transactions" action="return" withPadding withScrolling>
       <TransactionForm initialTransaction={initialTransaction} onSubmit={onSubmit} submitText="Add" type="expense" />
     </ContentWithHeader>
   )

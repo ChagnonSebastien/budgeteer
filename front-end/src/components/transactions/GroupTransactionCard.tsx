@@ -1,4 +1,5 @@
-import { Box, Button, Tooltip, Typography } from '@mui/material'
+import { Box, ButtonBase, Tooltip, Typography } from '@mui/material'
+import { formatDate } from 'date-fns'
 import { FC, memo, useContext, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 
@@ -28,8 +29,10 @@ const GroupTransactionCard: FC<ItemProps<TransactionID, AugmentedTransaction, ob
 
   const payedBy = item.augmentedTransactionGroupData.transactionGroup.members.find((m) => m.email === item.owner)
   const isUnconfirmed = item instanceof UnconfirmedAugmentedTransaction
+  const promotable =
+    item instanceof UnconfirmedAugmentedTransaction && !isGuest && item.owner === email ? item.unconfirmed : null
 
-  return (
+  const card = (
     <GradientCard
       onClick={onClick}
       $selected={false}
@@ -42,20 +45,17 @@ const GroupTransactionCard: FC<ItemProps<TransactionID, AugmentedTransaction, ob
         fontSize: '0.875rem',
         padding: '0.5rem 0.75rem',
         border: '1px solid rgba(128,128,128,0.16)',
-        gap: '2rem',
+        gap: '0.75rem',
         overflowX: 'auto',
       }}
     >
       <Column style={{ flexGrow: 1 }}>
-        <Row style={{ justifyContent: 'space-between', alignItems: 'center' }}>
-          <Typography letterSpacing="0.01rem" fontSize="0.95rem" fontWeight="600">
+        <Row style={{ justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem' }}>
+          <Typography letterSpacing="0.01rem" fontSize="0.95rem" fontWeight="600" whiteSpace="nowrap">
             {formatFull(item.currency, item.amount, privacyMode)}
           </Typography>
-
-          <Box width="2rem" />
-
-          <Typography color="textDisabled" fontSize="0.9rem">
-            {item.date.toDateString()}
+          <Typography color="textDisabled" fontSize="0.9rem" whiteSpace="nowrap">
+            {formatDate(item.date, 'MMM d')}
           </Typography>
         </Row>
 
@@ -84,38 +84,58 @@ const GroupTransactionCard: FC<ItemProps<TransactionID, AugmentedTransaction, ob
           </Typography>
         )}
       </Column>
-      <Column style={{ alignItems: 'center' }}>
+      <Column style={{ alignItems: 'center', textAlign: 'center', width: '6.5rem', flexShrink: 0 }}>
         {userContribution === 0 ? (
-          <Typography fontSize="0.9rem" fontWeight="500" textOverflow={'ellipsis'} overflow={'hidden'}>
+          <Typography fontSize="0.9rem" fontWeight="500" color="textDisabled">
             Not involved
           </Typography>
         ) : (
           <>
-            <Typography fontSize="0.9rem" fontWeight="500" textOverflow={'ellipsis'} overflow={'hidden'}>
-              {userContribution > 0 ? 'You lent to the group' : 'You owe to the group'}
+            <Typography fontSize="0.9rem" fontWeight="500">
+              {userContribution > 0 ? 'You lent' : 'You owe'}
             </Typography>
-            <Typography fontSize="0.9rem" fontWeight="bold" textOverflow={'ellipsis'} overflow={'hidden'}>
-              {formatFull(item.augmentedTransactionGroupData.transactionGroup.augmentedCurrency, userContribution)}
+            <Typography fontSize="0.9rem" fontWeight="bold" whiteSpace="nowrap">
+              {formatFull(
+                item.augmentedTransactionGroupData.transactionGroup.augmentedCurrency,
+                Math.abs(userContribution),
+                privacyMode,
+              )}
             </Typography>
           </>
         )}
-        {isUnconfirmed && !isGuest && item.owner === email && (
-          <Button
-            size="small"
-            variant="text"
-            sx={{ mt: '0.25rem', py: 0, minHeight: 0, textTransform: 'none' }}
-            onClick={(e) => {
-              e.stopPropagation()
-              navigate(
-                `/transaction-groups/manage/${item.unconfirmed.transactionGroupId}/unconfirmed/${item.unconfirmed.id}/promote`,
-              )
-            }}
-          >
-            Add to mine
-          </Button>
-        )}
       </Column>
     </GradientCard>
+  )
+
+  if (promotable === null) return card
+
+  return (
+    <Column
+      style={{
+        backgroundColor: 'rgba(128,128,128,.16)',
+        border: '1px solid rgba(128,128,128,0.16)',
+        borderRadius: '0.5rem',
+      }}
+    >
+      {card}
+      <ButtonBase
+        onClick={() =>
+          navigate(`/transaction-groups/manage/${promotable.transactionGroupId}/unconfirmed/${promotable.id}/promote`)
+        }
+        sx={{
+          gap: '0.35rem',
+          padding: '0.25rem',
+          borderRadius: '0 0 0.5rem 0.5rem',
+          color: 'primary.main',
+          '&:hover': { backgroundColor: 'action.hover' },
+        }}
+      >
+        <IconLib.BsPlusCircle />
+        <Typography fontSize="0.9rem" fontWeight="500">
+          Confirm and add to my transactions
+        </Typography>
+      </ButtonBase>
+    </Column>
   )
 })
 
