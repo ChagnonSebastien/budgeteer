@@ -78,6 +78,7 @@ const CashFlowBarChart: FC<{ data: CashFlowDataPoint[] }> = ({ data }) => {
               }),
       }}
       enableLabel={false}
+      animate={false}
     />
   )
 }

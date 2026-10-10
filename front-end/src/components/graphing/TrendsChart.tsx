@@ -322,8 +322,7 @@ const TrendsChart: FC<Props> = (props) => {
         }}
         borderRadius={4}
         padding={0.2}
-        animate={true}
-        motionConfig="gentle"
+        animate={false}
       />
     </div>
   ) : null
