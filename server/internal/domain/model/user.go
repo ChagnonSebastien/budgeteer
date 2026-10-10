@@ -1,5 +1,7 @@
 package model
 
+import "encoding/json"
+
 type Email string
 
 type UserParams struct {
@@ -7,4 +9,5 @@ type UserParams struct {
 	DisplayName          *string
 	DefaultCurrency      *CurrencyID
 	HiddenDefaultAccount AccountID
+	Preferences          json.RawMessage
 }

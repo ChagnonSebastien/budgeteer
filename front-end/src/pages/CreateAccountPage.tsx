@@ -7,13 +7,11 @@ import { useToast } from '../components/shared/ToastProvider'
 import Account from '../domain/model/account'
 import { AccountServiceContext } from '../service/ServiceContext'
 
-const CreateAccountPage: FC = () => {
-  const navigate = useNavigate()
-
+export const useCreateAccount = (onCreated: () => void) => {
   const { create: createAccount } = useContext(AccountServiceContext)
   const { showToast } = useToast()
 
-  const onSubmit = useCallback(
+  return useCallback(
     async (data: Partial<Omit<Account, 'id' | 'hasName'>>) => {
       if (typeof data.name === 'undefined') throw new Error('Name cannot be undefined')
       if (typeof data.initialAmounts === 'undefined') throw new Error('initialAmounts cannot be undefined')
@@ -29,10 +27,15 @@ const CreateAccountPage: FC = () => {
         financialInstitution: data.financialInstitution,
       })
       showToast('Account created')
-      navigate('/accounts', { replace: true })
+      onCreated()
     },
-    [createAccount, navigate, showToast],
+    [createAccount, onCreated, showToast],
   )
+}
+
+const CreateAccountPage: FC = () => {
+  const navigate = useNavigate()
+  const onSubmit = useCreateAccount(useCallback(() => navigate('/accounts', { replace: true }), [navigate]))
 
   return (
     <ContentWithHeader title="Create new account" action="return" withPadding withScrolling>

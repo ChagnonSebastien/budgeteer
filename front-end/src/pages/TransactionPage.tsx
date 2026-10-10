@@ -9,6 +9,7 @@ import {
   SpeedDialIcon,
   ToggleButton,
   ToggleButtonGroup,
+  Tooltip,
   Typography,
 } from '@mui/material'
 import { format, isAfter, isBefore, isSameDay } from 'date-fns'
@@ -29,6 +30,7 @@ import { Column } from '../components/shared/Layout'
 import SplitView from '../components/shared/SplitView'
 import { useToast } from '../components/shared/ToastProvider'
 import { useElementDimensions } from '../components/shared/useDimensions'
+import usePinnableSpeedDial from '../components/shared/usePinnableSpeedDial'
 import useQueryParams from '../components/shared/useQueryParams'
 import TransactionCard from '../components/transactions/TransactionCard'
 import { TransactionList } from '../components/transactions/TransactionList'
@@ -97,6 +99,8 @@ const TransactionPage: FC = () => {
   const { width: contentWidth, ref: setContentRef } = useElementDimensions(600, 600)
 
   const splitHorizontal = useMemo(() => contentWidth > 1200, [contentWidth])
+  const hasTransactions = augmentedTransactions.length > 0
+  const dial = usePinnableSpeedDial()
 
   const firstDivision = (
     <FirstDivision style={{ justifyContent: 'center' }}>
@@ -140,7 +144,7 @@ const TransactionPage: FC = () => {
   )
 
   const secondDivision = (
-    <Box style={{ background: splitHorizontal ? undefined : 'rgba(128,128,128,0.04)', padding: '0 1rem' }}>
+    <Box style={{ background: splitHorizontal ? undefined : 'rgba(128,128,128,0.04)', padding: '0 1rem', flexGrow: 1 }}>
       <TransactionList
         items={filteredTransaction}
         onClick={(transactionId) => {
@@ -149,8 +153,6 @@ const TransactionPage: FC = () => {
             setClickedTransaction(transaction)
           }
         }}
-        displayMonthlySummaries
-        viewAsAccounts={accountFilter === null ? undefined : accountFilter}
         ItemComponent={TransactionCard}
         additionalItemsProps={{}}
         containerStyle={{ width: splitHorizontal ? '35rem' : undefined, maxWidth: 'min(35rem, 100%)' }}
@@ -165,62 +167,68 @@ const TransactionPage: FC = () => {
       withScrolling={!splitHorizontal}
       setContentRef={setContentRef}
       rightContent={
-        <>
-          {graphType === 'line' ? (
-            <IconButton
-              onClick={() => {
-                updateQueryParams({ chart: 'pie' })
-              }}
-            >
-              <IconLib.FaChartPie size="1.5rem" />
-            </IconButton>
-          ) : (
-            <IconButton
-              onClick={() => {
-                updateQueryParams({ chart: 'line' })
-              }}
-            >
-              <IconLib.BsGraphUp size="1.5rem" />
-            </IconButton>
-          )}
-          <IconButton onClick={(e) => setAnchorEl(e.currentTarget)}>
-            <IconLib.MdSettings size="1.5rem" />
-          </IconButton>
-          <Menu anchorEl={anchorEl} open={open} onClose={() => setAnchorEl(null)}>
-            {graphType === 'line' && (
-              <MenuItem
+        hasTransactions ? (
+          <>
+            {graphType === 'line' ? (
+              <IconButton
                 onClick={() => {
-                  updateQueryParams({ hideFinancialIncome: (!hideFinancialIncome).toString() })
-                  setAnchorEl(null)
+                  updateQueryParams({ chart: 'pie' })
                 }}
-                sx={{ gap: 1 }}
               >
-                <Checkbox checked={hideFinancialIncome} size="small" />
-                Hide Financial Income
-              </MenuItem>
+                <IconLib.FaChartPie size="1.5rem" />
+              </IconButton>
+            ) : (
+              <IconButton
+                onClick={() => {
+                  updateQueryParams({ chart: 'line' })
+                }}
+              >
+                <IconLib.BsGraphUp size="1.5rem" />
+              </IconButton>
             )}
-            {graphType === 'pie' && (
-              <MenuItem>
-                <ToggleButtonGroup
-                  value={showIncomes ? 'income' : 'expense'}
-                  exclusive
-                  onChange={(_event, value) => {
-                    if (value) {
-                      updateQueryParams({ showIncomes: (value === 'income').toString() })
-                    }
+            <IconButton onClick={(e) => setAnchorEl(e.currentTarget)}>
+              <IconLib.MdSettings size="1.5rem" />
+            </IconButton>
+            <Menu anchorEl={anchorEl} open={open} onClose={() => setAnchorEl(null)}>
+              {graphType === 'line' && (
+                <MenuItem
+                  onClick={() => {
+                    updateQueryParams({ hideFinancialIncome: (!hideFinancialIncome).toString() })
+                    setAnchorEl(null)
                   }}
-                  size="small"
+                  sx={{ gap: 1 }}
                 >
-                  <ToggleButton value="expense">Expenses</ToggleButton>
-                  <ToggleButton value="income">Income</ToggleButton>
-                </ToggleButtonGroup>
-              </MenuItem>
-            )}
-          </Menu>
-        </>
+                  <Checkbox checked={hideFinancialIncome} size="small" />
+                  Hide Financial Income
+                </MenuItem>
+              )}
+              {graphType === 'pie' && (
+                <MenuItem>
+                  <ToggleButtonGroup
+                    value={showIncomes ? 'income' : 'expense'}
+                    exclusive
+                    onChange={(_event, value) => {
+                      if (value) {
+                        updateQueryParams({ showIncomes: (value === 'income').toString() })
+                      }
+                    }}
+                    size="small"
+                  >
+                    <ToggleButton value="expense">Expenses</ToggleButton>
+                    <ToggleButton value="income">Income</ToggleButton>
+                  </ToggleButtonGroup>
+                </MenuItem>
+              )}
+            </Menu>
+          </>
+        ) : undefined
       }
     >
-      {splitHorizontal ? (
+      {!hasTransactions ? (
+        <Typography color="textDisabled" textAlign="center" marginTop="30vh">
+          No transactions yet
+        </Typography>
+      ) : splitHorizontal ? (
         <SplitView
           first={firstDivision}
           second={secondDivision}
@@ -229,15 +237,20 @@ const TransactionPage: FC = () => {
           secondZoneStyling={{ grow: false, scroll: true }}
         />
       ) : (
-        <Column style={{ width: '100%', alignItems: 'stretch' }}>
+        <Column style={{ width: '100%', minHeight: '100%', alignItems: 'stretch' }}>
           {firstDivision}
           {secondDivision}
         </Column>
       )}
 
+      <Tooltip open={!hasTransactions && !dial.open} title="Record your first transaction" placement="left" arrow>
+        <Box sx={{ position: 'absolute', bottom: 16, right: 16, width: 56, height: 56, pointerEvents: 'none' }} />
+      </Tooltip>
+
       <SpeedDial
         ariaLabel="Create new transaction"
         sx={{ position: 'absolute', bottom: 16, right: 16 }}
+        {...dial}
         icon={
           <SpeedDialIcon
             openIcon={<IconLib.FaPlus />}

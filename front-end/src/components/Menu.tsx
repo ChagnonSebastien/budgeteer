@@ -10,11 +10,12 @@ import {
   Switch,
   Typography,
 } from '@mui/material'
-import { createContext, FC, ReactElement, useContext, useState } from 'react'
+import { createContext, FC, ReactElement, useContext, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { default as styled } from 'styled-components'
 
 import { UserContext } from '../App'
+import MixedAugmentation from '../service/MixedAugmentation'
 import UserStore from '../UserStore'
 import { IconToolsContext, PreparedIcon } from './icons/IconTools'
 import { useElementDimensions, useWindowDimensions } from './shared/useDimensions'
@@ -87,7 +88,13 @@ const ContentContainer = styled.div<{ $persistentDrawer: boolean; $totalWidth: n
   margin-left: ${(props) => (props.$persistentDrawer ? `${props.$drawerWidth}px` : 0)};
 `
 
-const appPages = [
+interface MenuEntry {
+  guestView: boolean
+  requires?: 'transactions' | 'financialIncome'
+  element: AppPage | Subsection | Separator
+}
+
+const appPages: MenuEntry[] = [
   { guestView: false, element: new AppPage('Dashboard', '/', PreparedIcon.TbLayoutDashboardFilled, []) },
   { guestView: false, element: new Subsection('Data') },
   {
@@ -102,14 +109,27 @@ const appPages = [
   { guestView: false, element: new AppPage('Categories', '/categories', PreparedIcon.MdCategory, []) },
   { guestView: false, element: new AppPage('Accounts', '/accounts', PreparedIcon.MdAccountBalance, []) },
   { guestView: false, element: new AppPage('Currencies', '/currencies', PreparedIcon.BsCurrencyExchange, []) },
-  { guestView: false, element: new Subsection('Analysis') },
+  { guestView: false, requires: 'transactions', element: new Subsection('Analysis') },
   {
     guestView: false,
+    requires: 'transactions',
     element: new AppPage('Balances', '/balances', PreparedIcon.FaScaleUnbalanced, ['from', 'to', 'accounts']),
   },
-  { guestView: false, element: new AppPage('Trends', '/trends', PreparedIcon.BiSolidBarChartAlt2, ['categories']) },
-  { guestView: false, element: new AppPage('Costs Analysis', '/costs', PreparedIcon.BsFileEarmarkSpreadsheet, []) },
-  { guestView: false, element: new AppPage('Investments', '/investments', PreparedIcon.BsGraphUp, []) },
+  {
+    guestView: false,
+    requires: 'transactions',
+    element: new AppPage('Trends', '/trends', PreparedIcon.BiSolidBarChartAlt2, ['categories']),
+  },
+  {
+    guestView: false,
+    requires: 'transactions',
+    element: new AppPage('Costs Analysis', '/costs', PreparedIcon.BsFileEarmarkSpreadsheet, []),
+  },
+  {
+    guestView: false,
+    requires: 'financialIncome',
+    element: new AppPage('Investments', '/investments', PreparedIcon.BsGraphUp, []),
+  },
   { guestView: false, element: new Subsection('SplitWise') },
   { guestView: true, element: new AppPage('Groups', '/transaction-groups', PreparedIcon.BsGraphUp, []) },
   { guestView: true, element: new Separator() },
@@ -134,6 +154,11 @@ export const DrawerContext = createContext<DrawerActions>({
 })
 
 const DrawerWrapper: FC<Props> = ({ logout, children, userIsGuest = false }) => {
+  const { augmentedTransactions } = useContext(MixedAugmentation)
+  const hasFinancialIncome = useMemo(
+    () => augmentedTransactions.some((t) => t.financialIncomeData !== null),
+    [augmentedTransactions],
+  )
   const { email } = useContext(UserContext)
   const { IconLib } = useContext(IconToolsContext)
 
@@ -160,6 +185,11 @@ const DrawerWrapper: FC<Props> = ({ logout, children, userIsGuest = false }) => 
 
       {appPages
         .filter((appPage) => !userIsGuest || appPage.guestView)
+        .filter(
+          (appPage) =>
+            !appPage.requires ||
+            (appPage.requires === 'transactions' ? augmentedTransactions.length > 0 : hasFinancialIncome),
+        )
         .map((appPage) => (
           <appPage.element.Element />
         ))}

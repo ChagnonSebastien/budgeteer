@@ -3,6 +3,7 @@ import { BarDatum, ResponsiveBar } from '@nivo/bar'
 import { formatDate, startOfDay, subMonths } from 'date-fns'
 import React, { FC, useContext, useMemo } from 'react'
 
+import GettingStarted from '../components/dashboard/GettingStarted'
 import { GraphTooltip, GraphTooltipDate } from '../components/graphing/GraphStyledComponents'
 import InvestmentGainLineChart from '../components/graphing/InvestmentGainLineChart'
 import { DrawerContext } from '../components/Menu'
@@ -141,89 +142,95 @@ const Dashboard: FC = () => {
   const surplus = totalInflow - totalOutflow
   const savingsRate = totalInflow > 0 ? surplus / totalInflow : 0
 
+  const hasTransactions = augmentedTransactions.length > 0
+  const hasFinancialIncome = augmentedTransactions.some((t) => t.financialIncomeData !== null)
+  const hasCashFlow = cashFlowData.some((d) => d.inflow !== 0 || d.outflow !== 0)
+
   return (
     <ContentWithHeader title="Dashboard" action="menu" withPadding withScrolling>
       <div style={{ maxWidth: '50rem', width: '100%' }}>
-        {/* Net Worth */}
-        <Layout
-          title="Net Worth"
-          sx={{
-            display: 'flex',
-            width: '100%',
-            justifyContent: 'center',
-          }}
-        >
-          <p
-            style={{
-              margin: 0,
-              fontSize: '2.5rem',
-              fontWeight: 'bold',
+        {!hasTransactions && <GettingStarted />}
+        {(hasTransactions || netWorth !== 0) && (
+          <Layout
+            title="Net Worth"
+            sx={{
+              display: 'flex',
+              width: '100%',
+              justifyContent: 'center',
             }}
           >
-            {formatFull(defaultCurrency, netWorth, privacyMode)}
-          </p>
-        </Layout>
+            <p
+              style={{
+                margin: 0,
+                fontSize: '2.5rem',
+                fontWeight: 'bold',
+              }}
+            >
+              {formatFull(defaultCurrency, netWorth, privacyMode)}
+            </p>
+          </Layout>
+        )}
 
-        {/* Investments */}
-
-        <Layout title="Investments Performance">
-          <Column style={{ height: '40vh', width: '100%', justifyContent: 'stretch', alignItems: 'stretch' }}>
-            <InvestmentGainLineChart fromDate={lastYear} toDate={today} />
-          </Column>
-        </Layout>
-
-        {/* Cash Flow */}
-
-        <Layout title="Cash Flow">
-          <div style={{ height: '40vh', width: '100%' }}>
-            <CashFlowBarChart data={cashFlowData} />
-          </div>
-          <Box height="1rem" />
-          <Row
-            style={{
-              justifyContent: 'space-around',
-            }}
-          >
-            <Column>
-              <span
-                style={{
-                  fontSize: '0.75rem',
-                  textTransform: 'uppercase',
-                  color: '#888',
-                }}
-              >
-                Savings Rate
-              </span>
-              <span
-                style={{
-                  fontSize: '1.25rem',
-                  fontWeight: 600,
-                }}
-              >
-                {(savingsRate * 100).toFixed(1)}%
-              </span>
+        {hasFinancialIncome && (
+          <Layout title="Investments Performance">
+            <Column style={{ height: '40vh', width: '100%', justifyContent: 'stretch', alignItems: 'stretch' }}>
+              <InvestmentGainLineChart fromDate={lastYear} toDate={today} />
             </Column>
-            <Column>
-              <span
-                style={{
-                  fontSize: '0.75rem',
-                  textTransform: 'uppercase',
-                  color: '#888',
-                }}
-              >
-                Surplus
-              </span>
-              <span
-                style={{
-                  fontSize: '1.25rem',
-                  fontWeight: 600,
-                }}
-              >
-                {formatFull(defaultCurrency, surplus, privacyMode)}
-              </span>
-            </Column>
-          </Row>
-        </Layout>
+          </Layout>
+        )}
+
+        {hasCashFlow && (
+          <Layout title="Cash Flow">
+            <div style={{ height: '40vh', width: '100%' }}>
+              <CashFlowBarChart data={cashFlowData} />
+            </div>
+            <Box height="1rem" />
+            <Row
+              style={{
+                justifyContent: 'space-around',
+              }}
+            >
+              <Column>
+                <span
+                  style={{
+                    fontSize: '0.75rem',
+                    textTransform: 'uppercase',
+                    color: '#888',
+                  }}
+                >
+                  Savings Rate
+                </span>
+                <span
+                  style={{
+                    fontSize: '1.25rem',
+                    fontWeight: 600,
+                  }}
+                >
+                  {(savingsRate * 100).toFixed(1)}%
+                </span>
+              </Column>
+              <Column>
+                <span
+                  style={{
+                    fontSize: '0.75rem',
+                    textTransform: 'uppercase',
+                    color: '#888',
+                  }}
+                >
+                  Surplus
+                </span>
+                <span
+                  style={{
+                    fontSize: '1.25rem',
+                    fontWeight: 600,
+                  }}
+                >
+                  {formatFull(defaultCurrency, surplus, privacyMode)}
+                </span>
+              </Column>
+            </Row>
+          </Layout>
+        )}
       </div>
     </ContentWithHeader>
   )

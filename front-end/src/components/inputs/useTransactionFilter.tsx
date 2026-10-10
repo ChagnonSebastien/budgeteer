@@ -111,7 +111,7 @@ export const useDateFilter = (): DateFilters => {
       ticksNumber={10}
       disabledIntervals={[]}
       selectedInterval={timeRange}
-      timelineInterval={[startOfDay(transactions[transactions.length - 1].date), startOfDay(new Date())]}
+      timelineInterval={[startOfDay(transactions.at(-1)?.date ?? subYears(new Date(), 1)), startOfDay(new Date())]}
       step={20}
       formatTick={(a) => formatDate(new Date(a), 'MMM yyyy')}
       onUpdateCallback={(_data: { error: boolean; time: Date[] }) => {

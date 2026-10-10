@@ -79,7 +79,7 @@ const CategoryForm: FC<Props> = (props) => {
   const validateCategoryName = useCallback(
     (categoryName: string) => {
       if (!categoryName) {
-        return 'Amount is required'
+        return 'Required'
       }
 
       if (categories?.find((c) => c.id !== initialCategory?.id && c.name === categoryName)) {
@@ -126,7 +126,7 @@ const CategoryForm: FC<Props> = (props) => {
     <FormWrapper onSubmit={handleSubmit} submitText={submitText}>
       <TextField
         type="text"
-        label="Account name"
+        label="Category name"
         variant="standard"
         placeholder="e.g., Groceries"
         value={name}
@@ -152,7 +152,7 @@ const CategoryForm: FC<Props> = (props) => {
 
       <FormControlLabel
         control={<Checkbox checked={fixedCost} onChange={(ev) => setFixedCost(ev.target.checked)} />}
-        label="Is a fixed cost"
+        label="Essential expense"
       />
 
       <Row style={{ alignItems: 'center', gap: '1rem' }}>

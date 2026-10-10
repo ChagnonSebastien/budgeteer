@@ -1,5 +1,15 @@
 export type AuthMethod = 'oidc' | 'userPass' | 'guest'
 
+export interface UserPreferences {
+  gettingStartedDismissed?: boolean
+  categoryTutorialDone?: boolean
+  costsGrossIncome?: number
+  costsIncomeCategoryId?: number
+  costsIncomeCategoryIds?: number[]
+}
+
+export type UserPreferencesPatch = { [K in keyof UserPreferences]?: UserPreferences[K] | null }
+
 export default interface User {
   sub: string
   email: string
@@ -8,4 +18,5 @@ export default interface User {
   default_currency: number | null
   hidden_default_account: number
   authentification_method: AuthMethod
+  preferences?: UserPreferences
 }

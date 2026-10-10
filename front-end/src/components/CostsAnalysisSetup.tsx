@@ -1,16 +1,15 @@
 import { Button, DialogActions, DialogContent, DialogTitle, Stack, TextField } from '@mui/material'
-import { FC, useContext } from 'react'
+import { FC } from 'react'
 
 import CategoryPicker from './categories/CategoryPicker'
 import BasicModal from './shared/BasicModal'
-import { CategoryServiceContext } from '../service/ServiceContext'
 
 interface Props {
   open: boolean
   grossIncome: number
   setGrossIncome: (value: number) => void
-  incomeCategory: number
-  setIncomeCategory: (value: number) => void
+  incomeCategories: number[]
+  setIncomeCategories: (value: number[]) => void
   onComplete: () => void
 }
 
@@ -18,12 +17,10 @@ const CostsAnalysisSetup: FC<Props> = ({
   open,
   grossIncome,
   setGrossIncome,
-  incomeCategory,
-  setIncomeCategory,
+  incomeCategories,
+  setIncomeCategories,
   onComplete,
 }) => {
-  const { augmentedCategories } = useContext(CategoryServiceContext)
-
   return (
     <BasicModal open={open} fullWidth maxWidth="sm">
       <DialogTitle>Costs Analysis Setup</DialogTitle>
@@ -43,17 +40,16 @@ const CostsAnalysisSetup: FC<Props> = ({
 
           <CategoryPicker
             selectedConfig={{
-              mode: 'single',
-              selectedItem: incomeCategory,
-              onSelectItem: setIncomeCategory,
+              mode: 'multi',
+              selectedItems: incomeCategories,
+              onSelectItems: setIncomeCategories,
             }}
-            labelText="Select your net income category"
-            icon={augmentedCategories.find((category) => category.id === incomeCategory)}
+            labelText="Your net income categories"
           />
         </Stack>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onComplete} variant="contained" disabled={grossIncome === 0}>
+        <Button onClick={onComplete} variant="contained" disabled={grossIncome === 0 || incomeCategories.length === 0}>
           Complete Setup
         </Button>
       </DialogActions>

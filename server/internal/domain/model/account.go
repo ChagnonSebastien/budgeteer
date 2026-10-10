@@ -1,5 +1,7 @@
 package model
 
+import "time"
+
 type Balance struct {
 	CurrencyId int
 	Value      int
@@ -14,4 +16,5 @@ type Account struct {
 	IsMine               bool
 	Type                 string
 	FinancialInstitution string
+	CreatedAt            time.Time
 }

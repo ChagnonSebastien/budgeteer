@@ -16,6 +16,7 @@ message Account {
   bool is_mine = 4;
   string type = 5;
   string financial_institution = 6;
+  string created_at = 7;
 }
 
 message GetAllAccountsRequest {

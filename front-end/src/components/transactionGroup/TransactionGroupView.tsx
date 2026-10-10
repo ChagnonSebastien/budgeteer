@@ -15,6 +15,7 @@ import { IconToolsContext } from '../icons/IconTools'
 import ContentWithHeader from '../shared/ContentWithHeader'
 import { Column, Row } from '../shared/Layout'
 import SplitView from '../shared/SplitView'
+import usePinnableSpeedDial from '../shared/usePinnableSpeedDial'
 import { useElementDimensions } from '../shared/useDimensions'
 import GroupTransactionCard from '../transactions/GroupTransactionCard'
 import { TransactionList } from '../transactions/TransactionList'
@@ -33,6 +34,7 @@ const TransactionGroupView: FC<{
   const navigate = useNavigate()
   const { IconLib } = useContext(IconToolsContext)
   const [changingSplit, setChangingSplit] = useState(false)
+  const dial = usePinnableSpeedDial()
   const groupTransactions = useGroupTransactions(transactionGroup)
 
   const [clickedKey, setClickedKey] = useState<string | null>(null)
@@ -95,6 +97,7 @@ const TransactionGroupView: FC<{
       <SpeedDial
         ariaLabel="Add to transaction group"
         sx={{ position: 'absolute', bottom: 16, right: 16 }}
+        {...dial}
         icon={
           <SpeedDialIcon
             openIcon={<IconLib.FaPlus />}

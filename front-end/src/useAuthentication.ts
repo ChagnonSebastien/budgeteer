@@ -1,7 +1,7 @@
 import { Network } from '@capacitor/network'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
-import User, { AuthMethod } from './domain/model/user'
+import User, { AuthMethod, UserPreferences, UserPreferencesPatch } from './domain/model/user'
 import IndexedDB from './store/local/IndexedDB'
 import UserStore from './UserStore'
 
@@ -73,6 +73,26 @@ const useAuthentication = () => {
       userStore.upsertUser(updated)
       return updated
     })
+  }, [])
+
+  const updatePreferences = useCallback(async (patch: UserPreferencesPatch) => {
+    setUser((prev) => {
+      if (prev === null) return prev
+      const preferences = Object.fromEntries(
+        Object.entries({ ...prev.preferences, ...patch }).filter(([, value]) => value !== null),
+      ) as UserPreferences
+      const updated = { ...prev, preferences }
+      userStore.upsertUser(updated)
+      return updated
+    })
+
+    const response = await fetch(`${serverUrl}/auth/preferences`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(patch),
+    })
+    if (!response.ok) throw new Error('could not save your preferences')
   }, [])
 
   const fetchUserInfo = useCallback(async (): Promise<User | null> => {
@@ -198,6 +218,7 @@ const useAuthentication = () => {
     logout,
     setDefaultCurrency,
     setDisplayName,
+    updatePreferences,
   }
 }
 

@@ -5,7 +5,7 @@ import AuthenticatedZone from './AuthenticatedZone'
 import { IconToolsContext, useIconTools } from './components/icons/IconTools'
 import LoadingScreen from './components/LoadingScreen'
 import { Centered, Column } from './components/shared/Layout'
-import User from './domain/model/user'
+import User, { UserPreferencesPatch } from './domain/model/user'
 import SplitWizeZone from './SplitWizeZone'
 import useAuthentication from './useAuthentication'
 
@@ -18,9 +18,19 @@ export const UserContext = createContext<User>({
   authentification_method: 'oidc',
 })
 
+export const UpdatePreferencesContext = createContext<(patch: UserPreferencesPatch) => Promise<void>>(async () => {})
+
 const App: FC = () => {
-  const { user, attemptedUserVerification, hasInternet, authMethods, logout, setDefaultCurrency, setDisplayName } =
-    useAuthentication()
+  const {
+    user,
+    attemptedUserVerification,
+    hasInternet,
+    authMethods,
+    logout,
+    setDefaultCurrency,
+    setDisplayName,
+    updatePreferences,
+  } = useAuthentication()
 
   const iconTools = useIconTools()
 
@@ -38,7 +48,9 @@ const App: FC = () => {
     return (
       <IconToolsContext.Provider value={iconTools}>
         <UserContext.Provider value={user}>
-          <AuthenticatedZone hasInternet={hasInternet} logout={logout} setDefaultCurrency={setDefaultCurrency} />
+          <UpdatePreferencesContext.Provider value={updatePreferences}>
+            <AuthenticatedZone hasInternet={hasInternet} logout={logout} setDefaultCurrency={setDefaultCurrency} />
+          </UpdatePreferencesContext.Provider>
         </UserContext.Provider>
       </IconToolsContext.Provider>
     )

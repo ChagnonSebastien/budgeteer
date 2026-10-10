@@ -49,6 +49,7 @@ type userRepository interface {
 	UpsertOidcUser(ctx context.Context, oidcSub, email, username string) (uuid.UUID, error)
 	EnsureGuestUser(ctx context.Context, email string) (uuid.UUID, error)
 	SetDisplayName(ctx context.Context, userId uuid.UUID, displayName string) error
+	MergePreferences(ctx context.Context, userId uuid.UUID, patch json.RawMessage, maxSize int) (bool, error)
 }
 
 type guestLoginService interface {
@@ -131,6 +132,7 @@ func (auth *Auth) ServeMux() *http.ServeMux {
 	mux.HandleFunc("/guest/send-code", auth.guestSendCodeHandler)
 	mux.HandleFunc("/guest/verify-code", auth.guestVerifyCodeHandler)
 	mux.HandleFunc("/display-name", auth.displayNameHandler)
+	mux.HandleFunc("/preferences", auth.preferencesHandler)
 	return mux
 }
 
@@ -344,6 +346,7 @@ type userInfoResponse struct {
 	DefaultCurrency        *int              `json:"default_currency"`
 	HiddenDefaultAccount   *int              `json:"hidden_default_account"`
 	AuthentificationMethod shared.AuthMethod `json:"authentification_method"`
+	Preferences            json.RawMessage   `json:"preferences"`
 }
 
 func (auth *Auth) userInfoHandler(resp http.ResponseWriter, req *http.Request) {
@@ -466,6 +469,7 @@ func (auth *Auth) userInfoHandler(resp http.ResponseWriter, req *http.Request) {
 		DefaultCurrency:        defaultCurrency,
 		HiddenDefaultAccount:   &hiddenDefaultAccount,
 		AuthentificationMethod: user.AuthMethod,
+		Preferences:            params.Preferences,
 	}
 
 	resp.Header().Set("Content-Type", "application/json")
@@ -723,6 +727,47 @@ func (auth *Auth) displayNameHandler(w http.ResponseWriter, r *http.Request) {
 	if err := auth.UserService.SetDisplayName(r.Context(), user.ID, name); err != nil {
 		logger.Error("setting display name", "error", err, "user", user.Email)
 		http.Error(w, "internal error", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+const maxPreferencesSize = 16 * 1024
+
+func (auth *Auth) preferencesHandler(w http.ResponseWriter, r *http.Request) {
+	logger := logging.FromContext(r.Context())
+
+	if r.Method != http.MethodPatch {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	user, err := auth.parseSessionToken(r.Cookie)
+	if err != nil {
+		http.Error(w, "unauthenticated", http.StatusUnauthorized)
+		return
+	}
+
+	var patch map[string]json.RawMessage
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 4096)).Decode(&patch); err != nil || patch == nil {
+		http.Error(w, "invalid request body", http.StatusBadRequest)
+		return
+	}
+	encoded, err := json.Marshal(patch)
+	if err != nil {
+		http.Error(w, "invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	merged, err := auth.UserService.MergePreferences(r.Context(), user.ID, encoded, maxPreferencesSize)
+	if err != nil {
+		logger.Error("merging preferences", "error", err, "user", user.Email)
+		http.Error(w, "internal error", http.StatusInternalServerError)
+		return
+	}
+	if !merged {
+		http.Error(w, "preferences too large", http.StatusRequestEntityTooLarge)
 		return
 	}
 

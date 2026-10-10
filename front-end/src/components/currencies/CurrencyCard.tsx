@@ -15,6 +15,8 @@ const CurrencyCard = (props: ItemProps<CurrencyID, Currency, AdditionalCurrencyC
   const { item, onClick = () => {}, selected = false, total } = props
   const { IconLib } = useContext(IconToolsContext)
   const { privacyMode } = useContext(DrawerContext)
+  const balance = total?.(item.id)
+  const unused = balance === 0
 
   return (
     <GradientCard
@@ -27,6 +29,7 @@ const CurrencyCard = (props: ItemProps<CurrencyID, Currency, AdditionalCurrencyC
         alignItems: 'center',
         padding: '1rem',
         gap: '1rem',
+        opacity: unused ? 0.55 : 1,
       }}
     >
       <Box sx={{ padding: '0.75rem' }}>
@@ -38,10 +41,16 @@ const CurrencyCard = (props: ItemProps<CurrencyID, Currency, AdditionalCurrencyC
       </Typography>
 
       <Column style={{ alignItems: 'flex-end' }}>
-        {total && (
-          <Typography variant="h6" fontFamily="monospace" whiteSpace="nowrap">
-            {formatAmount(item, total(item.id), privacyMode)}
+        {unused ? (
+          <Typography variant="caption" color="textDisabled">
+            Unused
           </Typography>
+        ) : (
+          typeof balance !== 'undefined' && (
+            <Typography variant="h6" fontFamily="monospace" whiteSpace="nowrap">
+              {formatAmount(item, balance, privacyMode)}
+            </Typography>
+          )
         )}
 
         <Typography variant="subtitle1" color="textDisabled">

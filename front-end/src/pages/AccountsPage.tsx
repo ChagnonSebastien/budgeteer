@@ -3,7 +3,7 @@ import { FC, useContext, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 
 import AccountCard from '../components/accounts/AccountCard'
-import GroupedAccountList from '../components/accounts/GroupedAccountList'
+import GroupedAccountList, { isAccountUnused } from '../components/accounts/GroupedAccountList'
 import { IconToolsContext } from '../components/icons/IconTools'
 import { DrawerContext } from '../components/Menu'
 import BasicModal from '../components/shared/BasicModal'
@@ -23,7 +23,8 @@ const AccountsPage: FC = () => {
   const { accountBalances } = useContext(MixedAugmentation)
   const { privacyMode } = useContext(DrawerContext)
   const [searchParams, setSearchParams] = useSearchParams()
-  const showZeroBalances = searchParams.get('showZero') === 'true'
+  const allUnused = accounts.every((account) => isAccountUnused(account, accountBalances.get(account.id)))
+  const showZeroBalances = allUnused || searchParams.get('showZero') === 'true'
   const groupBy = (searchParams.get('groupBy') || 'institution') as 'institution' | 'type'
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
   const open = Boolean(anchorEl)
@@ -56,16 +57,18 @@ const AccountsPage: FC = () => {
             <IconLib.MdSettings size="1.5rem" />
           </IconButton>
           <Menu anchorEl={anchorEl} open={open} onClose={() => setAnchorEl(null)}>
-            <MenuItem
-              onClick={() => {
-                setSearchParams({ ...Object.fromEntries(searchParams), showZero: (!showZeroBalances).toString() })
-                setAnchorEl(null)
-              }}
-              sx={{ gap: 1 }}
-            >
-              <Checkbox checked={showZeroBalances} size="small" />
-              Show unused accounts
-            </MenuItem>
+            {!allUnused && (
+              <MenuItem
+                onClick={() => {
+                  setSearchParams({ ...Object.fromEntries(searchParams), showZero: (!showZeroBalances).toString() })
+                  setAnchorEl(null)
+                }}
+                sx={{ gap: 1 }}
+              >
+                <Checkbox checked={showZeroBalances} size="small" />
+                Show unused accounts
+              </MenuItem>
+            )}
             <MenuItem
               onClick={() => {
                 setSearchParams({

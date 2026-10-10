@@ -3,12 +3,15 @@ import { differenceInYears, startOfDay } from 'date-fns'
 import { FC, useContext, useEffect, useMemo, useState } from 'react'
 import { default as styled } from 'styled-components'
 
+import { UpdatePreferencesContext, UserContext } from '../App'
 import CostsAnalysisSetup from '../components/CostsAnalysisSetup'
 import EarningsBreakdownChart from '../components/graphing/EarningsBreakdownChart'
 import { IconToolsContext } from '../components/icons/IconTools'
 import { DrawerContext } from '../components/Menu'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
+import { useToast } from '../components/shared/ToastProvider'
 import { useElementDimensions } from '../components/shared/useDimensions'
+import { AugmentedCategory } from '../domain/model/category'
 import { formatAmount } from '../domain/model/currency'
 import MixedAugmentation from '../service/MixedAugmentation'
 import UserStore from '../UserStore'
@@ -103,8 +106,15 @@ const CostsAnalysisPage: FC = () => {
   const [showSetup, setShowSetup] = useState(false)
   const [showOptions, setShowOptions] = useState(false)
   const [viewType, setViewType] = useState<'table' | 'chart'>(query.get('view') === 'chart' ? 'chart' : 'table')
-  const [incomeCategory, setIncomeCategory] = useState<number>(userStore.getIncomeCategoryId() ?? rootCategory.id)
-  const [grossIncome, setGrossIncome] = useState<number>(userStore.getGrossIncome() ?? 0)
+  const { preferences } = useContext(UserContext)
+  const updatePreferences = useContext(UpdatePreferencesContext)
+  const { showToast } = useToast()
+  const savedGrossIncome = preferences?.costsGrossIncome ?? userStore.getGrossIncome()
+  const legacyIncomeCategory = preferences?.costsIncomeCategoryId ?? userStore.getIncomeCategoryId()
+  const savedIncomeCategories =
+    preferences?.costsIncomeCategoryIds ?? (legacyIncomeCategory !== null ? [legacyIncomeCategory] : [])
+  const [incomeCategories, setIncomeCategories] = useState<number[]>(savedIncomeCategories)
+  const [grossIncome, setGrossIncome] = useState<number>(savedGrossIncome ?? 0)
   const { ref: setContentRef, ...dimensions } = useElementDimensions(0, 0)
 
   // Update URL when viewType changes
@@ -122,8 +132,15 @@ const CostsAnalysisPage: FC = () => {
   }
 
   useEffect(() => {
-    if (!userStore.getGrossIncome() || !userStore.getIncomeCategoryId()) {
+    if (!savedGrossIncome || savedIncomeCategories.length === 0) {
       setShowSetup(true)
+    } else if (preferences?.costsGrossIncome === undefined || preferences?.costsIncomeCategoryIds === undefined) {
+      // Uploads values still only kept in this browser's storage.
+      updatePreferences({
+        costsGrossIncome: savedGrossIncome,
+        costsIncomeCategoryIds: savedIncomeCategories,
+        costsIncomeCategoryId: null,
+      }).catch(console.error)
     }
   }, [])
 
@@ -135,7 +152,7 @@ const CostsAnalysisPage: FC = () => {
         .filter((value) => {
           let category = value.category
           while (typeof category !== 'undefined') {
-            if (category.id === incomeCategory) return true
+            if (incomeCategories.includes(category.id)) return true
             category = category.parent
           }
           return false
@@ -148,8 +165,15 @@ const CostsAnalysisPage: FC = () => {
           }
           return previousValue + value
         }, 0),
-    [incomeCategory, transactions, exchangeRateOnDay, defaultCurrency],
+    [incomeCategories, transactions, exchangeRateOnDay, defaultCurrency],
   )
+
+  const topLevelCategory = (category: AugmentedCategory) => {
+    while (category.parent && category.parentId !== rootCategory.id) {
+      category = category.parent as AugmentedCategory
+    }
+    return category
+  }
 
   const fixedCosts = useMemo(() => {
     const fixedTransactions = transactions
@@ -164,10 +188,7 @@ const CostsAnalysisPage: FC = () => {
           value *= exchangeRateOnDay(currentValue.currencyId, defaultCurrency.id, startOfDay(new Date()))
         }
 
-        let category = currentValue.category!
-        while (category.parentId !== rootCategory.id) {
-          category = category.parent!
-        }
+        const category = topLevelCategory(currentValue.category!)
 
         previousValue.set(category.name, (previousValue.get(category.name) ?? 0) + value)
         return previousValue
@@ -181,10 +202,7 @@ const CostsAnalysisPage: FC = () => {
           value *= exchangeRateOnDay(currentValue.receiverCurrencyId, defaultCurrency.id, startOfDay(new Date()))
         }
 
-        let category = currentValue.category!
-        while (category.parentId !== rootCategory.id) {
-          category = category.parent!
-        }
+        const category = topLevelCategory(currentValue.category!)
 
         if (data.has(category.name)) {
           data.set(category.name, data.get(category.name)! - value)
@@ -192,7 +210,7 @@ const CostsAnalysisPage: FC = () => {
       })
 
     return data
-  }, [incomeCategory, transactions, exchangeRateOnDay, defaultCurrency])
+  }, [incomeCategories, transactions, exchangeRateOnDay, defaultCurrency])
 
   const fixedAmount = useMemo(() => {
     return [...fixedCosts.values()].reduce((previousValue, currentValue) => previousValue + currentValue, 0)
@@ -212,12 +230,7 @@ const CostsAnalysisPage: FC = () => {
           value *= exchangeRateOnDay(currentValue.currencyId, defaultCurrency.id, new Date())
         }
 
-        let category = currentValue.category!
-        if (category.id !== rootCategory.id) {
-          while (category.parentId !== rootCategory.id) {
-            category = category.parent!
-          }
-        }
+        const category = topLevelCategory(currentValue.category!)
 
         previousValue.set(category.name, (previousValue.get(category.name) ?? 0) + value)
         return previousValue
@@ -231,10 +244,7 @@ const CostsAnalysisPage: FC = () => {
           value *= exchangeRateOnDay(currentValue.receiverCurrencyId, defaultCurrency.id, startOfDay(new Date()))
         }
 
-        let category = currentValue.category!
-        while (category.parentId !== rootCategory.id) {
-          category = category.parent!
-        }
+        const category = topLevelCategory(currentValue.category!)
 
         if (data.has(category.name) && data.get(category.name)! >= value) {
           data.set(category.name, data.get(category.name)! - value)
@@ -242,17 +252,20 @@ const CostsAnalysisPage: FC = () => {
       })
 
     return data
-  }, [incomeCategory, transactions, exchangeRateOnDay, defaultCurrency])
+  }, [incomeCategories, transactions, exchangeRateOnDay, defaultCurrency])
 
   const variableAmount = useMemo(() => {
     return [...variableCosts.values()].reduce((previousValue, currentValue) => previousValue + currentValue, 0)
   }, [variableCosts])
 
-  const percentages = [
-    Math.floor((100 * fixedAmount) / income),
-    Math.floor((100 * variableAmount) / income),
-    Math.floor((100 * (income - variableAmount - fixedAmount)) / income),
-  ]
+  const percentages =
+    income > 0
+      ? [
+          Math.floor((100 * fixedAmount) / income),
+          Math.floor((100 * variableAmount) / income),
+          Math.floor((100 * (income - variableAmount - fixedAmount)) / income),
+        ]
+      : [0, 0, 0]
 
   const extraPercentages = [
     ((100 * fixedAmount) / income) % 1,
@@ -260,7 +273,7 @@ const CostsAnalysisPage: FC = () => {
     ((100 * (income - variableAmount - fixedAmount)) / income) % 1,
   ]
 
-  while (percentages.reduce((a, b) => a + b) < 100) {
+  while (income > 0 && percentages.reduce((a, b) => a + b) < 100) {
     let biggestIndex = 0
     for (let i = 1; i < extraPercentages.length; i += 1) {
       if (extraPercentages[i] > extraPercentages[biggestIndex]) {
@@ -308,16 +321,15 @@ const CostsAnalysisPage: FC = () => {
       <CostsAnalysisSetup
         open={showSetup || showOptions}
         grossIncome={grossIncome}
-        setGrossIncome={(value) => {
-          setGrossIncome(value)
-          userStore.upsertGrossIncome(value)
-        }}
-        incomeCategory={incomeCategory}
-        setIncomeCategory={(value) => {
-          setIncomeCategory(value)
-          userStore.upsertIncomeCategoryId(value)
-        }}
+        setGrossIncome={setGrossIncome}
+        incomeCategories={incomeCategories}
+        setIncomeCategories={setIncomeCategories}
         onComplete={() => {
+          updatePreferences({
+            costsGrossIncome: grossIncome,
+            costsIncomeCategoryIds: incomeCategories,
+            costsIncomeCategoryId: null,
+          }).catch(() => showToast('Could not save your costs analysis setup', 'error'))
           setShowSetup(false)
           setShowOptions(false)
         }}
@@ -368,7 +380,7 @@ const CostsAnalysisPage: FC = () => {
               )}
               <SpacerRow />
               <SectionHeader>
-                <th>Fixed Costs</th>
+                <th>Essential Expenses</th>
                 {privacyMode ? (
                   <>
                     <HeaderCell>Yearly ({defaultCurrency.symbol})</HeaderCell>
@@ -404,7 +416,7 @@ const CostsAnalysisPage: FC = () => {
               ))}
               <SpacerRow />
               <SectionHeader>
-                <th>Variable Costs</th>
+                <th>Other Expenses</th>
                 {privacyMode ? (
                   <>
                     <HeaderCell>Yearly ({defaultCurrency.symbol})</HeaderCell>

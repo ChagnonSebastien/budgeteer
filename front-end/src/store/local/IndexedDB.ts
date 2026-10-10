@@ -24,6 +24,7 @@ interface Account {
   isMine: boolean
   financialInstitution: string
   type: string
+  createdAt?: Date
 }
 
 interface Category {

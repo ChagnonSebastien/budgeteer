@@ -2,11 +2,12 @@ import { GrpcWebFetchTransport } from '@protobuf-ts/grpcweb-transport'
 import React, { FC, ReactNode, useContext, useMemo, useState } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 
-import { UserContext } from './App'
-import CurrencyForm from './components/currencies/CurrencyForm'
+import { UpdatePreferencesContext, UserContext } from './App'
+import FirstAccountSetup from './components/accounts/FirstAccountSetup'
+import CategoryTutorial from './components/categories/CategoryTutorial'
+import WelcomeCurrencySetup from './components/currencies/WelcomeCurrencySetup'
 import LoadingScreen from './components/LoadingScreen'
 import DrawerWrapper from './components/Menu'
-import ContentWithHeader from './components/shared/ContentWithHeader'
 import { Centered } from './components/shared/Layout'
 import Currency, { CurrencyUpdatableFields, RateAutoupdateSettings } from './domain/model/currency'
 import { IdIdentifier } from './domain/model/Unique'
@@ -100,6 +101,26 @@ const UnconfirmedTransactionPersistenceAugmenter = makeUnconfirmedTransactionPer
   unconfirmedTransactionRemoteStore,
 )
 
+const CategoryTutorialGate: FC<{ children: ReactNode }> = ({ children }) => {
+  const { preferences } = useContext(UserContext)
+  const updatePreferences = useContext(UpdatePreferencesContext)
+  const { augmentedCategories } = useContext(CategoryServiceContext)
+  const [showTutorial, setShowTutorial] = useState(
+    () => !preferences?.categoryTutorialDone && augmentedCategories.length <= 1,
+  )
+
+  if (!showTutorial) return children
+
+  return (
+    <CategoryTutorial
+      onDone={() => {
+        setShowTutorial(false)
+        updatePreferences({ categoryTutorialDone: true }).catch(console.error)
+      }}
+    />
+  )
+}
+
 const MustBeConnectedToInternetOnFirstSetup: FC<{ children: ReactNode; hasInternet: boolean }> = ({
   children,
   hasInternet,
@@ -109,39 +130,26 @@ const CreateDefaultCurrency: FC<{
   create: (data: CurrencyUpdatableFields, identity?: IdIdentifier) => Promise<Currency>
   hasInternet: boolean
   setDefaultCurrency(id: number): void
-  testGetRateScript(script: string): Promise<string>
-}> = ({ create, hasInternet, setDefaultCurrency, testGetRateScript }) => {
+}> = ({ create, hasInternet, setDefaultCurrency }) => {
   return (
     <UserContext.Consumer>
       {(user) =>
         user.default_currency === null ? (
           <MustBeConnectedToInternetOnFirstSetup hasInternet={hasInternet}>
-            <ContentWithHeader title="What's your main currency?">
-              <div style={{ padding: '1rem' }}>
-                <CurrencyForm
-                  onSubmit={async (currencyData: Partial<CurrencyUpdatableFields>) => {
-                    if (typeof currencyData.name === 'undefined') return
-                    if (typeof currencyData.symbol === 'undefined') return
-                    if (typeof currencyData.type === 'undefined') return
-                    if (typeof currencyData.risk === 'undefined') return
-                    if (typeof currencyData.decimalPoints === 'undefined') return
-
-                    const newCurrency = await create({
-                      name: currencyData.name,
-                      symbol: currencyData.symbol,
-                      type: currencyData.type,
-                      risk: currencyData.risk,
-                      decimalPoints: currencyData.decimalPoints,
-                      rateAutoupdateSettings: new RateAutoupdateSettings('', false),
-                    })
-                    await currencyRemoteStore.setDefault(newCurrency.id)
-                    setDefaultCurrency(newCurrency.id)
-                  }}
-                  submitText="Create"
-                  scriptRunner={testGetRateScript}
-                />
-              </div>
-            </ContentWithHeader>
+            <WelcomeCurrencySetup
+              onSubmit={async (choice) => {
+                const newCurrency = await create({
+                  name: choice.name,
+                  symbol: choice.code,
+                  type: '',
+                  risk: '',
+                  decimalPoints: choice.decimalPoints,
+                  rateAutoupdateSettings: new RateAutoupdateSettings('', false),
+                })
+                await currencyRemoteStore.setDefault(newCurrency.id)
+                setDefaultCurrency(newCurrency.id)
+              }}
+            />
           </MustBeConnectedToInternetOnFirstSetup>
         ) : (
           <LoadingScreen />
@@ -149,6 +157,12 @@ const CreateDefaultCurrency: FC<{
       }
     </UserContext.Consumer>
   )
+}
+
+const AssurePersonalAccount: FC<{ NextComponent: FC }> = ({ NextComponent }) => {
+  const { hidden_default_account } = useContext(UserContext)
+  const { myOwnAccounts } = useContext(AccountServiceContext)
+  return myOwnAccounts.some((a) => a.id !== hidden_default_account) ? <NextComponent /> : <FirstAccountSetup />
 }
 
 const WaitOnAtLeastOneCategory: FC<{ NextComponent: FC; hasInternet: boolean }> = ({ NextComponent, hasInternet }) => (
@@ -159,7 +173,7 @@ const WaitOnAtLeastOneCategory: FC<{ NextComponent: FC; hasInternet: boolean }> 
           <LoadingScreen />
         </MustBeConnectedToInternetOnFirstSetup>
       ) : (
-        <NextComponent />
+        <AssurePersonalAccount NextComponent={NextComponent} />
       )
     }
   </CategoryServiceContext.Consumer>
@@ -169,8 +183,7 @@ const AssureMinimumConfig: FC<{
   NextComponent: FC
   hasInternet: boolean
   setDefaultCurrency(id: number): void
-  testGetRateScript(script: string): Promise<string>
-}> = ({ NextComponent, hasInternet, setDefaultCurrency, testGetRateScript }) => (
+}> = ({ NextComponent, hasInternet, setDefaultCurrency }) => (
   <BrowserRouter>
     <CurrencyServiceContext.Consumer>
       {(currencyContext) =>
@@ -179,7 +192,6 @@ const AssureMinimumConfig: FC<{
             create={currencyContext.create}
             setDefaultCurrency={setDefaultCurrency}
             hasInternet={hasInternet}
-            testGetRateScript={testGetRateScript}
           />
         ) : (
           <WaitOnAtLeastOneCategory NextComponent={NextComponent} hasInternet={hasInternet} />
@@ -193,8 +205,7 @@ const WaitOnInitializedData: FC<{
   NextComponent: FC
   hasInternet: boolean
   setDefaultCurrency(id: number): void
-  testGetRateScript(script: string): Promise<string>
-}> = ({ NextComponent, hasInternet, setDefaultCurrency, testGetRateScript }) => (
+}> = ({ NextComponent, hasInternet, setDefaultCurrency }) => (
   <TransactionGroupServiceContext.Consumer>
     {(transactionGroupCtx) => (
       <TransactionServiceContext.Consumer>
@@ -224,7 +235,6 @@ const WaitOnInitializedData: FC<{
                               NextComponent={NextComponent}
                               setDefaultCurrency={setDefaultCurrency}
                               hasInternet={hasInternet}
-                              testGetRateScript={testGetRateScript}
                             />
                           )
                         }
@@ -379,56 +389,64 @@ const AuthenticatedZone: FC<Props> = (props) => {
 
   const FullyAugmentedView = useMemo<FC>(
     () => () => (
-      <DrawerWrapper logout={logout}>
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/currencies" element={<CurrenciesPage />} />
-          <Route path="/currencies/new" element={<CreateCurrencyPage scriptRunner={testGetRateScript} />} />
-          <Route path="/currencies/edit/:currencyId" element={<EditCurrencyPage scriptRunner={testGetRateScript} />} />
-          <Route path="/categories" element={<CategoryPage />} />
-          <Route path="/categories/new" element={<CreateCategoryPage />} />
-          <Route path="/categories/edit/:categoryId" element={<EditCategoryPage />} />
-          <Route path="/accounts" element={<AccountsPage />} />
-          <Route path="/accounts/new" element={<CreateAccountPage />} />
-          <Route path="/accounts/edit/:accountId" element={<EditAccountPage />} />
-          <Route path="/transactions" element={<TransactionPage />} />
-          <Route path="/transactions/new" element={<CreateTransactionPage />} />
-          <Route path="/transactions/edit/:transactionId" element={<EditTransactionPage />} />
-          <Route path="/balances" element={<BalancePage />} />
-          <Route path="/costs" element={<CostsAnalysisPage />} />
-          <Route path="/trends" element={<TrendsPage />} />
-          <Route path="/investments" element={<InvestmentsPerformancePage />} />
-          <Route path="/transaction-groups" element={<TransactionGroups />} />
-          <Route path="/transaction-groups/new" element={<CreateTransactionGroupPage />} />
-          <Route path="/transaction-groups/manage/:transactionGroupId" element={<ManageTransactionGroup />} />
-          <Route
-            path="/transaction-groups/manage/:transactionGroupId/unconfirmed/new"
-            element={<CreateUnconfirmedTransactionPage />}
-          />
-          <Route
-            path="/transaction-groups/manage/:transactionGroupId/unconfirmed/:unconfirmedTransactionId"
-            element={<EditUnconfirmedTransactionPage />}
-          />
-          <Route path="/transaction-groups/manage/:transactionGroupId/settle" element={<SettlementPage mode="new" />} />
-          <Route
-            path="/transaction-groups/manage/:transactionGroupId/settle/:settlementId/edit"
-            element={<SettlementPage mode="edit" />}
-          />
-          <Route
-            path="/transaction-groups/manage/:transactionGroupId/settle/:settlementId/confirm"
-            element={<SettlementPage mode="confirm" />}
-          />
-          <Route
-            path="/transaction-groups/manage/:transactionGroupId/settle/:settlementId/record"
-            element={<SettlementPage mode="record" />}
-          />
-          <Route
-            path="/transaction-groups/manage/:transactionGroupId/unconfirmed/:unconfirmedTransactionId/promote"
-            element={<PromoteUnconfirmedTransactionPage />}
-          />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </DrawerWrapper>
+      <CategoryTutorialGate>
+        <DrawerWrapper logout={logout}>
+          <Routes>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/currencies" element={<CurrenciesPage />} />
+            <Route path="/currencies/new" element={<CreateCurrencyPage scriptRunner={testGetRateScript} />} />
+            <Route
+              path="/currencies/edit/:currencyId"
+              element={<EditCurrencyPage scriptRunner={testGetRateScript} />}
+            />
+            <Route path="/categories" element={<CategoryPage />} />
+            <Route path="/categories/new" element={<CreateCategoryPage />} />
+            <Route path="/categories/edit/:categoryId" element={<EditCategoryPage />} />
+            <Route path="/accounts" element={<AccountsPage />} />
+            <Route path="/accounts/new" element={<CreateAccountPage />} />
+            <Route path="/accounts/edit/:accountId" element={<EditAccountPage />} />
+            <Route path="/transactions" element={<TransactionPage />} />
+            <Route path="/transactions/new" element={<CreateTransactionPage />} />
+            <Route path="/transactions/edit/:transactionId" element={<EditTransactionPage />} />
+            <Route path="/balances" element={<BalancePage />} />
+            <Route path="/costs" element={<CostsAnalysisPage />} />
+            <Route path="/trends" element={<TrendsPage />} />
+            <Route path="/investments" element={<InvestmentsPerformancePage />} />
+            <Route path="/transaction-groups" element={<TransactionGroups />} />
+            <Route path="/transaction-groups/new" element={<CreateTransactionGroupPage />} />
+            <Route path="/transaction-groups/manage/:transactionGroupId" element={<ManageTransactionGroup />} />
+            <Route
+              path="/transaction-groups/manage/:transactionGroupId/unconfirmed/new"
+              element={<CreateUnconfirmedTransactionPage />}
+            />
+            <Route
+              path="/transaction-groups/manage/:transactionGroupId/unconfirmed/:unconfirmedTransactionId"
+              element={<EditUnconfirmedTransactionPage />}
+            />
+            <Route
+              path="/transaction-groups/manage/:transactionGroupId/settle"
+              element={<SettlementPage mode="new" />}
+            />
+            <Route
+              path="/transaction-groups/manage/:transactionGroupId/settle/:settlementId/edit"
+              element={<SettlementPage mode="edit" />}
+            />
+            <Route
+              path="/transaction-groups/manage/:transactionGroupId/settle/:settlementId/confirm"
+              element={<SettlementPage mode="confirm" />}
+            />
+            <Route
+              path="/transaction-groups/manage/:transactionGroupId/settle/:settlementId/record"
+              element={<SettlementPage mode="record" />}
+            />
+            <Route
+              path="/transaction-groups/manage/:transactionGroupId/unconfirmed/:unconfirmedTransactionId/promote"
+              element={<PromoteUnconfirmedTransactionPage />}
+            />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </DrawerWrapper>
+      </CategoryTutorialGate>
     ),
     [logout, testGetRateScript],
   )
@@ -444,7 +462,6 @@ const AuthenticatedZone: FC<Props> = (props) => {
         NextComponent={CompleteView}
         setDefaultCurrency={setDefaultCurrency}
         hasInternet={hasInternet}
-        testGetRateScript={testGetRateScript}
       />
     </PersistenceSetup>
   )

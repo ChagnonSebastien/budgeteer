@@ -1,6 +1,6 @@
-import { Checkbox, IconButton, Menu, MenuItem, Typography } from '@mui/material'
+import { Typography } from '@mui/material'
 import { FC, useContext, useRef, useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 
 import ItemList from '../components/accounts/ItemList'
 import CurrencyCard from '../components/currencies/CurrencyCard'
@@ -20,12 +20,8 @@ const CurrenciesPage: FC = () => {
   const { state: currencies } = useContext(CurrencyServiceContext)
   const { defaultCurrency } = useContext(MixedAugmentation)
   const { IconLib } = useContext(IconToolsContext)
-  const [searchParams, setSearchParams] = useSearchParams()
-  const showZeroBalances = searchParams.get('showZero') === 'true'
   const [filter, setFilter] = useState('')
   const [clickedCurrency, setClickedCurrency] = useState<Currency | null>(null)
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
-  const open = Boolean(anchorEl)
   const scrollingContainerRef = useRef<HTMLDivElement>(null)
   const { accountBalances } = useContext(MixedAugmentation)
   const { state: accounts } = useContext(AccountServiceContext)
@@ -44,31 +40,12 @@ const CurrenciesPage: FC = () => {
     return total
   }
 
+  const orderedCurrencies = [...currencies].sort(
+    (a, b) => Number(getTotalForCurrency(a.id) === 0) - Number(getTotalForCurrency(b.id) === 0),
+  )
+
   return (
-    <ContentWithHeader
-      title="Currencies"
-      action="menu"
-      withPadding
-      rightContent={
-        <>
-          <IconButton onClick={(e) => setAnchorEl(e.currentTarget)}>
-            <IconLib.MdSettings size="1.5rem" />
-          </IconButton>
-          <Menu anchorEl={anchorEl} open={open} onClose={() => setAnchorEl(null)}>
-            <MenuItem
-              onClick={() => {
-                setSearchParams({ showZero: (!showZeroBalances).toString() })
-                setAnchorEl(null)
-              }}
-              sx={{ gap: 1 }}
-            >
-              <Checkbox checked={showZeroBalances} size="small" />
-              Show unused currencies
-            </MenuItem>
-          </Menu>
-        </>
-      }
-    >
+    <ContentWithHeader title="Currencies" action="menu" withPadding>
       <ScrollingOverButton
         button={{ text: 'New', onClick: () => navigate('/currencies/new') }}
         scrollingContainerRef={scrollingContainerRef}
@@ -85,7 +62,7 @@ const CurrenciesPage: FC = () => {
           }}
         >
           <ItemList
-            items={currencies}
+            items={orderedCurrencies}
             ItemComponent={CurrencyCard}
             selectConfiguration={{
               mode: 'click',
@@ -94,7 +71,6 @@ const CurrenciesPage: FC = () => {
             additionalItemsProps={{
               total: getTotalForCurrency,
             }}
-            filter={(item: Currency) => showZeroBalances || getTotalForCurrency(item.id) !== 0}
           />
         </CustomScrolling>
 

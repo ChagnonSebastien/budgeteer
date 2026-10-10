@@ -47,3 +47,9 @@ databaseChangeLog:
       file: ./changelogs/023-settlements.sql
   - include:
       file: ./changelogs/024-transaction-group-created-at.sql
+  - include:
+      file: ./changelogs/025-account-created-at.sql
+  - include:
+      file: ./changelogs/026-user-preferences.sql
+  - include:
+      file: ./changelogs/027-root-category-colors.sql

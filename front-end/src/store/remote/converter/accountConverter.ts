@@ -17,6 +17,7 @@ export class AccountConverter
       dto.isMine,
       dto.type,
       dto.financialInstitution,
+      new Date(dto.createdAt),
     )
   }
 

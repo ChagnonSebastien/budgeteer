@@ -112,8 +112,8 @@ const CategoryPage: FC = () => {
 
             <DetailCard
               delay={0}
-              title="Fixed Costs"
-              subTitle="Recurring expenses"
+              title="Essential expense"
+              subTitle="Needs like rent, groceries or transit"
               value={clickedCategory.fixedCosts ? 'Yes' : 'No'}
             />
           </FancyModal>

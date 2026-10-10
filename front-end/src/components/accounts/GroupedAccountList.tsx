@@ -1,4 +1,5 @@
 import { Chip, Stack, Tab, Tabs, Typography } from '@mui/material'
+import { differenceInDays } from 'date-fns'
 import { LegacyRef, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 
 import AccountCard, { AdditionalAccountCardProps } from './AccountCard'
@@ -26,6 +27,13 @@ type GroupedAccountListProps = {
 }
 
 type Props = ItemListProps<AccountID, Account, AdditionalAccountCardProps> & GroupedAccountListProps
+
+// New accounts get a grace period so a fresh setup is not hidden before its first transaction.
+const youngAccountDays = 7
+
+export const isAccountUnused = (account: Account, balances: Map<number, number> | undefined): boolean =>
+  differenceInDays(new Date(), account.createdAt) >= youngAccountDays &&
+  ![...(balances?.values() ?? [])].some((balance) => balance !== 0)
 
 const GroupedAccountList = (props: Props) => {
   const {
@@ -58,11 +66,7 @@ const GroupedAccountList = (props: Props) => {
         return false
       }
 
-      if (!showZeroBalances) {
-        const balances = accountBalances?.get(account.id)
-        if (!balances) return false
-        if (!Array.from(balances.values()).some((balance) => balance !== 0)) return false
-      }
+      if (!showZeroBalances && isAccountUnused(account, accountBalances?.get(account.id))) return false
 
       return true
     },

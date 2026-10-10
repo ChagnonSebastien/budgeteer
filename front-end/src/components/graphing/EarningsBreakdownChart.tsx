@@ -35,8 +35,8 @@ const EarningsBreakdownChart: FC<Props> = ({ grossIncome, netIncome, fixedCosts,
   const nodes: SankeyNode[] = [
     { id: 'Income', nodeColor: '#363' },
     { id: 'Income Taxes', nodeColor: darkColors[0] },
-    { id: 'Fixed Costs', nodeColor: darkColors[1] },
-    { id: 'Variable Costs', nodeColor: darkColors[2] },
+    { id: 'Essential Expenses', nodeColor: darkColors[1] },
+    { id: 'Other Expenses', nodeColor: darkColors[2] },
     { id: 'Investments and Savings', nodeColor: darkColors[3] },
   ]
 
@@ -70,12 +70,12 @@ const EarningsBreakdownChart: FC<Props> = ({ grossIncome, netIncome, fixedCosts,
     { source: 'Income', target: 'Income Taxes', value: taxes },
     {
       source: 'Income',
-      target: 'Fixed Costs',
+      target: 'Essential Expenses',
       value: [...fixedCosts.values()].filter((value) => value > 0).reduce((a, b) => a + b, 0),
     },
     {
       source: 'Income',
-      target: 'Variable Costs',
+      target: 'Other Expenses',
       value: [...variableCosts.values()].filter((value) => value > 0).reduce((a, b) => a + b, 0),
     },
     { source: 'Income', target: 'Investments and Savings', value: investments },
@@ -85,7 +85,7 @@ const EarningsBreakdownChart: FC<Props> = ({ grossIncome, netIncome, fixedCosts,
   const fixedCostLinks = [...fixedCosts.entries()]
     .filter(([, value]) => value > 0)
     .map(([name, value]) => ({
-      source: 'Fixed Costs',
+      source: 'Essential Expenses',
       target: `${name}`,
       value,
     }))
@@ -94,7 +94,7 @@ const EarningsBreakdownChart: FC<Props> = ({ grossIncome, netIncome, fixedCosts,
   const variableCostLinks = [...variableCosts.entries()]
     .filter(([, value]) => value > 0)
     .map(([name, value]) => ({
-      source: 'Variable Costs',
+      source: 'Other Expenses',
       target: `${name}`,
       value,
     }))
@@ -114,8 +114,8 @@ const EarningsBreakdownChart: FC<Props> = ({ grossIncome, netIncome, fixedCosts,
   const getNodeValue = (nodeId: string): number => {
     if (nodeId === 'Income') return totalIncome
     if (nodeId === 'Income Taxes') return taxes
-    if (nodeId === 'Fixed Costs') return [...fixedCosts.values()].filter((v) => v > 0).reduce((a, b) => a + b, 0)
-    if (nodeId === 'Variable Costs') return [...variableCosts.values()].filter((v) => v > 0).reduce((a, b) => a + b, 0)
+    if (nodeId === 'Essential Expenses') return [...fixedCosts.values()].filter((v) => v > 0).reduce((a, b) => a + b, 0)
+    if (nodeId === 'Other Expenses') return [...variableCosts.values()].filter((v) => v > 0).reduce((a, b) => a + b, 0)
     if (nodeId === 'Investments and Savings') return investments
 
     // Check if it's a fixed cost category

@@ -64,6 +64,7 @@ func (r *Repository) GetAllAccountsWithCurrencyIDs(ctx context.Context, userId u
 			IsMine:               accountDao.IsMine,
 			Type:                 accountType,
 			FinancialInstitution: financialInstitution,
+			CreatedAt:            accountDao.CreatedAt,
 		}
 	}
 

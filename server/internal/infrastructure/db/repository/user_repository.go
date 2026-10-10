@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"time"
 
 	"chagnon.dev/budget-server/internal/domain/model"
@@ -74,7 +75,17 @@ func (r *Repository) UserParams(ctx context.Context, id uuid.UUID) (*model.UserP
 		DisplayName:          displayName,
 		DefaultCurrency:      defaultCurrency,
 		HiddenDefaultAccount: model.AccountID(hiddenDefaultAccount),
+		Preferences:          userParams.Preferences,
 	}, nil
+}
+
+func (r *Repository) MergePreferences(ctx context.Context, id uuid.UUID, patch json.RawMessage, maxSize int) (bool, error) {
+	rows, err := r.queries.MergeUserPreferences(ctx, &dao.MergeUserPreferencesParams{
+		UserID:  id,
+		Patch:   patch,
+		MaxSize: int32(maxSize),
+	})
+	return rows == 1, err
 }
 
 func (r *Repository) CanIssueGuestLoginNow(ctx context.Context, email string, ttl, cooldown time.Duration) (allowed bool, nextAllowedAt *time.Time, err error) {

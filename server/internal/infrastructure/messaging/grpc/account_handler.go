@@ -3,6 +3,7 @@ package grpc
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"chagnon.dev/budget-server/internal/domain/model"
 	"chagnon.dev/budget-server/internal/infrastructure/db/repository"
@@ -146,6 +147,7 @@ func (s *AccountHandler) GetAllAccounts(ctx context.Context, _ *dto.GetAllAccoun
 			IsMine:               account.IsMine,
 			Type:                 account.Type,
 			FinancialInstitution: account.FinancialInstitution,
+			CreatedAt:            account.CreatedAt.Format(time.RFC3339),
 		}
 	}
 

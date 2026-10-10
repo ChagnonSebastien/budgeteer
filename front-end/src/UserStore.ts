@@ -30,10 +30,6 @@ export default class UserStore {
     return parseInt(grossIncome)
   }
 
-  public upsertGrossIncome(grossIncome: number) {
-    this.storage.setItem(KEY_GROSS_INCOME, grossIncome.toString())
-  }
-
   public getIncomeCategoryId() {
     const incomeCategory = this.storage.getItem(KEY_INCOME_CATEGORY)
     if (incomeCategory == null) {
@@ -41,10 +37,6 @@ export default class UserStore {
     }
 
     return parseInt(incomeCategory)
-  }
-
-  public upsertIncomeCategoryId(categoryId: number) {
-    this.storage.setItem(KEY_INCOME_CATEGORY, categoryId.toString())
   }
 
   public getPrivacyMode() {

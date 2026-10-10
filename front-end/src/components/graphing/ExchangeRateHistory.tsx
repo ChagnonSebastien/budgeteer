@@ -26,7 +26,7 @@ const ExchangeRateHistory: FC<Props> = ({ currency, against }) => {
 
   let startDate = startOfDay(new Date(Math.min(...rates.map((r) => new Date(r.date).getTime()))))
   if (currency.id === against.id) {
-    startDate = startOfDay(startOfMonth(augmentedTransactions[augmentedTransactions.length - 1].date))
+    startDate = startOfDay(startOfMonth(augmentedTransactions.at(-1)?.date ?? startDate))
   }
 
   const { timeseriesIteratorGenerator, showLabelEveryFactor } = useTimerangeSegmentation(

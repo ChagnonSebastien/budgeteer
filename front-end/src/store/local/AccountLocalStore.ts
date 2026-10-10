@@ -20,6 +20,7 @@ export default class AccountLocalStore {
           account.isMine,
           account.type,
           account.financialInstitution,
+          account.createdAt,
         ),
     )
   }
@@ -44,6 +45,7 @@ export default class AccountLocalStore {
       name: data.name,
       isMine: data.isMine,
       financialInstitution: data.financialInstitution,
+      createdAt: data.createdAt,
     })
   }
 
@@ -67,6 +69,7 @@ export default class AccountLocalStore {
         name: account.name,
         isMine: account.isMine,
         financialInstitution: account.financialInstitution,
+        createdAt: account.createdAt,
       })),
     )
   }

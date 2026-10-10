@@ -126,7 +126,7 @@ const ExchangeRateComparison: FC<Props> = (props) => {
 
       let heldYesterday = new Map(currentlyHeld.entries())
       let gainToday = new Map<CurrencyID, number>()
-      let date = augmentedTransactions[augmentedTransactions.length - 1].date
+      let date = augmentedTransactions.at(-1)?.date ?? new Date()
 
       const commitDividends = (_d: Date) => {
         for (const [cId, gains] of gainToday) {

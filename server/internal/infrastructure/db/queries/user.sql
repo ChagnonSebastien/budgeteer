@@ -46,6 +46,12 @@ SET display_name = sqlc.arg(display_name)
 WHERE id = sqlc.arg(user_id);
 
 -- name: GetUserParams :one
-SELECT default_currency, hidden_default_account, username, display_name
+SELECT default_currency, hidden_default_account, username, display_name, preferences
 FROM users
 WHERE id = sqlc.arg(user_id);
+
+-- name: MergeUserPreferences :execrows
+UPDATE users
+SET preferences = jsonb_strip_nulls(preferences || sqlc.arg(patch)::jsonb)
+WHERE id = sqlc.arg(user_id)
+  AND octet_length((preferences || sqlc.arg(patch)::jsonb)::text) <= sqlc.arg(max_size)::int;

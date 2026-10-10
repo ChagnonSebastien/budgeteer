@@ -22,6 +22,7 @@ export default class Account implements NamedItem<AccountID, Account> {
     public readonly isMine: boolean,
     public readonly type: string,
     public readonly financialInstitution: string,
+    public readonly createdAt: Date = new Date(),
   ) {}
 
   hasName(name: string): boolean {
@@ -34,6 +35,7 @@ export default class Account implements NamedItem<AccountID, Account> {
     if (this.isMine !== other.isMine) return false
     if (this.type !== other.type) return false
     if (this.financialInstitution !== other.financialInstitution) return false
+    if (this.createdAt.getTime() !== other.createdAt.getTime()) return false
     if (this.initialAmounts.length !== other.initialAmounts.length) return false
     for (let i = 0; i < this.initialAmounts.length; i += 1) {
       if (!this.initialAmounts[i].equals(other.initialAmounts[i])) return false
