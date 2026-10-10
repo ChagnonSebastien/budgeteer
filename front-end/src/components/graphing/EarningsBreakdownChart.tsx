@@ -189,8 +189,9 @@ const EarningsBreakdownChart: FC<Props> = ({ grossIncome, netIncome, fixedCosts,
         modifiers: [['darker', 0.8]],
       }}
       nodeBorderRadius={3}
-      linkOpacity={0.5}
-      linkHoverOpacity={0.8}
+      linkOpacity={0.35}
+      linkHoverOpacity={0.6}
+      linkBlendMode="normal"
       linkContract={3}
       enableLinkGradient={true}
       labelOrientation="horizontal"

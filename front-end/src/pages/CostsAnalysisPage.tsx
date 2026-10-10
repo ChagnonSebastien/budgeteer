@@ -76,7 +76,7 @@ const BudgetBar: FC<{ width: number; badness: number }> = ({ width, badness }) =
 }
 
 const AmountCell = styled('td')({
-  fontFamily: "'Roboto Mono', monospace",
+  fontVariantNumeric: 'tabular-nums',
   textAlign: 'right',
 })
 
