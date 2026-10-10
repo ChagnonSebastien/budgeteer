@@ -58,7 +58,7 @@ const SelectOne: FC<Props> = (props) => {
           label={props.label}
           fullWidth
           sx={{
-            minWidth: (theme) => theme.fieldWidth.sm,
+            minWidth: (theme) => `min(${theme.fieldWidth.sm}, 100%)`,
             '& .MuiInput-underline:before': {
               borderBottomColor: (theme) => alpha(theme.palette.primary.main, 0.1),
             },
@@ -95,6 +95,8 @@ const SelectOne: FC<Props> = (props) => {
           width: '100%',
           '& .MuiToggleButton-root': {
             flex: 1,
+            minWidth: 0,
+            px: { xs: 0.5, sm: 1.5 },
             textTransform: 'none',
             typography: 'body2',
           },

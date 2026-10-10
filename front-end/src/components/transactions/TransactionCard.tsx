@@ -73,7 +73,7 @@ export const CardAction: FC<{
       px: 1,
       borderRadius: (t) => `0 0 ${t.radius.md} ${t.radius.md}`,
       color,
-      '&:hover': { bgcolor: 'action.hover' },
+      '@media (hover: hover)': { '&:hover': { bgcolor: 'action.hover' } },
     }}
   >
     {icon}

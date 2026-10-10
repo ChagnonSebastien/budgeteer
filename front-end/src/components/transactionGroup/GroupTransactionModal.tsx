@@ -1,7 +1,6 @@
 import { Stack } from '@mui/material'
 import { format } from 'date-fns'
 import { FC, useContext, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 
 import TransactionSplitDialog from './TransactionSplitDialog'
 import { UserContext } from '../../App'
@@ -15,12 +14,13 @@ import { DrawerContext } from '../Menu'
 import ConfirmDeleteModal from '../shared/ConfirmDeleteModal'
 import { DetailCard, DetailHeading, FancyDialog, FancyModal } from '../shared/FancyModal'
 import { useToast } from '../shared/ToastProvider'
+import { useNavigateFromDialog } from '../shared/useCloseOnBack'
 
 const GroupTransactionModal: FC<{ transaction: AugmentedTransaction | null; onClose(): void }> = ({
   transaction,
   onClose,
 }) => {
-  const navigate = useNavigate()
+  const navigate = useNavigateFromDialog()
   const { email, authentification_method } = useContext(UserContext)
   const { IconLib } = useContext(IconToolsContext)
   const { privacyMode } = useContext(DrawerContext)

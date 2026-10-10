@@ -27,6 +27,16 @@ const StyledTable = styled('table')(({ theme }) => ({
     border: 'none',
     position: 'relative',
   },
+  // 'anywhere' would also shrink the column's minimum width, one letter per line in Firefox.
+  '& > * > tr > :first-of-type': {
+    overflowWrap: 'break-word',
+  },
+  [theme.breakpoints.down('sm')]: {
+    fontSize: '0.85rem',
+    '& > * > tr > *': {
+      padding: theme.spacing(0.75, 1),
+    },
+  },
 }))
 
 const HeaderRow = styled('tr')(({ theme }) => ({
@@ -35,6 +45,9 @@ const HeaderRow = styled('tr')(({ theme }) => ({
   th: {
     padding: theme.spacing(1.5, 2),
     color: theme.palette.intent.edit,
+    [theme.breakpoints.down('sm')]: {
+      padding: theme.spacing(1, 1),
+    },
   },
 }))
 
@@ -75,13 +88,16 @@ const BudgetBar: FC<{ width: number; badness: number }> = ({ width, badness }) =
   )
 }
 
+// '&&' outranks the table's left-aligned cell rule.
 const AmountCell = styled('td')({
   fontVariantNumeric: 'tabular-nums',
-  textAlign: 'right',
+  whiteSpace: 'nowrap',
+  '&&': { textAlign: 'right' },
 })
 
 const HeaderCell = styled('th')({
-  textAlign: 'right',
+  whiteSpace: 'nowrap',
+  '&&': { textAlign: 'right' },
 })
 
 const SpacerRow = styled('tr')(({ theme }) => ({
@@ -345,7 +361,13 @@ const CostsAnalysisPage: FC = () => {
         }}
       />
 
-      <Box sx={{ maxWidth: (t) => t.contentWidth.default, width: '100%', height: '100%' }}>
+      <Box
+        sx={{
+          maxWidth: (t) => t.contentWidth.default,
+          width: '100%',
+          height: viewType === 'chart' ? '100%' : undefined,
+        }}
+      >
         {viewType === 'chart' ? (
           <EarningsBreakdownChart
             grossIncome={grossIncome * Math.pow(10, defaultCurrency.decimalPoints)}

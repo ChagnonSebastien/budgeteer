@@ -23,9 +23,9 @@ const InvestmentsPerformancePage: FC = () => {
       <SecondDivision
         sx={{
           flexDirection: 'row',
-          columnGap: 6,
+          columnGap: { xs: 2, sm: 6 },
           flexWrap: 'wrap',
-          rowGap: 2,
+          rowGap: { xs: 1.5, sm: 2 },
           bgcolor: 'surface.subtle',
           flexShrink: 0,
         }}

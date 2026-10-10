@@ -25,12 +25,14 @@ const CategoryListItem = styled(
     borderLeft: `${selectionBorderWidth}px solid ${$isSelected ? brand : 'transparent'}`,
     margin: theme.spacing(0.25, 0),
     backgroundColor: $isSelected ? alpha(brand, 0.12) : $hasSelectedChild ? alpha(brand, 0.04) : 'transparent',
-    '&:hover': {
-      backgroundColor: $isSelected
-        ? alpha(brand, 0.16)
-        : $hasSelectedChild
-          ? alpha(brand, 0.08)
-          : theme.palette.surface.raised,
+    '@media (hover: hover)': {
+      '&:hover': {
+        backgroundColor: $isSelected
+          ? alpha(brand, 0.16)
+          : $hasSelectedChild
+            ? alpha(brand, 0.08)
+            : theme.palette.surface.raised,
+      },
     },
   }
 })
@@ -45,7 +47,7 @@ const ExpandButton = styled(
   justifyContent: 'center',
   cursor: 'pointer',
   color: theme.palette.text.disabled,
-  '&:hover': { color: theme.palette.text.primary },
+  '@media (hover: hover)': { '&:hover': { color: theme.palette.text.primary } },
   '.rotatable': {
     transition: 'all 200ms ease-in-out',
     fontSize: theme.typography.subtitle1.fontSize,

@@ -32,15 +32,22 @@ const LandingPage: FC<Props> = ({ oidcLogin, userPassLogin, guestLogin }) => (
     <Stack
       direction={{ xs: 'column', md: 'row' }}
       spacing={{ xs: 4, md: 8 }}
-      sx={{ m: 'auto', width: '100%', maxWidth: (t) => t.contentWidth.wide, alignItems: { md: 'center' } }}
+      useFlexGap
+      sx={(t) => ({
+        m: 'auto',
+        width: '100%',
+        maxWidth: { xs: t.contentWidth.compact, md: t.contentWidth.wide },
+        alignItems: { md: 'center' },
+      })}
     >
-      <Stack spacing={4} sx={{ flex: 1, minWidth: 0 }}>
+      {/* On phones the column dissolves so the sign-in card can sit right under the headline. */}
+      <Stack spacing={4} useFlexGap sx={{ flex: 1, minWidth: 0, display: { xs: 'contents', md: 'flex' } }}>
         <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
           <Box component="img" src="/icon.svg" alt="" sx={{ width: 40, height: 40 }} />
           <Typography variant="h6">Fintrospect</Typography>
         </Stack>
 
-        <Stack spacing={2}>
+        <Stack spacing={2} sx={{ order: 1 }}>
           <Typography variant="hero" component="h1" sx={{ fontSize: { xs: '2.25rem', sm: '2.75rem' } }}>
             Know where your money{' '}
             <Box
@@ -62,7 +69,7 @@ const LandingPage: FC<Props> = ({ oidcLogin, userPassLogin, guestLogin }) => (
           </Typography>
         </Stack>
 
-        <Stack spacing={2.5}>
+        <Stack spacing={2.5} sx={{ order: 3 }}>
           {features.map(({ Icon, title, text }) => (
             <Stack key={title} direction="row" spacing={2} sx={{ alignItems: 'flex-start' }}>
               <Box
@@ -93,17 +100,18 @@ const LandingPage: FC<Props> = ({ oidcLogin, userPassLogin, guestLogin }) => (
 
       <Paper
         variant="outlined"
-        sx={{
+        sx={(t) => ({
           p: { xs: 3, sm: 4 },
+          order: { xs: 2, md: 0 },
           width: '100%',
-          maxWidth: (t) => t.contentWidth.dialog,
+          maxWidth: { md: t.contentWidth.dialog },
           flexShrink: 0,
-          borderRadius: (t) => t.radius.card,
+          borderRadius: t.radius.card,
           borderColor: 'border.subtle',
           bgcolor: 'surface.subtle',
           backdropFilter: 'blur(12px)',
-          boxShadow: (t) => t.elevation.card,
-        }}
+          boxShadow: t.elevation.card,
+        })}
       >
         <Stack spacing={3}>
           <Stack spacing={0.5}>

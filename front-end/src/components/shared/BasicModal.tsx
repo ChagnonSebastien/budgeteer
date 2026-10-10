@@ -3,6 +3,7 @@ import { styled } from '@mui/material/styles'
 import { FC, useContext } from 'react'
 
 import { withoutTransientProps } from './Layout'
+import useCloseOnBack from './useCloseOnBack'
 import { DrawerContext } from '../Menu'
 
 const StyledDialog = styled(
@@ -27,6 +28,7 @@ const StyledDialog = styled(
 const BasicModal: FC<DialogProps> = (props) => {
   const { open, drawerWidth } = useContext(DrawerContext)
   const isPersistentDrawer = !open // If open() function doesn't exist, it means we're in persistent drawer mode
+  useCloseOnBack(props.open, () => props.onClose?.({}, 'backdropClick'))
 
   return <StyledDialog {...props} $isPersistentDrawer={isPersistentDrawer} $drawerWidth={drawerWidth} />
 }

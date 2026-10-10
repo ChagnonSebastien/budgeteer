@@ -31,9 +31,9 @@ const TrendsPage: FC = () => {
       <SecondDivision
         sx={{
           flexDirection: 'row',
-          columnGap: 6,
+          columnGap: { xs: 2, sm: 6 },
           flexWrap: 'wrap',
-          rowGap: 2,
+          rowGap: { xs: 1.5, sm: 2 },
           bgcolor: 'surface.subtle',
           flexShrink: 0,
         }}
@@ -51,7 +51,7 @@ const TrendsPage: FC = () => {
           />
         </Box>
 
-        <Box sx={{ flexGrow: 1, minWidth: (t) => t.fieldWidth.md }}>
+        <Box sx={{ flexGrow: 1, minWidth: (t) => `min(${t.fieldWidth.md}, 100%)` }}>
           <CounterInput
             label="Time Range"
             value={years}
@@ -59,7 +59,7 @@ const TrendsPage: FC = () => {
           />
         </Box>
 
-        <Box sx={{ flexGrow: 3, minWidth: (t) => t.fieldWidth.lg }}>
+        <Box sx={{ flexGrow: 3, minWidth: (t) => `min(${t.fieldWidth.lg}, 100%)` }}>
           <SelectOne
             label="Grouping"
             value={grouping}

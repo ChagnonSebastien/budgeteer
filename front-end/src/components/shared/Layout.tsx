@@ -107,13 +107,15 @@ export const GradientCard = styled(
     borderLeftColor: theme.palette.primary.main,
   }),
   ...($hoverEffect && {
-    '&:hover': {
-      backgroundColor: $selected ? alpha(theme.palette.primary.main, 0.16) : theme.palette.surface.raised,
-      transform: $withGradientBackground ? 'translateY(-2px) scale(1.01)' : 'translateY(-2px)',
-      ...($withGradientBackground && {
-        boxShadow: theme.elevation.card,
-        borderColor: theme.palette.border.default,
-      }),
+    '@media (hover: hover)': {
+      '&:hover': {
+        backgroundColor: $selected ? alpha(theme.palette.primary.main, 0.16) : theme.palette.surface.raised,
+        transform: $withGradientBackground ? 'translateY(-2px) scale(1.01)' : 'translateY(-2px)',
+        ...($withGradientBackground && {
+          boxShadow: theme.elevation.card,
+          borderColor: theme.palette.border.default,
+        }),
+      },
     },
   }),
 }))

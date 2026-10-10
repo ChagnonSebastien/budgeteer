@@ -1,8 +1,19 @@
 import { Box, Typography, useTheme } from '@mui/material'
 import { addDays, isBefore, isSameDay } from 'date-fns'
-import React, { Dispatch, FC, ReactNode, SetStateAction, useMemo } from 'react'
+import React, {
+  Dispatch,
+  FC,
+  ReactNode,
+  SetStateAction,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 
 import { Column, Row } from '../shared/Layout'
+import { useElementDimensions } from '../shared/useDimensions'
 
 export function monotoneSpline(pts: [number, number][]): string {
   const n = pts.length
@@ -96,14 +107,33 @@ export const XDateGrid: FC<{ range: [Date, Date]; height: number; config: DateAx
   )
 }
 
+// Horizontal room a rotated date label needs to stay readable next to its neighbour.
+const minDateLabelSpacingPx = 36
+
 export const BottomDateAxis: FC<{ range: [Date, Date]; height: number; config: DateAxisConfig }> = (props) => {
   const xSubdivisions = useDateSubdivisions(props.range, props.config)
+  const { ref, width } = useElementDimensions(0, 0)
+
+  const shownLabels = useMemo(() => {
+    const totalDays = xSubdivisions.reduce((sum, element) => sum + element.width, 0)
+    const pxPerDay = totalDays > 0 ? width / totalDays : 0
+    let end = 0
+    const ends = xSubdivisions.map((element) => (end += element.width * pxPerDay))
+    const shown = new Set<number>()
+    let lastShown = Infinity
+    for (let i = xSubdivisions.length - 1; i >= 0; i--) {
+      if (!xSubdivisions[i].label || lastShown - ends[i] < minDateLabelSpacingPx) continue
+      shown.add(i)
+      lastShown = ends[i]
+    }
+    return shown
+  }, [xSubdivisions, width])
 
   return (
-    <Row style={{ height: props.height, flexGrow: 1 }}>
-      {xSubdivisions.map((element) => (
+    <Row ref={ref} style={{ height: props.height, flexGrow: 1 }}>
+      {xSubdivisions.map((element, i) => (
         <div key={`x-label-${element.label}`} style={{ flexGrow: element.width, position: 'relative' }}>
-          {element.label && (
+          {shownLabels.has(i) && (
             <>
               <Box
                 sx={{
@@ -133,6 +163,62 @@ export const BottomDateAxis: FC<{ range: [Date, Date]; height: number; config: D
         </div>
       ))}
     </Row>
+  )
+}
+
+const tooltipCursorGap = 16
+const tooltipScreenEdge = 8
+
+const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(value, max))
+
+const ChartTooltip: FC<{ def: TooltipDefinition; offsetTop: number; children: ReactNode }> = ({
+  def,
+  offsetTop,
+  children,
+}) => {
+  const ref = useRef<HTMLDivElement>(null)
+  const [position, setPosition] = useState<{ left: number; top: number } | null>(null)
+
+  // Runs after every render: the tooltip's size depends on the hovered data, known only once drawn.
+  useLayoutEffect(() => {
+    if (!ref.current) return
+    const { width, height } = ref.current.getBoundingClientRect()
+    const maxLeft = window.innerWidth - width - tooltipScreenEdge
+    const maxTop = window.innerHeight - height - tooltipScreenEdge
+    const fitsRight = def.x + tooltipCursorGap + width <= window.innerWidth - tooltipScreenEdge
+    const fitsLeft = def.x - tooltipCursorGap - width >= tooltipScreenEdge
+
+    let left: number
+    let top: number
+    if (fitsRight || fitsLeft) {
+      const onRight = def.side === 'right' ? fitsRight : !fitsLeft
+      left = onRight ? def.x + tooltipCursorGap : def.x - tooltipCursorGap - width
+      top = clamp(def.y - offsetTop, tooltipScreenEdge, maxTop)
+    } else {
+      // Too wide to sit beside the cursor: centre it under the cursor instead, or over it when there is no room below.
+      const below = def.y + tooltipCursorGap
+      const above = def.y - tooltipCursorGap - height
+      left = clamp(def.x - width / 2, tooltipScreenEdge, maxLeft)
+      top = below <= maxTop ? below : above >= tooltipScreenEdge ? above : clamp(below, tooltipScreenEdge, maxTop)
+    }
+    if (position?.left !== left || position?.top !== top) setPosition({ left, top })
+  })
+
+  return (
+    <div
+      ref={ref}
+      style={{
+        position: 'fixed',
+        left: position?.left ?? def.x,
+        top: position?.top ?? def.y,
+        visibility: position ? 'visible' : 'hidden',
+        zIndex: 1100,
+        pointerEvents: 'none',
+        whiteSpace: 'nowrap',
+      }}
+    >
+      {children}
+    </div>
   )
 }
 
@@ -177,11 +263,28 @@ export const DateBasedGraph = (props: {
   } = props
   const { step, graphMinY, graphMaxY, startTick, endTick } = yAxisValues
 
+  // A finger never leaves the chart the way a mouse does: dismiss on a touch outside the plot or on scroll.
+  const plotRef = useRef<HTMLDivElement>(null)
+  const hasTooltip = tooltip !== null
+  useEffect(() => {
+    if (!hasTooltip) return
+    const dismissOutside = (e: PointerEvent) => {
+      if (!plotRef.current?.contains(e.target as Node)) setTooltip(null)
+    }
+    const dismiss = () => setTooltip(null)
+    document.addEventListener('pointerdown', dismissOutside)
+    document.addEventListener('scroll', dismiss, true)
+    return () => {
+      document.removeEventListener('pointerdown', dismissOutside)
+      document.removeEventListener('scroll', dismiss, true)
+    }
+  }, [hasTooltip, setTooltip])
+
   const { format: fmtX = (i) => String(i), tickSize: tickHeightX = 5, grid: gridX = false } = xAxisConfig
   const { format: fmtY = (v) => String(v), tickSize: tickSizeY = 5, grid: gridY = false } = yAxisConfig
 
   return (
-    <div style={{ position: 'relative', flexGrow: 1 }}>
+    <div style={{ position: 'relative', flexGrow: 1, userSelect: 'none', WebkitUserSelect: 'none' }}>
       <Column
         style={{
           paddingTop: margin.top,
@@ -194,13 +297,14 @@ export const DateBasedGraph = (props: {
           style={{
             flexGrow: 1,
           }}
-          onMouseLeave={() => {
-            setTooltip(null)
+          onPointerLeave={(e) => {
+            if (e.pointerType === 'mouse') setTooltip(null)
           }}
         >
           <Column
             style={{ width: margin.left, flexDirection: 'column-reverse' }}
-            onMouseMove={(e) =>
+            onPointerMove={(e) =>
+              e.pointerType === 'mouse' &&
               setTooltip((prev) =>
                 prev
                   ? {
@@ -240,7 +344,7 @@ export const DateBasedGraph = (props: {
             <div style={{ flexGrow: (graphMaxY - endTick) / step }} />
           </Column>
 
-          <div style={{ flexGrow: 1, position: 'relative' }}>
+          <div ref={plotRef} style={{ flexGrow: 1, position: 'relative' }}>
             {graph}
 
             {tooltip && (
@@ -294,7 +398,8 @@ export const DateBasedGraph = (props: {
 
           <Box
             width={margin.right}
-            onMouseMove={(e) =>
+            onPointerMove={(e) =>
+              e.pointerType === 'mouse' &&
               setTooltip((prev) =>
                 prev
                   ? {
@@ -328,28 +433,10 @@ export const DateBasedGraph = (props: {
         </Row>
       </Column>
 
-      {/* Tooltip box */}
       {tooltip && Tooltip && (
-        <div
-          style={{
-            position: 'fixed',
-            top: tooltip.y,
-            left: tooltip.x,
-            zIndex: 1100,
-          }}
-        >
-          <div
-            style={{
-              position: 'absolute',
-              top: -margin.top,
-              ...(tooltip.side === 'right' ? { left: theme.spacing(2) } : { right: theme.spacing(2) }),
-              pointerEvents: 'none',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            <Tooltip def={tooltip} />
-          </div>
-        </div>
+        <ChartTooltip def={tooltip} offsetTop={margin.top}>
+          <Tooltip def={tooltip} />
+        </ChartTooltip>
       )}
     </div>
   )

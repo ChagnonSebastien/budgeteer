@@ -35,8 +35,8 @@ const ActionSpeedDial: FC<{ ariaLabel: string; actions: DialAction[]; hint?: str
           onClick={onClick}
           sx={{
             position: 'absolute',
-            bottom: (t) => t.spacing(2),
-            right: (t) => t.spacing(2),
+            bottom: (t) => `calc(${t.spacing(2)} + env(safe-area-inset-bottom))`,
+            right: (t) => `calc(${t.spacing(2)} + env(safe-area-inset-right))`,
             bgcolor: color,
             color: 'common.white',
             '&:hover': { bgcolor: color },
@@ -55,8 +55,8 @@ const ActionSpeedDial: FC<{ ariaLabel: string; actions: DialAction[]; hint?: str
           <Box
             sx={{
               position: 'absolute',
-              bottom: (t) => t.spacing(2),
-              right: (t) => t.spacing(2),
+              bottom: (t) => `calc(${t.spacing(2)} + env(safe-area-inset-bottom))`,
+              right: (t) => `calc(${t.spacing(2)} + env(safe-area-inset-right))`,
               width: 56,
               height: 56,
               pointerEvents: 'none',
@@ -66,7 +66,11 @@ const ActionSpeedDial: FC<{ ariaLabel: string; actions: DialAction[]; hint?: str
       )}
       <SpeedDial
         ariaLabel={ariaLabel}
-        sx={{ position: 'absolute', bottom: (t) => t.spacing(2), right: (t) => t.spacing(2) }}
+        sx={{
+          position: 'absolute',
+          bottom: (t) => `calc(${t.spacing(2)} + env(safe-area-inset-bottom))`,
+          right: (t) => `calc(${t.spacing(2)} + env(safe-area-inset-right))`,
+        }}
         {...dial}
         icon={
           <SpeedDialIcon

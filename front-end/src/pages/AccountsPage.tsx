@@ -1,6 +1,5 @@
 import { Box, Checkbox, IconButton, Menu, MenuItem, Stack } from '@mui/material'
 import { FC, useContext, useRef, useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
 
 import AccountCard from '../components/accounts/AccountCard'
 import DeleteAccountDialog from '../components/accounts/DeleteAccountDialog'
@@ -10,23 +9,26 @@ import { DrawerContext } from '../components/Menu'
 import ActionSpeedDial from '../components/shared/ActionSpeedDial'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
 import { DetailCard, DetailHeading, FancyDialog, FancyModal } from '../components/shared/FancyModal'
+import useCloseOnBack, { useNavigateFromDialog } from '../components/shared/useCloseOnBack'
+import useQueryParams from '../components/shared/useQueryParams'
 import Account from '../domain/model/account'
 import { formatAmount } from '../domain/model/currency'
 import MixedAugmentation from '../service/MixedAugmentation'
 import { AccountServiceContext, CurrencyServiceContext } from '../service/ServiceContext'
 
 const AccountsPage: FC = () => {
-  const navigate = useNavigate()
+  const navigate = useNavigateFromDialog()
   const { IconLib } = useContext(IconToolsContext)
   const { state: accounts } = useContext(AccountServiceContext)
   const { state: currencies } = useContext(CurrencyServiceContext)
   const { accountBalances } = useContext(MixedAugmentation)
   const { privacyMode } = useContext(DrawerContext)
-  const [searchParams, setSearchParams] = useSearchParams()
+  const { queryParams, updateQueryParams } = useQueryParams<{ showZero: string; groupBy: string }>()
   const allUnused = accounts.every((account) => isAccountUnused(account, accountBalances.get(account.id)))
-  const showZeroBalances = allUnused || searchParams.get('showZero') === 'true'
-  const groupBy = (searchParams.get('groupBy') || 'institution') as 'institution' | 'type'
+  const showZeroBalances = allUnused || queryParams.showZero === 'true'
+  const groupBy = (queryParams.groupBy || 'institution') as 'institution' | 'type'
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
+  useCloseOnBack(anchorEl !== null, () => setAnchorEl(null))
   const open = Boolean(anchorEl)
 
   const [clickedAccount, setClickedAccount] = useState<Account | null>(null)
@@ -63,7 +65,7 @@ const AccountsPage: FC = () => {
             {!allUnused && (
               <MenuItem
                 onClick={() => {
-                  setSearchParams({ ...Object.fromEntries(searchParams), showZero: (!showZeroBalances).toString() })
+                  updateQueryParams({ showZero: (!showZeroBalances).toString() })
                   setAnchorEl(null)
                 }}
                 sx={{ gap: 1 }}
@@ -74,10 +76,7 @@ const AccountsPage: FC = () => {
             )}
             <MenuItem
               onClick={() => {
-                setSearchParams({
-                  ...Object.fromEntries(searchParams),
-                  groupBy: groupBy === 'institution' ? 'type' : 'institution',
-                })
+                updateQueryParams({ groupBy: groupBy === 'institution' ? 'type' : 'institution' })
                 setAnchorEl(null)
               }}
               sx={{ gap: 1 }}

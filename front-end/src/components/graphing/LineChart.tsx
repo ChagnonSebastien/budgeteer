@@ -17,6 +17,12 @@ export type Bucket = {
   values: Record<DataSetLabel, { amount: number }>
 }
 
+// A null amount is a gap: no data for that series at that date.
+export type SparseBucket = {
+  date: Date
+  values: Record<DataSetLabel, { amount: number | null }>
+}
+
 export type TooltipSlice = {
   slice: {
     index: number
@@ -30,7 +36,7 @@ export type TooltipSlice = {
 }
 
 type Props = {
-  data: Bucket[]
+  data: SparseBucket[]
   colors?: string[]
   datasetsLabels?: string[]
   valueFormat?: (v: number) => string
@@ -61,8 +67,14 @@ const LineChart: FC<Props> = ({
     return Array.from(s)
   }, [data, propDatasetsLabels])
 
-  const datasets = useMemo<number[][]>(() => {
-    return datasetLabels.map((key) => data.map((b) => b.values[key]?.amount || 0))
+  const datasets = useMemo<(number | null)[][]>(() => {
+    return datasetLabels.map((key) =>
+      data.map((b) => {
+        const value = b.values[key]
+        if (typeof value === 'undefined') return 0
+        return value.amount === null ? null : value.amount || 0
+      }),
+    )
   }, [data, datasetLabels])
 
   const layers = useMemo<[number, number][][]>(() => {
@@ -70,7 +82,7 @@ const LineChart: FC<Props> = ({
     return datasets.map((serie) =>
       serie.map((v, i) => {
         const y0 = offsets[i]
-        offsets[i] += v
+        offsets[i] += v ?? 0
         return [y0, offsets[i]] as [number, number]
       }),
     )
@@ -82,7 +94,10 @@ const LineChart: FC<Props> = ({
         (prev, dataset) =>
           Math.max(
             prev,
-            dataset.reduce((prev, value) => Math.max(prev, value), Number.MIN_SAFE_INTEGER),
+            dataset.reduce<number>(
+              (prev, value) => (value === null ? prev : Math.max(prev, value)),
+              Number.MIN_SAFE_INTEGER,
+            ),
           ),
         Number.MIN_SAFE_INTEGER,
       ),
@@ -95,7 +110,10 @@ const LineChart: FC<Props> = ({
         (prev, dataset) =>
           Math.min(
             prev,
-            dataset.reduce((prev, value) => Math.min(prev, value), Number.MAX_SAFE_INTEGER),
+            dataset.reduce<number>(
+              (prev, value) => (value === null ? prev : Math.min(prev, value)),
+              Number.MAX_SAFE_INTEGER,
+            ),
           ),
         Number.MAX_SAFE_INTEGER,
       ),
@@ -121,25 +139,46 @@ const LineChart: FC<Props> = ({
   )
 
   const splines = useMemo(() => {
-    return datasets.map((baselineStackedValues) => {
-      const pts: [number, number][] = []
-      for (let i = 0; i < baselineStackedValues.length; i += 1) {
-        pts.push([xScale(i), yNormalScale(baselineStackedValues[i])])
-      }
-      return monotoneSpline(pts)
+    return datasets.map((values) => {
+      const segments: [number, number][][] = [[]]
+      values.forEach((value, i) => {
+        if (value === null) {
+          if (segments[segments.length - 1].length > 0) segments.push([])
+          return
+        }
+        segments[segments.length - 1].push([xScale(i), yNormalScale(value)])
+      })
+      return segments.map(monotoneSpline).join(' ')
     })
   }, [data, datasets, xScale, yNormalScale])
 
   const computeStack = (idx: number) =>
-    datasetLabels.map((key, li) => {
+    datasetLabels.flatMap((key, li) => {
       const value = datasets[li][idx]
-      return {
-        layerLabel: key,
-        value,
-        color: getColor(key),
-        formattedValue: valueFormat(value),
-      }
+      if (value === null) return []
+      return [
+        {
+          layerLabel: key,
+          value,
+          color: getColor(key),
+          formattedValue: valueFormat(value),
+        },
+      ]
     })
+
+  const showTooltipAt = (e: React.PointerEvent<SVGSVGElement>) => {
+    const boundingRect = e.currentTarget.getBoundingClientRect()
+    const sliceWidth = boundingRect.width / (data.length - 1)
+    const percentage = (e.clientX - boundingRect.left) / boundingRect.width
+    const index = Math.floor(percentage * data.length)
+    setTooltip({
+      index,
+      x: e.clientX,
+      y: e.clientY,
+      side: index < data.length / 2 ? 'right' : 'left',
+      slice: sliceWidth,
+    })
+  }
 
   const graph = useMemo(
     () => (
@@ -151,20 +190,10 @@ const LineChart: FC<Props> = ({
           width: '100%',
           position: 'absolute',
           zIndex: 1,
+          touchAction: 'pan-y',
         }}
-        onMouseMove={(e) => {
-          const boundingRect = e.currentTarget.getBoundingClientRect()
-          const sliceWidth = boundingRect.width / (data.length - 1)
-          const percentage = (e.clientX - boundingRect.left) / boundingRect.width
-          const index = Math.floor(percentage * data.length)
-          setTooltip({
-            index,
-            x: e.clientX,
-            y: e.clientY,
-            side: index < data.length / 2 ? 'right' : 'left',
-            slice: sliceWidth,
-          })
-        }}
+        onPointerMove={showTooltipAt}
+        onPointerDown={showTooltipAt}
       >
         {/* Baselines */}
         {datasetLabels.map((datasetLabel, i) => {

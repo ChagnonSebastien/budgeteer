@@ -1,5 +1,4 @@
 import { FC, useContext, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 
 import ItemList from '../components/accounts/ItemList'
 import CurrencyCard from '../components/currencies/CurrencyCard'
@@ -10,12 +9,13 @@ import ActionSpeedDial from '../components/shared/ActionSpeedDial'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
 import { CustomScrolling } from '../components/shared/CustomScrolling'
 import { DetailCard, DetailHeading, FancyDialog, FancyModal } from '../components/shared/FancyModal'
+import { useNavigateFromDialog } from '../components/shared/useCloseOnBack'
 import Currency, { CurrencyID } from '../domain/model/currency'
 import MixedAugmentation from '../service/MixedAugmentation'
 import { AccountServiceContext, CurrencyServiceContext } from '../service/ServiceContext'
 
 const CurrenciesPage: FC = () => {
-  const navigate = useNavigate()
+  const navigate = useNavigateFromDialog()
   const { state: currencies } = useContext(CurrencyServiceContext)
   const { defaultCurrency } = useContext(MixedAugmentation)
   const { IconLib } = useContext(IconToolsContext)

@@ -51,7 +51,7 @@ const BalancePage: FC = () => {
   const baselineConfig = useMemo(() => (qp.baselineConfig ?? 'none') as BaseLineConfig, [qp.baselineConfig])
   const { privacyMode } = useContext(DrawerContext)
   const scale = useMemo(
-    () => (privacyMode ? 'absolute' : (qp.scale ?? 'cropped-absolute')) as ScaleConfig,
+    () => (qp.scale ?? (privacyMode ? 'relative' : 'cropped-absolute')) as ScaleConfig,
     [qp.scale, privacyMode],
   )
   const type = useMemo(() => (qp.type ?? 'active') as ActiveOrPassive, [qp.type])
@@ -135,29 +135,38 @@ const BalancePage: FC = () => {
       ]}
       type={splitHorizontal ? 'radio' : 'dropdown'}
     />,
-    ...(privacyMode
-      ? []
-      : [
-          <SelectOne
-            key="scale-option"
-            label="Scale"
-            value={scale}
-            onChange={(newValue) => updateQueryParams({ scale: newValue })}
-            options={[
-              { value: 'absolute', label: 'Absolute' },
-              { value: 'cropped-absolute', label: 'Cropped Absolute' },
-              { value: 'relative', label: 'Relative (%)' },
-            ]}
-            type={splitHorizontal ? 'radio' : 'dropdown'}
-          />,
-        ]),
+    <SelectOne
+      key="scale-option"
+      label="Scale"
+      value={scale}
+      onChange={(newValue) => updateQueryParams({ scale: newValue })}
+      options={[
+        { value: 'absolute', label: 'Absolute' },
+        { value: 'cropped-absolute', label: 'Cropped Absolute' },
+        { value: 'relative', label: 'Relative (%)' },
+      ]}
+      type={splitHorizontal ? 'radio' : 'dropdown'}
+    />,
   ]
 
   const secondDivision = (
     <SecondDivision $splitView={splitHorizontal} sx={{ bgcolor: splitHorizontal ? undefined : 'surface.subtle' }}>
       {!splitHorizontal && filterOverview}
 
-      {splitHorizontal ? selectOptions : <Row sx={{ gap: 2, flexFlow: 'wrap' }}>{selectOptions}</Row>}
+      {splitHorizontal ? (
+        selectOptions
+      ) : (
+        <Row
+          sx={{
+            gap: { xs: 1.5, sm: 2 },
+            flexFlow: 'wrap',
+            display: { xs: 'grid', sm: 'flex' },
+            gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+          }}
+        >
+          {selectOptions}
+        </Row>
+      )}
     </SecondDivision>
   )
 

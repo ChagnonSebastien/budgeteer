@@ -19,17 +19,22 @@ import {
 } from 'date-fns'
 import { FC, useCallback, useContext, useMemo } from 'react'
 
+import { gainColor, GraphTooltip, GraphTooltipDate } from './GraphStyledComponents'
 import { formatAmount, formatFull } from '../../domain/model/currency'
 import MixedAugmentation from '../../service/MixedAugmentation'
 import { darkTheme } from '../../utils'
 import { DrawerContext } from '../Menu'
-import { gainColor, GraphTooltip, GraphTooltipDate } from './GraphStyledComponents'
+import { useElementDimensions } from '../shared/useDimensions'
 
 export type Grouping = 'years' | 'quarters' | 'months' | 'weeks'
 
 const weekOptions = { weekStartsOn: 1 } as const
 const periodsPerYear: Record<Grouping, number> = { weeks: 52, months: 12, quarters: 4, years: 1 }
 const rollingTails: Record<Grouping, number> = { weeks: 4, months: 12, quarters: 4, years: 3 }
+const chartMargin = { top: 20, right: 25, bottom: 60, left: 70 }
+// Horizontal room a 12px label rotated -45deg needs to stay readable next to its neighbour.
+const minTickSpacingPx = 36
+const shortWeekLabelBelowPx = 600
 
 interface Props {
   categories: number[]
@@ -42,6 +47,7 @@ const TrendsChart: FC<Props> = (props) => {
   const { augmentedTransactions, exchangeRateOnDay, rootCategory, defaultCurrency } = useContext(MixedAugmentation)
   const { privacyMode } = useContext(DrawerContext)
   const theme = useTheme()
+  const { ref: containerRef, width: containerWidth } = useElementDimensions(0, 0)
 
   const filteredTransactions = useMemo(() => {
     return augmentedTransactions.filter((t) => {
@@ -194,13 +200,15 @@ const TrendsChart: FC<Props> = (props) => {
   }, [data, years, grouping])
 
   const tickValues = useMemo(() => {
-    if (grouping !== 'weeks') return undefined
-    const step = Math.ceil(visibleData.length / 13)
+    const plotWidth = containerWidth - chartMargin.left - chartMargin.right
+    const maxTicks = Math.max(1, Math.floor(plotWidth / minTickSpacingPx))
+    const step = Math.ceil(visibleData.length / maxTicks)
+    if (step <= 1) return undefined
     return visibleData.filter((_, index) => (visibleData.length - 1 - index) % step === 0).map((d) => d.date)
-  }, [visibleData, grouping])
+  }, [visibleData, containerWidth])
 
   return data ? (
-    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+    <div ref={containerRef} style={{ position: 'relative', width: '100%', height: '100%' }}>
       {/* Trendline overlay */}
       {visibleData.length >= 2 && trendlineData && (
         <svg
@@ -279,13 +287,16 @@ const TrendsChart: FC<Props> = (props) => {
 
       <ResponsiveBar
         enableGridY={!privacyMode}
-        margin={{ top: 20, right: 25, bottom: 60, left: 70 }}
+        margin={chartMargin}
         valueScale={{ type: 'linear', min: 'auto', nice: false }}
         data={visibleData}
         axisBottom={{
           tickRotation: -45,
           tickValues,
-          format: (props) => label(new Date(props)),
+          format: (props) =>
+            grouping === 'weeks' && containerWidth < shortWeekLabelBelowPx
+              ? formatDate(startOfWeek(new Date(props), weekOptions), "MMM d ''yy")
+              : label(new Date(props)),
         }}
         axisLeft={{
           tickSize: privacyMode ? 0 : 5,

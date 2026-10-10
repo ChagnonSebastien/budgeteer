@@ -242,7 +242,7 @@ const GroupedAccountList = (props: Props) => {
 
       <CustomScrolling ref={scrollingContainerRef} sx={{ pt: 2, pb: 11 }}>
         {groups.map(([type, accounts]) => (
-          <Column key={`account-group-${type}`} sx={{ mb: 4, gap: 1.5 }}>
+          <Column key={`account-group-${type}`} sx={{ mb: { xs: 3, sm: 4 }, gap: { xs: 1, sm: 1.5 } }}>
             {type !== groupOther && (
               <>
                 <Typography variant="subtitle1" textTransform="uppercase" color="textDisabled">
@@ -262,7 +262,12 @@ const GroupedAccountList = (props: Props) => {
             <Box
               sx={
                 additionalItemsProps.showBalances
-                  ? { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 2, p: 0.5 }
+                  ? {
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fill, minmax(min(300px, 100%), 1fr))',
+                      gap: { xs: 1, sm: 2 },
+                      p: 0.5,
+                    }
                   : { display: 'flex', flexDirection: 'column', gap: 0.25 }
               }
             >

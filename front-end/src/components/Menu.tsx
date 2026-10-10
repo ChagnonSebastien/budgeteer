@@ -11,14 +11,15 @@ import {
   Typography,
 } from '@mui/material'
 import { styled } from '@mui/material/styles'
-import { createContext, FC, ReactElement, useContext, useMemo, useState } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { createContext, FC, ReactElement, useContext, useEffect, useMemo, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 
 import { UserContext } from '../App'
 import MixedAugmentation from '../service/MixedAugmentation'
 import UserStore from '../UserStore'
 import { IconToolsContext, PreparedIcon } from './icons/IconTools'
 import { withoutTransientProps } from './shared/Layout'
+import useCloseOnBack, { useNavigateFromDialog } from './shared/useCloseOnBack'
 import { useElementDimensions, useWindowDimensions } from './shared/useDimensions'
 
 interface MenuElement {
@@ -36,7 +37,7 @@ class AppPage implements MenuElement {
   get Element() {
     return () => {
       const location = useLocation()
-      const navigate = useNavigate()
+      const navigate = useNavigateFromDialog()
       const { iconTypeFromName } = useContext(IconToolsContext)
 
       const Icon = iconTypeFromName(this.iconName)
@@ -173,6 +174,8 @@ const DrawerWrapper: FC<Props> = ({ logout, children, userIsGuest = false }) => 
   const { IconLib } = useContext(IconToolsContext)
 
   const [open, setOpen] = useState(false)
+  const { key: locationKey } = useLocation()
+  useEffect(() => setOpen(false), [locationKey])
 
   const iOS = typeof navigator !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent)
 
@@ -181,6 +184,7 @@ const DrawerWrapper: FC<Props> = ({ logout, children, userIsGuest = false }) => 
   const { width: totalWidth } = useWindowDimensions()
   const [privacyMode, setPrivacyMode] = useState(userStore.getPrivacyMode())
   const persistentDrawer = totalWidth - drawerWidth > 600
+  useCloseOnBack(!persistentDrawer && open, () => setOpen(false))
 
   const drawer = (
     <div ref={setDrawerRef}>
@@ -202,7 +206,7 @@ const DrawerWrapper: FC<Props> = ({ logout, children, userIsGuest = false }) => 
               (appPage.requires === 'transactions' ? augmentedTransactions.length > 0 : hasFinancialIncome)),
         )
         .map((appPage) => (
-          <appPage.element.Element />
+          <appPage.element.Element key={appPages.indexOf(appPage)} />
         ))}
 
       {!userIsGuest && (

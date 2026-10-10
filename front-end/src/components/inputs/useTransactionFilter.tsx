@@ -49,7 +49,16 @@ const presets: { label: string; from: (today: Date) => Date }[] = [
 const maxPresets = 5
 
 const PresetButton: FC<{ label: string; onClick(): void }> = ({ label, onClick }) => (
-  <Box onClick={onClick} sx={{ py: 0.5, px: 2, fontWeight: 'bolder', cursor: 'pointer' }}>
+  <Box
+    onClick={onClick}
+    sx={{
+      py: 0.5,
+      px: { xs: 1, sm: 2 },
+      fontWeight: 'bolder',
+      cursor: 'pointer',
+      '@media (pointer: coarse)': { py: 1.25 },
+    }}
+  >
     {label}
   </Box>
 )
@@ -291,7 +300,7 @@ const useTransactionFilter = ({
 
   const quickDates = (
     <Stack direction="row" sx={{ bgcolor: 'surface.raised', borderRadius: (t) => t.radius.md, overflow: 'hidden' }}>
-      <Box sx={{ py: 1.5, flexGrow: 1 }}>
+      <Box sx={{ py: 1.5, flexGrow: 1, minWidth: 0 }}>
         {quickFilter}
         {showSlider && (
           <>
@@ -300,9 +309,9 @@ const useTransactionFilter = ({
               direction="row"
               alignItems="center"
               onClick={() => setShowFilterSelection(true)}
-              sx={{ mt: 1.5, px: 3, cursor: 'pointer' }}
+              sx={{ mt: 1.5, px: { xs: 1.5, sm: 3 }, cursor: 'pointer' }}
             >
-              <Box sx={{ flexGrow: 1 }}>
+              <Box sx={{ flexGrow: 1, minWidth: 0 }}>
                 {fromPills}
                 {toPills}
                 {categoryPills}
@@ -318,7 +327,7 @@ const useTransactionFilter = ({
       <Stack
         justifyContent="center"
         onClick={() => setShowSlider((prev) => !prev)}
-        sx={{ bgcolor: 'surface.shade', p: 2, cursor: 'pointer' }}
+        sx={{ bgcolor: 'surface.shade', p: 2, flexShrink: 0, cursor: 'pointer' }}
       >
         {showSlider ? '-' : '+'}
       </Stack>

@@ -4,6 +4,8 @@ import { Column, withoutTransientProps } from '../shared/Layout'
 
 export const GraphContainer = styled('div')({
   width: '100%',
+  userSelect: 'none',
+  WebkitUserSelect: 'none',
 })
 
 export const FirstDivision = styled('div')({
@@ -26,6 +28,10 @@ export const SecondDivision = styled(
   height: $splitView ? '100%' : 'auto',
   gap: theme.spacing(4),
   alignSelf: 'stretch',
+  [theme.breakpoints.down('sm')]: {
+    padding: theme.spacing(1.5, 2),
+    gap: theme.spacing(2),
+  },
 }))
 
 export const GraphTooltip = styled('div')(({ theme }) => ({
@@ -36,6 +42,14 @@ export const GraphTooltip = styled('div')(({ theme }) => ({
   flexDirection: 'column',
   gap: theme.spacing(0.5),
   zIndex: 100,
+  maxWidth: 'calc(100vw - 32px)',
+  boxSizing: 'border-box',
+  overflow: 'hidden',
+  '& > *': {
+    minWidth: 0,
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+  },
 }))
 
 export const GraphTooltipDate = styled('div')(({ theme }) => ({
@@ -58,6 +72,13 @@ export const GraphTooltipColor = styled('div')(({ theme }) => ({
 export const GraphTooltipLabel = styled('div')(({ theme }) => ({
   color: theme.palette.text.primary,
   fontSize: theme.typography.body2.fontSize,
+  maxWidth: '20rem',
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  whiteSpace: 'nowrap',
+  [theme.breakpoints.down('sm')]: {
+    maxWidth: '40vw',
+  },
 }))
 
 export const GraphTooltipValue = styled('div')(({ theme }) => ({

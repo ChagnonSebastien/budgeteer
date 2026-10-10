@@ -1,5 +1,4 @@
 import { FC, useContext, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 
 import { CategoryCard } from '../components/categories/CategoryCard'
 import { CategoryList } from '../components/categories/CategoryList'
@@ -9,11 +8,12 @@ import ActionSpeedDial from '../components/shared/ActionSpeedDial'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
 import { CustomScrolling } from '../components/shared/CustomScrolling'
 import { DetailCard, DetailHeading, FancyDialog, FancyModal } from '../components/shared/FancyModal'
+import { useNavigateFromDialog } from '../components/shared/useCloseOnBack'
 import Category from '../domain/model/category'
 import { CategoryServiceContext } from '../service/ServiceContext'
 
 const CategoryPage: FC = () => {
-  const navigate = useNavigate()
+  const navigate = useNavigateFromDialog()
   const { IconLib } = useContext(IconToolsContext)
   const { state: categories } = useContext(CategoryServiceContext)
   const [clickedCategory, setClickedCategory] = useState<Category | null>(null)

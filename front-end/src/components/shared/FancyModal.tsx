@@ -41,12 +41,26 @@ export const OverviewActionItem = styled(
   transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
   animation: `${slideIn} 0.3s ease-out both`,
   animationDelay: `${($delay || 0) * 0.1}s`,
-  '&:hover': {
-    backgroundColor: theme.palette.surface.muted,
-    transform: 'translateX(8px)',
+  '@media (hover: hover)': {
+    '&:hover': {
+      backgroundColor: theme.palette.surface.muted,
+      transform: 'translateX(8px)',
+    },
+    '&:hover > :first-of-type': {
+      transform: 'scale(1.25)',
+    },
   },
-  '&:hover > :first-of-type': {
-    transform: 'scale(1.25)',
+  [theme.breakpoints.down('sm')]: {
+    flexDirection: 'column',
+    gap: theme.spacing(0.5),
+    margin: 0,
+    padding: theme.spacing(1),
+    textAlign: 'center',
+    '&:hover': { backgroundColor: theme.palette.surface.muted, transform: 'none' },
+    '& .MuiListItemText-secondary': { display: 'none' },
+    '& .MuiListItemText-root': { margin: 0 },
+    '& .MuiListItemText-primary': { fontSize: '0.75rem', fontWeight: 500, lineHeight: 1.3 },
+    '& > :first-of-type': { fontSize: '1.25rem' },
   },
 }))
 
@@ -54,6 +68,7 @@ export const OverviewActionIcon = styled('div')(({ theme }) => ({
   padding: theme.spacing(2),
   transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
   transform: 'scale(1)',
+  [theme.breakpoints.down('sm')]: { padding: theme.spacing(0.5), display: 'flex' },
 }))
 
 export const OverviewItem = styled(
@@ -66,6 +81,7 @@ export const OverviewItem = styled(
   gap: theme.spacing(2),
   padding: theme.spacing(2),
   animation: `${fadeIn} 0.3s ease-out both`,
+  [theme.breakpoints.down('sm')]: { gap: theme.spacing(1), padding: theme.spacing(1, 1.5) },
   animationDelay: `${($delay || 0) * 0.1}s`,
 }))
 
@@ -95,7 +111,7 @@ export const DetailCard: FC<DetailCardProps> = (props) => {
 }
 
 export const DetailHeading: FC<{ children: ReactNode }> = ({ children }) => (
-  <Typography variant="label" color="text.secondary" sx={{ display: 'block', mb: 2 }}>
+  <Typography variant="label" color="text.secondary" sx={{ display: 'block', mb: { xs: 1, sm: 2 } }}>
     {children}
   </Typography>
 )
@@ -116,6 +132,9 @@ export const FancyDialog: FC<{ open: boolean; onClose(): void; children: ReactNo
           borderRadius: (t) => t.radius.xl,
           border: 0,
           overflow: 'hidden',
+          m: { xs: 2, sm: 4 },
+          maxWidth: { xs: 'calc(100% - 32px)', sm: undefined },
+          maxHeight: { xs: 'calc(100% - 32px)', sm: undefined },
         },
       },
     }}
@@ -154,8 +173,9 @@ export const FancyModal: FC<FancyModalProps> = (props) => {
         backdropFilter: 'blur(48px)',
         border: 1,
         borderColor: 'surface.raised',
-        minWidth: (t) => t.contentWidth.modal,
-        maxWidth: '90vw',
+        borderRadius: 'inherit',
+        minWidth: (t) => ({ xs: 0, sm: t.contentWidth.modal }),
+        maxWidth: { xs: 'none', sm: '90vw' },
         boxShadow: (t) => t.elevation.card,
         transition: 'all 0.3s ease-in-out',
       }}
@@ -163,7 +183,7 @@ export const FancyModal: FC<FancyModalProps> = (props) => {
       <Box
         sx={{
           background: (t) => `linear-gradient(to top right, ${t.palette.surface.muted}, ${t.palette.border.subtle})`,
-          p: 5,
+          p: { xs: 2.5, sm: 5 },
           position: 'relative',
           overflow: 'hidden',
         }}
@@ -183,7 +203,8 @@ export const FancyModal: FC<FancyModalProps> = (props) => {
           variant="h5"
           sx={{
             fontWeight: 600,
-            mb: 2.5,
+            mb: { xs: 1, sm: 2.5 },
+            fontSize: { xs: '1.25rem', sm: undefined },
             letterSpacing: '0.05em',
             background: (t) => `linear-gradient(to right, ${t.palette.common.white}, ${t.palette.text.secondary})`,
             WebkitBackgroundClip: 'text',
@@ -199,11 +220,19 @@ export const FancyModal: FC<FancyModalProps> = (props) => {
         </Typography>
       </Box>
 
-      <Box sx={{ p: 3 }}>{props.children}</Box>
+      <Box sx={{ p: { xs: 2, sm: 3 } }}>{props.children}</Box>
 
       <Divider sx={{ opacity: 0.5 }} />
 
-      <List sx={{ p: 2 }}>
+      <List
+        sx={{
+          p: { xs: 1, sm: 2 },
+          display: { xs: 'grid', sm: 'block' },
+          gridAutoFlow: 'column',
+          gridAutoColumns: 'minmax(0, 1fr)',
+          gap: 0.5,
+        }}
+      >
         {props.bottomMenu
           .filter((item) => !item.disabled)
           .map((item, index) => (

@@ -16,6 +16,8 @@ import { darkTheme } from '../utils'
 
 const lastYear = startOfDay(subMonths(new Date(), 12))
 const today = startOfDay(new Date())
+// Widest per-character advance measured for formatted amounts in the hero font (800 weight).
+const HERO_CHAR_WIDTH_EM = 0.6
 
 interface CashFlowDataPoint {
   month: Date
@@ -144,6 +146,8 @@ const Dashboard: FC = () => {
   const surplus = totalInflow - totalOutflow
   const savingsRate = totalInflow > 0 ? surplus / totalInflow : 0
 
+  const netWorthText = formatFull(defaultCurrency, netWorth, privacyMode)
+
   const hasTransactions = augmentedTransactions.length > 0
   const hasFinancialIncome = augmentedTransactions.some((t) => t.financialIncomeData !== null)
   const hasCashFlow = cashFlowData.some((d) => d.inflow !== 0 || d.outflow !== 0)
@@ -154,9 +158,19 @@ const Dashboard: FC = () => {
         {!hasTransactions && <GettingStarted />}
         {(hasTransactions || netWorth !== 0) && (
           <Section title="Net Worth">
-            <Typography variant="hero" textAlign="center">
-              {formatFull(defaultCurrency, netWorth, privacyMode)}
-            </Typography>
+            <Box sx={{ containerType: 'inline-size' }}>
+              <Typography
+                variant="hero"
+                component="p"
+                sx={(t) => ({
+                  textAlign: 'center',
+                  whiteSpace: 'nowrap',
+                  fontSize: `min(${t.typography.hero.fontSize}, ${(90 / (netWorthText.length * HERO_CHAR_WIDTH_EM)).toFixed(2)}cqi)`,
+                })}
+              >
+                {netWorthText}
+              </Typography>
+            </Box>
           </Section>
         )}
 

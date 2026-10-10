@@ -1,4 +1,4 @@
-import { AppBar, IconButton, InputBase, Toolbar, Typography } from '@mui/material'
+import { AppBar, IconButton, InputBase, SxProps, Theme, Toolbar, Typography } from '@mui/material'
 import { styled } from '@mui/material/styles'
 import { FC, ReactNode, useContext, useState } from 'react'
 import { IconType } from 'react-icons'
@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom'
 import { IconToolsContext } from '../icons/IconTools'
 import { DrawerContext } from '../Menu'
 import { MaxSpaceNoOverflow, withoutTransientProps } from './Layout'
+import ScrollEndSpacer from './ScrollEndSpacer'
 
 export const ContentWithHeaderContainer = styled(MaxSpaceNoOverflow)({
   display: 'flex',
@@ -77,6 +78,7 @@ export interface ContentWithHeaderProps {
   setContentRef?: (value: ((prevState: HTMLDivElement | null) => HTMLDivElement | null) | HTMLDivElement | null) => void
   withPadding?: boolean
   withScrolling?: boolean
+  scrollEndSx?: SxProps<Theme>
 }
 
 const ContentWithHeader: FC<ContentWithHeaderProps> = (props) => {
@@ -89,6 +91,7 @@ const ContentWithHeader: FC<ContentWithHeaderProps> = (props) => {
     setContentRef = undefined,
     withPadding = false,
     withScrolling = false,
+    scrollEndSx,
   } = props
   const { IconLib } = useContext(IconToolsContext)
   const { open } = useContext(DrawerContext)
@@ -110,7 +113,13 @@ const ContentWithHeader: FC<ContentWithHeaderProps> = (props) => {
   return (
     <ContentWithHeaderContainer>
       <Header position="static">
-        <Toolbar>
+        <Toolbar
+          sx={{
+            minHeight: '100%',
+            // Optical alignment: the title's capitals sit about 1px below its line box centre.
+            '& .MuiIconButton-root svg': { transform: 'translateY(1px)' },
+          }}
+        >
           {actionButton}
           {searchOpen ? (
             <SearchField
@@ -134,6 +143,7 @@ const ContentWithHeader: FC<ContentWithHeaderProps> = (props) => {
 
       <ContentContainer ref={setContentRef} $withPadding={withPadding} $withScrolling={withScrolling}>
         {children}
+        {withScrolling && <ScrollEndSpacer sx={scrollEndSx} />}
       </ContentContainer>
     </ContentWithHeaderContainer>
   )

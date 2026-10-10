@@ -241,61 +241,63 @@ export const NetWorthTooltip: FC<NetWorthTooltipProps> = ({ tooltipProps, labels
       <GraphTooltipDate>{date}</GraphTooltipDate>
 
       <table>
-        {tooltipProps.slice.stack
-          .filter((s) => s.value !== 0)
-          .map((s) => {
-            const showGain = !privacyMode && s.gain !== 0 && baselineConfig === 'showIndividualBaselines'
-            return (
-              <Fragment key={`${date}-${s.layerLabel}`}>
-                {/* main row */}
-                <tr>
-                  <td>
-                    <GraphTooltipColor style={{ backgroundColor: s.color }} />
-                  </td>
-                  <td>
-                    <GraphTooltipLabel>{shortenLabel(s.layerLabel)}</GraphTooltipLabel>
-                  </td>
-
-                  {!privacyMode && (
-                    <Box component="td" sx={{ textAlign: 'end', pl: 2 }}>
-                      <GraphTooltipValue>{s.formattedValue}</GraphTooltipValue>
-                    </Box>
-                  )}
-
-                  {scaleConfig === 'relative' && (
-                    <Box component="td" sx={{ textAlign: 'end', pl: 2 }}>
-                      <GraphTooltipLabel>
-                        {totalValue !== 0 ? `${((s.value / totalValue) * 100).toFixed(1)}%` : '0.0%'}
-                      </GraphTooltipLabel>
-                    </Box>
-                  )}
-                </tr>
-
-                {/* indented gain row */}
-                {showGain && (
+        <tbody>
+          {tooltipProps.slice.stack
+            .filter((s) => s.value !== 0)
+            .map((s) => {
+              const showGain = !privacyMode && s.gain !== 0 && baselineConfig === 'showIndividualBaselines'
+              return (
+                <Fragment key={`${date}-${s.layerLabel}`}>
+                  {/* main row */}
                   <tr>
-                    <td />
-                    <td />
-                    <Box component="td" sx={{ textAlign: 'end' }}>
-                      <Box component={GraphTooltipValue} sx={{ typography: 'caption', color: gainColor(s.gain) }}>
-                        {s.gainFormatted}
+                    <td>
+                      <GraphTooltipColor style={{ backgroundColor: s.color }} />
+                    </td>
+                    <td>
+                      <GraphTooltipLabel>{shortenLabel(s.layerLabel)}</GraphTooltipLabel>
+                    </td>
+
+                    {!privacyMode && (
+                      <Box component="td" sx={{ textAlign: 'end', pl: 2 }}>
+                        <GraphTooltipValue>{s.formattedValue}</GraphTooltipValue>
                       </Box>
-                    </Box>
+                    )}
 
                     {scaleConfig === 'relative' && (
                       <Box component="td" sx={{ textAlign: 'end', pl: 2 }}>
-                        <Box component={GraphTooltipValue} sx={{ color: gainColor(s.gain) }}>
-                          {s.baseline !== undefined && s.baseline !== 0
-                            ? `${s.gain >= 0 ? '+' : ''}${((s.gain / s.baseline) * 100).toFixed(1)}%`
-                            : '+0.0%'}
-                        </Box>
+                        <GraphTooltipLabel>
+                          {totalValue !== 0 ? `${((s.value / totalValue) * 100).toFixed(1)}%` : '0.0%'}
+                        </GraphTooltipLabel>
                       </Box>
                     )}
                   </tr>
-                )}
-              </Fragment>
-            )
-          })}
+
+                  {/* indented gain row */}
+                  {showGain && (
+                    <tr>
+                      <td />
+                      <td />
+                      <Box component="td" sx={{ textAlign: 'end' }}>
+                        <Box component={GraphTooltipValue} sx={{ typography: 'caption', color: gainColor(s.gain) }}>
+                          {s.gainFormatted}
+                        </Box>
+                      </Box>
+
+                      {scaleConfig === 'relative' && (
+                        <Box component="td" sx={{ textAlign: 'end', pl: 2 }}>
+                          <Box component={GraphTooltipValue} sx={{ color: gainColor(s.gain) }}>
+                            {s.baseline !== undefined && s.baseline !== 0
+                              ? `${s.gain >= 0 ? '+' : ''}${((s.gain / s.baseline) * 100).toFixed(1)}%`
+                              : '+0.0%'}
+                          </Box>
+                        </Box>
+                      )}
+                    </tr>
+                  )}
+                </Fragment>
+              )
+            })}
+        </tbody>
       </table>
 
       {showGlobalGain && (

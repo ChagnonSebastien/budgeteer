@@ -2,6 +2,7 @@ import { styled } from '@mui/material/styles'
 import { FC, ReactNode } from 'react'
 
 import { Column, MaxSpaceNoOverflow, withoutTransientProps } from './Layout'
+import ScrollEndSpacer from './ScrollEndSpacer'
 
 export const SplitViewContainer = styled(
   MaxSpaceNoOverflow,
@@ -50,6 +51,7 @@ const SplitView: FC<Props> = (props) => {
     <SplitViewContainer $split={split}>
       <SplitViewPanel $split={split} $grow={firstZoneStyling.grow} $scroll={firstZoneStyling.scroll}>
         {first}
+        {split === 'horizontal' && firstZoneStyling.scroll && <ScrollEndSpacer />}
       </SplitViewPanel>
       <SplitViewPanel
         $split={split}
@@ -58,6 +60,7 @@ const SplitView: FC<Props> = (props) => {
         sx={{ flexShrink: 0, bgcolor: 'surface.subtle' }}
       >
         {second}
+        {split === 'horizontal' && secondZoneStyling.scroll && <ScrollEndSpacer />}
       </SplitViewPanel>
     </SplitViewContainer>
   )

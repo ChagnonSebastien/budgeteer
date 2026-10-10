@@ -1,6 +1,8 @@
 import { useCallback, useMemo } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 
+import { hasCloseOnBackOpen, noteUrlChangeUnderDialog } from './useCloseOnBack'
+
 type QueryParamsFormat = Record<string, string>
 
 export type UpdateQueryParamsSettings<Params> = Partial<{ [K in keyof Params]: string | null }>
@@ -36,7 +38,13 @@ function useQueryParams<Params extends QueryParamsFormat>(): QueryParamsResult<P
         }
       }
       const newSearch = qp.toString() ? `?${qp.toString()}` : ''
-      navigate({ pathname, search: newSearch }, { replace })
+      // Replace under an open dialog so back closes it; the router never sees the dialog's history state.
+      if (hasCloseOnBackOpen()) {
+        navigate({ pathname, search: newSearch }, { replace: true, state: window.history.state?.usr })
+        noteUrlChangeUnderDialog(`${pathname}${newSearch}`)
+      } else {
+        navigate({ pathname, search: newSearch }, { replace })
+      }
     },
     [search, pathname, navigate],
   )

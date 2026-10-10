@@ -8,6 +8,7 @@ import { IconToolsContext } from '../components/icons/IconTools'
 import ActionSpeedDial from '../components/shared/ActionSpeedDial'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
 import { CustomScrolling } from '../components/shared/CustomScrolling'
+import useCloseOnBack from '../components/shared/useCloseOnBack'
 import useQueryParams from '../components/shared/useQueryParams'
 import BalanceOverview, { CurrencyTotals } from '../components/transactionGroup/BalanceOverview'
 import { GroupSummary, TransactionGroupCard } from '../components/transactionGroup/TransactionGroupCard'
@@ -55,6 +56,7 @@ const TransactionGroups: FC<Props> = ({ canCreate = true }) => {
   const { queryParams, updateQueryParams } = useQueryParams<{ showHidden: string }>()
   const showHidden = queryParams.showHidden === 'true'
   const [settingsAnchor, setSettingsAnchor] = useState<HTMLElement | null>(null)
+  useCloseOnBack(settingsAnchor !== null, () => setSettingsAnchor(null))
 
   const orderedGroups = useMemo(
     () =>

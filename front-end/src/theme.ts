@@ -187,7 +187,16 @@ export const darkTheme = createTheme({
           MozOsxFontSmoothing: 'grayscale',
         },
         '::selection': { backgroundColor: alpha(theme.palette.primary.main, 0.35) },
+        // viewport-fit=cover lets the page draw under the notch and home bar.
+        '#root': {
+          boxSizing: 'border-box',
+          padding:
+            'env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)',
+        },
       }),
+    },
+    MuiSnackbar: {
+      styleOverrides: { root: { marginBottom: 'env(safe-area-inset-bottom)' } },
     },
     MuiPaper: {
       styleOverrides: { root: { backgroundImage: 'none' } },
@@ -209,6 +218,9 @@ export const darkTheme = createTheme({
         paper: ({ theme }) => ({
           backgroundColor: theme.palette.brand.drawer,
           borderRight: `1px solid ${theme.palette.border.subtle}`,
+          paddingTop: 'env(safe-area-inset-top)',
+          paddingBottom: 'env(safe-area-inset-bottom)',
+          paddingLeft: 'env(safe-area-inset-left)',
         }),
       },
     },
@@ -221,7 +233,7 @@ export const darkTheme = createTheme({
             backgroundColor: alpha(theme.palette.primary.main, 0.14),
             color: theme.palette.primary.light,
             '& .MuiListItemIcon-root': { color: theme.palette.primary.main },
-            '&:hover': { backgroundColor: alpha(theme.palette.primary.main, 0.2) },
+            '@media (hover: hover)': { '&:hover': { backgroundColor: alpha(theme.palette.primary.main, 0.2) } },
           },
         }),
       },
@@ -233,7 +245,9 @@ export const darkTheme = createTheme({
         containedPrimary: ({ theme }) => ({
           backgroundImage: theme.palette.brand.gradient,
           color: theme.palette.primary.contrastText,
-          '&:hover': { backgroundImage: theme.palette.brand.gradient, filter: 'brightness(1.08)' },
+          '&:hover': { backgroundImage: theme.palette.brand.gradient },
+          // Touch screens keep the hover state after a tap.
+          '@media (hover: hover)': { '&:hover': { filter: 'brightness(1.08)' } },
         }),
       },
     },
@@ -243,7 +257,8 @@ export const darkTheme = createTheme({
         primary: ({ theme }) => ({
           backgroundImage: theme.palette.brand.gradient,
           color: theme.palette.primary.contrastText,
-          '&:hover': { backgroundImage: theme.palette.brand.gradient, filter: 'brightness(1.08)' },
+          '&:hover': { backgroundImage: theme.palette.brand.gradient },
+          '@media (hover: hover)': { '&:hover': { filter: 'brightness(1.08)' } },
         }),
       },
     },

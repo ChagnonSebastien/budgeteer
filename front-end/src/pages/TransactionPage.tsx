@@ -11,7 +11,7 @@ import {
 } from '@mui/material'
 import { format, isAfter, isBefore, isSameDay } from 'date-fns'
 import { FC, useContext, useMemo, useState } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useLocation } from 'react-router-dom'
 
 import AggregatedDiffChart from '../components/graphing/AggregatedDiffChart'
 import { FirstDivision, GraphContainer } from '../components/graphing/GraphStyledComponents'
@@ -25,6 +25,7 @@ import ContentWithHeader from '../components/shared/ContentWithHeader'
 import { DetailCard, DetailHeading, FancyDialog, FancyModal } from '../components/shared/FancyModal'
 import SplitView from '../components/shared/SplitView'
 import { useToast } from '../components/shared/ToastProvider'
+import useCloseOnBack, { useNavigateFromDialog } from '../components/shared/useCloseOnBack'
 import useQueryParams from '../components/shared/useQueryParams'
 import useWideLayout from '../components/shared/useWideLayout'
 import TransactionCard from '../components/transactions/TransactionCard'
@@ -42,7 +43,7 @@ type QueryParams = {
 }
 
 const TransactionPage: FC = () => {
-  const navigate = useNavigate()
+  const navigate = useNavigateFromDialog()
   const location = useLocation()
   const currentUrl = `${location.pathname}${location.search}`
   const { privacyMode } = useContext(DrawerContext)
@@ -63,6 +64,7 @@ const TransactionPage: FC = () => {
   const showIncomes = useMemo(() => queryParams.showIncomes === 'true', [queryParams.showIncomes])
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
+  useCloseOnBack(anchorEl !== null, () => setAnchorEl(null))
   const open = Boolean(anchorEl)
   const { fromDate, toDate, accountFilter, categoryFilter, overview: filterOverview } = useTransactionFilter()
   const prefillAccountId = accountFilter?.length === 1 ? accountFilter[0] : null
@@ -150,6 +152,7 @@ const TransactionPage: FC = () => {
       title="Transactions"
       action="menu"
       withScrolling={!splitHorizontal}
+      scrollEndSx={{ bgcolor: 'surface.subtle' }}
       rightContent={
         hasTransactions ? (
           <>
@@ -221,7 +224,7 @@ const TransactionPage: FC = () => {
           secondZoneStyling={{ grow: false, scroll: true }}
         />
       ) : (
-        <Stack sx={{ width: '100%', minHeight: '100%' }}>
+        <Stack sx={{ width: '100%', minHeight: '100%', flexShrink: 0 }}>
           {firstDivision}
           {secondDivision}
         </Stack>

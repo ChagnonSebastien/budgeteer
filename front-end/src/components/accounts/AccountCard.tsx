@@ -40,17 +40,31 @@ const AccountCard = (props: ItemProps<AccountID, Account, AdditionalAccountCardP
       $hoverEffect
       onClick={onClick}
       sx={{
-        py: showBalances ? 2 : 1.5,
-        px: showBalances ? 3 : 2,
+        py: showBalances ? { xs: 1.5, sm: 2 } : 1.5,
+        px: showBalances ? { xs: 2, sm: 3 } : 2,
         display: 'flex',
         flexDirection: 'column',
-        gap: 1,
+        gap: { xs: 0.5, sm: 1 },
       }}
     >
-      <Typography variant="subtitle1">{item.name}</Typography>
+      <Typography
+        variant="subtitle1"
+        title={item.name}
+        sx={{
+          display: '-webkit-box',
+          WebkitLineClamp: 2,
+          WebkitBoxOrient: 'vertical',
+          overflow: 'hidden',
+          overflowWrap: 'anywhere',
+          lineHeight: 1.35,
+          fontSize: { xs: '0.9rem', sm: '1rem' },
+        }}
+      >
+        {item.name}
+      </Typography>
 
       {showBalances && (
-        <Typography style={{ alignSelf: 'flex-end' }}>
+        <Typography sx={{ alignSelf: 'flex-end', whiteSpace: 'nowrap', fontSize: { xs: '0.9rem', sm: '1rem' } }}>
           {formatFull(defaultCurrency, totalValue, privacyMode)}
         </Typography>
       )}
