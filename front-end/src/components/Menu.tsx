@@ -103,7 +103,7 @@ interface MenuEntry {
 }
 
 const appPages: MenuEntry[] = [
-  { guestView: false, element: new AppPage('Dashboard', '/', PreparedIcon.TbLayoutDashboardFilled, []) },
+  { guestView: false, element: new AppPage('Dashboard', '/', PreparedIcon.TbLayoutDashboard, []) },
   { guestView: false, element: new Subsection('Data') },
   {
     guestView: false,
@@ -114,32 +114,32 @@ const appPages: MenuEntry[] = [
       'categories',
     ]),
   },
-  { guestView: false, element: new AppPage('Categories', '/categories', PreparedIcon.MdCategory, []) },
-  { guestView: false, element: new AppPage('Accounts', '/accounts', PreparedIcon.MdAccountBalance, []) },
-  { guestView: false, element: new AppPage('Currencies', '/currencies', PreparedIcon.BsCurrencyExchange, []) },
+  { guestView: false, element: new AppPage('Categories', '/categories', PreparedIcon.TbCategory, []) },
+  { guestView: false, element: new AppPage('Accounts', '/accounts', PreparedIcon.TbBuildingBank, []) },
+  { guestView: false, element: new AppPage('Currencies', '/currencies', PreparedIcon.TbCoins, []) },
   { guestView: false, requires: 'transactions', element: new Subsection('Analysis') },
   {
     guestView: false,
     requires: 'transactions',
-    element: new AppPage('Balances', '/balances', PreparedIcon.FaScaleUnbalanced, ['from', 'to', 'accounts']),
+    element: new AppPage('Balances', '/balances', PreparedIcon.TbScale, ['from', 'to', 'accounts']),
   },
   {
     guestView: false,
     requires: 'transactions',
-    element: new AppPage('Trends', '/trends', PreparedIcon.BiSolidBarChartAlt2, ['categories']),
+    element: new AppPage('Trends', '/trends', PreparedIcon.TbChartBar, ['categories']),
   },
   {
     guestView: false,
     requires: 'transactions',
-    element: new AppPage('Costs Analysis', '/costs', PreparedIcon.BsFileEarmarkSpreadsheet, []),
+    element: new AppPage('Costs Analysis', '/costs', PreparedIcon.TbReportMoney, []),
   },
   {
     guestView: false,
     requires: 'financialIncome',
-    element: new AppPage('Investments', '/investments', PreparedIcon.BsGraphUp, []),
+    element: new AppPage('Investments', '/investments', PreparedIcon.TbTrendingUp, []),
   },
-  { guestView: false, element: new Subsection('SplitWise') },
-  { guestView: true, element: new AppPage('Groups', '/transaction-groups', PreparedIcon.BsGraphUp, []) },
+  { guestView: false, element: new Subsection('Shared expenses') },
+  { guestView: true, element: new AppPage('Groups', '/transaction-groups', PreparedIcon.TbUsersGroup, []) },
   { guestView: true, element: new Separator() },
 ]
 
@@ -184,7 +184,7 @@ const DrawerWrapper: FC<Props> = ({ logout, children, userIsGuest = false }) => 
     <div ref={setDrawerRef}>
       <Box sx={{ p: 3 }}>
         <Typography variant="h6" sx={{ fontWeight: 600, letterSpacing: '0.05em', mb: 0.5 }}>
-          {userIsGuest ? 'Split Wise' : 'Budget App'}
+          {userIsGuest ? 'Shared expenses' : 'Budget App'}
         </Typography>
         <Typography variant="body2" color="text.disabled">
           {email}

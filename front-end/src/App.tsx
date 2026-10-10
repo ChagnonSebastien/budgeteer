@@ -6,7 +6,7 @@ import { IconToolsContext, useIconTools } from './components/icons/IconTools'
 import LoadingScreen from './components/LoadingScreen'
 import { Centered, Column } from './components/shared/Layout'
 import User, { UserPreferencesPatch } from './domain/model/user'
-import SplitWizeZone from './SplitWizeZone'
+import GuestZone from './GuestZone'
 import useAuthentication from './useAuthentication'
 
 export const UserContext = createContext<User>({
@@ -39,7 +39,7 @@ const App: FC = () => {
       return (
         <IconToolsContext.Provider value={iconTools}>
           <UserContext.Provider value={user}>
-            <SplitWizeZone hasInternet={hasInternet} logout={logout} setDisplayName={setDisplayName} />
+            <GuestZone hasInternet={hasInternet} logout={logout} setDisplayName={setDisplayName} />
           </UserContext.Provider>
         </IconToolsContext.Provider>
       )

@@ -308,7 +308,7 @@ interface Props {
   setDisplayName(name: string): Promise<void>
 }
 
-const SplitWiseZone: FC<Props> = (props) => {
+const GuestZone: FC<Props> = (props) => {
   const { logout, hasInternet, setDisplayName } = props
   const { display_name } = useContext(UserContext)
 
@@ -357,4 +357,4 @@ const SplitWiseZone: FC<Props> = (props) => {
   )
 }
 
-export default SplitWiseZone
+export default GuestZone

@@ -42,6 +42,15 @@ export enum PreparedIcon {
   BsPlusCircle = 'BsPlusCircle',
   BsDashCircle = 'BsDashCircle',
   MdCheckCircle = 'MdCheckCircle',
+  TbLayoutDashboard = 'TbLayoutDashboard',
+  TbCategory = 'TbCategory',
+  TbBuildingBank = 'TbBuildingBank',
+  TbCoins = 'TbCoins',
+  TbScale = 'TbScale',
+  TbChartBar = 'TbChartBar',
+  TbReportMoney = 'TbReportMoney',
+  TbTrendingUp = 'TbTrendingUp',
+  TbUsersGroup = 'TbUsersGroup',
 }
 
 type PreparedIconLib = {
