@@ -7,6 +7,7 @@ import (
 
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 )
 
@@ -219,4 +220,129 @@ func (r *Repository) GetAllWithAutoUpdate(ctx context.Context, pageNumber, pageS
 	}
 
 	return currencies, len(currenciesDao) > pageSize, nil
+}
+
+var (
+	ErrCurrencyNotFound       = errors.New("currency not found")
+	ErrDefaultCurrency        = errors.New("the main currency cannot be deleted")
+	ErrCurrencyTargetMismatch = errors.New("the target must be another currency with the same number of decimal places")
+	ErrCurrencyUsedByGroups   = errors.New("this currency is used by transaction groups, so its transactions must move to another currency")
+)
+
+type DeleteCurrencyResult struct {
+	MigratedTransactions int64
+	DeletedTransactions  int64
+	MovedToUnconfirmed   int64
+	DeletedBalances      int64
+}
+
+func (r *Repository) DeleteCurrency(
+	ctx context.Context,
+	userId uuid.UUID,
+	userEmail string,
+	id model.CurrencyID,
+	targetId *model.CurrencyID,
+) (result DeleteCurrencyResult, err error) {
+	err = r.inTx(ctx, func(queries *dao.Queries) error {
+		currency, err := queries.GetCurrencyForDeletion(ctx, &dao.GetCurrencyForDeletionParams{CurrencyID: int32(id), UserID: userId})
+		if errors.Is(err, sql.ErrNoRows) {
+			return ErrCurrencyNotFound
+		}
+		if err != nil {
+			return err
+		}
+		if currency.IsDefault {
+			return ErrDefaultCurrency
+		}
+
+		if targetId != nil {
+			target, err := queries.GetCurrencyForDeletion(
+				ctx, &dao.GetCurrencyForDeletionParams{CurrencyID: int32(*targetId), UserID: userId},
+			)
+			if errors.Is(err, sql.ErrNoRows) {
+				return ErrCurrencyNotFound
+			}
+			if err != nil {
+				return err
+			}
+			if target.ID == currency.ID || target.DecimalPoints != currency.DecimalPoints {
+				return ErrCurrencyTargetMismatch
+			}
+
+			asSender, err := queries.MigrateTransactionCurrency(
+				ctx, &dao.MigrateTransactionCurrencyParams{TargetID: target.ID, UserID: userId, CurrencyID: currency.ID},
+			)
+			if err != nil {
+				return err
+			}
+			asReceiver, err := queries.MigrateTransactionReceiverCurrency(
+				ctx, &dao.MigrateTransactionReceiverCurrencyParams{TargetID: target.ID, UserID: userId, CurrencyID: currency.ID},
+			)
+			if err != nil {
+				return err
+			}
+			result.MigratedTransactions = asSender + asReceiver
+
+			if err := queries.MigrateFinancialIncomeCurrency(
+				ctx, &dao.MigrateFinancialIncomeCurrencyParams{TargetID: target.ID, CurrencyID: currency.ID},
+			); err != nil {
+				return err
+			}
+			if err := queries.MigrateGroupCurrencies(ctx, &dao.MigrateGroupCurrenciesParams{
+				TargetID:   sql.NullInt32{Int32: target.ID, Valid: true},
+				CurrencyID: sql.NullInt32{Int32: currency.ID, Valid: true},
+			}); err != nil {
+				return err
+			}
+			if err := queries.MigrateGroupCreatorCurrency(
+				ctx, &dao.MigrateGroupCreatorCurrencyParams{TargetID: target.ID, CurrencyID: currency.ID},
+			); err != nil {
+				return err
+			}
+		} else {
+			groupUses, err := queries.CountCurrencyGroupUses(ctx, sql.NullInt32{Int32: currency.ID, Valid: true})
+			if err != nil {
+				return err
+			}
+			if groupUses > 0 {
+				return ErrCurrencyUsedByGroups
+			}
+
+			rows, err := queries.GetGroupedTransactionsForCurrency(
+				ctx, &dao.GetGroupedTransactionsForCurrencyParams{UserID: userId, CurrencyID: currency.ID},
+			)
+			if err != nil {
+				return err
+			}
+			snapshots := make([]groupedTransactionSnapshot, len(rows))
+			for i, row := range rows {
+				snapshots[i] = groupedTransactionSnapshot(row)
+			}
+			if result.MovedToUnconfirmed, err = copyGroupedTransactionsToUnconfirmed(ctx, queries, userEmail, snapshots); err != nil {
+				return err
+			}
+			if result.DeletedTransactions, err = queries.DeleteTransactionsForCurrency(
+				ctx, &dao.DeleteTransactionsForCurrencyParams{UserID: userId, CurrencyID: currency.ID},
+			); err != nil {
+				return err
+			}
+			if err := queries.DeleteFinancialIncomesForCurrency(ctx, currency.ID); err != nil {
+				return err
+			}
+		}
+
+		if result.DeletedBalances, err = queries.DeleteBalancesForCurrency(
+			ctx, &dao.DeleteBalancesForCurrencyParams{UserID: userId, CurrencyID: currency.ID},
+		); err != nil {
+			return err
+		}
+		if err := queries.DeleteExchangeRatesForCurrency(ctx, currency.ID); err != nil {
+			return err
+		}
+		if _, err := queries.DeleteCurrency(ctx, &dao.DeleteCurrencyParams{CurrencyID: currency.ID, UserID: userId}); err != nil {
+			return fmt.Errorf("deleting currency %d: %w", currency.ID, err)
+		}
+		return nil
+	})
+	return result, err
 }

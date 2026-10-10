@@ -3,12 +3,18 @@ import { RpcTransport } from '@protobuf-ts/runtime-rpc'
 import { CurrencyConverter } from './converter/currencyConverter'
 import {
   CreateCurrencyRequest,
+  DeleteCurrencyRequest,
   GetAllCurrenciesRequest,
   SetDefaultCurrencyRequest,
   UpdateCurrencyRequest,
 } from './dto/currency'
 import { CurrencyServiceClient } from './dto/currency.client'
-import Currency, { CurrencyUpdatableFields, RateAutoupdateSettings } from '../../domain/model/currency'
+import Currency, {
+  CurrencyDeletionResult,
+  CurrencyID,
+  CurrencyUpdatableFields,
+  RateAutoupdateSettings,
+} from '../../domain/model/currency'
 import { IdIdentifier } from '../../domain/model/Unique'
 
 const conv = new CurrencyConverter()
@@ -55,5 +61,15 @@ export default class CurrencyRemoteStore {
 
   public async setDefault(id: number): Promise<void> {
     await this.client.setDefaultCurrency(SetDefaultCurrencyRequest.create({ currencyId: id })).response
+  }
+
+  public async deleteCurrency(id: CurrencyID, targetId?: CurrencyID): Promise<CurrencyDeletionResult> {
+    const response = await this.client.deleteCurrency(DeleteCurrencyRequest.create({ id, targetId })).response
+    return {
+      migratedTransactions: response.migratedTransactions,
+      deletedTransactions: response.deletedTransactions,
+      movedToUnconfirmed: response.movedToUnconfirmed,
+      deletedBalances: response.deletedBalances,
+    }
   }
 }

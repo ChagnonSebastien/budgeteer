@@ -8,7 +8,11 @@ import (
 	"github.com/google/uuid"
 
 	"context"
+	"errors"
 	"fmt"
+
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type currencyRepository interface {
@@ -26,6 +30,13 @@ type currencyRepository interface {
 	)
 	UpdateCurrency(ctx context.Context, userId uuid.UUID, id model.CurrencyID, fields repository.UpdateCurrencyFields) error
 	SetDefaultCurrency(ctx context.Context, userId uuid.UUID, currencyId model.CurrencyID) error
+	DeleteCurrency(
+		ctx context.Context,
+		userId uuid.UUID,
+		userEmail string,
+		id model.CurrencyID,
+		targetId *model.CurrencyID,
+	) (repository.DeleteCurrencyResult, error)
 }
 
 type CurrencyHandler struct {
@@ -141,4 +152,36 @@ func (s *CurrencyHandler) SetDefaultCurrency(
 	}
 
 	return &dto.SetDefaultCurrencyResponse{}, nil
+}
+
+func (s *CurrencyHandler) DeleteCurrency(ctx context.Context, req *dto.DeleteCurrencyRequest) (*dto.DeleteCurrencyResponse, error) {
+	user, ok := shared.FromContext(ctx)
+	if !ok {
+		return nil, fmt.Errorf("getting user from context")
+	}
+
+	var targetId *model.CurrencyID
+	if req.TargetId != nil {
+		id := model.CurrencyID(*req.TargetId)
+		targetId = &id
+	}
+
+	result, err := s.currencyService.DeleteCurrency(ctx, user.ID, user.Email, model.CurrencyID(req.Id), targetId)
+	switch {
+	case errors.Is(err, repository.ErrCurrencyNotFound):
+		return nil, status.Error(codes.NotFound, err.Error())
+	case errors.Is(err, repository.ErrDefaultCurrency),
+		errors.Is(err, repository.ErrCurrencyTargetMismatch),
+		errors.Is(err, repository.ErrCurrencyUsedByGroups):
+		return nil, status.Error(codes.FailedPrecondition, err.Error())
+	case err != nil:
+		return nil, err
+	}
+
+	return &dto.DeleteCurrencyResponse{
+		MigratedTransactions: uint32(result.MigratedTransactions),
+		DeletedTransactions:  uint32(result.DeletedTransactions),
+		MovedToUnconfirmed:   uint32(result.MovedToUnconfirmed),
+		DeletedBalances:      uint32(result.DeletedBalances),
+	}, nil
 }

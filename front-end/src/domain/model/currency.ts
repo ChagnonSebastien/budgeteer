@@ -68,3 +68,10 @@ export type CurrencyUpdatableFields = Pick<
   Currency,
   'symbol' | 'name' | 'rateAutoupdateSettings' | 'decimalPoints' | 'risk' | 'type'
 >
+
+export interface CurrencyDeletionResult {
+  migratedTransactions: number
+  deletedTransactions: number
+  movedToUnconfirmed: number
+  deletedBalances: number
+}

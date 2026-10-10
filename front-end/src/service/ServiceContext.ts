@@ -73,6 +73,7 @@ export const CurrencyServiceContext = createContext<
   get tentativeDefaultCurrency(): Currency | null {
     return null
   },
+  deleteCurrency: () => Promise.reject(new Error('deleteCurrency is not implemented')),
 })
 
 export const AccountServiceContext = createContext<

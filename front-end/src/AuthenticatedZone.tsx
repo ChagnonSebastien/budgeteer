@@ -38,7 +38,7 @@ import TrendsPage from './pages/TrendsPage'
 import { makeAccountPersistenceAugmenter } from './service/AccountServiceAugmenter'
 import { BasicCrudServiceWithPersistence } from './service/BasicCrudServiceWithPersistence'
 import { makeCategoryPersistenceAugmenter } from './service/CategoryServiceAugmenter'
-import { CurrencyPersistenceAugmenter } from './service/CurrencyServiceAugmenter'
+import { makeCurrencyPersistenceAugmenter } from './service/CurrencyServiceAugmenter'
 import { ExchangeRatePersistenceAugmenter } from './service/ExcahngeRateServiceAugmenter'
 import { MixedAugmentationProvider } from './service/MixedAugmentation'
 import {
@@ -98,6 +98,7 @@ const SettlementPersistenceAugmenter = makeSettlementPersistenceAugmenter(settle
 const replayStore = new ReplayStore(IndexedDB)
 const AccountPersistenceAugmenterWithRemote = makeAccountPersistenceAugmenter(accountRemoteStore)
 const CategoryPersistenceAugmenterWithRemote = makeCategoryPersistenceAugmenter(categoryRemoteStore)
+const CurrencyPersistenceAugmenterWithRemote = makeCurrencyPersistenceAugmenter(currencyRemoteStore)
 
 const UnconfirmedTransactionPersistenceAugmenter = makeUnconfirmedTransactionPersistenceAugmenter(
   unconfirmedTransactionRemoteStore,
@@ -269,7 +270,7 @@ const PersistenceSetup: FC<{ children: ReactNode; hasInternet: boolean }> = ({ c
       localStore={currencyLocalStore}
       actionStore={replayStore}
       context={CurrencyServiceContext}
-      Augmenter={CurrencyPersistenceAugmenter}
+      Augmenter={CurrencyPersistenceAugmenterWithRemote}
       hasInternet={hasInternet}
       sorter={(a, b) => b.id - a.id}
     >

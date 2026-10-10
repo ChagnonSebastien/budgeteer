@@ -68,9 +68,22 @@ message SetDefaultCurrencyResponse {
 
 }
 
+message DeleteCurrencyRequest {
+  uint32 id = 1;
+  optional uint32 target_id = 2;
+}
+
+message DeleteCurrencyResponse {
+  uint32 migrated_transactions = 1;
+  uint32 deleted_transactions = 2;
+  uint32 moved_to_unconfirmed = 3;
+  uint32 deleted_balances = 4;
+}
+
 service CurrencyService {
   rpc GetAllCurrencies (GetAllCurrenciesRequest) returns (GetAllCurrenciesResponse);
   rpc CreateCurrency (CreateCurrencyRequest) returns (CreateCurrencyResponse);
   rpc UpdateCurrency (UpdateCurrencyRequest) returns (UpdateCurrencyResponse);
   rpc SetDefaultCurrency (SetDefaultCurrencyRequest) returns (SetDefaultCurrencyResponse);
+  rpc DeleteCurrency (DeleteCurrencyRequest) returns (DeleteCurrencyResponse);
 }

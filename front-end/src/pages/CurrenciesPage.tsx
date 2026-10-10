@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 
 import ItemList from '../components/accounts/ItemList'
 import CurrencyCard from '../components/currencies/CurrencyCard'
+import DeleteCurrencyDialog from '../components/currencies/DeleteCurrencyDialog'
 import ExchangeRateHistory from '../components/graphing/ExchangeRateHistory'
 import { IconToolsContext } from '../components/icons/IconTools'
 import ActionSpeedDial from '../components/shared/ActionSpeedDial'
@@ -20,6 +21,7 @@ const CurrenciesPage: FC = () => {
   const { IconLib } = useContext(IconToolsContext)
   const [filter, setFilter] = useState('')
   const [clickedCurrency, setClickedCurrency] = useState<Currency | null>(null)
+  const [currencyToDelete, setCurrencyToDelete] = useState<Currency | null>(null)
   const { accountBalances } = useContext(MixedAugmentation)
   const { state: accounts } = useContext(AccountServiceContext)
 
@@ -101,9 +103,9 @@ const CurrenciesPage: FC = () => {
                 Icon: IconLib.MdDelete,
                 label: 'Delete Currency',
                 intent: 'destructive',
-                description: 'Remove this currency',
-                action: () => {},
-                disabled: true,
+                description: 'Move or delete its transactions, then remove it',
+                action: () => setCurrencyToDelete(clickedCurrency),
+                disabled: false,
               },
             ]}
           >
@@ -127,6 +129,16 @@ const CurrenciesPage: FC = () => {
           </FancyModal>
         )}
       </FancyDialog>
+      {currencyToDelete && (
+        <DeleteCurrencyDialog
+          currency={currencyToDelete}
+          onClose={() => setCurrencyToDelete(null)}
+          onDeleted={() => {
+            setCurrencyToDelete(null)
+            setClickedCurrency(null)
+          }}
+        />
+      )}
     </ContentWithHeader>
   )
 }
