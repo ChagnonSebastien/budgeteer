@@ -10,6 +10,7 @@ import { Centered } from './components/shared/Layout'
 import CreateUnconfirmedTransactionPage from './pages/CreateUnconfirmedTransactionPage'
 import EditUnconfirmedTransactionPage from './pages/EditUnconfirmedTransactionPage'
 import GuestTransactionGroupPage from './pages/GuestTransactionGroupPage'
+import SettlementPage from './pages/SettlementPage'
 import TransactionGroups from './pages/TransactionGroups'
 import { AccountPersistenceAugmenter } from './service/AccountServiceAugmenter'
 import { BasicCrudServiceWithPersistence } from './service/BasicCrudServiceWithPersistence'
@@ -23,10 +24,12 @@ import {
   ExchangeRateServiceContext,
   TransactionGroupServiceContext,
   TransactionServiceContext,
+  SettlementServiceContext,
   UnconfirmedTransactionServiceContext,
 } from './service/ServiceContext'
 import { makeTransactionGroupPersistenceAugmenter } from './service/TransactionGroupServiceAugmenter'
 import { TransactionPersistenceAugmenter } from './service/TransactionServiceAugmenter'
+import { makeSettlementPersistenceAugmenter } from './service/SettlementServiceAugmenter'
 import { makeUnconfirmedTransactionPersistenceAugmenter } from './service/UnconfirmedTransactionServiceAugmenter'
 import AccountLocalStore from './store/local/AccountLocalStore'
 import CategoryLocalStore from './store/local/CategoryLocalStore'
@@ -36,6 +39,7 @@ import IndexedDB from './store/local/IndexedDB'
 import ReplayStore from './store/local/ReplayStore'
 import TransactionGroupLocalStore from './store/local/TransactionGroupLocalStore'
 import TransactionLocalStore from './store/local/TransactionLocalStore'
+import SettlementLocalStore from './store/local/SettlementLocalStore'
 import UnconfirmedTransactionLocalStore from './store/local/UnconfirmedTransactionLocalStore'
 import AccountRemoteStore from './store/remote/AccountRemoteStore'
 import CategoryRemoteStore from './store/remote/CategoryRemoteStore'
@@ -43,6 +47,7 @@ import CurrencyRemoteStore from './store/remote/CurrencyRemoteStore'
 import ExchangeRateRemoteStore from './store/remote/ExchangeRateRemoteStore'
 import TransactionGroupRemoteStore from './store/remote/TransactionGroupRemoteStore'
 import TransactionRemoteStore from './store/remote/TransactionRemoteStore'
+import SettlementRemoteStore from './store/remote/SettlementRemoteStore'
 import UnconfirmedTransactionRemoteStore from './store/remote/UnconfirmedTransactionRemoteStore'
 
 const transport = new GrpcWebFetchTransport({
@@ -63,6 +68,9 @@ const accountLocalStore = new AccountLocalStore(IndexedDB)
 const transactionLocalStore = new TransactionLocalStore(IndexedDB)
 const exchangeRateLocalStore = new ExchangeRateLocalStore(IndexedDB)
 const unconfirmedTransactionLocalStore = new UnconfirmedTransactionLocalStore(IndexedDB)
+const settlementRemoteStore = new SettlementRemoteStore(transport)
+const settlementLocalStore = new SettlementLocalStore(IndexedDB)
+const SettlementPersistenceAugmenter = makeSettlementPersistenceAugmenter(settlementRemoteStore)
 const replayStore = new ReplayStore(IndexedDB)
 
 const UnconfirmedTransactionPersistenceAugmenter = makeUnconfirmedTransactionPersistenceAugmenter(
@@ -161,7 +169,22 @@ const GroupPersistenceSetup: FC<{ children: ReactNode; hasInternet: boolean }> =
         }}
         hasInternet={hasInternet}
       >
-        {children}
+        <BasicCrudServiceWithPersistence
+          itemName="settlement"
+          synced={true}
+          longTermStore={settlementRemoteStore}
+          localStore={settlementLocalStore}
+          actionStore={replayStore}
+          context={SettlementServiceContext}
+          Augmenter={SettlementPersistenceAugmenter}
+          sorter={(a, b) => {
+            if (b.date.getTime() !== a.date.getTime()) return b.date.getTime() - a.date.getTime()
+            return b.id - a.id
+          }}
+          hasInternet={hasInternet}
+        >
+          {children}
+        </BasicCrudServiceWithPersistence>
       </BasicCrudServiceWithPersistence>
     </BasicCrudServiceWithPersistence>
   )
@@ -309,6 +332,14 @@ const SplitWiseZone: FC<Props> = (props) => {
             <Route
               path="/transaction-groups/manage/:transactionGroupId/unconfirmed/:unconfirmedTransactionId"
               element={<EditUnconfirmedTransactionPage />}
+            />
+            <Route
+              path="/transaction-groups/manage/:transactionGroupId/settle"
+              element={<SettlementPage mode="new" />}
+            />
+            <Route
+              path="/transaction-groups/manage/:transactionGroupId/settle/:settlementId/edit"
+              element={<SettlementPage mode="edit" />}
             />
             <Route path="*" element={<Navigate to="/transaction-groups" />} />
           </Routes>

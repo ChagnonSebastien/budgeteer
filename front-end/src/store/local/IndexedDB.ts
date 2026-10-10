@@ -110,6 +110,20 @@ interface UnconfirmedTransaction {
   splitOverride: SplitOverride | null
 }
 
+interface Settlement {
+  id: number
+  transactionGroupId: number
+  amount: number
+  date: Date
+  note: string
+  payer: string
+  receiver: string
+  createdBy: string
+  proposedBy: string
+  completed: boolean
+  ownTransactionId: number | null
+}
+
 export type ActionType = 'create' | 'update' | 'delete'
 
 interface Action {
@@ -132,6 +146,7 @@ export class BudgeteerDB extends Dexie {
   transactions!: EntityTable<Transaction, 'id'>
   transactionGroups!: EntityTable<TransactionGroup, 'id'>
   unconfirmedTransactions!: EntityTable<UnconfirmedTransaction, 'id'>
+  settlements!: EntityTable<Settlement, 'id'>
   replay!: EntityTable<Action, 'id'>
 
   constructor() {
@@ -148,10 +163,23 @@ export class BudgeteerDB extends Dexie {
     this.version(2).stores({
       unconfirmedTransactions: '++id',
     })
+    this.version(3).stores({
+      settlements: '++id',
+    })
   }
 }
 
-export type { Currency, Account, Category, Action, Transaction, TransactionGroup, UnconfirmedTransaction, ExchangeRate }
+export type {
+  Currency,
+  Account,
+  Category,
+  Action,
+  Transaction,
+  TransactionGroup,
+  UnconfirmedTransaction,
+  Settlement,
+  ExchangeRate,
+}
 
 const IndexedDB = new BudgeteerDB()
 export default IndexedDB

@@ -5,6 +5,7 @@ import { UserContext } from '../App'
 import LoadingScreen from '../components/LoadingScreen'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
 import { useToast } from '../components/shared/ToastProvider'
+import useQueryParams from '../components/shared/useQueryParams'
 import UnconfirmedTransactionForm, {
   UnconfirmedTransactionFormFields,
 } from '../components/transactionGroup/UnconfirmedTransactionForm'
@@ -22,6 +23,8 @@ const CreateUnconfirmedTransactionPage: FC = () => {
   const { state: transactionGroups } = useContext(TransactionGroupServiceContext)
   const { create: createUnconfirmedTransaction } = useContext(UnconfirmedTransactionServiceContext)
   const { showToast } = useToast()
+  const { queryParams } = useQueryParams<{ payer: string }>()
+  const payer = queryParams.payer === 'me' || queryParams.payer === 'others' ? queryParams.payer : undefined
 
   const transactionGroup = useMemo(
     () => transactionGroups.find((tg) => tg.id === parseInt(transactionGroupId!)),
@@ -53,7 +56,12 @@ const CreateUnconfirmedTransactionPage: FC = () => {
 
   return (
     <ContentWithHeader title={`Record in ${transactionGroup.name}`} action="return" withPadding withScrolling>
-      <UnconfirmedTransactionForm transactionGroup={transactionGroup} onSubmit={onSubmit} submitText="Record" />
+      <UnconfirmedTransactionForm
+        transactionGroup={transactionGroup}
+        onSubmit={onSubmit}
+        submitText="Record"
+        payer={payer}
+      />
     </ContentWithHeader>
   )
 }

@@ -1,8 +1,8 @@
-import { Button } from '@mui/material'
 import { FC, useContext, useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
 import { UserContext } from '../App'
+import { IconToolsContext } from '../components/icons/IconTools'
 import LoadingScreen from '../components/LoadingScreen'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
 import JoinTransactionGroup from '../components/transactionGroup/JoinTransactionGroup'
@@ -17,6 +17,7 @@ type Params = {
 const ManageTransactionGroup: FC = () => {
   const { transactionGroupId } = useParams<Params>()
   const navigate = useNavigate()
+  const { IconLib } = useContext(IconToolsContext)
 
   const { email } = useContext(UserContext)
   const { state: rawTransactionGroups } = useContext(TransactionGroupServiceContext)
@@ -56,23 +57,23 @@ const ManageTransactionGroup: FC = () => {
     <TransactionGroupView
       transactionGroup={selectedTransactionGroup}
       confirmedTransactions={confirmedTransactions}
-      actions={
-        <>
-          <Button
-            variant="outlined"
-            onClick={() =>
-              navigate('/transactions/new', {
-                state: { from: `/transaction-groups/manage/${id}`, prefillTransactionGroupId: id },
-              })
-            }
-          >
-            Record for myself
-          </Button>
-          <Button variant="outlined" onClick={() => navigate(`/transaction-groups/manage/${id}/unconfirmed/new`)}>
-            Record for a member
-          </Button>
-        </>
-      }
+      actions={[
+        {
+          label: 'I paid',
+          Icon: IconLib.MdOutput,
+          color: 'red',
+          onClick: () =>
+            navigate('/transactions/new', {
+              state: { from: `/transaction-groups/manage/${id}`, prefillTransactionGroupId: id },
+            }),
+        },
+        {
+          label: 'Someone else paid',
+          Icon: IconLib.MdGroups,
+          color: '#64B5F6',
+          onClick: () => navigate(`/transaction-groups/manage/${id}/unconfirmed/new?payer=others`),
+        },
+      ]}
     />
   )
 }

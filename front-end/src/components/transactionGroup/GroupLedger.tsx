@@ -3,6 +3,7 @@ import { FC, useContext, useMemo } from 'react'
 import { default as styled } from 'styled-components'
 
 import Currency, { formatFull, RateAutoupdateSettings } from '../../domain/model/currency'
+import { SettlementAugmentedTransaction } from '../../domain/model/settlement'
 import { AugmentedTransaction } from '../../domain/model/transaction'
 import TransactionGroup, { Email, Person } from '../../domain/model/transactionGroup'
 import { DrawerContext } from '../Menu'
@@ -75,7 +76,10 @@ export const GroupPaidTable: FC<{ members: Person[]; transactions: AugmentedTran
     const paid = new Map<Email, number>(members.map((m) => [m.email, 0]))
     const balances = new Map<Email, number>(members.map((m) => [m.email, 0]))
     for (const transaction of transactions) {
-      paid.set(transaction.owner, (paid.get(transaction.owner) ?? 0) + transaction.amount)
+      // A settlement moves money between two people; it is not something either of them paid for the group.
+      if (!(transaction instanceof SettlementAugmentedTransaction)) {
+        paid.set(transaction.owner, (paid.get(transaction.owner) ?? 0) + transaction.amount)
+      }
       for (const member of members) {
         balances.set(member.email, balances.get(member.email)! + transaction.getUserContribution(member.email))
       }

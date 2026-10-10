@@ -112,6 +112,10 @@ export default class Transaction implements Unique<TransactionID, Transaction> {
     readonly transactionGroupData: TransactionGroupData | null,
   ) {}
 
+  get listKey(): string {
+    return `transaction-${this.id}`
+  }
+
   equals(other: Transaction): boolean {
     if (this.id !== other.id) return false
     if (this.amount !== other.amount) return false

@@ -21,7 +21,7 @@ import { Column, Row } from '../shared/Layout'
 const chunkSize = 100
 
 interface AdditionalTransactionListProps {
-  onClick: (transactionId: number) => void
+  onClick: (transactionId: number, transaction: AugmentedTransaction) => void
   viewAsAccounts?: number[]
   includeInitialAmounts?: boolean
   displayMonthlySummaries?: boolean
@@ -179,9 +179,9 @@ export const TransactionList = <T,>(props: Props<T>) => {
       }
       view.push(
         <ItemComponent
-          key={transaction.id}
+          key={transaction.listKey}
           item={transaction}
-          onClick={() => onClick(transaction.id)}
+          onClick={() => onClick(transaction.id, transaction)}
           {...additionalItemsProps}
         />,
       )

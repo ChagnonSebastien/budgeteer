@@ -35,7 +35,6 @@ export default class UnconfirmedTransaction implements Unique<UnconfirmedTransac
   }
 }
 
-// Negated id: unconfirmed ids are a separate sequence, and transaction lists key by id.
 export class UnconfirmedAugmentedTransaction extends AugmentedTransaction {
   constructor(
     readonly unconfirmed: UnconfirmedTransaction,
@@ -44,7 +43,7 @@ export class UnconfirmedAugmentedTransaction extends AugmentedTransaction {
     const transactionGroupData = new TransactionGroupData(transactionGroup.id, unconfirmed.splitOverride)
     super(
       new Transaction(
-        -unconfirmed.id,
+        unconfirmed.id,
         unconfirmed.owner,
         unconfirmed.amount,
         transactionGroup.augmentedCurrency.id,
@@ -63,6 +62,10 @@ export class UnconfirmedAugmentedTransaction extends AugmentedTransaction {
       transactionGroup.augmentedCurrency,
       transactionGroup.augmentedCurrency,
     )
+  }
+
+  get listKey(): string {
+    return `unconfirmed-${this.unconfirmed.id}`
   }
 }
 

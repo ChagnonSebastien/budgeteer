@@ -21,23 +21,24 @@ interface Props {
   initialUnconfirmedTransaction?: UnconfirmedTransaction
   onSubmit: (data: UnconfirmedTransactionFormFields) => Promise<void>
   submitText: string
+  payer?: 'me' | 'others'
 }
 
 const UnconfirmedTransactionForm: FC<Props> = (props) => {
-  const { transactionGroup, initialUnconfirmedTransaction, onSubmit, submitText } = props
+  const { transactionGroup, initialUnconfirmedTransaction, onSubmit, submitText, payer } = props
 
   const { email, authentification_method } = useContext(UserContext)
 
   // Full accounts record their own payments as regular transactions; only guests may pick themselves.
   const payerOptions = useMemo(
     () =>
-      transactionGroup.members.filter(
-        (member) =>
-          authentification_method === 'guest' ||
-          member.email !== email ||
-          member.email === initialUnconfirmedTransaction?.owner,
-      ),
-    [transactionGroup.members, authentification_method, email, initialUnconfirmedTransaction?.owner],
+      transactionGroup.members.filter((member) => {
+        if (member.email === initialUnconfirmedTransaction?.owner) return true
+        if (payer === 'me') return member.email === email
+        if (payer === 'others' || authentification_method !== 'guest') return member.email !== email
+        return true
+      }),
+    [transactionGroup.members, authentification_method, email, initialUnconfirmedTransaction?.owner, payer],
   )
 
   const [owner, setOwner] = useState<Email>(
@@ -64,13 +65,15 @@ const UnconfirmedTransactionForm: FC<Props> = (props) => {
 
   return (
     <FormWrapper onSubmit={handleSubmit} submitText={submitText}>
-      <SelectOne
-        label="Payed by"
-        value={owner}
-        onChange={setOwner}
-        options={payerOptions.map((member) => ({ value: member.email, label: member.name }))}
-        type="dropdown"
-      />
+      {payer !== 'me' && (
+        <SelectOne
+          label="Payed by"
+          value={owner}
+          onChange={setOwner}
+          options={payerOptions.map((member) => ({ value: member.email, label: member.name }))}
+          type="dropdown"
+        />
+      )}
 
       <FixedPointInput
         label="Amount"

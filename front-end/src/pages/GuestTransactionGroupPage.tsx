@@ -1,20 +1,15 @@
-import { Button } from '@mui/material'
 import { FC, useContext, useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
 import { UserContext } from '../App'
+import { IconToolsContext } from '../components/icons/IconTools'
 import LoadingScreen from '../components/LoadingScreen'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
-import { groupCurrency } from '../components/transactionGroup/GroupLedger'
 import JoinTransactionGroup from '../components/transactionGroup/JoinTransactionGroup'
 import TransactionGroupView from '../components/transactionGroup/TransactionGroupView'
+import useAugmentedTransactionGroup from '../components/transactionGroup/useAugmentedTransactionGroup'
 import { AugmentedTransaction, AugmentedTransactionGroupData } from '../domain/model/transaction'
-import { AugmentedTransactionGroup } from '../domain/model/transactionGroup'
-import {
-  CategoryServiceContext,
-  TransactionGroupServiceContext,
-  TransactionServiceContext,
-} from '../service/ServiceContext'
+import { TransactionServiceContext } from '../service/ServiceContext'
 
 type Params = {
   transactionGroupId: string
@@ -23,20 +18,13 @@ type Params = {
 const GuestTransactionGroupPage: FC = () => {
   const { transactionGroupId } = useParams<Params>()
   const navigate = useNavigate()
+  const { IconLib } = useContext(IconToolsContext)
 
   const { email } = useContext(UserContext)
-  const { state: transactionGroups } = useContext(TransactionGroupServiceContext)
   const { state: ownTransactions, transactionsFromGroupMembers } = useContext(TransactionServiceContext)
-  // Only satisfies AugmentedTransactionGroup: guests never promote, the one use of the group category.
-  const { tentativeRoot: rootCategory } = useContext(CategoryServiceContext)
 
   const id = parseInt(transactionGroupId!)
-
-  const transactionGroup = useMemo(() => {
-    const group = transactionGroups.find((tg) => tg.id === id)
-    if (!group || !rootCategory) return undefined
-    return new AugmentedTransactionGroup(group, groupCurrency(group), rootCategory)
-  }, [transactionGroups, id, rootCategory])
+  const transactionGroup = useAugmentedTransactionGroup(id)
 
   const confirmedTransactions = useMemo(() => {
     if (!transactionGroup) return []
@@ -71,11 +59,20 @@ const GuestTransactionGroupPage: FC = () => {
     <TransactionGroupView
       transactionGroup={transactionGroup}
       confirmedTransactions={confirmedTransactions}
-      actions={
-        <Button variant="outlined" onClick={() => navigate(`/transaction-groups/manage/${id}/unconfirmed/new`)}>
-          Record a payment
-        </Button>
-      }
+      actions={[
+        {
+          label: 'I paid',
+          Icon: IconLib.MdOutput,
+          color: 'red',
+          onClick: () => navigate(`/transaction-groups/manage/${id}/unconfirmed/new?payer=me`),
+        },
+        {
+          label: 'Someone else paid',
+          Icon: IconLib.MdGroups,
+          color: '#64B5F6',
+          onClick: () => navigate(`/transaction-groups/manage/${id}/unconfirmed/new?payer=others`),
+        },
+      ]}
     />
   )
 }

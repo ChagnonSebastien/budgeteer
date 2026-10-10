@@ -5,11 +5,13 @@ import { useNavigate } from 'react-router-dom'
 
 import { UserContext } from '../../App'
 import { formatFull } from '../../domain/model/currency'
+import { SettlementAugmentedTransaction } from '../../domain/model/settlement'
 import { AugmentedTransaction, TransactionID } from '../../domain/model/transaction'
 import { UnconfirmedAugmentedTransaction } from '../../domain/model/unconfirmedTransaction'
 import { ItemProps } from '../accounts/ItemList'
 import { IconToolsContext } from '../icons/IconTools'
 import { DrawerContext } from '../Menu'
+import SettlementCard from '../transactionGroup/SettlementCard'
 import { Column, GradientCard, Row } from '../shared/Layout'
 
 const GroupTransactionCard: FC<ItemProps<TransactionID, AugmentedTransaction, object>> = memo((props) => {
@@ -22,6 +24,10 @@ const GroupTransactionCard: FC<ItemProps<TransactionID, AugmentedTransaction, ob
   const isGuest = authentification_method === 'guest'
 
   const userContribution = useMemo(() => item.getUserContribution(email), [item, email])
+
+  if (item instanceof SettlementAugmentedTransaction) {
+    return <SettlementCard item={item} onClick={onClick} />
+  }
 
   if (item.augmentedTransactionGroupData === null) {
     return <p>Transaction is not part of a group</p>

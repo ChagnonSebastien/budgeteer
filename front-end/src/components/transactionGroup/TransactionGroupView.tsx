@@ -1,14 +1,19 @@
-import { Button, Typography } from '@mui/material'
-import { FC, ReactNode, useContext, useMemo, useState } from 'react'
+import { Button, SpeedDial, SpeedDialAction, SpeedDialIcon, Typography } from '@mui/material'
+import { FC, useContext, useMemo, useState } from 'react'
+import type { IconType } from 'react-icons'
+import { useNavigate } from 'react-router-dom'
 
 import ChangeSplitDialog from './ChangeSplitDialog'
 import { FirstDivision, GroupPaidTable, SecondDivision } from './GroupLedger'
 import GroupMembers from './GroupMembers'
 import GroupTransactionModal from './GroupTransactionModal'
+import SettlementModal from './SettlementModal'
+import { SettlementAugmentedTransaction } from '../../domain/model/settlement'
 import { AugmentedTransaction } from '../../domain/model/transaction'
 import { AugmentedTransactionGroup, SplitTypeToString } from '../../domain/model/transactionGroup'
 import { UnconfirmedAugmentedTransaction } from '../../domain/model/unconfirmedTransaction'
-import { UnconfirmedTransactionServiceContext } from '../../service/ServiceContext'
+import { SettlementServiceContext, UnconfirmedTransactionServiceContext } from '../../service/ServiceContext'
+import { IconToolsContext } from '../icons/IconTools'
 import ContentWithHeader from '../shared/ContentWithHeader'
 import { Row } from '../shared/Layout'
 import SplitView from '../shared/SplitView'
@@ -16,13 +21,23 @@ import { useElementDimensions } from '../shared/useDimensions'
 import GroupTransactionCard from '../transactions/GroupTransactionCard'
 import { TransactionList } from '../transactions/TransactionList'
 
+export interface GroupAction {
+  label: string
+  Icon: IconType
+  color: string
+  onClick(): void
+}
+
 const TransactionGroupView: FC<{
   transactionGroup: AugmentedTransactionGroup
   confirmedTransactions: AugmentedTransaction[]
-  actions: ReactNode
+  actions: GroupAction[]
 }> = ({ transactionGroup, confirmedTransactions, actions }) => {
+  const navigate = useNavigate()
+  const { IconLib } = useContext(IconToolsContext)
   const [changingSplit, setChangingSplit] = useState(false)
   const { state: unconfirmedTransactions } = useContext(UnconfirmedTransactionServiceContext)
+  const { state: settlements } = useContext(SettlementServiceContext)
 
   // Unconfirmed count toward totals: a guest's expenses can never be promoted.
   const groupTransactions = useMemo(
@@ -32,15 +47,18 @@ const TransactionGroupView: FC<{
         ...unconfirmedTransactions
           .filter((ut) => ut.transactionGroupId === transactionGroup.id)
           .map((ut) => new UnconfirmedAugmentedTransaction(ut, transactionGroup)),
+        ...settlements
+          .filter((s) => s.transactionGroupId === transactionGroup.id)
+          .map((s) => new SettlementAugmentedTransaction(s, transactionGroup)),
       ].sort((a, b) => {
         if (b.date.getTime() !== a.date.getTime()) return b.date.getTime() - a.date.getTime()
         return b.id - a.id
       }),
-    [confirmedTransactions, unconfirmedTransactions, transactionGroup],
+    [confirmedTransactions, unconfirmedTransactions, settlements, transactionGroup],
   )
 
-  const [clickedTransactionId, setClickedTransactionId] = useState<number | null>(null)
-  const clickedTransaction = groupTransactions.find((t) => t.id === clickedTransactionId) ?? null
+  const [clickedKey, setClickedKey] = useState<string | null>(null)
+  const clicked = groupTransactions.find((t) => t.listKey === clickedKey) ?? null
 
   const { width: contentWidth, ref: setContentRef } = useElementDimensions(600, 600)
   const splitHorizontal = contentWidth > 1200
@@ -68,7 +86,6 @@ const TransactionGroupView: FC<{
               transactions={groupTransactions}
               currency={transactionGroup.augmentedCurrency}
             />
-            <Row style={{ marginTop: '1rem', gap: '.5rem' }}>{actions}</Row>
           </FirstDivision>
         }
         firstZoneStyling={{ scroll: true, grow: false }}
@@ -83,7 +100,7 @@ const TransactionGroupView: FC<{
                 items={groupTransactions}
                 ItemComponent={GroupTransactionCard}
                 additionalItemsProps={{}}
-                onClick={setClickedTransactionId}
+                onClick={(_id, item) => setClickedKey(item.listKey)}
                 containerStyle={{ width: '100%', maxWidth: '32rem' }}
               />
             )}
@@ -91,7 +108,52 @@ const TransactionGroupView: FC<{
         }
         secondZoneStyling={{ scroll: true, grow: true }}
       />
-      <GroupTransactionModal transaction={clickedTransaction} onClose={() => setClickedTransactionId(null)} />
+      <SpeedDial
+        ariaLabel="Add to transaction group"
+        sx={{ position: 'absolute', bottom: 16, right: 16 }}
+        icon={
+          <SpeedDialIcon
+            openIcon={<IconLib.FaPlus />}
+            sx={{
+              '& .MuiSpeedDialIcon-icon, & .MuiSpeedDialIcon-openIcon': {
+                transition: 'all 0.2s ease-in-out',
+                height: '24px',
+                width: '24px',
+              },
+              '& .MuiSpeedDialIcon-openIcon': {
+                transform: 'rotate(45deg)',
+              },
+            }}
+          />
+        }
+      >
+        {[
+          ...actions,
+          {
+            label: 'Settle up',
+            Icon: IconLib.TbArrowsExchange,
+            color: 'green',
+            onClick: () => navigate(`/transaction-groups/manage/${transactionGroup.id}/settle`),
+          },
+        ].map(({ label, Icon, color, onClick }) => (
+          <SpeedDialAction
+            key={label}
+            icon={<Icon />}
+            onClick={onClick}
+            tooltipTitle={label}
+            tooltipOpen
+            slotProps={{
+              fab: { sx: { backgroundColor: color, color: 'white', '&:hover': { backgroundColor: color } } },
+              staticTooltipLabel: { sx: { whiteSpace: 'nowrap' } },
+            }}
+          />
+        ))}
+      </SpeedDial>
+      {clicked instanceof SettlementAugmentedTransaction ? (
+        <SettlementModal settlement={clicked} onClose={() => setClickedKey(null)} />
+      ) : (
+        <GroupTransactionModal transaction={clicked} onClose={() => setClickedKey(null)} />
+      )}
       {changingSplit && (
         <ChangeSplitDialog
           open

@@ -3,6 +3,7 @@ import { FC, useContext, useMemo, useState } from 'react'
 
 import { GroupPaidTable } from './GroupLedger'
 import SplitValuesEditor, { splitValuesError, SplitValueKind } from './SplitValuesEditor'
+import { SettlementAugmentedTransaction } from '../../domain/model/settlement'
 import {
   AugmentedTransaction,
   AugmentedTransactionGroupData,
@@ -81,6 +82,7 @@ const simulate = (
   )
 
   return transactions.map((t) => {
+    if (t instanceof SettlementAugmentedTransaction) return t
     const current = t.augmentedTransactionGroupData?.splitOverride ?? null
     const override =
       scope === SplitChangeScope.ALL_TRANSACTIONS

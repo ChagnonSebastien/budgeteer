@@ -76,6 +76,7 @@ const CreateTransactionPage: FC = () => {
         type={type}
         prefillAccountId={prefillAccountId}
         prefillTransactionGroupId={prefillTransactionGroupId}
+        groupContext={prefillTransactionGroupId !== null ? 'locked' : undefined}
       />
     </ContentWithHeader>
   )

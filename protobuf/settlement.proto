@@ -1,0 +1,95 @@
+syntax = "proto3";
+
+package transaction;
+
+option go_package = "server/internal/infrastructure/messaging/dto";
+
+message PersonalTransactionFields {
+  uint32 amount = 1;
+  uint32 currency = 2;
+  optional uint32 sender = 3;
+  optional uint32 receiver = 4;
+  optional uint32 category = 5;
+  string date = 6;
+  string note = 7;
+  uint32 receiver_currency = 8;
+  uint32 receiver_amount = 9;
+}
+
+message Settlement {
+  uint32 id = 1;
+  uint32 transaction_group = 2;
+  uint32 amount = 3;
+  string date = 4;
+  string note = 5;
+  string payer = 6;
+  string receiver = 7;
+  string created_by = 8;
+  string proposed_by = 9;
+  bool completed = 10;
+  optional uint32 own_transaction = 11;
+}
+
+message GetAllSettlementsRequest {
+}
+
+message GetAllSettlementsResponse {
+  repeated Settlement settlements = 1;
+}
+
+message CreateSettlementRequest {
+  uint32 transaction_group = 1;
+  uint32 amount = 2;
+  string date = 3;
+  string note = 4;
+  string payer = 5;
+  string receiver = 6;
+  optional PersonalTransactionFields own_transaction = 7;
+}
+
+message CreateSettlementResponse {
+  uint32 id = 1;
+}
+
+message UpdateSettlementRequest {
+  uint32 id = 1;
+  uint32 amount = 2;
+  string date = 3;
+  string note = 4;
+  optional PersonalTransactionFields own_transaction = 5;
+}
+
+message UpdateSettlementResponse {
+}
+
+message ConfirmSettlementRequest {
+  uint32 id = 1;
+  optional PersonalTransactionFields own_transaction = 2;
+}
+
+message ConfirmSettlementResponse {
+}
+
+message DeleteSettlementRequest {
+  uint32 id = 1;
+}
+
+message DeleteSettlementResponse {
+}
+
+message RecordSettlementTransactionRequest {
+  uint32 id = 1;
+  PersonalTransactionFields own_transaction = 2;
+}
+
+message RecordSettlementTransactionResponse {
+}
+
+service SettlementService {
+  rpc GetAllSettlements (GetAllSettlementsRequest) returns (GetAllSettlementsResponse);
+  rpc CreateSettlement (CreateSettlementRequest) returns (CreateSettlementResponse);
+  rpc UpdateSettlement (UpdateSettlementRequest) returns (UpdateSettlementResponse);
+  rpc ConfirmSettlement (ConfirmSettlementRequest) returns (ConfirmSettlementResponse);
+  rpc DeleteSettlement (DeleteSettlementRequest) returns (DeleteSettlementResponse);
+  rpc RecordSettlementTransaction (RecordSettlementTransactionRequest) returns (RecordSettlementTransactionResponse);
+}

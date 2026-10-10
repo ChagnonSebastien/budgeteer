@@ -5,6 +5,7 @@ import { BasicCrudService } from './BasicCrudService'
 import { CategoryPersistenceAugmentation } from './CategoryServiceAugmenter'
 import { CurrencyPersistenceAugmentation } from './CurrencyServiceAugmenter'
 import { ExchangeRatePersistenceAugmentation, RateOnDate } from './ExcahngeRateServiceAugmenter'
+import { SettlementPersistenceAugmentation } from './SettlementServiceAugmenter'
 import { TransactionGroupPersistenceAugmentation } from './TransactionGroupServiceAugmenter'
 import { TransactionPersistenceAugmentation } from './TransactionServiceAugmenter'
 import { UnconfirmedTransactionPersistenceAugmentation } from './UnconfirmedTransactionServiceAugmenter'
@@ -12,6 +13,7 @@ import Account, { AccountID, AccountUpdatableFields } from '../domain/model/acco
 import Category, { AugmentedCategory, CategoryID, CategoryUpdatableFields } from '../domain/model/category'
 import Currency, { CurrencyID, CurrencyUpdatableFields } from '../domain/model/currency'
 import ExchangeRate, { ExchangeRateId, ExchangeRateIdentifiableFields } from '../domain/model/exchangeRate'
+import Settlement, { SettlementID, SettlementUpdatableFields } from '../domain/model/settlement'
 import Transaction, { TransactionID, TransactionUpdatableFields } from '../domain/model/transaction'
 import TransactionGroup, {
   Person,
@@ -132,6 +134,25 @@ export const TransactionGroupServiceContext = createContext<
     return Promise.reject(new Error('nilPersistence'))
   },
   changeSplit(): Promise<void> {
+    return Promise.reject(new Error('nilPersistence'))
+  },
+})
+
+export const SettlementServiceContext = createContext<
+  BasicCrudService<SettlementID, Settlement, IdIdentifier, SettlementUpdatableFields> &
+    SettlementPersistenceAugmentation
+>({
+  ...nilPersistence,
+  createSettlement(): Promise<void> {
+    return Promise.reject(new Error('nilPersistence'))
+  },
+  updateSettlement(): Promise<void> {
+    return Promise.reject(new Error('nilPersistence'))
+  },
+  confirmSettlement(): Promise<void> {
+    return Promise.reject(new Error('nilPersistence'))
+  },
+  recordSettlementTransaction(): Promise<void> {
     return Promise.reject(new Error('nilPersistence'))
   },
 })

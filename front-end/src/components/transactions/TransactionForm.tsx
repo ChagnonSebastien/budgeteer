@@ -1,4 +1,4 @@
-import { Checkbox, Chip, FormControlLabel, IconButton, TextField } from '@mui/material'
+import { Checkbox, Chip, FormControlLabel, IconButton, TextField, Typography } from '@mui/material'
 import { FC, useContext, useEffect, useMemo, useState } from 'react'
 
 import { UserContext } from '../../App'
@@ -59,10 +59,19 @@ interface Props {
   type?: TransactionType
   prefillAccountId?: AccountID | null
   prefillTransactionGroupId?: TransactionGroupID | null
+  groupContext?: 'hidden' | 'locked'
 }
 
 const TransactionForm: FC<Props> = (props) => {
-  const { initialTransaction, onSubmit, submitText, type: rawType, prefillAccountId, prefillTransactionGroupId } = props
+  const {
+    initialTransaction,
+    onSubmit,
+    submitText,
+    type: rawType,
+    prefillAccountId,
+    prefillTransactionGroupId,
+    groupContext,
+  } = props
 
   const { create: createAccount, state: accounts } = useContext(AccountServiceContext)
   const { state: categories } = useContext(CategoryServiceContext)
@@ -101,7 +110,7 @@ const TransactionForm: FC<Props> = (props) => {
   const [date, setDate] = useState(initialTransaction?.date ?? new Date())
 
   const [differentCurrency, setDifferentCurrency] = useState(() => {
-    if (typeof initialTransaction === 'undefined') return false
+    if (typeof initialTransaction === 'undefined' || initialTransaction.transactionGroupData !== null) return false
     return initialTransaction.receiverCurrencyId !== initialTransaction.currencyId
   })
   const [receiverAmount, setReceiverAmount] = useState<number>(() => initialTransaction?.receiverAmount ?? 0)
@@ -294,6 +303,7 @@ const TransactionForm: FC<Props> = (props) => {
     } else {
       setUseTransactionGroup(true)
       setIsFinancialIncome(false)
+      setDifferentCurrency(false)
     }
   }
 
@@ -393,10 +403,12 @@ const TransactionForm: FC<Props> = (props) => {
         />
       </Row>
 
-      <FormControlLabel
-        control={<Checkbox onChange={(ev) => setDifferentCurrency(ev.target.checked)} />}
-        label="Receive in a different Currency"
-      />
+      {!useTransactionGroup && (
+        <FormControlLabel
+          control={<Checkbox checked={differentCurrency} onChange={(ev) => setDifferentCurrency(ev.target.checked)} />}
+          label="Receive in a different Currency"
+        />
+      )}
 
       {differentCurrency && (
         <Row style={{ gap: '1rem' }}>
@@ -466,7 +478,7 @@ const TransactionForm: FC<Props> = (props) => {
         onChange={(ev) => setNote(ev.target.value as string)}
       />
 
-      {baseType !== 'transfer' && (
+      {baseType !== 'transfer' && typeof groupContext === 'undefined' && (
         <Row style={{ gap: '0.75rem', flexWrap: 'wrap' }}>
           {baseType === 'income' && (
             <Chip
@@ -500,7 +512,7 @@ const TransactionForm: FC<Props> = (props) => {
         />
       )}
 
-      {useTransactionGroup && (
+      {useTransactionGroup && groupContext !== 'hidden' && (
         <Row style={{ justifyContent: 'stretch', alignItems: 'center', gap: '1rem' }}>
           {transactionGroup?.augmentedCategory && (
             <IconCapsule
@@ -510,19 +522,27 @@ const TransactionForm: FC<Props> = (props) => {
               backgroundColor={transactionGroup.augmentedCategory.iconBackground}
             />
           )}
-          <ItemPicker
-            style={{ flexGrow: 1 }}
-            items={visibleTransactionGroups}
-            labelText="Transaction Group"
-            itemDisplayText={(item) => item?.name ?? 'None'}
-            selectedItemId={transactionGroupId}
-            onSelectItem={setTransactionGroupId}
-            ItemComponent={TransactionGroupCard}
-            additionalItemProps={{}}
-          />
-          <IconButton onClick={() => setTransactionGroupId(null)}>
-            <IconLib.IoCloseCircle />
-          </IconButton>
+          {groupContext === 'locked' ? (
+            <Typography style={{ flexGrow: 1 }}>
+              Transaction group: <b>{transactionGroup?.name}</b>
+            </Typography>
+          ) : (
+            <>
+              <ItemPicker
+                style={{ flexGrow: 1 }}
+                items={visibleTransactionGroups}
+                labelText="Transaction Group"
+                itemDisplayText={(item) => item?.name ?? 'None'}
+                selectedItemId={transactionGroupId}
+                onSelectItem={setTransactionGroupId}
+                ItemComponent={TransactionGroupCard}
+                additionalItemProps={{}}
+              />
+              <IconButton onClick={() => setTransactionGroupId(null)}>
+                <IconLib.IoCloseCircle />
+              </IconButton>
+            </>
+          )}
         </Row>
       )}
     </FormWrapper>

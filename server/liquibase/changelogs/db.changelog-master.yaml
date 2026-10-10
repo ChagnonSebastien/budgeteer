@@ -43,3 +43,5 @@ databaseChangeLog:
       file: ./changelogs/021-unconfirmed-transactions.sql
   - include:
       file: ./changelogs/022-user-display-name.sql
+  - include:
+      file: ./changelogs/023-settlements.sql

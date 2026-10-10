@@ -10,6 +10,7 @@ export interface IdIdentifier {
 export type ItemType =
   | 'transactionGroup'
   | 'unconfirmedTransaction'
+  | 'settlement'
   | 'transaction'
   | 'currency'
   | 'category'
