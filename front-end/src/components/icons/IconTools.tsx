@@ -12,6 +12,7 @@ export enum PreparedIcon {
   MdOutput = 'MdOutput',
   MdInput = 'MdInput',
   BsGraphUp = 'BsGraphUp',
+  BsGraphDown = 'BsGraphDown',
   FaChartPie = 'FaChartPie',
   IoCloseCircle = 'IoCloseCircle',
   MdKeyboardBackspace = 'MdKeyboardBackspace',

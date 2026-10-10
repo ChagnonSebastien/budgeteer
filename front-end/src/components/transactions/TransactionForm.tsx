@@ -87,7 +87,9 @@ const TransactionForm: FC<Props> = (props) => {
   // the form (mutually exclusive), so the base type is only income/expense/transfer.
   const baseType: 'income' | 'expense' | 'transfer' = useMemo(() => {
     if (rawType === 'income' || rawType === 'expense' || rawType === 'transfer') return rawType
-    if (rawType === 'financialIncome' || initialTransaction?.financialIncomeData) return 'income'
+    if (rawType === 'financialIncome') return 'income'
+    if (initialTransaction?.financialIncomeData)
+      return initialTransaction.sender?.isMine && !initialTransaction.receiver?.isMine ? 'expense' : 'income'
     if (initialTransaction?.categoryId === null) return 'transfer'
     return (initialTransaction?.sender?.isMine ?? false) ? 'expense' : 'income'
   }, [initialTransaction, rawType])
@@ -99,7 +101,9 @@ const TransactionForm: FC<Props> = (props) => {
     () => (initialTransaction?.transactionGroupData?.transactionGroupId ?? prefillTransactionGroupId ?? null) !== null,
   )
 
-  const type: 'income' | 'expense' | 'transfer' | 'financialIncome' = isFinancialIncome ? 'financialIncome' : baseType
+  // A financial loss (fee) is stored like a financial income, but flows out of my accounts like an expense.
+  const isFinancial = isFinancialIncome && baseType !== 'transfer'
+  const type: 'income' | 'expense' | 'transfer' | 'financialIncome' = isFinancial ? 'financialIncome' : baseType
 
   const [amount, setAmount] = useState<number>(() => initialTransaction?.amount ?? 0)
   const [currency, setCurrency] = useState<CurrencyID>(initialTransaction?.currencyId ?? default_currency!)
@@ -214,7 +218,7 @@ const TransactionForm: FC<Props> = (props) => {
 
   useEffect(() => {
     const amountError = validateAmount(amount)
-    const senderError = validateAccount(senderAccount.name, type === 'expense' || type === 'transfer')
+    const senderError = validateAccount(senderAccount.name, baseType === 'expense' || baseType === 'transfer')
     const receiverError = validateAccount(senderAccount.name, type === 'income' || type === 'transfer')
     setErrors((prevState) => ({
       ...prevState,
@@ -234,7 +238,7 @@ const TransactionForm: FC<Props> = (props) => {
         errorText: receiverError,
       },
     }))
-  }, [amount, senderAccount.id, receiverAccount.id, type])
+  }, [amount, senderAccount.id, receiverAccount.id, type, baseType])
 
   useEffect(() => {
     const receiverAmountError = validateAmount(receiverAmount)
@@ -253,7 +257,7 @@ const TransactionForm: FC<Props> = (props) => {
     if (type === 'transfer') return
     if (parent !== rootCategory.id) return
 
-    const inferFromSender = type === 'income' || type === 'financialIncome'
+    const inferFromSender = baseType === 'income'
     const partyId = inferFromSender ? senderAccount.id : receiverAccount.id
     if (partyId === null) return
 
@@ -358,13 +362,13 @@ const TransactionForm: FC<Props> = (props) => {
         amount,
         receiverAmount: differentCurrency ? receiverAmount : amount,
         categoryId: transactionGroup?.category ?? parent,
-        receiverId: receiverAccount.id ?? (type === 'expense' ? (newAccount?.id ?? null) : null),
-        senderId: senderAccount.id ?? (type === 'income' ? (newAccount?.id ?? null) : null),
+        receiverId: receiverAccount.id ?? (baseType === 'expense' ? (newAccount?.id ?? null) : null),
+        senderId: senderAccount.id ?? (baseType === 'income' ? (newAccount?.id ?? null) : null),
         note,
         date,
         currencyId: currency,
         receiverCurrencyId: differentCurrency ? receiverCurrency : currency,
-        financialIncomeData: type === 'financialIncome' ? new FinancialIncomeData(investmentCurrency) : null,
+        financialIncomeData: isFinancial ? new FinancialIncomeData(investmentCurrency) : null,
         transactionGroupData: transactionGroupId !== null ? new TransactionGroupData(transactionGroupId, null) : null,
       }).catch((err) => {
         showToast('Unexpected error while submitting the transaction', 'error')
@@ -445,8 +449,8 @@ const TransactionForm: FC<Props> = (props) => {
         onAccountSelected={setSenderAccount}
         itemDisplayText={(item) => item?.name ?? senderAccount.name}
         valueText={senderAccount.name}
-        myOwn={type !== 'income' && type !== 'financialIncome'}
-        allowNew={type === 'income' || type === 'financialIncome'}
+        myOwn={baseType !== 'income'}
+        allowNew={baseType === 'income'}
       />
 
       <AccountPicker
@@ -455,8 +459,8 @@ const TransactionForm: FC<Props> = (props) => {
         itemDisplayText={(item) => item?.name ?? receiverAccount.name}
         onAccountSelected={setReceiverAccount}
         valueText={receiverAccount.name}
-        myOwn={type !== 'expense'}
-        allowNew={type === 'expense'}
+        myOwn={baseType !== 'expense'}
+        allowNew={baseType === 'expense'}
       />
 
       {transactionGroupId === null && typeof category !== 'undefined' && (
@@ -479,16 +483,14 @@ const TransactionForm: FC<Props> = (props) => {
 
       {baseType !== 'transfer' && typeof groupContext === 'undefined' && (
         <Stack direction="row" useFlexGap spacing={1.5} flexWrap="wrap">
-          {baseType === 'income' && (
-            <Chip
-              icon={<IconLib.BsGraphUp />}
-              label="Financial income"
-              variant={isFinancialIncome ? 'filled' : 'outlined'}
-              color={isFinancialIncome ? 'primary' : 'default'}
-              onClick={toggleFinancialIncome}
-              sx={{ pl: 1, '& .MuiChip-icon': { marginLeft: 0 } }}
-            />
-          )}
+          <Chip
+            icon={baseType === 'expense' ? <IconLib.BsGraphDown /> : <IconLib.BsGraphUp />}
+            label={baseType === 'expense' ? 'Financial loss' : 'Financial income'}
+            variant={isFinancialIncome ? 'filled' : 'outlined'}
+            color={isFinancialIncome ? 'primary' : 'default'}
+            onClick={toggleFinancialIncome}
+            sx={{ pl: 1, '& .MuiChip-icon': { marginLeft: 0 } }}
+          />
           <Chip
             icon={<IconLib.MdGroups />}
             label="Part of a transaction group"
@@ -500,13 +502,13 @@ const TransactionForm: FC<Props> = (props) => {
         </Stack>
       )}
 
-      {type === 'financialIncome' && (
+      {isFinancial && (
         <CurrencyPicker
           sx={{ width: '100%' }}
           currencies={currencies}
           selectedCurrencyId={investmentCurrency}
           setSelectedCurrencyId={setInvestmentCurrency}
-          labelText="From investment in"
+          labelText={baseType === 'expense' ? 'Charged to investment in' : 'From investment in'}
           errorText={NoError}
         />
       )}

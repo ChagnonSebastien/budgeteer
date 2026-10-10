@@ -10,7 +10,7 @@ import {
   GraphTooltipRow,
   GraphTooltipValue,
 } from './GraphStyledComponents'
-import LineChart, { Bucket, TooltipSlice } from './LineChart'
+import LineChart, { SparseBucket, TooltipSlice } from './LineChart'
 import { CurrencyID } from '../../domain/model/currency'
 import MixedAugmentation from '../../service/MixedAugmentation'
 import { AccountServiceContext, CurrencyServiceContext } from '../../service/ServiceContext'
@@ -92,7 +92,7 @@ const ExchangeRateComparison: FC<Props> = (props) => {
     const currentlyHeld = new Map<CurrencyID, number>()
     const dividends = new Map<CurrencyID, number>()
     const initialRate = new Map<CurrencyID, number>()
-    const data: Bucket[] = []
+    const data: SparseBucket[] = []
     for (const currency of currencies) {
       if (!isSelected(currency.id)) continue
       currentlyHeld.set(currency.id, 0)
@@ -175,13 +175,38 @@ const ExchangeRateComparison: FC<Props> = (props) => {
             gainToday.set(cId, prevGains + transaction.receiverAmount * factor)
           }
         }
+
+        // A financial loss (fee) leaves my accounts for a third party and shrinks the investment's return.
+        if (
+          transaction.financialIncomeData !== null &&
+          isSelected(transaction.financialIncomeData.relatedCurrencyId) &&
+          transaction.sender?.isMine &&
+          !transaction.receiver?.isMine
+        ) {
+          const cId = transaction.financialIncomeData.relatedCurrencyId
+          const prevGains = gainToday.get(cId) ?? 0
+
+          if (transaction.currencyId === cId) {
+            gainToday.set(cId, prevGains - transaction.amount)
+          } else if (transaction.receiverCurrencyId === cId) {
+            gainToday.set(cId, prevGains - transaction.receiverAmount)
+          } else {
+            const factor = exchangeRateOnDay(transaction.currencyId, cId, transaction.date)
+            gainToday.set(cId, prevGains - transaction.amount * factor)
+          }
+        }
       }
 
       commitDividends(startOfDay(date))
 
-      const values: Record<string, { amount: number }> = {}
+      const values: Record<string, { amount: number | null }> = {}
       for (const currency of currencies) {
         if (!isSelected(currency.id)) continue
+        const firstRate = exchangeRates.get(currency.id)?.get(defaultCurrency.id)?.[0]?.date
+        if (typeof firstRate === 'undefined' || upTo.getTime() < firstRate.getTime()) {
+          values[group(currency.id)] = { amount: null }
+          continue
+        }
         const currentRate = exchangeRateOnDay(currency.id, defaultCurrency.id, upTo)
         const wouldBe = initialRate.get(currency.id)! / dividends.get(currency.id)!
         values[group(currency.id)] = { amount: currentRate / wouldBe }
