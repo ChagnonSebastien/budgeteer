@@ -3,7 +3,7 @@ import { formatDate } from 'date-fns'
 import { FC, useContext } from 'react'
 
 import Account, { AccountID } from '../../domain/model/account'
-import { OnlineContext } from '../../service/OnlineContext'
+import { ReadOnlyContext } from '../../service/ReadOnlyContext'
 import { ImportRecord } from '../../store/remote/ImportRemoteStore'
 import { IconToolsContext } from '../icons/IconTools'
 
@@ -19,7 +19,7 @@ interface Props {
 
 const ImportSourceStep: FC<Props> = ({ accounts, accountId, onAccountChange, hasProfile, onFile, imports, onUndo }) => {
   const { IconLib } = useContext(IconToolsContext)
-  const online = useContext(OnlineContext)
+  const readOnly = useContext(ReadOnlyContext)
   const accountImports = imports.filter((record) => record.accountId === accountId)
 
   return (
@@ -42,10 +42,10 @@ const ImportSourceStep: FC<Props> = ({ accounts, accountId, onAccountChange, has
       <Button
         variant="contained"
         component="label"
-        disabled={accountId === null || !online}
+        disabled={accountId === null || readOnly !== null}
         startIcon={<IconLib.FaFileImport />}
       >
-        {online ? 'Choose a CSV file' : 'Unavailable offline'}
+        {readOnly?.label ?? 'Choose a CSV file'}
         <input
           hidden
           type="file"
@@ -71,7 +71,7 @@ const ImportSourceStep: FC<Props> = ({ accounts, accountId, onAccountChange, has
               <ListItem
                 key={record.id}
                 secondaryAction={
-                  <IconButton aria-label="Undo import" disabled={!online} onClick={() => onUndo(record)}>
+                  <IconButton aria-label="Undo import" disabled={readOnly !== null} onClick={() => onUndo(record)}>
                     <IconLib.MdUndo />
                   </IconButton>
                 }

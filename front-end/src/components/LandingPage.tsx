@@ -3,10 +3,13 @@ import { FC } from 'react'
 import { IconType } from 'react-icons'
 import { MdCurrencyExchange, MdGroups, MdOutlineInsights } from 'react-icons/md'
 
+import { SecureButton } from './shared/SecureButton'
+
 interface Props {
   oidcLogin: (() => void) | null
   userPassLogin: (() => void) | null
   guestLogin: (() => void) | null
+  demoLogin: () => Promise<void>
 }
 
 const features: { Icon: IconType; title: string; text: string }[] = [
@@ -27,7 +30,7 @@ const features: { Icon: IconType; title: string; text: string }[] = [
   },
 ]
 
-const LandingPage: FC<Props> = ({ oidcLogin, userPassLogin, guestLogin }) => (
+const LandingPage: FC<Props> = ({ oidcLogin, userPassLogin, guestLogin, demoLogin }) => (
   <Box sx={{ display: 'flex', minHeight: '100vh', px: 2, py: { xs: 4, md: 8 } }}>
     <Stack
       direction={{ xs: 'column', md: 'row' }}
@@ -142,6 +145,20 @@ const LandingPage: FC<Props> = ({ oidcLogin, userPassLogin, guestLogin }) => (
               </Typography>
             </Stack>
           )}
+          <Stack spacing={1}>
+            <SecureButton
+              variant="text"
+              color="inherit"
+              size="large"
+              fullWidth
+              onClick={() => demoLogin().catch(console.error)}
+            >
+              Explore a demo
+            </SecureButton>
+            <Typography variant="caption" color="text.disabled" sx={{ textAlign: 'center' }}>
+              Ten years of generated finances, read-only, kept in this browser until you log out.
+            </Typography>
+          </Stack>
         </Stack>
       </Paper>
     </Stack>

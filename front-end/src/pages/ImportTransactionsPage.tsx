@@ -31,6 +31,7 @@ import { CurrencyUpdatableFields } from '../domain/model/currency'
 import Transaction, { TransactionID } from '../domain/model/transaction'
 import MixedAugmentation from '../service/MixedAugmentation'
 import { OnlineContext } from '../service/OnlineContext'
+import { ReadOnlyContext } from '../service/ReadOnlyContext'
 import {
   AccountServiceContext,
   CurrencyServiceContext,
@@ -70,6 +71,7 @@ const ImportTransactionsPage: FC = () => {
   const prefillAccountId = (location.state as { prefillAccountId?: number | null } | null)?.prefillAccountId ?? null
   const importStore = useContext(ImportStoreContext) as ImportRemoteStore
   const online = useContext(OnlineContext)
+  const readOnly = useContext(ReadOnlyContext)
   const { email, hidden_default_account, default_currency } = useContext(UserContext)
   const {
     state: accounts,
@@ -395,7 +397,7 @@ const ImportTransactionsPage: FC = () => {
           ))}
         </Stepper>
 
-        {!online && <Alert severity="warning">Importing needs an internet connection.</Alert>}
+        {readOnly && <Alert severity="warning">{readOnly.explanation}</Alert>}
 
         {step === 0 && (
           <ImportSourceStep
@@ -457,7 +459,7 @@ const ImportTransactionsPage: FC = () => {
               </Button>
               <SecureButton
                 variant="contained"
-                disabled={!online || committing !== null || selected.length === 0 || fingerprinted === null}
+                disabled={readOnly !== null || committing !== null || selected.length === 0 || fingerprinted === null}
                 onClick={async () => {
                   if (uncategorized > 0) setConfirmUncategorized(uncategorized)
                   else await commit()
@@ -478,7 +480,7 @@ const ImportTransactionsPage: FC = () => {
             <Stack direction="row" spacing={2} justifyContent="space-between">
               <Button
                 color="inherit"
-                disabled={!online}
+                disabled={readOnly !== null}
                 onClick={() => {
                   const record = imports.find((i) => i.id === summary.importId)
                   if (record) setUndoing(record)

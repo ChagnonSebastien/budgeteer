@@ -10,7 +10,7 @@ import { useToast } from '../components/shared/ToastProvider'
 import UnconfirmedTransactionForm, {
   UnconfirmedTransactionFormFields,
 } from '../components/transactionGroup/UnconfirmedTransactionForm'
-import { OnlineContext } from '../service/OnlineContext'
+import { ReadOnlyContext } from '../service/ReadOnlyContext'
 import { TransactionGroupServiceContext, UnconfirmedTransactionServiceContext } from '../service/ServiceContext'
 
 type Params = {
@@ -23,7 +23,7 @@ const EditUnconfirmedTransactionPage: FC = () => {
   const navigate = useNavigate()
 
   const { email, authentification_method } = useContext(UserContext)
-  const online = useContext(OnlineContext)
+  const readOnly = useContext(ReadOnlyContext) !== null
   const { state: transactionGroups } = useContext(TransactionGroupServiceContext)
   const {
     state: unconfirmedTransactions,
@@ -78,7 +78,7 @@ const EditUnconfirmedTransactionPage: FC = () => {
         {canPromote && (
           <Button
             variant="contained"
-            disabled={!online}
+            disabled={readOnly}
             onClick={() =>
               navigate(
                 `/transaction-groups/manage/${transactionGroup.id}/unconfirmed/${unconfirmedTransaction.id}/promote`,

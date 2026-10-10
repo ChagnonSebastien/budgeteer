@@ -12,7 +12,7 @@ import {
 import { FC, useContext, useMemo, useState } from 'react'
 
 import Currency, { formatFull } from '../../domain/model/currency'
-import { OnlineContext } from '../../service/OnlineContext'
+import { ReadOnlyContext } from '../../service/ReadOnlyContext'
 import {
   AccountServiceContext,
   CurrencyServiceContext,
@@ -48,7 +48,7 @@ const DeleteCurrencyDialog: FC<{ currency: Currency; onClose(): void; onDeleted(
   const { refresh: refreshRates } = useContext(ExchangeRateServiceContext)
   const { showToast } = useToast()
   const { privacyMode } = useContext(DrawerContext)
-  const online = useContext(OnlineContext)
+  const readOnly = useContext(ReadOnlyContext) !== null
 
   const [mode, setMode] = useState<'migrate' | 'delete'>('migrate')
   const [target, setTarget] = useState<Currency | null>(null)
@@ -170,7 +170,7 @@ const DeleteCurrencyDialog: FC<{ currency: Currency; onClose(): void; onDeleted(
             {isDefault ? 'Close' : 'Cancel'}
           </Button>
           {!isDefault && (
-            <Button variant="contained" color="error" disabled={blocked || deleting || !online} onClick={confirm}>
+            <Button variant="contained" color="error" disabled={blocked || deleting || readOnly} onClick={confirm}>
               Delete currency
             </Button>
           )}

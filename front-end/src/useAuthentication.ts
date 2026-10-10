@@ -1,6 +1,7 @@
 import { Network } from '@capacitor/network'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
+import { seedDemo } from './demo/seedDemo'
 import User, { AuthMethod, UserPreferences, UserPreferencesPatch } from './domain/model/user'
 import IndexedDB from './store/local/IndexedDB'
 import UserStore from './UserStore'
@@ -46,13 +47,18 @@ const guestLogout = async () => {
   window.location.href = `${serverUrl}/auth/logout`
 }
 
-type AuthMethodStatuses = { [K in AuthMethod]: (() => void) | null }
+const demoLogout = async () => {
+  await clearLocalSession()
+  window.location.href = '/'
+}
+
+type AuthMethodStatuses = { [K in Exclude<AuthMethod, 'demo'>]: (() => void) | null }
 
 const useAuthentication = () => {
   const [loginMethods, setLoginMethods] = useState<AuthMethodStatuses | null>(null)
 
   const [user, setUser] = useState<User | null>(userStore.getUser())
-  const [userVerified, setUserVerified] = useState(false)
+  const [userVerified, setUserVerified] = useState(user?.authentification_method === 'demo')
   const [attemptedUserVerification, setAttemptedUserVerification] = useState(false)
   const [hasInternet, setHasInternet] = useState(navigator.onLine)
 
@@ -79,6 +85,14 @@ const useAuthentication = () => {
     })
   }, [])
 
+  const startDemo = useCallback(async () => {
+    await clearLocalSession()
+    const demoUser = await seedDemo()
+    userStore.upsertUser(demoUser)
+    setUser(demoUser)
+    setUserVerified(true)
+  }, [])
+
   const updatePreferences = useCallback(async (patch: UserPreferencesPatch) => {
     setUser((prev) => {
       if (prev === null) return prev
@@ -89,6 +103,7 @@ const useAuthentication = () => {
       userStore.upsertUser(updated)
       return updated
     })
+    if (userStore.getUser()?.authentification_method === 'demo') return
 
     const response = await fetch(`${serverUrl}/auth/preferences`, {
       method: 'PATCH',
@@ -218,6 +233,8 @@ const useAuthentication = () => {
         return userPassLogout
       case 'guest':
         return guestLogout
+      case 'demo':
+        return demoLogout
       default:
         console.error('cannot logout - unsupported auth method')
         return () => {}
@@ -231,6 +248,7 @@ const useAuthentication = () => {
     userVerified,
     hasInternet,
     logout,
+    startDemo,
     setDefaultCurrency,
     setDisplayName,
     updatePreferences,

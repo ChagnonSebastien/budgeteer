@@ -3,7 +3,7 @@ import { FC, useContext } from 'react'
 import type { IconType } from 'react-icons'
 
 import usePinnableSpeedDial from './usePinnableSpeedDial'
-import { OnlineContext } from '../../service/OnlineContext'
+import { ReadOnlyContext } from '../../service/ReadOnlyContext'
 import { IconToolsContext } from '../icons/IconTools'
 
 export type ActionColor =
@@ -32,12 +32,12 @@ const ActionSpeedDial: FC<{ ariaLabel: string; actions: DialAction[]; hint?: str
 }) => {
   const { IconLib } = useContext(IconToolsContext)
   const dial = usePinnableSpeedDial()
-  const online = useContext(OnlineContext)
+  const readOnly = useContext(ReadOnlyContext)
 
-  if (!online) {
+  if (readOnly) {
     const [{ label, Icon }] = actions
     return (
-      <Tooltip title="Unavailable offline" placement="left" arrow>
+      <Tooltip title={readOnly.label} placement="left" arrow>
         <Box component="span" sx={fabPosition}>
           <Fab disabled aria-label={actions.length === 1 ? label : ariaLabel}>
             {actions.length === 1 ? <Icon /> : <IconLib.FaPlus />}

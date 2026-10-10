@@ -4,7 +4,7 @@ import { FC, ReactNode, useContext } from 'react'
 
 import BasicModal from './BasicModal'
 import { GradientCard, withoutTransientProps } from './Layout'
-import { OnlineContext } from '../../service/OnlineContext'
+import { ReadOnlyContext } from '../../service/ReadOnlyContext'
 
 const fadeIn = keyframes`
   from {
@@ -166,7 +166,7 @@ type FancyModalProps = {
 }
 
 export const FancyModal: FC<FancyModalProps> = (props) => {
-  const online = useContext(OnlineContext)
+  const readOnly = useContext(ReadOnlyContext)
 
   return (
     <DialogContent
@@ -240,7 +240,7 @@ export const FancyModal: FC<FancyModalProps> = (props) => {
         {props.bottomMenu
           .filter((item) => !item.disabled)
           .map((item, index) => {
-            const unavailable = !online && !item.availableOffline
+            const unavailable = readOnly !== null && !item.availableOffline
             return (
               <ListItem
                 key={item.label}
@@ -255,7 +255,7 @@ export const FancyModal: FC<FancyModalProps> = (props) => {
                   </Box>
                   <ListItemText
                     primary={item.label}
-                    secondary={unavailable ? 'Unavailable offline' : item.description}
+                    secondary={unavailable ? readOnly.label : item.description}
                     slotProps={{ secondary: { variant: 'caption', color: 'text.disabled' } }}
                   />
                 </OverviewActionItem>

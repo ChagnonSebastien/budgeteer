@@ -1,4 +1,4 @@
-export type AuthMethod = 'oidc' | 'userPass' | 'guest'
+export type AuthMethod = 'oidc' | 'userPass' | 'guest' | 'demo'
 
 export interface UserPreferences {
   gettingStartedDismissed?: boolean

@@ -8,6 +8,7 @@ import { Centered } from './components/shared/Layout'
 import User, { UserPreferencesPatch } from './domain/model/user'
 import GuestZone from './GuestZone'
 import { OnlineContext } from './service/OnlineContext'
+import { demoReason, offlineReason, ReadOnlyContext } from './service/ReadOnlyContext'
 import useAuthentication from './useAuthentication'
 
 export const UserContext = createContext<User>({
@@ -28,6 +29,7 @@ const App: FC = () => {
     hasInternet,
     authMethods,
     logout,
+    startDemo,
     setDefaultCurrency,
     setDisplayName,
     updatePreferences,
@@ -36,27 +38,35 @@ const App: FC = () => {
   const iconTools = useIconTools()
 
   if (user !== null) {
+    // The demo lives only in IndexedDB, so it must never reach the server.
+    const demo = user.authentification_method === 'demo'
+    const readOnly = demo ? demoReason : hasInternet ? null : offlineReason
+
     if (user.authentification_method === 'guest') {
       return (
         <OnlineContext.Provider value={hasInternet}>
-          <IconToolsContext.Provider value={iconTools}>
-            <UserContext.Provider value={user}>
-              <GuestZone logout={logout} setDisplayName={setDisplayName} />
-            </UserContext.Provider>
-          </IconToolsContext.Provider>
+          <ReadOnlyContext.Provider value={readOnly}>
+            <IconToolsContext.Provider value={iconTools}>
+              <UserContext.Provider value={user}>
+                <GuestZone logout={logout} setDisplayName={setDisplayName} />
+              </UserContext.Provider>
+            </IconToolsContext.Provider>
+          </ReadOnlyContext.Provider>
         </OnlineContext.Provider>
       )
     }
 
     return (
-      <OnlineContext.Provider value={hasInternet}>
-        <IconToolsContext.Provider value={iconTools}>
-          <UserContext.Provider value={user}>
-            <UpdatePreferencesContext.Provider value={updatePreferences}>
-              <AuthenticatedZone logout={logout} setDefaultCurrency={setDefaultCurrency} />
-            </UpdatePreferencesContext.Provider>
-          </UserContext.Provider>
-        </IconToolsContext.Provider>
+      <OnlineContext.Provider value={hasInternet && !demo}>
+        <ReadOnlyContext.Provider value={readOnly}>
+          <IconToolsContext.Provider value={iconTools}>
+            <UserContext.Provider value={user}>
+              <UpdatePreferencesContext.Provider value={updatePreferences}>
+                <AuthenticatedZone logout={logout} setDefaultCurrency={setDefaultCurrency} />
+              </UpdatePreferencesContext.Provider>
+            </UserContext.Provider>
+          </IconToolsContext.Provider>
+        </ReadOnlyContext.Provider>
       </OnlineContext.Provider>
     )
   }
@@ -74,7 +84,12 @@ const App: FC = () => {
   }
 
   return (
-    <LandingPage oidcLogin={authMethods.oidc} userPassLogin={authMethods.userPass} guestLogin={authMethods.guest} />
+    <LandingPage
+      oidcLogin={authMethods.oidc}
+      userPassLogin={authMethods.userPass}
+      guestLogin={authMethods.guest}
+      demoLogin={startDemo}
+    />
   )
 }
 
