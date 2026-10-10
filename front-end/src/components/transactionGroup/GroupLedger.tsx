@@ -1,5 +1,5 @@
 import { Typography } from '@mui/material'
-import { FC, useContext, useMemo } from 'react'
+import { FC, ReactNode, useContext, useMemo } from 'react'
 import { default as styled } from 'styled-components'
 
 import Currency, { formatFull, RateAutoupdateSettings } from '../../domain/model/currency'
@@ -7,18 +7,17 @@ import { SettlementAugmentedTransaction } from '../../domain/model/settlement'
 import { AugmentedTransaction } from '../../domain/model/transaction'
 import TransactionGroup, { Email, Person } from '../../domain/model/transactionGroup'
 import { DrawerContext } from '../Menu'
-import { Column } from '../shared/Layout'
+import { Column, Row } from '../shared/Layout'
 
 export const FirstDivision = styled.div`
   width: 100%;
-  max-width: 100vh;
-  align-items: center;
+  max-width: 28rem;
   display: flex;
   flex-direction: column;
-  justify-content: stretch;
+  align-items: stretch;
+  gap: 1.5rem;
   margin: 0 auto;
-  padding: 2rem;
-  flex-grow: 1;
+  padding: 1.5rem clamp(0.75rem, 4vw, 1.5rem);
 `
 
 export const SecondDivision = styled(Column)<{ $splitView?: boolean }>`
@@ -29,26 +28,21 @@ export const SecondDivision = styled(Column)<{ $splitView?: boolean }>`
   align-self: stretch;
 `
 
-export const Table = styled.table`
-  border-spacing: 0;
-
-  & > thead tr th {
-    border-bottom: 3px solid rgba(128, 128, 128, 0.5);
-  }
-
-  & > * > * > * {
-    padding: 0.5rem 1rem;
-  }
-
-  & > tbody > * > :nth-child(2) {
-    text-align: end;
-    font-family: monospace;
-  }
-
-  & > tbody > :last-child > * {
-    border-top: 1px solid rgba(128, 128, 128, 0.5);
-  }
+const Panel = styled.div`
+  background-color: rgba(128, 128, 128, 0.08);
+  border: 1px solid rgba(128, 128, 128, 0.16);
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.75rem;
 `
+
+export const Section: FC<{ title: string; children: ReactNode }> = ({ title, children }) => (
+  <Column style={{ gap: '0.5rem' }}>
+    <Typography variant="overline" color="textSecondary" lineHeight={1} letterSpacing="0.08em">
+      {title}
+    </Typography>
+    <Panel>{children}</Panel>
+  </Column>
+)
 
 // Id 0: built only to format group amounts, never a currency the user owns.
 export const groupCurrency = (group: TransactionGroup): Currency =>
@@ -61,9 +55,6 @@ export const groupCurrency = (group: TransactionGroup): Currency =>
     group.originalCurrencyDecimalPoints,
     new RateAutoupdateSettings('', false),
   )
-
-export const memberName = (members: Person[], email: Email): string =>
-  members.find((m) => m.email === email)?.name ?? email
 
 export const GroupPaidTable: FC<{ members: Person[]; transactions: AugmentedTransaction[]; currency: Currency }> = ({
   members,
@@ -91,40 +82,53 @@ export const GroupPaidTable: FC<{ members: Person[]; transactions: AugmentedTran
   const format = (amount: number) => formatFull(currency, amount, privacyMode)
 
   return (
-    <Table>
-      <thead>
-        <tr>
-          <th>User</th>
-          <th>Payed</th>
-          <th />
-        </tr>
-      </thead>
-      <tbody>
-        {members.map((member) => {
-          const balance = balances.get(member.email)!
-          return (
-            <tr key={`table-user-${member.email}`}>
-              <td>{member.name}</td>
-              <td>{format(paid.get(member.email)!)}</td>
-              <td>
-                <Typography
-                  component="span"
-                  fontSize="inherit"
-                  whiteSpace="nowrap"
-                  color={balance > 0 ? 'success.main' : balance < 0 ? 'error.main' : 'textDisabled'}
-                >
-                  {balance > 0 ? `Is owed ${format(balance)}` : balance < 0 ? `Owes ${format(-balance)}` : 'Settled'}
-                </Typography>
-              </td>
-            </tr>
-          )
-        })}
-        <tr>
-          <td />
-          <td>{format(total)}</td>
-          <td />
-        </tr>
-      </tbody>
-    </Table>
+    <Column>
+      {members.map((member, index) => {
+        const balance = balances.get(member.email)!
+        return (
+          <Row
+            key={member.email}
+            style={{
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              gap: '1rem',
+              padding: '0.5rem 0',
+              borderTop: index === 0 ? undefined : '1px solid rgba(128,128,128,0.12)',
+            }}
+          >
+            <Column style={{ minWidth: 0 }}>
+              <Typography fontWeight="600" fontSize="0.95rem" textOverflow="ellipsis" overflow="hidden">
+                {member.name}
+              </Typography>
+              <Typography fontSize="0.8rem" color="textDisabled">
+                Paid {format(paid.get(member.email)!)}
+              </Typography>
+            </Column>
+            <Typography
+              fontSize="0.9rem"
+              fontWeight="500"
+              whiteSpace="nowrap"
+              color={balance > 0 ? 'success.main' : balance < 0 ? 'error.main' : 'textDisabled'}
+            >
+              {balance > 0 ? `Is owed ${format(balance)}` : balance < 0 ? `Owes ${format(-balance)}` : 'Settled'}
+            </Typography>
+          </Row>
+        )
+      })}
+      <Row
+        style={{
+          justifyContent: 'space-between',
+          paddingTop: '0.5rem',
+          borderTop: '1px solid rgba(128,128,128,0.24)',
+        }}
+      >
+        <Typography fontSize="0.85rem" color="textSecondary">
+          Total paid
+        </Typography>
+        <Typography fontSize="0.85rem" fontWeight="600">
+          {format(total)}
+        </Typography>
+      </Row>
+    </Column>
   )
 }

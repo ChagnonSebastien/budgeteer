@@ -213,7 +213,7 @@ export class AugmentedTransaction extends Transaction {
     switch (splitType) {
       case SplitType.EQUAL: {
         const participantCount = this.participants(memberValues).length
-        return participantCount >= memberCount ? null : `Between ${participantCount} of ${memberCount} members`
+        return participantCount >= memberCount ? 'Equal split' : `Between ${participantCount} of ${memberCount} members`
       }
       case SplitType.PERCENTAGE:
         return `Your portion: ${userValue}%`

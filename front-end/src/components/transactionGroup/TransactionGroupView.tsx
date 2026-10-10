@@ -4,7 +4,7 @@ import type { IconType } from 'react-icons'
 import { useNavigate } from 'react-router-dom'
 
 import ChangeSplitDialog from './ChangeSplitDialog'
-import { FirstDivision, GroupPaidTable, SecondDivision } from './GroupLedger'
+import { FirstDivision, GroupPaidTable, SecondDivision, Section } from './GroupLedger'
 import GroupMembers from './GroupMembers'
 import GroupTransactionModal from './GroupTransactionModal'
 import SettlementModal from './SettlementModal'
@@ -15,7 +15,7 @@ import { UnconfirmedAugmentedTransaction } from '../../domain/model/unconfirmedT
 import { SettlementServiceContext, UnconfirmedTransactionServiceContext } from '../../service/ServiceContext'
 import { IconToolsContext } from '../icons/IconTools'
 import ContentWithHeader from '../shared/ContentWithHeader'
-import { Row } from '../shared/Layout'
+import { Column, Row } from '../shared/Layout'
 import SplitView from '../shared/SplitView'
 import { useElementDimensions } from '../shared/useDimensions'
 import GroupTransactionCard from '../transactions/GroupTransactionCard'
@@ -69,23 +69,29 @@ const TransactionGroupView: FC<{
         split={splitHorizontal ? 'horizontal' : 'vertical'}
         first={
           <FirstDivision>
-            <Typography variant="h1" fontSize="2rem">
-              {transactionGroup.name}
-            </Typography>
-            <GroupMembers transactionGroup={transactionGroup} style={{ justifyContent: 'end', alignSelf: 'stretch' }} />
-            <Row style={{ alignItems: 'center', gap: '0.5rem' }}>
-              <Typography fontSize="0.95rem">
-                Default split: <b>{SplitTypeToString(transactionGroup.splitType)}</b>
+            <Column style={{ gap: '0.15rem' }}>
+              <Typography variant="h1" fontSize="1.75rem" fontWeight="600">
+                {transactionGroup.name}
               </Typography>
-              <Button size="small" onClick={() => setChangingSplit(true)}>
-                Change
-              </Button>
-            </Row>
-            <GroupPaidTable
-              members={transactionGroup.members}
-              transactions={groupTransactions}
-              currency={transactionGroup.augmentedCurrency}
-            />
+              <Row style={{ alignItems: 'center', gap: '0.25rem' }}>
+                <Typography fontSize="0.9rem" color="textSecondary">
+                  Default split: {SplitTypeToString(transactionGroup.splitType)}
+                </Typography>
+                <Button size="small" onClick={() => setChangingSplit(true)} sx={{ minWidth: 0, textTransform: 'none' }}>
+                  Change
+                </Button>
+              </Row>
+            </Column>
+            <Section title="Members">
+              <GroupMembers transactionGroup={transactionGroup} />
+            </Section>
+            <Section title="Balances">
+              <GroupPaidTable
+                members={transactionGroup.members}
+                transactions={groupTransactions}
+                currency={transactionGroup.augmentedCurrency}
+              />
+            </Section>
           </FirstDivision>
         }
         firstZoneStyling={{ scroll: true, grow: false }}
