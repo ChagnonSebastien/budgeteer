@@ -2,6 +2,7 @@ package grpc
 
 import (
 	"chagnon.dev/budget-server/internal/domain/model"
+	"chagnon.dev/budget-server/internal/infrastructure/autoupdate"
 	"chagnon.dev/budget-server/internal/infrastructure/db/repository"
 	"chagnon.dev/budget-server/internal/infrastructure/messaging/dto"
 	"chagnon.dev/budget-server/internal/infrastructure/messaging/shared"
@@ -40,6 +41,16 @@ type currencyRepository interface {
 	) (repository.DeleteCurrencyResult, error)
 }
 
+func checkRateScriptAllowed(user *shared.User, setsScript bool, scriptLength int) error {
+	if setsScript && user.IsGuestUser() {
+		return status.Error(codes.PermissionDenied, "currency rate scripts are not available to guest users")
+	}
+	if scriptLength > autoupdate.MaxScriptBytes {
+		return status.Errorf(codes.InvalidArgument, "the rate script must be at most %d bytes", autoupdate.MaxScriptBytes)
+	}
+	return nil
+}
+
 type CurrencyHandler struct {
 	dto.UnimplementedCurrencyServiceServer
 
@@ -53,6 +64,11 @@ func (s *CurrencyHandler) CreateCurrency(
 	user, ok := shared.FromContext(ctx)
 	if !ok {
 		return nil, fmt.Errorf("getting user from context")
+	}
+
+	setsScript := req.AutoUpdateSettingsScript != "" || req.AutoUpdateSettingsEnabled
+	if err := checkRateScriptAllowed(user, setsScript, len(req.AutoUpdateSettingsScript)); err != nil {
+		return nil, err
 	}
 
 	newCurrencyId, err := s.currencyService.CreateCurrency(
@@ -75,6 +91,12 @@ func (s *CurrencyHandler) UpdateCurrency(
 	user, ok := shared.FromContext(ctx)
 	if !ok {
 		return nil, fmt.Errorf("getting user from context")
+	}
+
+	script := req.GetFields().GetAutoUpdateSettingsScript()
+	setsScript := script != "" || req.GetFields().GetAutoUpdateSettingsEnabled()
+	if err := checkRateScriptAllowed(user, setsScript, len(script)); err != nil {
+		return nil, err
 	}
 
 	var decimalPoints *int
