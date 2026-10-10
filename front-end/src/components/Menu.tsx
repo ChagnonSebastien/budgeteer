@@ -186,7 +186,7 @@ const DrawerWrapper: FC<Props> = ({ logout, children, userIsGuest = false }) => 
     <div ref={setDrawerRef}>
       <Box sx={{ p: 3 }}>
         <Typography variant="h6" sx={{ fontWeight: 600, letterSpacing: '0.05em', mb: 0.5 }}>
-          {userIsGuest ? 'Shared expenses' : 'Budget App'}
+          {userIsGuest ? 'Shared expenses' : 'Fintrospect'}
         </Typography>
         <Typography variant="body2" color="text.disabled">
           {email}

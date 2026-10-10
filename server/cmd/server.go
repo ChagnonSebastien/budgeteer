@@ -148,7 +148,7 @@ func (s *Server) Serve(ctx context.Context) error {
 		}
 		brandName := s.config.Auth.GuestLogin.BrandName
 		if brandName == "" {
-			brandName = "Budgeteer"
+			brandName = "Fintrospect"
 		}
 
 		guestLoginService, err = service.NewGuestLoginService(

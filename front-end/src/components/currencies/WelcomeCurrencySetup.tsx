@@ -40,7 +40,7 @@ const WelcomeCurrencySetup: FC<{ onSubmit(choice: CurrencyChoice): Promise<void>
   return (
     <Box sx={{ height: '100%', overflowY: 'auto', display: 'flex' }}>
       <Stack spacing={2} sx={{ p: 2, maxWidth: (t) => t.contentWidth.default, width: '100%', m: 'auto' }}>
-        <Typography variant="h5">Welcome to Budgeteer</Typography>
+        <Typography variant="h5">Welcome to Fintrospect</Typography>
         <Typography color="textSecondary">
           Track your accounts and spending, and split expenses with others. To start, pick the currency you use day to
           day: totals, charts and balances are shown in it.

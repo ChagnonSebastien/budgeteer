@@ -1,18 +1,12 @@
 {
-  "short_name": "Budgeteer",
-  "name": "Budgeteer",
+  "short_name": "Fintrospect",
+  "name": "Fintrospect",
   "icons": [
-    {
-      "src": "assets/icon/favicon.png",
-      "sizes": "64x64 32x32 24x24 16x16",
-      "type": "image/x-icon"
-    },
-    {
-      "src": "assets/icon/icon.png",
-      "type": "image/png",
-      "sizes": "512x512",
-      "purpose": "maskable"
-    }
+    { "src": "favicon.png", "sizes": "64x64", "type": "image/png" },
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml" },
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ],
   "start_url": ".",
   "display": "standalone",

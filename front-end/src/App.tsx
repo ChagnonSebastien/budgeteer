@@ -1,10 +1,10 @@
-import { Button } from '@mui/material'
 import { createContext, FC } from 'react'
 
 import AuthenticatedZone from './AuthenticatedZone'
 import { IconToolsContext, useIconTools } from './components/icons/IconTools'
+import LandingPage from './components/LandingPage'
 import LoadingScreen from './components/LoadingScreen'
-import { Centered, Column } from './components/shared/Layout'
+import { Centered } from './components/shared/Layout'
 import User, { UserPreferencesPatch } from './domain/model/user'
 import GuestZone from './GuestZone'
 import useAuthentication from './useAuthentication'
@@ -69,25 +69,7 @@ const App: FC = () => {
   }
 
   return (
-    <Centered>
-      <Column sx={{ gap: 2 }}>
-        {authMethods.oidc && (
-          <Button variant="contained" disableElevation onClick={authMethods.oidc}>
-            OIDC Login
-          </Button>
-        )}
-        {authMethods.userPass && (
-          <Button variant="contained" disableElevation onClick={authMethods.userPass}>
-            Password Login
-          </Button>
-        )}
-        {authMethods.guest && (
-          <Button variant="contained" disableElevation onClick={authMethods.guest}>
-            Guest Login
-          </Button>
-        )}
-      </Column>
-    </Centered>
+    <LandingPage oidcLogin={authMethods.oidc} userPassLogin={authMethods.userPass} guestLogin={authMethods.guest} />
   )
 }
 

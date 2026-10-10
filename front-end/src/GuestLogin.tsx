@@ -93,7 +93,7 @@ export function GuestLogin() {
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh', p: 2, bgcolor: 'background.default' }}>
       <Stack spacing={2} sx={{ maxWidth: (t) => t.contentWidth.compact, width: '100%', m: 'auto' }}>
-        <Typography variant="h5">Budgeteer guest login</Typography>
+        <Typography variant="h5">Fintrospect guest login</Typography>
         <Typography color="text.secondary">
           We'll email you a verification code. Guest accounts can only see the groups they're invited to.
         </Typography>

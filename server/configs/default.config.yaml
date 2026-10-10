@@ -21,7 +21,7 @@ auth:
     codeTtlMinutes: 15
     resendCooldownSecs: 300
     maxFailedAttempts: 3
-    brandName: "Budgeteer"
+    brandName: "Fintrospect"
     supportEmail: ""
 mailer:
   host: "smtp.gmail.com"
