@@ -1,6 +1,18 @@
 import { Button, Chip, DialogActions, DialogContent, DialogTitle, useMediaQuery, useTheme } from '@mui/material'
 import { DateCalendar, DateView, PickerValidDate } from '@mui/x-date-pickers'
-import { addDays, formatDate, isSameDay, startOfDay, subMonths, subYears } from 'date-fns'
+import {
+  addDays,
+  differenceInMonths,
+  formatDate,
+  isAfter,
+  isSameDay,
+  max,
+  min,
+  startOfDay,
+  subMonths,
+  subWeeks,
+  subYears,
+} from 'date-fns'
 import dayjs from 'dayjs'
 import { ReactNode, useContext, useMemo, useState } from 'react'
 
@@ -27,17 +39,34 @@ type DateFilters = {
   toDate: Date
 }
 
+const presets: { label: string; from: (today: Date) => Date }[] = [
+  { label: '5Y', from: (today) => subYears(today, 5) },
+  { label: '3Y', from: (today) => subYears(today, 3) },
+  { label: '1Y', from: (today) => subYears(today, 1) },
+  { label: '3M', from: (today) => subMonths(today, 3) },
+  { label: '1M', from: (today) => subMonths(today, 1) },
+  { label: '1W', from: (today) => subWeeks(today, 1) },
+]
+const maxPresets = 5
+
 export const useDateFilter = (): DateFilters => {
   const { queryParams: qp, updateQueryParams } = useQueryParams<DateFiltersQueryParams>()
+  const { state: transactions } = useContext(TransactionServiceContext)
+
+  const today = startOfDay(new Date())
+  const historyStart = min([startOfDay(transactions.at(-1)?.date ?? today), subWeeks(today, 1)])
+
   const timeRange = useMemo(
     () => [
-      qp.from ? startOfDay(new Date(Number.parseInt(qp.from)!)) : startOfDay(addDays(subYears(new Date(), 1), 1)),
+      qp.from
+        ? startOfDay(new Date(Number.parseInt(qp.from)!))
+        : max([startOfDay(addDays(subYears(new Date(), 1), 1)), historyStart]),
       qp.to ? startOfDay(new Date(Number.parseInt(qp.to)!)) : startOfDay(new Date()),
     ],
-    [qp.from, qp.to],
+    [qp.from, qp.to, historyStart.getTime()],
   )
 
-  const { state: transactions } = useContext(TransactionServiceContext)
+  const fittingPresets = presets.filter((preset) => isAfter(preset.from(today), historyStart)).slice(0, maxPresets)
 
   const quickFilter = (
     <Row
@@ -48,61 +77,29 @@ export const useDateFilter = (): DateFilters => {
     >
       <div
         style={{ padding: '.25rem 1rem', fontWeight: 'bolder', cursor: 'pointer' }}
-        onClick={() => {
-          if (transactions.length > 0) {
-            updateQueryParams({
-              from: String(startOfDay(transactions[transactions.length - 1].date).getTime()),
-              to: String(startOfDay(new Date()).getTime()),
-            })
-          }
-        }}
+        onClick={() =>
+          updateQueryParams({
+            from: String(historyStart.getTime()),
+            to: String(today.getTime()),
+          })
+        }
       >
         Max
       </div>
-      <div
-        style={{ padding: '.25rem 1rem', fontWeight: 'bolder', cursor: 'pointer' }}
-        onClick={() => {
-          updateQueryParams({
-            from: String(startOfDay(addDays(subYears(new Date(), 5), 1)).getTime()),
-            to: String(startOfDay(new Date()).getTime()),
-          })
-        }}
-      >
-        5Y
-      </div>
-      <div
-        style={{ padding: '.25rem 1rem', fontWeight: 'bolder', cursor: 'pointer' }}
-        onClick={() => {
-          updateQueryParams({
-            from: String(startOfDay(addDays(subYears(new Date(), 3), 1)).getTime()),
-            to: String(startOfDay(new Date()).getTime()),
-          })
-        }}
-      >
-        3Y
-      </div>
-      <div
-        style={{ padding: '.25rem 1rem', fontWeight: 'bolder', cursor: 'pointer' }}
-        onClick={() => {
-          updateQueryParams({
-            from: String(startOfDay(addDays(subYears(new Date(), 1), 1)).getTime()),
-            to: String(startOfDay(new Date()).getTime()),
-          })
-        }}
-      >
-        1Y
-      </div>
-      <div
-        style={{ padding: '.25rem 1rem', fontWeight: 'bolder', cursor: 'pointer' }}
-        onClick={() => {
-          updateQueryParams({
-            from: String(startOfDay(addDays(subMonths(new Date(), 1), 1)).getTime()),
-            to: String(startOfDay(new Date()).getTime()),
-          })
-        }}
-      >
-        1M
-      </div>
+      {fittingPresets.map((preset) => (
+        <div
+          key={preset.label}
+          style={{ padding: '.25rem 1rem', fontWeight: 'bolder', cursor: 'pointer' }}
+          onClick={() =>
+            updateQueryParams({
+              from: String(addDays(preset.from(today), 1).getTime()),
+              to: String(today.getTime()),
+            })
+          }
+        >
+          {preset.label}
+        </div>
+      ))}
     </Row>
   )
 
@@ -111,9 +108,9 @@ export const useDateFilter = (): DateFilters => {
       ticksNumber={10}
       disabledIntervals={[]}
       selectedInterval={timeRange}
-      timelineInterval={[startOfDay(transactions.at(-1)?.date ?? subYears(new Date(), 1)), startOfDay(new Date())]}
+      timelineInterval={[historyStart, today]}
       step={20}
-      formatTick={(a) => formatDate(new Date(a), 'MMM yyyy')}
+      formatTick={(a) => formatDate(new Date(a), differenceInMonths(today, historyStart) < 3 ? 'MMM d' : 'MMM yyyy')}
       onUpdateCallback={(_data: { error: boolean; time: Date[] }) => {
         /** Ignore */
       }}
@@ -153,10 +150,19 @@ type TransactionFilters = {
   toDate: Date
 }
 
-const useTransactionFilter = (
-  accountPreFilter: (a: Account) => boolean = (_) => true,
+interface TransactionFilterOptions {
+  accountPreFilter?: (a: Account) => boolean
+  canFilterByCategory?: boolean
+  canFilterByAccount?: boolean
+}
+
+const allAccounts = (_: Account) => true
+
+const useTransactionFilter = ({
+  accountPreFilter = allAccounts,
   canFilterByCategory = true,
-): TransactionFilters => {
+  canFilterByAccount = true,
+}: TransactionFilterOptions = {}): TransactionFilters => {
   const { queryParams: qp, updateQueryParams } = useQueryParams<TransactionFiltersQueryParams>()
   const accountFilter = useMemo<number[] | null>(() => JSON.parse(qp.accounts ?? null), [qp.accounts])
   const categoryFilter = useMemo<number[] | null>(() => JSON.parse(qp.categories ?? null), [qp.categories])
@@ -262,19 +268,21 @@ const useTransactionFilter = (
       <>
         <DialogTitle>Edit filters</DialogTitle>
         <DialogContent>
-          <Row
-            style={{
-              borderBottom: '1px #8885 solid',
-              marginBottom: '1rem',
-              padding: '.5rem',
-              alignItems: 'center',
-            }}
-            onClick={() => setShowAccountModal(true)}
-          >
-            <div>Account:</div>
-            <div style={{ width: '.5rem' }} />
-            <div style={{ flexGrow: 1, minWidth: '20rem', flexWrap: 'wrap' }}>{accountPills}</div>
-          </Row>
+          {canFilterByAccount && (
+            <Row
+              style={{
+                borderBottom: '1px #8885 solid',
+                marginBottom: '1rem',
+                padding: '.5rem',
+                alignItems: 'center',
+              }}
+              onClick={() => setShowAccountModal(true)}
+            >
+              <div>Account:</div>
+              <div style={{ width: '.5rem' }} />
+              <div style={{ flexGrow: 1, minWidth: '20rem', flexWrap: 'wrap' }}>{accountPills}</div>
+            </Row>
+          )}
           {canFilterByCategory && (
             <Row
               style={{
@@ -349,7 +357,9 @@ const useTransactionFilter = (
                   {accountPills}
                 </div>
                 <div style={{ flexGrow: 1 }} />
-                <div style={{ margin: '.25rem', width: 'intrinsic', flexShrink: 0 }}>+ Filter</div>
+                <div style={{ margin: '.25rem', width: 'intrinsic', flexShrink: 0 }}>
+                  {canFilterByAccount || canFilterByCategory ? '+ Filter' : 'Edit dates'}
+                </div>
               </Row>
             </div>
           </>
@@ -449,7 +459,7 @@ const useTransactionFilter = (
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setShowAccountModal(false)}>Close</Button>
+          <Button onClick={() => setShowFromDateModal(false)}>Close</Button>
         </DialogActions>
       </BasicModal>
 
@@ -474,7 +484,7 @@ const useTransactionFilter = (
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setShowAccountModal(false)}>Close</Button>
+          <Button onClick={() => setShowToDateModal(false)}>Close</Button>
         </DialogActions>
       </BasicModal>
     </>

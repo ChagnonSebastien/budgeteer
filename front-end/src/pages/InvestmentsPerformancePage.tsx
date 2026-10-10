@@ -3,7 +3,7 @@ import { FC, useMemo } from 'react'
 
 import ExchangeRateComparison from '../components/graphing/ExchangeRateComparison'
 import { GraphContainer, SecondDivision } from '../components/graphing/GraphStyledComponents'
-import { useDateFilter } from '../components/inputs/useTransactionFilter'
+import useTransactionFilter from '../components/inputs/useTransactionFilter'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
 import { useElementDimensions, useWindowDimensions } from '../components/shared/useDimensions'
 import useQueryParams from '../components/shared/useQueryParams'
@@ -21,7 +21,11 @@ const InvestmentsPerformancePage: FC = () => {
   const { height: contentHeight, ref: setContentRef } = useElementDimensions(600, 600)
   const { height: optionsHeight, ref: setOptionsRef } = useElementDimensions(600, 600)
 
-  const { quickFilter, toDate, fromDate, slider } = useDateFilter()
+  const {
+    fromDate,
+    toDate,
+    overview: filterOverview,
+  } = useTransactionFilter({ canFilterByCategory: false, canFilterByAccount: false })
   const timeRange = useMemo<[Date, Date]>(() => [fromDate, toDate], [fromDate, toDate])
 
   const contentTooTall = useMemo(
@@ -58,10 +62,7 @@ const InvestmentsPerformancePage: FC = () => {
         }}
         ref={setOptionsRef}
       >
-        <Box style={{ flexGrow: 1, width: '100%' }}>
-          {quickFilter}
-          {slider}
-        </Box>
+        <Box style={{ flexGrow: 1, width: '100%' }}>{filterOverview}</Box>
       </SecondDivision>
     </ContentWithHeader>
   )

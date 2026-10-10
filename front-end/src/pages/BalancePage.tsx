@@ -40,7 +40,10 @@ const BalancePage: FC = () => {
     toDate,
     accountFilter,
     overview: filterOverview,
-  } = useTransactionFilter((account: Account) => account.isMine, false)
+  } = useTransactionFilter({
+    accountPreFilter: (account: Account) => account.isMine,
+    canFilterByCategory: false,
+  })
 
   const { queryParams: qp, updateQueryParams } = useQueryParams<QueryParams>()
   const groupBy = useMemo(() => (qp.groupBy ?? 'account') as AccountsGroupType | CurrenciesGroupType, [qp.groupBy])
