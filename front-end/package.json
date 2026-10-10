@@ -26,6 +26,7 @@
     "@protobuf-ts/grpcweb-transport": "^2.11.1",
     "@protobuf-ts/runtime": "^2.11.1",
     "@protobuf-ts/runtime-rpc": "^2.11.1",
+    "@tanstack/react-virtual": "3.13.26",
     "date-fns": "^4.1.0",
     "dayjs": "^1.11.13",
     "dexie": "^4.0.11",
