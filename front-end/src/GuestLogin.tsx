@@ -122,9 +122,9 @@ export function GuestLogin() {
                 label="Verification code"
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
-                placeholder="Enter 6-digit code"
+                placeholder="Enter the code from your email"
                 disabled={loading}
-                slotProps={{ htmlInput: { maxLength: 8 } }}
+                slotProps={{ htmlInput: { inputMode: 'numeric', autoComplete: 'one-time-code' } }}
                 autoFocus
                 fullWidth
               />
