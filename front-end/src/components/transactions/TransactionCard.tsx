@@ -83,15 +83,26 @@ export const CardAction: FC<{
   </ButtonBase>
 )
 
-export const CardTitleRow: FC<{ amount: ReactNode; date: ReactNode }> = ({ amount, date }) => (
-  <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={1}>
-    <Typography fontWeight={600} whiteSpace="nowrap">
-      {amount}
-    </Typography>
-    <Typography variant="body2" color="textDisabled" whiteSpace="nowrap">
-      {date}
-    </Typography>
-  </Stack>
+export const CardTitleRow: FC<{ amount: ReactNode; date: ReactNode; convertedAmount?: ReactNode }> = ({
+  amount,
+  date,
+  convertedAmount,
+}) => (
+  <>
+    <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={1}>
+      <Typography fontWeight={600} whiteSpace="nowrap" sx={{ minWidth: 0, ...ellipsis }}>
+        {amount}
+      </Typography>
+      <Typography variant="body2" color="textDisabled" whiteSpace="nowrap" sx={{ flexShrink: 0 }}>
+        {date}
+      </Typography>
+    </Stack>
+    {convertedAmount && (
+      <Typography variant="body2" color="text.secondary" whiteSpace="nowrap" sx={ellipsis}>
+        ➜ {convertedAmount}
+      </Typography>
+    )}
+  </>
 )
 
 const TransactionCard: FC<ItemProps<TransactionID, AugmentedTransaction, object>> = memo((props) => {
@@ -117,18 +128,17 @@ const TransactionCard: FC<ItemProps<TransactionID, AugmentedTransaction, object>
       }
     >
       <CardTitleRow
-        amount={
-          <>
-            {formatFull(item.currency, item.amount, privacyMode)}
-            {item.currency.id !== item.receiverCurrency.id &&
-              ` ➜ ${formatFull(item.receiverCurrency, item.receiverAmount, privacyMode)}`}
-          </>
+        amount={formatFull(item.currency, item.amount, privacyMode)}
+        convertedAmount={
+          item.currency.id !== item.receiverCurrency.id
+            ? formatFull(item.receiverCurrency, item.receiverAmount, privacyMode)
+            : undefined
         }
         date={item.date.toDateString()}
       />
 
       <Stack direction="row" justifyContent="space-between" spacing={1.5}>
-        <Stack sx={{ whiteSpace: 'nowrap', ...ellipsis }}>
+        <Stack sx={{ flex: 1, minWidth: 0, whiteSpace: 'nowrap', ...ellipsis }}>
           {[
             ['From:', item.sender?.name],
             ['To:', item.receiver?.name],
@@ -147,7 +157,15 @@ const TransactionCard: FC<ItemProps<TransactionID, AugmentedTransaction, object>
         <Typography
           variant="body2"
           align="right"
-          sx={{ alignSelf: 'stretch', flexShrink: 4, minWidth: 0, ...ellipsis }}
+          sx={{
+            flex: '0 1 40%',
+            minWidth: 0,
+            display: '-webkit-box',
+            WebkitLineClamp: 3,
+            WebkitBoxOrient: 'vertical',
+            overflow: 'hidden',
+            overflowWrap: 'break-word',
+          }}
         >
           {item.note}
         </Typography>
