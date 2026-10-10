@@ -23,7 +23,7 @@ const CreateTransactionGroupPage: FC = () => {
       if (typeof data.currency === 'undefined' || data.currency === 0) throw new Error('currency cannot be undefined')
       if (typeof data.category === 'undefined' || data.category === 0) throw new Error('category cannot be undefined')
 
-      await createTransactionGroup({
+      const created = await createTransactionGroup({
         name: data.name,
         splitType: data.splitType,
         currency: data.currency,
@@ -32,7 +32,7 @@ const CreateTransactionGroupPage: FC = () => {
         members: [new Person(email, name, null, true)],
       })
       showToast('Transaction group created')
-      navigate(`/transaction-groups`, { replace: true })
+      navigate(`/transaction-groups/manage/${created.id}`, { replace: true })
     },
     [navigate, showToast],
   )
