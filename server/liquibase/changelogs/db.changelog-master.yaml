@@ -57,3 +57,5 @@ databaseChangeLog:
       file: ./changelogs/028-root-category-brand-color.sql
   - include:
       file: ./changelogs/029-currency-rate-fetch-failure.sql
+  - include:
+      file: ./changelogs/030-sessions.sql

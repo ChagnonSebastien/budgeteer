@@ -1,16 +1,3 @@
--- name: UpsertUser :one
-INSERT INTO users as u (username, email, oidc_sub)
-VALUES (
-        sqlc.arg(username),
-        sqlc.arg(email),
-        sqlc.arg(oidc_sub)
-)
-ON CONFLICT (email)
-    DO UPDATE SET
-                  username = sqlc.arg(username),
-                  oidc_sub = COALESCE(sqlc.narg(oidc_sub), u.oidc_sub)
-RETURNING u.id;
-
 -- name: SetDefaultCurrency :execrows
 UPDATE users u
 SET default_currency = sqlc.arg(default_currency)
@@ -20,18 +7,34 @@ WHERE u.id = sqlc.arg(user_id) AND EXISTS (
     WHERE c.id = sqlc.arg(default_currency) AND c.user_id = sqlc.arg(user_id)
 );
 
--- name: UpsertOidcUser :one
-INSERT INTO users as u (username, email, oidc_sub)
-VALUES (
-           sqlc.arg(username),
-           sqlc.arg(email),
-           sqlc.arg(oidc_sub)
-       )
-ON CONFLICT (oidc_sub)
-    DO UPDATE SET
-                  username = sqlc.arg(username),
-                  email = sqlc.arg(email)
-RETURNING u.id;
+-- name: GetUserByOidcSub :one
+SELECT id, email
+FROM users
+WHERE oidc_sub = sqlc.arg(oidc_sub)
+FOR UPDATE;
+
+-- name: GetUserByEmail :one
+SELECT id, oidc_sub
+FROM users
+WHERE email = sqlc.arg(email)
+FOR UPDATE;
+
+-- name: UpdateOidcUserProfile :exec
+UPDATE users
+SET username = sqlc.arg(username),
+    email    = sqlc.arg(email)
+WHERE id = sqlc.arg(user_id);
+
+-- name: LinkOidcSub :execrows
+UPDATE users
+SET oidc_sub = sqlc.arg(oidc_sub),
+    username = sqlc.arg(username)
+WHERE id = sqlc.arg(user_id) AND oidc_sub IS NULL;
+
+-- name: CreateOidcUser :one
+INSERT INTO users (username, email, oidc_sub)
+VALUES (sqlc.arg(username), sqlc.arg(email), sqlc.arg(oidc_sub))
+RETURNING id;
 
 -- name: EnsureGuestUser :one
 INSERT INTO users as u (username, email)

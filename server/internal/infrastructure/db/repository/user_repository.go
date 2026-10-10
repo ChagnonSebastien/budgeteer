@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"time"
 
 	"chagnon.dev/budget-server/internal/domain/model"
@@ -11,28 +12,86 @@ import (
 	"github.com/google/uuid"
 )
 
-func (r *Repository) UpsertOidcUser(ctx context.Context, oidcSub, email, username string) (uuid.UUID, error) {
-	return r.queries.UpsertOidcUser(ctx, &dao.UpsertOidcUserParams{
-		Username: username,
-		Email:    email,
-		OidcSub: sql.NullString{
-			Valid:  true,
-			String: oidcSub,
-		},
-	})
+func (r *Repository) ResolveOidcUser(ctx context.Context, identity model.OidcIdentity) (userID uuid.UUID, email string, err error) {
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return uuid.Nil, "", err
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	queries := r.queries.WithTx(tx)
+	sub := sql.NullString{Valid: true, String: identity.Sub}
+
+	known, err := queries.GetUserByOidcSub(ctx, sub)
+	switch {
+	case err == nil:
+		email = known.Email
+		if identity.EmailVerified {
+			email = identity.Email
+		}
+		if err := queries.UpdateOidcUserProfile(ctx, &dao.UpdateOidcUserProfileParams{
+			Username: identity.Username,
+			Email:    email,
+			UserID:   known.ID,
+		}); err != nil {
+			return uuid.Nil, "", err
+		}
+		userID = known.ID
+	case errors.Is(err, sql.ErrNoRows):
+		if !identity.EmailVerified {
+			return uuid.Nil, "", model.ErrOidcEmailUnverified
+		}
+		email = identity.Email
+		userID, err = linkOrCreateOidcUser(ctx, queries, identity, sub)
+		if err != nil {
+			return uuid.Nil, "", err
+		}
+	default:
+		return uuid.Nil, "", err
+	}
+
+	return userID, email, tx.Commit()
 }
 
-func (r *Repository) UpsertUser(ctx context.Context, username, email string, oidcSub model.Optional[string]) (uuid.UUID, error) {
-	return r.queries.UpsertUser(
-		ctx, &dao.UpsertUserParams{
-			Username: username,
-			Email:    email,
-			OidcSub: sql.NullString{
-				Valid:  oidcSub.IsSome(),
-				String: oidcSub.ValueOr(""),
-			},
-		},
-	)
+func linkOrCreateOidcUser(ctx context.Context, queries *dao.Queries, identity model.OidcIdentity, sub sql.NullString) (uuid.UUID, error) {
+	existing, err := queries.GetUserByEmail(ctx, identity.Email)
+	if errors.Is(err, sql.ErrNoRows) {
+		return queries.CreateOidcUser(ctx, &dao.CreateOidcUserParams{
+			Username: identity.Username,
+			Email:    identity.Email,
+			OidcSub:  sub,
+		})
+	}
+	if err != nil {
+		return uuid.Nil, err
+	}
+	if existing.OidcSub.Valid {
+		return uuid.Nil, model.ErrOidcEmailTaken
+	}
+
+	if _, err := queries.LinkOidcSub(ctx, &dao.LinkOidcSubParams{
+		OidcSub:  sub,
+		Username: identity.Username,
+		UserID:   existing.ID,
+	}); err != nil {
+		return uuid.Nil, err
+	}
+	return existing.ID, nil
+}
+
+func (r *Repository) CreateSession(ctx context.Context, sessionID string, userID uuid.UUID, expiresAt time.Time) error {
+	if err := r.queries.DeleteExpiredSessions(ctx, userID); err != nil {
+		return err
+	}
+	return r.queries.CreateSession(ctx, &dao.CreateSessionParams{ID: sessionID, UserID: userID, ExpiresAt: expiresAt})
+}
+
+func (r *Repository) SessionIsActive(ctx context.Context, sessionID string, userID uuid.UUID) (bool, error) {
+	return r.queries.SessionIsActive(ctx, &dao.SessionIsActiveParams{ID: sessionID, UserID: userID})
+}
+
+func (r *Repository) DeleteSession(ctx context.Context, sessionID string) error {
+	return r.queries.DeleteSession(ctx, sessionID)
 }
 
 func (r *Repository) EnsureGuestUser(ctx context.Context, email string) (uuid.UUID, error) {

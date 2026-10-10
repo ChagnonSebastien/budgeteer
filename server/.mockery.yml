@@ -1,0 +1,5 @@
+template: testify
+packages:
+  chagnon.dev/budget-server/internal/infrastructure/messaging/http:
+    interfaces:
+      userRepository:

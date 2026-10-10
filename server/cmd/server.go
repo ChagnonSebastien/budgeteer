@@ -98,8 +98,9 @@ func (s *Server) Serve(ctx context.Context) error {
 
 	var oidcConfig *oauth2.Config
 	var verifier *oidc.IDTokenVerifier
+	var oidcRevocationEndpoint string
 	if s.config.Auth.Oidc.Enabled {
-		oidcConfig, verifier, err = setupOidcConfig(ctx, s.config.Auth.Oidc, s.config.PublicUrl)
+		oidcConfig, verifier, oidcRevocationEndpoint, err = setupOidcConfig(ctx, s.config.Auth.Oidc, s.config.PublicUrl)
 		if err != nil {
 			return fmt.Errorf("setting up oidc: %s", err)
 		}
@@ -192,6 +193,7 @@ func (s *Server) Serve(ctx context.Context) error {
 			verifier,                         // verifier
 			s.config.PublicUrl,               // serverPublicUrl
 			s.config.Auth.Oidc.ProviderUrl,   // oidcIssuer
+			oidcRevocationEndpoint,           // oidcRevocationEndpoint
 		),
 	)
 
@@ -210,15 +212,26 @@ func (s *Server) Serve(ctx context.Context) error {
 func setupOidcConfig(ctx context.Context, oidcConfig OidcConfig, serverPublicUrl string) (
 	*oauth2.Config,
 	*oidc.IDTokenVerifier,
+	string,
 	error,
 ) {
 	if oidcConfig.ClientId == "" || oidcConfig.ClientSecret == "" || oidcConfig.ProviderUrl == "" {
-		return nil, nil, fmt.Errorf("missing configuration parameters")
+		return nil, nil, "", fmt.Errorf("missing configuration parameters")
 	}
 
 	provider, err := oidc.NewProvider(ctx, oidcConfig.ProviderUrl)
 	if err != nil {
-		return nil, nil, fmt.Errorf("creating oidc provider")
+		return nil, nil, "", fmt.Errorf("creating oidc provider")
+	}
+
+	var discovery struct {
+		RevocationEndpoint string `json:"revocation_endpoint"`
+	}
+	if err := provider.Claims(&discovery); err != nil {
+		return nil, nil, "", fmt.Errorf("reading oidc discovery document: %w", err)
+	}
+	if discovery.RevocationEndpoint == "" {
+		logging.FromContext(ctx).Warn("OIDC provider has no revocation endpoint: logout cannot revoke refresh tokens")
 	}
 
 	return &oauth2.Config{
@@ -232,5 +245,5 @@ func setupOidcConfig(ctx context.Context, oidcConfig OidcConfig, serverPublicUrl
 				ClientID:          oidcConfig.ClientId,
 				SkipClientIDCheck: true,
 			},
-		), nil
+		), discovery.RevocationEndpoint, nil
 }
