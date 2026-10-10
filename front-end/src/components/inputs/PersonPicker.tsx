@@ -1,4 +1,4 @@
-import { FC, useContext } from 'react'
+import { FC, useContext, useMemo } from 'react'
 
 import ItemPicker from './ItemPicker'
 import { EmailValidator } from './Validator'
@@ -14,11 +14,16 @@ interface Props {
   errorText?: string
   allowNew?: boolean
   OverrideTextLabel?: FC<{ onClick(): void }>
+  excludeEmails?: Email[]
 }
 
 const PersonPicker: FC<Props> = (props) => {
-  const { value, onPersonSelected, allowNew = false, labelText, errorText, OverrideTextLabel } = props
-  const { knownPeople } = useContext(TransactionGroupServiceContext)
+  const { value, onPersonSelected, allowNew = false, labelText, errorText, OverrideTextLabel, excludeEmails } = props
+  const { knownPeople: allKnownPeople } = useContext(TransactionGroupServiceContext)
+  const knownPeople = useMemo(
+    () => allKnownPeople.filter((person) => !excludeEmails?.includes(person.email)),
+    [allKnownPeople, excludeEmails],
+  )
 
   const handleAccountSelected = (email: Email) => {
     if (onPersonSelected) {

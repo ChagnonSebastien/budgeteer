@@ -16,9 +16,7 @@ const GroupMembers: FC<{ transactionGroup: TransactionGroup; style?: CSSProperti
   const addMember = useCallback(
     ({ existing, id, name }: { existing: boolean; id: Email | null; name: string }) => {
       const email = existing ? id! : name
-      if (transactionGroup.members.some((m) => m.email === email)) {
-        throw new Error(`${email} already is a member of this transaction group`)
-      }
+      if (transactionGroup.members.some((m) => m.email === email)) return
 
       updateTransactionGroup(
         { id: transactionGroup.id },
@@ -47,6 +45,7 @@ const GroupMembers: FC<{ transactionGroup: TransactionGroup; style?: CSSProperti
           </IconButton>
         )}
         allowNew
+        excludeEmails={transactionGroup.members.map((m) => m.email)}
         value={null}
         labelText={''}
       />
