@@ -37,7 +37,7 @@ import TransactionPage from './pages/TransactionPage'
 import TrendsPage from './pages/TrendsPage'
 import { makeAccountPersistenceAugmenter } from './service/AccountServiceAugmenter'
 import { BasicCrudServiceWithPersistence } from './service/BasicCrudServiceWithPersistence'
-import { CategoryPersistenceAugmenter } from './service/CategoryServiceAugmenter'
+import { makeCategoryPersistenceAugmenter } from './service/CategoryServiceAugmenter'
 import { CurrencyPersistenceAugmenter } from './service/CurrencyServiceAugmenter'
 import { ExchangeRatePersistenceAugmenter } from './service/ExcahngeRateServiceAugmenter'
 import { MixedAugmentationProvider } from './service/MixedAugmentation'
@@ -97,6 +97,7 @@ const settlementLocalStore = new SettlementLocalStore(IndexedDB)
 const SettlementPersistenceAugmenter = makeSettlementPersistenceAugmenter(settlementRemoteStore)
 const replayStore = new ReplayStore(IndexedDB)
 const AccountPersistenceAugmenterWithRemote = makeAccountPersistenceAugmenter(accountRemoteStore)
+const CategoryPersistenceAugmenterWithRemote = makeCategoryPersistenceAugmenter(categoryRemoteStore)
 
 const UnconfirmedTransactionPersistenceAugmenter = makeUnconfirmedTransactionPersistenceAugmenter(
   unconfirmedTransactionRemoteStore,
@@ -279,7 +280,7 @@ const PersistenceSetup: FC<{ children: ReactNode; hasInternet: boolean }> = ({ c
         localStore={categoryLocalStore}
         actionStore={replayStore}
         context={CategoryServiceContext}
-        Augmenter={CategoryPersistenceAugmenter}
+        Augmenter={CategoryPersistenceAugmenterWithRemote}
         sorter={(a, b) => {
           if (b.ordering !== a.ordering) return b.ordering - a.ordering
           return b.id - a.id

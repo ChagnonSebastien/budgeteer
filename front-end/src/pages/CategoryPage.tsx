@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 
 import { CategoryCard } from '../components/categories/CategoryCard'
 import { CategoryList } from '../components/categories/CategoryList'
+import DeleteCategoryDialog from '../components/categories/DeleteCategoryDialog'
 import { IconToolsContext } from '../components/icons/IconTools'
 import ActionSpeedDial from '../components/shared/ActionSpeedDial'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
@@ -16,6 +17,7 @@ const CategoryPage: FC = () => {
   const { IconLib } = useContext(IconToolsContext)
   const { state: categories } = useContext(CategoryServiceContext)
   const [clickedCategory, setClickedCategory] = useState<Category | null>(null)
+  const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(null)
 
   return (
     <ContentWithHeader title="Categories" action="menu" withPadding>
@@ -66,9 +68,9 @@ const CategoryPage: FC = () => {
                 Icon: IconLib.MdDelete,
                 label: 'Delete Category',
                 intent: 'destructive',
-                description: 'Remove this category',
-                action: () => {},
-                disabled: true,
+                description: 'Move or delete its transactions, then remove it',
+                action: () => setCategoryToDelete(clickedCategory),
+                disabled: clickedCategory.parentId === null,
               },
               {
                 Icon: IconLib.MdList,
@@ -91,6 +93,16 @@ const CategoryPage: FC = () => {
           </FancyModal>
         )}
       </FancyDialog>
+      {categoryToDelete && (
+        <DeleteCategoryDialog
+          category={categoryToDelete}
+          onClose={() => setCategoryToDelete(null)}
+          onDeleted={() => {
+            setCategoryToDelete(null)
+            setClickedCategory(null)
+          }}
+        />
+      )}
     </ContentWithHeader>
   )
 }

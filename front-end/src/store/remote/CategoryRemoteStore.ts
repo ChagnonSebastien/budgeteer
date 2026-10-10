@@ -1,9 +1,19 @@
 import { RpcTransport } from '@protobuf-ts/runtime-rpc'
 
 import { CategoryConverter } from './converter/categoryConverter'
-import { CreateCategoryRequest, GetAllCategoriesRequest, UpdateCategoryRequest } from './dto/category'
+import {
+  CreateCategoryRequest,
+  DeleteCategoryRequest,
+  GetAllCategoriesRequest,
+  UpdateCategoryRequest,
+} from './dto/category'
 import { CategoryServiceClient } from './dto/category.client'
-import Category, { CategoryUpdatableFields } from '../../domain/model/category'
+import Category, {
+  CategoryDeletionOptions,
+  CategoryDeletionResult,
+  CategoryID,
+  CategoryUpdatableFields,
+} from '../../domain/model/category'
 import { IdIdentifier } from '../../domain/model/Unique'
 
 const converter = new CategoryConverter()
@@ -47,5 +57,21 @@ export default class CategoryRemoteStore {
         fields: converter.toUpdateDTO(data),
       }),
     ).response
+  }
+
+  public async deleteCategory(id: CategoryID, options: CategoryDeletionOptions): Promise<CategoryDeletionResult> {
+    const response = await this.client.deleteCategory(
+      DeleteCategoryRequest.create({
+        id,
+        targetId: options.targetId,
+        deleteTransactions: options.deleteTransactions ?? false,
+      }),
+    ).response
+    return {
+      movedTransactions: response.movedTransactions,
+      movedCategories: response.movedCategories,
+      deletedTransactions: response.deletedTransactions,
+      movedToUnconfirmed: response.movedToUnconfirmed,
+    }
   }
 }

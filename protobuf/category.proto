@@ -56,8 +56,22 @@ message UpdateCategoryResponse {
 
 }
 
+message DeleteCategoryRequest {
+  uint32 id = 1;
+  optional uint32 target_id = 2;
+  bool delete_transactions = 3;
+}
+
+message DeleteCategoryResponse {
+  uint32 moved_transactions = 1;
+  uint32 moved_categories = 2;
+  uint32 deleted_transactions = 3;
+  uint32 moved_to_unconfirmed = 4;
+}
+
 service CategoryService {
   rpc GetAllCategories (GetAllCategoriesRequest) returns (GetAllCategoriesResponse);
   rpc CreateCategory (CreateCategoryRequest) returns (CreateCategoryResponse);
   rpc UpdateCategory (UpdateCategoryRequest) returns (UpdateCategoryResponse);
+  rpc DeleteCategory (DeleteCategoryRequest) returns (DeleteCategoryResponse);
 }

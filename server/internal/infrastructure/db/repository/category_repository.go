@@ -3,6 +3,8 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"errors"
+	"fmt"
 
 	"chagnon.dev/budget-server/internal/domain/model"
 	"chagnon.dev/budget-server/internal/infrastructure/db/dao"
@@ -171,4 +173,102 @@ func (r *Repository) UpdateCategory(
 			Ordering:       fields.nullOrdering(),
 		},
 	)
+}
+
+var (
+	ErrCategoryNotFound      = errors.New("category not found")
+	ErrRootCategory          = errors.New("the root category cannot be deleted")
+	ErrInvalidCategoryTarget = errors.New("the target must be a category outside the deleted category")
+)
+
+type DeleteCategoryResult struct {
+	MovedTransactions   int64
+	MovedCategories     int64
+	DeletedTransactions int64
+	MovedToUnconfirmed  int64
+}
+
+func (r *Repository) DeleteCategory(
+	ctx context.Context,
+	userId uuid.UUID,
+	userEmail string,
+	id model.CategoryID,
+	targetId *model.CategoryID,
+	deleteTransactions bool,
+) (result DeleteCategoryResult, err error) {
+	err = r.inTx(ctx, func(queries *dao.Queries) error {
+		category, err := queries.GetCategoryForDeletion(ctx, &dao.GetCategoryForDeletionParams{CategoryID: int32(id), UserID: userId})
+		if errors.Is(err, sql.ErrNoRows) {
+			return ErrCategoryNotFound
+		}
+		if err != nil {
+			return err
+		}
+		if !category.Parent.Valid {
+			return ErrRootCategory
+		}
+
+		target := category.Parent.Int32
+		if targetId != nil {
+			if _, err := queries.GetCategoryForDeletion(
+				ctx, &dao.GetCategoryForDeletionParams{CategoryID: int32(*targetId), UserID: userId},
+			); errors.Is(err, sql.ErrNoRows) {
+				return ErrCategoryNotFound
+			} else if err != nil {
+				return err
+			}
+			inSubtree, err := queries.IsCategoryInSubtree(
+				ctx, &dao.IsCategoryInSubtreeParams{Candidate: int32(*targetId), SubtreeRoot: category.ID, UserID: userId},
+			)
+			if err != nil {
+				return err
+			}
+			if inSubtree {
+				return ErrInvalidCategoryTarget
+			}
+			target = int32(*targetId)
+		}
+
+		categoryRef := sql.NullInt32{Int32: category.ID, Valid: true}
+		targetRef := sql.NullInt32{Int32: target, Valid: true}
+
+		if deleteTransactions {
+			rows, err := queries.GetGroupedTransactionsForCategory(
+				ctx, &dao.GetGroupedTransactionsForCategoryParams{UserID: userId, CategoryID: categoryRef},
+			)
+			if err != nil {
+				return err
+			}
+			snapshots := make([]groupedTransactionSnapshot, len(rows))
+			for i, row := range rows {
+				snapshots[i] = groupedTransactionSnapshot(row)
+			}
+			if result.MovedToUnconfirmed, err = copyGroupedTransactionsToUnconfirmed(ctx, queries, userEmail, snapshots); err != nil {
+				return err
+			}
+			if result.DeletedTransactions, err = queries.DeleteTransactionsForCategory(
+				ctx, &dao.DeleteTransactionsForCategoryParams{UserID: userId, CategoryID: categoryRef},
+			); err != nil {
+				return err
+			}
+		} else if result.MovedTransactions, err = queries.MoveCategoryTransactions(
+			ctx, &dao.MoveCategoryTransactionsParams{TargetID: targetRef, UserID: userId, CategoryID: categoryRef},
+		); err != nil {
+			return err
+		}
+
+		if result.MovedCategories, err = queries.MoveChildCategories(
+			ctx, &dao.MoveChildCategoriesParams{TargetID: targetRef, UserID: userId, CategoryID: categoryRef},
+		); err != nil {
+			return err
+		}
+		if err := queries.MoveGroupCategory(ctx, &dao.MoveGroupCategoryParams{TargetID: targetRef, CategoryID: categoryRef}); err != nil {
+			return err
+		}
+		if _, err := queries.DeleteCategory(ctx, &dao.DeleteCategoryParams{CategoryID: category.ID, UserID: userId}); err != nil {
+			return fmt.Errorf("deleting category %d: %w", category.ID, err)
+		}
+		return nil
+	})
+	return result, err
 }

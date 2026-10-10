@@ -309,3 +309,54 @@ func (r *Repository) PromoteUnconfirmedTransaction(
 
 	return
 }
+
+type groupedTransactionSnapshot struct {
+	ID                 int32
+	Amount             int32
+	Date               time.Time
+	Note               string
+	TransactionGroupID int32
+	SplitTypeOverride  dao.NullTransactionSplitType
+}
+
+func copyGroupedTransactionsToUnconfirmed(
+	ctx context.Context,
+	queries *dao.Queries,
+	userEmail string,
+	transactions []groupedTransactionSnapshot,
+) (int64, error) {
+	for _, transaction := range transactions {
+		unconfirmedId, err := queries.CreateUnconfirmedTransaction(
+			ctx, &dao.CreateUnconfirmedTransactionParams{
+				TransactionGroupID: transaction.TransactionGroupID,
+				OwnerEmail:         userEmail,
+				CreatedBy:          userEmail,
+				Amount:             transaction.Amount,
+				Date:               transaction.Date,
+				Note:               transaction.Note,
+				SplitTypeOverride:  transaction.SplitTypeOverride,
+			},
+		)
+		if err != nil {
+			return 0, fmt.Errorf("moving transaction %d to unconfirmed: %w", transaction.ID, err)
+		}
+
+		splits, err := queries.GetGroupedTransactionUserSplits(ctx, transaction.ID)
+		if err != nil {
+			return 0, err
+		}
+		for _, split := range splits {
+			if err := queries.CreateUnconfirmedTransactionUserSplit(
+				ctx, &dao.CreateUnconfirmedTransactionUserSplitParams{
+					UnconfirmedTransactionID: unconfirmedId,
+					UserEmail:                split.UserEmail,
+					SplitValue:               split.SplitValue,
+				},
+			); err != nil {
+				return 0, err
+			}
+		}
+	}
+
+	return int64(len(transactions)), nil
+}

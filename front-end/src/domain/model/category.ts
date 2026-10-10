@@ -52,3 +52,15 @@ export type CategoryUpdatableFields = Pick<
   Category,
   'iconBackground' | 'iconColor' | 'iconName' | 'name' | 'fixedCosts' | 'ordering' | 'parentId'
 >
+
+export interface CategoryDeletionOptions {
+  targetId?: CategoryID
+  deleteTransactions?: boolean
+}
+
+export interface CategoryDeletionResult {
+  movedTransactions: number
+  movedCategories: number
+  deletedTransactions: number
+  movedToUnconfirmed: number
+}

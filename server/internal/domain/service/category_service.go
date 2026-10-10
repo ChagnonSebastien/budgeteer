@@ -25,6 +25,14 @@ type categoryRepository interface {
 		id model.CategoryID,
 		fields repository.UpdateCategoryFields,
 	) error
+	DeleteCategory(
+		ctx context.Context,
+		userId uuid.UUID,
+		userEmail string,
+		id model.CategoryID,
+		targetId *model.CategoryID,
+		deleteTransactions bool,
+	) (repository.DeleteCategoryResult, error)
 }
 
 type CategoryService struct {
@@ -113,4 +121,15 @@ func (a *CategoryService) UpdateCategory(
 		id,
 		fields,
 	)
+}
+
+func (a *CategoryService) DeleteCategory(
+	ctx context.Context,
+	userId uuid.UUID,
+	userEmail string,
+	id model.CategoryID,
+	targetId *model.CategoryID,
+	deleteTransactions bool,
+) (repository.DeleteCategoryResult, error) {
+	return a.categoryRepository.DeleteCategory(ctx, userId, userEmail, id, targetId, deleteTransactions)
 }

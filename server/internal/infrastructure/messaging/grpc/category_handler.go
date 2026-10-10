@@ -5,11 +5,14 @@ import (
 	"github.com/google/uuid"
 
 	"context"
+	"errors"
 	"fmt"
 
 	"chagnon.dev/budget-server/internal/infrastructure/db/repository"
 	"chagnon.dev/budget-server/internal/infrastructure/messaging/dto"
 	"chagnon.dev/budget-server/internal/infrastructure/messaging/shared"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type categoryRepository interface {
@@ -28,6 +31,14 @@ type categoryRepository interface {
 		id model.CategoryID,
 		fields repository.UpdateCategoryFields,
 	) error
+	DeleteCategory(
+		ctx context.Context,
+		userId uuid.UUID,
+		userEmail string,
+		id model.CategoryID,
+		targetId *model.CategoryID,
+		deleteTransactions bool,
+	) (repository.DeleteCategoryResult, error)
 }
 
 type CategoryHandler struct {
@@ -136,5 +147,37 @@ func (s *CategoryHandler) GetAllCategories(
 
 	return &dto.GetAllCategoriesResponse{
 		Categories: categoriesDto,
+	}, nil
+}
+
+func (s *CategoryHandler) DeleteCategory(ctx context.Context, req *dto.DeleteCategoryRequest) (*dto.DeleteCategoryResponse, error) {
+	user, ok := shared.FromContext(ctx)
+	if !ok {
+		return nil, fmt.Errorf("getting user from context")
+	}
+
+	var targetId *model.CategoryID
+	if req.TargetId != nil {
+		id := model.CategoryID(*req.TargetId)
+		targetId = &id
+	}
+
+	result, err := s.categoryService.DeleteCategory(
+		ctx, user.ID, user.Email, model.CategoryID(req.Id), targetId, req.DeleteTransactions,
+	)
+	switch {
+	case errors.Is(err, repository.ErrCategoryNotFound):
+		return nil, status.Error(codes.NotFound, err.Error())
+	case errors.Is(err, repository.ErrRootCategory), errors.Is(err, repository.ErrInvalidCategoryTarget):
+		return nil, status.Error(codes.FailedPrecondition, err.Error())
+	case err != nil:
+		return nil, err
+	}
+
+	return &dto.DeleteCategoryResponse{
+		MovedTransactions:   uint32(result.MovedTransactions),
+		MovedCategories:     uint32(result.MovedCategories),
+		DeletedTransactions: uint32(result.DeletedTransactions),
+		MovedToUnconfirmed:  uint32(result.MovedToUnconfirmed),
 	}, nil
 }

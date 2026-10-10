@@ -383,45 +383,16 @@ func moveGroupedTransactionsToUnconfirmed(
 	userEmail string,
 	account sql.NullInt32,
 ) (int64, error) {
-	grouped, err := queries.GetGroupedTransactionsForAccount(
+	rows, err := queries.GetGroupedTransactionsForAccount(
 		ctx, &dao.GetGroupedTransactionsForAccountParams{UserID: userId, AccountID: account},
 	)
 	if err != nil {
 		return 0, err
 	}
 
-	for _, transaction := range grouped {
-		unconfirmedId, err := queries.CreateUnconfirmedTransaction(
-			ctx, &dao.CreateUnconfirmedTransactionParams{
-				TransactionGroupID: transaction.TransactionGroupID,
-				OwnerEmail:         userEmail,
-				CreatedBy:          userEmail,
-				Amount:             transaction.Amount,
-				Date:               transaction.Date,
-				Note:               transaction.Note,
-				SplitTypeOverride:  transaction.SplitTypeOverride,
-			},
-		)
-		if err != nil {
-			return 0, fmt.Errorf("moving transaction %d to unconfirmed: %w", transaction.ID, err)
-		}
-
-		splits, err := queries.GetGroupedTransactionUserSplits(ctx, transaction.ID)
-		if err != nil {
-			return 0, err
-		}
-		for _, split := range splits {
-			if err := queries.CreateUnconfirmedTransactionUserSplit(
-				ctx, &dao.CreateUnconfirmedTransactionUserSplitParams{
-					UnconfirmedTransactionID: unconfirmedId,
-					UserEmail:                split.UserEmail,
-					SplitValue:               split.SplitValue,
-				},
-			); err != nil {
-				return 0, err
-			}
-		}
+	snapshots := make([]groupedTransactionSnapshot, len(rows))
+	for i, row := range rows {
+		snapshots[i] = groupedTransactionSnapshot(row)
 	}
-
-	return int64(len(grouped)), nil
+	return copyGroupedTransactionsToUnconfirmed(ctx, queries, userEmail, snapshots)
 }

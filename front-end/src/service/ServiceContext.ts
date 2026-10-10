@@ -62,6 +62,7 @@ export const CategoryServiceContext = createContext<
   get augmentedCategories(): AugmentedCategory[] {
     throw new Error('augmentedCategories is not implemented')
   },
+  deleteCategory: () => Promise.reject(new Error('deleteCategory is not implemented')),
 })
 
 export const CurrencyServiceContext = createContext<
