@@ -1,4 +1,4 @@
-import { FC } from 'react'
+import { FC, ReactNode } from 'react'
 
 import CurrencyCard from './CurrencyCard'
 import Currency, { CurrencyID } from '../../domain/model/currency'
@@ -11,10 +11,12 @@ interface Props {
   style?: React.CSSProperties
   errorText?: string
   currencies: Currency[]
+  additionalActions?: ReactNode
 }
 
 const CurrencyPicker: FC<Props> = (props) => {
-  const { selectedCurrencyId, setSelectedCurrencyId, labelText, style, errorText, currencies } = props
+  const { selectedCurrencyId, setSelectedCurrencyId, labelText, style, errorText, currencies, additionalActions } =
+    props
 
   return (
     <ItemPicker<CurrencyID, Currency, unknown>
@@ -28,6 +30,7 @@ const CurrencyPicker: FC<Props> = (props) => {
       itemDisplayText={(currency) => currency?.symbol ?? ''}
       ItemComponent={CurrencyCard}
       additionalItemProps={{}}
+      additionalActions={additionalActions}
     />
   )
 }

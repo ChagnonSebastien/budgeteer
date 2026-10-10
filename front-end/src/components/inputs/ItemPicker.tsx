@@ -20,7 +20,7 @@ import BasicModal from '../shared/BasicModal'
 import { CustomScrolling } from '../shared/ScrollingOverButton'
 
 const DialogContentContainer = styled(DialogContent)`
-  height: 70vh;
+  max-height: 70vh;
   overflow: hidden;
   padding: 0 20px;
   display: flex;
@@ -336,7 +336,7 @@ function ItemPicker<ItemID, T extends NamedItem<ItemID, T>, AdditionalItemProps>
               error={failedCreatingOnce && filterAsNewValueValidation.isErr()}
             />
           </SearchContainer>
-          <CustomScrolling>
+          <CustomScrolling style={{ minHeight: 0 }}>
             <ItemListComponent
               items={displayedItems}
               ItemComponent={ItemComponent}

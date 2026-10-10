@@ -1,9 +1,9 @@
-import { Button, Typography } from '@mui/material'
+import { Alert, Button, Typography } from '@mui/material'
 import { FC, useContext, useMemo, useState } from 'react'
 
 import { UserContext } from '../../App'
 import { CategoryID } from '../../domain/model/category'
-import { CurrencyID } from '../../domain/model/currency'
+import { CurrencyID, RateAutoupdateSettings } from '../../domain/model/currency'
 import TransactionGroup from '../../domain/model/transactionGroup'
 import {
   CategoryServiceContext,
@@ -15,7 +15,8 @@ import {
 import CategoryPicker from '../categories/CategoryPicker'
 import CurrencyPicker from '../currencies/CurrencyPicker'
 import FormWrapper from '../shared/FormWrapper'
-import { Column } from '../shared/Layout'
+import BasicModal from '../shared/BasicModal'
+import { Column, Row } from '../shared/Layout'
 import { useToast } from '../shared/ToastProvider'
 
 interface Props {
@@ -28,7 +29,7 @@ const JoinTransactionGroup: FC<Props> = ({ transactionGroup }) => {
     useContext(TransactionGroupServiceContext)
   const { refresh: refreshTransactions } = useContext(TransactionServiceContext)
   const { refresh: refreshUnconfirmedTransactions } = useContext(UnconfirmedTransactionServiceContext)
-  const { state: currencies } = useContext(CurrencyServiceContext)
+  const { state: currencies, create: createCurrency } = useContext(CurrencyServiceContext)
   const { tentativeRoot } = useContext(CategoryServiceContext)
   const { showToast } = useToast()
 
@@ -42,6 +43,36 @@ const JoinTransactionGroup: FC<Props> = ({ transactionGroup }) => {
   const [currency, setCurrency] = useState<CurrencyID | null>(null)
   const [category, setCategory] = useState<CategoryID | null>(tentativeRoot?.id ?? null)
   const [error, setError] = useState('')
+  const [addingCurrency, setAddingCurrency] = useState(false)
+
+  const addGroupCurrency = async () => {
+    setAddingCurrency(true)
+    try {
+      const created = await createCurrency({
+        name: transactionGroup.originalCurrency,
+        symbol: transactionGroup.originalCurrencySymbol,
+        decimalPoints: transactionGroup.originalCurrencyDecimalPoints,
+        risk: '',
+        type: '',
+        rateAutoupdateSettings: new RateAutoupdateSettings('', false),
+      })
+      setCurrency(created.id)
+      showToast(`${created.name} added to your currencies`)
+    } catch {
+      showToast('Could not add the currency', 'error')
+    } finally {
+      setAddingCurrency(false)
+    }
+  }
+
+  const groupCurrencyLabel = `${transactionGroup.originalCurrency} (${transactionGroup.originalCurrencySymbol})`
+  const lookAlikes = currencies.filter(
+    (c) =>
+      c.decimalPoints === transactionGroup.originalCurrencyDecimalPoints ||
+      c.name.toLowerCase() === transactionGroup.originalCurrency.toLowerCase(),
+  )
+  const [confirmingCurrency, setConfirmingCurrency] = useState(false)
+  const requestGroupCurrency = () => (lookAlikes.length > 0 ? setConfirmingCurrency(true) : addGroupCurrency())
 
   const join = async (fields: { currency?: CurrencyID; category?: CategoryID }) => {
     // Updating any personal property of the group accepts the invitation.
@@ -53,8 +84,8 @@ const JoinTransactionGroup: FC<Props> = ({ transactionGroup }) => {
 
   const intro = (
     <Typography>
-      You were invited to <b>{transactionGroup.name}</b>. Amounts in this group are in{' '}
-      <b>{transactionGroup.originalCurrency}</b>.
+      You were invited to <b>{transactionGroup.name}</b>. Amounts in this group are in <b>{groupCurrencyLabel}</b>.
+      {!isGuest && ' Pick the currency you track it in, or add a copy of it to your currencies.'}
     </Typography>
   )
 
@@ -82,13 +113,32 @@ const JoinTransactionGroup: FC<Props> = ({ transactionGroup }) => {
         }}
         submitText="Join group"
       >
-        <CurrencyPicker
-          selectedCurrencyId={currency}
-          setSelectedCurrencyId={setCurrency}
-          labelText={`Your currency (${transactionGroup.originalCurrencyDecimalPoints} decimals)`}
-          currencies={matchingCurrencies}
-          errorText={error && currency === null ? error : undefined}
-        />
+        {matchingCurrencies.length === 0 ? (
+          <Alert
+            severity="info"
+            action={
+              <Button color="inherit" size="small" disabled={addingCurrency} onClick={requestGroupCurrency}>
+                Add it
+              </Button>
+            }
+          >
+            None of your currencies uses {transactionGroup.originalCurrencyDecimalPoints} decimals. Add{' '}
+            {groupCurrencyLabel} to your currencies?
+          </Alert>
+        ) : (
+          <CurrencyPicker
+            selectedCurrencyId={currency}
+            setSelectedCurrencyId={setCurrency}
+            labelText={`Your currency (${transactionGroup.originalCurrencyDecimalPoints} decimals)`}
+            currencies={matchingCurrencies}
+            errorText={error && currency === null ? error : undefined}
+            additionalActions={
+              <Button disabled={addingCurrency} onClick={requestGroupCurrency}>
+                Add {transactionGroup.originalCurrency}
+              </Button>
+            }
+          />
+        )}
         <CategoryPicker
           selectedConfig={{
             mode: 'single',
@@ -98,6 +148,29 @@ const JoinTransactionGroup: FC<Props> = ({ transactionGroup }) => {
           labelText="Category"
         />
       </FormWrapper>
+      <BasicModal open={confirmingCurrency} onClose={() => setConfirmingCurrency(false)}>
+        <Column style={{ padding: '1.5rem', gap: '1rem', maxWidth: '24rem' }}>
+          <Typography variant="h6">Add {groupCurrencyLabel} to your currencies?</Typography>
+          <Typography color="text.secondary">
+            You already have {lookAlikes.map((c) => `${c.name} (${c.symbol})`).join(', ')}. If one of them is the
+            currency this group uses, pick it instead of adding a duplicate.
+          </Typography>
+          <Row style={{ gap: '1rem', justifyContent: 'end' }}>
+            <Button color="inherit" onClick={() => setConfirmingCurrency(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="contained"
+              onClick={() => {
+                setConfirmingCurrency(false)
+                addGroupCurrency()
+              }}
+            >
+              Add anyway
+            </Button>
+          </Row>
+        </Column>
+      </BasicModal>
     </Column>
   )
 }
