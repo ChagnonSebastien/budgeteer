@@ -1,4 +1,4 @@
-import { alpha, Box, Button, CircularProgress } from '@mui/material'
+import { alpha, Box, CircularProgress } from '@mui/material'
 import { styled } from '@mui/material/styles'
 import { Fragment, ReactNode, useContext, useMemo, useState } from 'react'
 
@@ -10,6 +10,10 @@ import { IconToolsContext } from '../icons/IconTools'
 
 const transient = { shouldForwardProp: (prop: PropertyKey) => !String(prop).startsWith('$') }
 
+const selectionBorderWidth = 3
+const expandWidth = 5
+const nestedIndent = 3
+
 const CategoryListItem = styled(
   'div',
   transient,
@@ -18,7 +22,7 @@ const CategoryListItem = styled(
   return {
     borderRadius: theme.radius.md,
     transition: 'all 200ms ease-in-out',
-    borderLeft: `3px solid ${$isSelected ? brand : 'transparent'}`,
+    borderLeft: `${selectionBorderWidth}px solid ${$isSelected ? brand : 'transparent'}`,
     margin: theme.spacing(0.25, 0),
     backgroundColor: $isSelected ? alpha(brand, 0.12) : $hasSelectedChild ? alpha(brand, 0.04) : 'transparent',
     '&:hover': {
@@ -35,7 +39,7 @@ const ExpandButton = styled(
   'div',
   transient,
 )<{ $hasSelectedChild: boolean }>(({ theme }) => ({
-  width: theme.spacing(5),
+  width: theme.spacing(expandWidth),
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
@@ -60,13 +64,13 @@ const Collapsible = styled(
 }))
 
 const NestedCategoryContainer = styled('div')(({ theme }) => ({
-  marginLeft: theme.spacing(3),
+  marginLeft: theme.spacing(nestedIndent),
   position: 'relative',
   paddingLeft: theme.spacing(1),
   '&::before': {
     content: '""',
     position: 'absolute',
-    left: 0,
+    left: `calc(${selectionBorderWidth}px + ${theme.spacing(expandWidth / 2)} - ${theme.spacing(nestedIndent)} - 0.5px)`,
     top: 0,
     bottom: 0,
     width: '1px',
@@ -75,14 +79,10 @@ const NestedCategoryContainer = styled('div')(({ theme }) => ({
   },
 }))
 
-interface CategoryListProps {
-  buttonText?: string
-}
-
-type Props = ItemListProps<CategoryID, Category, object> & CategoryListProps
+type Props = ItemListProps<CategoryID, Category, object>
 
 export const CategoryList = (props: Props) => {
-  const { buttonText, items, selectConfiguration, filter, ItemComponent, additionalItemsProps } = props
+  const { items, selectConfiguration, filter, ItemComponent, additionalItemsProps } = props
   const { subCategories } = useContext(CategoryServiceContext)
   const { rootCategory } = useContext(MixedAugmentation)
   const { IconLib } = useContext(IconToolsContext)
@@ -133,6 +133,11 @@ export const CategoryList = (props: Props) => {
   const click = (item: Category) => {
     if (typeof selectConfiguration === 'undefined') return false
 
+    if (selectConfiguration.mode === 'click') {
+      selectConfiguration.onClick(item)
+      return
+    }
+
     if (selectConfiguration.mode === 'single') {
       const config = selectConfiguration as SingleSelectConfiguration<CategoryID, Category>
       config.onSelectItem(item.id)
@@ -182,7 +187,6 @@ export const CategoryList = (props: Props) => {
 
     return [...new Set(openCategories)] // Remove duplicates
   })
-  const [hoveringOver, setHoveringOver] = useState<CategoryID | null>(null)
 
   if (!filteredList) {
     return <CircularProgress />
@@ -198,12 +202,7 @@ export const CategoryList = (props: Props) => {
 
     return (
       <Fragment key={`category-list-id-${category.id}`}>
-        <CategoryListItem
-          $isSelected={isSelected(category.id)}
-          $hasSelectedChild={hasSelectedDescendant}
-          onMouseEnter={() => setHoveringOver(category.id)}
-          onTouchStart={() => setHoveringOver(category.id)}
-        >
+        <CategoryListItem $isSelected={isSelected(category.id)} $hasSelectedChild={hasSelectedDescendant}>
           <Box sx={{ display: 'flex', alignItems: 'stretch', borderRadius: (t) => t.radius.lg, overflow: 'hidden' }}>
             {typeof subCategories[category.id] !== 'undefined' ? (
               <ExpandButton
@@ -222,27 +221,12 @@ export const CategoryList = (props: Props) => {
               <ExpandButton $hasSelectedChild={false} /> /* Placeholder for alignment */
             )}
             <Box
-              onClick={() => {
-                if (typeof buttonText !== 'undefined') return
-                click(category)
-              }}
+              onClick={() => click(category)}
               sx={{ cursor: 'pointer', display: 'flex', alignItems: 'center', flexGrow: 1, py: 1, pr: 1 }}
             >
               <Box sx={{ flexGrow: 1 }}>
                 <ItemComponent item={category} {...additionalItemsProps} />
               </Box>
-              {hoveringOver === category.id &&
-                typeof selectConfiguration !== 'undefined' &&
-                selectConfiguration.mode === 'click' && (
-                  <Button
-                    variant="contained"
-                    size="small"
-                    onClick={() => selectConfiguration.onClick(category)}
-                    sx={{ opacity: 1, mr: 1 }}
-                  >
-                    {buttonText ?? 'Select'}
-                  </Button>
-                )}
             </Box>
           </Box>
         </CategoryListItem>
