@@ -13,10 +13,18 @@ const oidcLogin = () => {
   window.location.href = `${serverUrl}/auth/login`
 }
 
-const oidcLogout = () => {
-  IndexedDB.delete()
-  userStore.clear()
+const clearLocalSession = async () => {
+  try {
+    await IndexedDB.clearAll()
+  } catch (error) {
+    console.error('clearing local data', error)
+    await IndexedDB.delete().catch(console.error)
+  }
   localStorage.clear()
+}
+
+const oidcLogout = async () => {
+  await clearLocalSession()
   window.location.href = `${serverUrl}/auth/logout`
 }
 
@@ -24,10 +32,8 @@ const userPassLogin = () => {
   throw new Error('Not implemented')
 }
 
-const userPassLogout = () => {
-  IndexedDB.delete()
-  userStore.clear()
-  localStorage.clear()
+const userPassLogout = async () => {
+  await clearLocalSession()
   throw new Error('Not implemented')
 }
 
@@ -35,10 +41,8 @@ const guestLogin = () => {
   window.location.href = '/guest.html'
 }
 
-const guestLogout = () => {
-  IndexedDB.delete()
-  userStore.clear()
-  localStorage.clear()
+const guestLogout = async () => {
+  await clearLocalSession()
   window.location.href = `${serverUrl}/auth/logout`
 }
 
@@ -166,6 +170,7 @@ const useAuthentication = () => {
     fetchUserInfo()
       .then(async (userResponse) => {
         if (userResponse === null) {
+          await clearLocalSession()
           if (amountAuthMethods === 1) {
             onlyLoginMethod()
           }
@@ -185,6 +190,16 @@ const useAuthentication = () => {
             }
           }
           return
+        }
+
+        const cachedUser: User | null = userStore.getUser()
+        if (cachedUser === null || cachedUser.email !== userResponse.email) {
+          await clearLocalSession()
+          if (cachedUser !== null) {
+            userStore.upsertUser(userResponse)
+            window.location.reload()
+            return
+          }
         }
 
         setUser({ ...userResponse })

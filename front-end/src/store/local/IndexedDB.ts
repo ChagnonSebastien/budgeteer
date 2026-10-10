@@ -170,6 +170,10 @@ export class BudgeteerDB extends Dexie {
       settlements: '++id',
     })
   }
+
+  public clearAll() {
+    return this.transaction('rw', this.tables, () => Promise.all(this.tables.map((table) => table.clear())))
+  }
 }
 
 export type {
