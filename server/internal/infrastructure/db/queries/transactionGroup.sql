@@ -3,6 +3,7 @@ SELECT
     tg.id,
     COALESCE(utg.name_override, tg.name)::text AS name,
     tg.split_type,
+    tg.created_at,
     c.name as creator_currency,
     c.symbol as creator_currency_symbol,
     c.decimal_points as creator_currency_decimal_points,

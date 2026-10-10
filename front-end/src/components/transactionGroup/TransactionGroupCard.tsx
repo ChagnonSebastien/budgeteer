@@ -1,21 +1,62 @@
 import { Typography } from '@mui/material'
-import { useContext, useMemo } from 'react'
+import { format, isSameDay, isSameYear } from 'date-fns'
+import { FC, useContext, useMemo } from 'react'
 
 import { UserContext } from '../../App'
+import Currency, { formatFull } from '../../domain/model/currency'
 import TransactionGroup, { TransactionGroupID } from '../../domain/model/transactionGroup'
 import { CategoryServiceContext } from '../../service/ServiceContext'
 import { ItemProps } from '../accounts/ItemList'
 import IconCapsule from '../icons/IconCapsule'
 import { PreparedIcon } from '../icons/IconTools'
-import { GradientCard } from '../shared/Layout'
+import { DrawerContext } from '../Menu'
+import { Column, GradientCard } from '../shared/Layout'
 
-type Props = ItemProps<TransactionGroupID, TransactionGroup, unknown>
+export interface GroupBalance {
+  balance: number
+  currency: Currency
+}
+
+export interface GroupSummary extends GroupBalance {
+  firstDate: Date | null
+  lastDate: Date | null
+}
+
+const dateRange = ({ firstDate, lastDate }: GroupSummary): string => {
+  if (!firstDate || !lastDate) return 'No transactions yet'
+  if (isSameDay(firstDate, lastDate)) return format(lastDate, 'MMM d, yyyy')
+  if (isSameYear(firstDate, lastDate)) return `${format(firstDate, 'MMM d')} – ${format(lastDate, 'MMM d, yyyy')}`
+  return `${format(firstDate, 'MMM d, yyyy')} – ${format(lastDate, 'MMM d, yyyy')}`
+}
+
+type Props = ItemProps<TransactionGroupID, TransactionGroup, { summaries?: Map<TransactionGroupID, GroupSummary> }>
+
+export const BalanceText: FC<GroupBalance & { settledLabel?: string }> = ({
+  balance,
+  currency,
+  settledLabel = 'Settled up',
+}) => {
+  const { privacyMode } = useContext(DrawerContext)
+  const amount = formatFull(currency, Math.abs(balance), privacyMode)
+
+  return (
+    <Typography
+      variant="body2"
+      fontWeight="500"
+      whiteSpace="nowrap"
+      color={balance > 0 ? 'success.main' : balance < 0 ? 'error.main' : 'textDisabled'}
+    >
+      {balance > 0 ? `You are owed ${amount}` : balance < 0 ? `You owe ${amount}` : settledLabel}
+    </Typography>
+  )
+}
 
 export const TransactionGroupCard = (props: Props) => {
-  const { item, selected = false, onClick } = props
+  const { item, selected = false, onClick, summaries } = props
+  const summary = summaries?.get(item.id)
 
   const { state: categories } = useContext(CategoryServiceContext)
-  const { email } = useContext(UserContext)
+  const { email, authentification_method } = useContext(UserContext)
 
   const invited = !item.hasJoined(email)
 
@@ -37,19 +78,28 @@ export const TransactionGroupCard = (props: Props) => {
         gap: '1rem',
       }}
     >
-      <IconCapsule
-        iconName={tgCategory?.iconName ?? PreparedIcon.FaQuestion}
-        color={tgCategory?.iconColor ?? '#DDD'}
-        backgroundColor={tgCategory?.iconBackground ?? '#444'}
-        size="2rem"
-      />
-      <Typography flexGrow={1} variant="subtitle1">
-        {item.name}
-      </Typography>
-      {invited && (
+      {authentification_method !== 'guest' && (
+        <IconCapsule
+          iconName={tgCategory?.iconName ?? PreparedIcon.FaQuestion}
+          color={tgCategory?.iconColor ?? '#DDD'}
+          backgroundColor={tgCategory?.iconBackground ?? '#444'}
+          size="2rem"
+        />
+      )}
+      <Column style={{ flexGrow: 1, minWidth: 0 }}>
+        <Typography variant="subtitle1">{item.name}</Typography>
+        {summary && (
+          <Typography variant="caption" color="textDisabled">
+            {dateRange(summary)}
+          </Typography>
+        )}
+      </Column>
+      {invited ? (
         <Typography variant="caption" color="warning">
           Invited
         </Typography>
+      ) : (
+        summary && <BalanceText {...summary} />
       )}
     </GradientCard>
   )

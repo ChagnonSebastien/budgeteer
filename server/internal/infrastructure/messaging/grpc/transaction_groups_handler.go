@@ -3,6 +3,7 @@ package grpc
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"chagnon.dev/budget-server/internal/domain/model"
 	"chagnon.dev/budget-server/internal/infrastructure/db/repository"
@@ -134,6 +135,7 @@ func (h *TransactionGroupHandler) GetAllTransactionGroups(ctx context.Context, r
 			Currency:                     currency,
 			Category:                     category,
 			Hidden:                       transactionGroup.Hidden,
+			CreatedAt:                    transactionGroup.CreatedAt.Format(time.RFC3339),
 		}
 	}
 

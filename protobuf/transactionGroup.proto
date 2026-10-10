@@ -30,6 +30,7 @@ message TransactionGroup {
   bool hidden = 8;
   string initial_currency_symbol = 9;
   uint32 initial_currency_decimal_points = 10;
+  string created_at = 11;
 }
 
 message GetAllTransactionGroupsRequest {

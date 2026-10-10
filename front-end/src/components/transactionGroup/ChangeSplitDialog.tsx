@@ -72,6 +72,7 @@ const simulate = (
       group.hidden,
       group.originalCurrencySymbol,
       group.originalCurrencyDecimalPoints,
+      group.createdAt,
     ),
     group.augmentedCurrency,
     group.augmentedCategory,

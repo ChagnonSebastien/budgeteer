@@ -54,6 +54,7 @@ export class TransactionGroupConverter
       dto.hidden,
       dto.initialCurrencySymbol,
       dto.initialCurrencyDecimalPoints,
+      new Date(dto.createdAt),
     )
   }
 

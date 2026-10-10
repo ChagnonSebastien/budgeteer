@@ -45,3 +45,5 @@ databaseChangeLog:
       file: ./changelogs/022-user-display-name.sql
   - include:
       file: ./changelogs/023-settlements.sql
+  - include:
+      file: ./changelogs/024-transaction-group-created-at.sql

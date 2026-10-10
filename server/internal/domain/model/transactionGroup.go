@@ -1,5 +1,7 @@
 package model
 
+import "time"
+
 type TransactionGroupID int
 
 type SplitType int
@@ -36,4 +38,5 @@ type TransactionGroup struct {
 	Category                      Optional[CategoryID]
 	Members                       []Member
 	Hidden                        bool
+	CreatedAt                     time.Time
 }

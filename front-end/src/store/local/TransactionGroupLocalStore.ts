@@ -30,6 +30,7 @@ export default class TransactionGroupLocalStore {
           transactionGroup.hidden,
           transactionGroup.originalCurrencySymbol,
           transactionGroup.originalCurrencyDecimalPoints,
+          transactionGroup.createdAt,
         ),
     )
   }
@@ -69,6 +70,7 @@ export default class TransactionGroupLocalStore {
       hidden: data.hidden,
       originalCurrencySymbol: data.originalCurrencySymbol,
       originalCurrencyDecimalPoints: data.originalCurrencyDecimalPoints,
+      createdAt: data.createdAt,
     })
   }
 
@@ -110,6 +112,7 @@ export default class TransactionGroupLocalStore {
         hidden: transactionGroup.hidden,
         originalCurrencySymbol: transactionGroup.originalCurrencySymbol,
         originalCurrencyDecimalPoints: transactionGroup.originalCurrencyDecimalPoints,
+        createdAt: transactionGroup.createdAt,
       })),
     )
   }

@@ -1,4 +1,4 @@
-import { FC, useContext, useMemo } from 'react'
+import { FC, useContext } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
 import { UserContext } from '../App'
@@ -8,8 +8,6 @@ import ContentWithHeader from '../components/shared/ContentWithHeader'
 import JoinTransactionGroup from '../components/transactionGroup/JoinTransactionGroup'
 import TransactionGroupView from '../components/transactionGroup/TransactionGroupView'
 import useAugmentedTransactionGroup from '../components/transactionGroup/useAugmentedTransactionGroup'
-import { AugmentedTransaction, AugmentedTransactionGroupData } from '../domain/model/transaction'
-import { TransactionServiceContext } from '../service/ServiceContext'
 
 type Params = {
   transactionGroupId: string
@@ -21,27 +19,9 @@ const GuestTransactionGroupPage: FC = () => {
   const { IconLib } = useContext(IconToolsContext)
 
   const { email } = useContext(UserContext)
-  const { state: ownTransactions, transactionsFromGroupMembers } = useContext(TransactionServiceContext)
 
   const id = parseInt(transactionGroupId!)
   const transactionGroup = useAugmentedTransactionGroup(id)
-
-  const confirmedTransactions = useMemo(() => {
-    if (!transactionGroup) return []
-    const currency = transactionGroup.augmentedCurrency
-    return [...ownTransactions, ...transactionsFromGroupMembers]
-      .filter((t) => t.transactionGroupData?.transactionGroupId === id)
-      .map(
-        (t) =>
-          new AugmentedTransaction(
-            t,
-            null,
-            new AugmentedTransactionGroupData(t.transactionGroupData!, transactionGroup),
-            currency,
-            currency,
-          ),
-      )
-  }, [ownTransactions, transactionsFromGroupMembers, id, transactionGroup])
 
   if (!transactionGroup) {
     return <LoadingScreen />
@@ -58,7 +38,6 @@ const GuestTransactionGroupPage: FC = () => {
   return (
     <TransactionGroupView
       transactionGroup={transactionGroup}
-      confirmedTransactions={confirmedTransactions}
       actions={[
         {
           label: 'I paid',

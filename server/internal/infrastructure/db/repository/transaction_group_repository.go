@@ -106,6 +106,7 @@ func (r *Repository) GetUserTransactionGroups(ctx context.Context, userEmail str
 			Category:                      category,
 			Members:                       members,
 			Hidden:                        transactionGroupDao.Hidden,
+			CreatedAt:                     transactionGroupDao.CreatedAt,
 		}
 	}
 

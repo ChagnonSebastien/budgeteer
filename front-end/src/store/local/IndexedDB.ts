@@ -97,6 +97,7 @@ interface TransactionGroup {
   hidden: boolean
   originalCurrencySymbol?: string
   originalCurrencyDecimalPoints?: number
+  createdAt?: Date
 }
 
 interface UnconfirmedTransaction {

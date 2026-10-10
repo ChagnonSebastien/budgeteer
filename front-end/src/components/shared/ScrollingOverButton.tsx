@@ -43,7 +43,7 @@ export const FadingDivider = styled.div<{ opacity: number }>`
 `
 
 const ScrollingOverButton: FC<{
-  button: { text: string; onClick(): void }
+  button?: { text: string; onClick(): void }
   children: ReactNode
   scrollingContainerRef?: RefObject<HTMLDivElement | null>
   contentStyle?: CSSProperties
@@ -90,13 +90,17 @@ const ScrollingOverButton: FC<{
 
   return (
     <MaxSpaceNoOverflow style={props.contentStyle} ref={setContentRef}>
-      <Column style={{ height: `${contentHeight - optionsHeight}px`, position: 'relative' }}>{props.children}</Column>
-      <div ref={setOptionsRef}>
-        <FadingDivider opacity={scrollProgress} />
-        <Button fullWidth variant="contained" onClick={props.button.onClick}>
-          {props.button.text}
-        </Button>
-      </div>
+      <Column style={{ height: `${contentHeight - (props.button ? optionsHeight : 0)}px`, position: 'relative' }}>
+        {props.children}
+      </Column>
+      {props.button && (
+        <div ref={setOptionsRef}>
+          <FadingDivider opacity={scrollProgress} />
+          <Button fullWidth variant="contained" onClick={props.button.onClick}>
+            {props.button.text}
+          </Button>
+        </div>
+      )}
     </MaxSpaceNoOverflow>
   )
 }

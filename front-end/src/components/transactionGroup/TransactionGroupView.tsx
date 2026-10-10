@@ -1,5 +1,5 @@
 import { Button, SpeedDial, SpeedDialAction, SpeedDialIcon, Typography } from '@mui/material'
-import { FC, useContext, useMemo, useState } from 'react'
+import { FC, useContext, useState } from 'react'
 import type { IconType } from 'react-icons'
 import { useNavigate } from 'react-router-dom'
 
@@ -8,11 +8,9 @@ import { FirstDivision, GroupPaidTable, SecondDivision, Section } from './GroupL
 import GroupMembers from './GroupMembers'
 import GroupTransactionModal from './GroupTransactionModal'
 import SettlementModal from './SettlementModal'
+import useGroupTransactions from './useGroupTransactions'
 import { SettlementAugmentedTransaction } from '../../domain/model/settlement'
-import { AugmentedTransaction } from '../../domain/model/transaction'
 import { AugmentedTransactionGroup, SplitTypeToString } from '../../domain/model/transactionGroup'
-import { UnconfirmedAugmentedTransaction } from '../../domain/model/unconfirmedTransaction'
-import { SettlementServiceContext, UnconfirmedTransactionServiceContext } from '../../service/ServiceContext'
 import { IconToolsContext } from '../icons/IconTools'
 import ContentWithHeader from '../shared/ContentWithHeader'
 import { Column, Row } from '../shared/Layout'
@@ -30,32 +28,12 @@ export interface GroupAction {
 
 const TransactionGroupView: FC<{
   transactionGroup: AugmentedTransactionGroup
-  confirmedTransactions: AugmentedTransaction[]
   actions: GroupAction[]
-}> = ({ transactionGroup, confirmedTransactions, actions }) => {
+}> = ({ transactionGroup, actions }) => {
   const navigate = useNavigate()
   const { IconLib } = useContext(IconToolsContext)
   const [changingSplit, setChangingSplit] = useState(false)
-  const { state: unconfirmedTransactions } = useContext(UnconfirmedTransactionServiceContext)
-  const { state: settlements } = useContext(SettlementServiceContext)
-
-  // Unconfirmed count toward totals: a guest's expenses can never be promoted.
-  const groupTransactions = useMemo(
-    () =>
-      [
-        ...confirmedTransactions,
-        ...unconfirmedTransactions
-          .filter((ut) => ut.transactionGroupId === transactionGroup.id)
-          .map((ut) => new UnconfirmedAugmentedTransaction(ut, transactionGroup)),
-        ...settlements
-          .filter((s) => s.transactionGroupId === transactionGroup.id)
-          .map((s) => new SettlementAugmentedTransaction(s, transactionGroup)),
-      ].sort((a, b) => {
-        if (b.date.getTime() !== a.date.getTime()) return b.date.getTime() - a.date.getTime()
-        return b.id - a.id
-      }),
-    [confirmedTransactions, unconfirmedTransactions, settlements, transactionGroup],
-  )
+  const groupTransactions = useGroupTransactions(transactionGroup)
 
   const [clickedKey, setClickedKey] = useState<string | null>(null)
   const clicked = groupTransactions.find((t) => t.listKey === clickedKey) ?? null

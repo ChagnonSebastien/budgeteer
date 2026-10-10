@@ -81,6 +81,7 @@ export default class TransactionGroup implements NamedItem<TransactionGroupID, T
     readonly hidden: boolean,
     readonly originalCurrencySymbol: string = '',
     readonly originalCurrencyDecimalPoints: number = 2,
+    readonly createdAt: Date = new Date(),
   ) {}
 
   hasName(name: string): boolean {
@@ -99,6 +100,7 @@ export default class TransactionGroup implements NamedItem<TransactionGroupID, T
     if (this.hidden !== other.hidden) return false
     if (this.originalCurrencySymbol !== other.originalCurrencySymbol) return false
     if (this.originalCurrencyDecimalPoints !== other.originalCurrencyDecimalPoints) return false
+    if (this.createdAt.getTime() !== other.createdAt.getTime()) return false
     return true
   }
 
@@ -124,6 +126,7 @@ export class AugmentedTransactionGroup extends TransactionGroup {
       transactionGroup.hidden,
       transactionGroup.originalCurrencySymbol,
       transactionGroup.originalCurrencyDecimalPoints,
+      transactionGroup.createdAt,
     )
   }
 }
