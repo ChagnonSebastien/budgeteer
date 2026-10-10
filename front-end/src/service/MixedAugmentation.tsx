@@ -7,6 +7,7 @@ import {
   CategoryServiceContext,
   CurrencyServiceContext,
   ExchangeRateServiceContext,
+  SettlementServiceContext,
   TransactionGroupServiceContext,
   TransactionServiceContext,
 } from './ServiceContext'
@@ -58,6 +59,7 @@ export const MixedAugmentationProvider: FC<Props> = ({ NextComponent }) => {
   const { augmentedCategories: categories, tentativeRoot } = useContext(CategoryServiceContext)
   const { state: accounts } = useContext(AccountServiceContext)
   const { exchangeRates: rawExchangeRates } = useContext(ExchangeRateServiceContext)
+  const { state: settlements } = useContext(SettlementServiceContext)
 
   const accountBalances = useMemo(() => {
     const accountAmounts = new Map<number, Map<number, number>>()
@@ -115,6 +117,12 @@ export const MixedAugmentationProvider: FC<Props> = ({ NextComponent }) => {
   }, [transactionGroups, categories, currencies])
 
   const augmentedTransactions = useMemo<AugmentedTransaction[]>(() => {
+    const settlementGroups = new Map<number, AugmentedTransactionGroup>()
+    for (const settlement of settlements) {
+      const group = augmentedTransactionGroups.find((tg) => tg.id === settlement.transactionGroupId)
+      if (settlement.ownTransactionId !== null && group) settlementGroups.set(settlement.ownTransactionId, group)
+    }
+
     return transactions.map<AugmentedTransaction>((transaction) => {
       let augmentedFinancialIncomeData = null
       if (transaction.financialIncomeData !== null) {
@@ -141,9 +149,10 @@ export const MixedAugmentationProvider: FC<Props> = ({ NextComponent }) => {
         categories.find((c) => c.id === transaction.categoryId),
         accounts.find((c) => c.id === transaction.senderId),
         accounts.find((c) => c.id === transaction.receiverId),
+        settlementGroups.get(transaction.id),
       )
     })
-  }, [transactions, currencies, categories, accounts, augmentedTransactionGroups])
+  }, [transactions, currencies, categories, accounts, augmentedTransactionGroups, settlements])
 
   // Other members' transactions are stripped of their owner's accounts, category and
   // financial income data, and carry this user's currency for the group.

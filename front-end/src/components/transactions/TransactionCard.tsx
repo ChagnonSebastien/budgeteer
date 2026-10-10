@@ -22,6 +22,7 @@ const defaultCategory = new Category(
 
 const TransactionCard: FC<ItemProps<TransactionID, AugmentedTransaction, object>> = memo((props) => {
   const { item, onClick } = props
+  const group = item.augmentedTransactionGroupData?.transactionGroup ?? item.settlementGroup
 
   const { privacyMode } = useContext(DrawerContext)
   const theme = useTheme()
@@ -43,10 +44,10 @@ const TransactionCard: FC<ItemProps<TransactionID, AugmentedTransaction, object>
         borderRadius: '0.5rem',
       }}
     >
-      {item.augmentedTransactionGroupData && !item.augmentedTransactionGroupData.transactionGroup.hidden && (
+      {group && !group.hidden && (
         <Row style={{ justifyContent: 'center', padding: '0.16rem', gap: '.5rem' }}>
           <Typography fontSize="0.9rem" fontWeight="500" textOverflow={'ellipsis'} overflow={'hidden'}>
-            {item.augmentedTransactionGroupData.transactionGroup.name}
+            {group.name}
           </Typography>
         </Row>
       )}

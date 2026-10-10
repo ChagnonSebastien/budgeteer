@@ -164,6 +164,7 @@ export class AugmentedTransaction extends Transaction {
     public readonly category?: AugmentedCategory,
     public readonly sender?: Account,
     public readonly receiver?: Account,
+    public readonly settlementGroup?: AugmentedTransactionGroup,
   ) {
     super(
       transaction.id,
