@@ -21,6 +21,7 @@ import TransactionGroup, {
   SplitType,
   SplitTypeToString,
 } from '../../domain/model/transactionGroup'
+import { OnlineContext } from '../../service/OnlineContext'
 import {
   TransactionGroupServiceContext,
   TransactionServiceContext,
@@ -113,6 +114,7 @@ const ChangeSplitDialog: FC<{
 }> = ({ open, onClose, transactionGroup, transactions }) => {
   const { changeSplit, refresh: refreshGroups } = useContext(TransactionGroupServiceContext)
   const { refresh: refreshTransactions } = useContext(TransactionServiceContext)
+  const online = useContext(OnlineContext)
   const { refresh: refreshUnconfirmed } = useContext(UnconfirmedTransactionServiceContext)
 
   const [step, setStep] = useState<'split' | 'scope'>('split')
@@ -167,7 +169,7 @@ const ChangeSplitDialog: FC<{
             <Button color="inherit" onClick={() => setStep('split')} disabled={saving}>
               Back
             </Button>
-            <Button variant="contained" onClick={save} disabled={saving}>
+            <Button variant="contained" onClick={save} disabled={saving || !online}>
               {saving ? 'Saving...' : 'Save'}
             </Button>
           </>

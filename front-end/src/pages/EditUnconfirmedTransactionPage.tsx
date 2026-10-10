@@ -5,10 +5,12 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { UserContext } from '../App'
 import LoadingScreen from '../components/LoadingScreen'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
+import { SecureButton } from '../components/shared/SecureButton'
 import { useToast } from '../components/shared/ToastProvider'
 import UnconfirmedTransactionForm, {
   UnconfirmedTransactionFormFields,
 } from '../components/transactionGroup/UnconfirmedTransactionForm'
+import { OnlineContext } from '../service/OnlineContext'
 import { TransactionGroupServiceContext, UnconfirmedTransactionServiceContext } from '../service/ServiceContext'
 
 type Params = {
@@ -21,6 +23,7 @@ const EditUnconfirmedTransactionPage: FC = () => {
   const navigate = useNavigate()
 
   const { email, authentification_method } = useContext(UserContext)
+  const online = useContext(OnlineContext)
   const { state: transactionGroups } = useContext(TransactionGroupServiceContext)
   const {
     state: unconfirmedTransactions,
@@ -75,6 +78,7 @@ const EditUnconfirmedTransactionPage: FC = () => {
         {canPromote && (
           <Button
             variant="contained"
+            disabled={!online}
             onClick={() =>
               navigate(
                 `/transaction-groups/manage/${transactionGroup.id}/unconfirmed/${unconfirmedTransaction.id}/promote`,
@@ -84,9 +88,9 @@ const EditUnconfirmedTransactionPage: FC = () => {
             Add to my transactions
           </Button>
         )}
-        <Button color="error" onClick={onDelete}>
+        <SecureButton color="error" onClick={onDelete}>
           Delete
-        </Button>
+        </SecureButton>
       </Stack>
       <UnconfirmedTransactionForm
         transactionGroup={transactionGroup}

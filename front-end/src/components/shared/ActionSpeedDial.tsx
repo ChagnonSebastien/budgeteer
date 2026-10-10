@@ -1,8 +1,9 @@
-import { Box, Fab, Palette, SpeedDial, SpeedDialAction, SpeedDialIcon, Tooltip } from '@mui/material'
+import { Box, Fab, Palette, SpeedDial, SpeedDialAction, SpeedDialIcon, Theme, Tooltip } from '@mui/material'
 import { FC, useContext } from 'react'
 import type { IconType } from 'react-icons'
 
 import usePinnableSpeedDial from './usePinnableSpeedDial'
+import { OnlineContext } from '../../service/OnlineContext'
 import { IconToolsContext } from '../icons/IconTools'
 
 export type ActionColor =
@@ -10,6 +11,12 @@ export type ActionColor =
   | `intent.${keyof Palette['intent']}`
   | 'grey.500'
   | 'primary.main'
+
+const fabPosition = {
+  position: 'absolute',
+  bottom: (t: Theme) => `calc(${t.spacing(2)} + env(safe-area-inset-bottom))`,
+  right: (t: Theme) => `calc(${t.spacing(2)} + env(safe-area-inset-right))`,
+} as const
 
 export interface DialAction {
   label: string
@@ -25,6 +32,20 @@ const ActionSpeedDial: FC<{ ariaLabel: string; actions: DialAction[]; hint?: str
 }) => {
   const { IconLib } = useContext(IconToolsContext)
   const dial = usePinnableSpeedDial()
+  const online = useContext(OnlineContext)
+
+  if (!online) {
+    const [{ label, Icon }] = actions
+    return (
+      <Tooltip title="Unavailable offline" placement="left" arrow>
+        <Box component="span" sx={fabPosition}>
+          <Fab disabled aria-label={actions.length === 1 ? label : ariaLabel}>
+            {actions.length === 1 ? <Icon /> : <IconLib.FaPlus />}
+          </Fab>
+        </Box>
+      </Tooltip>
+    )
+  }
 
   if (actions.length === 1) {
     const [{ label, Icon, color, onClick }] = actions
@@ -34,9 +55,7 @@ const ActionSpeedDial: FC<{ ariaLabel: string; actions: DialAction[]; hint?: str
           aria-label={label}
           onClick={onClick}
           sx={{
-            position: 'absolute',
-            bottom: (t) => `calc(${t.spacing(2)} + env(safe-area-inset-bottom))`,
-            right: (t) => `calc(${t.spacing(2)} + env(safe-area-inset-right))`,
+            ...fabPosition,
             bgcolor: color,
             color: 'common.white',
             '&:hover': { bgcolor: color },
@@ -54,9 +73,7 @@ const ActionSpeedDial: FC<{ ariaLabel: string; actions: DialAction[]; hint?: str
         <Tooltip open={!dial.open} title={hint} placement="left" arrow>
           <Box
             sx={{
-              position: 'absolute',
-              bottom: (t) => `calc(${t.spacing(2)} + env(safe-area-inset-bottom))`,
-              right: (t) => `calc(${t.spacing(2)} + env(safe-area-inset-right))`,
+              ...fabPosition,
               width: 56,
               height: 56,
               pointerEvents: 'none',
@@ -66,11 +83,7 @@ const ActionSpeedDial: FC<{ ariaLabel: string; actions: DialAction[]; hint?: str
       )}
       <SpeedDial
         ariaLabel={ariaLabel}
-        sx={{
-          position: 'absolute',
-          bottom: (t) => `calc(${t.spacing(2)} + env(safe-area-inset-bottom))`,
-          right: (t) => `calc(${t.spacing(2)} + env(safe-area-inset-right))`,
-        }}
+        sx={fabPosition}
         {...dial}
         icon={
           <SpeedDialIcon

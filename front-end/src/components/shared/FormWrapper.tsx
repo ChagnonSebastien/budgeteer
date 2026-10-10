@@ -1,7 +1,8 @@
 import { Box, Stack, Typography } from '@mui/material'
-import { FC, FormEvent, ReactNode, useState } from 'react'
+import { FC, FormEvent, ReactNode, useContext, useState } from 'react'
 
 import { SecureButton } from './SecureButton'
+import { OnlineContext } from '../../service/OnlineContext'
 
 interface Props {
   children: ReactNode
@@ -11,6 +12,7 @@ interface Props {
 
 const FormWrapper: FC<Props> = (props) => {
   const { children, onSubmit, submitText } = props
+  const online = useContext(OnlineContext)
   const [submitting, setSubmitting] = useState(false)
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
@@ -43,6 +45,11 @@ const FormWrapper: FC<Props> = (props) => {
       <SecureButton fullWidth variant="contained" type="submit" loading={submitting}>
         {submitText}
       </SecureButton>
+      {!online && (
+        <Typography variant="caption" color="text.secondary" sx={{ textAlign: 'center' }}>
+          You are offline. Changes can be saved once you reconnect.
+        </Typography>
+      )}
     </Stack>
   )
 }

@@ -152,6 +152,7 @@ const AccountsPage: FC = () => {
                 description: 'See all account activity',
                 action: () => navigate(`/transactions?accounts=[${clickedAccount.id}]`),
                 disabled: false,
+                availableOffline: true,
               },
             ]}
           >

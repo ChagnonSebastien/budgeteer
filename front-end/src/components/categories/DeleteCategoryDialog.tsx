@@ -4,6 +4,7 @@ import { FC, ReactNode, useContext, useMemo, useState } from 'react'
 import CategoryPicker from './CategoryPicker'
 import { UpdatePreferencesContext, UserContext } from '../../App'
 import Category, { CategoryID } from '../../domain/model/category'
+import { OnlineContext } from '../../service/OnlineContext'
 import {
   CategoryServiceContext,
   SettlementServiceContext,
@@ -75,6 +76,7 @@ const DeleteCategoryDialog: FC<{ category: Category; onClose(): void; onDeleted(
 }) => {
   const { preferences } = useContext(UserContext)
   const updatePreferences = useContext(UpdatePreferencesContext)
+  const online = useContext(OnlineContext)
   const {
     augmentedCategories,
     subCategories,
@@ -211,7 +213,7 @@ const DeleteCategoryDialog: FC<{ category: Category; onClose(): void; onDeleted(
           <Button color="inherit" onClick={onClose}>
             Cancel
           </Button>
-          <Button variant="contained" color="error" disabled={invalidTarget || deleting} onClick={confirm}>
+          <Button variant="contained" color="error" disabled={invalidTarget || deleting || !online} onClick={confirm}>
             Delete category
           </Button>
         </>

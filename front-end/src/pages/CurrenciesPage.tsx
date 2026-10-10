@@ -132,6 +132,7 @@ const CurrenciesPage: FC = () => {
                       description: 'Edit rate points and automate fetching',
                       action: () => navigate(`/currencies/rates/${clickedCurrency.id}`),
                       disabled: false,
+                      availableOffline: true,
                     },
                   ]),
               {

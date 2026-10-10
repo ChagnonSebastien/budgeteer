@@ -18,6 +18,7 @@ import { BasicCrudServiceWithPersistence } from './service/BasicCrudServiceWithP
 import { CategoryPersistenceAugmenter } from './service/CategoryServiceAugmenter'
 import { CurrencyPersistenceAugmenter } from './service/CurrencyServiceAugmenter'
 import { ExchangeRatePersistenceAugmenter } from './service/ExcahngeRateServiceAugmenter'
+import { OnlineContext } from './service/OnlineContext'
 import {
   AccountServiceContext,
   CategoryServiceContext,
@@ -78,16 +79,16 @@ const UnconfirmedTransactionPersistenceAugmenter = makeUnconfirmedTransactionPer
   unconfirmedTransactionRemoteStore,
 )
 
-const MustBeConnectedToInternetOnFirstSetup: FC<{ children: ReactNode; hasInternet: boolean }> = ({
-  children,
-  hasInternet,
-}) => (hasInternet ? children : <Centered>Internet connection required on first use</Centered>)
+const MustBeConnectedToInternetOnFirstSetup: FC<{ children: ReactNode }> = ({ children }) => {
+  const online = useContext(OnlineContext)
+  return online ? children : <Centered>Internet connection required on first use</Centered>
+}
 
-const WaitOnAtLeastOneCategory: FC<{ NextComponent: FC; hasInternet: boolean }> = ({ NextComponent, hasInternet }) => (
+const WaitOnAtLeastOneCategory: FC<{ NextComponent: FC }> = ({ NextComponent }) => (
   <CategoryServiceContext.Consumer>
     {(value) =>
       value.augmentedCategories.length === 0 ? (
-        <MustBeConnectedToInternetOnFirstSetup hasInternet={hasInternet}>
+        <MustBeConnectedToInternetOnFirstSetup>
           <LoadingScreen />
         </MustBeConnectedToInternetOnFirstSetup>
       ) : (
@@ -99,8 +100,7 @@ const WaitOnAtLeastOneCategory: FC<{ NextComponent: FC; hasInternet: boolean }> 
 
 const WaitOnInitializedData: FC<{
   NextComponent: FC
-  hasInternet: boolean
-}> = ({ NextComponent, hasInternet }) => (
+}> = ({ NextComponent }) => (
   <TransactionServiceContext.Consumer>
     {(transactionCtx) => (
       <ExchangeRateServiceContext.Consumer>
@@ -122,7 +122,7 @@ const WaitOnInitializedData: FC<{
                       !categoryCtx.version != !categoryCtx.augmentedVersion ? (
                         <LoadingScreen />
                       ) : (
-                        <WaitOnAtLeastOneCategory NextComponent={NextComponent} hasInternet={hasInternet} />
+                        <WaitOnAtLeastOneCategory NextComponent={NextComponent} />
                       )
                     }
                   </CategoryServiceContext.Consumer>
@@ -136,7 +136,7 @@ const WaitOnInitializedData: FC<{
   </TransactionServiceContext.Consumer>
 )
 
-const GroupPersistenceSetup: FC<{ children: ReactNode; hasInternet: boolean }> = ({ children, hasInternet }) => {
+const GroupPersistenceSetup: FC<{ children: ReactNode }> = ({ children }) => {
   const { email, name: username } = useContext(UserContext)
   const [transactionGroupLocalStore] = useState(new TransactionGroupLocalStore(email, username, IndexedDB))
   const [transactionGroupRemoteStore] = useState(new TransactionGroupRemoteStore(email, username, transport))
@@ -154,7 +154,6 @@ const GroupPersistenceSetup: FC<{ children: ReactNode; hasInternet: boolean }> =
       context={TransactionGroupServiceContext}
       Augmenter={TransactionGroupPersistenceAugmenter}
       sorter={(a, b) => b.id - a.id}
-      hasInternet={hasInternet}
     >
       <BasicCrudServiceWithPersistence
         itemName="unconfirmedTransaction"
@@ -168,7 +167,6 @@ const GroupPersistenceSetup: FC<{ children: ReactNode; hasInternet: boolean }> =
           if (b.date.getTime() !== a.date.getTime()) return b.date.getTime() - a.date.getTime()
           return b.id - a.id
         }}
-        hasInternet={hasInternet}
       >
         <BasicCrudServiceWithPersistence
           itemName="settlement"
@@ -182,7 +180,6 @@ const GroupPersistenceSetup: FC<{ children: ReactNode; hasInternet: boolean }> =
             if (b.date.getTime() !== a.date.getTime()) return b.date.getTime() - a.date.getTime()
             return b.id - a.id
           }}
-          hasInternet={hasInternet}
         >
           {children}
         </BasicCrudServiceWithPersistence>
@@ -191,7 +188,7 @@ const GroupPersistenceSetup: FC<{ children: ReactNode; hasInternet: boolean }> =
   )
 }
 
-const PersistenceSetup: FC<{ children: ReactNode; hasInternet: boolean }> = ({ children, hasInternet }) => (
+const PersistenceSetup: FC<{ children: ReactNode }> = ({ children }) => (
   <BasicCrudServiceWithPersistence
     itemName="currency"
     synced={true}
@@ -200,7 +197,6 @@ const PersistenceSetup: FC<{ children: ReactNode; hasInternet: boolean }> = ({ c
     actionStore={replayStore}
     context={CurrencyServiceContext}
     Augmenter={CurrencyPersistenceAugmenter}
-    hasInternet={hasInternet}
     sorter={(a, b) => b.id - a.id}
   >
     <BasicCrudServiceWithPersistence
@@ -215,7 +211,6 @@ const PersistenceSetup: FC<{ children: ReactNode; hasInternet: boolean }> = ({ c
         if (b.ordering !== a.ordering) return b.ordering - a.ordering
         return b.id - a.id
       }}
-      hasInternet={hasInternet}
     >
       <BasicCrudServiceWithPersistence
         itemName="account"
@@ -225,7 +220,6 @@ const PersistenceSetup: FC<{ children: ReactNode; hasInternet: boolean }> = ({ c
         actionStore={replayStore}
         context={AccountServiceContext}
         Augmenter={AccountPersistenceAugmenter}
-        hasInternet={hasInternet}
         sorter={(a, b) => b.id - a.id}
       >
         <BasicCrudServiceWithPersistence
@@ -236,7 +230,6 @@ const PersistenceSetup: FC<{ children: ReactNode; hasInternet: boolean }> = ({ c
           actionStore={replayStore}
           context={ExchangeRateServiceContext}
           Augmenter={ExchangeRatePersistenceAugmenter}
-          hasInternet={hasInternet}
           sorter={(a, b) => {
             if (b.date.getTime() !== a.date.getTime()) return b.date.getTime() - a.date.getTime()
             if (b.currencyA !== a.currencyA) return b.currencyA - a.currencyA
@@ -255,9 +248,8 @@ const PersistenceSetup: FC<{ children: ReactNode; hasInternet: boolean }> = ({ c
               if (b.date.getTime() !== a.date.getTime()) return b.date.getTime() - a.date.getTime()
               return b.id - a.id
             }}
-            hasInternet={hasInternet}
           >
-            <GroupPersistenceSetup hasInternet={hasInternet}>{children}</GroupPersistenceSetup>
+            <GroupPersistenceSetup>{children}</GroupPersistenceSetup>
           </BasicCrudServiceWithPersistence>
         </BasicCrudServiceWithPersistence>
       </BasicCrudServiceWithPersistence>
@@ -304,12 +296,11 @@ const AskDisplayName: FC<{ setDisplayName(name: string): Promise<void> }> = ({ s
 
 interface Props {
   logout(): void
-  hasInternet: boolean
   setDisplayName(name: string): Promise<void>
 }
 
 const GuestZone: FC<Props> = (props) => {
-  const { logout, hasInternet, setDisplayName } = props
+  const { logout, setDisplayName } = props
   const { display_name } = useContext(UserContext)
 
   const testGetRateScript = useMemo(() => exchangeRateRemoteStore.testGetRateScript(), [])
@@ -351,8 +342,8 @@ const GuestZone: FC<Props> = (props) => {
   }
 
   return (
-    <PersistenceSetup hasInternet={hasInternet}>
-      <WaitOnInitializedData NextComponent={FullyAugmentedView} hasInternet={hasInternet} />
+    <PersistenceSetup>
+      <WaitOnInitializedData NextComponent={FullyAugmentedView} />
     </PersistenceSetup>
   )
 }

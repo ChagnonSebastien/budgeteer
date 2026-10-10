@@ -54,7 +54,7 @@ const useAuthentication = () => {
   const [user, setUser] = useState<User | null>(userStore.getUser())
   const [userVerified, setUserVerified] = useState(false)
   const [attemptedUserVerification, setAttemptedUserVerification] = useState(false)
-  const [hasInternet, setHasInternet] = useState(false)
+  const [hasInternet, setHasInternet] = useState(navigator.onLine)
 
   const setDefaultCurrency = useCallback((id: number) => {
     if (user === null) return

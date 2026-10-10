@@ -5,6 +5,7 @@ import { FC, useCallback, useContext, useMemo, useState } from 'react'
 import { parseRate, toDisplayedRate, toStoredRate } from './exchangeRateUnits'
 import Currency from '../../domain/model/currency'
 import ExchangeRate, { ExchangeRateIdentifiableFields } from '../../domain/model/exchangeRate'
+import { OnlineContext } from '../../service/OnlineContext'
 import { ExchangeRateServiceContext } from '../../service/ServiceContext'
 import { IconToolsContext } from '../icons/IconTools'
 import DatePicker from '../inputs/DatePicker'
@@ -153,6 +154,7 @@ const ExchangeRatePoints: FC<Props> = ({ currency, against, draft, onDraftChange
   const { IconLib } = useContext(IconToolsContext)
   const { showToast } = useToast()
   const { points, save, remove } = useRatePoints(currency, against)
+  const online = useContext(OnlineContext)
   const [expanded, setExpanded] = useState(false)
   const [toDelete, setToDelete] = useState<RatePoint | null>(null)
 
@@ -164,6 +166,7 @@ const ExchangeRatePoints: FC<Props> = ({ currency, against, draft, onDraftChange
         size="small"
         startIcon={<IconLib.BsPlusCircle />}
         sx={{ alignSelf: 'flex-start' }}
+        disabled={!online}
         onClick={() =>
           onDraftChange({ editing: null, date: startOfDay(new Date()), rate: rateInput(points[0]?.displayed ?? 1) })
         }
@@ -184,11 +187,12 @@ const ExchangeRatePoints: FC<Props> = ({ currency, against, draft, onDraftChange
           <IconButton
             size="small"
             aria-label="edit rate"
+            disabled={!online}
             onClick={() => onDraftChange({ editing: point, date: point.date, rate: rateInput(point.displayed) })}
           >
             <IconLib.MdEdit />
           </IconButton>
-          <IconButton size="small" aria-label="delete rate" onClick={() => setToDelete(point)}>
+          <IconButton size="small" aria-label="delete rate" disabled={!online} onClick={() => setToDelete(point)}>
             <IconLib.MdDelete />
           </IconButton>
         </Stack>

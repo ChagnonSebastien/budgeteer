@@ -1,5 +1,7 @@
 import { Button, ButtonProps, CircularProgress } from '@mui/material'
-import { FC, MouseEvent, ReactNode, useState } from 'react'
+import { FC, MouseEvent, ReactNode, useContext, useState } from 'react'
+
+import { OnlineContext } from '../../service/OnlineContext'
 
 interface Props extends Omit<ButtonProps, 'onClick'> {
   /** Shows a spinner and disables the button. Use for work tracked by a parent (e.g. form submit). */
@@ -19,6 +21,7 @@ interface Props extends Omit<ButtonProps, 'onClick'> {
  */
 export const SecureButton: FC<Props> = (props) => {
   const { loading = false, disabled, onClick, children, startIcon, ...rest } = props
+  const online = useContext(OnlineContext)
   const [pending, setPending] = useState(false)
   const busy = loading || pending
 
@@ -37,7 +40,7 @@ export const SecureButton: FC<Props> = (props) => {
   return (
     <Button
       {...rest}
-      disabled={disabled || busy}
+      disabled={disabled || busy || !online}
       onClick={onClick ? handleClick : undefined}
       startIcon={busy ? <CircularProgress size="1.1rem" color="inherit" /> : startIcon}
     >

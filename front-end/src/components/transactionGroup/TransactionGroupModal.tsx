@@ -90,6 +90,7 @@ const TransactionGroupModal: FC<{ group: TransactionGroup; summary?: GroupSummar
                 navigate(`/transaction-groups/manage/${group.id}`)
               },
               disabled: false,
+              availableOffline: joined,
             },
             {
               Icon: group.hidden ? IconLib.MdVisibility : IconLib.MdVisibilityOff,

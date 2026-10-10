@@ -2,6 +2,7 @@ import { Chip, IconButton, Stack } from '@mui/material'
 import { CSSProperties, FC, useCallback, useContext } from 'react'
 
 import TransactionGroup, { Email, Person } from '../../domain/model/transactionGroup'
+import { OnlineContext } from '../../service/OnlineContext'
 import { TransactionGroupServiceContext } from '../../service/ServiceContext'
 import { IconToolsContext } from '../icons/IconTools'
 import PersonPicker from '../inputs/PersonPicker'
@@ -11,6 +12,7 @@ const GroupMembers: FC<{ transactionGroup: TransactionGroup; style?: CSSProperti
   style,
 }) => {
   const { IconLib } = useContext(IconToolsContext)
+  const online = useContext(OnlineContext)
   const { update: updateTransactionGroup } = useContext(TransactionGroupServiceContext)
 
   const addMember = useCallback(
@@ -40,7 +42,7 @@ const GroupMembers: FC<{ transactionGroup: TransactionGroup; style?: CSSProperti
       <PersonPicker
         onPersonSelected={addMember}
         OverrideTextLabel={({ onClick }) => (
-          <IconButton aria-label="add someone to transaction group" onClick={onClick}>
+          <IconButton aria-label="add someone to transaction group" onClick={onClick} disabled={!online}>
             <IconLib.BsPlusCircle />
           </IconButton>
         )}
@@ -54,7 +56,7 @@ const GroupMembers: FC<{ transactionGroup: TransactionGroup; style?: CSSProperti
           key={member.email}
           label={member.name}
           variant={member.joined ? 'filled' : 'outlined'}
-          onDelete={member.joined ? undefined : () => removeMember(member.email)}
+          onDelete={member.joined || !online ? undefined : () => removeMember(member.email)}
         />
       ))}
     </Stack>

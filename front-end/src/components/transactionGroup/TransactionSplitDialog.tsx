@@ -14,6 +14,7 @@ import {
 } from '../../domain/model/transaction'
 import { MemberSplitValues, SplitTypeToString } from '../../domain/model/transactionGroup'
 import { UnconfirmedAugmentedTransaction } from '../../domain/model/unconfirmedTransaction'
+import { OnlineContext } from '../../service/OnlineContext'
 import {
   TransactionGroupServiceContext,
   TransactionServiceContext,
@@ -38,6 +39,7 @@ const TransactionSplitDialog: FC<{ transaction: AugmentedTransaction; onClose():
   onClose,
 }) => {
   const { privacyMode } = useContext(DrawerContext)
+  const online = useContext(OnlineContext)
   const { refresh: refreshTransactions } = useContext(TransactionServiceContext)
   const { setTransactionSplit } = useContext(TransactionGroupServiceContext)
   const { update: updateUnconfirmed } = useContext(UnconfirmedTransactionServiceContext)
@@ -116,7 +118,7 @@ const TransactionSplitDialog: FC<{ transaction: AugmentedTransaction; onClose():
           <Button color="inherit" onClick={onClose} disabled={saving}>
             Cancel
           </Button>
-          <Button variant="contained" onClick={save} disabled={saving || valuesError !== null}>
+          <Button variant="contained" onClick={save} disabled={saving || valuesError !== null || !online}>
             {saving ? 'Saving...' : 'Save'}
           </Button>
         </>

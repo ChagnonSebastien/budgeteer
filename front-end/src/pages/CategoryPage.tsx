@@ -79,6 +79,7 @@ const CategoryPage: FC = () => {
                 description: 'See all category transactions',
                 action: () => navigate(`/transactions?categories=[${clickedCategory.id}]`),
                 disabled: false,
+                availableOffline: true,
               },
             ]}
           >

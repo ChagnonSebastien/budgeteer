@@ -1,9 +1,10 @@
 import { Box, DialogContent, Divider, List, ListItem, ListItemText, Palette, Typography } from '@mui/material'
 import { keyframes, styled } from '@mui/material/styles'
-import { FC, ReactNode } from 'react'
+import { FC, ReactNode, useContext } from 'react'
 
 import BasicModal from './BasicModal'
 import { GradientCard, withoutTransientProps } from './Layout'
+import { OnlineContext } from '../../service/OnlineContext'
 
 const fadeIn = keyframes`
   from {
@@ -160,10 +161,13 @@ type FancyModalProps = {
     description: string
     action(): void
     disabled: boolean
+    availableOffline?: boolean
   }[]
 }
 
 export const FancyModal: FC<FancyModalProps> = (props) => {
+  const online = useContext(OnlineContext)
+
   return (
     <DialogContent
       sx={{
@@ -235,20 +239,29 @@ export const FancyModal: FC<FancyModalProps> = (props) => {
       >
         {props.bottomMenu
           .filter((item) => !item.disabled)
-          .map((item, index) => (
-            <ListItem key={item.label} component="div" onClick={item.action} sx={{ p: 0 }}>
-              <OverviewActionItem $delay={index}>
-                <Box component={OverviewActionIcon} sx={{ color: `intent.${item.intent}` }}>
-                  <item.Icon />
-                </Box>
-                <ListItemText
-                  primary={item.label}
-                  secondary={item.description}
-                  slotProps={{ secondary: { variant: 'caption', color: 'text.disabled' } }}
-                />
-              </OverviewActionItem>
-            </ListItem>
-          ))}
+          .map((item, index) => {
+            const unavailable = !online && !item.availableOffline
+            return (
+              <ListItem
+                key={item.label}
+                component="div"
+                onClick={unavailable ? undefined : item.action}
+                aria-disabled={unavailable}
+                sx={{ p: 0, ...(unavailable && { opacity: 0.4, pointerEvents: 'none' }) }}
+              >
+                <OverviewActionItem $delay={index}>
+                  <Box component={OverviewActionIcon} sx={{ color: `intent.${item.intent}` }}>
+                    <item.Icon />
+                  </Box>
+                  <ListItemText
+                    primary={item.label}
+                    secondary={unavailable ? 'Unavailable offline' : item.description}
+                    slotProps={{ secondary: { variant: 'caption', color: 'text.disabled' } }}
+                  />
+                </OverviewActionItem>
+              </ListItem>
+            )
+          })}
       </List>
     </DialogContent>
   )

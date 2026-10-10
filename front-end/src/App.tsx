@@ -7,6 +7,7 @@ import LoadingScreen from './components/LoadingScreen'
 import { Centered } from './components/shared/Layout'
 import User, { UserPreferencesPatch } from './domain/model/user'
 import GuestZone from './GuestZone'
+import { OnlineContext } from './service/OnlineContext'
 import useAuthentication from './useAuthentication'
 
 export const UserContext = createContext<User>({
@@ -37,22 +38,26 @@ const App: FC = () => {
   if (user !== null) {
     if (user.authentification_method === 'guest') {
       return (
-        <IconToolsContext.Provider value={iconTools}>
-          <UserContext.Provider value={user}>
-            <GuestZone hasInternet={hasInternet} logout={logout} setDisplayName={setDisplayName} />
-          </UserContext.Provider>
-        </IconToolsContext.Provider>
+        <OnlineContext.Provider value={hasInternet}>
+          <IconToolsContext.Provider value={iconTools}>
+            <UserContext.Provider value={user}>
+              <GuestZone logout={logout} setDisplayName={setDisplayName} />
+            </UserContext.Provider>
+          </IconToolsContext.Provider>
+        </OnlineContext.Provider>
       )
     }
 
     return (
-      <IconToolsContext.Provider value={iconTools}>
-        <UserContext.Provider value={user}>
-          <UpdatePreferencesContext.Provider value={updatePreferences}>
-            <AuthenticatedZone hasInternet={hasInternet} logout={logout} setDefaultCurrency={setDefaultCurrency} />
-          </UpdatePreferencesContext.Provider>
-        </UserContext.Provider>
-      </IconToolsContext.Provider>
+      <OnlineContext.Provider value={hasInternet}>
+        <IconToolsContext.Provider value={iconTools}>
+          <UserContext.Provider value={user}>
+            <UpdatePreferencesContext.Provider value={updatePreferences}>
+              <AuthenticatedZone logout={logout} setDefaultCurrency={setDefaultCurrency} />
+            </UpdatePreferencesContext.Provider>
+          </UserContext.Provider>
+        </IconToolsContext.Provider>
+      </OnlineContext.Provider>
     )
   }
 

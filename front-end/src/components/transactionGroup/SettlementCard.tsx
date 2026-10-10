@@ -7,6 +7,7 @@ import useSettlementSide from './useSettlementSide'
 import { UserContext } from '../../App'
 import { formatFull } from '../../domain/model/currency'
 import { SettlementAugmentedTransaction } from '../../domain/model/settlement'
+import { OnlineContext } from '../../service/OnlineContext'
 import { SettlementServiceContext, TransactionServiceContext } from '../../service/ServiceContext'
 import { IconToolsContext } from '../icons/IconTools'
 import { DrawerContext } from '../Menu'
@@ -18,6 +19,7 @@ const SettlementCard: FC<{ item: SettlementAugmentedTransaction; onClick?(): voi
   const { privacyMode } = useContext(DrawerContext)
   const { email, authentification_method } = useContext(UserContext)
   const { IconLib } = useContext(IconToolsContext)
+  const online = useContext(OnlineContext)
   const { confirmSettlement, refresh: refreshSettlements } = useContext(SettlementServiceContext)
   const { refresh: refreshTransactions } = useContext(TransactionServiceContext)
   const { showToast } = useToast()
@@ -82,7 +84,7 @@ const SettlementCard: FC<{ item: SettlementAugmentedTransaction; onClick?(): voi
         strip && (
           <CardAction
             onClick={strip.action}
-            disabled={confirming}
+            disabled={confirming || !online}
             color={strip.color}
             icon={canConfirm ? <IconLib.MdCheckCircle /> : <IconLib.MdEdit />}
             label={strip.label}

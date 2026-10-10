@@ -1,6 +1,7 @@
-import { Context, FC, ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Context, FC, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 
 import { BasicCrudService } from './BasicCrudService'
+import { OnlineContext } from './OnlineContext'
 import Unique, { ItemType } from '../domain/model/Unique'
 import { ActionType } from '../store/local/IndexedDB'
 
@@ -44,7 +45,6 @@ interface Props<IdType, Item extends Unique<IdType, Item>, ItemIdentifiableField
   sorter: (a: Item, b: Item) => number
   Augmenter: FC<AugmenterProps<IdType, Item, Augmentation>>
   synced: boolean
-  hasInternet: boolean
 }
 
 const MemoizedProvider = <Value, Base extends object, Augmentation>({
@@ -82,8 +82,8 @@ export const BasicCrudServiceWithPersistence = <
     sorter,
     Augmenter,
     synced,
-    hasInternet,
   } = props
+  const hasInternet = useContext(OnlineContext)
 
   const [state, setState] = useState<{ version: number; data: Item[] }>({ version: 0, data: initialState ?? [] })
   const [initialized, setInitialized] = useState<boolean>(typeof initialState !== 'undefined')

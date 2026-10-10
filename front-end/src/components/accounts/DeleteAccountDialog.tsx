@@ -14,6 +14,7 @@ import { FC, useContext, useMemo, useState } from 'react'
 import { UserContext } from '../../App'
 import Account from '../../domain/model/account'
 import { formatFull } from '../../domain/model/currency'
+import { OnlineContext } from '../../service/OnlineContext'
 import {
   AccountServiceContext,
   CurrencyServiceContext,
@@ -37,6 +38,7 @@ const DeleteAccountDialog: FC<{ account: Account; onClose(): void; onDeleted(): 
   onDeleted,
 }) => {
   const { hidden_default_account } = useContext(UserContext)
+  const online = useContext(OnlineContext)
   const { state: accounts, deleteAccount, refresh: refreshAccounts } = useContext(AccountServiceContext)
   const { state: transactions, refresh: refreshTransactions } = useContext(TransactionServiceContext)
   const { refresh: refreshUnconfirmed } = useContext(UnconfirmedTransactionServiceContext)
@@ -150,7 +152,7 @@ const DeleteAccountDialog: FC<{ account: Account; onClose(): void; onDeleted(): 
           <Button color="inherit" onClick={onClose}>
             Cancel
           </Button>
-          <Button variant="contained" color="error" disabled={blocked || deleting} onClick={confirm}>
+          <Button variant="contained" color="error" disabled={blocked || deleting || !online} onClick={confirm}>
             Delete account
           </Button>
         </>
