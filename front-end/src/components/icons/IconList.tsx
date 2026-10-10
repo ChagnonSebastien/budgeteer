@@ -2,6 +2,7 @@ import { Box, Stack } from '@mui/material'
 import { FC, useContext, useEffect, useMemo, useRef, useState } from 'react'
 
 import { IconToolsContext } from './IconTools'
+import { matchesSearch } from '../../utils'
 
 const perfectMultiplier = 4 * 3 * 5 * 7
 
@@ -17,7 +18,7 @@ const IconList: FC<Props> = ({ filter, onSelect }) => {
   useEffect(() => setAmountItems(perfectMultiplier), [filter])
 
   const filteredIcons = useMemo(() => {
-    return iconNameList.filter((value) => value.toLowerCase().includes(filter.toLowerCase())).slice(0, amountItems)
+    return iconNameList.filter((value) => matchesSearch(value, filter)).slice(0, amountItems)
   }, [iconNameList, filter, amountItems])
 
   const loadMoreRef = useRef(null)

@@ -7,6 +7,7 @@ import ItemList, { ItemListProps } from './ItemList'
 import Account, { AccountID } from '../../domain/model/account'
 import { formatFull } from '../../domain/model/currency'
 import MixedAugmentation from '../../service/MixedAugmentation'
+import { matchesSearch } from '../../utils'
 import { DrawerContext } from '../Menu'
 import { CustomScrolling } from '../shared/CustomScrolling'
 import { Column, Row } from '../shared/Layout'
@@ -64,7 +65,7 @@ const GroupedAccountList = (props: Props) => {
 
   const filterAccounts = useCallback(
     (account: Account) => {
-      if (filterable && filter !== '' && !account.name.toLowerCase().includes(filter.toLowerCase())) {
+      if (filterable && !matchesSearch(account.name, filter)) {
         return false
       }
 

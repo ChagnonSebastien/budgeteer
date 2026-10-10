@@ -21,6 +21,7 @@ import {
   TransactionServiceContext,
   UnconfirmedTransactionServiceContext,
 } from '../../service/ServiceContext'
+import { searchFilterOptions } from '../../utils'
 import { DrawerContext } from '../Menu'
 import AppDialog from '../shared/AppDialog'
 import { useToast } from '../shared/ToastProvider'
@@ -214,6 +215,7 @@ const DeleteCurrencyDialog: FC<{ currency: Currency; onClose(): void; onDeleted(
               </Alert>
             ) : (
               <Autocomplete
+                filterOptions={searchFilterOptions}
                 options={candidates}
                 value={target}
                 onChange={(_, value) => setTarget(value)}

@@ -1,3 +1,5 @@
+import { FilterOptionsState } from '@mui/material'
+
 export function doNothing(..._params: unknown[]) {}
 
 export function notImplemented(..._params: never) {
@@ -65,3 +67,32 @@ export const darkTheme = {
     },
   },
 }
+
+// No canonical decomposition, so NFD leaves these letters as they are.
+const undecomposedLetters: Record<string, string> = {
+  ß: 'ss',
+  æ: 'ae',
+  œ: 'oe',
+  ø: 'o',
+  đ: 'd',
+  ð: 'd',
+  ł: 'l',
+  ı: 'i',
+  þ: 'th',
+}
+
+export const normalizeForSearch = (text: string): string =>
+  text
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/\p{M}/gu, '')
+    .replace(/[ßæœøđðłıþ]/g, (letter) => undecomposedLetters[letter])
+    .replace(/[\s\p{Pd}]/gu, '')
+
+export const matchesSearch = (text: string, query: string): boolean =>
+  normalizeForSearch(text).includes(normalizeForSearch(query))
+
+export const sameForSearch = (a: string, b: string): boolean => normalizeForSearch(a) === normalizeForSearch(b)
+
+export const searchFilterOptions = <T>(options: T[], { inputValue, getOptionLabel }: FilterOptionsState<T>): T[] =>
+  options.filter((option) => matchesSearch(getOptionLabel(option), inputValue))

@@ -15,6 +15,7 @@ import { useNavigateFromDialog } from '../components/shared/useCloseOnBack'
 import Currency, { CurrencyID } from '../domain/model/currency'
 import MixedAugmentation from '../service/MixedAugmentation'
 import { AccountServiceContext, CurrencyServiceContext } from '../service/ServiceContext'
+import { matchesSearch } from '../utils'
 
 const CurrenciesPage: FC = () => {
   const navigate = useNavigateFromDialog()
@@ -42,9 +43,8 @@ const CurrenciesPage: FC = () => {
     return total
   }
 
-  const search = filter.trim().toLowerCase()
   const orderedCurrencies = currencies
-    .filter((c) => search === '' || c.name.toLowerCase().includes(search) || c.symbol.toLowerCase().includes(search))
+    .filter((c) => matchesSearch(c.name, filter) || matchesSearch(c.symbol, filter))
     .sort((a, b) => Number(getTotalForCurrency(a.id) === 0) - Number(getTotalForCurrency(b.id) === 0))
 
   return (

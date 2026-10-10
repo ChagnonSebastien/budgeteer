@@ -4,6 +4,7 @@ import ItemPicker from './ItemPicker'
 import { EmailValidator } from './Validator'
 import { Email, Person } from '../../domain/model/transactionGroup'
 import { TransactionGroupServiceContext } from '../../service/ServiceContext'
+import { matchesSearch, sameForSearch } from '../../utils'
 import { AdditionalAccountCardProps } from '../accounts/AccountCard'
 import PersonCard from '../shared/PersonCard'
 
@@ -64,10 +65,10 @@ const PersonPicker: FC<Props> = (props) => {
       onNewItemSelected={handleNewPersonSelected}
       additionalItemProps={{}}
       doesStringMatchItem={(s: string, item: Person) => {
-        return item.email.toLowerCase().includes(s.toLowerCase()) || item.name.toLowerCase().includes(s.toLowerCase())
+        return matchesSearch(item.email, s) || matchesSearch(item.name, s)
       }}
       doesStringMatchItemPerfectly={(s: string, item: Person) => {
-        return item.email.toLowerCase() === s.toLowerCase() || item.name.toLowerCase() === s.toLowerCase()
+        return sameForSearch(item.email, s) || sameForSearch(item.name, s)
       }}
       newItemStringValidator={new EmailValidator()}
     />

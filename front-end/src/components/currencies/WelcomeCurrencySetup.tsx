@@ -1,6 +1,7 @@
 import { Alert, Autocomplete, Box, Stack, TextField, Typography } from '@mui/material'
 import { FC, useMemo, useState } from 'react'
 
+import { searchFilterOptions } from '../../utils'
 import FormWrapper from '../shared/FormWrapper'
 
 const defaultCurrencyCode = 'CAD'
@@ -48,6 +49,7 @@ const WelcomeCurrencySetup: FC<{ onSubmit(choice: CurrencyChoice): Promise<void>
         <FormWrapper onSubmit={submit} submitText="Continue">
           {error && <Alert severity="error">{error}</Alert>}
           <Autocomplete
+            filterOptions={searchFilterOptions}
             options={choices}
             value={choice}
             onChange={(_, value) => setChoice(value)}

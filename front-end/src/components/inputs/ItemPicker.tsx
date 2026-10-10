@@ -15,6 +15,7 @@ import React, { FC, ReactNode, useEffect, useMemo, useRef, useState } from 'reac
 
 import { NotEmptyValidator, Validator } from './Validator'
 import NamedItem from '../../domain/model/NamedItem'
+import { matchesSearch, sameForSearch } from '../../utils'
 import ItemList, { ItemListProps, ItemProps } from '../accounts/ItemList'
 import AppDialog from '../shared/AppDialog'
 import { CustomScrolling } from '../shared/CustomScrolling'
@@ -81,8 +82,8 @@ function ItemPicker<ItemID, T extends NamedItem<ItemID, T>, AdditionalItemProps>
 
     selectedItemId,
     onSelectItem,
-    doesStringMatchItem = (s: string, item: T) => itemDisplayText(item).toLowerCase().includes(s.toLowerCase()),
-    doesStringMatchItemPerfectly = (s: string, item: T) => itemDisplayText(item).toLowerCase() === s.toLowerCase(),
+    doesStringMatchItem = (s: string, item: T) => matchesSearch(itemDisplayText(item), s),
+    doesStringMatchItemPerfectly = (s: string, item: T) => sameForSearch(itemDisplayText(item), s),
 
     ItemListComponent = ItemList,
     ItemComponent,

@@ -22,6 +22,7 @@ import {
   TransactionServiceContext,
   UnconfirmedTransactionServiceContext,
 } from '../../service/ServiceContext'
+import { searchFilterOptions } from '../../utils'
 import { DrawerContext } from '../Menu'
 import AppDialog from '../shared/AppDialog'
 import { useToast } from '../shared/ToastProvider'
@@ -184,6 +185,7 @@ const DeleteAccountDialog: FC<{ account: Account; onClose(): void; onDeleted(): 
             </Alert>
           ) : (
             <Autocomplete
+              filterOptions={searchFilterOptions}
               options={candidates}
               value={replacement}
               onChange={(_, value) => setReplacement(value)}
