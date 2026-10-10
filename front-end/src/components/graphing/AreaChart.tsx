@@ -9,6 +9,7 @@ import {
   useValueAxisConfiguration,
   ValueAxisConfig,
 } from './TimerangeGraphUtils'
+import assignAreaColors from './assignAreaColors'
 
 function brighten(hex: string, amount = 0.4): string {
   const r = parseInt(hex.slice(1, 3), 16)
@@ -19,6 +20,14 @@ function brighten(hex: string, amount = 0.4): string {
   const lg = Math.round(g + (255 - g) * lightenFactor)
   const lb = Math.round(b + (255 - b) * lightenFactor)
   return `#${lr.toString(16).padStart(2, '0')}${lg.toString(16).padStart(2, '0')}${lb.toString(16).padStart(2, '0')}`
+}
+
+function darken(hex: string, amount = 0.45): string {
+  const channel = (i: number) =>
+    Math.round(parseInt(hex.slice(i, i + 2), 16) * (1 - amount))
+      .toString(16)
+      .padStart(2, '0')
+  return `#${channel(1)}${channel(3)}${channel(5)}`
 }
 
 type DataSetLabel = string
@@ -188,9 +197,9 @@ const AreaChart: FC<Props> = ({
     return `${monotoneSpline(bot)} L${rev[0][0]},${rev[0][1]} ${monotoneSpline(rev).slice(1)} Z`
   }
 
-  const getColor = (id: string) => {
-    return datasetLabels.indexOf(id) !== -1 ? colors[datasetLabels.indexOf(id) % colors.length] : '#ccc'
-  }
+  const assignedColors = useMemo(() => assignAreaColors(layers, colors), [layers, colors])
+
+  const getColor = (id: string) => assignedColors[datasetLabels.indexOf(id)] ?? '#ccc'
 
   const individualBaselineSplines = useMemo(() => {
     return datasetsBaselineStackedValue.map((baselineStackedValues, n) => {
@@ -261,7 +270,9 @@ const AreaChart: FC<Props> = ({
             key={`${datasetLabels[li]}-area`}
             d={buildPath(layer)}
             fill={getColor(datasetLabels[li])}
-            stroke="none"
+            stroke={darken(getColor(datasetLabels[li]))}
+            strokeWidth={0.75}
+            vectorEffect="non-scaling-stroke"
           />
         ))}
 

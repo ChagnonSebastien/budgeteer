@@ -4,26 +4,20 @@ export function notImplemented(..._params: never) {
   throw new Error('Not implemented')
 }
 
+// Validated on #1F1F1F for contrast and color-blind separation of neighbours; re-run the check before editing.
 export const darkColors = [
-  '#CC6619CC', // Deep Orange
-  '#7B3B99CC', // Deep Purple
-  '#1B8599CC', // Deep Cyan
-  '#B33B73CC', // Deep Rose
-  '#739926CC', // Deep Lime
-  '#CC5B73CC', // Deep Coral
-  '#1B7A73CC', // Deep Teal
-  '#8B5BBFCC', // Deep Violet
-  '#B34D2BCC', // Deep Terra Cotta
-  '#BFA673CC', // Rich Beige
-  '#992626CC', // Dark Red
-  '#3B8B8BCC', // Deep Aqua
-  '#737326CC', // Deep Olive
-  '#BF704DCC', // Rich Copper
-  '#4D4D99CC', // Deep Indigo
-  '#CC3B3BCC', // Deep Red
-  '#2D995BCC', // Rich Green
-  '#CC9B20CC', // Deep Gold
-  '#2B5CADCC', // Deep Blue
+  '#A76239',
+  '#A472AF',
+  '#966E1F',
+  '#B76C91',
+  '#7A7B27',
+  '#3493BB',
+  '#538548',
+  '#877CC3',
+  '#1A896C',
+  '#6288C7',
+  '#AB5B5C',
+  '#099AA1',
 ]
 
 export const darkTheme = {
