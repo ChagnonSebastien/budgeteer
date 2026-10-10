@@ -2,11 +2,13 @@ package grpc
 
 import (
 	"context"
+	"errors"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"chagnon.dev/budget-server/internal/infrastructure/db/repository"
 	"chagnon.dev/budget-server/internal/logging"
 )
 
@@ -30,6 +32,9 @@ func sanitizeErrorInterceptor(
 	resp, err := handler(ctx, req)
 	if err == nil {
 		return resp, nil
+	}
+	if errors.Is(err, repository.ErrForeignReference) {
+		return resp, status.Error(codes.InvalidArgument, repository.ErrForeignReference.Error())
 	}
 
 	st, _ := status.FromError(err)

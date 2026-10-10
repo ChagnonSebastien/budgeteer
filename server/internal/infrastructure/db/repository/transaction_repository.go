@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"slices"
 	"time"
@@ -273,6 +274,23 @@ func insertTransaction(
 		category = sql.NullInt32{Valid: true, Int32: int32(value)}
 	}
 
+	relatedCurrency := sql.NullInt32{}
+	if financialIncome, isSome := financialIncomeData.Value(); isSome {
+		relatedCurrency = sql.NullInt32{Valid: true, Int32: int32(financialIncome.RelatedCurrency)}
+	}
+	if err := ensureOwnedReferences(
+		ctx, queries, userId,
+		validIds(sender, receiver),
+		validIds(category),
+		validIds(
+			sql.NullInt32{Valid: true, Int32: int32(currencyId)},
+			sql.NullInt32{Valid: true, Int32: int32(receiverCurrencyId)},
+			relatedCurrency,
+		),
+	); err != nil {
+		return 0, err
+	}
+
 	transactionId, err := queries.CreateTransaction(
 		ctx, &dao.CreateTransactionParams{
 			UserID:           userId,
@@ -511,6 +529,21 @@ func (r *Repository) UpdateTransaction(
 		}
 	}()
 
+	relatedCurrency := sql.NullInt32{}
+	if updatingFinancialData, isSome := field.UpdateFinancialIncomeAdditionalData.Value(); isSome {
+		if financialDataFields, isSome := updatingFinancialData.Value(); isSome {
+			relatedCurrency = financialDataFields.nullRelatedCurrencyId()
+		}
+	}
+	if err = ensureOwnedReferences(
+		ctx, r.queries.WithTx(tx), userId,
+		validIds(field.nullSenderAccountId(), field.nullReceiverAccountId()),
+		validIds(field.nullCategoryId()),
+		validIds(field.nullCurrencyId(), field.nullReceiverCurrencyId(), relatedCurrency),
+	); err != nil {
+		return
+	}
+
 	_, err = r.queries.WithTx(tx).UpdateTransaction(
 		ctx, &dao.UpdateTransactionParams{
 			UserID:           userId,
@@ -691,5 +724,38 @@ func (r *Repository) DeleteTransaction(ctx context.Context, userId uuid.UUID, id
 		return fmt.Errorf("deleting transaction: %w", err)
 	}
 
+	return nil
+}
+
+var ErrForeignReference = errors.New("an account, category or currency does not belong to you")
+
+func validIds(ids ...sql.NullInt32) []int32 {
+	unique := make([]int32, 0, len(ids))
+	for _, id := range ids {
+		if id.Valid && !slices.Contains(unique, id.Int32) {
+			unique = append(unique, id.Int32)
+		}
+	}
+	return unique
+}
+
+func ensureOwnedReferences(
+	ctx context.Context,
+	queries *dao.Queries,
+	userId uuid.UUID,
+	accounts, categories, currencies []int32,
+) error {
+	owned, err := queries.CountOwnedReferences(ctx, &dao.CountOwnedReferencesParams{
+		UserID:      userId,
+		AccountIds:  accounts,
+		CategoryIds: categories,
+		CurrencyIds: currencies,
+	})
+	if err != nil {
+		return fmt.Errorf("checking referenced ownership: %w", err)
+	}
+	if int(owned.Accounts) != len(accounts) || int(owned.Categories) != len(categories) || int(owned.Currencies) != len(currencies) {
+		return ErrForeignReference
+	}
 	return nil
 }

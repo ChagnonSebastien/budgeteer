@@ -128,7 +128,14 @@ func (r *Repository) CreateTransactionGroup(
 	}
 
 	if currency.Email != email {
-		return 0, fmt.Errorf("currency does not seem to belong to creator")
+		return 0, ErrForeignReference
+	}
+	if err := ensureOwnedGroupReferences(
+		ctx, r.queries, email,
+		validIds(sql.NullInt32{Valid: true, Int32: int32(categoryId)}),
+		validIds(sql.NullInt32{Valid: true, Int32: int32(currencyId)}),
+	); err != nil {
+		return 0, err
 	}
 
 	splitTypeDao, err := SplitTypeToDao(splitType)
@@ -314,6 +321,12 @@ func (r *Repository) UpdateTransactionGroup(
 			}
 		}
 
+	}
+
+	if err = ensureOwnedGroupReferences(
+		ctx, r.queries.WithTx(tx), email, validIds(fields.nullCategoryId()), validIds(fields.nullCurrencyId()),
+	); err != nil {
+		return
 	}
 
 	rowsAffected, err := r.queries.WithTx(tx).UpdateTransactionGroupPersonalProperties(ctx, &dao.UpdateTransactionGroupPersonalPropertiesParams{
@@ -514,4 +527,24 @@ func (r *Repository) DeleteTransactionGroup(ctx context.Context, userId uuid.UUI
 		}
 		return nil
 	})
+}
+
+func ensureOwnedGroupReferences(
+	ctx context.Context,
+	queries *dao.Queries,
+	email string,
+	categories, currencies []int32,
+) error {
+	owned, err := queries.CountOwnedGroupReferences(ctx, &dao.CountOwnedGroupReferencesParams{
+		Email:       email,
+		CategoryIds: categories,
+		CurrencyIds: currencies,
+	})
+	if err != nil {
+		return fmt.Errorf("checking referenced ownership: %w", err)
+	}
+	if int(owned.Categories) != len(categories) || int(owned.Currencies) != len(currencies) {
+		return ErrForeignReference
+	}
+	return nil
 }

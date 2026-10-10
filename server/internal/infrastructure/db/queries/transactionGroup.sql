@@ -266,3 +266,10 @@ SELECT
 -- name: DeleteTransactionGroup :exec
 DELETE FROM transaction_group
 WHERE id = sqlc.arg(transaction_group_id);
+
+-- name: CountOwnedGroupReferences :one
+SELECT
+    (SELECT count(*) FROM categories c JOIN users u ON u.id = c.user_id
+     WHERE u.email = sqlc.arg(email) AND c.id = ANY(sqlc.arg(category_ids)::int[]))::int AS categories,
+    (SELECT count(*) FROM currencies c JOIN users u ON u.id = c.user_id
+     WHERE u.email = sqlc.arg(email) AND c.id = ANY(sqlc.arg(currency_ids)::int[]))::int AS currencies;

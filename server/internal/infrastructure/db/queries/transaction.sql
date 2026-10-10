@@ -242,3 +242,9 @@ WHERE transaction_id = sqlc.arg(transaction_id);
 UPDATE transaction_transaction_group
 SET split_type_override = sqlc.narg(split_type_override)
 WHERE transaction_id = sqlc.arg(transaction_id);
+
+-- name: CountOwnedReferences :one
+SELECT
+    (SELECT count(*) FROM accounts a WHERE a.user_id = sqlc.arg(user_id) AND a.id = ANY(sqlc.arg(account_ids)::int[]))::int AS accounts,
+    (SELECT count(*) FROM categories c WHERE c.user_id = sqlc.arg(user_id) AND c.id = ANY(sqlc.arg(category_ids)::int[]))::int AS categories,
+    (SELECT count(*) FROM currencies c WHERE c.user_id = sqlc.arg(user_id) AND c.id = ANY(sqlc.arg(currency_ids)::int[]))::int AS currencies;
