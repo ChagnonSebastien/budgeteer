@@ -1,4 +1,5 @@
 import { Box, ButtonBase, Stack, Typography } from '@mui/material'
+import { formatDate, isSameYear } from 'date-fns'
 import { FC, memo, ReactNode, useContext } from 'react'
 
 import Category from '../../domain/model/category'
@@ -105,6 +106,8 @@ export const CardTitleRow: FC<{ amount: ReactNode; date: ReactNode; convertedAmo
   </>
 )
 
+const shortDate = (date: Date) => formatDate(date, isSameYear(date, new Date()) ? 'EEE MMM d' : 'EEE MMM d, yyyy')
+
 const TransactionCard: FC<ItemProps<TransactionID, AugmentedTransaction, object>> = memo((props) => {
   const { item, onClick } = props
   const group = item.augmentedTransactionGroupData?.transactionGroup ?? item.settlementGroup
@@ -113,6 +116,10 @@ const TransactionCard: FC<ItemProps<TransactionID, AugmentedTransaction, object>
 
   const cardType = item.getType()
   const tint = cardType === 'expense' || cardType === 'income' || cardType === 'financialIncome' ? cardType : 'transfer'
+  const incoming = !!item.receiver?.isMine && !item.sender?.isMine
+  const title = item.note || item.category?.name || 'Transfer'
+  const converted = item.currency.id !== item.receiverCurrency.id
+
   return (
     <CardShell
       header={group && !group.hidden ? group.name : undefined}
@@ -127,48 +134,44 @@ const TransactionCard: FC<ItemProps<TransactionID, AugmentedTransaction, object>
         />
       }
     >
-      <CardTitleRow
-        amount={formatFull(item.currency, item.amount, privacyMode)}
-        convertedAmount={
-          item.currency.id !== item.receiverCurrency.id
-            ? formatFull(item.receiverCurrency, item.receiverAmount, privacyMode)
-            : undefined
-        }
-        date={item.date.toDateString()}
-      />
-
-      <Stack direction="row" justifyContent="space-between" spacing={1.5}>
-        <Stack sx={{ flex: 1, minWidth: 0, whiteSpace: 'nowrap', ...ellipsis }}>
-          {[
-            ['From:', item.sender?.name],
-            ['To:', item.receiver?.name],
-          ].map(([label, name]) => (
-            <Stack key={label} direction="row" spacing={1}>
-              <Typography variant="body2" color="textDisabled">
-                {label}
-              </Typography>
-              <Typography variant="body2" fontWeight={500} sx={ellipsis}>
-                {name ?? '-'}
-              </Typography>
-            </Stack>
-          ))}
+      <Stack direction="row" spacing={1.5} alignItems="flex-start">
+        <Stack sx={{ flex: 1, minWidth: 0 }}>
+          <Typography fontWeight={600} noWrap title={title}>
+            {title}
+          </Typography>
+          <Typography variant="body2" color="text.secondary" noWrap>
+            {item.sender?.name ?? '-'}
+          </Typography>
+          <Typography variant="body2" color="text.secondary" noWrap>
+            <Box component="span" sx={{ color: 'text.disabled', mr: 0.5 }}>
+              ↳
+            </Box>
+            {item.receiver?.name ?? '-'}
+          </Typography>
         </Stack>
 
-        <Typography
-          variant="body2"
-          align="right"
-          sx={{
-            flex: '0 1 40%',
-            minWidth: 0,
-            display: '-webkit-box',
-            WebkitLineClamp: 3,
-            WebkitBoxOrient: 'vertical',
-            overflow: 'hidden',
-            overflowWrap: 'break-word',
-          }}
-        >
-          {item.note}
-        </Typography>
+        <Stack alignItems="flex-end" sx={{ flexShrink: 0, maxWidth: '55%' }}>
+          <Typography
+            fontWeight={600}
+            noWrap
+            sx={{
+              maxWidth: '100%',
+              color: incoming ? 'money.gain' : 'text.primary',
+              fontVariantNumeric: 'tabular-nums',
+            }}
+          >
+            {incoming && !privacyMode && '+'}
+            {formatFull(item.currency, item.amount, privacyMode)}
+          </Typography>
+          {converted && (
+            <Typography variant="caption" color="text.secondary" noWrap sx={{ maxWidth: '100%' }}>
+              ➜ {formatFull(item.receiverCurrency, item.receiverAmount, privacyMode)}
+            </Typography>
+          )}
+          <Typography variant="caption" color="text.disabled" noWrap>
+            {shortDate(item.date)}
+          </Typography>
+        </Stack>
       </Stack>
     </CardShell>
   )
