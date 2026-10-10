@@ -80,7 +80,7 @@ const CategoryPicker: FC<Props> = (props) => {
             </Button>
           </>
         }
-        contentSx={{ height: '70vh' }}
+        contentSx={{ maxHeight: '70vh' }}
       >
         <CategoryList
           items={categories}

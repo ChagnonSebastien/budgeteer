@@ -3,7 +3,7 @@ import { createTheme } from '@mui/material'
 declare module '@mui/material/styles' {
   interface Palette {
     surface: { subtle: string; muted: string; raised: string; strong: string; shade: string }
-    overlay: { tooltip: string; backdrop: string; panelTop: string; panelBottom: string }
+    overlay: { tooltip: string; backdrop: string; panelTop: string; panelBottom: string; dialog: string }
     border: { subtle: string; default: string; strong: string }
     intent: { edit: string; destructive: string; navigate: string; adjust: string; confirm: string }
     money: { gain: string; loss: string }
@@ -88,6 +88,7 @@ export const darkTheme = createTheme({
       backdrop: 'rgba(0, 0, 0, 0.75)',
       panelTop: 'rgba(15, 15, 15, 0.98)',
       panelBottom: 'rgba(10, 10, 10, 0.98)',
+      dialog: '#2A2A2A',
     },
     surface: {
       subtle: 'rgba(128,128,128,0.04)',
@@ -155,9 +156,13 @@ export const darkTheme = createTheme({
     MuiDialog: {
       styleOverrides: {
         paper: ({ theme }) => ({
-          backgroundImage: `linear-gradient(to bottom, ${theme.palette.overlay.panelTop}, ${theme.palette.overlay.panelBottom})`,
+          backgroundColor: theme.palette.overlay.dialog,
+          backgroundImage: 'none',
           border: `1px solid ${theme.palette.surface.raised}`,
           borderRadius: theme.radius.xl,
+          [theme.breakpoints.up('sm')]: { minWidth: theme.contentWidth.dialog },
+          [theme.breakpoints.up('md')]: { minWidth: theme.contentWidth.compact },
+          [theme.breakpoints.up('lg')]: { minWidth: theme.contentWidth.narrow },
         }),
       },
     },

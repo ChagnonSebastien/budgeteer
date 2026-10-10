@@ -359,7 +359,7 @@ const useTransactionFilter = ({
         open={showCategoryModal}
         onClose={() => setShowCategoryModal(false)}
         title="Filter by category"
-        contentSx={{ height: '70vh' }}
+        contentSx={{ maxHeight: '70vh' }}
         actions={
           <Button color="inherit" onClick={() => setShowCategoryModal(false)}>
             Close
@@ -389,7 +389,7 @@ const useTransactionFilter = ({
         open={showAccountModal}
         onClose={() => setShowAccountModal(false)}
         title="Filter by account"
-        contentSx={{ height: '70vh', overflow: 'hidden' }}
+        contentSx={{ maxHeight: '70vh' }}
         actions={
           <Button color="inherit" onClick={() => setShowAccountModal(false)}>
             Close
