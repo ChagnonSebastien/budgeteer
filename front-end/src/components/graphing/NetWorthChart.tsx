@@ -47,6 +47,7 @@ export const useNetWorthChartData = <Item extends object>(
   )
 
   return useMemo(() => {
+    const accountIds = new Set(accounts.map((a) => a.id))
     const Investments = accounts.reduce((totals, account) => {
       for (const initialAmount of account.initialAmounts) {
         const groupLabel = group(getInitialAmountIdentifier(account, initialAmount.currencyId))!
@@ -70,7 +71,7 @@ export const useNetWorthChartData = <Item extends object>(
           if (
             typeof transaction.receiver !== 'undefined' && // Has a Receiver
             transaction.receiver.isMine && // I am the receiver
-            accounts.findIndex((a) => a.id === transaction.receiver?.id) >= 0 // The account respects filters
+            accountIds.has(transaction.receiver?.id ?? -1) // The account respects filters
           ) {
             const groupLabel = group(getToIdentifier(transaction))!
             const data = Investments.get(groupLabel) ?? { bookValue: 0, assets: new Map() }
@@ -83,7 +84,7 @@ export const useNetWorthChartData = <Item extends object>(
           if (
             typeof transaction.sender !== 'undefined' &&
             transaction.sender.isMine &&
-            accounts.findIndex((a) => a.id === transaction.sender?.id) >= 0
+            accountIds.has(transaction.sender?.id ?? -1)
           ) {
             const groupLabel = group(getFromIdentifier(transaction))!
             const data = Investments.get(groupLabel) ?? { bookValue: 0, assets: new Map() }
@@ -111,7 +112,7 @@ export const useNetWorthChartData = <Item extends object>(
         if (
           typeof transaction.receiver !== 'undefined' && // Has a Receiver
           transaction.receiver.isMine && // I am the receiver
-          accounts.findIndex((a) => a.id === transaction.receiver?.id) >= 0 // The account respects filters
+          accountIds.has(transaction.receiver?.id ?? -1) // The account respects filters
         ) {
           const groupLabel = group(getToIdentifier(transaction))!
           const data = Investments.get(groupLabel) ?? { bookValue: 0, assets: new Map() }
@@ -124,7 +125,7 @@ export const useNetWorthChartData = <Item extends object>(
             !(
               typeof transaction.sender !== 'undefined' &&
               transaction.sender.isMine &&
-              accounts.findIndex((a) => a.id === transaction.sender?.id) >= 0 &&
+              accountIds.has(transaction.sender?.id ?? -1) &&
               group(getFromIdentifier(transaction)) === groupLabel
             )
           ) {
@@ -158,7 +159,7 @@ export const useNetWorthChartData = <Item extends object>(
         if (
           typeof transaction.sender !== 'undefined' && // Has a Sender
           transaction.sender.isMine && // I am the sender
-          accounts.findIndex((a) => a.id === transaction.sender?.id) >= 0 // The account respects filters
+          accountIds.has(transaction.sender?.id ?? -1) // The account respects filters
         ) {
           const groupLabel = group(getFromIdentifier(transaction))!
           const data = Investments.get(groupLabel) ?? { bookValue: 0, assets: new Map() }
@@ -168,7 +169,7 @@ export const useNetWorthChartData = <Item extends object>(
             !(
               (typeof transaction.receiver !== 'undefined' &&
                 transaction.receiver.isMine &&
-                accounts.findIndex((a) => a.id === transaction.receiver?.id) >= 0 &&
+                accountIds.has(transaction.receiver?.id ?? -1) &&
                 group(getToIdentifier(transaction)) === groupLabel) ||
               transaction.getType() === 'financialIncome'
             )

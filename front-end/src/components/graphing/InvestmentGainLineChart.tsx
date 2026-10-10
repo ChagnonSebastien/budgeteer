@@ -29,6 +29,7 @@ const InvestmentGainLineChart: FC<GainChartProps> = ({ fromDate, toDate }) => {
   )
 
   const { data, labels, groups } = useMemo(() => {
+    const myAccountIds = new Set(myOwnAccounts.map((a) => a.id))
     const groupLabel = 'Total'
     const Investments = myOwnAccounts.reduce((totals, account) => {
       const groupData = totals.get(groupLabel) ?? { bookValue: 0, assets: new Map() }
@@ -52,7 +53,7 @@ const InvestmentGainLineChart: FC<GainChartProps> = ({ fromDate, toDate }) => {
           if (
             typeof transaction.receiver !== 'undefined' && // Has a Receiver
             transaction.receiver.isMine && // I am the receiver
-            myOwnAccounts.findIndex((a) => a.id === transaction.receiver?.id) >= 0 // The account respects filters
+            myAccountIds.has(transaction.receiver?.id ?? -1) // The account respects filters
           ) {
             const data = Investments.get(groupLabel) ?? { bookValue: 0, assets: new Map() }
             data.assets.set(
@@ -64,7 +65,7 @@ const InvestmentGainLineChart: FC<GainChartProps> = ({ fromDate, toDate }) => {
           if (
             typeof transaction.sender !== 'undefined' &&
             transaction.sender.isMine &&
-            myOwnAccounts.findIndex((a) => a.id === transaction.sender?.id) >= 0
+            myAccountIds.has(transaction.sender?.id ?? -1)
           ) {
             const data = Investments.get(groupLabel) ?? { bookValue: 0, assets: new Map() }
             data.assets.set(transaction.currencyId, (data.assets.get(transaction.currencyId) ?? 0) - transaction.amount)
@@ -91,7 +92,7 @@ const InvestmentGainLineChart: FC<GainChartProps> = ({ fromDate, toDate }) => {
         if (
           typeof transaction.receiver !== 'undefined' && // Has a Receiver
           transaction.receiver.isMine && // I am the receiver
-          myOwnAccounts.findIndex((a) => a.id === transaction.receiver?.id) >= 0 // The account respects filters
+          myAccountIds.has(transaction.receiver?.id ?? -1) // The account respects filters
         ) {
           const data = Investments.get(groupLabel) ?? { bookValue: 0, assets: new Map() }
           data.assets.set(
@@ -103,7 +104,7 @@ const InvestmentGainLineChart: FC<GainChartProps> = ({ fromDate, toDate }) => {
             !(
               (typeof transaction.sender !== 'undefined' &&
                 transaction.sender.isMine &&
-                myOwnAccounts.findIndex((a) => a.id === transaction.sender?.id) >= 0) ||
+                myAccountIds.has(transaction.sender?.id ?? -1)) ||
               transaction.getType() === 'financialIncome'
             )
           ) {
@@ -122,7 +123,7 @@ const InvestmentGainLineChart: FC<GainChartProps> = ({ fromDate, toDate }) => {
         if (
           typeof transaction.sender !== 'undefined' &&
           transaction.sender.isMine &&
-          myOwnAccounts.findIndex((a) => a.id === transaction.sender?.id) >= 0
+          myAccountIds.has(transaction.sender?.id ?? -1)
         ) {
           const data = Investments.get(groupLabel) ?? { bookValue: 0, assets: new Map() }
           data.assets.set(transaction.currencyId, (data.assets.get(transaction.currencyId) ?? 0) - transaction.amount)
@@ -131,7 +132,7 @@ const InvestmentGainLineChart: FC<GainChartProps> = ({ fromDate, toDate }) => {
             !(
               (typeof transaction.receiver !== 'undefined' &&
                 transaction.receiver.isMine &&
-                myOwnAccounts.findIndex((a) => a.id === transaction.receiver?.id) >= 0) ||
+                myAccountIds.has(transaction.receiver?.id ?? -1)) ||
               transaction.getType() === 'financialIncome'
             )
           ) {

@@ -1,4 +1,4 @@
-import { Context, FC, ReactNode, useCallback, useEffect, useRef, useState } from 'react'
+import { Context, FC, ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { BasicCrudService } from './BasicCrudService'
 import Unique, { ItemType } from '../domain/model/Unique'
@@ -45,6 +45,21 @@ interface Props<IdType, Item extends Unique<IdType, Item>, ItemIdentifiableField
   Augmenter: FC<AugmenterProps<IdType, Item, Augmentation>>
   synced: boolean
   hasInternet: boolean
+}
+
+const MemoizedProvider = <Value, Base extends object, Augmentation>({
+  context,
+  base,
+  augmentation,
+  children,
+}: {
+  context: Context<Value>
+  base: Base
+  augmentation: Augmentation
+  children: ReactNode
+}) => {
+  const value = useMemo(() => ({ ...base, ...augmentation }) as Value, [base, augmentation])
+  return <context.Provider value={value}>{children}</context.Provider>
 }
 
 export const BasicCrudServiceWithPersistence = <
@@ -173,25 +188,19 @@ export const BasicCrudServiceWithPersistence = <
     [hasInternet],
   )
 
+  const baseValue = useMemo(
+    () => ({ initialized, version: state.version, state: state.data, create, update, delete: deleteItem, refresh }),
+    [initialized, state.version, state.data, create, update, deleteItem, refresh],
+  )
+
   return (
     <Augmenter
       version={state.version}
       state={state.data}
-      augment={(b) => (
-        <context.Provider
-          value={{
-            initialized,
-            version: state.version,
-            state: state.data,
-            create,
-            update,
-            delete: deleteItem,
-            refresh,
-            ...b,
-          }}
-        >
+      augment={(augmentation) => (
+        <MemoizedProvider context={context} base={baseValue} augmentation={augmentation}>
           {children}
-        </context.Provider>
+        </MemoizedProvider>
       )}
     />
   )

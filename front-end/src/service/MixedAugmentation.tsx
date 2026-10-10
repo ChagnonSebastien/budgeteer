@@ -1,4 +1,3 @@
-import { differenceInMilliseconds, isBefore } from 'date-fns'
 import React, { createContext, FC, useContext, useMemo } from 'react'
 
 import { addComparison, RateOnDate } from './ExcahngeRateServiceAugmenter'
@@ -117,9 +116,13 @@ export const MixedAugmentationProvider: FC<Props> = ({ NextComponent }) => {
   }, [transactionGroups, categories, currencies])
 
   const augmentedTransactions = useMemo<AugmentedTransaction[]>(() => {
+    const currencyById = new Map(currencies.map((c) => [c.id, c]))
+    const categoryById = new Map(categories.map((c) => [c.id, c]))
+    const accountById = new Map(accounts.map((a) => [a.id, a]))
+    const groupById = new Map(augmentedTransactionGroups.map((tg) => [tg.id, tg]))
     const settlementGroups = new Map<number, AugmentedTransactionGroup>()
     for (const settlement of settlements) {
-      const group = augmentedTransactionGroups.find((tg) => tg.id === settlement.transactionGroupId)
+      const group = groupById.get(settlement.transactionGroupId)
       if (settlement.ownTransactionId !== null && group) settlementGroups.set(settlement.ownTransactionId, group)
     }
 
@@ -128,7 +131,7 @@ export const MixedAugmentationProvider: FC<Props> = ({ NextComponent }) => {
       if (transaction.financialIncomeData !== null) {
         augmentedFinancialIncomeData = new AugmentedFinancialIncomeData(
           transaction.financialIncomeData,
-          currencies.find((c) => c.id === transaction.financialIncomeData?.relatedCurrencyId)!,
+          currencyById.get(transaction.financialIncomeData.relatedCurrencyId)!,
         )
       }
 
@@ -136,7 +139,7 @@ export const MixedAugmentationProvider: FC<Props> = ({ NextComponent }) => {
       if (transaction.transactionGroupData !== null) {
         augmentedTransactionGroupData = new AugmentedTransactionGroupData(
           transaction.transactionGroupData,
-          augmentedTransactionGroups.find((tg) => tg.id === transaction.transactionGroupData?.transactionGroupId)!,
+          groupById.get(transaction.transactionGroupData.transactionGroupId)!,
         )
       }
 
@@ -144,11 +147,11 @@ export const MixedAugmentationProvider: FC<Props> = ({ NextComponent }) => {
         transaction,
         augmentedFinancialIncomeData,
         augmentedTransactionGroupData,
-        currencies.find((c) => c.id === transaction.currencyId)!,
-        currencies.find((c) => c.id === transaction.receiverCurrencyId)!,
-        categories.find((c) => c.id === transaction.categoryId),
-        accounts.find((c) => c.id === transaction.senderId),
-        accounts.find((c) => c.id === transaction.receiverId),
+        currencyById.get(transaction.currencyId)!,
+        currencyById.get(transaction.receiverCurrencyId)!,
+        transaction.categoryId === null ? undefined : categoryById.get(transaction.categoryId),
+        transaction.senderId === null ? undefined : accountById.get(transaction.senderId),
+        transaction.receiverId === null ? undefined : accountById.get(transaction.receiverId),
         settlementGroups.get(transaction.id),
       )
     })
@@ -198,53 +201,79 @@ export const MixedAugmentationProvider: FC<Props> = ({ NextComponent }) => {
       })
     })
 
-    for (const specificRates of exchangeRates.values()) {
-      for (const [child, list] of specificRates.entries()) {
-        specificRates.set(
-          child,
-          list.sort((e1, e2) => e1.date.getTime() - e2.date.getTime()),
+    const rateTimes = new Map<number, Map<number, number[]>>()
+    for (const [from, specificRates] of exchangeRates.entries()) {
+      const times = new Map<number, number[]>()
+      rateTimes.set(from, times)
+      for (const [to, list] of specificRates.entries()) {
+        list.sort((e1, e2) => e1.date.getTime() - e2.date.getTime())
+        times.set(
+          to,
+          list.map((r) => r.date.getTime()),
         )
       }
     }
 
     const exchangeRateOnDay = (from: number, to: number, date: Date): number => {
       const specificRates = exchangeRates.get(from)?.get(to)
-      if (typeof specificRates === 'undefined') {
+      const times = rateTimes.get(from)?.get(to)
+      if (typeof specificRates === 'undefined' || typeof times === 'undefined') {
         return 1
       }
 
-      let beforeIndex = specificRates.findLastIndex((r) => isBefore(r.date, date))
-      let afterIndex = beforeIndex + 1
+      const time = date.getTime()
+      let low = 0
+      let high = times.length
+      while (low < high) {
+        const middle = (low + high) >> 1
+        if (times[middle] < time) low = middle + 1
+        else high = middle
+      }
+
+      let beforeIndex = low - 1
+      let afterIndex = low
       if (beforeIndex === -1) beforeIndex = 0
-      if (afterIndex === specificRates.length) afterIndex -= 1
+      if (afterIndex === times.length) afterIndex -= 1
       const before = specificRates[beforeIndex]
       const after = specificRates[afterIndex]
       const ratio =
-        beforeIndex === afterIndex
-          ? 1
-          : differenceInMilliseconds(before.date, date) / differenceInMilliseconds(before.date, after.date)
+        beforeIndex === afterIndex ? 1 : (time - times[beforeIndex]) / (times[afterIndex] - times[beforeIndex])
       return after.rate * ratio + before.rate * (1 - ratio)
     }
 
     return { exchangeRates, exchangeRateOnDay }
   }, [rawExchangeRates, transactions])
 
-  if (tentativeRoot === null || tentativeDefaultCurrency === null) {
+  const value = useMemo(
+    () =>
+      tentativeRoot === null || tentativeDefaultCurrency === null
+        ? null
+        : {
+            rootCategory: tentativeRoot,
+            defaultCurrency: tentativeDefaultCurrency,
+            accountBalances,
+            augmentedTransactionGroups,
+            augmentedTransactions,
+            augmentedTransactionsFromGroupMembers,
+            ...augmentedData,
+          },
+    [
+      tentativeRoot,
+      tentativeDefaultCurrency,
+      accountBalances,
+      augmentedTransactionGroups,
+      augmentedTransactions,
+      augmentedTransactionsFromGroupMembers,
+      augmentedData,
+    ],
+  )
+
+  if (value === null) {
     return <LoadingScreen />
   }
 
   return (
-    <MixedAugmentation.Provider
-      value={{
-        rootCategory: tentativeRoot,
-        defaultCurrency: tentativeDefaultCurrency,
-        accountBalances,
-        augmentedTransactionGroups,
-        augmentedTransactions,
-        augmentedTransactionsFromGroupMembers,
-        ...augmentedData,
-      }}
-    >
+    <MixedAugmentation.Provider value={value}>
       <NextComponent />
     </MixedAugmentation.Provider>
   )

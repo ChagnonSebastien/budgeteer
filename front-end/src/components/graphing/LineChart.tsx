@@ -1,5 +1,5 @@
 import { useTheme } from '@mui/material'
-import React, { FC, useMemo, useState } from 'react'
+import React, { FC, useCallback, useMemo, useState } from 'react'
 
 import {
   DateAxisConfig,
@@ -108,14 +108,17 @@ const LineChart: FC<Props> = ({
     yAxisConfig.nice || false,
   )
 
-  const xScale = (i: number) => (i / (data.length - 1)) * 1000
-  const yNormalScale = (y: number) => 1000 - ((Math.max(y, graphMinY) - graphMinY) / (graphMaxY - graphMinY)) * 1000
+  const xScale = useCallback((i: number) => (i / (data.length - 1)) * 1000, [data.length])
+  const yNormalScale = useCallback(
+    (y: number) => 1000 - ((Math.max(y, graphMinY) - graphMinY) / (graphMaxY - graphMinY)) * 1000,
+    [graphMinY, graphMaxY],
+  )
 
-  const getColor = (id: string) => {
-    return datasetLabels.indexOf(id) !== -1
-      ? colors[datasetLabels.indexOf(id) % colors.length]
-      : theme.palette.grey[400]
-  }
+  const getColor = useCallback(
+    (id: string) =>
+      datasetLabels.indexOf(id) !== -1 ? colors[datasetLabels.indexOf(id) % colors.length] : theme.palette.grey[400],
+    [datasetLabels, colors, theme],
+  )
 
   const splines = useMemo(() => {
     return datasets.map((baselineStackedValues) => {

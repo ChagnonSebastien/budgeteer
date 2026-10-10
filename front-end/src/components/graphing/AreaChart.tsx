@@ -1,5 +1,5 @@
 import { useTheme } from '@mui/material'
-import React, { FC, useMemo, useState } from 'react'
+import React, { FC, useCallback, useMemo, useState } from 'react'
 
 import assignAreaColors from './assignAreaColors'
 import {
@@ -186,22 +186,32 @@ const AreaChart: FC<Props> = ({
     offsetType === 'normal' && (yAxisConfig.nice || false),
   )
 
-  const xScale = (i: number) => (i / (data.length - 1)) * 1000
-  const yNormalScale = (y: number) => 1000 - ((Math.max(y, graphMinY) - graphMinY) / (graphMaxY - graphMinY)) * 1000
-  const yExpandedScale = (y: number, i: number) => {
-    return yNormalScale(y / datasetsStackedUpperBound[datasetsStackedUpperBound.length - 1][i])
-  }
+  const xScale = useCallback((i: number) => (i / (data.length - 1)) * 1000, [data.length])
+  const yNormalScale = useCallback(
+    (y: number) => 1000 - ((Math.max(y, graphMinY) - graphMinY) / (graphMaxY - graphMinY)) * 1000,
+    [graphMinY, graphMaxY],
+  )
+  const yExpandedScale = useCallback(
+    (y: number, i: number) => yNormalScale(y / datasetsStackedUpperBound[datasetsStackedUpperBound.length - 1][i]),
+    [yNormalScale, datasetsStackedUpperBound],
+  )
 
-  const buildPath = (layer: [number, number][]) => {
-    const bot = layer.map(([y0], i) => [xScale(i), yNormalScale(y0)] as [number, number])
-    const top = layer.map(([, y1], i) => [xScale(i), yNormalScale(y1)] as [number, number])
-    const rev = [...top].reverse() as [number, number][]
-    return `${monotoneSpline(bot)} L${rev[0][0]},${rev[0][1]} ${monotoneSpline(rev).slice(1)} Z`
-  }
+  const buildPath = useCallback(
+    (layer: [number, number][]) => {
+      const bot = layer.map(([y0], i) => [xScale(i), yNormalScale(y0)] as [number, number])
+      const top = layer.map(([, y1], i) => [xScale(i), yNormalScale(y1)] as [number, number])
+      const rev = [...top].reverse() as [number, number][]
+      return `${monotoneSpline(bot)} L${rev[0][0]},${rev[0][1]} ${monotoneSpline(rev).slice(1)} Z`
+    },
+    [xScale, yNormalScale],
+  )
 
   const assignedColors = useMemo(() => assignAreaColors(layers, colors), [layers, colors])
 
-  const getColor = (id: string) => assignedColors[datasetLabels.indexOf(id)] ?? theme.palette.grey[400]
+  const getColor = useCallback(
+    (id: string) => assignedColors[datasetLabels.indexOf(id)] ?? theme.palette.grey[400],
+    [assignedColors, datasetLabels, theme],
+  )
 
   const individualBaselineSplines = useMemo(() => {
     return datasetsBaselineStackedValue.map((baselineStackedValues, n) => {
@@ -223,7 +233,7 @@ const AreaChart: FC<Props> = ({
       }
     })
     return pts.length > 1 ? monotoneSpline(pts) : ''
-  }, [data, offsetType, xScale, yNormalScale])
+  }, [data, offsetType, xScale, yNormalScale, yExpandedScale])
 
   const computeStack = (idx: number) =>
     datasetLabels.map((key, li) => {
