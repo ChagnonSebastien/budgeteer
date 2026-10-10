@@ -45,7 +45,7 @@ func (a *CategoryService) GetAllCategories(ctx context.Context, userId uuid.UUID
 		rootCategoryName := "Any"
 		rootIconName := "MdCategory"
 		rootIconColor := "#FFFFFF"
-		rootIconBackground := "#757575"
+		rootIconBackground := "#C84B31"
 		rootId, err := a.categoryRepository.CreateCategory(
 			ctx,
 			userId,
