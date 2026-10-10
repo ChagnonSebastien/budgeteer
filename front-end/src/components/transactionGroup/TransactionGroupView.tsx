@@ -14,7 +14,7 @@ import { IconToolsContext } from '../icons/IconTools'
 import ActionSpeedDial, { DialAction } from '../shared/ActionSpeedDial'
 import ContentWithHeader from '../shared/ContentWithHeader'
 import SplitView from '../shared/SplitView'
-import { useElementDimensions } from '../shared/useDimensions'
+import useWideLayout from '../shared/useWideLayout'
 import GroupTransactionCard from '../transactions/GroupTransactionCard'
 import { TransactionList } from '../transactions/TransactionList'
 
@@ -30,11 +30,10 @@ const TransactionGroupView: FC<{
   const [clickedKey, setClickedKey] = useState<string | null>(null)
   const clicked = groupTransactions.find((t) => t.listKey === clickedKey) ?? null
 
-  const { width: contentWidth, ref: setContentRef } = useElementDimensions(600, 600)
-  const splitHorizontal = contentWidth > 1200
+  const splitHorizontal = useWideLayout()
 
   return (
-    <ContentWithHeader title="Manage transaction group" action="menu" setContentRef={setContentRef}>
+    <ContentWithHeader title="Manage transaction group" action="menu">
       <SplitView
         split={splitHorizontal ? 'horizontal' : 'vertical'}
         first={

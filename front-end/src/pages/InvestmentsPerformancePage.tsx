@@ -5,13 +5,8 @@ import ExchangeRateComparison from '../components/graphing/ExchangeRateCompariso
 import { GraphContainer, SecondDivision } from '../components/graphing/GraphStyledComponents'
 import useTransactionFilter from '../components/inputs/useTransactionFilter'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
-import { useElementDimensions, useWindowDimensions } from '../components/shared/useDimensions'
 
 const InvestmentsPerformancePage: FC = () => {
-  const { height: pageHeight } = useWindowDimensions()
-  const { height: contentHeight, ref: setContentRef } = useElementDimensions(600, 600)
-  const { height: optionsHeight, ref: setOptionsRef } = useElementDimensions(600, 600)
-
   const {
     fromDate,
     toDate,
@@ -19,33 +14,21 @@ const InvestmentsPerformancePage: FC = () => {
   } = useTransactionFilter({ canFilterByCategory: false, canFilterByAccount: false })
   const timeRange = useMemo<[Date, Date]>(() => [fromDate, toDate], [fromDate, toDate])
 
-  const contentTooTall = useMemo(
-    () => Math.max(pageHeight / 2, 300) + optionsHeight + 64 > pageHeight,
-    [optionsHeight, pageHeight],
-  )
-
   return (
-    <ContentWithHeader
-      title="Investments Performance"
-      action="menu"
-      setContentRef={setContentRef}
-      withScrolling={contentTooTall}
-    >
-      <GraphContainer
-        style={{
-          height: contentHeight - optionsHeight,
-          minHeight: 'max(50vh, 300px)',
-          display: 'flex',
-          justifyContent: 'stretch',
-          alignItems: 'stretch',
-        }}
-      >
+    <ContentWithHeader title="Investments Performance" action="menu" withScrolling>
+      <GraphContainer sx={{ flex: '1 0 max(50vh, 300px)', display: 'flex' }}>
         <ExchangeRateComparison startDate={timeRange[0]} endDate={timeRange[1]} />
       </GraphContainer>
 
       <SecondDivision
-        sx={{ flexDirection: 'row', columnGap: 6, flexWrap: 'wrap', rowGap: 2, bgcolor: 'surface.subtle' }}
-        ref={setOptionsRef}
+        sx={{
+          flexDirection: 'row',
+          columnGap: 6,
+          flexWrap: 'wrap',
+          rowGap: 2,
+          bgcolor: 'surface.subtle',
+          flexShrink: 0,
+        }}
       >
         <Box sx={{ flexGrow: 1, width: '100%' }}>{filterOverview}</Box>
       </SecondDivision>

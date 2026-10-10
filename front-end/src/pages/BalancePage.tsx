@@ -10,8 +10,8 @@ import useTransactionFilter from '../components/inputs/useTransactionFilter'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
 import { Row } from '../components/shared/Layout'
 import SplitView from '../components/shared/SplitView'
-import { useElementDimensions, useWindowDimensions } from '../components/shared/useDimensions'
 import useQueryParams from '../components/shared/useQueryParams'
+import useWideLayout from '../components/shared/useWideLayout'
 import Account from '../domain/model/account'
 
 type QueryParams = {
@@ -56,15 +56,7 @@ const BalancePage: FC = () => {
     [groupBy],
   )
 
-  const { height: pageHeight } = useWindowDimensions()
-  const { height: optionsHeight, ref: setOptionsRef } = useElementDimensions(600, 600)
-  const { ref: setContentRef, width: contentWidth } = useElementDimensions(600, 600)
-
-  const splitHorizontal = useMemo(() => contentWidth > 1200, [contentWidth])
-  const contentTooTall = useMemo(
-    () => Math.max(pageHeight / 2, 300) + optionsHeight + 64 > pageHeight,
-    [optionsHeight, pageHeight],
-  )
+  const splitHorizontal = useWideLayout()
 
   const firstDivision = (
     <FirstDivision>
@@ -102,11 +94,7 @@ const BalancePage: FC = () => {
         )}
       </GraphContainer>
 
-      {splitHorizontal && (
-        <Box sx={{ p: 2 }} ref={setOptionsRef}>
-          {filterOverview}
-        </Box>
-      )}
+      {splitHorizontal && <Box sx={{ p: 2 }}>{filterOverview}</Box>}
     </FirstDivision>
   )
 
@@ -157,11 +145,7 @@ const BalancePage: FC = () => {
   ]
 
   const secondDivision = (
-    <SecondDivision
-      $splitView={splitHorizontal}
-      ref={!splitHorizontal ? setOptionsRef : undefined}
-      sx={{ bgcolor: splitHorizontal ? undefined : 'surface.subtle' }}
-    >
+    <SecondDivision $splitView={splitHorizontal} sx={{ bgcolor: splitHorizontal ? undefined : 'surface.subtle' }}>
       {!splitHorizontal && filterOverview}
 
       {splitHorizontal ? selectOptions : <Row sx={{ gap: 2, flexFlow: 'wrap' }}>{selectOptions}</Row>}
@@ -169,17 +153,12 @@ const BalancePage: FC = () => {
   )
 
   return (
-    <ContentWithHeader
-      title="Balances"
-      action="menu"
-      setContentRef={setContentRef}
-      withScrolling={!splitHorizontal && contentTooTall}
-    >
+    <ContentWithHeader title="Balances" action="menu" withScrolling={!splitHorizontal}>
       <SplitView
         first={firstDivision}
         second={secondDivision}
         split={splitHorizontal ? 'horizontal' : 'vertical'}
-        firstZoneStyling={{ grow: true, scroll: splitHorizontal && contentTooTall }}
+        firstZoneStyling={{ grow: true, scroll: splitHorizontal }}
         secondZoneStyling={{ grow: false, scroll: true }}
       />
     </ContentWithHeader>

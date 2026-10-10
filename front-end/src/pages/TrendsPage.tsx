@@ -7,7 +7,6 @@ import TrendsChart, { Grouping } from '../components/graphing/TrendsChart'
 import CounterInput from '../components/inputs/CounterInput'
 import SelectOne from '../components/inputs/SelectOne'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
-import { useElementDimensions, useWindowDimensions } from '../components/shared/useDimensions'
 import useQueryParams from '../components/shared/useQueryParams'
 import { CategoryID } from '../domain/model/category'
 
@@ -23,24 +22,21 @@ const TrendsPage: FC = () => {
   const years = useMemo(() => parseInt(qp.years || '1'), [qp.years])
   const selectedCategories = useMemo<CategoryID[]>(() => JSON.parse(qp.categories || '[]'), [qp.categories])
 
-  const { height: pageHeight } = useWindowDimensions()
-  const { height: contentHeight, ref: setContentRef } = useElementDimensions(600, 600)
-  const { height: optionsHeight, ref: setOptionsRef } = useElementDimensions(600, 600)
-
-  const contentTooTall = useMemo(
-    () => Math.max(pageHeight / 2, 300) + optionsHeight + 64 > pageHeight,
-    [optionsHeight, pageHeight],
-  )
-
   return (
-    <ContentWithHeader title="Trends" action="menu" setContentRef={setContentRef} withScrolling={contentTooTall}>
-      <GraphContainer style={{ height: contentHeight - optionsHeight, minHeight: 'max(50vh, 300px)' }}>
+    <ContentWithHeader title="Trends" action="menu" withScrolling>
+      <GraphContainer sx={{ flex: '1 0 max(50vh, 300px)' }}>
         <TrendsChart categories={selectedCategories} grouping={grouping} years={years} />
       </GraphContainer>
 
       <SecondDivision
-        sx={{ flexDirection: 'row', columnGap: 6, flexWrap: 'wrap', rowGap: 2, bgcolor: 'surface.subtle' }}
-        ref={setOptionsRef}
+        sx={{
+          flexDirection: 'row',
+          columnGap: 6,
+          flexWrap: 'wrap',
+          rowGap: 2,
+          bgcolor: 'surface.subtle',
+          flexShrink: 0,
+        }}
       >
         <Box sx={{ flexGrow: 1, width: '100%' }}>
           <CategoryPicker

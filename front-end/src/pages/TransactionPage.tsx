@@ -25,8 +25,8 @@ import ContentWithHeader from '../components/shared/ContentWithHeader'
 import { DetailCard, DetailHeading, FancyDialog, FancyModal } from '../components/shared/FancyModal'
 import SplitView from '../components/shared/SplitView'
 import { useToast } from '../components/shared/ToastProvider'
-import { useElementDimensions } from '../components/shared/useDimensions'
 import useQueryParams from '../components/shared/useQueryParams'
+import useWideLayout from '../components/shared/useWideLayout'
 import TransactionCard from '../components/transactions/TransactionCard'
 import { TransactionList } from '../components/transactions/TransactionList'
 import { AugmentedCategory } from '../domain/model/category'
@@ -91,9 +91,7 @@ const TransactionPage: FC = () => {
       })
   }, [augmentedTransactions, categoryFilter, accountFilter, toDate, fromDate])
 
-  const { width: contentWidth, ref: setContentRef } = useElementDimensions(600, 600)
-
-  const splitHorizontal = useMemo(() => contentWidth > 1200, [contentWidth])
+  const splitHorizontal = useWideLayout()
   const hasTransactions = augmentedTransactions.length > 0
 
   const firstDivision = (
@@ -152,7 +150,6 @@ const TransactionPage: FC = () => {
       title="Transactions"
       action="menu"
       withScrolling={!splitHorizontal}
-      setContentRef={setContentRef}
       rightContent={
         hasTransactions ? (
           <>
