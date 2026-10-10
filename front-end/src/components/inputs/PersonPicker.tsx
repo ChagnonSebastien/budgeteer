@@ -10,7 +10,6 @@ import PersonCard from '../shared/PersonCard'
 interface Props {
   value: Email | null
   onPersonSelected: (newUser: { existing: boolean; id: Email | null; name: string }) => void
-  validateNewItemString?(s: string): boolean
   labelText: string
   errorText?: string
   allowNew?: boolean
@@ -18,15 +17,7 @@ interface Props {
 }
 
 const PersonPicker: FC<Props> = (props) => {
-  const {
-    value,
-    onPersonSelected,
-    allowNew = false,
-    labelText,
-    errorText,
-    OverrideTextLabel,
-    validateNewItemString,
-  } = props
+  const { value, onPersonSelected, allowNew = false, labelText, errorText, OverrideTextLabel } = props
   const { knownPeople } = useContext(TransactionGroupServiceContext)
 
   const handleAccountSelected = (email: Email) => {

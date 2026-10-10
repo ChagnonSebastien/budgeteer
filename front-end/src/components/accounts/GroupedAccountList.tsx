@@ -1,4 +1,4 @@
-import { Chip, Stack, Tab, Tabs, Typography } from '@mui/material'
+import { Box, Chip, Stack, Tab, Tabs, Typography } from '@mui/material'
 import { differenceInDays } from 'date-fns'
 import { LegacyRef, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 
@@ -228,9 +228,9 @@ const GroupedAccountList = (props: Props) => {
     <Column style={{ position: 'relative', height: '100%' }}>
       {segments}
 
-      <CustomScrolling ref={scrollingContainerRef} style={{ paddingTop: '1rem', paddingBottom: '4rem' }}>
+      <CustomScrolling ref={scrollingContainerRef} sx={{ pt: 2, pb: 8 }}>
         {groups.map(([type, accounts]) => (
-          <Column key={`account-group-${type}`} style={{ marginBottom: '2rem', gap: '0.75rem' }}>
+          <Column key={`account-group-${type}`} sx={{ mb: 4, gap: 1.5 }}>
             {type !== groupOther && (
               <>
                 <Typography variant="subtitle1" textTransform="uppercase" color="textDisabled">
@@ -238,12 +238,7 @@ const GroupedAccountList = (props: Props) => {
                 </Typography>
 
                 {showGroupTotals && (
-                  <Row
-                    style={{
-                      paddingLeft: '0.5rem',
-                      borderLeft: '2px solid rgba(128,128,128,0.2)',
-                    }}
-                  >
+                  <Row sx={{ pl: 1, borderLeft: 2, borderColor: 'border.subtle' }}>
                     <Typography variant="subtitle2" fontFamily="monospace" color="textDisabled">
                       {formatFull(defaultCurrency, getTotal(accounts), privacyMode)}
                     </Typography>
@@ -252,21 +247,12 @@ const GroupedAccountList = (props: Props) => {
               </>
             )}
 
-            <div
-              style={{
-                ...(additionalItemsProps.showBalances
-                  ? {
-                      display: 'grid',
-                      gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-                      gap: '1rem',
-                      padding: '0.25rem',
-                    }
-                  : {
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '0.1rem',
-                    }),
-              }}
+            <Box
+              sx={
+                additionalItemsProps.showBalances
+                  ? { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 2, p: 0.5 }
+                  : { display: 'flex', flexDirection: 'column', gap: 0.25 }
+              }
             >
               <ItemList
                 items={accounts}
@@ -275,7 +261,7 @@ const GroupedAccountList = (props: Props) => {
                 selectConfiguration={selectConfiguration}
                 filter={filterAccounts}
               />
-            </div>
+            </Box>
           </Column>
         ))}
       </CustomScrolling>

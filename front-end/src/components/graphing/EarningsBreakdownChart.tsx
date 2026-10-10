@@ -1,3 +1,4 @@
+import { darken, useTheme } from '@mui/material/styles'
 import { ResponsiveSankey, SankeyLinkDatum, SankeyNodeDatum } from '@nivo/sankey'
 import { FC, useContext } from 'react'
 
@@ -16,6 +17,7 @@ interface Props {
 }
 
 const EarningsBreakdownChart: FC<Props> = ({ grossIncome, netIncome, fixedCosts, variableCosts }) => {
+  const theme = useTheme()
   const { defaultCurrency } = useContext(MixedAugmentation)
   const { privacyMode } = useContext(DrawerContext)
 
@@ -33,7 +35,7 @@ const EarningsBreakdownChart: FC<Props> = ({ grossIncome, netIncome, fixedCosts,
 
   // Prepare data for Sankey diagram
   const nodes: SankeyNode[] = [
-    { id: 'Income', nodeColor: '#363' },
+    { id: 'Income', nodeColor: darken(theme.palette.money.gain, 0.4) },
     { id: 'Income Taxes', nodeColor: darkColors[0] },
     { id: 'Essential Expenses', nodeColor: darkColors[1] },
     { id: 'Other Expenses', nodeColor: darkColors[2] },

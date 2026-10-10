@@ -1,11 +1,10 @@
-import { Button } from '@mui/material'
+import { Button, Stack } from '@mui/material'
 import { FC, useCallback, useContext, useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
 import { UserContext } from '../App'
 import LoadingScreen from '../components/LoadingScreen'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
-import { Row } from '../components/shared/Layout'
 import { useToast } from '../components/shared/ToastProvider'
 import UnconfirmedTransactionForm, {
   UnconfirmedTransactionFormFields,
@@ -72,7 +71,7 @@ const EditUnconfirmedTransactionPage: FC = () => {
 
   return (
     <ContentWithHeader title="Unconfirmed transaction" action="return" withPadding withScrolling>
-      <Row style={{ justifyContent: 'end', gap: '.5rem', marginBottom: '1rem' }}>
+      <Stack direction="row" sx={{ justifyContent: 'end', gap: 1, mb: 2 }}>
         {canPromote && (
           <Button
             variant="contained"
@@ -88,7 +87,7 @@ const EditUnconfirmedTransactionPage: FC = () => {
         <Button color="error" onClick={onDelete}>
           Delete
         </Button>
-      </Row>
+      </Stack>
       <UnconfirmedTransactionForm
         transactionGroup={transactionGroup}
         initialUnconfirmedTransaction={unconfirmedTransaction}

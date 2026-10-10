@@ -33,7 +33,7 @@ export function GuestLogin() {
         const data = await response.text()
         setError(data || 'Failed to send code')
       }
-    } catch (err) {
+    } catch {
       setError('Network error. Please try again.')
     } finally {
       setLoading(false)
@@ -66,7 +66,7 @@ export function GuestLogin() {
       } else {
         setError(data.message || 'Invalid code')
       }
-    } catch (err) {
+    } catch {
       setError('Network error. Please try again.')
     } finally {
       setLoading(false)

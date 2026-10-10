@@ -120,7 +120,7 @@ const commonCategories: TemplateGroup[] = [
 
 const Screen: FC<{ children: React.ReactNode }> = ({ children }) => (
   <Box sx={{ height: '100%', overflowY: 'auto', display: 'flex' }}>
-    <Stack spacing={2} sx={{ p: 2, maxWidth: '50rem', width: '100%', m: 'auto' }}>
+    <Stack spacing={2} sx={{ p: 2, maxWidth: (t) => t.contentWidth.default, width: '100%', m: 'auto' }}>
       {children}
     </Stack>
   </Box>

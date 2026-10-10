@@ -7,13 +7,13 @@ import {
   MenuItem,
   Radio,
   RadioGroup,
+  Stack,
   TextField,
   ToggleButton,
   ToggleButtonGroup,
+  Typography,
 } from '@mui/material'
 import { FC } from 'react'
-
-import { Column, TinyHeader } from '../shared/Layout'
 
 type Option = {
   value: string
@@ -58,7 +58,7 @@ const SelectOne: FC<Props> = (props) => {
           label={props.label}
           fullWidth
           sx={{
-            minWidth: '10rem',
+            minWidth: (theme) => theme.fieldWidth.sm,
             '& .MuiInput-underline:before': {
               borderBottomColor: (theme) => alpha(theme.palette.primary.main, 0.1),
             },
@@ -78,8 +78,12 @@ const SelectOne: FC<Props> = (props) => {
     )
 
   return (
-    <Column style={{ gap: '0.5rem' }}>
-      {props.label && <TinyHeader>{props.label}</TinyHeader>}
+    <Stack spacing={1}>
+      {props.label && (
+        <Typography variant="caption" color="text.secondary">
+          {props.label}
+        </Typography>
+      )}
 
       <ToggleButtonGroup
         value={props.value}
@@ -92,15 +96,17 @@ const SelectOne: FC<Props> = (props) => {
           '& .MuiToggleButton-root': {
             flex: 1,
             textTransform: 'none',
-            fontSize: '0.9rem',
+            typography: 'body2',
           },
         }}
       >
         {props.options.map((option) => (
-          <ToggleButton value={option.value}>{option.label}</ToggleButton>
+          <ToggleButton key={option.value} value={option.value}>
+            {option.label}
+          </ToggleButton>
         ))}
       </ToggleButtonGroup>
-    </Column>
+    </Stack>
   )
 }
 

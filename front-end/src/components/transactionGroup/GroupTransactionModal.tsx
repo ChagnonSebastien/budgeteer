@@ -1,4 +1,4 @@
-import { Typography } from '@mui/material'
+import { Stack } from '@mui/material'
 import { format } from 'date-fns'
 import { FC, useContext, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -12,10 +12,8 @@ import { UnconfirmedAugmentedTransaction } from '../../domain/model/unconfirmedT
 import { TransactionServiceContext, UnconfirmedTransactionServiceContext } from '../../service/ServiceContext'
 import { IconToolsContext } from '../icons/IconTools'
 import { DrawerContext } from '../Menu'
-import BasicModal from '../shared/BasicModal'
 import ConfirmDeleteModal from '../shared/ConfirmDeleteModal'
-import { DetailCard, FancyModal } from '../shared/FancyModal'
-import { Column } from '../shared/Layout'
+import { DetailCard, DetailHeading, FancyDialog, FancyModal } from '../shared/FancyModal'
 import { useToast } from '../shared/ToastProvider'
 
 const GroupTransactionModal: FC<{ transaction: AugmentedTransaction | null; onClose(): void }> = ({
@@ -59,13 +57,7 @@ const GroupTransactionModal: FC<{ transaction: AugmentedTransaction | null; onCl
 
   return (
     <>
-      <BasicModal
-        open
-        onClose={onClose}
-        slotProps={{
-          paper: { style: { backgroundColor: 'transparent', borderRadius: '24px', border: '0', overflow: 'hidden' } },
-        }}
-      >
+      <FancyDialog open onClose={onClose}>
         <FancyModal
           title={{
             topCategory: group.name,
@@ -76,7 +68,7 @@ const GroupTransactionModal: FC<{ transaction: AugmentedTransaction | null; onCl
             {
               Icon: IconLib.MdCheckCircle,
               label: 'Confirm and add to my transactions',
-              color: '#66BB6A',
+              intent: 'confirm',
               description: 'Record it in your own accounts',
               action: () => {
                 onClose()
@@ -87,7 +79,7 @@ const GroupTransactionModal: FC<{ transaction: AugmentedTransaction | null; onCl
             {
               Icon: IconLib.MdGroups,
               label: 'Edit Split',
-              color: '#FFB74D',
+              intent: 'adjust',
               description: 'Change how this transaction is shared',
               action: () => setEditingSplit(true),
               disabled: false,
@@ -95,7 +87,7 @@ const GroupTransactionModal: FC<{ transaction: AugmentedTransaction | null; onCl
             {
               Icon: IconLib.MdEdit,
               label: 'Edit Transaction',
-              color: '#64B5F6',
+              intent: 'edit',
               description: 'Modify transaction details',
               action: () => {
                 onClose()
@@ -110,20 +102,15 @@ const GroupTransactionModal: FC<{ transaction: AugmentedTransaction | null; onCl
             {
               Icon: IconLib.MdDelete,
               label: 'Delete Transaction',
-              color: '#EF5350',
+              intent: 'destructive',
               description: 'Remove this transaction',
               action: () => setConfirmingDelete(true),
               disabled: unconfirmed === null && !canEditConfirmed,
             },
           ]}
         >
-          <Typography
-            variant="subtitle2"
-            style={{ opacity: 0.6, marginBottom: '16px', letterSpacing: '0.05em', fontSize: '0.75rem' }}
-          >
-            DETAILS
-          </Typography>
-          <Column style={{ gap: '0.2rem' }}>
+          <DetailHeading>DETAILS</DetailHeading>
+          <Stack sx={{ gap: 0.5 }}>
             <DetailCard
               delay={0}
               title={transaction.currency.symbol}
@@ -155,9 +142,9 @@ const GroupTransactionModal: FC<{ transaction: AugmentedTransaction | null; onCl
               title="Status"
               value={unconfirmed ? 'Any member can edit it' : 'Confirmed by the payer'}
             />
-          </Column>
+          </Stack>
         </FancyModal>
-      </BasicModal>
+      </FancyDialog>
 
       {editingSplit && <TransactionSplitDialog transaction={transaction} onClose={() => setEditingSplit(false)} />}
 

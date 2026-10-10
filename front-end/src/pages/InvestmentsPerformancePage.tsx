@@ -6,17 +6,8 @@ import { GraphContainer, SecondDivision } from '../components/graphing/GraphStyl
 import useTransactionFilter from '../components/inputs/useTransactionFilter'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
 import { useElementDimensions, useWindowDimensions } from '../components/shared/useDimensions'
-import useQueryParams from '../components/shared/useQueryParams'
-import { CurrencyID } from '../domain/model/currency'
-
-type QueryParams = {
-  currencies: string
-}
 
 const InvestmentsPerformancePage: FC = () => {
-  const { queryParams: qp, updateQueryParams } = useQueryParams<QueryParams>()
-  const selectedCurrencies = useMemo<CurrencyID[]>(() => JSON.parse(qp.currencies || '[]'), [qp.currencies])
-
   const { height: pageHeight } = useWindowDimensions()
   const { height: contentHeight, ref: setContentRef } = useElementDimensions(600, 600)
   const { height: optionsHeight, ref: setOptionsRef } = useElementDimensions(600, 600)
@@ -53,16 +44,10 @@ const InvestmentsPerformancePage: FC = () => {
       </GraphContainer>
 
       <SecondDivision
-        style={{
-          flexDirection: 'row',
-          columnGap: '3rem',
-          flexWrap: 'wrap',
-          rowGap: '1rem',
-          backgroundColor: 'rgba(128, 128, 128, 0.04)',
-        }}
+        sx={{ flexDirection: 'row', columnGap: 6, flexWrap: 'wrap', rowGap: 2, bgcolor: 'surface.subtle' }}
         ref={setOptionsRef}
       >
-        <Box style={{ flexGrow: 1, width: '100%' }}>{filterOverview}</Box>
+        <Box sx={{ flexGrow: 1, width: '100%' }}>{filterOverview}</Box>
       </SecondDivision>
     </ContentWithHeader>
   )

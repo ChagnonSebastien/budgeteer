@@ -1,9 +1,8 @@
-import { Alert, Button } from '@mui/material'
+import { Alert, Button, Stack } from '@mui/material'
 import { FC, useCallback, useContext, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
 import ContentWithHeader from '../components/shared/ContentWithHeader'
-import { Column, Row } from '../components/shared/Layout'
 import { useToast } from '../components/shared/ToastProvider'
 import TransactionForm from '../components/transactions/TransactionForm'
 import Transaction from '../domain/model/transaction'
@@ -51,18 +50,18 @@ const EditTransactionPage: FC = () => {
   return (
     <ContentWithHeader title="Edit Transaction" action="return" withPadding withScrolling>
       {partOfCompletedSettlement && !acknowledgedSettlement ? (
-        <Column style={{ gap: '1rem', maxWidth: '32rem', margin: '0 auto' }}>
+        <Stack spacing={2} sx={{ maxWidth: (t) => t.contentWidth.compact, mx: 'auto' }}>
           <Alert severity="warning">
             This transaction is part of a completed settlement. Adjustments should rather be made with a new settlement:
             editing it here only changes your records, which will no longer match the settlement.
           </Alert>
-          <Row style={{ gap: '1rem', justifyContent: 'end' }}>
+          <Stack direction="row" spacing={2} justifyContent="flex-end">
             <Button onClick={() => navigate(-1)}>Go back</Button>
             <Button variant="contained" color="warning" onClick={() => setAcknowledgedSettlement(true)}>
               Edit anyway
             </Button>
-          </Row>
-        </Column>
+          </Stack>
+        </Stack>
       ) : (
         <TransactionForm onSubmit={onSubmit} submitText="Update" initialTransaction={selectedTransaction} />
       )}

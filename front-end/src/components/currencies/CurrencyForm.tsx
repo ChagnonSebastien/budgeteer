@@ -1,4 +1,4 @@
-import { Box, Button, Checkbox, FormControlLabel, TextField, Typography } from '@mui/material'
+import { Box, Button, Checkbox, FormControlLabel, Stack, TextField, Typography } from '@mui/material'
 import { startOfDay } from 'date-fns'
 import { FC, FormEvent, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 
@@ -7,8 +7,9 @@ import { CurrencyServiceContext } from '../../service/ServiceContext'
 import ExchangeRateHistory from '../graphing/ExchangeRateHistory'
 import CodeEditor from '../inputs/CodeEditor'
 import DatePicker from '../inputs/DatePicker'
+import { DetailHeading } from '../shared/FancyModal'
 import FormWrapper from '../shared/FormWrapper'
-import { Row } from '../shared/Layout'
+import { Section } from '../shared/Layout'
 import { SecureButton } from '../shared/SecureButton'
 import { useToast } from '../shared/ToastProvider'
 
@@ -432,40 +433,24 @@ const CurrencyForm: FC<Props> = (props) => {
             }
           />
 
-          <div
-            style={{
-              transformOrigin: 'left center',
-              transform: 'scale(0.75)',
-              maxWidth: 'calc(100% / 0.75)',
-            }}
-          >
-            <Typography color="warning">Warning: This value cannot be changed later</Typography>
-          </div>
+          <Typography variant="caption" color="warning">
+            Warning: This value cannot be changed later
+          </Typography>
         </div>
       )}
 
       {showExchangeRate && (
         <>
-          <div>
-            <Row>
-              <Typography
-                color="textSecondary"
-                style={{ margin: '0 1rem', transform: 'translate(0, 0.5rem)', fontSize: '.75rem' }}
-              >
-                Formatting example
-              </Typography>
-              <div style={{ borderBottom: '1px grey solid', flexGrow: 1 }} />
-            </Row>
-            <Typography style={{ padding: '1rem', border: '1px grey solid', borderTop: 0, textAlign: 'center' }}>
+          <Section title="Formatting example" compact>
+            <Typography textAlign="center">
               {formatExample(123.456789)} {symbol}
             </Typography>
-          </div>
-          <div>
-            <div style={{ height: '1rem' }} />
-            <div style={{ color: 'grey' }}>Exchange Rates</div>
-            <Row style={{ alignItems: 'end' }}>
-              <Row style={{ alignItems: 'center', flexShrink: 0 }}>{`1 ${symbol === '' ? '___' : symbol}`}</Row>
-              <Row style={{ margin: '0 1rem', alignItems: 'center', flexShrink: 0 }}>=</Row>
+          </Section>
+          <Stack spacing={1} sx={{ pt: 2 }}>
+            <Typography color="text.disabled">Exchange Rates</Typography>
+            <Stack direction="row" alignItems="flex-end" spacing={2}>
+              <Box sx={{ flexShrink: 0 }}>{`1 ${symbol === '' ? '___' : symbol}`}</Box>
+              <Box sx={{ flexShrink: 0 }}>=</Box>
               <TextField
                 type="text"
                 variant="standard"
@@ -483,65 +468,26 @@ const CurrencyForm: FC<Props> = (props) => {
                   }))
                 }
               />
-              <Row style={{ margin: '0 1rem', alignItems: 'center', flexShrink: 0 }}>
-                {tentativeDefaultCurrency!.symbol} on
-              </Row>
+              <Box sx={{ flexShrink: 0 }}>{tentativeDefaultCurrency!.symbol} on</Box>
               <DatePicker date={initialExchangeRateDate} onChange={setInitialExchangeRateDate} label="" />
-            </Row>
-          </div>
+            </Stack>
+          </Stack>
         </>
       )}
       {tentativeDefaultCurrency?.id !== initialCurrency?.id && initialCurrency && tentativeDefaultCurrency && (
         <>
-          <Typography
-            variant="subtitle2"
-            style={{
-              opacity: 0.6,
-              marginBottom: '16px',
-              letterSpacing: '0.05em',
-              fontSize: '0.75rem',
-            }}
-          >
-            EXCHANGE RATE HISTORY
-          </Typography>
-          <Box style={{ height: '200px', display: 'flex', justifyContent: 'stretch', alignItems: 'stretch' }}>
+          <DetailHeading>Exchange rate history</DetailHeading>
+          <Box sx={{ height: 200, display: 'flex' }}>
             <ExchangeRateHistory currency={initialCurrency} against={tentativeDefaultCurrency} />
           </Box>
         </>
       )}
       {tentativeDefaultCurrency?.id !== initialCurrency?.id && (
         <>
-          <Typography
-            variant="subtitle2"
-            style={{
-              opacity: 0.6,
-              marginBottom: '16px',
-              letterSpacing: '0.05em',
-              fontSize: '0.75rem',
-            }}
-          >
-            EXCHANGE RATE FETCHER
-          </Typography>
+          <DetailHeading>Exchange rate fetcher</DetailHeading>
           <CodeEditor content={getRateScript} onChange={setRateAutoupdateScript} />
-          <div>
-            <Row>
-              <Typography
-                color="textSecondary"
-                style={{ margin: '0 1rem', transform: 'translate(0, 0.5rem)', fontSize: '.75rem' }}
-              >
-                Test and Submit
-              </Typography>
-              <div style={{ borderBottom: '1px grey solid', flexGrow: 1 }} />
-            </Row>
-            <Row
-              style={{
-                padding: '1rem',
-                border: '1px grey solid',
-                borderTop: 0,
-                textAlign: 'center',
-                justifyContent: 'space-between',
-              }}
-            >
+          <Section title="Test and Submit" compact>
+            <Stack direction="row" justifyContent="space-between" alignItems="center" textAlign="center">
               <SecureButton variant="contained" onClick={testScript}>
                 Test Run
               </SecureButton>
@@ -558,51 +504,32 @@ const CurrencyForm: FC<Props> = (props) => {
                   Submit
                 </Button>
               )}
-            </Row>
-          </div>
+            </Stack>
+          </Section>
 
-          <div>
-            <Row>
-              <Typography
-                color="textSecondary"
-                style={{ margin: '0 1rem', transform: 'translate(0, 0.5rem)', fontSize: '.75rem' }}
-              >
-                Rate Auto Update
-              </Typography>
-              <div style={{ borderBottom: '1px grey solid', flexGrow: 1 }} />
-            </Row>
-            <div>
-              <Row
-                style={{
-                  padding: '1rem',
-                  border: '1px grey solid',
-                  borderTop: 0,
-                  textAlign: 'center',
-                  justifyContent: 'space-between',
-                }}
-              >
-                <div style={{ margin: 'auto 2rem' }}>
-                  {errors.autoupdateScriptValidated.hasVisited && !!errors.autoupdateScriptValidated.errorText ? (
-                    <Typography color="error">{errors.autoupdateScriptValidated.errorText}</Typography>
-                  ) : (
-                    <Typography>
-                      Do you want to enable the auto update of the rate? It will be fetched at 6AM every day for the day
-                      before.
-                    </Typography>
-                  )}
-                </div>
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      checked={rateAutoupdateEnabled}
-                      onChange={(ev) => setRateAutoupdateEnabled(ev.target.checked)}
-                    />
-                  }
-                  label="Enabled"
-                />
-              </Row>
-            </div>
-          </div>
+          <Section title="Rate Auto Update" compact>
+            <Stack direction="row" justifyContent="space-between" alignItems="center" textAlign="center">
+              <Box sx={{ mx: 4 }}>
+                {errors.autoupdateScriptValidated.hasVisited && !!errors.autoupdateScriptValidated.errorText ? (
+                  <Typography color="error">{errors.autoupdateScriptValidated.errorText}</Typography>
+                ) : (
+                  <Typography>
+                    Do you want to enable the auto update of the rate? It will be fetched at 6AM every day for the day
+                    before.
+                  </Typography>
+                )}
+              </Box>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={rateAutoupdateEnabled}
+                    onChange={(ev) => setRateAutoupdateEnabled(ev.target.checked)}
+                  />
+                }
+                label="Enabled"
+              />
+            </Stack>
+          </Section>
         </>
       )}
     </FormWrapper>

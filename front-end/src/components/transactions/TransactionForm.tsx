@@ -1,4 +1,4 @@
-import { Checkbox, Chip, FormControlLabel, IconButton, TextField, Typography } from '@mui/material'
+import { Checkbox, Chip, FormControlLabel, IconButton, Stack, TextField, Typography } from '@mui/material'
 import { FC, useContext, useEffect, useMemo, useState } from 'react'
 
 import { UserContext } from '../../App'
@@ -22,7 +22,6 @@ import DatePicker from '../inputs/DatePicker'
 import { FixedPointInput } from '../inputs/FixedPointInput'
 import ItemPicker from '../inputs/ItemPicker'
 import FormWrapper from '../shared/FormWrapper'
-import { Row } from '../shared/Layout'
 import { useToast } from '../shared/ToastProvider'
 import { TransactionGroupCard } from '../transactionGroup/TransactionGroupCard'
 
@@ -376,7 +375,7 @@ const TransactionForm: FC<Props> = (props) => {
 
   return (
     <FormWrapper onSubmit={handleSubmit} submitText={submitText}>
-      <Row style={{ gap: '1rem' }}>
+      <Stack direction="row" spacing={2}>
         <FixedPointInput
           sx={{ width: '100%' }}
           label={`Amount${differentCurrency ? ' Sent' : ''}`}
@@ -394,14 +393,14 @@ const TransactionForm: FC<Props> = (props) => {
           }}
         />
         <CurrencyPicker
-          style={{ width: '100%', flexShrink: 2 }}
+          sx={{ width: '100%', flexShrink: 2 }}
           currencies={currencies}
           selectedCurrencyId={currency}
           setSelectedCurrencyId={setCurrency}
           labelText="Currency"
           errorText={NoError}
         />
-      </Row>
+      </Stack>
 
       {!useTransactionGroup && (
         <FormControlLabel
@@ -411,7 +410,7 @@ const TransactionForm: FC<Props> = (props) => {
       )}
 
       {differentCurrency && (
-        <Row style={{ gap: '1rem' }}>
+        <Stack direction="row" spacing={2}>
           <FixedPointInput
             sx={{ width: '100%' }}
             label="Amount Received"
@@ -432,10 +431,10 @@ const TransactionForm: FC<Props> = (props) => {
             selectedCurrencyId={receiverCurrency}
             setSelectedCurrencyId={setReceiverCurrency}
             labelText="Currency"
-            style={{ width: '100%', flexShrink: 2 }}
+            sx={{ width: '100%', flexShrink: 2 }}
             errorText={NoError}
           />
-        </Row>
+        </Stack>
       )}
 
       <DatePicker label="Date" date={date} onChange={setDate} />
@@ -479,7 +478,7 @@ const TransactionForm: FC<Props> = (props) => {
       />
 
       {baseType !== 'transfer' && typeof groupContext === 'undefined' && (
-        <Row style={{ gap: '0.75rem', flexWrap: 'wrap' }}>
+        <Stack direction="row" useFlexGap spacing={1.5} flexWrap="wrap">
           {baseType === 'income' && (
             <Chip
               icon={<IconLib.BsGraphUp />}
@@ -498,12 +497,12 @@ const TransactionForm: FC<Props> = (props) => {
             onClick={toggleTransactionGroup}
             sx={{ pl: 1, '& .MuiChip-icon': { marginLeft: 0 } }}
           />
-        </Row>
+        </Stack>
       )}
 
       {type === 'financialIncome' && (
         <CurrencyPicker
-          style={{ width: '100%' }}
+          sx={{ width: '100%' }}
           currencies={currencies}
           selectedCurrencyId={investmentCurrency}
           setSelectedCurrencyId={setInvestmentCurrency}
@@ -513,7 +512,7 @@ const TransactionForm: FC<Props> = (props) => {
       )}
 
       {useTransactionGroup && groupContext !== 'hidden' && (
-        <Row style={{ justifyContent: 'stretch', alignItems: 'center', gap: '1rem' }}>
+        <Stack direction="row" alignItems="center" spacing={2}>
           {transactionGroup?.augmentedCategory && (
             <IconCapsule
               iconName={transactionGroup.augmentedCategory.iconName}
@@ -523,13 +522,13 @@ const TransactionForm: FC<Props> = (props) => {
             />
           )}
           {groupContext === 'locked' ? (
-            <Typography style={{ flexGrow: 1 }}>
+            <Typography sx={{ flexGrow: 1 }}>
               Transaction group: <b>{transactionGroup?.name}</b>
             </Typography>
           ) : (
             <>
               <ItemPicker
-                style={{ flexGrow: 1 }}
+                sx={{ flexGrow: 1 }}
                 items={visibleTransactionGroups}
                 labelText="Transaction Group"
                 itemDisplayText={(item) => item?.name ?? 'None'}
@@ -543,7 +542,7 @@ const TransactionForm: FC<Props> = (props) => {
               </IconButton>
             </>
           )}
-        </Row>
+        </Stack>
       )}
     </FormWrapper>
   )

@@ -1,3 +1,4 @@
+import { SxProps, Theme } from '@mui/material'
 import { FC, ReactNode } from 'react'
 
 import CurrencyCard from './CurrencyCard'
@@ -8,15 +9,14 @@ interface Props {
   selectedCurrencyId: CurrencyID | null
   setSelectedCurrencyId: (id: CurrencyID) => void
   labelText: string
-  style?: React.CSSProperties
+  sx?: SxProps<Theme>
   errorText?: string
   currencies: Currency[]
   additionalActions?: ReactNode
 }
 
 const CurrencyPicker: FC<Props> = (props) => {
-  const { selectedCurrencyId, setSelectedCurrencyId, labelText, style, errorText, currencies, additionalActions } =
-    props
+  const { selectedCurrencyId, setSelectedCurrencyId, labelText, sx, errorText, currencies, additionalActions } = props
 
   return (
     <ItemPicker<CurrencyID, Currency, unknown>
@@ -24,7 +24,7 @@ const CurrencyPicker: FC<Props> = (props) => {
       selectedItemId={selectedCurrencyId}
       onSelectItem={setSelectedCurrencyId}
       labelText={labelText}
-      style={style}
+      sx={sx}
       errorText={errorText}
       searchPlaceholder="Search currency..."
       itemDisplayText={(currency) => currency?.symbol ?? ''}

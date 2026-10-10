@@ -1,14 +1,35 @@
+import { useTheme } from '@mui/material'
 import { scaleTime } from 'd3-scale'
 import { format, differenceInMilliseconds, isBefore, isAfter, addMinutes } from 'date-fns'
 import React from 'react'
 import { Slider, Rail, Handles, Tracks, Ticks } from 'react-compound-slider'
 
 import Handle from './Handle'
-import SliderRail from './SliderRail'
+import { SliderRail } from './SliderRail'
 import Tick from './Tick'
 import Track from './Track'
 
 import './TimeRange.scss'
+
+const TimeRangeRoot: React.FC<{ className: string; children: React.ReactNode }> = ({ className, children }) => {
+  const { palette } = useTheme()
+  const colors = {
+    '--time-range-tap': palette.common.black,
+    '--time-range-tick': palette.slider.tick,
+    '--time-range-tick-label': palette.slider.tickLabel,
+    '--time-range-rail': palette.slider.rail,
+    '--time-range-handle': palette.common.white,
+    '--time-range-handle-disabled': palette.slider.handleDisabled,
+    '--time-range-valid': palette.slider.validEdge,
+    '--time-range-invalid': palette.slider.invalidEdge,
+    '--time-range-disabled-stripe': palette.slider.disabledStripe,
+  } as React.CSSProperties
+  return (
+    <div className={className} style={colors}>
+      {children}
+    </div>
+  )
+}
 
 const getTimelineConfig = (timelineStart: Date, timelineLength: number) => (date: Date) => {
   const percent = (differenceInMilliseconds(date, timelineStart) / timelineLength) * 100
@@ -146,7 +167,7 @@ class TimeRange extends React.Component<TimeRangeProps> {
     const disabledIntervals = this.disabledIntervals
 
     return (
-      <div className={containerClassName || 'react_time_range__time_range_container'}>
+      <TimeRangeRoot className={containerClassName || 'react_time_range__time_range_container'}>
         <Slider
           mode={mode}
           step={step}
@@ -238,7 +259,7 @@ class TimeRange extends React.Component<TimeRangeProps> {
             )}
           </Ticks>
         </Slider>
-      </div>
+      </TimeRangeRoot>
     )
   }
 }

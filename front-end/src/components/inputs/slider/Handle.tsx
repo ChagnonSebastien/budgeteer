@@ -1,3 +1,4 @@
+import { useTheme } from '@mui/material'
 import React from 'react'
 
 interface HandleProps {
@@ -20,15 +21,16 @@ const Handle: React.FC<HandleProps> = ({
   handle: { id, value, percent = 0 },
   disabled = false,
   getHandleProps,
-  errorColor = 'rgb(214, 0, 11)',
-  validColor = 'rgb(98, 203, 102)',
+  errorColor,
+  validColor,
 }) => {
+  const { palette } = useTheme()
   const leftPosition = `${percent}%`
 
   const getHandleStyle = () => {
     if (disabled) return undefined
-    if (error) return { backgroundColor: errorColor }
-    return { backgroundColor: validColor }
+    if (error) return { backgroundColor: errorColor ?? palette.error.main }
+    return { backgroundColor: validColor ?? palette.slider.validEdge }
   }
 
   return (

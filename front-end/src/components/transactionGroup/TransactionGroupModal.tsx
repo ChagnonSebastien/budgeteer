@@ -1,4 +1,4 @@
-import { Typography } from '@mui/material'
+import { Stack } from '@mui/material'
 import { format } from 'date-fns'
 import { FC, useContext, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -17,10 +17,8 @@ import {
 } from '../../service/ServiceContext'
 import { IconToolsContext } from '../icons/IconTools'
 import { DrawerContext } from '../Menu'
-import BasicModal from '../shared/BasicModal'
 import ConfirmDeleteModal from '../shared/ConfirmDeleteModal'
-import { DetailCard, FancyModal } from '../shared/FancyModal'
-import { Column } from '../shared/Layout'
+import { DetailCard, DetailHeading, FancyDialog, FancyModal } from '../shared/FancyModal'
 import { useToast } from '../shared/ToastProvider'
 
 const TransactionGroupModal: FC<{ group: TransactionGroup; summary?: GroupSummary; onClose(): void }> = ({
@@ -74,13 +72,7 @@ const TransactionGroupModal: FC<{ group: TransactionGroup; summary?: GroupSummar
 
   return (
     <>
-      <BasicModal
-        open
-        onClose={onClose}
-        slotProps={{
-          paper: { style: { backgroundColor: 'transparent', borderRadius: '24px', border: '0', overflow: 'hidden' } },
-        }}
-      >
+      <FancyDialog open onClose={onClose}>
         <FancyModal
           title={{
             topCategory: group.hidden ? 'Transaction group · Hidden' : 'Transaction group',
@@ -91,7 +83,7 @@ const TransactionGroupModal: FC<{ group: TransactionGroup; summary?: GroupSummar
             {
               Icon: IconLib.MdGroups,
               label: joined ? 'Open Group' : 'Join Group',
-              color: '#64B5F6',
+              intent: 'navigate',
               description: joined ? 'See its transactions and balances' : 'Accept the invitation',
               action: () => {
                 onClose()
@@ -102,7 +94,7 @@ const TransactionGroupModal: FC<{ group: TransactionGroup; summary?: GroupSummar
             {
               Icon: group.hidden ? IconLib.MdVisibility : IconLib.MdVisibilityOff,
               label: group.hidden ? 'Unhide Group' : 'Hide Group',
-              color: '#FFB74D',
+              intent: 'adjust',
               description: group.hidden
                 ? 'Show its label on your transactions again'
                 : deletable
@@ -114,20 +106,15 @@ const TransactionGroupModal: FC<{ group: TransactionGroup; summary?: GroupSummar
             {
               Icon: IconLib.MdDelete,
               label: 'Delete Group',
-              color: '#EF5350',
+              intent: 'destructive',
               description: 'Your transactions are kept, just unlinked',
               action: () => setConfirmingDelete(true),
               disabled: !deletable,
             },
           ]}
         >
-          <Typography
-            variant="subtitle2"
-            style={{ opacity: 0.6, marginBottom: '16px', letterSpacing: '0.05em', fontSize: '0.75rem' }}
-          >
-            DETAILS
-          </Typography>
-          <Column style={{ gap: '0.2rem' }}>
+          <DetailHeading>DETAILS</DetailHeading>
+          <Stack sx={{ gap: 0.5 }}>
             <DetailCard delay={0} title="Your balance" value={balanceValue} />
             {summary && <DetailCard delay={1} title="Activity" value={dateRange(summary)} />}
             <DetailCard
@@ -137,9 +124,9 @@ const TransactionGroupModal: FC<{ group: TransactionGroup; summary?: GroupSummar
               value={String(group.members.length)}
             />
             <DetailCard delay={3} title="Default split" value={SplitTypeToString(group.splitType)} />
-          </Column>
+          </Stack>
         </FancyModal>
-      </BasicModal>
+      </FancyDialog>
 
       <ConfirmDeleteModal
         open={confirmingDelete}

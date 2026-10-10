@@ -1,4 +1,4 @@
-import { Typography } from '@mui/material'
+import { Stack, Typography, useTheme } from '@mui/material'
 import { format, isSameDay, isSameYear } from 'date-fns'
 import { FC, useContext, useMemo } from 'react'
 
@@ -10,7 +10,7 @@ import { ItemProps } from '../accounts/ItemList'
 import IconCapsule from '../icons/IconCapsule'
 import { PreparedIcon } from '../icons/IconTools'
 import { DrawerContext } from '../Menu'
-import { Column, GradientCard } from '../shared/Layout'
+import { GradientCard } from '../shared/Layout'
 
 export interface GroupBalance {
   balance: number
@@ -52,6 +52,7 @@ export const BalanceText: FC<GroupBalance & { settledLabel?: string }> = ({
 }
 
 export const TransactionGroupCard = (props: Props) => {
+  const theme = useTheme()
   const { item, selected = false, onClick, summaries } = props
   const summary = summaries?.get(item.id)
 
@@ -74,27 +75,27 @@ export const TransactionGroupCard = (props: Props) => {
       style={{
         display: 'flex',
         alignItems: 'center',
-        padding: '1rem',
-        gap: '1rem',
+        padding: theme.spacing(2),
+        gap: theme.spacing(2),
         opacity: item.hidden ? 0.55 : 1,
       }}
     >
       {authentification_method !== 'guest' && (
         <IconCapsule
           iconName={tgCategory?.iconName ?? PreparedIcon.FaQuestion}
-          color={tgCategory?.iconColor ?? '#DDD'}
-          backgroundColor={tgCategory?.iconBackground ?? '#444'}
+          color={tgCategory?.iconColor ?? theme.palette.text.secondary}
+          backgroundColor={tgCategory?.iconBackground ?? theme.palette.grey[800]}
           size="2rem"
         />
       )}
-      <Column style={{ flexGrow: 1, minWidth: 0 }}>
+      <Stack sx={{ flexGrow: 1, minWidth: 0 }}>
         <Typography variant="subtitle1">{item.name}</Typography>
         {summary && (
           <Typography variant="caption" color="textDisabled">
             {dateRange(summary)}
           </Typography>
         )}
-      </Column>
+      </Stack>
       {invited ? (
         <Typography variant="caption" color="warning">
           Invited

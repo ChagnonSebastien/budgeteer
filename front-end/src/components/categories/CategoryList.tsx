@@ -1,6 +1,6 @@
-import { Box, Button, CircularProgress } from '@mui/material'
+import { alpha, Box, Button, CircularProgress } from '@mui/material'
+import { styled } from '@mui/material/styles'
 import { Fragment, ReactNode, useContext, useMemo, useState } from 'react'
-import { default as styled } from 'styled-components'
 
 import Category, { CategoryID } from '../../domain/model/category'
 import MixedAugmentation from '../../service/MixedAugmentation'
@@ -8,74 +8,72 @@ import { CategoryServiceContext } from '../../service/ServiceContext'
 import { ItemListProps, MultiSelectConfiguration, SingleSelectConfiguration } from '../accounts/ItemList'
 import { IconToolsContext } from '../icons/IconTools'
 
-// Styled components only for complex hover effects and transitions
-const CategoryListItem = styled.div<{ $isSelected: boolean; $hasSelectedChild: boolean }>`
-  border-radius: 0.5rem;
-  transition: all 200ms ease-in-out;
-  border-left: 3px solid ${(props) => (props.$isSelected ? '#C84B31' : 'transparent')};
-  margin: 0.125rem 0;
-  background-color: ${(props) =>
-    props.$isSelected
-      ? 'rgba(200, 75, 49, 0.12)'
-      : props.$hasSelectedChild
-        ? 'rgba(200, 75, 49, 0.04)'
-        : 'transparent'};
+const transient = { shouldForwardProp: (prop: PropertyKey) => !String(prop).startsWith('$') }
 
-  &:hover {
-    background-color: ${(props) =>
-      props.$isSelected
-        ? 'rgba(200, 75, 49, 0.16)'
-        : props.$hasSelectedChild
-          ? 'rgba(200, 75, 49, 0.08)'
-          : 'rgba(128, 128, 128, 0.16)'};
+const CategoryListItem = styled(
+  'div',
+  transient,
+)<{ $isSelected: boolean; $hasSelectedChild: boolean }>(({ theme, $isSelected, $hasSelectedChild }) => {
+  const brand = theme.palette.primary.main
+  return {
+    borderRadius: theme.radius.md,
+    transition: 'all 200ms ease-in-out',
+    borderLeft: `3px solid ${$isSelected ? brand : 'transparent'}`,
+    margin: theme.spacing(0.25, 0),
+    backgroundColor: $isSelected ? alpha(brand, 0.12) : $hasSelectedChild ? alpha(brand, 0.04) : 'transparent',
+    '&:hover': {
+      backgroundColor: $isSelected
+        ? alpha(brand, 0.16)
+        : $hasSelectedChild
+          ? alpha(brand, 0.08)
+          : theme.palette.surface.raised,
+    },
   }
-`
+})
 
-const ExpandButton = styled.div<{ $hasSelectedChild: boolean }>`
-  width: 2.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  color: gray;
+const ExpandButton = styled(
+  'div',
+  transient,
+)<{ $hasSelectedChild: boolean }>(({ theme }) => ({
+  width: theme.spacing(5),
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  cursor: 'pointer',
+  color: theme.palette.text.disabled,
+  '&:hover': { color: theme.palette.text.primary },
+  '.rotatable': {
+    transition: 'all 200ms ease-in-out',
+    fontSize: theme.typography.subtitle1.fontSize,
+    '&.open': { transform: 'rotate(90deg)' },
+  },
+}))
 
-  &:hover {
-    color: white;
-  }
+const Collapsible = styled(
+  'div',
+  transient,
+)<{ $isOpen: boolean }>(({ $isOpen }) => ({
+  maxHeight: $isOpen ? 'none' : 0,
+  overflow: $isOpen ? 'visible' : 'hidden',
+  transition: 'all 300ms ease-in-out',
+  opacity: $isOpen ? 1 : 0,
+}))
 
-  .rotatable {
-    transition: all 200ms ease-in-out;
-    font-size: 1.1rem;
-
-    &.open {
-      transform: rotate(90deg);
-    }
-  }
-`
-
-const Collapsible = styled.div<{ $isOpen: boolean }>`
-  max-height: ${(props) => (props.$isOpen ? 'none' : '0')};
-  overflow: ${(props) => (props.$isOpen ? 'visible' : 'hidden')};
-  transition: all 300ms ease-in-out;
-  opacity: ${(props) => (props.$isOpen ? 1 : 0)};
-`
-
-const NestedCategoryContainer = styled.div`
-  margin-left: 1.5rem;
-  position: relative;
-  padding-left: 0.5rem;
-
-  &::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 1px;
-    background-color: rgba(128, 128, 128, 0.24);
-    border-radius: 0.125rem;
-  }
-`
+const NestedCategoryContainer = styled('div')(({ theme }) => ({
+  marginLeft: theme.spacing(3),
+  position: 'relative',
+  paddingLeft: theme.spacing(1),
+  '&::before': {
+    content: '""',
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: '1px',
+    backgroundColor: theme.palette.surface.strong,
+    borderRadius: theme.radius.sm,
+  },
+}))
 
 interface CategoryListProps {
   buttonText?: string
@@ -206,14 +204,7 @@ export const CategoryList = (props: Props) => {
           onMouseEnter={() => setHoveringOver(category.id)}
           onTouchStart={() => setHoveringOver(category.id)}
         >
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'stretch',
-              borderRadius: '0.75rem',
-              overflow: 'hidden',
-            }}
-          >
+          <Box sx={{ display: 'flex', alignItems: 'stretch', borderRadius: (t) => t.radius.lg, overflow: 'hidden' }}>
             {typeof subCategories[category.id] !== 'undefined' ? (
               <ExpandButton
                 $hasSelectedChild={hasSelectedDescendant}
@@ -230,18 +221,12 @@ export const CategoryList = (props: Props) => {
             ) : (
               <ExpandButton $hasSelectedChild={false} /> /* Placeholder for alignment */
             )}
-            <div
+            <Box
               onClick={() => {
                 if (typeof buttonText !== 'undefined') return
                 click(category)
               }}
-              style={{
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                flexGrow: 1,
-                padding: '0.5rem 0.5rem 0.5rem 0',
-              }}
+              sx={{ cursor: 'pointer', display: 'flex', alignItems: 'center', flexGrow: 1, py: 1, pr: 1 }}
             >
               <Box sx={{ flexGrow: 1 }}>
                 <ItemComponent item={category} {...additionalItemsProps} />
@@ -253,13 +238,13 @@ export const CategoryList = (props: Props) => {
                     variant="contained"
                     size="small"
                     onClick={() => selectConfiguration.onClick(category)}
-                    style={{ opacity: 1, marginRight: '0.5rem' }}
+                    sx={{ opacity: 1, mr: 1 }}
                   >
                     {buttonText ?? 'Select'}
                   </Button>
                 )}
-            </div>
-          </div>
+            </Box>
+          </Box>
         </CategoryListItem>
         <Collapsible $isOpen={open.includes(category.id)}>
           <NestedCategoryContainer>

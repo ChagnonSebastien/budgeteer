@@ -39,11 +39,12 @@ const AccountCard = (props: ItemProps<AccountID, Account, AdditionalAccountCardP
       $withGradientBackground={showBalances}
       $hoverEffect
       onClick={onClick}
-      style={{
-        padding: showBalances ? '1rem 1.5rem' : '0.75rem 1rem',
+      sx={{
+        py: showBalances ? 2 : 1.5,
+        px: showBalances ? 3 : 2,
         display: 'flex',
         flexDirection: 'column',
-        gap: '0.5rem',
+        gap: 1,
       }}
     >
       <Typography variant="subtitle1">{item.name}</Typography>

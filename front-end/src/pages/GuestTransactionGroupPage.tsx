@@ -42,13 +42,13 @@ const GuestTransactionGroupPage: FC = () => {
         {
           label: 'I paid',
           Icon: IconLib.MdOutput,
-          color: 'red',
+          color: 'money.loss',
           onClick: () => navigate(`/transaction-groups/manage/${id}/unconfirmed/new?payer=me`),
         },
         {
           label: 'Someone else paid',
           Icon: IconLib.MdGroups,
-          color: '#64B5F6',
+          color: 'intent.edit',
           onClick: () => navigate(`/transaction-groups/manage/${id}/unconfirmed/new?payer=others`),
         },
       ]}

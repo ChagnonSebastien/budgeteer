@@ -1,5 +1,5 @@
-import { Typography, useTheme } from '@mui/material'
-import { FC, memo, useContext } from 'react'
+import { Box, ButtonBase, Stack, Typography } from '@mui/material'
+import { FC, memo, ReactNode, useContext } from 'react'
 
 import Category from '../../domain/model/category'
 import { formatFull } from '../../domain/model/currency'
@@ -7,7 +7,6 @@ import { AugmentedTransaction, TransactionID } from '../../domain/model/transact
 import { ItemProps } from '../accounts/ItemList'
 import IconCapsule from '../icons/IconCapsule'
 import { DrawerContext } from '../Menu'
-import { Column, Row } from '../shared/Layout'
 
 const defaultCategory = new Category(
   0,
@@ -20,110 +19,140 @@ const defaultCategory = new Category(
   0,
 )
 
+export const ellipsis = { overflow: 'hidden', textOverflow: 'ellipsis' }
+
+export const CardShell: FC<{
+  header?: ReactNode
+  footer?: ReactNode
+  tint?: string
+  icon?: ReactNode
+  aside?: ReactNode
+  onClick?(): void
+  children: ReactNode
+}> = ({ header, footer, tint = 'surface.muted', icon, aside, onClick, children }) => (
+  <Stack sx={{ bgcolor: 'surface.raised', border: 1, borderColor: 'surface.raised', borderRadius: (t) => t.radius.md }}>
+    {header && (
+      <Typography variant="body2" fontWeight={500} textAlign="center" sx={{ py: 0.25, ...ellipsis }}>
+        {header}
+      </Typography>
+    )}
+    <Box sx={{ bgcolor: 'background.default', borderRadius: (t) => t.radius.md, overflow: 'hidden' }}>
+      <Stack
+        direction="row"
+        spacing={1.5}
+        alignItems="center"
+        onClick={onClick}
+        sx={{ bgcolor: tint, py: 1, px: 1.5, overflowX: 'auto' }}
+      >
+        {icon}
+        <Stack sx={{ flexGrow: 1, minWidth: 0 }}>{children}</Stack>
+        {aside && (
+          <Stack alignItems="center" textAlign="center" sx={{ width: '6.5rem', flexShrink: 0 }}>
+            {aside}
+          </Stack>
+        )}
+      </Stack>
+    </Box>
+    {footer}
+  </Stack>
+)
+
+export const CardAction: FC<{
+  onClick(): void
+  disabled?: boolean
+  color: string
+  icon: ReactNode
+  label: string
+}> = ({ onClick, disabled, color, icon, label }) => (
+  <ButtonBase
+    onClick={onClick}
+    disabled={disabled}
+    sx={{
+      gap: 0.5,
+      py: 0.5,
+      px: 1,
+      borderRadius: (t) => `0 0 ${t.radius.md} ${t.radius.md}`,
+      color,
+      '&:hover': { bgcolor: 'action.hover' },
+    }}
+  >
+    {icon}
+    <Typography variant="body2" fontWeight={500}>
+      {label}
+    </Typography>
+  </ButtonBase>
+)
+
+export const CardTitleRow: FC<{ amount: ReactNode; date: ReactNode }> = ({ amount, date }) => (
+  <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={1}>
+    <Typography fontWeight={600} whiteSpace="nowrap">
+      {amount}
+    </Typography>
+    <Typography variant="body2" color="textDisabled" whiteSpace="nowrap">
+      {date}
+    </Typography>
+  </Stack>
+)
+
 const TransactionCard: FC<ItemProps<TransactionID, AugmentedTransaction, object>> = memo((props) => {
   const { item, onClick } = props
   const group = item.augmentedTransactionGroupData?.transactionGroup ?? item.settlementGroup
 
   const { privacyMode } = useContext(DrawerContext)
-  const theme = useTheme()
 
   const cardType = item.getType()
-
-  const getBackgroundColor = () => {
-    if (cardType === 'expense') return 'rgba(240, 128, 128, 0.05)'
-    if (cardType === 'income') return 'rgba(128, 240, 128, 0.05)'
-    if (cardType === 'financialIncome') return 'rgba(128, 240, 240, 0.05)'
-    return 'rgba(128, 128, 128, 0.05)'
-  }
-
+  const tint = cardType === 'expense' || cardType === 'income' || cardType === 'financialIncome' ? cardType : 'transfer'
   return (
-    <Column
-      style={{
-        backgroundColor: 'rgba(128,128,128,.16)',
-        border: '1px solid rgba(128,128,128,0.16)',
-        borderRadius: '0.5rem',
-      }}
+    <CardShell
+      header={group && !group.hidden ? group.name : undefined}
+      tint={`transactionTint.${tint}`}
+      onClick={onClick}
+      icon={
+        <IconCapsule
+          iconName={item.category?.iconName ?? defaultCategory.iconName}
+          size="2.4rem"
+          backgroundColor={item.category?.iconBackground ?? defaultCategory.iconBackground}
+          color={item.category?.iconColor ?? defaultCategory.iconColor}
+        />
+      }
     >
-      {group && !group.hidden && (
-        <Row style={{ justifyContent: 'center', padding: '0.16rem', gap: '.5rem' }}>
-          <Typography fontSize="0.9rem" fontWeight="500" textOverflow={'ellipsis'} overflow={'hidden'}>
-            {group.name}
-          </Typography>
-        </Row>
-      )}
-      <div style={{ backgroundColor: theme.palette.background.default, borderRadius: '0.5rem', overflow: 'hidden' }}>
-        <div
-          onClick={onClick}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            backgroundColor: getBackgroundColor(),
-            fontSize: '0.875rem',
-            padding: '0.5rem 0.75rem',
+      <CardTitleRow
+        amount={
+          <>
+            {formatFull(item.currency, item.amount, privacyMode)}
+            {item.currency.id !== item.receiverCurrency.id &&
+              ` ➜ ${formatFull(item.receiverCurrency, item.receiverAmount, privacyMode)}`}
+          </>
+        }
+        date={item.date.toDateString()}
+      />
 
-            gap: '0.75rem',
-            overflowX: 'auto',
-          }}
+      <Stack direction="row" justifyContent="space-between" spacing={1.5}>
+        <Stack sx={{ whiteSpace: 'nowrap', ...ellipsis }}>
+          {[
+            ['From:', item.sender?.name],
+            ['To:', item.receiver?.name],
+          ].map(([label, name]) => (
+            <Stack key={label} direction="row" spacing={1}>
+              <Typography variant="body2" color="textDisabled">
+                {label}
+              </Typography>
+              <Typography variant="body2" fontWeight={500} sx={ellipsis}>
+                {name ?? '-'}
+              </Typography>
+            </Stack>
+          ))}
+        </Stack>
+
+        <Typography
+          variant="body2"
+          align="right"
+          sx={{ alignSelf: 'stretch', flexShrink: 4, minWidth: 0, ...ellipsis }}
         >
-          <IconCapsule
-            iconName={item.category?.iconName ?? defaultCategory.iconName}
-            size="2.4rem"
-            backgroundColor={item.category?.iconBackground ?? defaultCategory.iconBackground}
-            color={item.category?.iconColor ?? defaultCategory.iconColor}
-          />
-          <Column style={{ flexGrow: 1 }}>
-            <Row style={{ justifyContent: 'space-between' }}>
-              <Typography letterSpacing="0.01rem" fontSize="0.95rem" fontWeight="600">
-                {formatFull(item.currency, item.amount, privacyMode)}
-
-                {item.currency.id !== item.receiverCurrency.id &&
-                  ` ➜ ${formatFull(item.receiverCurrency, item.receiverAmount, privacyMode)}`}
-              </Typography>
-
-              <Typography color="textDisabled" fontSize="0.9rem">
-                {item.date.toDateString()}
-              </Typography>
-            </Row>
-
-            <Row style={{ justifyContent: 'space-between', gap: '0.75rem' }}>
-              <Column style={{ overflow: 'hidden', whiteSpace: 'nowrap' }}>
-                <Row style={{ gap: '0.5rem' }}>
-                  <Typography fontSize="0.9rem" color="textDisabled">
-                    From:
-                  </Typography>
-
-                  <Typography fontSize="0.9rem" fontWeight="500" textOverflow={'ellipsis'} overflow={'hidden'}>
-                    {item.sender?.name ?? '-'}
-                  </Typography>
-                </Row>
-
-                <Row style={{ gap: '0.5rem' }}>
-                  <Typography fontSize="0.9rem" color="textDisabled">
-                    To:
-                  </Typography>
-
-                  <Typography fontSize="0.9rem" fontWeight="500" textOverflow={'ellipsis'} overflow={'hidden'}>
-                    {item.receiver?.name ?? '-'}
-                  </Typography>
-                </Row>
-              </Column>
-
-              <Typography
-                fontSize="0.9rem"
-                alignSelf="stretch"
-                align="right"
-                textOverflow="ellipsis"
-                flexShrink={4}
-                minWidth={0}
-                overflow={'hidden'}
-              >
-                {item.note}
-              </Typography>
-            </Row>
-          </Column>
-        </div>
-      </div>
-    </Column>
+          {item.note}
+        </Typography>
+      </Stack>
+    </CardShell>
   )
 })
 

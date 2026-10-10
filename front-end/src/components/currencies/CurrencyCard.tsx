@@ -24,23 +24,17 @@ const CurrencyCard = (props: ItemProps<CurrencyID, Currency, AdditionalCurrencyC
       $hoverEffect
       onClick={onClick}
       $withGradientBackground={true}
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        padding: '1rem',
-        gap: '1rem',
-        opacity: unused ? 0.55 : 1,
-      }}
+      sx={{ display: 'flex', alignItems: 'center', p: 2, gap: 2, opacity: unused ? 0.55 : 1 }}
     >
-      <Box sx={{ padding: '0.75rem' }}>
-        <IconLib.BsCurrencyExchange style={{ color: 'white', fontSize: '1.5rem' }} />
+      <Box sx={{ p: 1.5, color: 'common.white', display: 'flex' }}>
+        <IconLib.BsCurrencyExchange size="1.5rem" />
       </Box>
 
-      <Typography variant="h6" fontSize="1.1rem" sx={{ flexGrow: 1 }}>
+      <Typography variant="subtitle1" fontWeight={500} sx={{ flexGrow: 1 }}>
         {item.name}
       </Typography>
 
-      <Column style={{ alignItems: 'flex-end' }}>
+      <Column sx={{ alignItems: 'flex-end' }}>
         {unused ? (
           <Typography variant="caption" color="textDisabled">
             Unused

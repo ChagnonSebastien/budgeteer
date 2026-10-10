@@ -1,3 +1,4 @@
+import { Box } from '@mui/material'
 import { formatDate } from 'date-fns'
 import React, { FC, useContext, useMemo } from 'react'
 
@@ -41,7 +42,7 @@ export const Tooltip: FC<TooltipProps> = ({ tooltipProps, labels }) => {
               {!privacyMode && (
                 <>
                   <div>:</div>
-                  <div style={{ minWidth: '1rem', flexGrow: 1 }} />
+                  <Box sx={{ minWidth: (t) => t.spacing(2), flexGrow: 1 }} />
                   <GraphTooltipValue>{s.formattedValue}</GraphTooltipValue>
                 </>
               )}

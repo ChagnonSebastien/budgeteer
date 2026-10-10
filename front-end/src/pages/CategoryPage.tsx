@@ -1,13 +1,11 @@
-import { Typography } from '@mui/material'
 import { FC, useContext, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import { CategoryCard } from '../components/categories/CategoryCard'
 import { CategoryList } from '../components/categories/CategoryList'
 import { IconToolsContext } from '../components/icons/IconTools'
-import BasicModal from '../components/shared/BasicModal'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
-import { DetailCard, FancyModal } from '../components/shared/FancyModal'
+import { DetailCard, DetailHeading, FancyDialog, FancyModal } from '../components/shared/FancyModal'
 import ScrollingOverButton, { CustomScrolling } from '../components/shared/ScrollingOverButton'
 import Category from '../domain/model/category'
 import { CategoryServiceContext } from '../service/ServiceContext'
@@ -25,16 +23,11 @@ const CategoryPage: FC = () => {
       <ScrollingOverButton
         button={{ text: 'New', onClick: () => navigate('/categories/new') }}
         scrollingContainerRef={scrollingContainerRef}
-        contentStyle={{ maxWidth: '40rem' }}
+        contentWidth="medium"
       >
         <CustomScrolling
           ref={scrollingContainerRef}
-          style={{
-            overflowY: 'auto',
-            flexGrow: 1,
-            paddingBottom: '4rem',
-            position: 'relative',
-          }}
+          sx={{ overflowY: 'auto', flexGrow: 1, pb: 8, position: 'relative' }}
         >
           <CategoryList
             items={categories}
@@ -47,20 +40,7 @@ const CategoryPage: FC = () => {
           />
         </CustomScrolling>
       </ScrollingOverButton>
-      <BasicModal
-        open={clickedCategory !== null}
-        onClose={() => setClickedCategory(null)}
-        slotProps={{
-          paper: {
-            style: {
-              backgroundColor: 'transparent',
-              borderRadius: '24px',
-              border: '0',
-              overflow: 'hidden',
-            },
-          },
-        }}
-      >
+      <FancyDialog open={clickedCategory !== null} onClose={() => setClickedCategory(null)}>
         {clickedCategory !== null && (
           <FancyModal
             title={{
@@ -75,7 +55,7 @@ const CategoryPage: FC = () => {
               {
                 Icon: IconLib.MdEdit,
                 label: 'Edit Category',
-                color: '#64B5F6',
+                intent: 'edit',
                 description: 'Modify category details',
                 action: () => navigate(`/categories/edit/${clickedCategory.id}`),
                 disabled: false,
@@ -83,7 +63,7 @@ const CategoryPage: FC = () => {
               {
                 Icon: IconLib.MdDelete,
                 label: 'Delete Category',
-                color: '#EF5350',
+                intent: 'destructive',
                 description: 'Remove this category',
                 action: () => {},
                 disabled: true,
@@ -91,24 +71,14 @@ const CategoryPage: FC = () => {
               {
                 Icon: IconLib.MdList,
                 label: 'View Transactions',
-                color: '#81C784',
+                intent: 'navigate',
                 description: 'See all category transactions',
                 action: () => navigate(`/transactions?categories=[${clickedCategory.id}]`),
                 disabled: false,
               },
             ]}
           >
-            <Typography
-              variant="subtitle2"
-              style={{
-                opacity: 0.6,
-                marginBottom: '16px',
-                letterSpacing: '0.05em',
-                fontSize: '0.75rem',
-              }}
-            >
-              DETAILS
-            </Typography>
+            <DetailHeading>DETAILS</DetailHeading>
 
             <DetailCard
               delay={0}
@@ -118,7 +88,7 @@ const CategoryPage: FC = () => {
             />
           </FancyModal>
         )}
-      </BasicModal>
+      </FancyDialog>
     </ContentWithHeader>
   )
 }

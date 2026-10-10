@@ -1,7 +1,7 @@
-import { IconButton } from '@mui/material'
+import { Box, IconButton } from '@mui/material'
+import { decomposeColor, recomposeColor, styled, useTheme } from '@mui/material/styles'
 import { differenceInYears, startOfDay } from 'date-fns'
 import { FC, useContext, useEffect, useMemo, useState } from 'react'
-import { default as styled } from 'styled-components'
 
 import { UpdatePreferencesContext, UserContext } from '../App'
 import CostsAnalysisSetup from '../components/CostsAnalysisSetup'
@@ -16,77 +16,77 @@ import { formatAmount } from '../domain/model/currency'
 import MixedAugmentation from '../service/MixedAugmentation'
 import UserStore from '../UserStore'
 
-const StyledTable = styled.table`
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-  margin-top: 0.5rem;
+const StyledTable = styled('table')(({ theme }) => ({
+  width: '100%',
+  borderCollapse: 'separate',
+  borderSpacing: 0,
+  marginTop: theme.spacing(1),
+  '& > * > tr > *': {
+    padding: theme.spacing(1, 2),
+    textAlign: 'left',
+    border: 'none',
+    position: 'relative',
+  },
+}))
 
-  & > * > tr > * {
-    padding: 0.5rem 1rem;
-    text-align: left;
-    border: none;
-    position: relative;
-  }
-`
+const HeaderRow = styled('tr')(({ theme }) => ({
+  fontWeight: 600,
+  backgroundColor: theme.palette.surface.muted,
+  th: {
+    padding: theme.spacing(1.5, 2),
+    color: theme.palette.intent.edit,
+  },
+}))
 
-const HeaderRow = styled.tr`
-  font-weight: 600;
-  background-color: rgba(128, 128, 128, 0.06);
+const SectionHeader = styled('tr')(({ theme }) => ({
+  fontWeight: 600,
+  color: theme.palette.intent.edit,
+  backgroundColor: theme.palette.surface.muted,
+  th: {
+    paddingTop: theme.spacing(2),
+  },
+  '& + tr': {
+    borderBottom: `1px solid ${theme.palette.border.subtle}`,
+  },
+}))
 
-  th {
-    padding: 0.75rem 1rem;
-    color: #90caf9;
-  }
-`
+const mixColors = (from: string, to: string, ratio: number) => {
+  const [a, b] = [decomposeColor(from).values, decomposeColor(to).values]
+  return recomposeColor({
+    type: 'rgb',
+    values: [0, 1, 2].map((i) => Math.floor(a[i] + (b[i] - a[i]) * ratio)) as [number, number, number],
+  })
+}
 
-const SectionHeader = styled.tr`
-  font-weight: 600;
-  color: #90caf9;
-  background-color: rgba(128, 128, 128, 0.06);
+const BudgetBar: FC<{ width: number; badness: number }> = ({ width, badness }) => {
+  const theme = useTheme()
+  const ratio = Math.min(1, Math.max(0, badness))
+  return (
+    <Box sx={{ height: 3, bgcolor: 'border.subtle', borderRadius: (t) => t.radius.sm, mt: 0.5, overflow: 'hidden' }}>
+      <Box
+        sx={{
+          height: '100%',
+          width: `${width}%`,
+          bgcolor: mixColors(theme.palette.money.gain, theme.palette.money.loss, ratio),
+          transition: 'width 300ms ease-in',
+        }}
+      />
+    </Box>
+  )
+}
 
-  th {
-    padding-top: 1rem;
-  }
+const AmountCell = styled('td')({
+  fontFamily: "'Roboto Mono', monospace",
+  textAlign: 'right',
+})
 
-  & + tr {
-    border-bottom: 1px solid rgba(128, 128, 128, 0.2);
-  }
-`
+const HeaderCell = styled('th')({
+  textAlign: 'right',
+})
 
-const PercentageBar: React.FC<{ width: number; color: string }> = ({ width, color }) => (
-  <div
-    style={{
-      height: '3px',
-      backgroundColor: 'rgba(128, 128, 128, 0.2)',
-      borderRadius: '2px',
-      marginTop: '0.25rem',
-      overflow: 'hidden',
-    }}
-  >
-    <div
-      style={{
-        height: '100%',
-        width: `${width}%`,
-        backgroundColor: color,
-        transition: 'width 300ms ease-in',
-      }}
-    />
-  </div>
-)
-
-const AmountCell = styled.td`
-  font-family: 'Roboto Mono', monospace;
-  text-align: right;
-`
-
-const HeaderCell = styled.th`
-  text-align: right;
-`
-
-const SpacerRow = styled.tr`
-  height: 1rem;
-`
+const SpacerRow = styled('tr')(({ theme }) => ({
+  height: theme.spacing(2),
+}))
 
 const userStore = new UserStore(localStorage)
 
@@ -335,7 +335,7 @@ const CostsAnalysisPage: FC = () => {
         }}
       />
 
-      <div style={{ maxWidth: '50rem', width: '100%', height: '100%' }}>
+      <Box sx={{ maxWidth: (t) => t.contentWidth.default, width: '100%', height: '100%' }}>
         {viewType === 'chart' ? (
           <EarningsBreakdownChart
             grossIncome={grossIncome * Math.pow(10, defaultCurrency.decimalPoints)}
@@ -389,16 +389,7 @@ const CostsAnalysisPage: FC = () => {
                 ) : (
                   <th colSpan={2}>
                     {!privacyMode && `${privacyMode ? 'XX' : percentages[0]}%`}
-                    <PercentageBar
-                      width={percentages[0]}
-                      color={
-                        percentages[0] < 50
-                          ? '#4caf50' // Green if < 50%
-                          : percentages[0] > 60
-                            ? '#f44336' // Red if > 60%
-                            : `rgb(${Math.floor(76 + ((244 - 76) * (percentages[0] - 50)) / 10)}, ${Math.floor(175 + ((67 - 175) * (percentages[0] - 50)) / 10)}, ${Math.floor(80 + ((54 - 80) * (percentages[0] - 50)) / 10)})` // Gradient from green to red
-                      }
-                    />
+                    <BudgetBar width={percentages[0]} badness={(percentages[0] - 50) / 10} />
                   </th>
                 )}
               </SectionHeader>
@@ -425,16 +416,7 @@ const CostsAnalysisPage: FC = () => {
                 ) : (
                   <th colSpan={2}>
                     {!privacyMode && `${privacyMode ? 'XX' : percentages[1]}%`}
-                    <PercentageBar
-                      width={percentages[1]}
-                      color={
-                        percentages[1] < 30
-                          ? '#4caf50' // Green if < 30%
-                          : percentages[1] > 40
-                            ? '#f44336' // Red if > 40%
-                            : `rgb(${Math.floor(76 + ((244 - 76) * (percentages[1] - 30)) / 10)}, ${Math.floor(175 + ((67 - 175) * (percentages[1] - 30)) / 10)}, ${Math.floor(80 + ((54 - 80) * (percentages[1] - 30)) / 10)})` // Gradient from green to red
-                      }
-                    />
+                    <BudgetBar width={percentages[1]} badness={(percentages[1] - 30) / 10} />
                   </th>
                 )}
               </SectionHeader>
@@ -457,16 +439,7 @@ const CostsAnalysisPage: FC = () => {
                     <th>Investments & Savings</th>
                     <th colSpan={2}>
                       {privacyMode ? 'XX' : percentages[2]}%
-                      <PercentageBar
-                        width={percentages[2]}
-                        color={
-                          percentages[2] > 20
-                            ? '#4caf50' // Green if > 20%
-                            : percentages[2] < 10
-                              ? '#f44336' // Red if < 10%
-                              : `rgb(${Math.floor(76 + ((244 - 76) * (20 - percentages[2])) / 10)}, ${Math.floor(175 + ((67 - 175) * (20 - percentages[2])) / 10)}, ${Math.floor(80 + ((54 - 80) * (20 - percentages[2])) / 10)})` // Gradient from green to red
-                        }
-                      />
+                      <BudgetBar width={percentages[2]} badness={(20 - percentages[2]) / 10} />
                     </th>
                   </SectionHeader>
                   <tr>
@@ -483,7 +456,7 @@ const CostsAnalysisPage: FC = () => {
             </tbody>
           </StyledTable>
         )}
-      </div>
+      </Box>
     </ContentWithHeader>
   )
 }

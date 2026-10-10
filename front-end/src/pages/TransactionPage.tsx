@@ -4,12 +4,9 @@ import {
   IconButton,
   Menu,
   MenuItem,
-  SpeedDial,
-  SpeedDialAction,
-  SpeedDialIcon,
+  Stack,
   ToggleButton,
   ToggleButtonGroup,
-  Tooltip,
   Typography,
 } from '@mui/material'
 import { format, isAfter, isBefore, isSameDay } from 'date-fns'
@@ -22,15 +19,13 @@ import TransactionsPieChart from '../components/graphing/PieChart'
 import { IconToolsContext } from '../components/icons/IconTools'
 import useTransactionFilter from '../components/inputs/useTransactionFilter'
 import { DrawerContext } from '../components/Menu'
-import BasicModal from '../components/shared/BasicModal'
+import ActionSpeedDial from '../components/shared/ActionSpeedDial'
 import ConfirmDeleteModal from '../components/shared/ConfirmDeleteModal'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
-import { DetailCard, FancyModal } from '../components/shared/FancyModal'
-import { Column } from '../components/shared/Layout'
+import { DetailCard, DetailHeading, FancyDialog, FancyModal } from '../components/shared/FancyModal'
 import SplitView from '../components/shared/SplitView'
 import { useToast } from '../components/shared/ToastProvider'
 import { useElementDimensions } from '../components/shared/useDimensions'
-import usePinnableSpeedDial from '../components/shared/usePinnableSpeedDial'
 import useQueryParams from '../components/shared/useQueryParams'
 import TransactionCard from '../components/transactions/TransactionCard'
 import { TransactionList } from '../components/transactions/TransactionList'
@@ -100,19 +95,12 @@ const TransactionPage: FC = () => {
 
   const splitHorizontal = useMemo(() => contentWidth > 1200, [contentWidth])
   const hasTransactions = augmentedTransactions.length > 0
-  const dial = usePinnableSpeedDial()
 
   const firstDivision = (
-    <FirstDivision style={{ justifyContent: 'center' }}>
-      <GraphContainer
-        style={{
-          position: 'relative',
-          height: '60vh',
-          minHeight: 'max(50vh, 300px)',
-          display: 'flex',
-          justifyContent: 'stretch',
-          alignItems: 'stretch',
-        }}
+    <Box component={FirstDivision} sx={{ justifyContent: 'center' }}>
+      <Box
+        component={GraphContainer}
+        sx={{ position: 'relative', height: '60vh', minHeight: 'max(50vh, 300px)', display: 'flex' }}
       >
         {graphType === 'line' ? (
           <AggregatedDiffChart
@@ -137,14 +125,14 @@ const TransactionPage: FC = () => {
             }}
           />
         )}
-      </GraphContainer>
+      </Box>
 
-      <Box sx={{ padding: '1rem' }}>{filterOverview}</Box>
-    </FirstDivision>
+      <Box sx={{ p: 2 }}>{filterOverview}</Box>
+    </Box>
   )
 
   const secondDivision = (
-    <Box style={{ background: splitHorizontal ? undefined : 'rgba(128,128,128,0.04)', padding: '0 1rem', flexGrow: 1 }}>
+    <Box sx={{ bgcolor: splitHorizontal ? undefined : 'surface.subtle', px: 2, flexGrow: 1 }}>
       <TransactionList
         items={filteredTransaction}
         onClick={(transactionId) => {
@@ -155,7 +143,6 @@ const TransactionPage: FC = () => {
         }}
         ItemComponent={TransactionCard}
         additionalItemsProps={{}}
-        containerStyle={{ width: splitHorizontal ? '35rem' : undefined, maxWidth: 'min(35rem, 100%)' }}
       />
     </Box>
   )
@@ -237,67 +224,30 @@ const TransactionPage: FC = () => {
           secondZoneStyling={{ grow: false, scroll: true }}
         />
       ) : (
-        <Column style={{ width: '100%', minHeight: '100%', alignItems: 'stretch' }}>
+        <Stack sx={{ width: '100%', minHeight: '100%' }}>
           {firstDivision}
           {secondDivision}
-        </Column>
+        </Stack>
       )}
 
-      <Tooltip open={!hasTransactions && !dial.open} title="Record your first transaction" placement="left" arrow>
-        <Box sx={{ position: 'absolute', bottom: 16, right: 16, width: 56, height: 56, pointerEvents: 'none' }} />
-      </Tooltip>
-
-      <SpeedDial
+      <ActionSpeedDial
         ariaLabel="Create new transaction"
-        sx={{ position: 'absolute', bottom: 16, right: 16 }}
-        {...dial}
-        icon={
-          <SpeedDialIcon
-            openIcon={<IconLib.FaPlus />}
-            sx={{
-              '& .MuiSpeedDialIcon-icon, & .MuiSpeedDialIcon-openIcon': {
-                transition: 'all 0.2s ease-in-out',
-                height: '24px',
-                width: '24px',
-              },
-              '& .MuiSpeedDialIcon-openIcon': {
-                transform: 'rotate(45deg)',
-              },
-            }}
-          />
-        }
-      >
-        <SpeedDialAction
-          sx={{ backgroundColor: 'red' }}
-          onClick={() => navigate('/transactions/new?type=expense', { state: { from: currentUrl, prefillAccountId } })}
-          icon={<IconLib.MdOutput />}
-        />
-        <SpeedDialAction
-          sx={{ backgroundColor: 'green' }}
-          onClick={() => navigate('/transactions/new?type=income', { state: { from: currentUrl, prefillAccountId } })}
-          icon={<IconLib.MdInput />}
-        />
-        <SpeedDialAction
-          sx={{ backgroundColor: 'darkgrey' }}
-          onClick={() => navigate('/transactions/new?type=transfer', { state: { from: currentUrl, prefillAccountId } })}
-          icon={<IconLib.GrTransaction />}
-        />
-      </SpeedDial>
+        hint={hasTransactions ? undefined : 'Record your first transaction'}
+        actions={(
+          [
+            ['Expense', 'expense', IconLib.MdOutput, 'money.loss'],
+            ['Income', 'income', IconLib.MdInput, 'money.gain'],
+            ['Transfer', 'transfer', IconLib.GrTransaction, 'grey.500'],
+          ] as const
+        ).map(([label, type, Icon, color]) => ({
+          label,
+          Icon,
+          color,
+          onClick: () => navigate(`/transactions/new?type=${type}`, { state: { from: currentUrl, prefillAccountId } }),
+        }))}
+      />
 
-      <BasicModal
-        open={clickedTransaction !== null}
-        onClose={() => setClickedTransaction(null)}
-        slotProps={{
-          paper: {
-            style: {
-              backgroundColor: 'transparent',
-              borderRadius: '24px',
-              border: '0',
-              overflow: 'hidden',
-            },
-          },
-        }}
-      >
+      <FancyDialog open={clickedTransaction !== null} onClose={() => setClickedTransaction(null)}>
         {clickedTransaction !== null && (
           <FancyModal
             title={{
@@ -317,7 +267,7 @@ const TransactionPage: FC = () => {
               {
                 Icon: IconLib.MdEdit,
                 label: 'Edit Transaction',
-                color: '#64B5F6',
+                intent: 'edit',
                 description: 'Modify transaction details',
                 action: () => {
                   navigate(`/transactions/edit/${clickedTransaction.id}`)
@@ -328,7 +278,7 @@ const TransactionPage: FC = () => {
               {
                 Icon: IconLib.MdDelete,
                 label: 'Delete Transaction',
-                color: '#EF5350',
+                intent: 'destructive',
                 description: 'Remove this transaction',
                 action: () => {
                   setTransactionToDelete(clickedTransaction)
@@ -337,18 +287,8 @@ const TransactionPage: FC = () => {
               },
             ]}
           >
-            <Typography
-              variant="subtitle2"
-              style={{
-                opacity: 0.6,
-                marginBottom: '16px',
-                letterSpacing: '0.05em',
-                fontSize: '0.75rem',
-              }}
-            >
-              DETAILS
-            </Typography>
-            <Column style={{ gap: '0.2rem' }}>
+            <DetailHeading>DETAILS</DetailHeading>
+            <Stack spacing={0.5}>
               {/* Amount */}
               <DetailCard
                 delay={0}
@@ -406,10 +346,10 @@ const TransactionPage: FC = () => {
                   value={clickedTransaction.augmentedFinancialIncomeData.relatedCurrency.symbol}
                 />
               )}
-            </Column>
+            </Stack>
           </FancyModal>
         )}
-      </BasicModal>
+      </FancyDialog>
 
       <ConfirmDeleteModal
         open={transactionToDelete !== null}

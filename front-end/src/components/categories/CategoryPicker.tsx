@@ -1,4 +1,4 @@
-import { Button, DialogActions, DialogContent, DialogTitle, TextField } from '@mui/material'
+import { Button, DialogActions, DialogContent, DialogTitle, Stack, TextField } from '@mui/material'
 import { FC, useContext, useMemo, useState } from 'react'
 
 import { CategoryCard } from './CategoryCard'
@@ -8,7 +8,6 @@ import { CategoryServiceContext } from '../../service/ServiceContext'
 import { MultiSelectConfiguration, SingleSelectConfiguration } from '../accounts/ItemList'
 import IconCapsule from '../icons/IconCapsule'
 import BasicModal from '../shared/BasicModal'
-import { Row } from '../shared/Layout'
 
 interface Props {
   selectedConfig: MultiSelectConfiguration<CategoryID, Category> | SingleSelectConfiguration<CategoryID, Category>
@@ -45,7 +44,7 @@ const CategoryPicker: FC<Props> = (props) => {
 
   return (
     <>
-      <Row style={{ alignItems: 'center', gap: '1rem' }}>
+      <Stack direction="row" alignItems="center" spacing={2}>
         {icon && (
           <IconCapsule
             iconName={icon.iconName}
@@ -68,14 +67,15 @@ const CategoryPicker: FC<Props> = (props) => {
           }}
           required={selectedConfig.mode === 'single'}
         />
-      </Row>
+      </Stack>
       <BasicModal open={showModal} onClose={() => setShowModal(false)} disableRestoreFocus>
         <DialogTitle>Select Category</DialogTitle>
         <DialogContent
           sx={{
             height: '70vh',
             overflowY: 'scroll',
-            padding: '0 20px',
+            px: 2.5,
+            py: 0,
           }}
         >
           <CategoryList

@@ -1,4 +1,4 @@
-import { Alert, Button, Dialog, DialogActions, DialogContent, DialogTitle, Typography } from '@mui/material'
+import { Alert, Button, Dialog, DialogActions, DialogContent, DialogTitle, Stack, Typography } from '@mui/material'
 import { FC, useContext, useMemo, useState } from 'react'
 
 import SplitValuesEditor, { splitValuesError, SplitValueKind } from './SplitValuesEditor'
@@ -21,7 +21,6 @@ import {
 } from '../../service/ServiceContext'
 import SelectOne from '../inputs/SelectOne'
 import { DrawerContext } from '../Menu'
-import { Column, Row } from '../shared/Layout'
 
 type Choice = 'default' | SplitType
 
@@ -109,7 +108,7 @@ const TransactionSplitDialog: FC<{ transaction: AugmentedTransaction; onClose():
     <Dialog open onClose={saving ? undefined : onClose} fullWidth maxWidth="sm">
       <DialogTitle>Split of this transaction</DialogTitle>
       <DialogContent>
-        <Column style={{ gap: '1.5rem', paddingTop: '0.5rem' }}>
+        <Stack sx={{ gap: 3, pt: 1 }}>
           <SelectOne
             label="Split"
             value={String(choice)}
@@ -135,20 +134,18 @@ const TransactionSplitDialog: FC<{ transaction: AugmentedTransaction; onClose():
             />
           )}
           {!valuesError && (
-            <Column style={{ gap: '0.25rem' }}>
+            <Stack sx={{ gap: 0.5 }}>
               <Typography variant="subtitle2">Each member's part</Typography>
               {shares.map(({ name, share }) => (
-                <Row key={name} style={{ justifyContent: 'space-between' }}>
-                  <Typography fontSize="0.95rem">{name}</Typography>
-                  <Typography fontSize="0.95rem" fontFamily="monospace">
-                    {formatFull(transaction.currency, share, privacyMode)}
-                  </Typography>
-                </Row>
+                <Stack direction="row" key={name} sx={{ justifyContent: 'space-between' }}>
+                  <Typography variant="body1">{name}</Typography>
+                  <Typography fontFamily="monospace">{formatFull(transaction.currency, share, privacyMode)}</Typography>
+                </Stack>
               ))}
-            </Column>
+            </Stack>
           )}
           {error && <Alert severity="error">{error}</Alert>}
-        </Column>
+        </Stack>
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose} disabled={saving}>

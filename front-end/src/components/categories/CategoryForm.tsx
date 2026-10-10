@@ -1,7 +1,7 @@
-import { Button, Checkbox, FormControlLabel, TextField } from '@mui/material'
+import { Box, Button, Checkbox, FormControlLabel, Stack, TextField, useTheme } from '@mui/material'
+import { styled } from '@mui/material/styles'
 import { FC, FormEvent, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { HexColorPicker } from 'react-colorful'
-import { default as styled } from 'styled-components'
 
 import CategoryPicker from './CategoryPicker'
 import Category from '../../domain/model/category'
@@ -13,16 +13,15 @@ import { IconToolsContext } from '../icons/IconTools'
 import BasicModal from '../shared/BasicModal'
 import ContentWithHeader from '../shared/ContentWithHeader'
 import FormWrapper from '../shared/FormWrapper'
-import { Column, Row } from '../shared/Layout'
 import { CustomScrolling } from '../shared/ScrollingOverButton'
 import { useToast } from '../shared/ToastProvider'
 
-const SizedHexColorPicker = styled(HexColorPicker)`
-  &.react-colorful {
-    width: min(30rem, calc(100vw / 2));
-    height: min(30rem, calc(100vh / 2));
-  }
-`
+const SizedHexColorPicker = styled(HexColorPicker)({
+  '&.react-colorful': {
+    width: 'min(30rem, calc(100vw / 2))',
+    height: 'min(30rem, calc(100vh / 2))',
+  },
+})
 
 type IconPropertyEditorProps = {
   buttonText: string
@@ -31,12 +30,12 @@ type IconPropertyEditorProps = {
 }
 
 const IconPropertyEditor: FC<IconPropertyEditorProps> = (props) => (
-  <Row style={{ gap: '1rem' }}>
+  <Stack direction="row" spacing={2}>
     <Button onClick={props.onClick} variant="outlined" color="secondary" fullWidth>
       {props.buttonText}
     </Button>
-    <IconCapsule size="2rem" border="1px gray solid" {...props.indicatorIconProperties} />
-  </Row>
+    <IconCapsule size="2rem" bordered {...props.indicatorIconProperties} />
+  </Stack>
 )
 
 interface Props {
@@ -47,6 +46,7 @@ interface Props {
 
 const CategoryForm: FC<Props> = (props) => {
   const { initialCategory, onSubmit, submitText } = props
+  const theme = useTheme()
 
   const { state: categories } = useContext(CategoryServiceContext)
   const { rootCategory } = useContext(MixedAugmentation)
@@ -155,14 +155,14 @@ const CategoryForm: FC<Props> = (props) => {
         label="Essential expense"
       />
 
-      <Row style={{ alignItems: 'center', gap: '1rem' }}>
-        <Column style={{ gap: '0.25rem', flexGrow: 1 }}>
+      <Stack direction="row" alignItems="center" spacing={2}>
+        <Stack spacing={0.5} sx={{ flexGrow: 1 }}>
           <IconPropertyEditor
             buttonText="Select Icon"
             onClick={() => setShowIconModal(true)}
             indicatorIconProperties={{
               iconName: selectedIcon,
-              color: 'gray',
+              color: theme.palette.text.disabled,
               backgroundColor: 'transparent',
             }}
           />
@@ -186,7 +186,7 @@ const CategoryForm: FC<Props> = (props) => {
               backgroundColor: innerColor,
             }}
           />
-        </Column>
+        </Stack>
         <BasicModal open={showIconModal} onClose={() => setShowIconModal(false)}>
           <ContentWithHeader
             title="Select Icon"
@@ -200,9 +200,9 @@ const CategoryForm: FC<Props> = (props) => {
               autoFocus
               fullWidth
             />
-            <CustomScrolling style={{ maxHeight: 'calc(100vh - 15rem)' }}>
+            <Box component={CustomScrolling} sx={{ maxHeight: 'calc(100vh - 15rem)' }}>
               <IconList filter={filter} onSelect={onIconSelect} />
-            </CustomScrolling>
+            </Box>
           </ContentWithHeader>
         </BasicModal>
         <BasicModal onClose={() => setShowOuterColorModal(false)} open={showOuterColorModal}>
@@ -221,10 +221,10 @@ const CategoryForm: FC<Props> = (props) => {
             <SizedHexColorPicker color={innerColor} onChange={setInnerColor} />
           </ContentWithHeader>
         </BasicModal>
-        <div style={{ padding: '1rem', border: '2px solid grey', borderRadius: '0.5rem' }}>
+        <Box sx={{ p: 2, border: 2, borderColor: 'border.strong', borderRadius: (t) => t.radius.md }}>
           <IconCapsule iconName={selectedIcon} size="5rem" color={innerColor} backgroundColor={outerColor} />
-        </div>
-      </Row>
+        </Box>
+      </Stack>
     </FormWrapper>
   )
 }

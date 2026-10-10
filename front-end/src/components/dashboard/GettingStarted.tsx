@@ -1,4 +1,4 @@
-import { Box, Button, Typography } from '@mui/material'
+import { Box, Button, Stack, Typography } from '@mui/material'
 import { FC, useContext } from 'react'
 import { useNavigate } from 'react-router-dom'
 
@@ -6,7 +6,7 @@ import { UpdatePreferencesContext, UserContext } from '../../App'
 import MixedAugmentation from '../../service/MixedAugmentation'
 import { TransactionGroupServiceContext } from '../../service/ServiceContext'
 import { IconToolsContext } from '../icons/IconTools'
-import Layout, { Column, Row } from '../shared/Layout'
+import { Section } from '../shared/Layout'
 import { useToast } from '../shared/ToastProvider'
 
 interface Step {
@@ -50,42 +50,44 @@ const GettingStarted: FC = () => {
   if (preferences?.gettingStartedDismissed) return null
 
   return (
-    <Layout title="Getting started">
-      <Column style={{ gap: '1.25rem', width: '100%' }}>
+    <Section title="Getting started">
+      <Stack spacing={3}>
         {steps.map((step, index) => (
-          <Row key={step.title} style={{ gap: '1rem', alignItems: 'center' }}>
+          <Stack key={step.title} direction="row" spacing={2} alignItems="center">
             <Box
               sx={{
-                width: '2rem',
-                height: '2rem',
+                width: (t) => t.spacing(4),
+                height: (t) => t.spacing(4),
                 flexShrink: 0,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                borderRadius: '50%',
-                border: step.done ? 'none' : '1px solid rgba(128,128,128,0.4)',
+                borderRadius: (t) => t.radius.round,
+                border: step.done ? 'none' : 1,
+                borderColor: 'border.default',
                 color: step.done ? 'success.main' : 'text.secondary',
-                fontSize: step.done ? '2rem' : '0.9rem',
+                typography: step.done ? undefined : 'body2',
+                fontSize: step.done ? (t) => t.spacing(4) : undefined,
               }}
             >
               {step.done ? <IconLib.MdCheckCircle /> : index + 1}
             </Box>
-            <Column style={{ flexGrow: 1, minWidth: 0 }}>
+            <Stack sx={{ flexGrow: 1, minWidth: 0 }}>
               <Typography fontWeight="600" color={step.done ? 'textDisabled' : undefined}>
                 {step.title}
               </Typography>
               <Typography variant="body2" color="textSecondary">
                 {step.description}
               </Typography>
-            </Column>
+            </Stack>
             {!step.done && (
               <Button variant="outlined" size="small" onClick={() => navigate(step.path)} sx={{ flexShrink: 0 }}>
                 {step.action}
               </Button>
             )}
-          </Row>
+          </Stack>
         ))}
-        <Row style={{ justifyContent: 'flex-end' }}>
+        <Stack direction="row" justifyContent="flex-end">
           <Button
             size="small"
             color="inherit"
@@ -97,9 +99,9 @@ const GettingStarted: FC = () => {
           >
             Don't show again
           </Button>
-        </Row>
-      </Column>
-    </Layout>
+        </Stack>
+      </Stack>
+    </Section>
   )
 }
 

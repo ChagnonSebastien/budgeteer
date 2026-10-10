@@ -1,3 +1,4 @@
+import { Box } from '@mui/material'
 import { formatDate, isSameDay, startOfDay } from 'date-fns'
 import { FC, useCallback, useContext, useMemo } from 'react'
 
@@ -39,7 +40,7 @@ const Tooltip: FC<TooltipProps> = ({ tooltipProps, labels }) => {
                 <GraphTooltipLabel>{s.layerLabel}</GraphTooltipLabel>
 
                 <div>:</div>
-                <div style={{ minWidth: '1rem', flexGrow: 1 }} />
+                <Box sx={{ minWidth: (t) => t.spacing(2), flexGrow: 1 }} />
                 <GraphTooltipValue>{s.formattedValue}</GraphTooltipValue>
               </GraphTooltipRow>
             </div>

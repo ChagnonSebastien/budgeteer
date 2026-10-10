@@ -1,5 +1,7 @@
+import { useTheme } from '@mui/material'
 import React, { FC, useMemo, useState } from 'react'
 
+import assignAreaColors from './assignAreaColors'
 import {
   DateAxisConfig,
   DateBasedGraph,
@@ -9,7 +11,6 @@ import {
   useValueAxisConfiguration,
   ValueAxisConfig,
 } from './TimerangeGraphUtils'
-import assignAreaColors from './assignAreaColors'
 
 function brighten(hex: string, amount = 0.4): string {
   const r = parseInt(hex.slice(1, 3), 16)
@@ -84,6 +85,7 @@ const AreaChart: FC<Props> = ({
   minYValue = 0,
 }) => {
   const [tooltip, setTooltip] = useState<TooltipDefinition | null>(null)
+  const theme = useTheme()
 
   const datasetLabels = useMemo<DataSetLabel[]>(() => {
     if (propDatasetsLabels && propDatasetsLabels.length) return propDatasetsLabels
@@ -199,7 +201,7 @@ const AreaChart: FC<Props> = ({
 
   const assignedColors = useMemo(() => assignAreaColors(layers, colors), [layers, colors])
 
-  const getColor = (id: string) => assignedColors[datasetLabels.indexOf(id)] ?? '#ccc'
+  const getColor = (id: string) => assignedColors[datasetLabels.indexOf(id)] ?? theme.palette.grey[400]
 
   const individualBaselineSplines = useMemo(() => {
     return datasetsBaselineStackedValue.map((baselineStackedValues, n) => {
@@ -303,7 +305,7 @@ const AreaChart: FC<Props> = ({
             d={globalBaselineSpline}
             vectorEffect="non-scaling-stroke"
             fill="none"
-            stroke="#fff"
+            stroke={theme.palette.common.white}
             strokeWidth={2}
             strokeDasharray="10 4"
           />
@@ -320,6 +322,7 @@ const AreaChart: FC<Props> = ({
       brighten,
       showIndividualBaselines,
       individualBaselineSplines,
+      theme,
     ],
   )
 

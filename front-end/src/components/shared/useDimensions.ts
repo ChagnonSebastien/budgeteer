@@ -9,16 +9,16 @@ export const useElementDimensions = (defaultHeight: number, defaultWidth: number
 
   const updateDimensions = useCallback(() => {
     if (!contentRef) return
-    
+
     const rect = contentRef.getBoundingClientRect()
     const newDimensions = {
       height: contentRef.clientHeight,
       width: contentRef.clientWidth,
-      boundingRect: rect
+      boundingRect: rect,
     }
-    
+
     // Only update if dimensions actually changed to avoid unnecessary re-renders
-    setDimensions(prev => {
+    setDimensions((prev) => {
       if (prev.height !== newDimensions.height || prev.width !== newDimensions.width) {
         return newDimensions
       }

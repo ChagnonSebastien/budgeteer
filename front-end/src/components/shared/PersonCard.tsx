@@ -5,7 +5,7 @@ import { Email, Person } from '../../domain/model/transactionGroup'
 import { ItemProps } from '../accounts/ItemList'
 
 const PersonCard = (props: ItemProps<Email, Person, unknown>) => {
-  const { item, selected = false, onClick = () => {} } = props
+  const { item, onClick = () => {} } = props
 
   return (
     <Column onClick={onClick}>

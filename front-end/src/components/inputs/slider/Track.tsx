@@ -1,4 +1,11 @@
+import { useTheme } from '@mui/material'
 import React from 'react'
+
+interface TrackStyle {
+  backgroundColor: string
+  borderLeft: string
+  borderRight: string
+}
 
 interface getTrackConfigArgs {
   error?: boolean
@@ -11,7 +18,7 @@ interface getTrackConfigArgs {
     percent: number
   }
   disabled?: boolean
-  styles?: {
+  styles: {
     error: object
     valid: object
   }
@@ -24,28 +31,7 @@ const getTrackConfig = ({ error, source, target, disabled, styles }: getTrackCon
   }
 
   if (disabled) return basicStyle
-
-  const coloredTrackStyle = error
-    ? {
-        backgroundColor: 'rgba(214,0,11,0.5)',
-        borderLeft: '1px solid rgba(214,0,11,0.5)',
-        borderRight: '1px solid rgba(214,0,11,0.5)',
-      }
-    : {
-        backgroundColor: 'rgba(98, 203, 102, 0.5)',
-        borderLeft: '1px solid #62CB66',
-        borderRight: '1px solid #62CB66',
-      }
-
-  if (styles) {
-    if (error) {
-      return { ...basicStyle, ...styles.error }
-    } else {
-      return { ...basicStyle, ...styles.valid }
-    }
-  }
-
-  return { ...basicStyle, ...coloredTrackStyle }
+  return { ...basicStyle, ...(error ? styles.error : styles.valid) }
 }
 
 interface TrackProps {
@@ -66,30 +52,29 @@ interface TrackProps {
   }
 }
 
-const Track: React.FC<TrackProps> = ({
-  error,
-  source,
-  target,
-  getTrackProps,
-  disabled = false,
-  styles = {
-    error: {
-      backgroundColor: 'rgba(214,0,11,0.5)',
-      borderLeft: '1px solid rgba(214,0,11,0.5)',
-      borderRight: '1px solid rgba(214,0,11,0.5)',
-    },
+const Track: React.FC<TrackProps> = ({ error, source, target, getTrackProps, disabled = false, styles }) => {
+  const { slider } = useTheme().palette
+  const edge = (color: string): TrackStyle => ({
+    backgroundColor: color,
+    borderLeft: `1px solid ${color}`,
+    borderRight: `1px solid ${color}`,
+  })
+  const trackStyles = styles ?? {
+    error: edge(slider.invalid),
     valid: {
-      backgroundColor: 'rgba(98, 203, 102, 0.5)',
-      borderLeft: '1px solid #62CB66',
-      borderRight: '1px solid #62CB66',
+      ...edge(slider.valid),
+      borderLeft: `1px solid ${slider.validEdge}`,
+      borderRight: `1px solid ${slider.validEdge}`,
     },
-  },
-}) => (
-  <div
-    className={`react_time_range__track${disabled ? '__disabled' : ''}`}
-    style={getTrackConfig({ error, source, target, disabled, styles })}
-    {...getTrackProps()}
-  />
-)
+  }
+
+  return (
+    <div
+      className={`react_time_range__track${disabled ? '__disabled' : ''}`}
+      style={getTrackConfig({ error, source, target, disabled, styles: trackStyles })}
+      {...getTrackProps()}
+    />
+  )
+}
 
 export default Track

@@ -1,4 +1,4 @@
-import { useTheme } from '@mui/material'
+import { Box } from '@mui/material'
 import { formatDate } from 'date-fns'
 import React, { FC, Fragment, useContext, useMemo } from 'react'
 
@@ -10,6 +10,7 @@ import {
   GraphTooltipLabel,
   GraphTooltipRow,
   GraphTooltipValue,
+  gainColor,
 } from './GraphStyledComponents'
 import Account from '../../domain/model/account'
 import { CurrencyID, formatFull } from '../../domain/model/currency'
@@ -227,7 +228,6 @@ type NetWorthTooltipProps = {
 }
 
 export const NetWorthTooltip: FC<NetWorthTooltipProps> = ({ tooltipProps, labels, baselineConfig, scaleConfig }) => {
-  const theme = useTheme()
   const { privacyMode } = useContext(DrawerContext)
   const { defaultCurrency } = useContext(MixedAugmentation)
   const date = formatDate(labels[tooltipProps.slice.index], 'MMM d, yyyy')
@@ -256,17 +256,17 @@ export const NetWorthTooltip: FC<NetWorthTooltipProps> = ({ tooltipProps, labels
                   </td>
 
                   {!privacyMode && (
-                    <td style={{ textAlign: 'end', paddingLeft: '1rem' }}>
+                    <Box component="td" sx={{ textAlign: 'end', pl: 2 }}>
                       <GraphTooltipValue>{s.formattedValue}</GraphTooltipValue>
-                    </td>
+                    </Box>
                   )}
 
                   {scaleConfig === 'relative' && (
-                    <td style={{ paddingLeft: '1rem', textAlign: 'end' }}>
+                    <Box component="td" sx={{ textAlign: 'end', pl: 2 }}>
                       <GraphTooltipLabel>
                         {totalValue !== 0 ? `${((s.value / totalValue) * 100).toFixed(1)}%` : '0.0%'}
                       </GraphTooltipLabel>
-                    </td>
+                    </Box>
                   )}
                 </tr>
 
@@ -275,27 +275,20 @@ export const NetWorthTooltip: FC<NetWorthTooltipProps> = ({ tooltipProps, labels
                   <tr>
                     <td />
                     <td />
-                    <td style={{ textAlign: 'end' }}>
-                      <GraphTooltipValue
-                        style={{
-                          fontSize: 'small',
-                          color: s.gain < 0 ? theme.palette.error.light : theme.palette.success.light,
-                        }}
-                      >
+                    <Box component="td" sx={{ textAlign: 'end' }}>
+                      <Box component={GraphTooltipValue} sx={{ typography: 'caption', color: gainColor(s.gain) }}>
                         {s.gainFormatted}
-                      </GraphTooltipValue>
-                    </td>
+                      </Box>
+                    </Box>
 
                     {scaleConfig === 'relative' && (
-                      <td style={{ paddingLeft: '1rem', textAlign: 'end' }}>
-                        <GraphTooltipValue
-                          style={{ color: s.gain < 0 ? theme.palette.error.light : theme.palette.success.light }}
-                        >
+                      <Box component="td" sx={{ textAlign: 'end', pl: 2 }}>
+                        <Box component={GraphTooltipValue} sx={{ color: gainColor(s.gain) }}>
                           {s.baseline !== undefined && s.baseline !== 0
                             ? `${s.gain >= 0 ? '+' : ''}${((s.gain / s.baseline) * 100).toFixed(1)}%`
                             : '+0.0%'}
-                        </GraphTooltipValue>
-                      </td>
+                        </Box>
+                      </Box>
                     )}
                   </tr>
                 )}
@@ -308,13 +301,9 @@ export const NetWorthTooltip: FC<NetWorthTooltipProps> = ({ tooltipProps, labels
         <div>
           <hr />
           <GraphTooltipRow>
-            <GraphTooltipValue
-              style={{
-                color: totalGain < 0 ? theme.palette.error.light : theme.palette.success.light,
-              }}
-            >
+            <Box component={GraphTooltipValue} sx={{ color: gainColor(totalGain) }}>
               Total Gains: {formatFull(defaultCurrency, totalGain, privacyMode)}
-            </GraphTooltipValue>
+            </Box>
           </GraphTooltipRow>
         </div>
       )}

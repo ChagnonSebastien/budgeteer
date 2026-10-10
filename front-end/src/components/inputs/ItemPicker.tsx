@@ -1,4 +1,5 @@
 import {
+  Box,
   Button,
   ClickAwayListener,
   DialogActions,
@@ -8,10 +9,12 @@ import {
   MenuList,
   Paper,
   Popper,
+  SxProps,
   TextField,
+  Theme,
 } from '@mui/material'
-import React, { CSSProperties, FC, ReactNode, useEffect, useMemo, useRef, useState } from 'react'
-import { default as styled } from 'styled-components'
+import { styled } from '@mui/material/styles'
+import React, { FC, ReactNode, useEffect, useMemo, useRef, useState } from 'react'
 
 import { NotEmptyValidator, Validator } from './Validator'
 import NamedItem from '../../domain/model/NamedItem'
@@ -19,18 +22,18 @@ import ItemList, { ItemListProps, ItemProps } from '../accounts/ItemList'
 import BasicModal from '../shared/BasicModal'
 import { CustomScrolling } from '../shared/ScrollingOverButton'
 
-const DialogContentContainer = styled(DialogContent)`
-  max-height: 70vh;
-  overflow: hidden;
-  padding: 0 20px;
-  display: flex;
-  flex-direction: column;
-`
+const DialogContentContainer = styled(DialogContent)(({ theme }) => ({
+  maxHeight: '70vh',
+  overflow: 'hidden',
+  padding: theme.spacing(0, 2.5),
+  display: 'flex',
+  flexDirection: 'column',
+}))
 
-const SearchContainer = styled.div`
-  padding: 16px 0;
-  width: 100%;
-`
+const SearchContainer = styled('div')(({ theme }) => ({
+  padding: theme.spacing(2, 0),
+  width: '100%',
+}))
 
 const defaultValidator = new NotEmptyValidator()
 
@@ -42,7 +45,7 @@ export interface ItemPickerProps<ItemID, T extends NamedItem<ItemID, T>, Additio
   labelText: string
   dialogTitle?: string
   searchPlaceholder?: string
-  style?: CSSProperties
+  sx?: SxProps<Theme>
   errorText?: string
 
   variant?: ItemPickerVariant
@@ -75,7 +78,7 @@ function ItemPicker<ItemID, T extends NamedItem<ItemID, T>, AdditionalItemProps>
     labelText,
     dialogTitle,
     searchPlaceholder,
-    style,
+    sx,
     errorText,
     variant = 'modal',
     itemDisplayText = (item: T | undefined) => item?.name ?? '',
@@ -233,7 +236,7 @@ function ItemPicker<ItemID, T extends NamedItem<ItemID, T>, AdditionalItemProps>
   if (variant === 'dropdown') {
     return (
       <ClickAwayListener onClickAway={() => setShowModal(false)}>
-        <div ref={anchorRef} style={{ ...style, width: '100%' }}>
+        <Box ref={anchorRef} sx={[...(Array.isArray(sx) ? sx : [sx]), { width: '100%' }]}>
           <TextField
             fullWidth
             variant="standard"
@@ -266,9 +269,9 @@ function ItemPicker<ItemID, T extends NamedItem<ItemID, T>, AdditionalItemProps>
             open={showModal}
             anchorEl={anchorRef.current}
             placement="bottom-start"
-            style={{ zIndex: 1300, width: anchorRef.current?.clientWidth }}
+            sx={{ zIndex: (t) => t.zIndex.modal, width: anchorRef.current?.clientWidth }}
           >
-            <Paper elevation={3} style={{ maxHeight: '40vh', overflowY: 'auto' }}>
+            <Paper elevation={3} sx={{ maxHeight: '40vh', overflowY: 'auto' }}>
               <MenuList dense>
                 {displayedItems.map((item) => (
                   <MenuItem
@@ -295,7 +298,7 @@ function ItemPicker<ItemID, T extends NamedItem<ItemID, T>, AdditionalItemProps>
               </MenuList>
             </Paper>
           </Popper>
-        </div>
+        </Box>
       </ClickAwayListener>
     )
   }
@@ -306,7 +309,7 @@ function ItemPicker<ItemID, T extends NamedItem<ItemID, T>, AdditionalItemProps>
         <OverrideTextLabel onClick={() => setShowModal(true)} />
       ) : (
         <TextField
-          sx={style}
+          sx={sx}
           error={!!errorText}
           variant="standard"
           label={labelText}
@@ -336,7 +339,7 @@ function ItemPicker<ItemID, T extends NamedItem<ItemID, T>, AdditionalItemProps>
               error={failedCreatingOnce && filterAsNewValueValidation.isErr()}
             />
           </SearchContainer>
-          <CustomScrolling style={{ minHeight: 0 }}>
+          <Box component={CustomScrolling} sx={{ minHeight: 0 }}>
             <ItemListComponent
               items={displayedItems}
               ItemComponent={ItemComponent}
@@ -351,7 +354,7 @@ function ItemPicker<ItemID, T extends NamedItem<ItemID, T>, AdditionalItemProps>
                 selectedItem: selectedItemId,
               }}
             />
-          </CustomScrolling>
+          </Box>
         </DialogContentContainer>
         <DialogActions>
           <Button onClick={() => setShowModal(false)}>Close</Button>

@@ -1,6 +1,7 @@
-import { Fab, IconButton, TextField } from '@mui/material'
+import { alpha, Box, Fab, IconButton, TextField } from '@mui/material'
+import { styled } from '@mui/material/styles'
+import { keyframes } from '@mui/system'
 import { Dispatch, SetStateAction, useContext, useEffect, useState } from 'react'
-import { default as styled, keyframes } from 'styled-components'
 
 import { IconToolsContext } from '../icons/IconTools'
 
@@ -24,62 +25,52 @@ const slideIn = keyframes`
   }
 `
 
-const SearchOverlayContainer = styled.div`
-  position: fixed;
-  top: 0;
-  bottom: 0;
-  right: 0;
-  background: rgba(0, 0, 0, 0.75);
-  backdrop-filter: blur(12px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 100;
-  padding: 2rem;
-  animation: ${fadeIn} 0.2s ease-out;
+const SearchOverlayContainer = styled('div')(({ theme }) => ({
+  position: 'fixed',
+  top: 0,
+  bottom: 0,
+  right: 0,
+  left: 0,
+  background: theme.palette.overlay.backdrop,
+  backdropFilter: 'blur(12px)',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  zIndex: 100,
+  padding: theme.spacing(4),
+  animation: `${fadeIn} 0.2s ease-out`,
+  // Keeps the persistent drawer (240px wide past 840px) uncovered.
+  '@media (min-width: 840px)': { left: 240 },
 
-  /* When screen is wide enough for persistent drawer */
-  @media (min-width: 840px) {
-    left: 240px; /* Match drawer width */
-  }
+  '.MuiTextField-root': {
+    width: '100%',
+    maxWidth: 600,
+    background: alpha(theme.palette.grey[900], 0.9),
+    backdropFilter: 'blur(32px)',
+    borderRadius: theme.radius.lg,
+    boxShadow: theme.elevation.card,
+    animation: `${slideIn} 0.3s cubic-bezier(0.16, 1, 0.3, 1)`,
+  },
 
-  /* When screen is narrow (mobile/tablet) */
-  @media (max-width: 839px) {
-    left: 0;
-  }
+  '.MuiInputBase-root': {
+    padding: theme.spacing(1.5, 2),
+    borderRadius: theme.radius.lg,
+  },
 
-  .MuiTextField-root {
-    width: 100%;
-    max-width: 600px;
-    background: rgba(33, 33, 33, 0.9);
-    backdrop-filter: blur(32px);
-    border-radius: 12px;
-    box-shadow:
-      0 10px 15px -3px rgba(0, 0, 0, 0.1),
-      0 4px 6px -2px rgba(0, 0, 0, 0.05);
-    animation: ${slideIn} 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  }
+  '.MuiOutlinedInput-notchedOutline': {
+    border: 'none',
+  },
 
-  .MuiInputBase-root {
-    padding: 12px 16px;
-    border-radius: 12px;
-    rgba(128, 128, 128, 0.2);
-  }
+  '.MuiInputBase-input': {
+    color: theme.palette.text.primary,
+    ...theme.typography.subtitle1,
 
-  .MuiOutlinedInput-notchedOutline {
-    border: none;
-  }
-
-  .MuiInputBase-input {
-    color: rgba(255, 255, 255, 0.9);
-    font-size: 1.1rem;
-
-    &::placeholder {
-      color: rgba(255, 255, 255, 0.5);
-      opacity: 1;
-    }
-  }
-`
+    '&::placeholder': {
+      color: theme.palette.text.disabled,
+      opacity: 1,
+    },
+  },
+}))
 
 interface Props {
   filter: string
@@ -116,8 +107,8 @@ export const SearchOverlay = ({ filter, setFilter, placeholder = 'Search...' }: 
           onClick={() => setShowSearch(true)}
           sx={{
             position: 'absolute',
-            bottom: '1rem',
-            right: '2rem',
+            bottom: (t) => t.spacing(2),
+            right: (t) => t.spacing(4),
             zIndex: 1000,
             minWidth: filter.length > 0 ? 'auto' : '50px',
             width: filter.length > 0 ? 'auto' : '50px',
@@ -126,20 +117,20 @@ export const SearchOverlay = ({ filter, setFilter, placeholder = 'Search...' }: 
             paddingLeft: filter.length > 0 ? 1.75 : 0,
             paddingRight: filter.length > 0 ? 0.75 : 0,
             transition: 'all 0.2s ease',
-            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+            boxShadow: (t) => t.elevation.card,
           }}
         >
           {filter.length > 0 ? (
-            <div
-              style={{
+            <Box
+              sx={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '8px',
-                maxWidth: '200px',
+                gap: 1,
+                maxWidth: 200,
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
                 whiteSpace: 'nowrap',
-                fontSize: '0.9rem',
+                typography: 'body2',
               }}
             >
               <span>{`${filter}`}</span>
@@ -149,19 +140,13 @@ export const SearchOverlay = ({ filter, setFilter, placeholder = 'Search...' }: 
                   e.stopPropagation()
                   handleClose()
                 }}
-                sx={{
-                  color: 'white',
-                  padding: '4px',
-                  '&:hover': {
-                    backgroundColor: 'rgba(128,128,128,0.2)',
-                  },
-                }}
+                sx={{ color: 'common.white', p: 0.5, '&:hover': { bgcolor: 'border.subtle' } }}
               >
                 <IconLib.IoCloseCircle />
               </IconButton>
-            </div>
+            </Box>
           ) : (
-            <IconLib.BiSearch style={{ fontSize: '1.5rem' }} />
+            <IconLib.BiSearch size={24} />
           )}
         </Fab>
       )}
@@ -183,15 +168,11 @@ export const SearchOverlay = ({ filter, setFilter, placeholder = 'Search...' }: 
                       e.stopPropagation()
                       handleClose()
                     }}
-                    size="medium"
+                    size="large"
                     sx={{
-                      color: 'rgba(255, 255, 255, 0.7)',
-                      padding: '8px',
-                      fontSize: '1.8rem',
-                      '&:hover': {
-                        color: 'rgba(255, 255, 255, 0.9)',
-                        backgroundColor: 'rgba(128, 128, 128, 0.2)',
-                      },
+                      color: 'text.secondary',
+                      p: 1,
+                      '&:hover': { color: 'text.primary', bgcolor: 'border.subtle' },
                     }}
                   >
                     <IconLib.IoCloseCircle />

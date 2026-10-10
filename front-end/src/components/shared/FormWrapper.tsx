@@ -1,13 +1,8 @@
 import { Stack } from '@mui/material'
 import { FC, FormEvent, ReactNode, useState } from 'react'
-import { default as styled } from 'styled-components'
 
-import Layout from './Layout'
+import { Section } from './Layout'
 import { SecureButton } from './SecureButton'
-
-const Form = styled.form`
-  max-width: 50rem;
-`
 
 interface Props {
   children: ReactNode
@@ -37,21 +32,21 @@ const FormWrapper: FC<Props> = (props) => {
   }
 
   return (
-    <Form noValidate onSubmit={handleSubmit}>
-      <Layout title="Form">
-        <Stack spacing="1rem">{children}</Stack>
-      </Layout>
+    <Stack
+      component="form"
+      noValidate
+      onSubmit={handleSubmit}
+      spacing={2}
+      sx={{ mt: 2, maxWidth: (t) => t.contentWidth.default }}
+    >
+      <Section title="Form">
+        <Stack spacing={2}>{children}</Stack>
+      </Section>
 
-      <SecureButton
-        fullWidth
-        variant="contained"
-        type="submit"
-        style={{ marginTop: '1rem' }}
-        loading={submitting}
-      >
+      <SecureButton fullWidth variant="contained" type="submit" loading={submitting}>
         {submitText}
       </SecureButton>
-    </Form>
+    </Stack>
   )
 }
 

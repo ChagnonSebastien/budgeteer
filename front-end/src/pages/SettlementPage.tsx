@@ -1,4 +1,4 @@
-import { Alert, Button, TextField, Typography } from '@mui/material'
+import { Alert, Button, Stack, TextField, Typography } from '@mui/material'
 import { FC, useContext, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
@@ -8,7 +8,6 @@ import { FixedPointInput } from '../components/inputs/FixedPointInput'
 import SelectOne from '../components/inputs/SelectOne'
 import LoadingScreen from '../components/LoadingScreen'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
-import { Column } from '../components/shared/Layout'
 import { useToast } from '../components/shared/ToastProvider'
 import useAugmentedTransactionGroup from '../components/transactionGroup/useAugmentedTransactionGroup'
 import TransactionForm from '../components/transactions/TransactionForm'
@@ -179,7 +178,7 @@ const SettlementPage: FC<{ mode: SettlementPageMode }> = ({ mode }) => {
   return (
     <ContentWithHeader title={titles[mode]} action="return" withPadding withScrolling>
       {step === 'details' ? (
-        <Column style={{ gap: '1.5rem', maxWidth: '32rem', margin: '0 auto', width: '100%' }}>
+        <Stack sx={{ gap: 3, maxWidth: (t) => t.contentWidth.compact, mx: 'auto', width: '100%' }}>
           {mode === 'new' && (
             <>
               <SelectOne
@@ -223,9 +222,9 @@ const SettlementPage: FC<{ mode: SettlementPageMode }> = ({ mode }) => {
           >
             {isGuest ? 'Save' : 'Next'}
           </Button>
-        </Column>
+        </Stack>
       ) : (
-        <Column style={{ gap: '1rem' }}>
+        <Stack sx={{ gap: 2 }}>
           <Typography color="textDisabled">
             {iPaid ? `You paid ${counterpartName}.` : `${counterpartName} paid you.`}{' '}
             {mode === 'confirm' ? 'Confirm it by recording it in your accounts.' : 'Record it in your accounts.'}
@@ -238,7 +237,7 @@ const SettlementPage: FC<{ mode: SettlementPageMode }> = ({ mode }) => {
             type={iPaid ? 'expense' : 'income'}
             groupContext="hidden"
           />
-        </Column>
+        </Stack>
       )}
     </ContentWithHeader>
   )

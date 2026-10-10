@@ -1,4 +1,4 @@
-import { Typography } from '@mui/material'
+import { Stack } from '@mui/material'
 import { format } from 'date-fns'
 import { FC, useContext, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -10,10 +10,8 @@ import { SettlementAugmentedTransaction } from '../../domain/model/settlement'
 import { SettlementServiceContext, TransactionServiceContext } from '../../service/ServiceContext'
 import { IconToolsContext } from '../icons/IconTools'
 import { DrawerContext } from '../Menu'
-import BasicModal from '../shared/BasicModal'
 import ConfirmDeleteModal from '../shared/ConfirmDeleteModal'
-import { DetailCard, FancyModal } from '../shared/FancyModal'
-import { Column } from '../shared/Layout'
+import { DetailCard, DetailHeading, FancyDialog, FancyModal } from '../shared/FancyModal'
 import { useToast } from '../shared/ToastProvider'
 
 const SettlementModal: FC<{ settlement: SettlementAugmentedTransaction; onClose(): void }> = ({
@@ -82,13 +80,7 @@ const SettlementModal: FC<{ settlement: SettlementAugmentedTransaction; onClose(
 
   return (
     <>
-      <BasicModal
-        open
-        onClose={onClose}
-        slotProps={{
-          paper: { style: { backgroundColor: 'transparent', borderRadius: '24px', border: '0', overflow: 'hidden' } },
-        }}
-      >
+      <FancyDialog open onClose={onClose}>
         <FancyModal
           title={{
             topCategory: `${group.name} · Settlement`,
@@ -99,7 +91,7 @@ const SettlementModal: FC<{ settlement: SettlementAugmentedTransaction; onClose(
             {
               Icon: IconLib.MdCheckCircle,
               label: 'Confirm Settlement',
-              color: '#66BB6A',
+              intent: 'confirm',
               description: isGuest ? 'Agree with this amount' : 'Agree with this amount and record it in your accounts',
               action: () => (isGuest ? confirmAsGuest() : goTo(`${pages}/confirm`)),
               disabled: !canConfirm,
@@ -107,7 +99,7 @@ const SettlementModal: FC<{ settlement: SettlementAugmentedTransaction; onClose(
             {
               Icon: IconLib.MdEdit,
               label: 'Edit Settlement',
-              color: '#64B5F6',
+              intent: 'edit',
               description: 'Propose a different amount, date or note',
               action: () => goTo(`${pages}/edit`),
               disabled: settlement.completed || !isEnd,
@@ -115,7 +107,7 @@ const SettlementModal: FC<{ settlement: SettlementAugmentedTransaction; onClose(
             {
               Icon: IconLib.MdInput,
               label: 'Restore my side',
-              color: '#FFB74D',
+              intent: 'adjust',
               description:
                 side.state === 'missing'
                   ? 'It is no longer in your transactions: record it again'
@@ -126,20 +118,15 @@ const SettlementModal: FC<{ settlement: SettlementAugmentedTransaction; onClose(
             {
               Icon: IconLib.MdDelete,
               label: 'Delete Settlement',
-              color: '#EF5350',
+              intent: 'destructive',
               description: 'Remove this settlement',
               action: () => setConfirmingDelete(true),
               disabled: settlement.completed || !isEnd,
             },
           ]}
         >
-          <Typography
-            variant="subtitle2"
-            style={{ opacity: 0.6, marginBottom: '16px', letterSpacing: '0.05em', fontSize: '0.75rem' }}
-          >
-            DETAILS
-          </Typography>
-          <Column style={{ gap: '0.2rem' }}>
+          <DetailHeading>DETAILS</DetailHeading>
+          <Stack sx={{ gap: 0.5 }}>
             <DetailCard
               delay={0}
               title={item.currency.symbol}
@@ -156,9 +143,9 @@ const SettlementModal: FC<{ settlement: SettlementAugmentedTransaction; onClose(
                   : `Waiting for ${settlement.proposedBy === settlement.payer ? nameOf(settlement.receiver) : nameOf(settlement.payer)}`
               }
             />
-          </Column>
+          </Stack>
         </FancyModal>
-      </BasicModal>
+      </FancyDialog>
 
       <ConfirmDeleteModal
         open={confirmingDelete}

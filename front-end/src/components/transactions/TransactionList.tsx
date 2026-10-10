@@ -1,27 +1,26 @@
+import { Box, Stack, Typography } from '@mui/material'
 import { formatDate, isSameMonth } from 'date-fns'
-import { CSSProperties, ReactNode, useEffect, useMemo, useRef, useState } from 'react'
+import { ReactNode, useEffect, useMemo, useRef, useState } from 'react'
 
 import { AugmentedTransaction, TransactionID } from '../../domain/model/transaction'
 import { ItemListProps } from '../accounts/ItemList'
-import { Column } from '../shared/Layout'
 
 const chunkSize = 100
 
 interface AdditionalTransactionListProps {
   onClick: (transactionId: number, transaction: AugmentedTransaction) => void
-  containerStyle?: CSSProperties
 }
 
 type Props<T> = ItemListProps<TransactionID, AugmentedTransaction, T> & AdditionalTransactionListProps
 
 const MonthLabel = ({ date }: { date: Date }) => (
-  <div style={{ alignSelf: 'center', fontWeight: 'bold', padding: '1rem', paddingBottom: '0.5rem' }}>
+  <Typography fontWeight={700} sx={{ alignSelf: 'center', pt: 2, pb: 1 }}>
     {formatDate(date, 'MMMM yyyy')}
-  </div>
+  </Typography>
 )
 
 export const TransactionList = <T,>(props: Props<T>) => {
-  const { items, ItemComponent, onClick, containerStyle, additionalItemsProps } = props
+  const { items, ItemComponent, onClick, additionalItemsProps } = props
 
   const [displayedAmount, setDisplayedAmount] = useState<number>(chunkSize)
   useEffect(() => {
@@ -74,19 +73,9 @@ export const TransactionList = <T,>(props: Props<T>) => {
   }, [])
 
   return (
-    <Column style={{ position: 'relative', margin: 'auto', gap: '0.4rem', ...containerStyle }}>
+    <Stack spacing={1} sx={{ position: 'relative', mx: 'auto', width: '100%', maxWidth: (t) => t.contentWidth.narrow }}>
       {displayedItems}
-      <div
-        style={{
-          height: '100vh',
-          position: 'absolute',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          zIndex: -1,
-        }}
-        ref={loadMoreRef}
-      />
-    </Column>
+      <Box ref={loadMoreRef} sx={{ height: '100vh', position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: -1 }} />
+    </Stack>
   )
 }

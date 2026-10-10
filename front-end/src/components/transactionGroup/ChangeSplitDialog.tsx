@@ -1,4 +1,4 @@
-import { Alert, Button, Dialog, DialogActions, DialogContent, DialogTitle, Typography } from '@mui/material'
+import { Alert, Button, Dialog, DialogActions, DialogContent, DialogTitle, Stack, Typography } from '@mui/material'
 import { FC, useContext, useMemo, useState } from 'react'
 
 import { GroupPaidTable } from './GroupLedger'
@@ -27,7 +27,6 @@ import {
   UnconfirmedTransactionServiceContext,
 } from '../../service/ServiceContext'
 import SelectOne from '../inputs/SelectOne'
-import { Column } from '../shared/Layout'
 
 const valueKind = (splitType: SplitType): SplitValueKind | null => {
   if (splitType === SplitType.PERCENTAGE) return 'percentage'
@@ -151,7 +150,7 @@ const ChangeSplitDialog: FC<{
       <DialogTitle>{step === 'split' ? 'Change the default split' : 'Apply the new split to'}</DialogTitle>
       <DialogContent>
         {step === 'split' ? (
-          <Column style={{ gap: '1.5rem', paddingTop: '0.5rem' }}>
+          <Stack sx={{ gap: 3, pt: 1 }}>
             <SelectOne
               label="Split Type"
               value={SplitTypeToString(splitType)}
@@ -165,9 +164,9 @@ const ChangeSplitDialog: FC<{
             {kind && (
               <SplitValuesEditor kind={kind} members={transactionGroup.members} values={values} onChange={setValues} />
             )}
-          </Column>
+          </Stack>
         ) : (
-          <Column style={{ gap: '1.5rem', paddingTop: '0.5rem' }}>
+          <Stack sx={{ gap: 3, pt: 1 }}>
             <SelectOne
               label="Which transactions use the new split?"
               value={String(scope)}
@@ -175,19 +174,19 @@ const ChangeSplitDialog: FC<{
               options={scopes.map((s) => ({ value: String(s.scope), label: s.label }))}
               type="radio"
             />
-            <Typography fontSize="0.9rem" color="textDisabled">
+            <Typography variant="body2" color="textDisabled">
               {scopes.find((s) => s.scope === scope)!.description}
             </Typography>
-            <Column style={{ alignItems: 'center', gap: '0.5rem' }}>
+            <Stack sx={{ alignItems: 'center', gap: 1 }}>
               <Typography variant="subtitle2">Balances after the change</Typography>
               <GroupPaidTable
                 members={transactionGroup.members}
                 transactions={preview}
                 currency={transactionGroup.augmentedCurrency}
               />
-            </Column>
+            </Stack>
             {error && <Alert severity="error">{error}</Alert>}
-          </Column>
+          </Stack>
         )}
       </DialogContent>
       <DialogActions>

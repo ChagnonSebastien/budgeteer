@@ -1,8 +1,9 @@
-import { Box, ButtonBase, Tooltip, Typography } from '@mui/material'
+import { Box, Stack, Tooltip, Typography } from '@mui/material'
 import { formatDate } from 'date-fns'
 import { FC, memo, useContext, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 
+import { CardAction, CardShell, CardTitleRow, ellipsis } from './TransactionCard'
 import { UserContext } from '../../App'
 import { formatFull } from '../../domain/model/currency'
 import { SettlementAugmentedTransaction } from '../../domain/model/settlement'
@@ -12,7 +13,6 @@ import { ItemProps } from '../accounts/ItemList'
 import { IconToolsContext } from '../icons/IconTools'
 import { DrawerContext } from '../Menu'
 import SettlementCard from '../transactionGroup/SettlementCard'
-import { Column, GradientCard, Row } from '../shared/Layout'
 
 const GroupTransactionCard: FC<ItemProps<TransactionID, AugmentedTransaction, object>> = memo((props) => {
   const { item, onClick } = props
@@ -40,131 +40,94 @@ const GroupTransactionCard: FC<ItemProps<TransactionID, AugmentedTransaction, ob
   const promotable =
     item instanceof UnconfirmedAugmentedTransaction && !isGuest && item.owner === email ? item.unconfirmed : null
 
-  const card = (
-    <GradientCard
-      onClick={onClick}
-      $selected={false}
-      $hoverEffect={false}
-      $withGradientBackground={false}
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        backgroundColor: 'rgba(128,128,128,0.08)',
-        fontSize: '0.875rem',
-        padding: '0.5rem 0.75rem',
-        border: '1px solid rgba(128,128,128,0.16)',
-        gap: '0.75rem',
-        overflowX: 'auto',
-      }}
-    >
-      <Column style={{ flexGrow: 1 }}>
-        <Row style={{ justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem' }}>
-          <Typography letterSpacing="0.01rem" fontSize="0.95rem" fontWeight="600" whiteSpace="nowrap">
-            {formatFull(item.currency, item.amount, privacyMode)}
-          </Typography>
-          <Typography color="textDisabled" fontSize="0.9rem" whiteSpace="nowrap">
-            {formatDate(item.date, 'MMM d')}
-          </Typography>
-        </Row>
-
-        <Row style={{ alignItems: 'center', gap: '0.35rem', minWidth: 0 }}>
-          <Typography fontSize="0.9rem" fontWeight="500" textOverflow={'ellipsis'} overflow={'hidden'}>
-            Payed by: <span style={{ fontWeight: 'bold' }}>{payedBy?.name ?? item.owner}</span>
-          </Typography>
-          {!isUnconfirmed && (
-            <Tooltip
-              title={
-                item.owner === email
-                  ? 'Confirmed, it is part of your transactions'
-                  : 'Confirmed by the payer, it can no longer be edited'
-              }
-            >
-              <Box component="span" sx={{ display: 'flex', alignItems: 'center', color: 'success.main' }}>
-                <IconLib.MdCheckCircle />
-              </Box>
-            </Tooltip>
-          )}
-        </Row>
-
-        {item.note && (
-          <Typography fontSize="0.9rem" textOverflow="ellipsis" minWidth={0} overflow={'hidden'}>
-            For: {item.note}
-          </Typography>
-        )}
-      </Column>
-      <Column style={{ alignItems: 'center', textAlign: 'center', width: '6.5rem', flexShrink: 0 }}>
-        {userContribution === 0 ? (
-          <Typography fontSize="0.9rem" fontWeight="500" color="textDisabled">
-            Not involved
-          </Typography>
-        ) : (
-          <>
-            <Typography fontSize="0.9rem" fontWeight="500">
-              {userContribution > 0 ? 'You lent' : 'You owe'}
-            </Typography>
-            <Typography fontSize="0.9rem" fontWeight="bold" whiteSpace="nowrap">
-              {formatFull(
-                item.augmentedTransactionGroupData.transactionGroup.augmentedCurrency,
-                Math.abs(userContribution),
-                privacyMode,
-              )}
-            </Typography>
-          </>
-        )}
-        {splitSummary && (
-          <Tooltip
-            enterTouchDelay={0}
-            title={item.memberParts().map(({ email: memberEmail, part }) => (
-              <div key={memberEmail}>
-                {members.find((m) => m.email === memberEmail)?.name ?? memberEmail}:{' '}
-                {formatFull(item.currency, part, privacyMode)}
-              </div>
-            ))}
-          >
-            <Typography
-              fontSize="0.75rem"
-              color="textDisabled"
-              lineHeight={1.2}
-              marginTop="0.15rem"
-              sx={{ textDecoration: 'underline dotted' }}
-            >
-              {splitSummary}
-            </Typography>
-          </Tooltip>
-        )}
-      </Column>
-    </GradientCard>
-  )
-
-  if (promotable === null) return card
+  const groupCurrency = item.augmentedTransactionGroupData.transactionGroup.augmentedCurrency
 
   return (
-    <Column
-      style={{
-        backgroundColor: 'rgba(128,128,128,.16)',
-        border: '1px solid rgba(128,128,128,0.16)',
-        borderRadius: '0.5rem',
-      }}
+    <CardShell
+      onClick={onClick}
+      footer={
+        promotable && (
+          <CardAction
+            onClick={() =>
+              navigate(
+                `/transaction-groups/manage/${promotable.transactionGroupId}/unconfirmed/${promotable.id}/promote`,
+              )
+            }
+            color="primary.main"
+            icon={<IconLib.BsPlusCircle />}
+            label="Confirm and add to my transactions"
+          />
+        )
+      }
+      aside={
+        <>
+          {userContribution === 0 ? (
+            <Typography variant="body2" fontWeight={500} color="textDisabled">
+              Not involved
+            </Typography>
+          ) : (
+            <>
+              <Typography variant="body2" fontWeight={500}>
+                {userContribution > 0 ? 'You lent' : 'You owe'}
+              </Typography>
+              <Typography variant="body2" fontWeight={700} whiteSpace="nowrap">
+                {formatFull(groupCurrency, Math.abs(userContribution), privacyMode)}
+              </Typography>
+            </>
+          )}
+          {splitSummary && (
+            <Tooltip
+              enterTouchDelay={0}
+              title={item.memberParts().map(({ email: memberEmail, part }) => (
+                <div key={memberEmail}>
+                  {members.find((m) => m.email === memberEmail)?.name ?? memberEmail}:{' '}
+                  {formatFull(item.currency, part, privacyMode)}
+                </div>
+              ))}
+            >
+              <Typography
+                variant="caption"
+                color="textDisabled"
+                lineHeight={1.2}
+                sx={{ mt: 0.25, textDecoration: 'underline dotted' }}
+              >
+                {splitSummary}
+              </Typography>
+            </Tooltip>
+          )}
+        </>
+      }
     >
-      {card}
-      <ButtonBase
-        onClick={() =>
-          navigate(`/transaction-groups/manage/${promotable.transactionGroupId}/unconfirmed/${promotable.id}/promote`)
-        }
-        sx={{
-          gap: '0.35rem',
-          padding: '0.25rem',
-          borderRadius: '0 0 0.5rem 0.5rem',
-          color: 'primary.main',
-          '&:hover': { backgroundColor: 'action.hover' },
-        }}
-      >
-        <IconLib.BsPlusCircle />
-        <Typography fontSize="0.9rem" fontWeight="500">
-          Confirm and add to my transactions
+      <CardTitleRow
+        amount={formatFull(item.currency, item.amount, privacyMode)}
+        date={formatDate(item.date, 'MMM d')}
+      />
+
+      <Stack direction="row" alignItems="center" spacing={0.5} sx={{ minWidth: 0 }}>
+        <Typography variant="body2" fontWeight={500} sx={ellipsis}>
+          Payed by: <b>{payedBy?.name ?? item.owner}</b>
         </Typography>
-      </ButtonBase>
-    </Column>
+        {!isUnconfirmed && (
+          <Tooltip
+            title={
+              item.owner === email
+                ? 'Confirmed, it is part of your transactions'
+                : 'Confirmed by the payer, it can no longer be edited'
+            }
+          >
+            <Box component="span" sx={{ display: 'flex', alignItems: 'center', color: 'success.main' }}>
+              <IconLib.MdCheckCircle />
+            </Box>
+          </Tooltip>
+        )}
+      </Stack>
+
+      {item.note && (
+        <Typography variant="body2" sx={{ minWidth: 0, ...ellipsis }}>
+          For: {item.note}
+        </Typography>
+      )}
+    </CardShell>
   )
 })
 

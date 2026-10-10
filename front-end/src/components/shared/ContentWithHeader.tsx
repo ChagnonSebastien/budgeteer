@@ -1,41 +1,36 @@
 import { AppBar, IconButton, Toolbar, Typography } from '@mui/material'
+import { styled } from '@mui/material/styles'
 import { FC, ReactNode, useContext } from 'react'
 import { IconType } from 'react-icons'
 import { useNavigate } from 'react-router-dom'
-import { css, default as styled } from 'styled-components'
 
 import { IconToolsContext } from '../icons/IconTools'
 import { DrawerContext } from '../Menu'
-import { MaxSpaceNoOverflow } from './Layout'
+import { MaxSpaceNoOverflow, withoutTransientProps } from './Layout'
 
-export const ContentWithHeaderContainer = styled(MaxSpaceNoOverflow)`
-  display: flex;
-  flex-direction: column;
-`
+export const ContentWithHeaderContainer = styled(MaxSpaceNoOverflow)({
+  display: 'flex',
+  flexDirection: 'column',
+})
 
-export const Header = styled(AppBar)`
-  height: 64px;
-`
+export const Header = styled(AppBar)({
+  height: 64,
+})
 
-export const ContentContainer = styled(MaxSpaceNoOverflow)<{ $withPadding: boolean; $withScrolling: boolean }>`
-  height: calc(100% - 64px);
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-
-  ${(props) =>
-    props.$withPadding &&
-    css`
-      padding: 1rem calc(1rem + min(2rem, max(0px, calc(100vw - 30rem)) / 10));
-    `};
-
-  ${(props) =>
-    props.$withScrolling &&
-    css`
-      overflow: auto;
-    `};
-`
+export const ContentContainer = styled(
+  MaxSpaceNoOverflow,
+  withoutTransientProps,
+)<{ $withPadding: boolean; $withScrolling: boolean }>(({ theme, $withPadding, $withScrolling }) => ({
+  height: 'calc(100% - 64px)',
+  width: '100%',
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  ...($withPadding && {
+    padding: `${theme.spacing(2)} calc(${theme.spacing(2)} + min(${theme.spacing(4)}, max(0px, calc(100vw - 30rem)) / 10))`,
+  }),
+  ...($withScrolling && { overflow: 'auto' }),
+}))
 
 type CustomAction = {
   Icon: IconType
@@ -88,7 +83,7 @@ const ContentWithHeader: FC<ContentWithHeaderProps> = (props) => {
       <Header position="static">
         <Toolbar>
           {actionButton}
-          <Typography variant="h6" style={{ flexGrow: 1 }}>
+          <Typography variant="h6" sx={{ flexGrow: 1 }}>
             {title}
           </Typography>
           {typeof rightContent !== 'undefined' && rightContent}

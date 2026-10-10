@@ -1,14 +1,10 @@
-import { Chip, IconButton } from '@mui/material'
+import { Chip, IconButton, Stack } from '@mui/material'
 import { CSSProperties, FC, useCallback, useContext } from 'react'
 
 import TransactionGroup, { Email, Person } from '../../domain/model/transactionGroup'
 import { TransactionGroupServiceContext } from '../../service/ServiceContext'
 import { IconToolsContext } from '../icons/IconTools'
 import PersonPicker from '../inputs/PersonPicker'
-import { Row } from '../shared/Layout'
-
-const emailRegex =
-  /^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/
 
 const GroupMembers: FC<{ transactionGroup: TransactionGroup; style?: CSSProperties }> = ({
   transactionGroup,
@@ -42,7 +38,7 @@ const GroupMembers: FC<{ transactionGroup: TransactionGroup; style?: CSSProperti
   )
 
   return (
-    <Row style={{ alignItems: 'center', flexWrap: 'wrap', gap: '.5rem', ...style }}>
+    <Stack direction="row" sx={{ alignItems: 'center', flexWrap: 'wrap', gap: 1, ...style }}>
       <PersonPicker
         onPersonSelected={addMember}
         OverrideTextLabel={({ onClick }) => (
@@ -53,7 +49,6 @@ const GroupMembers: FC<{ transactionGroup: TransactionGroup; style?: CSSProperti
         allowNew
         value={null}
         labelText={''}
-        validateNewItemString={(s: string) => emailRegex.test(s)}
       />
       {transactionGroup.members.map((member) => (
         <Chip
@@ -63,7 +58,7 @@ const GroupMembers: FC<{ transactionGroup: TransactionGroup; style?: CSSProperti
           onDelete={member.joined ? undefined : () => removeMember(member.email)}
         />
       ))}
-    </Row>
+    </Stack>
   )
 }
 

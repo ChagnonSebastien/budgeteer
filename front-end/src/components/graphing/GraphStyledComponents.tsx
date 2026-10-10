@@ -1,64 +1,69 @@
-import { default as styled } from 'styled-components'
+import { styled } from '@mui/material/styles'
 
-import { Column } from '../shared/Layout'
+import { Column, withoutTransientProps } from '../shared/Layout'
 
-export const GraphContainer = styled.div`
-  width: 100%;
-`
+export const GraphContainer = styled('div')({
+  width: '100%',
+})
 
-export const FirstDivision = styled.div`
-  width: 100%;
-  max-width: 100vh;
-  align-items: stretch;
-  display: flex;
-  flex-direction: column;
-  justify-content: stretch;
-  margin: 0 auto;
-  flex-grow: 1;
-`
+export const FirstDivision = styled('div')({
+  width: '100%',
+  maxWidth: '100vh',
+  alignItems: 'stretch',
+  display: 'flex',
+  flexDirection: 'column',
+  justifyContent: 'stretch',
+  margin: '0 auto',
+  flexGrow: 1,
+})
 
-export const SecondDivision = styled(Column)<{ $splitView?: boolean }>`
-  padding: 1rem 2rem;
-  border-top: ${(props) => (props.$splitView ? 'none' : '1px solid rgba(128,128,128,0.2)')};
-  height: ${(props) => (props.$splitView ? '100%' : 'auto')};
-  gap: 2rem;
-  align-self: stretch;
-`
+export const SecondDivision = styled(
+  Column,
+  withoutTransientProps,
+)<{ $splitView?: boolean }>(({ theme, $splitView }) => ({
+  padding: theme.spacing(2, 4),
+  borderTop: $splitView ? 'none' : `1px solid ${theme.palette.border.subtle}`,
+  height: $splitView ? '100%' : 'auto',
+  gap: theme.spacing(4),
+  alignSelf: 'stretch',
+}))
 
-export const GraphTooltip = styled.div`
-  padding: 0.5rem 0.75rem;
-  background: rgba(0, 0, 0, 0.85);
-  border-radius: 0.25rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  z-index: 100;
-`
+export const GraphTooltip = styled('div')(({ theme }) => ({
+  padding: theme.spacing(1, 1.5),
+  background: theme.palette.overlay.tooltip,
+  borderRadius: theme.radius.sm,
+  display: 'flex',
+  flexDirection: 'column',
+  gap: theme.spacing(0.5),
+  zIndex: 100,
+}))
 
-export const GraphTooltipDate = styled.div`
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 0.9rem;
-`
+export const GraphTooltipDate = styled('div')(({ theme }) => ({
+  color: theme.palette.text.secondary,
+  fontSize: theme.typography.body2.fontSize,
+}))
 
-export const GraphTooltipRow = styled.div`
-  display: flex;
-  align-items: center;
-`
+export const GraphTooltipRow = styled('div')({
+  display: 'flex',
+  alignItems: 'center',
+})
 
-export const GraphTooltipColor = styled.div`
-  width: 0.75rem;
-  height: 0.75rem;
-  border-radius: 0.125rem;
-  margin-right: 0.5rem;
-`
+export const GraphTooltipColor = styled('div')(({ theme }) => ({
+  width: theme.spacing(1.5),
+  height: theme.spacing(1.5),
+  borderRadius: theme.radius.sm,
+  marginRight: theme.spacing(1),
+}))
 
-export const GraphTooltipLabel = styled.div`
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 0.9rem;
-`
+export const GraphTooltipLabel = styled('div')(({ theme }) => ({
+  color: theme.palette.text.primary,
+  fontSize: theme.typography.body2.fontSize,
+}))
 
-export const GraphTooltipValue = styled.div`
-  margin-left: auto;
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 0.9rem;
-`
+export const GraphTooltipValue = styled('div')(({ theme }) => ({
+  marginLeft: 'auto',
+  color: theme.palette.text.primary,
+  fontSize: theme.typography.body2.fontSize,
+}))
+
+export const gainColor = (value: number) => (value < 0 ? 'error.light' : 'success.light')

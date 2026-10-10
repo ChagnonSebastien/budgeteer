@@ -1,4 +1,3 @@
-import { Typography } from '@mui/material'
 import { FC, useContext, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
@@ -7,9 +6,8 @@ import CurrencyCard from '../components/currencies/CurrencyCard'
 import ExchangeRateHistory from '../components/graphing/ExchangeRateHistory'
 import { IconToolsContext } from '../components/icons/IconTools'
 import { SearchOverlay } from '../components/inputs/SearchOverlay'
-import BasicModal from '../components/shared/BasicModal'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
-import { DetailCard, FancyModal } from '../components/shared/FancyModal'
+import { DetailCard, DetailHeading, FancyDialog, FancyModal } from '../components/shared/FancyModal'
 import ScrollingOverButton, { CustomScrolling } from '../components/shared/ScrollingOverButton'
 import Currency, { CurrencyID } from '../domain/model/currency'
 import MixedAugmentation from '../service/MixedAugmentation'
@@ -49,17 +47,11 @@ const CurrenciesPage: FC = () => {
       <ScrollingOverButton
         button={{ text: 'New', onClick: () => navigate('/currencies/new') }}
         scrollingContainerRef={scrollingContainerRef}
-        contentStyle={{ maxWidth: '50rem' }}
+        contentWidth="default"
       >
         <CustomScrolling
           ref={scrollingContainerRef}
-          style={{
-            overflowY: 'auto',
-            flexGrow: 1,
-            paddingBottom: '4rem',
-            position: 'relative',
-            gap: '0.05rem',
-          }}
+          sx={{ overflowY: 'auto', flexGrow: 1, pb: 8, position: 'relative', gap: 0.125 }}
         >
           <ItemList
             items={orderedCurrencies}
@@ -77,20 +69,7 @@ const CurrenciesPage: FC = () => {
         <SearchOverlay filter={filter} setFilter={setFilter} placeholder="Search currencies..." />
       </ScrollingOverButton>
 
-      <BasicModal
-        open={clickedCurrency !== null}
-        onClose={() => setClickedCurrency(null)}
-        slotProps={{
-          paper: {
-            style: {
-              backgroundColor: 'transparent',
-              borderRadius: '24px',
-              border: '0',
-              overflow: 'hidden',
-            },
-          },
-        }}
-      >
+      <FancyDialog open={clickedCurrency !== null} onClose={() => setClickedCurrency(null)}>
         {clickedCurrency !== null && (
           <FancyModal
             title={{
@@ -105,7 +84,7 @@ const CurrenciesPage: FC = () => {
               {
                 Icon: IconLib.MdEdit,
                 label: 'Edit Currency',
-                color: '#64B5F6',
+                intent: 'edit',
                 description: 'Modify currency details',
                 action: () => navigate(`/currencies/edit/${clickedCurrency.id}`),
                 disabled: false,
@@ -113,7 +92,7 @@ const CurrenciesPage: FC = () => {
               {
                 Icon: IconLib.MdDelete,
                 label: 'Delete Currency',
-                color: '#EF5350',
+                intent: 'destructive',
                 description: 'Remove this currency',
                 action: () => {},
                 disabled: true,
@@ -124,17 +103,7 @@ const CurrenciesPage: FC = () => {
               <DetailCard title="Default Currency" value="" />
             ) : (
               <>
-                <Typography
-                  variant="subtitle2"
-                  style={{
-                    opacity: 0.6,
-                    marginBottom: '16px',
-                    letterSpacing: '0.05em',
-                    fontSize: '0.75rem',
-                  }}
-                >
-                  EXCHANGE RATE HISTORY
-                </Typography>
+                <DetailHeading>EXCHANGE RATE HISTORY</DetailHeading>
                 <div
                   style={{
                     height: 'max(25vh, 200px)',
@@ -149,7 +118,7 @@ const CurrenciesPage: FC = () => {
             )}
           </FancyModal>
         )}
-      </BasicModal>
+      </FancyDialog>
     </ContentWithHeader>
   )
 }

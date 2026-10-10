@@ -1,12 +1,12 @@
-$react-time-range--gray: #C8CACC;
-$react-time-range--highlight-tap: #000000;
-$react-time-range--rail-bg: #505050;
-$react-time-range--handle-bg: #FFFFFF;
-$react-time-range--handle-bg--disabled: #666;
-$react-time-range--track--valid: rgb(98, 203, 102);
-$react-time-range--track--not-valid: rgb(214, 0, 11);
-$react-time-range--tick-label: #77828C;
-$react-time-range--track--disabled: repeating-linear-gradient( -45deg, transparent, transparent 3px, #D0D3D7 4px, #D0D3D7 2px);
+$react-time-range--gray: var(--time-range-tick);
+$react-time-range--highlight-tap: var(--time-range-tap);
+$react-time-range--rail-bg: var(--time-range-rail);
+$react-time-range--handle-bg: var(--time-range-handle);
+$react-time-range--handle-bg--disabled: var(--time-range-handle-disabled);
+$react-time-range--track--valid: var(--time-range-valid);
+$react-time-range--track--not-valid: var(--time-range-invalid);
+$react-time-range--tick-label: var(--time-range-tick-label);
+$react-time-range--track--disabled: repeating-linear-gradient( -45deg, transparent, transparent 3px, var(--time-range-disabled-stripe) 4px, var(--time-range-disabled-stripe) 2px);
 
 .react_time_range__time_range_container {
   padding: 1.5rem 3rem 0;

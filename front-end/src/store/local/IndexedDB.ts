@@ -1,4 +1,4 @@
-import Dexie, { type EntityTable, Table } from 'dexie'
+import { Dexie, type EntityTable, Table } from 'dexie'
 
 import { SplitType } from '../../domain/model/transaction'
 import { SplitType as TransactionGroupSplitType } from '../../domain/model/transactionGroup'

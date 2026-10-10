@@ -1,3 +1,4 @@
+import { useTheme } from '@mui/material'
 import React, { FC, useMemo, useState } from 'react'
 
 import {
@@ -51,6 +52,7 @@ const LineChart: FC<Props> = ({
   stackTooltip,
 }) => {
   const [tooltip, setTooltip] = useState<TooltipDefinition | null>(null)
+  const theme = useTheme()
 
   const datasetLabels = useMemo<DataSetLabel[]>(() => {
     if (propDatasetsLabels && propDatasetsLabels.length) return propDatasetsLabels
@@ -110,7 +112,9 @@ const LineChart: FC<Props> = ({
   const yNormalScale = (y: number) => 1000 - ((Math.max(y, graphMinY) - graphMinY) / (graphMaxY - graphMinY)) * 1000
 
   const getColor = (id: string) => {
-    return datasetLabels.indexOf(id) !== -1 ? colors[datasetLabels.indexOf(id) % colors.length] : '#ccc'
+    return datasetLabels.indexOf(id) !== -1
+      ? colors[datasetLabels.indexOf(id) % colors.length]
+      : theme.palette.grey[400]
   }
 
   const splines = useMemo(() => {

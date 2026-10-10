@@ -1,26 +1,28 @@
 import { Dialog, DialogProps } from '@mui/material'
+import { styled } from '@mui/material/styles'
 import { FC, useContext } from 'react'
-import { default as styled } from 'styled-components'
 
+import { withoutTransientProps } from './Layout'
 import { DrawerContext } from '../Menu'
 
-const StyledDialog = styled(Dialog)<{ $isPersistentDrawer: boolean; $drawerWidth: number }>`
-  ${(props) =>
-    props.$isPersistentDrawer &&
-    `
-    --drawer-width: ${props.$drawerWidth}px;
-    
-    & .MuiBackdrop-root {
-      left: ${props.$drawerWidth}px;
-      width: calc(100% - ${props.$drawerWidth}px);
-    }
-    
-    & .MuiDialog-paper {
-      position: relative;
-      left: ${props.$drawerWidth / 2}px;
-    }
-  `}
-`
+const StyledDialog = styled(
+  Dialog,
+  withoutTransientProps,
+)<{ $isPersistentDrawer: boolean; $drawerWidth: number }>(({ $isPersistentDrawer, $drawerWidth }) =>
+  $isPersistentDrawer
+    ? {
+        '--drawer-width': `${$drawerWidth}px`,
+        '& .MuiBackdrop-root': {
+          left: `${$drawerWidth}px`,
+          width: `calc(100% - ${$drawerWidth}px)`,
+        },
+        '& .MuiDialog-paper': {
+          position: 'relative',
+          left: `${$drawerWidth / 2}px`,
+        },
+      }
+    : {},
+)
 
 const BasicModal: FC<DialogProps> = (props) => {
   const { open, drawerWidth } = useContext(DrawerContext)

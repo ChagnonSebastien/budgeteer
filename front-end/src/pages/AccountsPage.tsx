@@ -1,4 +1,4 @@
-import { Checkbox, IconButton, Menu, MenuItem, Typography } from '@mui/material'
+import { Checkbox, IconButton, Menu, MenuItem, Stack } from '@mui/material'
 import { FC, useContext, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 
@@ -6,9 +6,8 @@ import AccountCard from '../components/accounts/AccountCard'
 import GroupedAccountList, { isAccountUnused } from '../components/accounts/GroupedAccountList'
 import { IconToolsContext } from '../components/icons/IconTools'
 import { DrawerContext } from '../components/Menu'
-import BasicModal from '../components/shared/BasicModal'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
-import { DetailCard, FancyModal } from '../components/shared/FancyModal'
+import { DetailCard, DetailHeading, FancyDialog, FancyModal } from '../components/shared/FancyModal'
 import ScrollingOverButton from '../components/shared/ScrollingOverButton'
 import Account from '../domain/model/account'
 import { formatAmount } from '../domain/model/currency'
@@ -89,7 +88,7 @@ const AccountsPage: FC = () => {
       <ScrollingOverButton
         button={{ text: 'New', onClick: () => navigate('/accounts/new') }}
         scrollingContainerRef={scrollingContainerRef}
-        contentStyle={{ maxWidth: '65rem' }}
+        contentWidth="wide"
       >
         <GroupedAccountList
           ItemComponent={AccountCard}
@@ -107,20 +106,7 @@ const AccountsPage: FC = () => {
         />
       </ScrollingOverButton>
 
-      <BasicModal
-        open={clickedAccount !== null}
-        onClose={handleClose}
-        slotProps={{
-          paper: {
-            style: {
-              backgroundColor: 'transparent',
-              borderRadius: '24px',
-              border: '0',
-              overflow: 'hidden',
-            },
-          },
-        }}
-      >
+      <FancyDialog open={clickedAccount !== null} onClose={handleClose}>
         {clickedAccount !== null && (
           <FancyModal
             title={{
@@ -135,7 +121,7 @@ const AccountsPage: FC = () => {
               {
                 Icon: IconLib.MdEdit,
                 label: 'Edit Account',
-                color: '#64B5F6',
+                intent: 'edit',
                 description: 'Modify account details',
                 action: () => navigate(`/accounts/edit/${clickedAccount.id}`),
                 disabled: false,
@@ -143,7 +129,7 @@ const AccountsPage: FC = () => {
               {
                 Icon: IconLib.MdDelete,
                 label: 'Delete Account',
-                color: '#EF5350',
+                intent: 'destructive',
                 description: 'Remove this account',
                 action: () => {},
                 disabled: true,
@@ -151,7 +137,7 @@ const AccountsPage: FC = () => {
               {
                 Icon: IconLib.MdList,
                 label: 'View Transactions',
-                color: '#81C784',
+                intent: 'navigate',
                 description: 'See all account activity',
                 action: () => navigate(`/transactions?accounts=[${clickedAccount.id}]`),
                 disabled: false,
@@ -160,18 +146,8 @@ const AccountsPage: FC = () => {
           >
             {balanceEntries.length > 0 && (
               <>
-                <Typography
-                  variant="subtitle2"
-                  style={{
-                    opacity: 0.6,
-                    marginBottom: '16px',
-                    letterSpacing: '0.05em',
-                    fontSize: '0.75rem',
-                  }}
-                >
-                  BALANCES
-                </Typography>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <DetailHeading>BALANCES</DetailHeading>
+                <Stack spacing={1.5}>
                   {balanceEntries.map(({ currency, amount }, index) => (
                     <DetailCard
                       key={`currency-card-${currency.id}`}
@@ -181,12 +157,12 @@ const AccountsPage: FC = () => {
                       value={formatAmount(currency, amount, privacyMode)}
                     />
                   ))}
-                </div>
+                </Stack>
               </>
             )}
           </FancyModal>
         )}
-      </BasicModal>
+      </FancyDialog>
     </ContentWithHeader>
   )
 }

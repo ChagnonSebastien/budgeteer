@@ -1,6 +1,6 @@
 import { Button, Stack, TextField, ToggleButton, ToggleButtonGroup, Tooltip, Typography } from '@mui/material'
+import { styled } from '@mui/material/styles'
 import { FC, FormEvent, useCallback, useContext, useEffect, useMemo, useState } from 'react'
-import { default as styled } from 'styled-components'
 
 import Account, { Balance } from '../../domain/model/account'
 import { AccountServiceContext, CurrencyServiceContext } from '../../service/ServiceContext'
@@ -8,14 +8,9 @@ import CurrencyPicker from '../currencies/CurrencyPicker'
 import { IconToolsContext } from '../icons/IconTools'
 import { FixedPointInput } from '../inputs/FixedPointInput'
 import FormWrapper from '../shared/FormWrapper'
-import { Row, TinyHeader } from '../shared/Layout'
 import { useToast } from '../shared/ToastProvider'
 
-const IconButton = styled.div`
-  display: flex;
-  flex-shrink: 0;
-  cursor: pointer;
-`
+const IconButton = styled('div')({ display: 'flex', flexShrink: 0, cursor: 'pointer' })
 
 interface Props {
   initialAccount?: Account
@@ -181,7 +176,9 @@ const AccountForm: FC<Props> = (props) => {
       />
 
       <div>
-        <TinyHeader>Starting balance</TinyHeader>
+        <Typography variant="caption" color="text.secondary">
+          Starting balance
+        </Typography>
         <Typography variant="body2" color="textSecondary" sx={{ mt: 1, mb: 2 }}>
           How much is in this account right now. If you plan to record past transactions, enter the balance from before
           the first one instead. You can change it later.
@@ -191,7 +188,7 @@ const AccountForm: FC<Props> = (props) => {
           {initialAmounts.map((i) => {
             const currency = currencies.find((c) => c.id === i.currencyId)
             return (
-              <Row key={i.uid} style={{ alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+              <Stack key={i.uid} direction="row" alignItems="center" useFlexGap spacing={2} flexWrap="wrap">
                 <ToggleButtonGroup
                   exclusive
                   size="small"
@@ -212,7 +209,7 @@ const AccountForm: FC<Props> = (props) => {
                 {currencies.length > 1 && (
                   <CurrencyPicker
                     errorText={NoError}
-                    style={{ flex: '1 1 10rem' }}
+                    sx={{ flex: '1 1 10rem' }}
                     currencies={[...(currency ? [currency] : []), ...availableCurrencies]}
                     selectedCurrencyId={i.currencyId}
                     setSelectedCurrencyId={(selected) =>
@@ -241,7 +238,7 @@ const AccountForm: FC<Props> = (props) => {
                     <IconLib.BsDashCircle size="1.25rem" />
                   </IconButton>
                 )}
-              </Row>
+              </Stack>
             )
           })}
         </Stack>

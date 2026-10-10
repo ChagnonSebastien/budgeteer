@@ -9,7 +9,7 @@ const FirstAccountSetup: FC = () => {
 
   return (
     <Box sx={{ height: '100%', overflowY: 'auto', display: 'flex' }}>
-      <Stack spacing={2} sx={{ p: 2, maxWidth: '50rem', width: '100%', m: 'auto' }}>
+      <Stack spacing={2} sx={{ p: 2, maxWidth: (t) => t.contentWidth.default, width: '100%', m: 'auto' }}>
         <Typography variant="h5">Add your first account</Typography>
         <Typography color="textSecondary">
           Every transaction moves money in or out of one of your accounts: a bank account, a credit card or the cash in

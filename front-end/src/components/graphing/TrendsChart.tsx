@@ -1,4 +1,4 @@
-import { useTheme } from '@mui/material'
+import { Box, useTheme } from '@mui/material'
 import { ResponsiveBar } from '@nivo/bar'
 import {
   addMonths,
@@ -23,7 +23,7 @@ import { formatAmount, formatFull } from '../../domain/model/currency'
 import MixedAugmentation from '../../service/MixedAugmentation'
 import { darkTheme } from '../../utils'
 import { DrawerContext } from '../Menu'
-import { GraphTooltip, GraphTooltipDate } from './GraphStyledComponents'
+import { gainColor, GraphTooltip, GraphTooltipDate } from './GraphStyledComponents'
 
 export type Grouping = 'years' | 'quarters' | 'months' | 'weeks'
 
@@ -250,7 +250,7 @@ const TrendsChart: FC<Props> = (props) => {
                   y1={`${y1}%`}
                   x2={`${x2}%`}
                   y2={`${y2}%`}
-                  stroke="#eeeeff"
+                  stroke={theme.palette.text.primary}
                   strokeWidth="0.2"
                   strokeDasharray="1,0.5"
                 />
@@ -265,12 +265,12 @@ const TrendsChart: FC<Props> = (props) => {
               y1="0"
               x2="20"
               y2="0"
-              stroke="#ffffff"
+              stroke={theme.palette.common.white}
               strokeWidth={1.5}
               strokeDasharray="4,3"
               strokeLinecap="round"
             />
-            <text x="25" y="5" fontSize="12" fill="#ffffff" opacity="0.7">
+            <text x="25" y="5" fontSize={theme.typography.caption.fontSize} fill={theme.palette.text.secondary}>
               Rolling Avg ({rollingTail})
             </text>
           </g>
@@ -297,9 +297,7 @@ const TrendsChart: FC<Props> = (props) => {
           <GraphTooltip style={{ whiteSpace: 'nowrap' }}>
             <GraphTooltipDate>{label(new Date(props.indexValue))}</GraphTooltipDate>
             {!privacyMode && (
-              <div style={{ color: props.value! < 0 ? theme.palette.error.light : theme.palette.success.light }}>
-                {formatFull(defaultCurrency, props.value, privacyMode)}
-              </div>
+              <Box sx={{ color: gainColor(props.value!) }}>{formatFull(defaultCurrency, props.value, privacyMode)}</Box>
             )}
           </GraphTooltip>
         )}

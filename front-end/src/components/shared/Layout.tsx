@@ -1,126 +1,119 @@
-import { Box, SxProps, Theme, Typography } from '@mui/material'
+import { Box, Stack, SxProps, Theme, Typography } from '@mui/material'
+import { alpha, styled } from '@mui/material/styles'
 import React, { FC, ReactNode } from 'react'
-import { css, default as styled } from 'styled-components'
 
-interface Props {
+interface SectionProps {
   title: string
   children: ReactNode
+  compact?: boolean
   sx?: SxProps<Theme> | undefined
 }
 
-const Layout: FC<Props> = (props) => (
-  <>
-    <Row style={{ marginTop: '1rem' }}>
-      <div style={{ color: 'gray', margin: '0 1rem', transform: 'translate(0, 0.5rem)' }}>{props.title}</div>
-      <div style={{ borderBottom: '1px grey solid', flexGrow: 1 }} />
-    </Row>
+export const Section: FC<SectionProps> = ({ title, children, compact = false, sx }) => (
+  <Box>
+    <Stack direction="row">
+      <Typography
+        variant={compact ? 'caption' : 'body1'}
+        color={compact ? 'text.secondary' : 'text.disabled'}
+        sx={{ mx: 2, transform: (t) => `translateY(${t.spacing(1)})` }}
+      >
+        {title}
+      </Typography>
+      <Box sx={{ flexGrow: 1, borderBottom: 1, borderColor: 'border.strong' }} />
+    </Stack>
     <Box
       sx={{
-        ...props.sx,
-        padding: `2rem ${window.innerWidth > 600 ? '1' : '0'}rem`,
-        border: '1px grey solid',
+        ...(compact ? { p: 2 } : { py: 4, px: { xs: 0, sm: 2 } }),
+        border: 1,
         borderTop: 0,
+        borderColor: 'border.strong',
+        ...sx,
       }}
     >
-      {props.children}
+      {children}
     </Box>
-  </>
+  </Box>
 )
 
-export const MaxSpace = styled.div`
-  height: 100%;
-  width: 100%;
-`
-
-export const MaxSpaceNoOverflow = styled(MaxSpace)`
-  height: 100%;
-  width: 100%;
-  overflow: hidden;
-`
-
-export const Centered = styled(MaxSpaceNoOverflow)`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-`
-
-export const Column = styled.div`
-  display: flex;
-  flex-direction: column;
-`
-
-export const Row = styled.div`
-  display: flex;
-  flex-direction: row;
-`
-
-export const TinyHeader = (props: { children: ReactNode }) => (
-  <Typography
-    fontSize="0.75rem"
-    color="rgba(255, 255, 255, 0.7)"
-    fontWeight={400}
-    lineHeight="1.4375em"
-    letterSpacing="0.00938em"
-    fontFamily="'Roboto', 'Helvetica', 'Arial', sans-serif"
-  >
-    {props.children}
-  </Typography>
+export const PageBody: FC<{ children: ReactNode; width?: keyof Theme['contentWidth'] }> = ({
+  children,
+  width = 'default',
+}) => (
+  <Stack spacing={2} sx={{ width: '100%', maxWidth: (t) => t.contentWidth[width] }}>
+    {children}
+  </Stack>
 )
 
-export const GradientCard = styled.div<{
+export const Stat: FC<{ label: string; value: ReactNode }> = ({ label, value }) => (
+  <Stack>
+    <Typography variant="label" color="text.disabled">
+      {label}
+    </Typography>
+    <Typography variant="stat">{value}</Typography>
+  </Stack>
+)
+
+export const withoutTransientProps = {
+  shouldForwardProp: (prop: PropertyKey) => !String(prop).startsWith('$'),
+}
+
+export const MaxSpace = styled('div')({
+  height: '100%',
+  width: '100%',
+})
+
+export const MaxSpaceNoOverflow = styled(MaxSpace)({
+  overflow: 'hidden',
+})
+
+export const Centered = styled(MaxSpaceNoOverflow)({
+  display: 'flex',
+  justifyContent: 'center',
+  alignItems: 'center',
+})
+
+export const Column = styled('div')({
+  display: 'flex',
+  flexDirection: 'column',
+})
+
+export const Row = styled('div')({
+  display: 'flex',
+  flexDirection: 'row',
+})
+
+export const GradientCard = styled(
+  'div',
+  withoutTransientProps,
+)<{
   $selected: boolean
   $withGradientBackground: boolean
   $hoverEffect: boolean
-}>`
-  border-radius: 0.5rem;
-  transition: all 200ms ease-in-out;
-  border-left: 3px solid transparent;
-  cursor: pointer;
-
-  ${({ $withGradientBackground }) =>
-    $withGradientBackground &&
-    css`
-      background: linear-gradient(135deg, rgba(128, 128, 128, 0.1) 0%, rgba(128, 128, 128, 0.04) 100%);
-      border: 1px solid rgba(128, 128, 128, 0.16);
-      border-radius: 1rem;
-      backdrop-filter: blur(12px);
-      box-shadow:
-        0 4px 6px -1px rgba(0, 0, 0, 0.1),
-        0 2px 4px -1px rgba(0, 0, 0, 0.06);
-      margin: 0.25rem 0;
-    `}
-
-  ${({ $selected }) =>
-    $selected &&
-    css`
-      background-color: rgba(200, 75, 49, 0.12);
-      border-left-color: #c84b31;
-    `}
-
-  ${({ $hoverEffect, $withGradientBackground, $selected }) =>
-    $hoverEffect &&
-    css`
-      &:hover {
-        background-color: rgba(128, 128, 128, 0.16);
-        transform: translateY(-2px);
-
-        ${() =>
-          $withGradientBackground &&
-          css`
-            transform: translateY(-2px) scale(1.01);
-            box-shadow:
-              0 10px 15px -3px rgba(0, 0, 0, 0.1),
-              0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            border-color: rgba(128, 128, 128, 0.3);
-          `}
-
-        ${() =>
-          $selected &&
-          css`
-            background-color: rgba(200, 75, 49, 0.16);
-          `}
-      }
-    `}
-`
-
-export default Layout
+}>(({ theme, $selected, $withGradientBackground, $hoverEffect }) => ({
+  borderRadius: theme.radius.md,
+  transition: 'all 200ms ease-in-out',
+  borderLeft: '3px solid transparent',
+  cursor: 'pointer',
+  ...($withGradientBackground && {
+    background: `linear-gradient(135deg, ${theme.palette.surface.muted} 0%, ${theme.palette.surface.subtle} 100%)`,
+    border: `1px solid ${theme.palette.surface.raised}`,
+    borderRadius: theme.radius.card,
+    backdropFilter: 'blur(12px)',
+    boxShadow: theme.elevation.subtle,
+    margin: theme.spacing(0.5, 0),
+  }),
+  ...($selected && {
+    backgroundColor: alpha(theme.palette.primary.main, 0.12),
+    borderLeftColor: theme.palette.primary.main,
+  }),
+  ...($hoverEffect && {
+    '&:hover': {
+      backgroundColor: $selected ? alpha(theme.palette.primary.main, 0.16) : theme.palette.surface.raised,
+      transform: $withGradientBackground ? 'translateY(-2px) scale(1.01)' : 'translateY(-2px)',
+      ...($withGradientBackground && {
+        boxShadow: theme.elevation.card,
+        borderColor: theme.palette.border.default,
+      }),
+    },
+  }),
+}))

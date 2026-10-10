@@ -1,4 +1,4 @@
-import { Alert, Button, Typography } from '@mui/material'
+import { Alert, Button, Stack, Typography } from '@mui/material'
 import { FC, useContext, useMemo, useState } from 'react'
 
 import { UserContext } from '../../App'
@@ -14,9 +14,8 @@ import {
 } from '../../service/ServiceContext'
 import CategoryPicker from '../categories/CategoryPicker'
 import CurrencyPicker from '../currencies/CurrencyPicker'
-import FormWrapper from '../shared/FormWrapper'
 import BasicModal from '../shared/BasicModal'
-import { Column, Row } from '../shared/Layout'
+import FormWrapper from '../shared/FormWrapper'
 import { useToast } from '../shared/ToastProvider'
 
 interface Props {
@@ -91,17 +90,17 @@ const JoinTransactionGroup: FC<Props> = ({ transactionGroup }) => {
 
   if (isGuest) {
     return (
-      <Column style={{ gap: '1rem', alignItems: 'start' }}>
+      <Stack sx={{ gap: 2, alignItems: 'start' }}>
         {intro}
         <Button variant="contained" onClick={() => join({})}>
           Join group
         </Button>
-      </Column>
+      </Stack>
     )
   }
 
   return (
-    <Column style={{ gap: '1rem' }}>
+    <Stack sx={{ gap: 2 }}>
       {intro}
       <FormWrapper
         onSubmit={async () => {
@@ -149,13 +148,13 @@ const JoinTransactionGroup: FC<Props> = ({ transactionGroup }) => {
         />
       </FormWrapper>
       <BasicModal open={confirmingCurrency} onClose={() => setConfirmingCurrency(false)}>
-        <Column style={{ padding: '1.5rem', gap: '1rem', maxWidth: '24rem' }}>
+        <Stack sx={{ p: 3, gap: 2, maxWidth: (t) => t.contentWidth.dialog }}>
           <Typography variant="h6">Add {groupCurrencyLabel} to your currencies?</Typography>
           <Typography color="text.secondary">
             You already have {lookAlikes.map((c) => `${c.name} (${c.symbol})`).join(', ')}. If one of them is the
             currency this group uses, pick it instead of adding a duplicate.
           </Typography>
-          <Row style={{ gap: '1rem', justifyContent: 'end' }}>
+          <Stack direction="row" sx={{ gap: 2, justifyContent: 'end' }}>
             <Button color="inherit" onClick={() => setConfirmingCurrency(false)}>
               Cancel
             </Button>
@@ -168,10 +167,10 @@ const JoinTransactionGroup: FC<Props> = ({ transactionGroup }) => {
             >
               Add anyway
             </Button>
-          </Row>
-        </Column>
+          </Stack>
+        </Stack>
       </BasicModal>
-    </Column>
+    </Stack>
   )
 }
 

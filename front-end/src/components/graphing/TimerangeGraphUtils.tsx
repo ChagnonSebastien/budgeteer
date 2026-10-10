@@ -1,4 +1,4 @@
-import { Box, Typography } from '@mui/material'
+import { Box, Typography, useTheme } from '@mui/material'
 import { addDays, isBefore, isSameDay } from 'date-fns'
 import React, { Dispatch, FC, ReactNode, SetStateAction, useMemo } from 'react'
 
@@ -89,15 +89,7 @@ export const XDateGrid: FC<{ range: [Date, Date]; height: number; config: DateAx
     >
       {xSubdivisions.map((element) => (
         <div key={`x-grid-${element.label}`} style={{ flexGrow: element.width, position: 'relative' }}>
-          <Box
-            style={{
-              right: 0,
-              width: 1,
-              height: '100%',
-              backgroundColor: 'rgba(128, 128, 128, 0.2)',
-              position: 'absolute',
-            }}
-          />
+          <Box sx={{ right: 0, width: '1px', height: '100%', bgcolor: 'border.subtle', position: 'absolute' }} />
         </div>
       ))}
     </Row>
@@ -114,15 +106,16 @@ export const BottomDateAxis: FC<{ range: [Date, Date]; height: number; config: D
           {element.label && (
             <>
               <Box
-                style={{
-                  width: 1,
-                  backgroundColor: 'white',
+                sx={{
+                  width: '1px',
+                  bgcolor: 'common.white',
                   height: props.config.tickSize,
                   position: 'absolute',
                   right: 0,
                 }}
               />
               <Typography
+                variant="caption"
                 style={{
                   transform: 'rotate(-45deg)',
                   transformOrigin: 'right',
@@ -131,7 +124,6 @@ export const BottomDateAxis: FC<{ range: [Date, Date]; height: number; config: D
                   top: 0,
                   right: 0,
                   whiteSpace: 'nowrap',
-                  fontSize: '0.75rem',
                 }}
               >
                 {element.label}
@@ -170,6 +162,7 @@ export const DateBasedGraph = (props: {
   range: [Date, Date]
   datasetLength: number
 }) => {
+  const theme = useTheme()
   const {
     margin,
     yAxisValues,
@@ -226,8 +219,11 @@ export const DateBasedGraph = (props: {
                 key={`y-label-${i}`}
                 style={{ position: 'relative', flexGrow: i === 0 ? (startTick - graphMinY) / step : 1 }}
               >
-                <Box style={{ width: tickSizeY, borderTop: '1px solid white', position: 'absolute', right: 0 }} />
+                <Box
+                  sx={{ width: tickSizeY, borderTop: 1, borderColor: 'common.white', position: 'absolute', right: 0 }}
+                />
                 <Typography
+                  variant="caption"
                   style={{
                     transform: `translate(-${tickSizeY + 5}px, -50%)`,
                     transformOrigin: 'center',
@@ -235,7 +231,6 @@ export const DateBasedGraph = (props: {
                     top: 0,
                     right: 0,
                     whiteSpace: 'nowrap',
-                    fontSize: '0.75rem',
                   }}
                 >
                   {fmtY(startTick + i * step)}
@@ -255,7 +250,7 @@ export const DateBasedGraph = (props: {
                   position: 'absolute',
                   height: '100%',
                   width: tooltip.index * tooltip.slice,
-                  borderRight: '2px dashed rgba(255, 255, 255, 0.5)',
+                  borderRight: `2px dashed ${theme.palette.text.disabled}`,
                   pointerEvents: 'none',
                 }}
               />
@@ -289,9 +284,7 @@ export const DateBasedGraph = (props: {
                     key={`y-grid-${i}`}
                     style={{ position: 'relative', flexGrow: i === 0 ? (startTick - graphMinY) / step : 1 }}
                   >
-                    <Box
-                      style={{ width: '100%', borderTop: '1px solid rgba(128, 128, 128, 0.2)', position: 'absolute' }}
-                    />
+                    <Box sx={{ width: '100%', borderTop: 1, borderColor: 'border.subtle', position: 'absolute' }} />
                   </div>
                 ))}
                 <div style={{ flexGrow: (graphMaxY - endTick) / step }} />
@@ -349,7 +342,7 @@ export const DateBasedGraph = (props: {
             style={{
               position: 'absolute',
               top: -margin.top,
-              ...(tooltip.side === 'right' ? { left: '1rem' } : { right: '1rem' }),
+              ...(tooltip.side === 'right' ? { left: theme.spacing(2) } : { right: theme.spacing(2) }),
               pointerEvents: 'none',
               whiteSpace: 'nowrap',
             }}

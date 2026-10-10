@@ -39,16 +39,10 @@ const TrendsPage: FC = () => {
       </GraphContainer>
 
       <SecondDivision
-        style={{
-          flexDirection: 'row',
-          columnGap: '3rem',
-          flexWrap: 'wrap',
-          rowGap: '1rem',
-          backgroundColor: 'rgba(128, 128, 128, 0.04)',
-        }}
+        sx={{ flexDirection: 'row', columnGap: 6, flexWrap: 'wrap', rowGap: 2, bgcolor: 'surface.subtle' }}
         ref={setOptionsRef}
       >
-        <Box style={{ flexGrow: 1, width: '100%' }}>
+        <Box sx={{ flexGrow: 1, width: '100%' }}>
           <CategoryPicker
             selectedConfig={{
               mode: 'multi',
@@ -61,7 +55,7 @@ const TrendsPage: FC = () => {
           />
         </Box>
 
-        <Box style={{ flexGrow: 1, minWidth: '15rem' }}>
+        <Box sx={{ flexGrow: 1, minWidth: (t) => t.fieldWidth.md }}>
           <CounterInput
             label="Time Range"
             value={years}
@@ -69,7 +63,7 @@ const TrendsPage: FC = () => {
           />
         </Box>
 
-        <Box style={{ flexGrow: 3, minWidth: '25rem' }}>
+        <Box sx={{ flexGrow: 3, minWidth: (t) => t.fieldWidth.lg }}>
           <SelectOne
             label="Grouping"
             value={grouping}

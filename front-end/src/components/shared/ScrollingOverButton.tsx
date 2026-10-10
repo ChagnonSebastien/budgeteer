@@ -1,52 +1,47 @@
 import { Button } from '@mui/material'
-import React, { CSSProperties, FC, ReactNode, RefObject, useEffect, useState } from 'react'
-import { default as styled } from 'styled-components'
+import { styled, Theme } from '@mui/material/styles'
+import React, { FC, ReactNode, RefObject, useEffect, useState } from 'react'
 
 import { Column, MaxSpaceNoOverflow } from './Layout'
 import { useElementDimensions } from './useDimensions'
 
-export const CustomScrolling = styled(Column)`
-  overflow-y: auto;
-  padding-left: 1rem;
-  padding-right: 1rem;
+export const CustomScrolling = styled(Column)(({ theme }) => ({
+  overflowY: 'auto',
+  paddingLeft: theme.spacing(2),
+  paddingRight: theme.spacing(2),
+  '&::-webkit-scrollbar': {
+    width: 6,
+    height: 6,
+  },
+  '&::-webkit-scrollbar-track': {
+    background: 'transparent',
+  },
+  '&::-webkit-scrollbar-thumb': {
+    background: theme.palette.border.default,
+    borderRadius: 3,
+    transition: 'background-color 200ms',
+  },
+  '&::-webkit-scrollbar-thumb:hover': {
+    background: theme.palette.border.strong,
+  },
+  scrollbarColor: `${theme.palette.border.default} transparent`,
+}))
 
-  /* Modern scrollbar styling */
-  &::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: rgba(128, 128, 128, 0.4);
-    border-radius: 3px;
-    transition: background-color 200ms;
-  }
-
-  &::-webkit-scrollbar-thumb:hover {
-    background: rgba(128, 128, 128, 0.6);
-  }
-
-  /* Firefox scrollbar styling */
-  scrollbar-color: rgba(128, 128, 128, 0.4) transparent;
-`
-
-export const FadingDivider = styled.div<{ opacity: number }>`
-  height: 1rem;
-  border-top: 1px solid transparent;
-  border-image: linear-gradient(to right, transparent, #fff4 20%, #fff4 80%, transparent) 1;
-  background: radial-gradient(ellipse 100% 100% at 50% 0%, #fff2 0%, #fff0 50%, transparent 100%);
-  opacity: ${(props) => props.opacity};
-`
+export const FadingDivider = styled('div', { shouldForwardProp: (prop) => prop !== 'opacity' })<{
+  opacity: number
+}>(({ theme, opacity }) => ({
+  height: theme.spacing(2),
+  borderTop: '1px solid transparent',
+  borderImage: `linear-gradient(to right, transparent, ${theme.palette.border.subtle} 20%, ${theme.palette.border.subtle} 80%, transparent) 1`,
+  background: `radial-gradient(ellipse 100% 100% at 50% 0%, ${theme.palette.surface.muted} 0%, transparent 50%, transparent 100%)`,
+  opacity,
+}))
 
 const ScrollingOverButton: FC<{
   button?: { text: string; onClick(): void }
   children: ReactNode
   scrollingContainerRef?: RefObject<HTMLDivElement | null>
-  contentStyle?: CSSProperties
+  contentWidth?: keyof Theme['contentWidth']
 }> = (props) => {
   const [scrollProgress, setScrollProgress] = useState(1)
 
@@ -89,7 +84,10 @@ const ScrollingOverButton: FC<{
   }, [])
 
   return (
-    <MaxSpaceNoOverflow style={props.contentStyle} ref={setContentRef}>
+    <MaxSpaceNoOverflow
+      sx={{ maxWidth: props.contentWidth && ((t) => t.contentWidth[props.contentWidth!]) }}
+      ref={setContentRef}
+    >
       <Column style={{ height: `${contentHeight - (props.button ? optionsHeight : 0)}px`, position: 'relative' }}>
         {props.children}
       </Column>

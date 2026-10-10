@@ -1,4 +1,4 @@
-import Editor from '@monaco-editor/react'
+import { Editor } from '@monaco-editor/react'
 import { FC } from 'react'
 
 type Props = {

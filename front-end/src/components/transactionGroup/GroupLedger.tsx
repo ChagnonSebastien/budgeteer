@@ -1,47 +1,50 @@
-import { Typography } from '@mui/material'
+import { Box, Stack, Typography } from '@mui/material'
+import { styled } from '@mui/material/styles'
 import { FC, ReactNode, useContext, useMemo } from 'react'
-import { default as styled } from 'styled-components'
 
 import Currency, { formatFull, RateAutoupdateSettings } from '../../domain/model/currency'
 import { SettlementAugmentedTransaction } from '../../domain/model/settlement'
 import { AugmentedTransaction } from '../../domain/model/transaction'
 import TransactionGroup, { Email, Person } from '../../domain/model/transactionGroup'
 import { DrawerContext } from '../Menu'
-import { Column, Row } from '../shared/Layout'
 
-export const FirstDivision = styled.div`
-  width: 100%;
-  max-width: 28rem;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 1.5rem;
-  margin: 0 auto;
-  padding: 1.5rem clamp(0.75rem, 4vw, 1.5rem);
-`
+export const FirstDivision = styled('div')(({ theme }) => ({
+  width: '100%',
+  maxWidth: theme.contentWidth.compact,
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'stretch',
+  gap: theme.spacing(3),
+  margin: '0 auto',
+  padding: `${theme.spacing(3)} clamp(${theme.spacing(1.5)}, 4vw, ${theme.spacing(3)})`,
+}))
 
-export const SecondDivision = styled(Column)<{ $splitView?: boolean }>`
-  padding: 1rem clamp(0.5rem, 4vw, 2rem);
-  border-top: ${(props) => (props.$splitView ? 'none' : '1px solid rgba(128,128,128,0.2)')};
-  height: ${(props) => (props.$splitView ? '100%' : 'auto')};
-  gap: 2rem;
-  align-self: stretch;
-`
+export const SecondDivision = styled('div', {
+  shouldForwardProp: (prop) => !String(prop).startsWith('$'),
+})<{ $splitView?: boolean }>(({ theme, $splitView }) => ({
+  display: 'flex',
+  flexDirection: 'column',
+  padding: `${theme.spacing(2)} clamp(${theme.spacing(1)}, 4vw, ${theme.spacing(4)})`,
+  borderTop: $splitView ? 'none' : `1px solid ${theme.palette.border.subtle}`,
+  height: $splitView ? '100%' : 'auto',
+  gap: theme.spacing(4),
+  alignSelf: 'stretch',
+}))
 
-const Panel = styled.div`
-  background-color: rgba(128, 128, 128, 0.08);
-  border: 1px solid rgba(128, 128, 128, 0.16);
-  border-radius: 0.5rem;
-  padding: 0.5rem 0.75rem;
-`
+const Panel = styled('div')(({ theme }) => ({
+  backgroundColor: theme.palette.surface.muted,
+  border: `1px solid ${theme.palette.surface.raised}`,
+  borderRadius: theme.radius.md,
+  padding: theme.spacing(1, 1.5),
+}))
 
 export const Section: FC<{ title: string; children: ReactNode }> = ({ title, children }) => (
-  <Column style={{ gap: '0.5rem' }}>
+  <Stack spacing={1}>
     <Typography variant="overline" color="textSecondary" lineHeight={1} letterSpacing="0.08em">
       {title}
     </Typography>
     <Panel>{children}</Panel>
-  </Column>
+  </Stack>
 )
 
 // Id 0: built only to format group amounts, never a currency the user owns.
@@ -82,53 +85,45 @@ export const GroupPaidTable: FC<{ members: Person[]; transactions: AugmentedTran
   const format = (amount: number) => formatFull(currency, amount, privacyMode)
 
   return (
-    <Column>
+    <Stack>
       {members.map((member, index) => {
         const balance = balances.get(member.email)!
         return (
-          <Row
+          <Stack
             key={member.email}
-            style={{
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              gap: '1rem',
-              padding: '0.5rem 0',
-              borderTop: index === 0 ? undefined : '1px solid rgba(128,128,128,0.12)',
-            }}
+            direction="row"
+            justifyContent="space-between"
+            alignItems="center"
+            spacing={2}
+            sx={{ py: 1, borderTop: index === 0 ? 0 : 1, borderColor: 'surface.raised' }}
           >
-            <Column style={{ minWidth: 0 }}>
-              <Typography fontWeight="600" fontSize="0.95rem" textOverflow="ellipsis" overflow="hidden">
+            <Box sx={{ minWidth: 0 }}>
+              <Typography fontWeight="600" textOverflow="ellipsis" overflow="hidden">
                 {member.name}
               </Typography>
-              <Typography fontSize="0.8rem" color="textDisabled">
+              <Typography variant="caption" color="textDisabled">
                 Paid {format(paid.get(member.email)!)}
               </Typography>
-            </Column>
+            </Box>
             <Typography
-              fontSize="0.9rem"
+              variant="body2"
               fontWeight="500"
               whiteSpace="nowrap"
               color={balance > 0 ? 'success.main' : balance < 0 ? 'error.main' : 'textDisabled'}
             >
               {balance > 0 ? `Is owed ${format(balance)}` : balance < 0 ? `Owes ${format(-balance)}` : 'Settled'}
             </Typography>
-          </Row>
+          </Stack>
         )
       })}
-      <Row
-        style={{
-          justifyContent: 'space-between',
-          paddingTop: '0.5rem',
-          borderTop: '1px solid rgba(128,128,128,0.24)',
-        }}
-      >
-        <Typography fontSize="0.85rem" color="textSecondary">
+      <Stack direction="row" justifyContent="space-between" sx={{ pt: 1, borderTop: 1, borderColor: 'surface.strong' }}>
+        <Typography variant="body2" color="textSecondary">
           Total paid
         </Typography>
-        <Typography fontSize="0.85rem" fontWeight="600">
+        <Typography variant="body2" fontWeight="600">
           {format(total)}
         </Typography>
-      </Row>
-    </Column>
+      </Stack>
+    </Stack>
   )
 }

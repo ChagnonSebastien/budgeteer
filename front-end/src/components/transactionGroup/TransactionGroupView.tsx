@@ -1,6 +1,5 @@
-import { Button, SpeedDial, SpeedDialAction, SpeedDialIcon, Typography } from '@mui/material'
+import { Button, Stack, Typography } from '@mui/material'
 import { FC, useContext, useState } from 'react'
-import type { IconType } from 'react-icons'
 import { useNavigate } from 'react-router-dom'
 
 import ChangeSplitDialog from './ChangeSplitDialog'
@@ -12,29 +11,20 @@ import useGroupTransactions from './useGroupTransactions'
 import { SettlementAugmentedTransaction } from '../../domain/model/settlement'
 import { AugmentedTransactionGroup, SplitTypeToString } from '../../domain/model/transactionGroup'
 import { IconToolsContext } from '../icons/IconTools'
+import ActionSpeedDial, { DialAction } from '../shared/ActionSpeedDial'
 import ContentWithHeader from '../shared/ContentWithHeader'
-import { Column, Row } from '../shared/Layout'
 import SplitView from '../shared/SplitView'
-import usePinnableSpeedDial from '../shared/usePinnableSpeedDial'
 import { useElementDimensions } from '../shared/useDimensions'
 import GroupTransactionCard from '../transactions/GroupTransactionCard'
 import { TransactionList } from '../transactions/TransactionList'
 
-export interface GroupAction {
-  label: string
-  Icon: IconType
-  color: string
-  onClick(): void
-}
-
 const TransactionGroupView: FC<{
   transactionGroup: AugmentedTransactionGroup
-  actions: GroupAction[]
+  actions: DialAction[]
 }> = ({ transactionGroup, actions }) => {
   const navigate = useNavigate()
   const { IconLib } = useContext(IconToolsContext)
   const [changingSplit, setChangingSplit] = useState(false)
-  const dial = usePinnableSpeedDial()
   const groupTransactions = useGroupTransactions(transactionGroup)
 
   const [clickedKey, setClickedKey] = useState<string | null>(null)
@@ -49,19 +39,19 @@ const TransactionGroupView: FC<{
         split={splitHorizontal ? 'horizontal' : 'vertical'}
         first={
           <FirstDivision>
-            <Column style={{ gap: '0.15rem' }}>
-              <Typography variant="h1" fontSize="1.75rem" fontWeight="600">
+            <Stack sx={{ gap: 0.25 }}>
+              <Typography component="h1" variant="h5" fontWeight="600">
                 {transactionGroup.name}
               </Typography>
-              <Row style={{ alignItems: 'center', gap: '0.25rem' }}>
-                <Typography fontSize="0.9rem" color="textSecondary">
+              <Stack direction="row" sx={{ alignItems: 'center', gap: 0.5 }}>
+                <Typography variant="body2" color="textSecondary">
                   Default split: {SplitTypeToString(transactionGroup.splitType)}
                 </Typography>
                 <Button size="small" onClick={() => setChangingSplit(true)} sx={{ minWidth: 0, textTransform: 'none' }}>
                   Change
                 </Button>
-              </Row>
-            </Column>
+              </Stack>
+            </Stack>
             <Section title="Members">
               <GroupMembers transactionGroup={transactionGroup} />
             </Section>
@@ -87,55 +77,24 @@ const TransactionGroupView: FC<{
                 ItemComponent={GroupTransactionCard}
                 additionalItemsProps={{}}
                 onClick={(_id, item) => setClickedKey(item.listKey)}
-                containerStyle={{ width: '100%', maxWidth: '32rem' }}
               />
             )}
           </SecondDivision>
         }
         secondZoneStyling={{ scroll: true, grow: true }}
       />
-      <SpeedDial
+      <ActionSpeedDial
         ariaLabel="Add to transaction group"
-        sx={{ position: 'absolute', bottom: 16, right: 16 }}
-        {...dial}
-        icon={
-          <SpeedDialIcon
-            openIcon={<IconLib.FaPlus />}
-            sx={{
-              '& .MuiSpeedDialIcon-icon, & .MuiSpeedDialIcon-openIcon': {
-                transition: 'all 0.2s ease-in-out',
-                height: '24px',
-                width: '24px',
-              },
-              '& .MuiSpeedDialIcon-openIcon': {
-                transform: 'rotate(45deg)',
-              },
-            }}
-          />
-        }
-      >
-        {[
+        actions={[
           ...actions,
           {
             label: 'Settle up',
             Icon: IconLib.TbArrowsExchange,
-            color: 'green',
+            color: 'intent.confirm',
             onClick: () => navigate(`/transaction-groups/manage/${transactionGroup.id}/settle`),
           },
-        ].map(({ label, Icon, color, onClick }) => (
-          <SpeedDialAction
-            key={label}
-            icon={<Icon />}
-            onClick={onClick}
-            tooltipTitle={label}
-            tooltipOpen
-            slotProps={{
-              fab: { sx: { backgroundColor: color, color: 'white', '&:hover': { backgroundColor: color } } },
-              staticTooltipLabel: { sx: { whiteSpace: 'nowrap' } },
-            }}
-          />
-        ))}
-      </SpeedDial>
+        ]}
+      />
       {clicked instanceof SettlementAugmentedTransaction ? (
         <SettlementModal settlement={clicked} onClose={() => setClickedKey(null)} />
       ) : (

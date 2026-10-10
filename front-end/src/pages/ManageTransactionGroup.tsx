@@ -47,7 +47,7 @@ const ManageTransactionGroup: FC = () => {
         {
           label: 'I paid',
           Icon: IconLib.MdOutput,
-          color: 'red',
+          color: 'money.loss',
           onClick: () =>
             navigate('/transactions/new', {
               state: { from: `/transaction-groups/manage/${id}`, prefillTransactionGroupId: id },
@@ -56,7 +56,7 @@ const ManageTransactionGroup: FC = () => {
         {
           label: 'Someone else paid',
           Icon: IconLib.MdGroups,
-          color: '#64B5F6',
+          color: 'intent.edit',
           onClick: () => navigate(`/transaction-groups/manage/${id}/unconfirmed/new?payer=others`),
         },
       ]}

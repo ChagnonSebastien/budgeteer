@@ -70,7 +70,7 @@ const App: FC = () => {
 
   return (
     <Centered>
-      <Column style={{ gap: '1rem' }}>
+      <Column sx={{ gap: 2 }}>
         {authMethods.oidc && (
           <Button variant="contained" disableElevation onClick={authMethods.oidc}>
             OIDC Login

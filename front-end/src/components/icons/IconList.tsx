@@ -1,7 +1,7 @@
+import { Box, Stack } from '@mui/material'
 import { FC, useContext, useEffect, useMemo, useRef, useState } from 'react'
 
 import { IconToolsContext } from './IconTools'
-import { Row } from '../shared/Layout'
 
 const perfectMultiplier = 4 * 3 * 5 * 7
 
@@ -41,39 +41,23 @@ const IconList: FC<Props> = ({ filter, onSelect }) => {
   }, [])
 
   return (
-    <div style={{ position: 'relative' }}>
-      <Row
-        style={{
-          flexWrap: 'wrap',
-          justifyContent: 'space-evenly',
-          paddingTop: '.5rem',
-        }}
-      >
+    <Box sx={{ position: 'relative' }}>
+      <Stack direction="row" flexWrap="wrap" justifyContent="space-evenly" sx={{ pt: 1 }}>
         {filteredIcons.map((iconName) => {
           const IconType = iconTypeFromName(iconName)
           return (
-            <div
+            <Box
               onClick={() => onSelect(iconName)}
               key={`icon-list-element-${iconName}`}
-              style={{ margin: '0.2rem', padding: '0.5rem', borderRadius: '0.5rem' }}
+              sx={{ m: 0.25, p: 1, borderRadius: (t) => t.radius.md }}
             >
               <IconType size="2.5rem" />
-            </div>
+            </Box>
           )
         })}
-      </Row>
-      <div
-        style={{
-          zIndex: -1,
-          height: '100vh',
-          position: 'absolute',
-          bottom: 0,
-          left: 0,
-          right: 0,
-        }}
-        ref={loadMoreRef}
-      />
-    </div>
+      </Stack>
+      <Box ref={loadMoreRef} sx={{ zIndex: -1, height: '100vh', position: 'absolute', bottom: 0, left: 0, right: 0 }} />
+    </Box>
   )
 }
 

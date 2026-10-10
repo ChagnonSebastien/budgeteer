@@ -1,10 +1,9 @@
-import { Checkbox, TextField, Typography } from '@mui/material'
+import { Checkbox, Stack, TextField, Typography } from '@mui/material'
 import { FC } from 'react'
 
 import Currency, { formatFull } from '../../domain/model/currency'
 import { MemberSplitValues, Person } from '../../domain/model/transactionGroup'
 import { FixedPointInput } from '../inputs/FixedPointInput'
-import { Column, Row } from '../shared/Layout'
 
 export type SplitValueKind = 'participants' | 'percentage' | 'shares' | 'amount'
 
@@ -30,10 +29,14 @@ const SplitValuesEditor: FC<{
   const total = [...values.values()].reduce<number>((sum, v) => sum + (v ?? 0), 0)
 
   return (
-    <Column style={{ gap: '0.75rem', alignSelf: 'stretch' }}>
+    <Stack sx={{ gap: 1.5, alignSelf: 'stretch' }}>
       {members.map((member) => (
-        <Row key={member.email} style={{ alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
-          <Typography fontSize="0.95rem" textOverflow="ellipsis" overflow="hidden">
+        <Stack
+          direction="row"
+          key={member.email}
+          sx={{ alignItems: 'center', justifyContent: 'space-between', gap: 2 }}
+        >
+          <Typography textOverflow="ellipsis" overflow="hidden">
             {member.name}
           </Typography>
           {kind === 'participants' ? (
@@ -69,15 +72,15 @@ const SplitValuesEditor: FC<{
               sx={{ width: '8rem' }}
             />
           )}
-        </Row>
+        </Stack>
       ))}
-      <Typography fontSize="0.9rem" color={error ? 'error' : 'textDisabled'} alignSelf="end">
+      <Typography variant="body2" color={error ? 'error' : 'textDisabled'} alignSelf="end">
         {error ??
           (kind === 'participants'
             ? `${values.size} of ${members.length} taking part`
             : `Total: ${kind === 'amount' && currency ? formatFull(currency, total) : total}${kind === 'percentage' ? '%' : ''}`)}
       </Typography>
-    </Column>
+    </Stack>
   )
 }
 

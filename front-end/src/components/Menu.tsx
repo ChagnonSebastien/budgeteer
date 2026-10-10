@@ -10,14 +10,15 @@ import {
   Switch,
   Typography,
 } from '@mui/material'
+import { styled } from '@mui/material/styles'
 import { createContext, FC, ReactElement, useContext, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { default as styled } from 'styled-components'
 
 import { UserContext } from '../App'
 import MixedAugmentation from '../service/MixedAugmentation'
 import UserStore from '../UserStore'
 import { IconToolsContext, PreparedIcon } from './icons/IconTools'
+import { withoutTransientProps } from './shared/Layout'
 import { useElementDimensions, useWindowDimensions } from './shared/useDimensions'
 
 interface MenuElement {
@@ -54,8 +55,8 @@ class AppPage implements MenuElement {
           }}
           selected={selected}
         >
-          <ListItemIcon style={{ minWidth: '42px' }}>
-            <Icon style={{ margin: '0.5rem', fontSize: '1.3rem' }} />
+          <ListItemIcon sx={{ minWidth: 42, '& svg': { m: 1 } }}>
+            <Icon size={menuIconSize} />
           </ListItemIcon>
           <ListItemText primary={this.title} />
         </ListItemButton>
@@ -69,7 +70,7 @@ class Subsection implements MenuElement {
 
   get Element() {
     return () => (
-      <ListItemButton disabled sx={{ paddingBottom: 0, paddingLeft: '1.5rem' }}>
+      <ListItemButton disabled sx={{ pb: 0, pl: 3 }}>
         <ListItemText primary={this.title} />
       </ListItemButton>
     )
@@ -78,15 +79,22 @@ class Subsection implements MenuElement {
 
 class Separator implements MenuElement {
   get Element() {
-    return () => <Divider sx={{ margin: '0.5rem 0' }} />
+    return () => <Divider sx={{ my: 1 }} />
   }
 }
 
-const ContentContainer = styled.div<{ $persistentDrawer: boolean; $totalWidth: number; $drawerWidth: number }>`
-  width: ${(props) => (props.$persistentDrawer ? `${props.$totalWidth - props.$drawerWidth}px` : '100%')};
-  height: 100%;
-  margin-left: ${(props) => (props.$persistentDrawer ? `${props.$drawerWidth}px` : 0)};
-`
+const menuIconSize = '1.3rem'
+
+const ContentContainer = styled(
+  'div',
+  withoutTransientProps,
+)<{ $persistentDrawer: boolean; $totalWidth: number; $drawerWidth: number }>(
+  ({ $persistentDrawer, $totalWidth, $drawerWidth }) => ({
+    width: $persistentDrawer ? `${$totalWidth - $drawerWidth}px` : '100%',
+    height: '100%',
+    marginLeft: $persistentDrawer ? `${$drawerWidth}px` : 0,
+  }),
+)
 
 interface MenuEntry {
   guestView: boolean
@@ -164,8 +172,6 @@ const DrawerWrapper: FC<Props> = ({ logout, children, userIsGuest = false }) => 
 
   const [open, setOpen] = useState(false)
 
-  const iconStyle = { margin: '0.5rem', fontSize: '1.3rem' }
-
   const iOS = typeof navigator !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent)
 
   const { width: drawerWidth, ref: setDrawerRef } = useElementDimensions(240, 240)
@@ -176,11 +182,13 @@ const DrawerWrapper: FC<Props> = ({ logout, children, userIsGuest = false }) => 
 
   const drawer = (
     <div ref={setDrawerRef}>
-      <Box style={{ padding: '1.5rem' }}>
-        <Typography variant="h6" sx={{ fontWeight: 600, letterSpacing: '0.05em', marginBottom: '0.25rem' }}>
+      <Box sx={{ p: 3 }}>
+        <Typography variant="h6" sx={{ fontWeight: 600, letterSpacing: '0.05em', mb: 0.5 }}>
           {userIsGuest ? 'Split Wise' : 'Budget App'}
         </Typography>
-        <Typography sx={{ color: 'gray', fontSize: '0.875rem' }}>{email}</Typography>
+        <Typography variant="body2" color="text.disabled">
+          {email}
+        </Typography>
       </Box>
 
       {appPages
@@ -204,21 +212,26 @@ const DrawerWrapper: FC<Props> = ({ logout, children, userIsGuest = false }) => 
             }}
             disableRipple
             sx={{
-              padding: '0.5rem 1rem',
+              py: 1,
+              px: 2,
               '&:hover': {
                 backgroundColor: 'transparent',
               },
             }}
           >
-            <ListItemIcon>
-              {privacyMode ? <IconLib.MdVisibilityOff style={iconStyle} /> : <IconLib.MdVisibility style={iconStyle} />}
+            <ListItemIcon sx={{ '& svg': { m: 1 } }}>
+              {privacyMode ? (
+                <IconLib.MdVisibilityOff size={menuIconSize} />
+              ) : (
+                <IconLib.MdVisibility size={menuIconSize} />
+              )}
             </ListItemIcon>
             <ListItemText primary="Privacy Mode" />
             <Switch edge="end" checked={privacyMode} />
           </ListItemButton>
         </div>
       )}
-      <Box style={{ padding: '1rem' }}>
+      <Box sx={{ p: 2 }}>
         <Button fullWidth onClick={logout} variant="contained" disableElevation>
           Logout
         </Button>

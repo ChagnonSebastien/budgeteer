@@ -1,4 +1,4 @@
-import { Box, ButtonBase, Tooltip, Typography } from '@mui/material'
+import { Box, Stack, Tooltip, Typography } from '@mui/material'
 import { formatDate } from 'date-fns'
 import { FC, useContext, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -10,8 +10,8 @@ import { SettlementAugmentedTransaction } from '../../domain/model/settlement'
 import { SettlementServiceContext, TransactionServiceContext } from '../../service/ServiceContext'
 import { IconToolsContext } from '../icons/IconTools'
 import { DrawerContext } from '../Menu'
-import { Column, GradientCard, Row } from '../shared/Layout'
 import { useToast } from '../shared/ToastProvider'
+import { CardAction, CardShell, CardTitleRow, ellipsis } from '../transactions/TransactionCard'
 
 const SettlementCard: FC<{ item: SettlementAugmentedTransaction; onClick?(): void }> = ({ item, onClick }) => {
   const navigate = useNavigate()
@@ -47,67 +47,6 @@ const SettlementCard: FC<{ item: SettlementAugmentedTransaction; onClick?(): voi
     }
   }
 
-  const card = (
-    <GradientCard
-      onClick={onClick}
-      $selected={false}
-      $hoverEffect={false}
-      $withGradientBackground={false}
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        backgroundColor: 'rgba(128,128,128,0.08)',
-        fontSize: '0.875rem',
-        padding: '0.5rem 0.75rem',
-        border: '1px solid rgba(128,128,128,0.16)',
-        gap: '0.75rem',
-      }}
-    >
-      <Column style={{ flexGrow: 1, minWidth: 0 }}>
-        <Row style={{ justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem' }}>
-          <Typography letterSpacing="0.01rem" fontSize="0.95rem" fontWeight="600" whiteSpace="nowrap">
-            {formatFull(item.currency, settlement.amount, privacyMode)}
-          </Typography>
-          <Typography color="textDisabled" fontSize="0.9rem" whiteSpace="nowrap">
-            {formatDate(settlement.date, 'MMM d')}
-          </Typography>
-        </Row>
-        <Row style={{ alignItems: 'center', gap: '0.35rem', minWidth: 0 }}>
-          <Typography fontSize="0.9rem" fontWeight="500" textOverflow="ellipsis" overflow="hidden">
-            <b>{nameOf(settlement.payer)}</b> paid <b>{nameOf(settlement.receiver)}</b>
-          </Typography>
-          {settlement.completed && (
-            <Tooltip title="Settlement confirmed by both">
-              <Box component="span" sx={{ display: 'flex', alignItems: 'center', color: 'success.main' }}>
-                <IconLib.MdCheckCircle />
-              </Box>
-            </Tooltip>
-          )}
-        </Row>
-        {!settlement.completed && (
-          <Typography fontSize="0.8rem" color="textDisabled">
-            Waiting for {awaiting === email ? 'you' : nameOf(awaiting)} to confirm
-          </Typography>
-        )}
-        {settlement.note && (
-          <Typography fontSize="0.9rem" textOverflow="ellipsis" minWidth={0} overflow="hidden">
-            For: {settlement.note}
-          </Typography>
-        )}
-      </Column>
-      <Column style={{ alignItems: 'center', textAlign: 'center', width: '6.5rem', flexShrink: 0 }}>
-        <Typography fontSize="0.9rem" fontWeight="500" color={settlement.isEnd(email) ? undefined : 'textDisabled'}>
-          {settlement.payer === email ? 'You paid' : settlement.receiver === email ? 'You received' : 'Settlement'}
-        </Typography>
-        {settlement.isEnd(email) && (
-          <Typography fontSize="0.9rem" fontWeight="bold" whiteSpace="nowrap">
-            {formatFull(item.currency, settlement.amount, privacyMode)}
-          </Typography>
-        )}
-      </Column>
-    </GradientCard>
-  )
-
   const restore = async () => {
     if (side.state === 'missing') {
       navigate(`/transaction-groups/manage/${group.id}/settle/${settlement.id}/record`)
@@ -136,34 +75,60 @@ const SettlementCard: FC<{ item: SettlementAugmentedTransaction; onClick?(): voi
           }
         : null
 
-  if (strip === null) return card
-
   return (
-    <Column
-      style={{
-        backgroundColor: 'rgba(128,128,128,.16)',
-        border: '1px solid rgba(128,128,128,0.16)',
-        borderRadius: '0.5rem',
-      }}
+    <CardShell
+      onClick={onClick}
+      footer={
+        strip && (
+          <CardAction
+            onClick={strip.action}
+            disabled={confirming}
+            color={strip.color}
+            icon={canConfirm ? <IconLib.MdCheckCircle /> : <IconLib.MdEdit />}
+            label={strip.label}
+          />
+        )
+      }
+      aside={
+        <>
+          <Typography variant="body2" fontWeight={500} color={settlement.isEnd(email) ? undefined : 'textDisabled'}>
+            {settlement.payer === email ? 'You paid' : settlement.receiver === email ? 'You received' : 'Settlement'}
+          </Typography>
+          {settlement.isEnd(email) && (
+            <Typography variant="body2" fontWeight={700} whiteSpace="nowrap">
+              {formatFull(item.currency, settlement.amount, privacyMode)}
+            </Typography>
+          )}
+        </>
+      }
     >
-      {card}
-      <ButtonBase
-        onClick={strip.action}
-        disabled={confirming}
-        sx={{
-          gap: '0.35rem',
-          padding: '0.25rem 0.5rem',
-          borderRadius: '0 0 0.5rem 0.5rem',
-          color: strip.color,
-          '&:hover': { backgroundColor: 'action.hover' },
-        }}
-      >
-        {canConfirm ? <IconLib.MdCheckCircle /> : <IconLib.MdEdit />}
-        <Typography fontSize="0.9rem" fontWeight="500">
-          {strip.label}
+      <CardTitleRow
+        amount={formatFull(item.currency, settlement.amount, privacyMode)}
+        date={formatDate(settlement.date, 'MMM d')}
+      />
+      <Stack direction="row" alignItems="center" spacing={0.5} sx={{ minWidth: 0 }}>
+        <Typography variant="body2" fontWeight={500} sx={ellipsis}>
+          <b>{nameOf(settlement.payer)}</b> paid <b>{nameOf(settlement.receiver)}</b>
         </Typography>
-      </ButtonBase>
-    </Column>
+        {settlement.completed && (
+          <Tooltip title="Settlement confirmed by both">
+            <Box component="span" sx={{ display: 'flex', alignItems: 'center', color: 'success.main' }}>
+              <IconLib.MdCheckCircle />
+            </Box>
+          </Tooltip>
+        )}
+      </Stack>
+      {!settlement.completed && (
+        <Typography variant="caption" color="textDisabled">
+          Waiting for {awaiting === email ? 'you' : nameOf(awaiting)} to confirm
+        </Typography>
+      )}
+      {settlement.note && (
+        <Typography variant="body2" sx={{ minWidth: 0, ...ellipsis }}>
+          For: {settlement.note}
+        </Typography>
+      )}
+    </CardShell>
   )
 }
 

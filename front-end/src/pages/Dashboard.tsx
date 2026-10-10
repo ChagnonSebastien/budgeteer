@@ -1,4 +1,4 @@
-import { Box } from '@mui/material'
+import { Box, Stack, Typography, useTheme } from '@mui/material'
 import { BarDatum, ResponsiveBar } from '@nivo/bar'
 import { formatDate, startOfDay, subMonths } from 'date-fns'
 import React, { FC, useContext, useMemo } from 'react'
@@ -8,7 +8,7 @@ import { GraphTooltip, GraphTooltipDate } from '../components/graphing/GraphStyl
 import InvestmentGainLineChart from '../components/graphing/InvestmentGainLineChart'
 import { DrawerContext } from '../components/Menu'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
-import Layout, { Column, Row } from '../components/shared/Layout'
+import { PageBody, Section, Stat } from '../components/shared/Layout'
 import { formatFull } from '../domain/model/currency'
 import MixedAugmentation from '../service/MixedAugmentation'
 import { AccountServiceContext } from '../service/ServiceContext'
@@ -26,6 +26,7 @@ interface CashFlowDataPoint {
 const CashFlowBarChart: FC<{ data: CashFlowDataPoint[] }> = ({ data }) => {
   const { privacyMode } = useContext(DrawerContext)
   const { defaultCurrency } = useContext(MixedAugmentation)
+  const theme = useTheme()
 
   // convert outflow to negative for diverging chart
   const barData = useMemo<BarDatum[]>(
@@ -48,7 +49,7 @@ const CashFlowBarChart: FC<{ data: CashFlowDataPoint[] }> = ({ data }) => {
       groupMode="stacked"
       valueScale={{ type: 'linear', nice: true, min: 'auto' }}
       indexScale={{ type: 'band', round: true }}
-      colors={({ id }) => (id === 'Inflow' ? '#4caf50' : '#f44336')}
+      colors={({ id }) => (id === 'Inflow' ? theme.palette.money.gain : theme.palette.money.loss)}
       colorBy="id"
       theme={darkTheme}
       tooltip={({ id, value, indexValue }) => (
@@ -148,90 +149,38 @@ const Dashboard: FC = () => {
 
   return (
     <ContentWithHeader title="Dashboard" action="menu" withPadding withScrolling>
-      <div style={{ maxWidth: '50rem', width: '100%' }}>
+      <PageBody>
         {!hasTransactions && <GettingStarted />}
         {(hasTransactions || netWorth !== 0) && (
-          <Layout
-            title="Net Worth"
-            sx={{
-              display: 'flex',
-              width: '100%',
-              justifyContent: 'center',
-            }}
-          >
-            <p
-              style={{
-                margin: 0,
-                fontSize: '2.5rem',
-                fontWeight: 'bold',
-              }}
-            >
+          <Section title="Net Worth">
+            <Typography variant="hero" textAlign="center">
               {formatFull(defaultCurrency, netWorth, privacyMode)}
-            </p>
-          </Layout>
+            </Typography>
+          </Section>
         )}
 
         {hasFinancialIncome && (
-          <Layout title="Investments Performance">
-            <Column style={{ height: '40vh', width: '100%', justifyContent: 'stretch', alignItems: 'stretch' }}>
+          <Section title="Investments Performance">
+            <Stack sx={{ height: '40vh' }}>
               <InvestmentGainLineChart fromDate={lastYear} toDate={today} />
-            </Column>
-          </Layout>
+            </Stack>
+          </Section>
         )}
 
         {hasCashFlow && (
-          <Layout title="Cash Flow">
-            <div style={{ height: '40vh', width: '100%' }}>
-              <CashFlowBarChart data={cashFlowData} />
-            </div>
-            <Box height="1rem" />
-            <Row
-              style={{
-                justifyContent: 'space-around',
-              }}
-            >
-              <Column>
-                <span
-                  style={{
-                    fontSize: '0.75rem',
-                    textTransform: 'uppercase',
-                    color: '#888',
-                  }}
-                >
-                  Savings Rate
-                </span>
-                <span
-                  style={{
-                    fontSize: '1.25rem',
-                    fontWeight: 600,
-                  }}
-                >
-                  {(savingsRate * 100).toFixed(1)}%
-                </span>
-              </Column>
-              <Column>
-                <span
-                  style={{
-                    fontSize: '0.75rem',
-                    textTransform: 'uppercase',
-                    color: '#888',
-                  }}
-                >
-                  Surplus
-                </span>
-                <span
-                  style={{
-                    fontSize: '1.25rem',
-                    fontWeight: 600,
-                  }}
-                >
-                  {formatFull(defaultCurrency, surplus, privacyMode)}
-                </span>
-              </Column>
-            </Row>
-          </Layout>
+          <Section title="Cash Flow">
+            <Stack spacing={2}>
+              <Box sx={{ height: '40vh' }}>
+                <CashFlowBarChart data={cashFlowData} />
+              </Box>
+              <Stack direction="row" justifyContent="space-around">
+                <Stat label="Savings Rate" value={`${(savingsRate * 100).toFixed(1)}%`} />
+                <Stat label="Surplus" value={formatFull(defaultCurrency, surplus, privacyMode)} />
+              </Stack>
+            </Stack>
+          </Section>
         )}
-      </div>
+      </PageBody>
     </ContentWithHeader>
   )
 }

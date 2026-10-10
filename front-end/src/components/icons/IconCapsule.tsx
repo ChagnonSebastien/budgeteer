@@ -1,5 +1,5 @@
+import { styled } from '@mui/material/styles'
 import { useContext, useMemo } from 'react'
-import { default as styled } from 'styled-components'
 
 import { IconToolsContext } from './IconTools'
 
@@ -13,21 +13,27 @@ export type IconProperties = {
 
 type Props = {
   size?: string | number
-  border?: string
+  bordered?: boolean
 } & IconProperties
 
-const CapsuleContainer = styled.div<{ $size: string | number; $sizeNumber: number; $unit: string }>`
-  display: flex;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  border-radius: ${(props) => `${props.$sizeNumber * 0.5}${props.$unit}`};
-  height: ${(props) => props.$size};
-  width: ${(props) => props.$size};
-`
+const CapsuleContainer = styled('div', { shouldForwardProp: (prop) => !String(prop).startsWith('$') })<{
+  $size: string | number
+  $sizeNumber: number
+  $unit: string
+  $bordered: boolean
+}>(({ theme, $size, $sizeNumber, $unit, $bordered }) => ({
+  display: 'flex',
+  flexShrink: 0,
+  alignItems: 'center',
+  justifyContent: 'center',
+  borderRadius: `${$sizeNumber * 0.5}${$unit}`,
+  height: $size,
+  width: $size,
+  border: $bordered ? `1px solid ${theme.palette.border.strong}` : undefined,
+}))
 
 const IconCapsule = (props: Props) => {
-  const { iconName, size = '1rem', color, border, backgroundColor } = props
+  const { iconName, size = '1rem', color, bordered = false, backgroundColor } = props
 
   const { iconTypeFromName } = useContext(IconToolsContext)
 
@@ -48,7 +54,13 @@ const IconCapsule = (props: Props) => {
   }, [size])
 
   return (
-    <CapsuleContainer $size={size} $sizeNumber={sizeNumber} $unit={unit} style={{ border, backgroundColor }}>
+    <CapsuleContainer
+      $size={size}
+      $sizeNumber={sizeNumber}
+      $unit={unit}
+      $bordered={bordered}
+      style={{ backgroundColor }}
+    >
       <Icon size={`${sizeNumber * 0.625}${unit}`} color={color} />
     </CapsuleContainer>
   )

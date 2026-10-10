@@ -103,7 +103,7 @@ const BalancePage: FC = () => {
       </GraphContainer>
 
       {splitHorizontal && (
-        <Box sx={{ padding: '1rem' }} ref={setOptionsRef}>
+        <Box sx={{ p: 2 }} ref={setOptionsRef}>
           {filterOverview}
         </Box>
       )}
@@ -160,11 +160,11 @@ const BalancePage: FC = () => {
     <SecondDivision
       $splitView={splitHorizontal}
       ref={!splitHorizontal ? setOptionsRef : undefined}
-      style={{ background: splitHorizontal ? undefined : 'rgba(128,128,128,0.04)' }}
+      sx={{ bgcolor: splitHorizontal ? undefined : 'surface.subtle' }}
     >
       {!splitHorizontal && filterOverview}
 
-      {splitHorizontal ? selectOptions : <Row style={{ gap: '1rem', flexFlow: 'wrap' }}>{selectOptions}</Row>}
+      {splitHorizontal ? selectOptions : <Row sx={{ gap: 2, flexFlow: 'wrap' }}>{selectOptions}</Row>}
     </SecondDivision>
   )
 

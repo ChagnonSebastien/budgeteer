@@ -1,4 +1,4 @@
-import { Checkbox, IconButton, Menu, MenuItem } from '@mui/material'
+import { Checkbox, IconButton, Menu, MenuItem, Stack, useTheme } from '@mui/material'
 import React, { FC, useContext, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
@@ -6,12 +6,11 @@ import { UserContext } from '../App'
 import ItemList from '../components/accounts/ItemList'
 import { IconToolsContext } from '../components/icons/IconTools'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
-import { Column } from '../components/shared/Layout'
 import ScrollingOverButton, { CustomScrolling } from '../components/shared/ScrollingOverButton'
 import useQueryParams from '../components/shared/useQueryParams'
 import BalanceOverview, { CurrencyTotals } from '../components/transactionGroup/BalanceOverview'
-import TransactionGroupModal from '../components/transactionGroup/TransactionGroupModal'
 import { GroupSummary, TransactionGroupCard } from '../components/transactionGroup/TransactionGroupCard'
+import TransactionGroupModal from '../components/transactionGroup/TransactionGroupModal'
 import { useAugmentedTransactionGroups } from '../components/transactionGroup/useAugmentedTransactionGroup'
 import {
   buildGroupTransactions,
@@ -27,6 +26,7 @@ interface Props {
 }
 
 const TransactionGroups: FC<Props> = ({ canCreate = true }) => {
+  const theme = useTheme()
   const navigate = useNavigate()
   const { IconLib } = useContext(IconToolsContext)
   const { email } = useContext(UserContext)
@@ -89,11 +89,11 @@ const TransactionGroups: FC<Props> = ({ canCreate = true }) => {
       style={{
         overflowY: 'auto',
         flexGrow: 1,
-        paddingBottom: '4rem',
+        paddingBottom: theme.spacing(8),
         position: 'relative',
       }}
     >
-      <Column style={{ gap: '1rem' }}>
+      <Stack sx={{ gap: 2 }}>
         {totals.length > 0 && <BalanceOverview totals={totals} />}
         <ItemList
           items={orderedGroups}
@@ -104,7 +104,7 @@ const TransactionGroups: FC<Props> = ({ canCreate = true }) => {
           ItemComponent={TransactionGroupCard}
           additionalItemsProps={{ summaries }}
         />
-      </Column>
+      </Stack>
     </CustomScrolling>
   )
 
@@ -136,7 +136,7 @@ const TransactionGroups: FC<Props> = ({ canCreate = true }) => {
       <ScrollingOverButton
         button={canCreate ? { text: 'New', onClick: () => navigate('/transaction-groups/new') } : undefined}
         scrollingContainerRef={scrollingContainerRef}
-        contentStyle={{ maxWidth: '40rem' }}
+        contentWidth="medium"
       >
         {list}
       </ScrollingOverButton>

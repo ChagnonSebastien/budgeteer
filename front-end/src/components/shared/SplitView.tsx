@@ -1,36 +1,34 @@
+import { styled } from '@mui/material/styles'
 import { FC, ReactNode } from 'react'
-import { default as styled } from 'styled-components'
 
-import { Column, MaxSpaceNoOverflow } from './Layout'
+import { Column, MaxSpaceNoOverflow, withoutTransientProps } from './Layout'
 
-export const SplitViewContainer = styled(MaxSpaceNoOverflow)<{ $split: 'horizontal' | 'vertical' }>`
-  display: flex;
-  flex-direction: ${(props) => (props.$split === 'horizontal' ? 'row' : 'column')};
-  overflow-y: ${(props) => (props.$split === 'vertical' ? 'visible' : 'hidden')};
-`
+export const SplitViewContainer = styled(
+  MaxSpaceNoOverflow,
+  withoutTransientProps,
+)<{
+  $split: 'horizontal' | 'vertical'
+}>(({ $split }) => ({
+  display: 'flex',
+  flexDirection: $split === 'horizontal' ? 'row' : 'column',
+  overflowY: $split === 'vertical' ? 'visible' : 'hidden',
+}))
 
-export const SplitViewPanel = styled(Column)<{
+export const SplitViewPanel = styled(
+  Column,
+  withoutTransientProps,
+)<{
   $split: 'horizontal' | 'vertical'
   $grow: boolean | number
   $scroll: boolean
-}>`
-  height: ${(props) => (props.$split === 'horizontal' ? '100%' : undefined)};
-  width: ${(props) => (props.$split === 'vertical' ? '100%' : undefined)};
-  flex-grow: ${(props) => (typeof props.$grow === 'number' ? props.$grow : props.$grow ? 1 : 0)};
-  flex-shrink: ${(props) => (props.$split === 'horizontal' ? 1 : 0)};
-  overflow-y: ${(props) =>
-    props.$split === 'horizontal' && props.$scroll
-      ? 'auto'
-      : props.$split === 'vertical' && props.$grow
-        ? 'visible'
-        : 'hidden'};
-  overflow-x: ${(props) =>
-    props.$split === 'vertical' && props.$scroll
-      ? 'auto'
-      : props.$split === 'horizontal' && props.$grow
-        ? 'visible'
-        : 'hidden'};
-`
+}>(({ $split, $grow, $scroll }) => ({
+  height: $split === 'horizontal' ? '100%' : undefined,
+  width: $split === 'vertical' ? '100%' : undefined,
+  flexGrow: typeof $grow === 'number' ? $grow : $grow ? 1 : 0,
+  flexShrink: $split === 'horizontal' ? 1 : 0,
+  overflowY: $split === 'horizontal' && $scroll ? 'auto' : $split === 'vertical' && $grow ? 'visible' : 'hidden',
+  overflowX: $split === 'vertical' && $scroll ? 'auto' : $split === 'horizontal' && $grow ? 'visible' : 'hidden',
+}))
 
 interface ZoneStyling {
   grow: boolean | number
@@ -57,7 +55,7 @@ const SplitView: FC<Props> = (props) => {
         $split={split}
         $grow={secondZoneStyling.grow}
         $scroll={secondZoneStyling.scroll}
-        style={{ flexShrink: 0, backgroundColor: 'rgba(128, 128, 128, 0.04)' }}
+        sx={{ flexShrink: 0, bgcolor: 'surface.subtle' }}
       >
         {second}
       </SplitViewPanel>

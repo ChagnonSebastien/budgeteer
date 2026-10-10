@@ -1,33 +1,33 @@
-import { Button } from '@mui/material'
-import { default as styled } from 'styled-components'
+import { Box, Button, Stack, SxProps, Theme, Typography } from '@mui/material'
+import { styled } from '@mui/material/styles'
 
-import { Column, Row, TinyHeader } from '../shared/Layout'
+const Input = styled('input')(({ theme }) => ({
+  width: theme.spacing(4),
+  background: 'transparent',
+  border: 'none',
+  color: theme.palette.text.primary,
+  ...theme.typography.body1,
+  textAlign: 'right',
+  padding: theme.spacing(0.5, 0),
+  appearance: 'none',
+  MozAppearance: 'textfield',
 
-const Input = styled.input`
-  width: 2rem;
-  background: transparent;
-  border: none;
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 1rem;
-  font-weight: 400;
-  line-height: 1.4375em;
-  letter-spacing: 0.00938em;
-  font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
-  text-align: right;
-  padding: 0.25rem 0;
-  appearance: none;
-  -moz-appearance: textfield;
+  '&::-webkit-inner-spin-button, &::-webkit-outer-spin-button': {
+    appearance: 'none',
+    margin: 0,
+  },
 
-  &::-webkit-inner-spin-button,
-  &::-webkit-outer-spin-button {
-    appearance: none;
-    margin: 0;
-  }
+  '&:focus': {
+    outline: 'none',
+  },
+}))
 
-  &:focus {
-    outline: none;
-  }
-`
+const stepButton: SxProps<Theme> = {
+  minWidth: (t) => t.spacing(4),
+  width: (t) => t.spacing(4),
+  height: (t) => t.spacing(4),
+  p: 0,
+}
 
 type Props = {
   label?: string
@@ -36,28 +36,28 @@ type Props = {
 }
 
 const CounterInput = (props: Props) => (
-  <Column style={{ gap: '0.5rem' }}>
-    {props.label && <TinyHeader>{props.label}</TinyHeader>}
+  <Stack spacing={1}>
+    {props.label && (
+      <Typography variant="caption" color="text.secondary">
+        {props.label}
+      </Typography>
+    )}
 
-    <Row style={{ alignItems: 'center', gap: '1rem' }}>
+    <Stack direction="row" alignItems="center" spacing={2}>
       <Button
         variant="outlined"
         size="small"
         onClick={() => props.value > 1 && props.onChange(props.value - 1)}
         disabled={props.value <= 1}
-        style={{ minWidth: '2rem', width: '2rem', height: '2rem', padding: 0 }}
+        sx={stepButton}
       >
         -
       </Button>
-      <Row
-        style={{
-          alignItems: 'center',
-          justifyContent: 'center',
-          flex: 1,
-          backgroundColor: 'rgba(128,128,128,0.1)',
-          borderRadius: '0.25rem',
-          padding: '0 0.75rem',
-        }}
+      <Stack
+        direction="row"
+        alignItems="center"
+        justifyContent="center"
+        sx={{ flex: 1, bgcolor: 'surface.muted', borderRadius: (t) => t.radius.sm, px: 1.5 }}
       >
         <Input
           type="number"
@@ -69,18 +69,15 @@ const CounterInput = (props: Props) => (
           }}
           onFocus={(e) => e.target.select()}
         />
-        <span style={{ marginLeft: '0.5rem' }}>{props.value === 1 ? 'Year' : 'Years'}</span>
-      </Row>
-      <Button
-        variant="outlined"
-        size="small"
-        onClick={() => props.onChange(props.value + 1)}
-        style={{ minWidth: '2rem', width: '2rem', height: '2rem', padding: 0 }}
-      >
+        <Box component="span" sx={{ ml: 1 }}>
+          {props.value === 1 ? 'Year' : 'Years'}
+        </Box>
+      </Stack>
+      <Button variant="outlined" size="small" onClick={() => props.onChange(props.value + 1)} sx={stepButton}>
         +
       </Button>
-    </Row>
-  </Column>
+    </Stack>
+  </Stack>
 )
 
 export default CounterInput

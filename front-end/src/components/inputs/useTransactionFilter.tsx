@@ -1,4 +1,14 @@
-import { Button, Chip, DialogActions, DialogContent, DialogTitle, useMediaQuery, useTheme } from '@mui/material'
+import {
+  Box,
+  Button,
+  Chip,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Stack,
+  useMediaQuery,
+  useTheme,
+} from '@mui/material'
 import { DateCalendar, DateView, PickerValidDate } from '@mui/x-date-pickers'
 import {
   addDays,
@@ -14,7 +24,7 @@ import {
   subYears,
 } from 'date-fns'
 import dayjs from 'dayjs'
-import { ReactNode, useContext, useMemo, useState } from 'react'
+import { FC, ReactNode, useContext, useMemo, useState } from 'react'
 
 import TimeRange from './slider/TimeRange'
 import Account, { AccountID } from '../../domain/model/account'
@@ -24,7 +34,6 @@ import GroupedAccountList from '../accounts/GroupedAccountList'
 import { CategoryCard } from '../categories/CategoryCard'
 import { CategoryList } from '../categories/CategoryList'
 import BasicModal from '../shared/BasicModal'
-import { Row } from '../shared/Layout'
 import useQueryParams from '../shared/useQueryParams'
 
 type DateFiltersQueryParams = {
@@ -49,6 +58,25 @@ const presets: { label: string; from: (today: Date) => Date }[] = [
 ]
 const maxPresets = 5
 
+const PresetButton: FC<{ label: string; onClick(): void }> = ({ label, onClick }) => (
+  <Box onClick={onClick} sx={{ py: 0.5, px: 2, fontWeight: 'bolder', cursor: 'pointer' }}>
+    {label}
+  </Box>
+)
+
+const FilterRow: FC<{ label: string; onClick(): void; children: ReactNode }> = ({ label, onClick, children }) => (
+  <Stack
+    direction="row"
+    spacing={1}
+    alignItems="center"
+    onClick={onClick}
+    sx={{ borderBottom: 1, borderColor: 'border.default', mb: 2, p: 1 }}
+  >
+    <span>{label}</span>
+    <Box sx={{ flexGrow: 1, minWidth: (t) => t.fieldWidth.sm }}>{children}</Box>
+  </Stack>
+)
+
 export const useDateFilter = (): DateFilters => {
   const { queryParams: qp, updateQueryParams } = useQueryParams<DateFiltersQueryParams>()
   const { state: transactions } = useContext(TransactionServiceContext)
@@ -69,38 +97,24 @@ export const useDateFilter = (): DateFilters => {
   const fittingPresets = presets.filter((preset) => isAfter(preset.from(today), historyStart)).slice(0, maxPresets)
 
   const quickFilter = (
-    <Row
-      style={{
-        flexGrow: 1,
-        justifyContent: 'space-around',
-      }}
-    >
-      <div
-        style={{ padding: '.25rem 1rem', fontWeight: 'bolder', cursor: 'pointer' }}
-        onClick={() =>
-          updateQueryParams({
-            from: String(historyStart.getTime()),
-            to: String(today.getTime()),
-          })
-        }
-      >
-        Max
-      </div>
+    <Stack direction="row" justifyContent="space-around" sx={{ flexGrow: 1 }}>
+      <PresetButton
+        label="Max"
+        onClick={() => updateQueryParams({ from: String(historyStart.getTime()), to: String(today.getTime()) })}
+      />
       {fittingPresets.map((preset) => (
-        <div
+        <PresetButton
           key={preset.label}
-          style={{ padding: '.25rem 1rem', fontWeight: 'bolder', cursor: 'pointer' }}
+          label={preset.label}
           onClick={() =>
             updateQueryParams({
               from: String(addDays(preset.from(today), 1).getTime()),
               to: String(today.getTime()),
             })
           }
-        >
-          {preset.label}
-        </div>
+        />
       ))}
-    </Row>
+    </Stack>
   )
 
   const slider = (
@@ -196,7 +210,7 @@ const useTransactionFilter = ({
     return accountFilter.map((accountId) => (
       <Chip
         key={accountId}
-        style={{ margin: '.25rem' }}
+        sx={{ m: 0.5 }}
         onClick={(ev) => {
           ev.stopPropagation()
           setShowAccountModal(true)
@@ -219,7 +233,7 @@ const useTransactionFilter = ({
     return categoryFilter.map((categoryId) => (
       <Chip
         key={categoryId}
-        style={{ margin: '.25rem' }}
+        sx={{ m: 0.5 }}
         onClick={(ev) => {
           ev.stopPropagation()
           setShowCategoryModal(true)
@@ -240,7 +254,7 @@ const useTransactionFilter = ({
   const fromPills = useMemo(() => {
     return (
       <Chip
-        style={{ margin: '.25rem' }}
+        sx={{ m: 0.5 }}
         onClick={(ev) => {
           ev.stopPropagation()
           setShowFromDateModal(true)
@@ -253,7 +267,7 @@ const useTransactionFilter = ({
   const toPills = useMemo(() => {
     return (
       <Chip
-        style={{ margin: '.25rem' }}
+        sx={{ m: 0.5 }}
         onClick={(ev) => {
           ev.stopPropagation()
           setShowToDateModal(true)
@@ -269,51 +283,19 @@ const useTransactionFilter = ({
         <DialogTitle>Edit filters</DialogTitle>
         <DialogContent>
           {canFilterByAccount && (
-            <Row
-              style={{
-                borderBottom: '1px #8885 solid',
-                marginBottom: '1rem',
-                padding: '.5rem',
-                alignItems: 'center',
-              }}
-              onClick={() => setShowAccountModal(true)}
-            >
-              <div>Account:</div>
-              <div style={{ width: '.5rem' }} />
-              <div style={{ flexGrow: 1, minWidth: '20rem', flexWrap: 'wrap' }}>{accountPills}</div>
-            </Row>
+            <FilterRow label="Account:" onClick={() => setShowAccountModal(true)}>
+              {accountPills}
+            </FilterRow>
           )}
           {canFilterByCategory && (
-            <Row
-              style={{
-                borderBottom: '1px #8885 solid',
-                marginBottom: '1rem',
-                padding: '.5rem',
-                alignItems: 'center',
-              }}
-              onClick={() => setShowCategoryModal(true)}
-            >
-              <div>Category:</div>
-              <div style={{ width: '.5rem' }} />
-              <div style={{ flexGrow: 1, minWidth: '10rem' }}>{categoryPills}</div>
-            </Row>
+            <FilterRow label="Category:" onClick={() => setShowCategoryModal(true)}>
+              {categoryPills}
+            </FilterRow>
           )}
-          <Row
-            style={{
-              borderBottom: '1px #8885 solid',
-              marginBottom: '1rem',
-              padding: '.5rem',
-              alignItems: 'center',
-            }}
-            onClick={() => setShowFromDateModal(true)}
-          >
-            <div>Date:</div>
-            <div style={{ width: '.5rem' }} />
-            <div style={{ flexGrow: 1, minWidth: '10rem' }}>
-              {fromPills}
-              {toPills}
-            </div>
-          </Row>
+          <FilterRow label="Date:" onClick={() => setShowFromDateModal(true)}>
+            {fromPills}
+            {toPills}
+          </FilterRow>
         </DialogContent>
 
         <DialogActions>
@@ -325,53 +307,39 @@ const useTransactionFilter = ({
   )
 
   const quickDates = (
-    <Row
-      style={{
-        backgroundColor: '#8882',
-        borderRadius: '.5rem',
-        overflow: 'hidden',
-      }}
-    >
-      <div
-        style={{
-          padding: '.75rem 0',
-          flexGrow: 1,
-        }}
-      >
+    <Stack direction="row" sx={{ bgcolor: 'surface.raised', borderRadius: (t) => t.radius.md, overflow: 'hidden' }}>
+      <Box sx={{ py: 1.5, flexGrow: 1 }}>
         {quickFilter}
         {showSlider && (
           <>
             {slider}
-            <div style={{ marginTop: '.75rem', padding: '0 1.5rem' }}>
-              <Row
-                style={{
-                  alignItems: 'center',
-                  cursor: 'pointer',
-                }}
-                onClick={() => setShowFilterSelection(true)}
-              >
-                <div>
-                  {fromPills}
-                  {toPills}
-                  {categoryPills}
-                  {accountPills}
-                </div>
-                <div style={{ flexGrow: 1 }} />
-                <div style={{ margin: '.25rem', width: 'intrinsic', flexShrink: 0 }}>
-                  {canFilterByAccount || canFilterByCategory ? '+ Filter' : 'Edit dates'}
-                </div>
-              </Row>
-            </div>
+            <Stack
+              direction="row"
+              alignItems="center"
+              onClick={() => setShowFilterSelection(true)}
+              sx={{ mt: 1.5, px: 3, cursor: 'pointer' }}
+            >
+              <Box sx={{ flexGrow: 1 }}>
+                {fromPills}
+                {toPills}
+                {categoryPills}
+                {accountPills}
+              </Box>
+              <Box sx={{ m: 0.5, flexShrink: 0 }}>
+                {canFilterByAccount || canFilterByCategory ? '+ Filter' : 'Edit dates'}
+              </Box>
+            </Stack>
           </>
         )}
-      </div>
-      <Row
-        style={{ backgroundColor: '#0003', padding: '1rem', cursor: 'pointer', alignItems: 'center' }}
+      </Box>
+      <Stack
+        justifyContent="center"
         onClick={() => setShowSlider((prev) => !prev)}
+        sx={{ bgcolor: 'surface.shade', p: 2, cursor: 'pointer' }}
       >
         {showSlider ? '-' : '+'}
-      </Row>
-    </Row>
+      </Stack>
+    </Stack>
   )
 
   const overview = showSlider ? (
@@ -388,7 +356,7 @@ const useTransactionFilter = ({
 
       <BasicModal fullScreen={fullScreen} open={showCategoryModal} onClose={() => setShowCategoryModal(false)}>
         <DialogTitle>Filter by category</DialogTitle>
-        <DialogContent style={{ height: '70vh', overflowY: 'auto', padding: '0 20px' }}>
+        <DialogContent sx={{ height: '70vh', overflowY: 'auto', px: 2.5, py: 0 }}>
           <CategoryList
             ItemComponent={CategoryCard}
             additionalItemsProps={{}}
@@ -413,7 +381,7 @@ const useTransactionFilter = ({
 
       <BasicModal fullScreen={fullScreen} open={showAccountModal} onClose={() => setShowAccountModal(false)}>
         <DialogTitle>Pick Account</DialogTitle>
-        <DialogContent style={{ height: '70vh', overflow: 'hidden' }}>
+        <DialogContent sx={{ height: '70vh', overflow: 'hidden' }}>
           <GroupedAccountList
             items={accounts}
             filterable
@@ -491,10 +459,10 @@ const useTransactionFilter = ({
   ) : null
 
   const overviewWithToggle = (
-    <div style={{ position: 'relative' }}>
+    <Box sx={{ position: 'relative' }}>
       {quickDates}
       {overview}
-    </div>
+    </Box>
   )
 
   return {
