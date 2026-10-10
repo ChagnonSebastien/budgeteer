@@ -1,8 +1,10 @@
-import { FC, useContext, useState } from 'react'
+import { Alert, Link } from '@mui/material'
+import { FC, Fragment, useContext, useState } from 'react'
 
 import ItemList from '../components/accounts/ItemList'
 import CurrencyCard from '../components/currencies/CurrencyCard'
 import DeleteCurrencyDialog from '../components/currencies/DeleteCurrencyDialog'
+import { useRateFetchFailures } from '../components/currencies/useRateFetchFailures'
 import ExchangeRateHistory from '../components/graphing/ExchangeRateHistory'
 import { IconToolsContext } from '../components/icons/IconTools'
 import ActionSpeedDial from '../components/shared/ActionSpeedDial'
@@ -24,6 +26,7 @@ const CurrenciesPage: FC = () => {
   const [currencyToDelete, setCurrencyToDelete] = useState<Currency | null>(null)
   const { accountBalances } = useContext(MixedAugmentation)
   const { state: accounts } = useContext(AccountServiceContext)
+  const failingFetchers = useRateFetchFailures()
 
   const getTotalForCurrency = (targetCurrencyId: CurrencyID): number => {
     let total = 0
@@ -54,6 +57,26 @@ const CurrenciesPage: FC = () => {
       <CustomScrolling
         sx={{ width: '100%', height: '100%', maxWidth: (t) => t.contentWidth.default, pb: 11, gap: 0.125 }}
       >
+        {failingFetchers.length > 0 && (
+          <Alert severity="error" sx={{ mb: 1.5 }}>
+            The last nightly rate fetch failed for{' '}
+            {failingFetchers.map((currency, i) => (
+              <Fragment key={currency.id}>
+                {i > 0 && ', '}
+                <Link
+                  component="button"
+                  color="inherit"
+                  sx={{ verticalAlign: 'baseline', fontWeight: 600 }}
+                  onClick={() => navigate(`/currencies/rates/${currency.id}?tab=fetcher`)}
+                >
+                  {currency.name}
+                </Link>
+              </Fragment>
+            ))}
+            . Their rates were not updated.
+          </Alert>
+        )}
+
         <ItemList
           items={orderedCurrencies}
           ItemComponent={CurrencyCard}

@@ -12,6 +12,18 @@ export class RateAutoupdateSettings {
   }
 }
 
+export class RateFetchFailure {
+  constructor(
+    public readonly at: Date,
+    public readonly message: string,
+  ) {}
+
+  static same(a: RateFetchFailure | null, b: RateFetchFailure | null): boolean {
+    if (a === null || b === null) return a === b
+    return a.at.getTime() === b.at.getTime() && a.message === b.message
+  }
+}
+
 export type CurrencyID = number
 
 export default class Currency implements NamedItem<CurrencyID, Currency> {
@@ -23,6 +35,7 @@ export default class Currency implements NamedItem<CurrencyID, Currency> {
     public readonly type: string,
     public readonly decimalPoints: number,
     public readonly rateAutoupdateSettings: RateAutoupdateSettings,
+    public readonly rateFetchFailure: RateFetchFailure | null = null,
   ) {}
 
   hasName(name: string): boolean {
@@ -36,6 +49,7 @@ export default class Currency implements NamedItem<CurrencyID, Currency> {
     if (this.risk !== other.risk) return false
     if (this.type !== other.type) return false
     if (this.decimalPoints !== other.decimalPoints) return false
+    if (!RateFetchFailure.same(this.rateFetchFailure, other.rateFetchFailure)) return false
     return this.rateAutoupdateSettings.equals(other.rateAutoupdateSettings)
   }
 }

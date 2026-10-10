@@ -1,5 +1,9 @@
 import { BudgeteerDB } from './IndexedDB'
-import Currency, { CurrencyUpdatableFields, RateAutoupdateSettings } from '../../domain/model/currency'
+import Currency, {
+  CurrencyUpdatableFields,
+  RateAutoupdateSettings,
+  RateFetchFailure,
+} from '../../domain/model/currency'
 import { IdIdentifier } from '../../domain/model/Unique'
 
 export default class CurrencyLocalStore {
@@ -21,6 +25,9 @@ export default class CurrencyLocalStore {
           currency.type,
           currency.decimalPoints,
           new RateAutoupdateSettings(currency.rateFetchScript, currency.autoUpdate),
+          currency.rateFetchFailure
+            ? new RateFetchFailure(currency.rateFetchFailure.at, currency.rateFetchFailure.message)
+            : null,
         ),
     )
   }
@@ -81,6 +88,7 @@ export default class CurrencyLocalStore {
         risk: currency.risk,
         type: currency.type,
         decimalPoints: currency.decimalPoints,
+        rateFetchFailure: currency.rateFetchFailure ?? undefined,
       })),
     )
   }

@@ -1,7 +1,9 @@
-import { Alert, Box, Button, Stack, Switch, Typography } from '@mui/material'
+import { Alert, AlertTitle, Box, Button, Stack, Switch, Typography } from '@mui/material'
+import { formatDate } from 'date-fns'
 import { FC, useCallback, useContext, useState } from 'react'
 
 import { formatRate } from './ExchangeRatePoints'
+import { hasRateFetchFailure } from './useRateFetchFailures'
 import Currency, { RateAutoupdateSettings } from '../../domain/model/currency'
 import { CurrencyServiceContext } from '../../service/ServiceContext'
 import CodeEditor from '../inputs/CodeEditor'
@@ -36,7 +38,7 @@ interface Props {
 }
 
 const RateAutomation: FC<Props> = ({ currency, against, scriptRunner, onUseRate }) => {
-  const { update: updateCurrency } = useContext(CurrencyServiceContext)
+  const { update: updateCurrency, refresh: refreshCurrencies } = useContext(CurrencyServiceContext)
   const { showToast } = useToast()
 
   const savedScript = currency.rateAutoupdateSettings.script
@@ -80,6 +82,7 @@ const RateAutomation: FC<Props> = ({ currency, against, scriptRunner, onUseRate 
         { rateAutoupdateSettings: new RateAutoupdateSettings(scriptToSave, enabled) },
       )
       showToast('Rate automation saved')
+      await refreshCurrencies()
     } catch (err) {
       showToast('Unexpected error while saving the rate automation', 'error')
       console.error(err)
@@ -95,6 +98,18 @@ const RateAutomation: FC<Props> = ({ currency, against, scriptRunner, onUseRate 
 
   return (
     <Stack spacing={2}>
+      {hasRateFetchFailure(currency) && (
+        <Alert severity="error">
+          <AlertTitle>
+            The nightly run failed on {formatDate(currency.rateFetchFailure!.at, "MMM d 'at' h:mm a")}
+          </AlertTitle>
+          <Box component="span" sx={{ fontFamily: 'monospace', overflowWrap: 'anywhere' }}>
+            {currency.rateFetchFailure!.message}
+          </Box>
+          <Box sx={{ mt: 1 }}>Fix the script and save to clear this, or wait for the next successful run.</Box>
+        </Alert>
+      )}
+
       <Box sx={{ border: 1, borderColor: 'border.subtle', borderRadius: (t) => t.radius.md, overflow: 'hidden' }}>
         <CodeEditor content={script} onChange={onScriptChange} />
         <Stack

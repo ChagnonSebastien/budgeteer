@@ -1,4 +1,5 @@
 import {
+  Badge,
   Box,
   Button,
   Divider,
@@ -17,6 +18,7 @@ import { useLocation } from 'react-router-dom'
 import { UserContext } from '../App'
 import MixedAugmentation from '../service/MixedAugmentation'
 import UserStore from '../UserStore'
+import { useRateFetchFailures } from './currencies/useRateFetchFailures'
 import { IconToolsContext, PreparedIcon } from './icons/IconTools'
 import { withoutTransientProps } from './shared/Layout'
 import useCloseOnBack, { useNavigateFromDialog } from './shared/useCloseOnBack'
@@ -32,6 +34,7 @@ class AppPage implements MenuElement {
     private url: string,
     private iconName: string,
     private keepQuery: string[],
+    private useNeedsAttention: () => boolean = () => false,
   ) {}
 
   get Element() {
@@ -39,6 +42,7 @@ class AppPage implements MenuElement {
       const location = useLocation()
       const navigate = useNavigateFromDialog()
       const { iconTypeFromName } = useContext(IconToolsContext)
+      const needsAttention = this.useNeedsAttention()
 
       const Icon = iconTypeFromName(this.iconName)
       const selected = location.pathname === this.url
@@ -56,8 +60,10 @@ class AppPage implements MenuElement {
           }}
           selected={selected}
         >
-          <ListItemIcon sx={{ minWidth: 42, '& svg': { m: 1 } }}>
-            <Icon size={menuIconSize} />
+          <ListItemIcon sx={{ minWidth: 42, '& > .MuiBadge-root': { m: 1 } }}>
+            <Badge color="error" variant="dot" invisible={!needsAttention} overlap="circular">
+              <Icon size={menuIconSize} />
+            </Badge>
           </ListItemIcon>
           <ListItemText primary={this.title} />
         </ListItemButton>
@@ -118,7 +124,16 @@ const appPages: MenuEntry[] = [
   },
   { guestView: false, element: new AppPage('Categories', '/categories', PreparedIcon.TbCategory, []) },
   { guestView: false, element: new AppPage('Accounts', '/accounts', PreparedIcon.TbBuildingBank, []) },
-  { guestView: false, element: new AppPage('Currencies', '/currencies', PreparedIcon.TbCoins, []) },
+  {
+    guestView: false,
+    element: new AppPage(
+      'Currencies',
+      '/currencies',
+      PreparedIcon.TbCoins,
+      [],
+      () => useRateFetchFailures().length > 0,
+    ),
+  },
   { guestView: false, requires: 'transactions', element: new Subsection('Analysis') },
   {
     guestView: false,

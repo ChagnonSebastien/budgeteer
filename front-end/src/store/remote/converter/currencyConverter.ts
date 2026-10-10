@@ -1,5 +1,9 @@
 import { Converter } from './converter'
-import Currency, { CurrencyUpdatableFields, RateAutoupdateSettings } from '../../../domain/model/currency'
+import Currency, {
+  CurrencyUpdatableFields,
+  RateAutoupdateSettings,
+  RateFetchFailure,
+} from '../../../domain/model/currency'
 import { Currency as CurrencyDto, UpdateCurrencyFields } from '../dto/currency'
 
 export class CurrencyConverter
@@ -14,6 +18,7 @@ export class CurrencyConverter
       dto.type,
       dto.decimalPoints,
       new RateAutoupdateSettings(dto.autoUpdateSettingsScript, dto.autoUpdateSettingsEnabled),
+      dto.rateFetchFailedAt === '' ? null : new RateFetchFailure(new Date(dto.rateFetchFailedAt), dto.rateFetchError),
     )
   }
 
@@ -27,6 +32,8 @@ export class CurrencyConverter
       decimalPoints: model.decimalPoints,
       autoUpdateSettingsScript: model.rateAutoupdateSettings.script,
       autoUpdateSettingsEnabled: model.rateAutoupdateSettings.enabled,
+      rateFetchFailedAt: model.rateFetchFailure?.at.toISOString() ?? '',
+      rateFetchError: model.rateFetchFailure?.message ?? '',
     })
   }
 

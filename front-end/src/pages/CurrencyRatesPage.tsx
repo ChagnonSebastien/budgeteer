@@ -1,13 +1,15 @@
-import { Box, Stack, Tab, Tabs } from '@mui/material'
+import { Badge, Box, Stack, Tab, Tabs } from '@mui/material'
 import { startOfDay } from 'date-fns'
 import { FC, useContext, useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
 import ExchangeRatePoints, { PointDraft, rateInput } from '../components/currencies/ExchangeRatePoints'
 import RateAutomation from '../components/currencies/RateAutomation'
+import { hasRateFetchFailure } from '../components/currencies/useRateFetchFailures'
 import ExchangeRateHistory from '../components/graphing/ExchangeRateHistory'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
 import { FormSection } from '../components/shared/FormWrapper'
+import useQueryParams from '../components/shared/useQueryParams'
 import MixedAugmentation from '../service/MixedAugmentation'
 import { CurrencyServiceContext } from '../service/ServiceContext'
 
@@ -25,7 +27,8 @@ const CurrencyRatesPage: FC<Props> = ({ scriptRunner }) => {
   const { state: currencies } = useContext(CurrencyServiceContext)
   const { defaultCurrency } = useContext(MixedAugmentation)
   const [draft, setDraft] = useState<PointDraft | null>(null)
-  const [tab, setTab] = useState<'rates' | 'fetcher'>('rates')
+  const { queryParams, updateQueryParams } = useQueryParams<{ tab?: string }>()
+  const tab = queryParams.tab === 'fetcher' ? 'fetcher' : 'rates'
 
   const currency = currencies.find((c) => c.id === parseInt(currencyId!))
   const isUnavailable = typeof currency === 'undefined' || currency.id === defaultCurrency.id
@@ -45,9 +48,20 @@ const CurrencyRatesPage: FC<Props> = ({ scriptRunner }) => {
           </Box>
         </FormSection>
 
-        <Tabs variant="fullWidth" value={tab} onChange={(_ev, value) => setTab(value)}>
+        <Tabs
+          variant="fullWidth"
+          value={tab}
+          onChange={(_ev, value) => updateQueryParams({ tab: value === 'rates' ? null : value }, true)}
+        >
           <Tab label={`Rates in ${defaultCurrency.symbol}`} value="rates" />
-          <Tab label="Fetcher" value="fetcher" />
+          <Tab
+            label={
+              <Badge color="error" variant="dot" invisible={!hasRateFetchFailure(currency)} sx={{ pr: 1 }}>
+                Fetcher
+              </Badge>
+            }
+            value="fetcher"
+          />
         </Tabs>
 
         {/* Both stay mounted so unsaved script edits survive a tab switch. */}

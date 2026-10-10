@@ -18,6 +18,8 @@ message Currency {
   bool auto_update_settings_enabled = 6;
   string risk = 7;
   string type = 8;
+  string rate_fetch_failed_at = 9;
+  string rate_fetch_error = 10;
 }
 
 message GetAllCurrenciesRequest {

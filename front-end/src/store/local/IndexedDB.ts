@@ -12,6 +12,7 @@ interface Currency {
   decimalPoints: number
   rateFetchScript: string
   autoUpdate: boolean
+  rateFetchFailure?: { at: Date; message: string }
 }
 
 interface Account {

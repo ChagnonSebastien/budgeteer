@@ -1,6 +1,7 @@
 import { Box, Stack, Typography } from '@mui/material'
 import { useContext } from 'react'
 
+import { hasRateFetchFailure } from './useRateFetchFailures'
 import Currency, { CurrencyID, formatAmount } from '../../domain/model/currency'
 import { ItemProps } from '../accounts/ItemList'
 import { IconToolsContext } from '../icons/IconTools'
@@ -29,7 +30,7 @@ const CurrencyCard = (props: ItemProps<CurrencyID, Currency, AdditionalCurrencyC
       <Box
         sx={{
           p: { xs: 0.5, sm: 1 },
-          color: 'common.white',
+          color: hasRateFetchFailure(item) ? 'error.main' : 'common.white',
           display: 'flex',
           flexShrink: 0,
           fontSize: { xs: '1.25rem', sm: '1.5rem' },

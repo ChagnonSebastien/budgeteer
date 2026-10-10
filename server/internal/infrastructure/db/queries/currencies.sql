@@ -10,7 +10,7 @@ FROM currencies c
 WHERE c.id = sqlc.arg(currency_id);
 
 -- name: GetAllCurrencies :many
-SELECT id, name, symbol, risk, type, decimal_points, rate_fetch_script, auto_update
+SELECT id, name, symbol, risk, type, decimal_points, rate_fetch_script, auto_update, rate_fetch_failed_at, rate_fetch_error
 FROM currencies
 WHERE user_id = sqlc.arg(user_id);
 
@@ -29,8 +29,24 @@ SET
     type = COALESCE(sqlc.narg(type), type),
     decimal_points = COALESCE(sqlc.narg(decimal_points), decimal_points),
     rate_fetch_script = COALESCE(sqlc.narg(rate_fetch_script), rate_fetch_script),
-    auto_update = COALESCE(sqlc.narg(auto_update), auto_update)
+    auto_update = COALESCE(sqlc.narg(auto_update), auto_update),
+    rate_fetch_failed_at = CASE
+        WHEN sqlc.narg(rate_fetch_script)::text IS NULL AND sqlc.narg(auto_update)::boolean IS NULL THEN rate_fetch_failed_at
+    END,
+    rate_fetch_error = CASE
+        WHEN sqlc.narg(rate_fetch_script)::text IS NULL AND sqlc.narg(auto_update)::boolean IS NULL THEN rate_fetch_error
+    END
 WHERE id = sqlc.arg(id) AND user_id = sqlc.arg(user_id);
+
+-- name: RecordRateFetchFailure :exec
+UPDATE currencies
+SET rate_fetch_failed_at = now(), rate_fetch_error = sqlc.arg(error)
+WHERE id = sqlc.arg(id);
+
+-- name: ClearRateFetchFailure :exec
+UPDATE currencies
+SET rate_fetch_failed_at = NULL, rate_fetch_error = NULL
+WHERE id = sqlc.arg(id);
 
 -- name: GetCurrencyForDeletion :one
 SELECT c.id, c.decimal_points, coalesce(u.default_currency = c.id, false)::bool AS is_default

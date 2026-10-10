@@ -31,9 +31,27 @@ func (r *Repository) GetAllCurrencies(ctx context.Context, userId uuid.UUID) ([]
 				Enabled: currencyDao.AutoUpdate,
 			},
 		}
+
+		if currencyDao.RateFetchFailedAt.Valid {
+			currencies[i].LastRateFetchFailure = &model.RateFetchFailure{
+				At:      currencyDao.RateFetchFailedAt.Time,
+				Message: currencyDao.RateFetchError.String,
+			}
+		}
 	}
 
 	return currencies, nil
+}
+
+func (r *Repository) RecordRateFetchFailure(ctx context.Context, currencyID model.CurrencyID, message string) error {
+	return r.queries.RecordRateFetchFailure(ctx, &dao.RecordRateFetchFailureParams{
+		ID:    int32(currencyID),
+		Error: sql.NullString{String: message, Valid: true},
+	})
+}
+
+func (r *Repository) ClearRateFetchFailure(ctx context.Context, currencyID model.CurrencyID) error {
+	return r.queries.ClearRateFetchFailure(ctx, int32(currencyID))
 }
 
 func (r *Repository) CreateCurrency(

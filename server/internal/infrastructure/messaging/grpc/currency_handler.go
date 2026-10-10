@@ -10,6 +10,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -119,7 +120,6 @@ func (s *CurrencyHandler) GetAllCurrencies(
 
 	currenciesDto := make([]*dto.Currency, len(currencies))
 	for i, currency := range currencies {
-
 		currenciesDto[i] = &dto.Currency{
 			Id:                        uint32(currency.ID),
 			Name:                      currency.Name,
@@ -129,6 +129,11 @@ func (s *CurrencyHandler) GetAllCurrencies(
 			DecimalPoints:             uint32(currency.DecimalPoints),
 			AutoUpdateSettingsScript:  currency.RateAutoUpdateSettings.Script,
 			AutoUpdateSettingsEnabled: currency.RateAutoUpdateSettings.Enabled,
+		}
+
+		if failure := currency.LastRateFetchFailure; failure != nil {
+			currenciesDto[i].RateFetchFailedAt = failure.At.Format(time.RFC3339)
+			currenciesDto[i].RateFetchError = failure.Message
 		}
 	}
 
