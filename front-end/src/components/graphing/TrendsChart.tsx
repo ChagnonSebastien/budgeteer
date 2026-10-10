@@ -278,6 +278,7 @@ const TrendsChart: FC<Props> = (props) => {
       )}
 
       <ResponsiveBar
+        enableGridY={!privacyMode}
         margin={{ top: 20, right: 25, bottom: 60, left: 70 }}
         valueScale={{ type: 'linear', min: 'auto', nice: false }}
         data={visibleData}

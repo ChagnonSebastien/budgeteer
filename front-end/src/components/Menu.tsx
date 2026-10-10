@@ -99,6 +99,7 @@ const ContentContainer = styled(
 interface MenuEntry {
   guestView: boolean
   requires?: 'transactions' | 'financialIncome'
+  hiddenInPrivacy?: boolean
   element: AppPage | Subsection | Separator
 }
 
@@ -131,6 +132,7 @@ const appPages: MenuEntry[] = [
   {
     guestView: false,
     requires: 'transactions',
+    hiddenInPrivacy: true,
     element: new AppPage('Costs Analysis', '/costs', PreparedIcon.TbReportMoney, []),
   },
   {
@@ -195,8 +197,9 @@ const DrawerWrapper: FC<Props> = ({ logout, children, userIsGuest = false }) => 
         .filter((appPage) => !userIsGuest || appPage.guestView)
         .filter(
           (appPage) =>
-            !appPage.requires ||
-            (appPage.requires === 'transactions' ? augmentedTransactions.length > 0 : hasFinancialIncome),
+            (!privacyMode || !appPage.hiddenInPrivacy) &&
+            (!appPage.requires ||
+              (appPage.requires === 'transactions' ? augmentedTransactions.length > 0 : hasFinancialIncome)),
         )
         .map((appPage) => (
           <appPage.element.Element />

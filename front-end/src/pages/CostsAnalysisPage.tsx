@@ -1,4 +1,4 @@
-import { Box, IconButton } from '@mui/material'
+import { Box, IconButton, Typography } from '@mui/material'
 import { decomposeColor, recomposeColor, styled, useTheme } from '@mui/material/styles'
 import { differenceInYears, startOfDay } from 'date-fns'
 import { FC, useContext, useEffect, useMemo, useState } from 'react'
@@ -284,6 +284,16 @@ const CostsAnalysisPage: FC = () => {
     percentages[biggestIndex] += 1
   }
 
+  if (privacyMode) {
+    return (
+      <ContentWithHeader title="Costs Analysis" action="menu" withPadding>
+        <Typography color="text.secondary" sx={{ mt: 4, textAlign: 'center' }}>
+          Costs Analysis is hidden while privacy mode is on.
+        </Typography>
+      </ContentWithHeader>
+    )
+  }
+
   return (
     <ContentWithHeader
       title="Costs Analysis"
@@ -395,14 +405,14 @@ const CostsAnalysisPage: FC = () => {
               </SectionHeader>
               <SectionHeader>
                 <th>Totals</th>
-                <AmountCell>{formatAmount(defaultCurrency, fixedAmount)}</AmountCell>
-                <AmountCell>{formatAmount(defaultCurrency, fixedAmount / 12)}</AmountCell>
+                <AmountCell>{formatAmount(defaultCurrency, fixedAmount, privacyMode)}</AmountCell>
+                <AmountCell>{formatAmount(defaultCurrency, fixedAmount / 12, privacyMode)}</AmountCell>
               </SectionHeader>
               {[...fixedCosts.entries()].map((entry) => (
                 <tr key={`fixed-${entry[0]}`}>
                   <td>{entry[0]}</td>
-                  <AmountCell>{formatAmount(defaultCurrency, entry[1])}</AmountCell>
-                  <AmountCell>{formatAmount(defaultCurrency, entry[1] / 12)}</AmountCell>
+                  <AmountCell>{formatAmount(defaultCurrency, entry[1], privacyMode)}</AmountCell>
+                  <AmountCell>{formatAmount(defaultCurrency, entry[1] / 12, privacyMode)}</AmountCell>
                 </tr>
               ))}
               <SpacerRow />
@@ -422,14 +432,14 @@ const CostsAnalysisPage: FC = () => {
               </SectionHeader>
               <SectionHeader>
                 <th>Totals</th>
-                <AmountCell>{formatAmount(defaultCurrency, variableAmount)}</AmountCell>
-                <AmountCell>{formatAmount(defaultCurrency, variableAmount / 12)}</AmountCell>
+                <AmountCell>{formatAmount(defaultCurrency, variableAmount, privacyMode)}</AmountCell>
+                <AmountCell>{formatAmount(defaultCurrency, variableAmount / 12, privacyMode)}</AmountCell>
               </SectionHeader>
               {[...variableCosts.entries()].map((entry) => (
                 <tr key={`variable-${entry[0]}`}>
                   <td>{entry[0]}</td>
-                  <AmountCell>{formatAmount(defaultCurrency, entry[1])}</AmountCell>
-                  <AmountCell>{formatAmount(defaultCurrency, entry[1] / 12)}</AmountCell>
+                  <AmountCell>{formatAmount(defaultCurrency, entry[1], privacyMode)}</AmountCell>
+                  <AmountCell>{formatAmount(defaultCurrency, entry[1] / 12, privacyMode)}</AmountCell>
                 </tr>
               ))}
               {!privacyMode && (

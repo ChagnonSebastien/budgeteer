@@ -1,9 +1,10 @@
 import { Checkbox, Stack, TextField, Typography } from '@mui/material'
-import { FC } from 'react'
+import { FC, useContext } from 'react'
 
 import Currency, { formatFull } from '../../domain/model/currency'
 import { MemberSplitValues, Person } from '../../domain/model/transactionGroup'
 import { FixedPointInput } from '../inputs/FixedPointInput'
+import { DrawerContext } from '../Menu'
 
 export type SplitValueKind = 'participants' | 'percentage' | 'shares' | 'amount'
 
@@ -24,6 +25,7 @@ const SplitValuesEditor: FC<{
   currency?: Currency
   amount?: number
 }> = ({ kind, members, values, onChange, currency, amount }) => {
+  const { privacyMode } = useContext(DrawerContext)
   const setValue = (email: string, value: number | null) => onChange(new Map(values).set(email, value))
   const error = splitValuesError(kind, values, amount)
   const total = [...values.values()].reduce<number>((sum, v) => sum + (v ?? 0), 0)
@@ -78,7 +80,7 @@ const SplitValuesEditor: FC<{
         {error ??
           (kind === 'participants'
             ? `${values.size} of ${members.length} taking part`
-            : `Total: ${kind === 'amount' && currency ? formatFull(currency, total) : total}${kind === 'percentage' ? '%' : ''}`)}
+            : `Total: ${kind === 'amount' && currency ? formatFull(currency, total, privacyMode) : total}${kind === 'percentage' ? '%' : ''}`)}
       </Typography>
     </Stack>
   )

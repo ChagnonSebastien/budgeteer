@@ -21,6 +21,7 @@ import {
   TransactionServiceContext,
   UnconfirmedTransactionServiceContext,
 } from '../../service/ServiceContext'
+import { DrawerContext } from '../Menu'
 import AppDialog from '../shared/AppDialog'
 import { useToast } from '../shared/ToastProvider'
 
@@ -44,6 +45,7 @@ const DeleteCurrencyDialog: FC<{ currency: Currency; onClose(): void; onDeleted(
   const { state: transactionGroups, refresh: refreshGroups } = useContext(TransactionGroupServiceContext)
   const { refresh: refreshRates } = useContext(ExchangeRateServiceContext)
   const { showToast } = useToast()
+  const { privacyMode } = useContext(DrawerContext)
 
   const [mode, setMode] = useState<'migrate' | 'delete'>('migrate')
   const [target, setTarget] = useState<Currency | null>(null)
@@ -59,7 +61,7 @@ const DeleteCurrencyDialog: FC<{ currency: Currency; onClose(): void; onDeleted(
   const balances = accounts.flatMap((account) =>
     account.initialAmounts
       .filter((balance) => balance.currencyId === currency.id && balance.value !== 0)
-      .map((balance) => `${account.name} (${formatFull(currency, balance.value)})`),
+      .map((balance) => `${account.name} (${formatFull(currency, balance.value, privacyMode)})`),
   )
 
   const affected = useMemo(

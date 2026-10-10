@@ -22,6 +22,7 @@ import {
   TransactionServiceContext,
   UnconfirmedTransactionServiceContext,
 } from '../../service/ServiceContext'
+import { DrawerContext } from '../Menu'
 import AppDialog from '../shared/AppDialog'
 import { useToast } from '../shared/ToastProvider'
 
@@ -42,6 +43,7 @@ const DeleteAccountDialog: FC<{ account: Account; onClose(): void; onDeleted(): 
   const { state: transactionGroups } = useContext(TransactionGroupServiceContext)
   const { state: currencies } = useContext(CurrencyServiceContext)
   const { showToast } = useToast()
+  const { privacyMode } = useContext(DrawerContext)
 
   const [mode, setMode] = useState<Mode>('replace')
   const [replacement, setReplacement] = useState<Account | null>(null)
@@ -80,7 +82,7 @@ const DeleteAccountDialog: FC<{ account: Account; onClose(): void; onDeleted(): 
     .filter((balance) => balance.value !== 0)
     .map((balance) => {
       const currency = currencies.find((c) => c.id === balance.currencyId)
-      return currency ? formatFull(currency, balance.value) : null
+      return currency ? formatFull(currency, balance.value, privacyMode) : null
     })
     .filter((text) => text !== null)
     .join(', ')

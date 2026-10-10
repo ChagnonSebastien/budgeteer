@@ -1,5 +1,5 @@
 import { Box } from '@mui/material'
-import { FC, useMemo } from 'react'
+import { FC, useContext, useMemo } from 'react'
 
 import AccountsBalanceChart, { GroupType as AccountsGroupType } from '../components/graphing/AccountsBalanceChart'
 import CurrenciesBalanceChart, { GroupType as CurrenciesGroupType } from '../components/graphing/CurrenciesBalanceChart'
@@ -7,6 +7,7 @@ import { FirstDivision, GraphContainer, SecondDivision } from '../components/gra
 import { BaseLineConfig, ScaleConfig } from '../components/graphing/NetWorthChart'
 import SelectOne from '../components/inputs/SelectOne'
 import useTransactionFilter from '../components/inputs/useTransactionFilter'
+import { DrawerContext } from '../components/Menu'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
 import { Row } from '../components/shared/Layout'
 import SplitView from '../components/shared/SplitView'
@@ -48,7 +49,11 @@ const BalancePage: FC = () => {
   const { queryParams: qp, updateQueryParams } = useQueryParams<QueryParams>()
   const groupBy = useMemo(() => (qp.groupBy ?? 'account') as AccountsGroupType | CurrenciesGroupType, [qp.groupBy])
   const baselineConfig = useMemo(() => (qp.baselineConfig ?? 'none') as BaseLineConfig, [qp.baselineConfig])
-  const scale = useMemo(() => (qp.scale ?? 'cropped-absolute') as ScaleConfig, [qp.scale])
+  const { privacyMode } = useContext(DrawerContext)
+  const scale = useMemo(
+    () => (privacyMode ? 'absolute' : (qp.scale ?? 'cropped-absolute')) as ScaleConfig,
+    [qp.scale, privacyMode],
+  )
   const type = useMemo(() => (qp.type ?? 'active') as ActiveOrPassive, [qp.type])
 
   const majorType = useMemo(
@@ -130,18 +135,22 @@ const BalancePage: FC = () => {
       ]}
       type={splitHorizontal ? 'radio' : 'dropdown'}
     />,
-    <SelectOne
-      key="scale-option"
-      label="Scale"
-      value={scale}
-      onChange={(newValue) => updateQueryParams({ scale: newValue })}
-      options={[
-        { value: 'absolute', label: 'Absolute' },
-        { value: 'cropped-absolute', label: 'Cropped Absolute' },
-        { value: 'relative', label: 'Relative (%)' },
-      ]}
-      type={splitHorizontal ? 'radio' : 'dropdown'}
-    />,
+    ...(privacyMode
+      ? []
+      : [
+          <SelectOne
+            key="scale-option"
+            label="Scale"
+            value={scale}
+            onChange={(newValue) => updateQueryParams({ scale: newValue })}
+            options={[
+              { value: 'absolute', label: 'Absolute' },
+              { value: 'cropped-absolute', label: 'Cropped Absolute' },
+              { value: 'relative', label: 'Relative (%)' },
+            ]}
+            type={splitHorizontal ? 'radio' : 'dropdown'}
+          />,
+        ]),
   ]
 
   const secondDivision = (
