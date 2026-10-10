@@ -43,7 +43,7 @@ const TransactionCard: FC<ItemProps<TransactionID, AugmentedTransaction, object>
         borderRadius: '0.5rem',
       }}
     >
-      {item.augmentedTransactionGroupData && (
+      {item.augmentedTransactionGroupData && !item.augmentedTransactionGroupData.transactionGroup.hidden && (
         <Row style={{ justifyContent: 'center', padding: '0.16rem', gap: '.5rem' }}>
           <Typography fontSize="0.9rem" fontWeight="500" textOverflow={'ellipsis'} overflow={'hidden'}>
             {item.augmentedTransactionGroupData.transactionGroup.name}

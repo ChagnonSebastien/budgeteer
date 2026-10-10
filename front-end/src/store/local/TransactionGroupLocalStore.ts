@@ -98,6 +98,10 @@ export default class TransactionGroupLocalStore {
     await this.db.transactionGroups.update(identity.id, updateQuery)
   }
 
+  public async delete(identity: IdIdentifier): Promise<void> {
+    await this.db.transactionGroups.delete(identity.id)
+  }
+
   public async sync(transactionGroups: TransactionGroup[]): Promise<void> {
     await this.db.transactionGroups.clear()
     await this.db.transactionGroups.bulkPut(

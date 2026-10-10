@@ -94,6 +94,9 @@ export const buildGroupTransactions = (
   })
 }
 
+export const canDeleteGroup = (transactions: AugmentedTransaction[], email: string): boolean =>
+  transactions.every((t) => (t instanceof SettlementAugmentedTransaction ? !t.settlement.completed : t.owner === email))
+
 export const userBalance = (transactions: AugmentedTransaction[], email: string): number =>
   transactions.reduce((sum, t) => sum + t.getUserContribution(email), 0)
 

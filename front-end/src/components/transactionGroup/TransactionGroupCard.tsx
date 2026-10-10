@@ -22,7 +22,7 @@ export interface GroupSummary extends GroupBalance {
   lastDate: Date | null
 }
 
-const dateRange = ({ firstDate, lastDate }: GroupSummary): string => {
+export const dateRange = ({ firstDate, lastDate }: GroupSummary): string => {
   if (!firstDate || !lastDate) return 'No transactions yet'
   if (isSameDay(firstDate, lastDate)) return format(lastDate, 'MMM d, yyyy')
   if (isSameYear(firstDate, lastDate)) return `${format(firstDate, 'MMM d')} – ${format(lastDate, 'MMM d, yyyy')}`
@@ -76,6 +76,7 @@ export const TransactionGroupCard = (props: Props) => {
         alignItems: 'center',
         padding: '1rem',
         gap: '1rem',
+        opacity: item.hidden ? 0.55 : 1,
       }}
     >
       {authentification_method !== 'guest' && (
@@ -97,6 +98,10 @@ export const TransactionGroupCard = (props: Props) => {
       {invited ? (
         <Typography variant="caption" color="warning">
           Invited
+        </Typography>
+      ) : item.hidden ? (
+        <Typography variant="caption" color="textDisabled">
+          Hidden
         </Typography>
       ) : (
         summary && <BalanceText {...summary} />

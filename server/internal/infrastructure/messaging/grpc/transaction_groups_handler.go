@@ -2,6 +2,7 @@ package grpc
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -9,6 +10,7 @@ import (
 	"chagnon.dev/budget-server/internal/infrastructure/db/repository"
 	"chagnon.dev/budget-server/internal/infrastructure/messaging/dto"
 	"chagnon.dev/budget-server/internal/infrastructure/messaging/shared"
+	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -42,6 +44,7 @@ type transactionGroupRepository interface {
 		transactionId model.TransactionID,
 		splitOverride model.Optional[model.SplitOverride],
 	) error
+	DeleteTransactionGroup(ctx context.Context, userId uuid.UUID, userEmail string, id model.TransactionGroupID) error
 }
 
 type TransactionGroupHandler struct {
@@ -323,4 +326,21 @@ func (h *TransactionGroupHandler) SetGroupedTransactionSplit(ctx context.Context
 	}
 
 	return &dto.SetGroupedTransactionSplitResponse{}, nil
+}
+
+func (h *TransactionGroupHandler) DeleteTransactionGroup(ctx context.Context, request *dto.DeleteTransactionGroupRequest) (*dto.DeleteTransactionGroupResponse, error) {
+	user, ok := shared.FromContext(ctx)
+	if !ok {
+		return nil, fmt.Errorf("getting user from context")
+	}
+
+	err := h.transactionGroupService.DeleteTransactionGroup(ctx, user.ID, user.Email, model.TransactionGroupID(request.Id))
+	if errors.Is(err, repository.ErrTransactionGroupNotDeletable) {
+		return nil, status.Error(codes.FailedPrecondition, "this group has other members' transactions or completed settlements: hide it instead")
+	}
+	if err != nil {
+		return nil, fmt.Errorf("deleting transaction group: %w", err)
+	}
+
+	return &dto.DeleteTransactionGroupResponse{}, nil
 }

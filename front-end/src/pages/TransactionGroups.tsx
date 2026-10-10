@@ -1,12 +1,16 @@
-import React, { FC, useContext, useMemo, useRef } from 'react'
+import { Checkbox, IconButton, Menu, MenuItem } from '@mui/material'
+import React, { FC, useContext, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import { UserContext } from '../App'
 import ItemList from '../components/accounts/ItemList'
+import { IconToolsContext } from '../components/icons/IconTools'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
 import { Column } from '../components/shared/Layout'
 import ScrollingOverButton, { CustomScrolling } from '../components/shared/ScrollingOverButton'
+import useQueryParams from '../components/shared/useQueryParams'
 import BalanceOverview, { CurrencyTotals } from '../components/transactionGroup/BalanceOverview'
+import TransactionGroupModal from '../components/transactionGroup/TransactionGroupModal'
 import { GroupSummary, TransactionGroupCard } from '../components/transactionGroup/TransactionGroupCard'
 import { useAugmentedTransactionGroups } from '../components/transactionGroup/useAugmentedTransactionGroup'
 import {
@@ -24,6 +28,7 @@ interface Props {
 
 const TransactionGroups: FC<Props> = ({ canCreate = true }) => {
   const navigate = useNavigate()
+  const { IconLib } = useContext(IconToolsContext)
   const { email } = useContext(UserContext)
   const { state: transactionGroups } = useContext(TransactionGroupServiceContext)
   const augmentedGroups = useAugmentedTransactionGroups()
@@ -47,12 +52,19 @@ const TransactionGroups: FC<Props> = ({ canCreate = true }) => {
     return { summaries, lastActivity }
   }, [augmentedGroups, sources, email])
 
+  const { queryParams, updateQueryParams } = useQueryParams<{ showHidden: string }>()
+  const showHidden = queryParams.showHidden === 'true'
+  const [settingsAnchor, setSettingsAnchor] = useState<HTMLElement | null>(null)
+
   const orderedGroups = useMemo(
     () =>
-      [...transactionGroups].sort(
-        (a, b) => (lastActivity.get(b.id) ?? b.createdAt.getTime()) - (lastActivity.get(a.id) ?? a.createdAt.getTime()),
-      ),
-    [transactionGroups, lastActivity],
+      transactionGroups
+        .filter((group) => showHidden || !group.hidden)
+        .sort(
+          (a, b) =>
+            (lastActivity.get(b.id) ?? b.createdAt.getTime()) - (lastActivity.get(a.id) ?? a.createdAt.getTime()),
+        ),
+    [transactionGroups, lastActivity, showHidden],
   )
 
   // Groups can use different currencies with no shared exchange rate, so totals stay per currency.
@@ -68,6 +80,8 @@ const TransactionGroups: FC<Props> = ({ canCreate = true }) => {
   }, [summaries])
 
   const scrollingContainerRef = useRef<HTMLDivElement>(null)
+  const [clickedGroupId, setClickedGroupId] = useState<TransactionGroupID | null>(null)
+  const clickedGroup = transactionGroups.find((g) => g.id === clickedGroupId)
 
   const list = (
     <CustomScrolling
@@ -85,7 +99,7 @@ const TransactionGroups: FC<Props> = ({ canCreate = true }) => {
           items={orderedGroups}
           selectConfiguration={{
             mode: 'click',
-            onClick: (clicked) => navigate(`/transaction-groups/manage/${clicked.id}`),
+            onClick: (clicked) => setClickedGroupId(clicked.id),
           }}
           ItemComponent={TransactionGroupCard}
           additionalItemsProps={{ summaries }}
@@ -95,7 +109,30 @@ const TransactionGroups: FC<Props> = ({ canCreate = true }) => {
   )
 
   return (
-    <ContentWithHeader title="Transaction Groups" action="menu" withPadding>
+    <ContentWithHeader
+      title="Transaction Groups"
+      action="menu"
+      withPadding
+      rightContent={
+        <>
+          <IconButton aria-label="list settings" onClick={(e) => setSettingsAnchor(e.currentTarget)}>
+            <IconLib.MdSettings size="1.5rem" />
+          </IconButton>
+          <Menu anchorEl={settingsAnchor} open={settingsAnchor !== null} onClose={() => setSettingsAnchor(null)}>
+            <MenuItem
+              onClick={() => {
+                updateQueryParams({ showHidden: (!showHidden).toString() })
+                setSettingsAnchor(null)
+              }}
+              sx={{ gap: 1 }}
+            >
+              <Checkbox checked={showHidden} size="small" />
+              Show hidden groups
+            </MenuItem>
+          </Menu>
+        </>
+      }
+    >
       <ScrollingOverButton
         button={canCreate ? { text: 'New', onClick: () => navigate('/transaction-groups/new') } : undefined}
         scrollingContainerRef={scrollingContainerRef}
@@ -103,6 +140,13 @@ const TransactionGroups: FC<Props> = ({ canCreate = true }) => {
       >
         {list}
       </ScrollingOverButton>
+      {clickedGroup && (
+        <TransactionGroupModal
+          group={clickedGroup}
+          summary={summaries.get(clickedGroup.id)}
+          onClose={() => setClickedGroupId(null)}
+        />
+      )}
     </ContentWithHeader>
   )
 }

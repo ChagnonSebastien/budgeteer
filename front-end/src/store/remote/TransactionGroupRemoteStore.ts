@@ -6,6 +6,7 @@ import { MemberSplitValue as MemberSplitValueDto, SplitOverride as SplitOverride
 import {
   ChangeTransactionGroupSplitRequest,
   CreateTransactionGroupRequest,
+  DeleteTransactionGroupRequest,
   GetAllTransactionGroupsRequest,
   SetGroupedTransactionSplitRequest,
   SplitChangeScope as SplitChangeScopeDto,
@@ -102,6 +103,10 @@ export default class TransactionGroupRemoteStore {
           : undefined,
       }),
     ).response
+  }
+
+  public async delete(identity: IdIdentifier): Promise<void> {
+    await this.client.deleteTransactionGroup(DeleteTransactionGroupRequest.create({ id: identity.id })).response
   }
 
   public async update(identity: IdIdentifier, data: Partial<Omit<TransactionGroup, 'id'>>): Promise<void> {

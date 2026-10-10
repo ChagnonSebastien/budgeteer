@@ -249,3 +249,20 @@ WHERE utus.unconfirmed_transaction_id = ut.id AND ut.transaction_group_id = sqlc
 UPDATE unconfirmed_transactions
 SET split_type_override = NULL
 WHERE transaction_group_id = sqlc.arg(transaction_group_id);
+
+-- name: GetTransactionGroupDeletionBlockers :one
+SELECT
+    (SELECT count(*)
+     FROM transaction_transaction_group ttg
+     JOIN transactions t ON t.id = ttg.transaction_id
+     WHERE ttg.transaction_group_id = sqlc.arg(transaction_group_id) AND t.user_id <> sqlc.arg(user_id))::integer AS others_transactions,
+    (SELECT count(*)
+     FROM unconfirmed_transactions ut
+     WHERE ut.transaction_group_id = sqlc.arg(transaction_group_id) AND ut.owner_email <> sqlc.arg(user_email))::integer AS others_unconfirmed_transactions,
+    (SELECT count(*)
+     FROM settlements s
+     WHERE s.transaction_group_id = sqlc.arg(transaction_group_id) AND s.completed_at IS NOT NULL)::integer AS completed_settlements;
+
+-- name: DeleteTransactionGroup :exec
+DELETE FROM transaction_group
+WHERE id = sqlc.arg(transaction_group_id);

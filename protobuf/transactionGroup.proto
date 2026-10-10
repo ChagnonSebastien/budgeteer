@@ -98,10 +98,18 @@ message SetGroupedTransactionSplitRequest {
 message SetGroupedTransactionSplitResponse {
 }
 
+message DeleteTransactionGroupRequest {
+  uint32 id = 1;
+}
+
+message DeleteTransactionGroupResponse {
+}
+
 service TransactionGroupService {
   rpc GetAllTransactionGroups (GetAllTransactionGroupsRequest) returns (GetAllTransactionGroupsResponse);
   rpc CreateTransactionGroup (CreateTransactionGroupRequest) returns (CreateTransactionGroupResponse);
   rpc UpdateTransactionGroup (UpdateTransactionGroupRequest) returns (UpdateTransactionGroupResponse);
   rpc ChangeTransactionGroupSplit (ChangeTransactionGroupSplitRequest) returns (ChangeTransactionGroupSplitResponse);
   rpc SetGroupedTransactionSplit (SetGroupedTransactionSplitRequest) returns (SetGroupedTransactionSplitResponse);
+  rpc DeleteTransactionGroup (DeleteTransactionGroupRequest) returns (DeleteTransactionGroupResponse);
 }

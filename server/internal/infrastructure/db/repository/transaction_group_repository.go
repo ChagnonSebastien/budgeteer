@@ -4,12 +4,14 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"slices"
 
 	"chagnon.dev/budget-server/internal/domain/model"
 	"chagnon.dev/budget-server/internal/infrastructure/db/dao"
 	"chagnon.dev/budget-server/internal/logging"
+	"github.com/google/uuid"
 )
 
 func SplitTypeFromDao(splitType dao.GroupSplitType) (model.SplitType, error) {
@@ -483,6 +485,33 @@ func (r *Repository) SetGroupedTransactionSplit(
 			}
 		}
 
+		return nil
+	})
+}
+
+var ErrTransactionGroupNotDeletable = errors.New("transaction group holds other members' transactions or completed settlements")
+
+func (r *Repository) DeleteTransactionGroup(ctx context.Context, userId uuid.UUID, userEmail string, id model.TransactionGroupID) error {
+	return r.inTx(ctx, func(queries *dao.Queries) error {
+		if err := ensureTransactionGroupMember(ctx, queries, userEmail, int32(id), true); err != nil {
+			return err
+		}
+
+		blockers, err := queries.GetTransactionGroupDeletionBlockers(ctx, &dao.GetTransactionGroupDeletionBlockersParams{
+			TransactionGroupID: int32(id),
+			UserID:             userId,
+			UserEmail:          userEmail,
+		})
+		if err != nil {
+			return fmt.Errorf("checking whether the transaction group can be deleted: %w", err)
+		}
+		if blockers.OthersTransactions > 0 || blockers.OthersUnconfirmedTransactions > 0 || blockers.CompletedSettlements > 0 {
+			return ErrTransactionGroupNotDeletable
+		}
+
+		if err := queries.DeleteTransactionGroup(ctx, int32(id)); err != nil {
+			return fmt.Errorf("deleting transaction group: %w", err)
+		}
 		return nil
 	})
 }
