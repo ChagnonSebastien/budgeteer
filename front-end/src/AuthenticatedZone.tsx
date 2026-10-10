@@ -35,7 +35,7 @@ import SettlementPage from './pages/SettlementPage'
 import TransactionGroups from './pages/TransactionGroups'
 import TransactionPage from './pages/TransactionPage'
 import TrendsPage from './pages/TrendsPage'
-import { AccountPersistenceAugmenter } from './service/AccountServiceAugmenter'
+import { makeAccountPersistenceAugmenter } from './service/AccountServiceAugmenter'
 import { BasicCrudServiceWithPersistence } from './service/BasicCrudServiceWithPersistence'
 import { CategoryPersistenceAugmenter } from './service/CategoryServiceAugmenter'
 import { CurrencyPersistenceAugmenter } from './service/CurrencyServiceAugmenter'
@@ -96,6 +96,7 @@ const settlementRemoteStore = new SettlementRemoteStore(transport)
 const settlementLocalStore = new SettlementLocalStore(IndexedDB)
 const SettlementPersistenceAugmenter = makeSettlementPersistenceAugmenter(settlementRemoteStore)
 const replayStore = new ReplayStore(IndexedDB)
+const AccountPersistenceAugmenterWithRemote = makeAccountPersistenceAugmenter(accountRemoteStore)
 
 const UnconfirmedTransactionPersistenceAugmenter = makeUnconfirmedTransactionPersistenceAugmenter(
   unconfirmedTransactionRemoteStore,
@@ -292,7 +293,7 @@ const PersistenceSetup: FC<{ children: ReactNode; hasInternet: boolean }> = ({ c
           localStore={accountLocalStore}
           actionStore={replayStore}
           context={AccountServiceContext}
-          Augmenter={AccountPersistenceAugmenter}
+          Augmenter={AccountPersistenceAugmenterWithRemote}
           hasInternet={hasInternet}
           sorter={(a, b) => b.id - a.id}
         >

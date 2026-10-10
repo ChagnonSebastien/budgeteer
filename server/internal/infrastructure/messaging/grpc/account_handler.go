@@ -2,6 +2,7 @@ package grpc
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -10,6 +11,8 @@ import (
 	"chagnon.dev/budget-server/internal/infrastructure/messaging/dto"
 	"chagnon.dev/budget-server/internal/infrastructure/messaging/shared"
 	"github.com/google/uuid"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type accountRepository interface {
@@ -28,6 +31,14 @@ type accountRepository interface {
 		id model.AccountID,
 		fields repository.UpdateAccountFields,
 	) error
+	DeleteAccount(
+		ctx context.Context,
+		userId uuid.UUID,
+		userEmail string,
+		id model.AccountID,
+		replacementId *model.AccountID,
+		deleteTransactions bool,
+	) (repository.DeleteAccountResult, error)
 }
 
 type AccountHandler struct {
@@ -153,5 +164,39 @@ func (s *AccountHandler) GetAllAccounts(ctx context.Context, _ *dto.GetAllAccoun
 
 	return &dto.GetAllAccountsResponse{
 		Accounts: accountsDto,
+	}, nil
+}
+
+func (s *AccountHandler) DeleteAccount(ctx context.Context, req *dto.DeleteAccountRequest) (*dto.DeleteAccountResponse, error) {
+	user, ok := shared.FromContext(ctx)
+	if !ok {
+		return nil, fmt.Errorf("getting user from context")
+	}
+
+	var replacementId *model.AccountID
+	if req.ReplacementId != nil {
+		id := model.AccountID(*req.ReplacementId)
+		replacementId = &id
+	}
+
+	result, err := s.accountService.DeleteAccount(
+		ctx, user.ID, user.Email, model.AccountID(req.Id), replacementId, req.DeleteTransactions,
+	)
+	switch {
+	case errors.Is(err, repository.ErrAccountNotFound):
+		return nil, status.Error(codes.NotFound, err.Error())
+	case errors.Is(err, repository.ErrAccountNotDeletable),
+		errors.Is(err, repository.ErrReplacementRequired),
+		errors.Is(err, repository.ErrReplacementNotAllowed),
+		errors.Is(err, repository.ErrReplacementSelfTransfer),
+		errors.Is(err, repository.ErrConflictingDeleteOptions):
+		return nil, status.Error(codes.FailedPrecondition, err.Error())
+	case err != nil:
+		return nil, err
+	}
+
+	return &dto.DeleteAccountResponse{
+		AffectedTransactions: uint32(result.AffectedTransactions),
+		MovedToUnconfirmed:   uint32(result.MovedToUnconfirmed),
 	}, nil
 }

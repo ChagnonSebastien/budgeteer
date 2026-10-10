@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 
 	"chagnon.dev/budget-server/internal/domain/model"
@@ -248,4 +249,179 @@ func (r *Repository) UpdateAccount(
 	}
 
 	return tx.Commit()
+}
+
+var (
+	ErrAccountNotFound          = errors.New("account not found")
+	ErrAccountNotDeletable      = errors.New("the default account cannot be deleted")
+	ErrReplacementRequired      = errors.New("an own account needs another own account to take over its transactions")
+	ErrReplacementNotAllowed    = errors.New("the replacement must be a different account of the same kind")
+	ErrReplacementSelfTransfer  = errors.New("the replacement would turn some transactions into transfers to the same account")
+	ErrConflictingDeleteOptions = errors.New("transactions can either be moved to a replacement or deleted, not both")
+)
+
+type DeleteAccountResult struct {
+	AffectedTransactions int64
+	MovedToUnconfirmed   int64
+}
+
+func (r *Repository) DeleteAccount(
+	ctx context.Context,
+	userId uuid.UUID,
+	userEmail string,
+	id model.AccountID,
+	replacementId *model.AccountID,
+	deleteTransactions bool,
+) (result DeleteAccountResult, err error) {
+	err = r.inTx(ctx, func(queries *dao.Queries) error {
+		account, err := queries.GetAccountForDeletion(ctx, &dao.GetAccountForDeletionParams{AccountID: int32(id), UserID: userId})
+		if errors.Is(err, sql.ErrNoRows) {
+			return ErrAccountNotFound
+		}
+		if err != nil {
+			return err
+		}
+		if account.IsHiddenDefault {
+			return ErrAccountNotDeletable
+		}
+		if deleteTransactions && replacementId != nil {
+			return ErrConflictingDeleteOptions
+		}
+		if account.IsMine && replacementId == nil && !deleteTransactions {
+			return ErrReplacementRequired
+		}
+
+		accountRef := sql.NullInt32{Int32: account.ID, Valid: true}
+		if deleteTransactions {
+			moved, err := moveGroupedTransactionsToUnconfirmed(ctx, queries, userId, userEmail, accountRef)
+			if err != nil {
+				return err
+			}
+			result.MovedToUnconfirmed = moved
+
+			deleted, err := queries.DeleteTransactionsForAccount(
+				ctx, &dao.DeleteTransactionsForAccountParams{UserID: userId, AccountID: accountRef},
+			)
+			if err != nil {
+				return err
+			}
+			result.AffectedTransactions = deleted
+			return deleteAccountRows(ctx, queries, userId, account.ID)
+		}
+
+		replacement := sql.NullInt32{}
+		if replacementId != nil {
+			other, err := queries.GetAccountForDeletion(
+				ctx, &dao.GetAccountForDeletionParams{AccountID: int32(*replacementId), UserID: userId},
+			)
+			if errors.Is(err, sql.ErrNoRows) {
+				return ErrAccountNotFound
+			}
+			if err != nil {
+				return err
+			}
+			if other.ID == account.ID || other.IsMine != account.IsMine || other.IsHiddenDefault {
+				return ErrReplacementNotAllowed
+			}
+
+			selfTransfers, err := queries.CountSelfTransfersAfterReplacement(
+				ctx, &dao.CountSelfTransfersAfterReplacementParams{
+					UserID:        userId,
+					AccountID:     sql.NullInt32{Int32: account.ID, Valid: true},
+					ReplacementID: sql.NullInt32{Int32: other.ID, Valid: true},
+				},
+			)
+			if err != nil {
+				return err
+			}
+			if selfTransfers > 0 {
+				return ErrReplacementSelfTransfer
+			}
+
+			if err := queries.MergeAccountCurrencies(
+				ctx, &dao.MergeAccountCurrenciesParams{ReplacementID: other.ID, AccountID: account.ID},
+			); err != nil {
+				return err
+			}
+			replacement = sql.NullInt32{Int32: other.ID, Valid: true}
+		}
+
+		asSender, err := queries.ReplaceTransactionSender(
+			ctx, &dao.ReplaceTransactionSenderParams{ReplacementID: replacement, UserID: userId, AccountID: accountRef},
+		)
+		if err != nil {
+			return err
+		}
+		asReceiver, err := queries.ReplaceTransactionReceiver(
+			ctx, &dao.ReplaceTransactionReceiverParams{ReplacementID: replacement, UserID: userId, AccountID: accountRef},
+		)
+		if err != nil {
+			return err
+		}
+		result.AffectedTransactions = asSender + asReceiver
+		return deleteAccountRows(ctx, queries, userId, account.ID)
+	})
+	return result, err
+}
+
+func deleteAccountRows(ctx context.Context, queries *dao.Queries, userId uuid.UUID, accountId int32) error {
+	if err := queries.DeleteAccountCurrencies(
+		ctx, &dao.DeleteAccountCurrenciesParams{AccountID: accountId, UserID: userId},
+	); err != nil {
+		return err
+	}
+	if _, err := queries.DeleteAccount(ctx, &dao.DeleteAccountParams{AccountID: accountId, UserID: userId}); err != nil {
+		return fmt.Errorf("deleting account %d: %w", accountId, err)
+	}
+	return nil
+}
+
+func moveGroupedTransactionsToUnconfirmed(
+	ctx context.Context,
+	queries *dao.Queries,
+	userId uuid.UUID,
+	userEmail string,
+	account sql.NullInt32,
+) (int64, error) {
+	grouped, err := queries.GetGroupedTransactionsForAccount(
+		ctx, &dao.GetGroupedTransactionsForAccountParams{UserID: userId, AccountID: account},
+	)
+	if err != nil {
+		return 0, err
+	}
+
+	for _, transaction := range grouped {
+		unconfirmedId, err := queries.CreateUnconfirmedTransaction(
+			ctx, &dao.CreateUnconfirmedTransactionParams{
+				TransactionGroupID: transaction.TransactionGroupID,
+				OwnerEmail:         userEmail,
+				CreatedBy:          userEmail,
+				Amount:             transaction.Amount,
+				Date:               transaction.Date,
+				Note:               transaction.Note,
+				SplitTypeOverride:  transaction.SplitTypeOverride,
+			},
+		)
+		if err != nil {
+			return 0, fmt.Errorf("moving transaction %d to unconfirmed: %w", transaction.ID, err)
+		}
+
+		splits, err := queries.GetGroupedTransactionUserSplits(ctx, transaction.ID)
+		if err != nil {
+			return 0, err
+		}
+		for _, split := range splits {
+			if err := queries.CreateUnconfirmedTransactionUserSplit(
+				ctx, &dao.CreateUnconfirmedTransactionUserSplitParams{
+					UnconfirmedTransactionID: unconfirmedId,
+					UserEmail:                split.UserEmail,
+					SplitValue:               split.SplitValue,
+				},
+			); err != nil {
+				return 0, err
+			}
+		}
+	}
+
+	return int64(len(grouped)), nil
 }

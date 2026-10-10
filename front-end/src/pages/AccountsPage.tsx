@@ -3,6 +3,7 @@ import { FC, useContext, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 
 import AccountCard from '../components/accounts/AccountCard'
+import DeleteAccountDialog from '../components/accounts/DeleteAccountDialog'
 import GroupedAccountList, { isAccountUnused } from '../components/accounts/GroupedAccountList'
 import { IconToolsContext } from '../components/icons/IconTools'
 import { DrawerContext } from '../components/Menu'
@@ -29,6 +30,7 @@ const AccountsPage: FC = () => {
   const open = Boolean(anchorEl)
 
   const [clickedAccount, setClickedAccount] = useState<Account | null>(null)
+  const [accountToDelete, setAccountToDelete] = useState<Account | null>(null)
   const [filter, setFilter] = useState('')
 
   const scrollingContainerRef = useRef<HTMLDivElement>(null)
@@ -140,9 +142,9 @@ const AccountsPage: FC = () => {
                 Icon: IconLib.MdDelete,
                 label: 'Delete Account',
                 intent: 'destructive',
-                description: 'Remove this account',
-                action: () => {},
-                disabled: true,
+                description: 'Move or drop its transactions, then remove it',
+                action: () => setAccountToDelete(clickedAccount),
+                disabled: false,
               },
               {
                 Icon: IconLib.MdList,
@@ -173,6 +175,16 @@ const AccountsPage: FC = () => {
           </FancyModal>
         )}
       </FancyDialog>
+      {accountToDelete && (
+        <DeleteAccountDialog
+          account={accountToDelete}
+          onClose={() => setAccountToDelete(null)}
+          onDeleted={() => {
+            setAccountToDelete(null)
+            setClickedAccount(null)
+          }}
+        />
+      )}
     </ContentWithHeader>
   )
 }

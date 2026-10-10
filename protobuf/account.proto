@@ -55,8 +55,20 @@ message UpdateAccountResponse {
 
 }
 
+message DeleteAccountRequest {
+  uint32 id = 1;
+  optional uint32 replacement_id = 2;
+  bool delete_transactions = 3;
+}
+
+message DeleteAccountResponse {
+  uint32 affected_transactions = 1;
+  uint32 moved_to_unconfirmed = 2;
+}
+
 service AccountService {
   rpc GetAllAccounts (GetAllAccountsRequest) returns (GetAllAccountsResponse);
   rpc CreateAccount (CreateAccountRequest) returns (CreateAccountResponse);
   rpc UpdateAccount (UpdateAccountRequest) returns (UpdateAccountResponse);
+  rpc DeleteAccount (DeleteAccountRequest) returns (DeleteAccountResponse);
 }

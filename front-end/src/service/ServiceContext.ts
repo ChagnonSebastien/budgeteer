@@ -85,6 +85,7 @@ export const AccountServiceContext = createContext<
   get otherAccounts(): Account[] {
     throw new Error('otherAccounts is not implemented')
   },
+  deleteAccount: () => Promise.reject(new Error('deleteAccount is not implemented')),
 })
 
 export const ExchangeRateServiceContext = createContext<

@@ -1,9 +1,21 @@
 import { RpcTransport } from '@protobuf-ts/runtime-rpc'
 
 import { AccountConverter } from './converter/accountConverter'
-import { CreateAccountRequest, CurrencyBalance, GetAllAccountsRequest, UpdateAccountRequest } from './dto/account'
+import {
+  CreateAccountRequest,
+  CurrencyBalance,
+  DeleteAccountRequest,
+  GetAllAccountsRequest,
+  UpdateAccountRequest,
+} from './dto/account'
 import { AccountServiceClient } from './dto/account.client'
-import Account, { AccountUpdatableFields, Balance } from '../../domain/model/account'
+import Account, {
+  AccountDeletionOptions,
+  AccountDeletionResult,
+  AccountID,
+  AccountUpdatableFields,
+  Balance,
+} from '../../domain/model/account'
 import { IdIdentifier } from '../../domain/model/Unique'
 
 const conv = new AccountConverter()
@@ -51,5 +63,16 @@ export default class AccountRemoteStore {
         fields: conv.toUpdateDTO(data),
       }),
     ).response
+  }
+
+  public async deleteAccount(id: AccountID, options: AccountDeletionOptions): Promise<AccountDeletionResult> {
+    const response = await this.client.deleteAccount(
+      DeleteAccountRequest.create({
+        id,
+        replacementId: options.replacementId,
+        deleteTransactions: options.deleteTransactions ?? false,
+      }),
+    ).response
+    return { affected: response.affectedTransactions, movedToUnconfirmed: response.movedToUnconfirmed }
   }
 }

@@ -48,3 +48,13 @@ export type AccountUpdatableFields = Pick<
   Account,
   'name' | 'initialAmounts' | 'type' | 'financialInstitution' | 'isMine'
 >
+
+export interface AccountDeletionOptions {
+  replacementId?: AccountID
+  deleteTransactions?: boolean
+}
+
+export interface AccountDeletionResult {
+  affected: number
+  movedToUnconfirmed: number
+}
