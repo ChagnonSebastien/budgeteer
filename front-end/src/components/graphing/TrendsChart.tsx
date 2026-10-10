@@ -2,15 +2,19 @@ import { useTheme } from '@mui/material'
 import { ResponsiveBar } from '@nivo/bar'
 import {
   addMonths,
+  addWeeks,
   differenceInMonths,
   differenceInQuarters,
+  differenceInWeeks,
   differenceInYears,
   formatDate,
   isBefore,
   isSameDay,
+  startOfWeek,
   subDays,
   subMonths,
   subQuarters,
+  subWeeks,
   subYears,
 } from 'date-fns'
 import { FC, useCallback, useContext, useMemo } from 'react'
@@ -21,7 +25,11 @@ import { darkTheme } from '../../utils'
 import { DrawerContext } from '../Menu'
 import { GraphTooltip, GraphTooltipDate } from './GraphStyledComponents'
 
-export type Grouping = 'years' | 'quarters' | 'months'
+export type Grouping = 'years' | 'quarters' | 'months' | 'weeks'
+
+const weekOptions = { weekStartsOn: 1 } as const
+const periodsPerYear: Record<Grouping, number> = { weeks: 52, months: 12, quarters: 4, years: 1 }
+const rollingTails: Record<Grouping, number> = { weeks: 4, months: 12, quarters: 4, years: 3 }
 
 interface Props {
   categories: number[]
@@ -55,6 +63,10 @@ const TrendsChart: FC<Props> = (props) => {
     let toDate = addMonths(today, 1)
     toDate.setDate(1)
 
+    if (grouping === 'weeks') {
+      toDate = addWeeks(startOfWeek(today, weekOptions), 1)
+    }
+
     if (grouping === 'quarters') {
       while (toDate.getMonth() % 3 !== 0) {
         toDate = addMonths(toDate, 1)
@@ -76,7 +88,10 @@ const TrendsChart: FC<Props> = (props) => {
     let subN = subMonths
     let i = diffMonths
 
-    if (grouping === 'quarters') {
+    if (grouping === 'weeks') {
+      subN = subWeeks
+      i = differenceInWeeks(toDate, startOfWeek(fromDate, weekOptions)) - 1
+    } else if (grouping === 'quarters') {
       subN = subQuarters
       i = diffQuarters
     } else if (grouping === 'years') {
@@ -133,6 +148,8 @@ const TrendsChart: FC<Props> = (props) => {
   const label = useCallback(
     (d: Date): string => {
       switch (grouping) {
+        case 'weeks':
+          return formatDate(startOfWeek(d, weekOptions), 'MMM d, yyyy')
         case 'months':
           return formatDate(d, 'MMM yyyy')
         case 'quarters':
@@ -144,7 +161,7 @@ const TrendsChart: FC<Props> = (props) => {
     [grouping],
   )
 
-  const rollingTail = useMemo(() => (grouping === 'months' ? 12 : grouping === 'quarters' ? 4 : 3), [grouping])
+  const rollingTail = rollingTails[grouping]
 
   const trendlineData = useMemo(() => {
     if (!data) return null
@@ -167,18 +184,20 @@ const TrendsChart: FC<Props> = (props) => {
       movingAverages.push({ index: i, value: average })
     }
 
-    return movingAverages.slice(
-      data.length - Math.min(data.length, years * (grouping === 'months' ? 12 : grouping === 'quarters' ? 4 : 1)),
-    )
+    return movingAverages.slice(data.length - Math.min(data.length, years * periodsPerYear[grouping]))
   }, [data, years, grouping, rollingTail])
 
   // Calculate the visible data points
   const visibleData = useMemo(() => {
     if (!data) return []
-    return data.slice(
-      data.length - Math.min(data.length, years * (grouping === 'months' ? 12 : grouping === 'quarters' ? 4 : 1)),
-    )
+    return data.slice(data.length - Math.min(data.length, years * periodsPerYear[grouping]))
   }, [data, years, grouping])
+
+  const tickValues = useMemo(() => {
+    if (grouping !== 'weeks') return undefined
+    const step = Math.ceil(visibleData.length / 13)
+    return visibleData.filter((_, index) => (visibleData.length - 1 - index) % step === 0).map((d) => d.date)
+  }, [visibleData, grouping])
 
   return data ? (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
@@ -264,6 +283,7 @@ const TrendsChart: FC<Props> = (props) => {
         data={visibleData}
         axisBottom={{
           tickRotation: -45,
+          tickValues,
           format: (props) => label(new Date(props)),
         }}
         axisLeft={{

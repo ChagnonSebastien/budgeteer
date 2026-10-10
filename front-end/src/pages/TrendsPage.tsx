@@ -75,6 +75,7 @@ const TrendsPage: FC = () => {
             value={grouping}
             onChange={(value) => updateQueryParams({ grouping: value })}
             options={[
+              { value: 'weeks', label: 'Weekly' },
               { value: 'months', label: 'Monthly' },
               { value: 'quarters', label: 'Quarterly' },
               { value: 'years', label: 'Yearly' },
