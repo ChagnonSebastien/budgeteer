@@ -1,10 +1,10 @@
 import { Box, Typography } from '@mui/material'
-import { useVirtualizer } from '@tanstack/react-virtual'
 import { formatDate, isSameMonth } from 'date-fns'
-import { useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useMemo } from 'react'
 
 import { AugmentedTransaction, TransactionID } from '../../domain/model/transaction'
 import { ItemListProps } from '../accounts/ItemList'
+import useScrollParentVirtualizer from '../shared/useScrollParentVirtualizer'
 
 interface AdditionalTransactionListProps {
   onClick: (transactionId: number, transaction: AugmentedTransaction) => void
@@ -15,14 +15,6 @@ type Props<T> = ItemListProps<TransactionID, AugmentedTransaction, T> & Addition
 type Row = { kind: 'month'; date: Date } | { kind: 'item'; transaction: AugmentedTransaction }
 
 const estimatedRowHeight = { month: 48, item: 96 }
-
-const findScrollParent = (element: HTMLElement | null): HTMLElement | null => {
-  for (let node = element?.parentElement ?? null; node; node = node.parentElement) {
-    const { overflowY } = getComputedStyle(node)
-    if (overflowY === 'auto' || overflowY === 'scroll') return node
-  }
-  return document.scrollingElement as HTMLElement | null
-}
 
 export const TransactionList = <T,>(props: Props<T>) => {
   const { items, ItemComponent, onClick, additionalItemsProps } = props
@@ -39,32 +31,14 @@ export const TransactionList = <T,>(props: Props<T>) => {
     return result
   }, [items])
 
-  const listRef = useRef<HTMLDivElement>(null)
-  const [scrollElement, setScrollElement] = useState<HTMLElement | null>(null)
-  const [scrollMargin, setScrollMargin] = useState(0)
-
-  useLayoutEffect(() => {
-    setScrollElement(findScrollParent(listRef.current))
-  }, [])
-
-  // The list sits below other content in a shared scroll container; its offset moves when that content resizes.
-  useLayoutEffect(() => {
-    if (!listRef.current || !scrollElement) return
-    const offset =
-      listRef.current.getBoundingClientRect().top - scrollElement.getBoundingClientRect().top + scrollElement.scrollTop
-    if (Math.abs(offset - scrollMargin) > 1) setScrollMargin(offset)
-  })
-
-  const virtualizer = useVirtualizer({
+  const { listRef, virtualizer, scrollMargin } = useScrollParentVirtualizer({
     count: rows.length,
-    getScrollElement: () => scrollElement,
     estimateSize: (index) => estimatedRowHeight[rows[index].kind],
     getItemKey: (index) => {
       const row = rows[index]
       return row.kind === 'month' ? `month-${row.date.getTime()}` : row.transaction.listKey
     },
     overscan: 8,
-    scrollMargin,
   })
 
   return (

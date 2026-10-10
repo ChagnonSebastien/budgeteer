@@ -26,6 +26,7 @@ interface Account {
   financialInstitution: string
   type: string
   createdAt?: Date
+  statementNames?: string[]
 }
 
 interface Category {

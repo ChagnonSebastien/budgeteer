@@ -19,6 +19,7 @@ export interface ExchangeRateConfig {
 
 interface Props {
   initialCurrency?: Currency
+  initialName?: string
   onSubmit: (
     currencyData: Partial<CurrencyUpdatableFields>,
     initialExchangeRates?: ExchangeRateConfig[],
@@ -35,11 +36,11 @@ interface FieldStatus {
 const NoError = ''
 
 const CurrencyForm: FC<Props> = (props) => {
-  const { initialCurrency, onSubmit, submitText } = props
+  const { initialCurrency, initialName, onSubmit, submitText } = props
 
   const { state: currencies, tentativeDefaultCurrency } = useContext(CurrencyServiceContext)
 
-  const [name, setName] = useState(initialCurrency?.name ?? '')
+  const [name, setName] = useState(initialCurrency?.name ?? initialName ?? '')
   const [symbol, setSymbol] = useState(initialCurrency?.symbol ?? '')
   const [risk, setRisk] = useState(initialCurrency?.risk ?? '')
   const [type, setType] = useState(initialCurrency?.type ?? '')

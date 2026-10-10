@@ -8,4 +8,5 @@ export interface BasicCrudService<IdType, Item extends Unique<IdType, Item>, Ite
   update(identity: ItemIdentifiableFields, data: Partial<UpdatableFields>): Promise<void>
   delete(identity: ItemIdentifiableFields): Promise<void>
   refresh(): Promise<void>
+  absorb(items: Item[]): Promise<void>
 }

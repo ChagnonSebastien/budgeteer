@@ -59,3 +59,5 @@ databaseChangeLog:
       file: ./changelogs/029-currency-rate-fetch-failure.sql
   - include:
       file: ./changelogs/030-sessions.sql
+  - include:
+      file: ./changelogs/031-transaction-import.sql

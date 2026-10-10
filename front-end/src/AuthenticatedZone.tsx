@@ -29,6 +29,7 @@ import EditCategoryPage from './pages/EditCategoryPage'
 import EditCurrencyPage from './pages/EditCurrencyPage'
 import EditTransactionPage from './pages/EditTransactionPage'
 import EditUnconfirmedTransactionPage from './pages/EditUnconfirmedTransactionPage'
+import ImportTransactionsPage from './pages/ImportTransactionsPage'
 import InvestmentsPerformancePage from './pages/InvestmentsPerformancePage'
 import ManageTransactionGroup from './pages/ManageTransactionGroup'
 import PromoteUnconfirmedTransactionPage from './pages/PromoteUnconfirmedTransactionPage'
@@ -48,6 +49,7 @@ import {
   CategoryServiceContext,
   CurrencyServiceContext,
   ExchangeRateServiceContext,
+  ImportStoreContext,
   TransactionGroupServiceContext,
   TransactionServiceContext,
   SettlementServiceContext,
@@ -71,6 +73,7 @@ import AccountRemoteStore from './store/remote/AccountRemoteStore'
 import CategoryRemoteStore from './store/remote/CategoryRemoteStore'
 import CurrencyRemoteStore from './store/remote/CurrencyRemoteStore'
 import ExchangeRateRemoteStore from './store/remote/ExchangeRateRemoteStore'
+import ImportRemoteStore from './store/remote/ImportRemoteStore'
 import SettlementRemoteStore from './store/remote/SettlementRemoteStore'
 import TransactionGroupRemoteStore from './store/remote/TransactionGroupRemoteStore'
 import TransactionRemoteStore from './store/remote/TransactionRemoteStore'
@@ -87,6 +90,7 @@ const accountRemoteStore = new AccountRemoteStore(transport)
 const transactionRemoteStore = new TransactionRemoteStore(transport)
 const exchangeRateRemoteStore = new ExchangeRateRemoteStore(transport)
 const unconfirmedTransactionRemoteStore = new UnconfirmedTransactionRemoteStore(transport)
+const importRemoteStore = new ImportRemoteStore(transport)
 
 const currencyLocalStore = new CurrencyLocalStore(IndexedDB)
 const categoryLocalStore = new CategoryLocalStore(IndexedDB)
@@ -396,6 +400,7 @@ const AuthenticatedZone: FC<Props> = (props) => {
             <Route path="/accounts/edit/:accountId" element={<EditAccountPage />} />
             <Route path="/transactions" element={<TransactionPage />} />
             <Route path="/transactions/new" element={<CreateTransactionPage />} />
+            <Route path="/transactions/import" element={<ImportTransactionsPage />} />
             <Route path="/transactions/edit/:transactionId" element={<EditTransactionPage />} />
             <Route path="/balances" element={<BalancePage />} />
             <Route path="/costs" element={<CostsAnalysisPage />} />
@@ -446,9 +451,11 @@ const AuthenticatedZone: FC<Props> = (props) => {
   )
 
   return (
-    <PersistenceSetup>
-      <WaitOnInitializedData NextComponent={CompleteView} setDefaultCurrency={setDefaultCurrency} />
-    </PersistenceSetup>
+    <ImportStoreContext.Provider value={importRemoteStore}>
+      <PersistenceSetup>
+        <WaitOnInitializedData NextComponent={CompleteView} setDefaultCurrency={setDefaultCurrency} />
+      </PersistenceSetup>
+    </ImportStoreContext.Provider>
   )
 }
 

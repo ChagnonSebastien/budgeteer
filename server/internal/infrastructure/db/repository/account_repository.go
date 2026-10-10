@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -58,6 +59,11 @@ func (r *Repository) GetAllAccountsWithCurrencyIDs(ctx context.Context, userId u
 			financialInstitution = accountDao.FinancialInstitution.String
 		}
 
+		var statementNames []string
+		if err := json.Unmarshal(accountDao.StatementNames, &statementNames); err != nil {
+			return nil, fmt.Errorf("parsing statement names of account %d: %w", accountDao.ID, err)
+		}
+
 		accounts[i] = model.Account{
 			ID:                   model.AccountID(accountDao.ID),
 			Name:                 accountDao.Name,
@@ -66,6 +72,7 @@ func (r *Repository) GetAllAccountsWithCurrencyIDs(ctx context.Context, userId u
 			Type:                 accountType,
 			FinancialInstitution: financialInstitution,
 			CreatedAt:            accountDao.CreatedAt,
+			StatementNames:       statementNames,
 		}
 	}
 

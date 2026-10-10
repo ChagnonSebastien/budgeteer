@@ -55,6 +55,8 @@ export enum PreparedIcon {
   TbReportMoney = 'TbReportMoney',
   TbTrendingUp = 'TbTrendingUp',
   TbUsersGroup = 'TbUsersGroup',
+  FaFileImport = 'FaFileImport',
+  MdUndo = 'MdUndo',
 }
 
 type PreparedIconLib = {

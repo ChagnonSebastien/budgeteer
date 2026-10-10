@@ -26,6 +26,7 @@ import UnconfirmedTransaction, {
 } from '../domain/model/unconfirmedTransaction'
 import Unique, { IdIdentifier } from '../domain/model/Unique'
 import { UpdateExchangeRateFields } from '../store/remote/dto/exchangeRate'
+import ImportRemoteStore from '../store/remote/ImportRemoteStore'
 
 const nilPersistence = {
   initialized: false,
@@ -44,6 +45,9 @@ const nilPersistence = {
     return Promise.reject(new Error('nilPersistence'))
   },
   refresh(): Promise<void> {
+    return Promise.reject(new Error('nilPersistence'))
+  },
+  absorb(): Promise<void> {
     return Promise.reject(new Error('nilPersistence'))
   },
 }
@@ -159,3 +163,5 @@ export const SettlementServiceContext = createContext<
     return Promise.reject(new Error('nilPersistence'))
   },
 })
+
+export const ImportStoreContext = createContext<ImportRemoteStore | null>(null)

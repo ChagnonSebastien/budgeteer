@@ -2,12 +2,13 @@ import { Checkbox, Chip, FormControlLabel, IconButton, Stack, TextField, Typogra
 import { FC, useContext, useEffect, useMemo, useState } from 'react'
 
 import { UserContext } from '../../App'
-import Account, { AccountID } from '../../domain/model/account'
+import Account, { AccountID, payeeFields } from '../../domain/model/account'
 import { CategoryID } from '../../domain/model/category'
 import { CurrencyID } from '../../domain/model/currency'
 import Transaction, {
   AugmentedTransaction,
   FinancialIncomeData,
+  latestCategoryWith,
   TransactionGroupData,
 } from '../../domain/model/transaction'
 import { TransactionGroupID } from '../../domain/model/transactionGroup'
@@ -261,18 +262,10 @@ const TransactionForm: FC<Props> = (props) => {
     const partyId = inferFromSender ? senderAccount.id : receiverAccount.id
     if (partyId === null) return
 
-    let latest: AugmentedTransaction | undefined
-    for (const transaction of augmentedTransactions) {
-      const matches = inferFromSender ? transaction.senderId === partyId : transaction.receiverId === partyId
-      if (matches && transaction.categoryId !== null) {
-        latest = transaction
-        break
-      }
-    }
+    const latestCategory = latestCategoryWith(augmentedTransactions, partyId, inferFromSender)
+    if (latestCategory === null || latestCategory === parent) return
 
-    if (typeof latest === 'undefined' || latest.categoryId === null || latest.categoryId === parent) return
-
-    setParent(latest.categoryId)
+    setParent(latestCategory)
     showToast('Category autofilled from past behavior', 'info')
   }, [
     type,
@@ -337,23 +330,11 @@ const TransactionForm: FC<Props> = (props) => {
 
     if (!senderAccount.existing) {
       if (senderAccount.name !== '') {
-        accountCreations = createAccount({
-          name: senderAccount.name,
-          type: '',
-          isMine: false,
-          financialInstitution: '',
-          initialAmounts: [],
-        })
+        accountCreations = createAccount(payeeFields(senderAccount.name))
       }
     } else if (!receiverAccount.existing) {
       if (receiverAccount.name !== '') {
-        accountCreations = createAccount({
-          name: receiverAccount.name,
-          type: '',
-          isMine: false,
-          financialInstitution: '',
-          initialAmounts: [],
-        })
+        accountCreations = createAccount(payeeFields(receiverAccount.name))
       }
     }
 

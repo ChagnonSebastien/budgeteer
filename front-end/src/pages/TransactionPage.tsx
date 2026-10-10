@@ -19,7 +19,7 @@ import TransactionsPieChart from '../components/graphing/PieChart'
 import { IconToolsContext } from '../components/icons/IconTools'
 import useTransactionFilter from '../components/inputs/useTransactionFilter'
 import { DrawerContext } from '../components/Menu'
-import ActionSpeedDial from '../components/shared/ActionSpeedDial'
+import ActionSpeedDial, { DialAction } from '../components/shared/ActionSpeedDial'
 import ConfirmDeleteModal from '../components/shared/ConfirmDeleteModal'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
 import { DetailCard, DetailHeading, FancyDialog, FancyModal } from '../components/shared/FancyModal'
@@ -233,18 +233,29 @@ const TransactionPage: FC = () => {
       <ActionSpeedDial
         ariaLabel="Create new transaction"
         hint={hasTransactions ? undefined : 'Record your first transaction'}
-        actions={(
-          [
-            ['Expense', 'expense', IconLib.MdOutput, 'money.loss'],
-            ['Income', 'income', IconLib.MdInput, 'money.gain'],
-            ['Transfer', 'transfer', IconLib.GrTransaction, 'grey.500'],
-          ] as const
-        ).map(([label, type, Icon, color]) => ({
-          label,
-          Icon,
-          color,
-          onClick: () => navigate(`/transactions/new?type=${type}`, { state: { from: currentUrl, prefillAccountId } }),
-        }))}
+        actions={[
+          ...(
+            [
+              ['Expense', 'expense', IconLib.MdOutput, 'money.loss'],
+              ['Income', 'income', IconLib.MdInput, 'money.gain'],
+              ['Transfer', 'transfer', IconLib.GrTransaction, 'grey.500'],
+            ] as const
+          ).map(
+            ([label, type, Icon, color]): DialAction => ({
+              label,
+              Icon,
+              color,
+              onClick: () =>
+                navigate(`/transactions/new?type=${type}`, { state: { from: currentUrl, prefillAccountId } }),
+            }),
+          ),
+          {
+            label: 'Import CSV',
+            Icon: IconLib.FaFileImport,
+            color: 'primary.main',
+            onClick: () => navigate('/transactions/import', { state: { prefillAccountId } }),
+          },
+        ]}
       />
 
       <FancyDialog open={clickedTransaction !== null} onClose={() => setClickedTransaction(null)}>

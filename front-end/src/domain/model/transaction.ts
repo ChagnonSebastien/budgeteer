@@ -136,6 +136,18 @@ export default class Transaction implements Unique<TransactionID, Transaction> {
   }
 }
 
+export const latestCategoryWith = (
+  transactions: Transaction[],
+  partyId: AccountID,
+  inferFromSender: boolean,
+): CategoryID | null => {
+  for (const transaction of transactions) {
+    const matches = inferFromSender ? transaction.senderId === partyId : transaction.receiverId === partyId
+    if (matches && transaction.categoryId !== null) return transaction.categoryId
+  }
+  return null
+}
+
 export class AugmentedTransactionGroupData extends TransactionGroupData {
   constructor(
     transactionGroupData: TransactionGroupData,

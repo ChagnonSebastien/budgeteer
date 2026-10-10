@@ -17,6 +17,7 @@ message Account {
   string type = 5;
   string financial_institution = 6;
   string created_at = 7;
+  repeated string statement_names = 8;
 }
 
 message GetAllAccountsRequest {

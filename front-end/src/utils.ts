@@ -81,13 +81,14 @@ const undecomposedLetters: Record<string, string> = {
   þ: 'th',
 }
 
-export const normalizeForSearch = (text: string): string =>
+export const foldText = (text: string): string =>
   text
     .toLowerCase()
     .normalize('NFD')
     .replace(/\p{M}/gu, '')
     .replace(/[ßæœøđðłıþ]/g, (letter) => undecomposedLetters[letter])
-    .replace(/[\s\p{Pd}]/gu, '')
+
+export const normalizeForSearch = (text: string): string => foldText(text).replace(/[\s\p{Pd}]/gu, '')
 
 export const matchesSearch = (text: string, query: string): boolean =>
   normalizeForSearch(text).includes(normalizeForSearch(query))

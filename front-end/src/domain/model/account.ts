@@ -23,6 +23,7 @@ export default class Account implements NamedItem<AccountID, Account> {
     public readonly type: string,
     public readonly financialInstitution: string,
     public readonly createdAt: Date = new Date(),
+    public readonly statementNames: string[] = [],
   ) {}
 
   hasName(name: string): boolean {
@@ -36,6 +37,8 @@ export default class Account implements NamedItem<AccountID, Account> {
     if (this.type !== other.type) return false
     if (this.financialInstitution !== other.financialInstitution) return false
     if (this.createdAt.getTime() !== other.createdAt.getTime()) return false
+    if (this.statementNames.length !== other.statementNames.length) return false
+    if (this.statementNames.some((name, i) => name !== other.statementNames[i])) return false
     if (this.initialAmounts.length !== other.initialAmounts.length) return false
     for (let i = 0; i < this.initialAmounts.length; i += 1) {
       if (!this.initialAmounts[i].equals(other.initialAmounts[i])) return false
@@ -48,6 +51,14 @@ export type AccountUpdatableFields = Pick<
   Account,
   'name' | 'initialAmounts' | 'type' | 'financialInstitution' | 'isMine'
 >
+
+export const payeeFields = (name: string): AccountUpdatableFields => ({
+  name,
+  type: '',
+  isMine: false,
+  financialInstitution: '',
+  initialAmounts: [],
+})
 
 export interface AccountDeletionOptions {
   replacementId?: AccountID

@@ -13,7 +13,8 @@ interface Props {
   itemDisplayText?: (item: Account | undefined) => string
   labelText: string
   errorText?: string
-  myOwn: boolean
+  myOwn?: boolean
+  excludeIds?: AccountID[]
   allowNew?: boolean
 }
 
@@ -22,16 +23,18 @@ const AccountPicker: FC<Props> = (props) => {
     valueText,
     onAccountSelected,
     myOwn,
+    excludeIds,
     allowNew = false,
     labelText,
     errorText,
     itemDisplayText = (item) => item?.name ?? '',
   } = props
-  const { myOwnAccounts, otherAccounts } = useContext(AccountServiceContext)
+  const { state: allAccounts, myOwnAccounts, otherAccounts } = useContext(AccountServiceContext)
   const { augmentedTransactions: transactions } = useContext(MixedAugmentation)
   const accounts = useMemo(() => {
-    return myOwn ? myOwnAccounts : otherAccounts
-  }, [myOwn, myOwnAccounts, otherAccounts])
+    const scoped = typeof myOwn === 'undefined' ? allAccounts : myOwn ? myOwnAccounts : otherAccounts
+    return excludeIds ? scoped.filter((a) => !excludeIds.includes(a.id)) : scoped
+  }, [myOwn, excludeIds, allAccounts, myOwnAccounts, otherAccounts])
 
   // Order accounts by how recently they were transacted with, matching the
   // ordering used in the full account list.

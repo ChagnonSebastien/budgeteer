@@ -127,9 +127,43 @@ message DeleteTransactionResponse {
 
 }
 
+message ImportRow {
+  CreateTransactionRequest transaction = 1;
+  string fingerprint = 2;
+  string statement_name = 3;
+  optional uint32 merge_into = 4;
+}
+
+message BatchCreateTransactionsRequest {
+  uint32 import_id = 1;
+  repeated ImportRow rows = 2;
+}
+
+enum ImportRowOutcome {
+  ImportRowCreated = 0;
+  ImportRowMerged = 1;
+  ImportRowSkipped = 2;
+}
+
+message ImportRowResult {
+  ImportRowOutcome outcome = 1;
+  uint32 transaction_id = 2;
+}
+
+message AccountStatementNames {
+  uint32 account = 1;
+  repeated string statement_names = 2;
+}
+
+message BatchCreateTransactionsResponse {
+  repeated ImportRowResult results = 1;
+  repeated AccountStatementNames accounts = 2;
+}
+
 service TransactionService {
   rpc GetAllTransactions (GetAllTransactionsRequest) returns (GetAllTransactionsResponse);
   rpc CreateTransaction (CreateTransactionRequest) returns (CreateTransactionResponse);
   rpc UpdateTransaction (UpdateTransactionRequest) returns (UpdateTransactionResponse);
   rpc DeleteTransaction (DeleteTransactionRequest) returns (DeleteTransactionResponse);
+  rpc BatchCreateTransactions (BatchCreateTransactionsRequest) returns (BatchCreateTransactionsResponse);
 }

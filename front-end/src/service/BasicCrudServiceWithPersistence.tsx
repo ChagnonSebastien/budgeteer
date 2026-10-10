@@ -188,9 +188,28 @@ export const BasicCrudServiceWithPersistence = <
     [hasInternet],
   )
 
+  const absorb = useCallback(async (items: Item[]): Promise<void> => {
+    for (const item of items) await localStore.createKnown(item)
+
+    const absorbed = new Set(items.map((item) => item.id))
+    setState((prevState) => ({
+      data: [...prevState.data.filter((item) => !absorbed.has(item.id)), ...items].sort(sorter),
+      version: prevState.version + 1,
+    }))
+  }, [])
+
   const baseValue = useMemo(
-    () => ({ initialized, version: state.version, state: state.data, create, update, delete: deleteItem, refresh }),
-    [initialized, state.version, state.data, create, update, deleteItem, refresh],
+    () => ({
+      initialized,
+      version: state.version,
+      state: state.data,
+      create,
+      update,
+      delete: deleteItem,
+      refresh,
+      absorb,
+    }),
+    [initialized, state.version, state.data, create, update, deleteItem, refresh, absorb],
   )
 
   return (

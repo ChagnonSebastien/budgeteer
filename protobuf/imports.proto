@@ -1,0 +1,80 @@
+syntax = "proto3";
+
+package imports;
+
+option go_package = "server/internal/infrastructure/messaging/dto";
+
+message Import {
+  uint32 id = 1;
+  uint32 account = 2;
+  string file_name = 3;
+  uint32 row_count = 4;
+  string created_at = 5;
+}
+
+message StartImportRequest {
+  uint32 account = 1;
+  string file_name = 2;
+}
+
+message StartImportResponse {
+  uint32 id = 1;
+}
+
+message GetAllImportsRequest {
+}
+
+message GetAllImportsResponse {
+  repeated Import imports = 1;
+}
+
+message DeleteImportRequest {
+  uint32 id = 1;
+}
+
+message DeleteImportResponse {
+  uint32 deleted_transactions = 1;
+  uint32 reverted_transactions = 2;
+}
+
+message ImportProfile {
+  uint32 account = 1;
+  string mapping = 2;
+}
+
+message GetAllImportProfilesRequest {
+}
+
+message GetAllImportProfilesResponse {
+  repeated ImportProfile profiles = 1;
+}
+
+message SaveImportProfileRequest {
+  ImportProfile profile = 1;
+}
+
+message SaveImportProfileResponse {
+}
+
+message GetKnownFingerprintsRequest {
+  uint32 account = 1;
+  repeated string fingerprints = 2;
+}
+
+message KnownFingerprint {
+  string fingerprint = 1;
+  uint32 transaction_id = 2;
+}
+
+message GetKnownFingerprintsResponse {
+  repeated KnownFingerprint fingerprints = 1;
+}
+
+service ImportService {
+  rpc StartImport (StartImportRequest) returns (StartImportResponse);
+  rpc GetAllImports (GetAllImportsRequest) returns (GetAllImportsResponse);
+  rpc DeleteImport (DeleteImportRequest) returns (DeleteImportResponse);
+  rpc GetAllImportProfiles (GetAllImportProfilesRequest) returns (GetAllImportProfilesResponse);
+  rpc SaveImportProfile (SaveImportProfileRequest) returns (SaveImportProfileResponse);
+  rpc GetKnownFingerprints (GetKnownFingerprintsRequest) returns (GetKnownFingerprintsResponse);
+}

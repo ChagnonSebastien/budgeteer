@@ -159,6 +159,7 @@ func (s *AccountHandler) GetAllAccounts(ctx context.Context, _ *dto.GetAllAccoun
 			Type:                 account.Type,
 			FinancialInstitution: account.FinancialInstitution,
 			CreatedAt:            account.CreatedAt.Format(time.RFC3339),
+			StatementNames:       account.StatementNames,
 		}
 	}
 

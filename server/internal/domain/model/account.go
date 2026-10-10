@@ -17,4 +17,5 @@ type Account struct {
 	Type                 string
 	FinancialInstitution string
 	CreatedAt            time.Time
+	StatementNames       []string
 }

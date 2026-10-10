@@ -1,5 +1,5 @@
 -- name: GetAllAccounts :many
-SELECT id, name, is_mine, type, financial_institution, created_at
+SELECT id, name, is_mine, type, financial_institution, created_at, statement_names
 FROM accounts
 WHERE user_id = sqlc.arg(user_id);
 

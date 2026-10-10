@@ -41,6 +41,13 @@ type transactionRepository interface {
 		userId uuid.UUID,
 		id model.TransactionID,
 	) error
+	BatchCreateTransactions(
+		ctx context.Context,
+		userId uuid.UUID,
+		userEmail string,
+		importId model.ImportID,
+		rows []repository.ImportRow,
+	) (repository.BatchImportResult, error)
 }
 
 func SplitTypeOverrideFromDto(splitType dto.SplitTypeOverride) (model.SplitTypeOverride, error) {
@@ -79,15 +86,7 @@ type TransactionHandler struct {
 	transactionService transactionRepository
 }
 
-func (s *TransactionHandler) CreateTransaction(
-	ctx context.Context,
-	req *dto.CreateTransactionRequest,
-) (*dto.CreateTransactionResponse, error) {
-	user, ok := shared.FromContext(ctx)
-	if !ok {
-		return nil, fmt.Errorf("getting user from context")
-	}
-
+func newTransactionFromDto(req *dto.CreateTransactionRequest) (repository.NewTransaction, error) {
 	sender := model.None[int]()
 	if req.Sender != nil {
 		sender = model.Some(int(*req.Sender))
@@ -114,7 +113,7 @@ func (s *TransactionHandler) CreateTransaction(
 	if req.TransactionGroupData != nil {
 		splitOverride, err := splitOverrideFromDto(req.TransactionGroupData.SplitOverride)
 		if err != nil {
-			return nil, err
+			return repository.NewTransaction{}, err
 		}
 
 		transactionGroupData = model.Some(model.GroupedTransactionData{
@@ -125,6 +124,36 @@ func (s *TransactionHandler) CreateTransaction(
 
 	date, err := time.Parse(layout, req.Date)
 	if err != nil {
+		return repository.NewTransaction{}, err
+	}
+
+	return repository.NewTransaction{
+		OwnerEmail:           req.Owner,
+		Amount:               int(req.Amount),
+		ReceiverAmount:       int(req.ReceiverAmount),
+		CurrencyId:           int(req.Currency),
+		ReceiverCurrencyId:   int(req.ReceiverCurrency),
+		SenderAccountId:      sender,
+		ReceiverAccountId:    receiver,
+		CategoryId:           category,
+		Date:                 date,
+		Note:                 req.Note,
+		FinancialIncomeData:  financialIncomeData,
+		TransactionGroupData: transactionGroupData,
+	}, nil
+}
+
+func (s *TransactionHandler) CreateTransaction(
+	ctx context.Context,
+	req *dto.CreateTransactionRequest,
+) (*dto.CreateTransactionResponse, error) {
+	user, ok := shared.FromContext(ctx)
+	if !ok {
+		return nil, fmt.Errorf("getting user from context")
+	}
+
+	transaction, err := newTransactionFromDto(req)
+	if err != nil {
 		return nil, err
 	}
 
@@ -132,18 +161,18 @@ func (s *TransactionHandler) CreateTransaction(
 		ctx,
 		user.ID,
 		user.Email,
-		req.Owner,
-		int(req.Amount),
-		int(req.ReceiverAmount),
-		int(req.Currency),
-		int(req.ReceiverCurrency),
-		sender,
-		receiver,
-		category,
-		date,
-		req.Note,
-		financialIncomeData,
-		transactionGroupData,
+		transaction.OwnerEmail,
+		transaction.Amount,
+		transaction.ReceiverAmount,
+		transaction.CurrencyId,
+		transaction.ReceiverCurrencyId,
+		transaction.SenderAccountId,
+		transaction.ReceiverAccountId,
+		transaction.CategoryId,
+		transaction.Date,
+		transaction.Note,
+		transaction.FinancialIncomeData,
+		transaction.TransactionGroupData,
 	)
 	if err != nil {
 		return nil, err
