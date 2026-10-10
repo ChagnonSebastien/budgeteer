@@ -7,7 +7,16 @@ type Props = {
 }
 
 const CodeEditor: FC<Props> = ({ content, onChange }) => {
-  return <Editor theme="vs-dark" defaultLanguage="javascript" value={content} onChange={onChange} height="20rem" />
+  return (
+    <Editor
+      theme="vs-dark"
+      defaultLanguage="javascript"
+      value={content}
+      onChange={onChange}
+      height="20rem"
+      options={{ automaticLayout: true }}
+    />
+  )
 }
 
 export default CodeEditor

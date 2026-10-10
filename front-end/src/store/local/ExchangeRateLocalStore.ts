@@ -52,6 +52,14 @@ export default class ExchangeRateLocalStore {
     )
   }
 
+  public async delete(identity: ExchangeRateIdentifiableFields): Promise<void> {
+    await this.db.exchangeRates.delete([
+      identity.currencyA,
+      identity.currencyB,
+      identity.date,
+    ] as ExchangeRateCompositeKey)
+  }
+
   public async sync(rates: ExchangeRate[]): Promise<void> {
     await this.db.exchangeRates.clear()
     await this.db.exchangeRates.bulkPut(

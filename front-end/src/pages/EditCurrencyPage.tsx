@@ -11,11 +11,7 @@ type Params = {
   currencyId: string
 }
 
-interface Props {
-  scriptRunner: (script: string) => Promise<string>
-}
-
-const EditCurrency: FC<Props> = ({ scriptRunner }: Props) => {
+const EditCurrency: FC = () => {
   const navigate = useNavigate()
 
   const { currencyId } = useParams<Params>()
@@ -45,12 +41,7 @@ const EditCurrency: FC<Props> = ({ scriptRunner }: Props) => {
 
   return (
     <ContentWithHeader title="Edit currency" action="return" withPadding withScrolling>
-      <CurrencyForm
-        onSubmit={onSubmit}
-        submitText="Save changes"
-        initialCurrency={selectedCurrency}
-        scriptRunner={scriptRunner}
-      />
+      <CurrencyForm onSubmit={onSubmit} submitText="Save changes" initialCurrency={selectedCurrency} />
     </ContentWithHeader>
   )
 }

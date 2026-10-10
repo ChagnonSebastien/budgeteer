@@ -4,6 +4,7 @@ import { ExchangeRateConverter } from './converter/exchangeRateConverter'
 import { formatDateTime } from './converter/transactionConverter'
 import {
   CreateExchangeRateRequest,
+  DeleteExchangeRateRequest,
   GetAllExchangeRateRequest,
   TestGetCurrencyRateRequest,
   UpdateExchangeRateRequest,
@@ -56,6 +57,16 @@ export default class ExchangeRateRemoteStore {
         currencyB: identity.currencyB,
         date: formatDateTime(identity.date),
         fields: conv.toUpdateDTO(data),
+      }),
+    ).response
+  }
+
+  public async delete(identity: ExchangeRateIdentifiableFields): Promise<void> {
+    await this.client.deleteExchangeRate(
+      DeleteExchangeRateRequest.create({
+        currencyA: identity.currencyA,
+        currencyB: identity.currencyB,
+        date: formatDateTime(identity.date),
       }),
     ).response
   }

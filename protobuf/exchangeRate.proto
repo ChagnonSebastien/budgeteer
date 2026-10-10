@@ -43,6 +43,15 @@ message UpdateExchangeRateResponse {
 
 }
 
+message DeleteExchangeRateRequest {
+  uint32 currency_a = 1;
+  uint32 currency_b = 2;
+  string date = 3;
+}
+
+message DeleteExchangeRateResponse {
+}
+
 message TestGetCurrencyRateRequest {
   string script = 1;
 }
@@ -55,5 +64,6 @@ service ExchangeRateService {
   rpc GetAllExchangeRate (GetAllExchangeRateRequest) returns (GetAllExchangeRateResponse);
   rpc CreateExchangeRate (CreateExchangeRateRequest) returns (CreateExchangeRateResponse);
   rpc UpdateExchangeRate (UpdateExchangeRateRequest) returns (UpdateExchangeRateResponse);
+  rpc DeleteExchangeRate (DeleteExchangeRateRequest) returns (DeleteExchangeRateResponse);
   rpc TestGetCurrencyRate (TestGetCurrencyRateRequest) returns (TestGetCurrencyRateResponse);
 }

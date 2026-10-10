@@ -24,6 +24,10 @@ type exchangeRateRepository interface {
 		ctx context.Context, userId uuid.UUID,
 		currencyA, currencyB model.CurrencyID, Date time.Time, Rate float64,
 	) error
+	DeleteExchangeRate(
+		ctx context.Context, userId uuid.UUID,
+		currencyA, currencyB model.CurrencyID, Date time.Time,
+	) error
 }
 
 type ExchangeRateHandler struct {
@@ -69,6 +73,25 @@ func (s *ExchangeRateHandler) UpdateExchangeRate(ctx context.Context, req *dto.U
 	}
 
 	return &dto.UpdateExchangeRateResponse{}, err
+}
+
+func (s *ExchangeRateHandler) DeleteExchangeRate(ctx context.Context, req *dto.DeleteExchangeRateRequest) (*dto.DeleteExchangeRateResponse, error) {
+	user, ok := shared.FromContext(ctx)
+	if !ok {
+		return nil, fmt.Errorf("getting user from context")
+	}
+
+	date, err := time.Parse(layout, req.Date)
+	if err != nil {
+		return nil, fmt.Errorf("parsing exchange rate date: %s", err)
+	}
+
+	err = s.exchangeRateService.DeleteExchangeRate(ctx, user.ID, model.CurrencyID(req.CurrencyA), model.CurrencyID(req.CurrencyB), date)
+	if err != nil {
+		return nil, fmt.Errorf("deleting exchange rate: %s", err)
+	}
+
+	return &dto.DeleteExchangeRateResponse{}, nil
 }
 
 func (s *ExchangeRateHandler) GetAllExchangeRate(ctx context.Context, _ *dto.GetAllExchangeRateRequest) (*dto.GetAllExchangeRateResponse, error) {

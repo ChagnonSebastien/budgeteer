@@ -99,6 +99,18 @@ const CurrenciesPage: FC = () => {
                 action: () => navigate(`/currencies/edit/${clickedCurrency.id}`),
                 disabled: false,
               },
+              ...(clickedCurrency.id === defaultCurrency.id
+                ? []
+                : [
+                    {
+                      Icon: IconLib.BsGraphUp,
+                      label: 'Exchange Rates',
+                      intent: 'adjust' as const,
+                      description: 'Edit rate points and automate fetching',
+                      action: () => navigate(`/currencies/rates/${clickedCurrency.id}`),
+                      disabled: false,
+                    },
+                  ]),
               {
                 Icon: IconLib.MdDelete,
                 label: 'Delete Currency',

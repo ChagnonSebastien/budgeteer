@@ -44,7 +44,16 @@ WHERE EXISTS (
 )
 ON CONFLICT (a, b, date)
     DO UPDATE
-    SET rate = sqlc.arg(date);
+    SET rate = EXCLUDED.rate;
+
+-- name: DeleteExchangeRate :exec
+DELETE FROM exchangerates er
+USING currencies c
+WHERE er.a = c.id
+  AND c.user_id = sqlc.arg(user_id)
+  AND er.a = sqlc.arg(a)
+  AND er.b = sqlc.arg(b)
+  AND er.date = sqlc.arg(date)::date;
 
 
 -- name: NewAutoExchangeRateEntry :exec

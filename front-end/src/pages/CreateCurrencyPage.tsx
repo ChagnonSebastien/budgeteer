@@ -8,11 +8,7 @@ import { CurrencyUpdatableFields } from '../domain/model/currency'
 import { ExchangeRateIdentifiableFields } from '../domain/model/exchangeRate'
 import { CurrencyServiceContext, ExchangeRateServiceContext } from '../service/ServiceContext'
 
-interface Props {
-  scriptRunner: (script: string) => Promise<string>
-}
-
-const CreateCurrencyPage: FC<Props> = ({ scriptRunner }: Props) => {
+const CreateCurrencyPage: FC = () => {
   const navigate = useNavigate()
 
   const { create: createCurrency } = useContext(CurrencyServiceContext)
@@ -58,7 +54,7 @@ const CreateCurrencyPage: FC<Props> = ({ scriptRunner }: Props) => {
 
   return (
     <ContentWithHeader title="Create new currency" action="return" withPadding withScrolling>
-      <CurrencyForm onSubmit={onSubmit} submitText="Create" scriptRunner={scriptRunner} />
+      <CurrencyForm onSubmit={onSubmit} submitText="Create" />
     </ContentWithHeader>
   )
 }

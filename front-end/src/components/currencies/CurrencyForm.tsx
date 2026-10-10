@@ -1,18 +1,15 @@
-import { Box, Button, Checkbox, FormControlLabel, Stack, TextField, Typography } from '@mui/material'
+import { Box, Stack, TextField, Typography } from '@mui/material'
 import { startOfDay } from 'date-fns'
 import { FC, FormEvent, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 
+import { validRate } from './exchangeRateUnits'
 import Currency, { CurrencyUpdatableFields, RateAutoupdateSettings } from '../../domain/model/currency'
 import { CurrencyServiceContext } from '../../service/ServiceContext'
-import ExchangeRateHistory from '../graphing/ExchangeRateHistory'
-import CodeEditor from '../inputs/CodeEditor'
 import DatePicker from '../inputs/DatePicker'
 import FormWrapper, { FormSection } from '../shared/FormWrapper'
-import { SecureButton } from '../shared/SecureButton'
 import { useToast } from '../shared/ToastProvider'
 
 const validAmount = new RegExp(`^\\d+[.,]?$`)
-const validRate = new RegExp(`^\\d*[.,]?\\d*$`)
 
 export interface ExchangeRateConfig {
   otherCurrency: number
@@ -27,7 +24,6 @@ interface Props {
     initialExchangeRates?: ExchangeRateConfig[],
   ) => Promise<void>
   submitText: string
-  scriptRunner: (script: string) => Promise<string>
 }
 
 interface FieldStatus {
@@ -38,28 +34,8 @@ interface FieldStatus {
 
 const NoError = ''
 
-const defaultScript = `// Update the code to fetch the exchange rate.
-// Code block should end with a async function call that returns a number value.
-
-// This code runs in a bare-bones V8 engine. It implements the ECMAScript language spec itself, but it doesn’t include
-// any of the host-environment APIs you get in Node.js or a browser. This is for sandboxing reasons because one should
-// never run untrusted code that could arbitrarily read files, make HTTP calls, spin up timers, etc. Some methods have
-// been explicitly setup for your convenience within the sandbox:
-
-// - httpGet(string url) string
-//     Gets the body response of a http get request to the specified url 
-// - httpGetWithStealth(string url) string
-//     Gets the body response of a http get request to the specified url that is behind a Cloudflare bot protection
-
-async function getRate() {
-  return 1
-}
-
-getRate()
-`
-
 const CurrencyForm: FC<Props> = (props) => {
-  const { initialCurrency, onSubmit, submitText, scriptRunner } = props
+  const { initialCurrency, onSubmit, submitText } = props
 
   const { state: currencies, tentativeDefaultCurrency } = useContext(CurrencyServiceContext)
 
@@ -72,21 +48,6 @@ const CurrencyForm: FC<Props> = (props) => {
   )
   const [initialExchangeRate, setInitialExchangeRate] = useState('1')
   const [initialExchangeRateDate, setInitialExchangeRateDate] = useState(startOfDay(new Date()))
-  const [getRateScript, setGetRateScript] = useState<string>(
-    (initialCurrency?.rateAutoupdateSettings.script ?? '') === ''
-      ? defaultScript
-      : initialCurrency!.rateAutoupdateSettings.script,
-  )
-
-  const [scriptOutput, setScriptOutput] = useState<number | null>(null)
-  const setRateAutoupdateScript = useCallback((value?: string) => {
-    setScriptOutput(null)
-    setGetRateScript(value!)
-  }, [])
-  const [rateAutoupdateEnabled, setRateAutoupdateEnabled] = useState<boolean>(
-    initialCurrency?.rateAutoupdateSettings.enabled ?? false,
-  )
-  const [rateScriptError, setRateScriptError] = useState<string | null>(null)
 
   const showExchangeRate = useMemo(() => {
     return typeof initialCurrency === 'undefined' && tentativeDefaultCurrency !== null
@@ -98,7 +59,6 @@ const CurrencyForm: FC<Props> = (props) => {
     symbol: FieldStatus
     decimalPoints: FieldStatus
     exchangeRate: FieldStatus
-    autoupdateScriptValidated: FieldStatus
   }>({
     accountName: {
       hasVisited: false,
@@ -118,11 +78,6 @@ const CurrencyForm: FC<Props> = (props) => {
     exchangeRate: {
       hasVisited: false,
       isValid: !showExchangeRate,
-      errorText: NoError,
-    },
-    autoupdateScriptValidated: {
-      hasVisited: false,
-      isValid: false,
       errorText: NoError,
     },
   })
@@ -247,35 +202,6 @@ const CurrencyForm: FC<Props> = (props) => {
     }))
   }, [validateExchangeRate, initialExchangeRate])
 
-  useEffect(() => {
-    let rateAutoupdateError = NoError
-    if (rateAutoupdateEnabled) {
-      if (getRateScript === defaultScript) {
-        rateAutoupdateError =
-          'You must edit the script before enabling autoupdates. Otherwise, this currency will be pinned to the the default currency'
-      } else if (initialCurrency?.rateAutoupdateSettings.script !== getRateScript) {
-        if (rateScriptError !== null || scriptOutput === null) {
-          rateAutoupdateError =
-            'You must have one successfully run with the script before you can save it with autoupdate enabled.'
-        }
-      }
-    }
-    setErrors((prevState) => ({
-      ...prevState,
-      autoupdateScriptValidated: {
-        ...prevState.autoupdateScriptValidated,
-        errorText: rateAutoupdateError,
-        isValid: rateAutoupdateError == NoError,
-      },
-    }))
-  }, [
-    rateScriptError,
-    scriptOutput,
-    initialCurrency?.rateAutoupdateSettings.script,
-    getRateScript,
-    rateAutoupdateEnabled,
-  ])
-
   const isFormValid = useMemo(() => {
     return Object.values(errors).every((value) => value.isValid)
   }, [errors])
@@ -299,10 +225,6 @@ const CurrencyForm: FC<Props> = (props) => {
           ...prevState.exchangeRate,
           hasVisited: true,
         },
-        autoupdateScriptValidated: {
-          ...prevState.autoupdateScriptValidated,
-          hasVisited: true,
-        },
       }))
       return
     }
@@ -310,11 +232,13 @@ const CurrencyForm: FC<Props> = (props) => {
     return onSubmit(
       {
         name,
-        decimalPoints: parseInt(decimalPoints),
         type: type.trim(),
         risk: risk.trim(),
         symbol: symbol,
-        rateAutoupdateSettings: new RateAutoupdateSettings(getRateScript, rateAutoupdateEnabled),
+        ...(typeof initialCurrency === 'undefined' && {
+          decimalPoints: parseInt(decimalPoints),
+          rateAutoupdateSettings: new RateAutoupdateSettings('', false),
+        }),
       },
       showExchangeRate && tentativeDefaultCurrency != null
         ? [
@@ -331,18 +255,6 @@ const CurrencyForm: FC<Props> = (props) => {
       showToast('Unexpected error while submitting the currency', 'error')
       console.error(err)
     })
-  }
-
-  const testScript = async () => {
-    const runnerResponse = await scriptRunner(getRateScript!)
-    const rate = Number.parseFloat(runnerResponse.replaceAll(',', '.'))
-    if (isNaN(rate)) {
-      setRateScriptError(`Invalid format or an error occurred: ${runnerResponse}`)
-      return
-    }
-
-    setRateScriptError(null)
-    setScriptOutput(rate)
   }
 
   return (
@@ -467,62 +379,6 @@ const CurrencyForm: FC<Props> = (props) => {
               />
               <Box sx={{ flexShrink: 0 }}>{tentativeDefaultCurrency!.symbol} on</Box>
               <DatePicker date={initialExchangeRateDate} onChange={setInitialExchangeRateDate} label="" />
-            </Stack>
-          </FormSection>
-        </>
-      )}
-      {tentativeDefaultCurrency?.id !== initialCurrency?.id && initialCurrency && tentativeDefaultCurrency && (
-        <FormSection title="Exchange rate history">
-          <Box sx={{ height: 200, display: 'flex' }}>
-            <ExchangeRateHistory currency={initialCurrency} against={tentativeDefaultCurrency} />
-          </Box>
-        </FormSection>
-      )}
-      {tentativeDefaultCurrency?.id !== initialCurrency?.id && (
-        <>
-          <FormSection title="Exchange rate fetcher">
-            <CodeEditor content={getRateScript} onChange={setRateAutoupdateScript} />
-            <Stack direction="row" justifyContent="space-between" alignItems="center" textAlign="center">
-              <SecureButton variant="contained" onClick={testScript}>
-                Test Run
-              </SecureButton>
-              <Typography color={rateScriptError === null ? 'success' : 'error'}>
-                {rateScriptError === null && scriptOutput !== null && (
-                  <>
-                    1 {symbol} = {scriptOutput} {tentativeDefaultCurrency?.symbol ?? '$'}
-                  </>
-                )}
-                {rateScriptError !== null && rateScriptError}
-              </Typography>
-              {initialCurrency && (
-                <Button variant="contained" disabled={rateScriptError !== null || scriptOutput === null}>
-                  Submit
-                </Button>
-              )}
-            </Stack>
-          </FormSection>
-
-          <FormSection title="Rate auto update">
-            <Stack direction="row" justifyContent="space-between" alignItems="center" textAlign="center">
-              <Box sx={{ mx: 4 }}>
-                {errors.autoupdateScriptValidated.hasVisited && !!errors.autoupdateScriptValidated.errorText ? (
-                  <Typography color="error">{errors.autoupdateScriptValidated.errorText}</Typography>
-                ) : (
-                  <Typography>
-                    Do you want to enable the auto update of the rate? It will be fetched at 6AM every day for the day
-                    before.
-                  </Typography>
-                )}
-              </Box>
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={rateAutoupdateEnabled}
-                    onChange={(ev) => setRateAutoupdateEnabled(ev.target.checked)}
-                  />
-                }
-                label="Enabled"
-              />
             </Stack>
           </FormSection>
         </>

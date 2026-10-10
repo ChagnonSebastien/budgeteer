@@ -22,6 +22,7 @@ import CreateTransactionGroupPage from './pages/CreateTransactionGroupPage'
 import CreateTransactionPage from './pages/CreateTransactionPage'
 import CreateUnconfirmedTransactionPage from './pages/CreateUnconfirmedTransactionPage'
 import CurrenciesPage from './pages/CurrenciesPage'
+import CurrencyRatesPage from './pages/CurrencyRatesPage'
 import Dashboard from './pages/Dashboard'
 import EditAccountPage from './pages/EditAccountPage'
 import EditCategoryPage from './pages/EditCategoryPage'
@@ -397,10 +398,11 @@ const AuthenticatedZone: FC<Props> = (props) => {
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/currencies" element={<CurrenciesPage />} />
-            <Route path="/currencies/new" element={<CreateCurrencyPage scriptRunner={testGetRateScript} />} />
+            <Route path="/currencies/new" element={<CreateCurrencyPage />} />
+            <Route path="/currencies/edit/:currencyId" element={<EditCurrencyPage />} />
             <Route
-              path="/currencies/edit/:currencyId"
-              element={<EditCurrencyPage scriptRunner={testGetRateScript} />}
+              path="/currencies/rates/:currencyId"
+              element={<CurrencyRatesPage scriptRunner={testGetRateScript} />}
             />
             <Route path="/categories" element={<CategoryPage />} />
             <Route path="/categories/new" element={<CreateCategoryPage />} />

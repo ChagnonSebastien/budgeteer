@@ -86,6 +86,22 @@ func (r *Repository) UpsertExchangeRate(
 	)
 }
 
+func (r *Repository) DeleteExchangeRate(
+	ctx context.Context,
+	userId uuid.UUID,
+	currencyA, currencyB model.CurrencyID,
+	date time.Time,
+) error {
+	return r.queries.DeleteExchangeRate(
+		ctx, &dao.DeleteExchangeRateParams{
+			UserID: userId,
+			A:      int32(currencyA),
+			B:      int32(currencyB),
+			Date:   date,
+		},
+	)
+}
+
 func (r *Repository) UpdateExchangeRateRelativeToDefaultCurrency(ctx context.Context, currencyID model.CurrencyID, date time.Time, newRate float64) error {
 	return r.queries.NewAutoExchangeRateEntry(ctx, &dao.NewAutoExchangeRateEntryParams{
 		Rate:       newRate,
