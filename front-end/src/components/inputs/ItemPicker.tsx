@@ -2,9 +2,6 @@ import {
   Box,
   Button,
   ClickAwayListener,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
   MenuItem,
   MenuList,
   Paper,
@@ -19,19 +16,11 @@ import React, { FC, ReactNode, useEffect, useMemo, useRef, useState } from 'reac
 import { NotEmptyValidator, Validator } from './Validator'
 import NamedItem from '../../domain/model/NamedItem'
 import ItemList, { ItemListProps, ItemProps } from '../accounts/ItemList'
-import BasicModal from '../shared/BasicModal'
-import { CustomScrolling } from '../shared/ScrollingOverButton'
-
-const DialogContentContainer = styled(DialogContent)(({ theme }) => ({
-  maxHeight: '70vh',
-  overflow: 'hidden',
-  padding: theme.spacing(0, 2.5),
-  display: 'flex',
-  flexDirection: 'column',
-}))
+import AppDialog from '../shared/AppDialog'
+import { CustomScrolling } from '../shared/CustomScrolling'
 
 const SearchContainer = styled('div')(({ theme }) => ({
-  padding: theme.spacing(2, 0),
+  paddingBottom: theme.spacing(2),
   width: '100%',
 }))
 
@@ -323,49 +312,56 @@ function ItemPicker<ItemID, T extends NamedItem<ItemID, T>, AdditionalItemProps>
           }}
         />
       )}
-      <BasicModal open={showModal} onClose={() => setShowModal(false)} disableRestoreFocus>
-        <DialogTitle>{dialogTitle || `Select ${labelText}`}</DialogTitle>
-        <DialogContentContainer>
-          <SearchContainer>
-            <TextField
-              fullWidth
-              variant="standard"
-              placeholder={searchPlaceholder || `Search ${labelText.toLowerCase()}...`}
-              value={filter}
-              onChange={(e) => setFilter(e.target.value)}
-              autoFocus
-              onKeyDown={handleKeyDown}
-              helperText={failedCreatingOnce ? filterAsNewValueValidation.error : ''}
-              error={failedCreatingOnce && filterAsNewValueValidation.isErr()}
-            />
-          </SearchContainer>
-          <Box component={CustomScrolling} sx={{ minHeight: 0 }}>
-            <ItemListComponent
-              items={displayedItems}
-              ItemComponent={ItemComponent}
-              additionalItemsProps={additionalItemProps}
-              selectConfiguration={{
-                mode: 'single',
-                onSelectItem: (item: ItemID) => {
-                  setShowModal(false)
-                  onSelectItem(item)
-                  blurInput()
-                },
-                selectedItem: selectedItemId,
-              }}
-            />
-          </Box>
-        </DialogContentContainer>
-        <DialogActions>
-          <Button onClick={() => setShowModal(false)}>Close</Button>
-          {showConfirmButton && (
-            <Button onClick={handleConfirmClick} color="primary">
-              Confirm
+      <AppDialog
+        open={showModal}
+        onClose={() => setShowModal(false)}
+        disableRestoreFocus
+        title={dialogTitle || `Select ${labelText}`}
+        actions={
+          <>
+            <Button color="inherit" onClick={() => setShowModal(false)}>
+              Close
             </Button>
-          )}
-          {additionalActions}
-        </DialogActions>
-      </BasicModal>
+            {additionalActions}
+            {showConfirmButton && (
+              <Button variant="contained" onClick={handleConfirmClick}>
+                Confirm
+              </Button>
+            )}
+          </>
+        }
+        contentSx={{ maxHeight: '70vh', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}
+      >
+        <SearchContainer>
+          <TextField
+            fullWidth
+            variant="standard"
+            placeholder={searchPlaceholder || `Search ${labelText.toLowerCase()}...`}
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+            autoFocus
+            onKeyDown={handleKeyDown}
+            helperText={failedCreatingOnce ? filterAsNewValueValidation.error : ''}
+            error={failedCreatingOnce && filterAsNewValueValidation.isErr()}
+          />
+        </SearchContainer>
+        <Box component={CustomScrolling} sx={{ minHeight: 0 }}>
+          <ItemListComponent
+            items={displayedItems}
+            ItemComponent={ItemComponent}
+            additionalItemsProps={additionalItemProps}
+            selectConfiguration={{
+              mode: 'single',
+              onSelectItem: (item: ItemID) => {
+                setShowModal(false)
+                onSelectItem(item)
+                blurInput()
+              },
+              selectedItem: selectedItemId,
+            }}
+          />
+        </Box>
+      </AppDialog>
     </>
   )
 }

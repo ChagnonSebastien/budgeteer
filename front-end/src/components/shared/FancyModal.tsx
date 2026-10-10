@@ -110,7 +110,13 @@ export const FancyDialog: FC<{ open: boolean; onClose(): void; children: ReactNo
     onClose={onClose}
     slotProps={{
       paper: {
-        sx: { backgroundColor: 'transparent', borderRadius: (t) => t.radius.xl, border: 0, overflow: 'hidden' },
+        sx: {
+          backgroundColor: 'transparent',
+          backgroundImage: 'none',
+          borderRadius: (t) => t.radius.xl,
+          border: 0,
+          overflow: 'hidden',
+        },
       },
     }}
   >

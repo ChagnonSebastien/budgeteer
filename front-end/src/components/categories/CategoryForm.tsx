@@ -9,11 +9,9 @@ import MixedAugmentation from '../../service/MixedAugmentation'
 import { CategoryServiceContext } from '../../service/ServiceContext'
 import IconCapsule, { IconProperties } from '../icons/IconCapsule'
 import IconList from '../icons/IconList'
-import { IconToolsContext } from '../icons/IconTools'
-import BasicModal from '../shared/BasicModal'
-import ContentWithHeader from '../shared/ContentWithHeader'
-import FormWrapper from '../shared/FormWrapper'
-import { CustomScrolling } from '../shared/ScrollingOverButton'
+import AppDialog from '../shared/AppDialog'
+import { CustomScrolling } from '../shared/CustomScrolling'
+import FormWrapper, { FormSection } from '../shared/FormWrapper'
 import { useToast } from '../shared/ToastProvider'
 
 const SizedHexColorPicker = styled(HexColorPicker)({
@@ -50,7 +48,6 @@ const CategoryForm: FC<Props> = (props) => {
 
   const { state: categories } = useContext(CategoryServiceContext)
   const { rootCategory } = useContext(MixedAugmentation)
-  const { IconLib } = useContext(IconToolsContext)
 
   const editingRoot = useMemo(() => initialCategory?.id === rootCategory.id, [initialCategory, rootCategory])
 
@@ -155,43 +152,45 @@ const CategoryForm: FC<Props> = (props) => {
         label="Essential expense"
       />
 
-      <Stack direction="row" alignItems="center" spacing={2}>
-        <Stack spacing={0.5} sx={{ flexGrow: 1 }}>
-          <IconPropertyEditor
-            buttonText="Select Icon"
-            onClick={() => setShowIconModal(true)}
-            indicatorIconProperties={{
-              iconName: selectedIcon,
-              color: theme.palette.text.disabled,
-              backgroundColor: 'transparent',
-            }}
-          />
+      <FormSection title="Appearance">
+        <Stack direction="row" alignItems="center" spacing={2}>
+          <Stack spacing={0.5} sx={{ flexGrow: 1 }}>
+            <IconPropertyEditor
+              buttonText="Select Icon"
+              onClick={() => setShowIconModal(true)}
+              indicatorIconProperties={{
+                iconName: selectedIcon,
+                color: theme.palette.text.disabled,
+                backgroundColor: 'transparent',
+              }}
+            />
 
-          <IconPropertyEditor
-            buttonText="Select Outer Color"
-            onClick={() => setShowOuterColorModal(true)}
-            indicatorIconProperties={{
-              iconName: 'GrX',
-              color: 'transparent',
-              backgroundColor: outerColor,
-            }}
-          />
+            <IconPropertyEditor
+              buttonText="Select Outer Color"
+              onClick={() => setShowOuterColorModal(true)}
+              indicatorIconProperties={{
+                iconName: 'GrX',
+                color: 'transparent',
+                backgroundColor: outerColor,
+              }}
+            />
 
-          <IconPropertyEditor
-            buttonText="Select Inner Color"
-            onClick={() => setShowInnerColorModal(true)}
-            indicatorIconProperties={{
-              iconName: 'GrX',
-              color: 'transparent',
-              backgroundColor: innerColor,
-            }}
-          />
-        </Stack>
-        <BasicModal open={showIconModal} onClose={() => setShowIconModal(false)}>
-          <ContentWithHeader
-            title="Select Icon"
-            withPadding
-            action={{ Icon: IconLib.MdKeyboardBackspace, onClick: () => setShowIconModal(false) }}
+            <IconPropertyEditor
+              buttonText="Select Inner Color"
+              onClick={() => setShowInnerColorModal(true)}
+              indicatorIconProperties={{
+                iconName: 'GrX',
+                color: 'transparent',
+                backgroundColor: innerColor,
+              }}
+            />
+          </Stack>
+          <AppDialog
+            open={showIconModal}
+            onClose={() => setShowIconModal(false)}
+            title="Select icon"
+            fullWidth
+            actions={<Button onClick={() => setShowIconModal(false)}>Close</Button>}
           >
             <TextField
               onChange={(event) => setFilter(event.target.value ?? '')}
@@ -200,31 +199,31 @@ const CategoryForm: FC<Props> = (props) => {
               autoFocus
               fullWidth
             />
-            <Box component={CustomScrolling} sx={{ maxHeight: 'calc(100vh - 15rem)' }}>
+            <Box component={CustomScrolling} sx={{ maxHeight: '60vh' }}>
               <IconList filter={filter} onSelect={onIconSelect} />
             </Box>
-          </ContentWithHeader>
-        </BasicModal>
-        <BasicModal onClose={() => setShowOuterColorModal(false)} open={showOuterColorModal}>
-          <ContentWithHeader
-            title="Select Outer Color"
-            action={{ Icon: IconLib.MdKeyboardBackspace, onClick: () => setShowOuterColorModal(false) }}
+          </AppDialog>
+          <AppDialog
+            open={showOuterColorModal}
+            onClose={() => setShowOuterColorModal(false)}
+            title="Select outer color"
+            actions={<Button onClick={() => setShowOuterColorModal(false)}>Done</Button>}
           >
             <SizedHexColorPicker color={outerColor} onChange={setOuterColor} />
-          </ContentWithHeader>
-        </BasicModal>
-        <BasicModal onClose={() => setShowInnerColorModal(false)} open={showInnerColorModal}>
-          <ContentWithHeader
-            title="Select Inner Color"
-            action={{ Icon: IconLib.MdKeyboardBackspace, onClick: () => setShowInnerColorModal(false) }}
+          </AppDialog>
+          <AppDialog
+            open={showInnerColorModal}
+            onClose={() => setShowInnerColorModal(false)}
+            title="Select inner color"
+            actions={<Button onClick={() => setShowInnerColorModal(false)}>Done</Button>}
           >
             <SizedHexColorPicker color={innerColor} onChange={setInnerColor} />
-          </ContentWithHeader>
-        </BasicModal>
-        <Box sx={{ p: 2, border: 2, borderColor: 'border.strong', borderRadius: (t) => t.radius.md }}>
-          <IconCapsule iconName={selectedIcon} size="5rem" color={innerColor} backgroundColor={outerColor} />
-        </Box>
-      </Stack>
+          </AppDialog>
+          <Box sx={{ p: 2, border: 2, borderColor: 'border.strong', borderRadius: (t) => t.radius.md }}>
+            <IconCapsule iconName={selectedIcon} size="5rem" color={innerColor} backgroundColor={outerColor} />
+          </Box>
+        </Stack>
+      </FormSection>
     </FormWrapper>
   )
 }

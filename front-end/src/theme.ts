@@ -152,6 +152,24 @@ export const darkTheme = createTheme({
     hero: { fontSize: '2.5rem', fontWeight: 700, lineHeight: 1.2 },
   },
   components: {
+    MuiDialog: {
+      styleOverrides: {
+        paper: ({ theme }) => ({
+          backgroundImage: `linear-gradient(to bottom, ${theme.palette.overlay.panelTop}, ${theme.palette.overlay.panelBottom})`,
+          border: `1px solid ${theme.palette.surface.raised}`,
+          borderRadius: theme.radius.xl,
+        }),
+      },
+    },
+    MuiDialogTitle: {
+      styleOverrides: { root: ({ theme }) => ({ padding: theme.spacing(3, 3, 1) }) },
+    },
+    MuiDialogContent: {
+      styleOverrides: { root: ({ theme }) => ({ padding: theme.spacing(1, 3) }) },
+    },
+    MuiDialogActions: {
+      styleOverrides: { root: ({ theme }) => ({ padding: theme.spacing(2, 3, 3), gap: theme.spacing(1) }) },
+    },
     MuiTypography: {
       defaultProps: {
         variantMapping: { label: 'span', stat: 'span', hero: 'p' },

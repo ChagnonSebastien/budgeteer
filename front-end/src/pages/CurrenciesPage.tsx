@@ -1,14 +1,14 @@
-import { FC, useContext, useRef, useState } from 'react'
+import { FC, useContext, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import ItemList from '../components/accounts/ItemList'
 import CurrencyCard from '../components/currencies/CurrencyCard'
 import ExchangeRateHistory from '../components/graphing/ExchangeRateHistory'
 import { IconToolsContext } from '../components/icons/IconTools'
-import { SearchOverlay } from '../components/inputs/SearchOverlay'
+import ActionSpeedDial from '../components/shared/ActionSpeedDial'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
+import { CustomScrolling } from '../components/shared/CustomScrolling'
 import { DetailCard, DetailHeading, FancyDialog, FancyModal } from '../components/shared/FancyModal'
-import ScrollingOverButton, { CustomScrolling } from '../components/shared/ScrollingOverButton'
 import Currency, { CurrencyID } from '../domain/model/currency'
 import MixedAugmentation from '../service/MixedAugmentation'
 import { AccountServiceContext, CurrencyServiceContext } from '../service/ServiceContext'
@@ -20,7 +20,6 @@ const CurrenciesPage: FC = () => {
   const { IconLib } = useContext(IconToolsContext)
   const [filter, setFilter] = useState('')
   const [clickedCurrency, setClickedCurrency] = useState<Currency | null>(null)
-  const scrollingContainerRef = useRef<HTMLDivElement>(null)
   const { accountBalances } = useContext(MixedAugmentation)
   const { state: accounts } = useContext(AccountServiceContext)
 
@@ -38,36 +37,45 @@ const CurrenciesPage: FC = () => {
     return total
   }
 
-  const orderedCurrencies = [...currencies].sort(
-    (a, b) => Number(getTotalForCurrency(a.id) === 0) - Number(getTotalForCurrency(b.id) === 0),
-  )
+  const search = filter.trim().toLowerCase()
+  const orderedCurrencies = currencies
+    .filter((c) => search === '' || c.name.toLowerCase().includes(search) || c.symbol.toLowerCase().includes(search))
+    .sort((a, b) => Number(getTotalForCurrency(a.id) === 0) - Number(getTotalForCurrency(b.id) === 0))
 
   return (
-    <ContentWithHeader title="Currencies" action="menu" withPadding>
-      <ScrollingOverButton
-        button={{ text: 'New', onClick: () => navigate('/currencies/new') }}
-        scrollingContainerRef={scrollingContainerRef}
-        contentWidth="default"
+    <ContentWithHeader
+      title="Currencies"
+      action="menu"
+      withPadding
+      search={{ value: filter, onChange: setFilter, placeholder: 'Search currencies...' }}
+    >
+      <CustomScrolling
+        sx={{ width: '100%', height: '100%', maxWidth: (t) => t.contentWidth.default, pb: 11, gap: 0.125 }}
       >
-        <CustomScrolling
-          ref={scrollingContainerRef}
-          sx={{ overflowY: 'auto', flexGrow: 1, pb: 8, position: 'relative', gap: 0.125 }}
-        >
-          <ItemList
-            items={orderedCurrencies}
-            ItemComponent={CurrencyCard}
-            selectConfiguration={{
-              mode: 'click',
-              onClick: (item: Currency) => setClickedCurrency(currencies.find((c) => c.id === item.id) ?? null),
-            }}
-            additionalItemsProps={{
-              total: getTotalForCurrency,
-            }}
-          />
-        </CustomScrolling>
+        <ItemList
+          items={orderedCurrencies}
+          ItemComponent={CurrencyCard}
+          selectConfiguration={{
+            mode: 'click',
+            onClick: (item: Currency) => setClickedCurrency(currencies.find((c) => c.id === item.id) ?? null),
+          }}
+          additionalItemsProps={{
+            total: getTotalForCurrency,
+          }}
+        />
+      </CustomScrolling>
 
-        <SearchOverlay filter={filter} setFilter={setFilter} placeholder="Search currencies..." />
-      </ScrollingOverButton>
+      <ActionSpeedDial
+        ariaLabel="Create currency"
+        actions={[
+          {
+            label: 'New currency',
+            Icon: IconLib.FaPlus,
+            color: 'primary.main',
+            onClick: () => navigate('/currencies/new'),
+          },
+        ]}
+      />
 
       <FancyDialog open={clickedCurrency !== null} onClose={() => setClickedCurrency(null)}>
         {clickedCurrency !== null && (

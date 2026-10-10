@@ -1,4 +1,4 @@
-import { Alert, Button, Dialog, DialogActions, DialogContent, DialogTitle, Stack, Typography } from '@mui/material'
+import { Alert, Button, Stack, Typography } from '@mui/material'
 import { FC, useContext, useMemo, useState } from 'react'
 
 import { GroupPaidTable } from './GroupLedger'
@@ -27,6 +27,7 @@ import {
   UnconfirmedTransactionServiceContext,
 } from '../../service/ServiceContext'
 import SelectOne from '../inputs/SelectOne'
+import AppDialog from '../shared/AppDialog'
 
 const valueKind = (splitType: SplitType): SplitValueKind | null => {
   if (splitType === SplitType.PERCENTAGE) return 'percentage'
@@ -146,69 +147,73 @@ const ChangeSplitDialog: FC<{
   }
 
   return (
-    <Dialog open={open} onClose={saving ? undefined : onClose} fullWidth maxWidth="sm">
-      <DialogTitle>{step === 'split' ? 'Change the default split' : 'Apply the new split to'}</DialogTitle>
-      <DialogContent>
-        {step === 'split' ? (
-          <Stack sx={{ gap: 3, pt: 1 }}>
-            <SelectOne
-              label="Split Type"
-              value={SplitTypeToString(splitType)}
-              onChange={(value) => setSplitType(ParseSplitType(value) ?? SplitType.EQUAL)}
-              options={[SplitType.EQUAL, SplitType.PERCENTAGE, SplitType.SHARES].map((st) => ({
-                value: SplitTypeToString(st),
-                label: SplitTypeToString(st),
-              }))}
-              type="dropdown"
-            />
-            {kind && (
-              <SplitValuesEditor kind={kind} members={transactionGroup.members} values={values} onChange={setValues} />
-            )}
-          </Stack>
-        ) : (
-          <Stack sx={{ gap: 3, pt: 1 }}>
-            <SelectOne
-              label="Which transactions use the new split?"
-              value={String(scope)}
-              onChange={(value) => setScope(Number(value) as SplitChangeScope)}
-              options={scopes.map((s) => ({ value: String(s.scope), label: s.label }))}
-              type="radio"
-            />
-            <Typography variant="body2" color="textDisabled">
-              {scopes.find((s) => s.scope === scope)!.description}
-            </Typography>
-            <Stack sx={{ alignItems: 'center', gap: 1 }}>
-              <Typography variant="subtitle2">Balances after the change</Typography>
-              <GroupPaidTable
-                members={transactionGroup.members}
-                transactions={preview}
-                currency={transactionGroup.augmentedCurrency}
-              />
-            </Stack>
-            {error && <Alert severity="error">{error}</Alert>}
-          </Stack>
-        )}
-      </DialogContent>
-      <DialogActions>
-        {step === 'split' ? (
+    <AppDialog
+      open={open}
+      onClose={() => !saving && onClose()}
+      fullWidth
+      title={step === 'split' ? 'Change the default split' : 'Apply the new split to'}
+      actions={
+        step === 'split' ? (
           <>
-            <Button onClick={onClose}>Cancel</Button>
+            <Button color="inherit" onClick={onClose}>
+              Cancel
+            </Button>
             <Button variant="contained" disabled={valuesError !== null} onClick={() => setStep('scope')}>
               Next
             </Button>
           </>
         ) : (
           <>
-            <Button onClick={() => setStep('split')} disabled={saving}>
+            <Button color="inherit" onClick={() => setStep('split')} disabled={saving}>
               Back
             </Button>
             <Button variant="contained" onClick={save} disabled={saving}>
               {saving ? 'Saving...' : 'Save'}
             </Button>
           </>
-        )}
-      </DialogActions>
-    </Dialog>
+        )
+      }
+    >
+      {step === 'split' ? (
+        <Stack sx={{ gap: 3, pt: 1 }}>
+          <SelectOne
+            label="Split Type"
+            value={SplitTypeToString(splitType)}
+            onChange={(value) => setSplitType(ParseSplitType(value) ?? SplitType.EQUAL)}
+            options={[SplitType.EQUAL, SplitType.PERCENTAGE, SplitType.SHARES].map((st) => ({
+              value: SplitTypeToString(st),
+              label: SplitTypeToString(st),
+            }))}
+            type="dropdown"
+          />
+          {kind && (
+            <SplitValuesEditor kind={kind} members={transactionGroup.members} values={values} onChange={setValues} />
+          )}
+        </Stack>
+      ) : (
+        <Stack sx={{ gap: 3, pt: 1 }}>
+          <SelectOne
+            label="Which transactions use the new split?"
+            value={String(scope)}
+            onChange={(value) => setScope(Number(value) as SplitChangeScope)}
+            options={scopes.map((s) => ({ value: String(s.scope), label: s.label }))}
+            type="radio"
+          />
+          <Typography variant="body2" color="textDisabled">
+            {scopes.find((s) => s.scope === scope)!.description}
+          </Typography>
+          <Stack sx={{ alignItems: 'center', gap: 1 }}>
+            <Typography variant="subtitle2">Balances after the change</Typography>
+            <GroupPaidTable
+              members={transactionGroup.members}
+              transactions={preview}
+              currency={transactionGroup.augmentedCurrency}
+            />
+          </Stack>
+          {error && <Alert severity="error">{error}</Alert>}
+        </Stack>
+      )}
+    </AppDialog>
   )
 }
 

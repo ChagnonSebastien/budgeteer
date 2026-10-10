@@ -1,6 +1,6 @@
-import { AppBar, IconButton, Toolbar, Typography } from '@mui/material'
+import { AppBar, IconButton, InputBase, Toolbar, Typography } from '@mui/material'
 import { styled } from '@mui/material/styles'
-import { FC, ReactNode, useContext } from 'react'
+import { FC, ReactNode, useContext, useState } from 'react'
 import { IconType } from 'react-icons'
 import { useNavigate } from 'react-router-dom'
 
@@ -43,11 +43,37 @@ const ActionButtom = (props: CustomAction) => (
   </IconButton>
 )
 
+export interface HeaderSearch {
+  value: string
+  onChange(value: string): void
+  placeholder: string
+}
+
+const SearchField: FC<HeaderSearch & { onClose(): void }> = ({ value, onChange, placeholder, onClose }) => {
+  const { IconLib } = useContext(IconToolsContext)
+  return (
+    <>
+      <InputBase
+        autoFocus
+        value={value}
+        placeholder={placeholder}
+        onChange={(ev) => onChange(ev.target.value)}
+        onKeyDown={(ev) => ev.key === 'Escape' && onClose()}
+        sx={{ flexGrow: 1, mx: 1, px: 1.5, py: 0.5, bgcolor: 'surface.raised', borderRadius: (t) => t.radius.md }}
+      />
+      <IconButton aria-label="close search" onClick={onClose}>
+        <IconLib.IoCloseCircle />
+      </IconButton>
+    </>
+  )
+}
+
 export interface ContentWithHeaderProps {
   children: ReactNode | ReactNode[]
   title: string
   action?: 'menu' | 'return' | CustomAction
   rightContent?: ReactNode
+  search?: HeaderSearch
   setContentRef?: (value: ((prevState: HTMLDivElement | null) => HTMLDivElement | null) | HTMLDivElement | null) => void
   withPadding?: boolean
   withScrolling?: boolean
@@ -59,6 +85,7 @@ const ContentWithHeader: FC<ContentWithHeaderProps> = (props) => {
     children,
     action,
     rightContent,
+    search,
     setContentRef = undefined,
     withPadding = false,
     withScrolling = false,
@@ -66,6 +93,8 @@ const ContentWithHeader: FC<ContentWithHeaderProps> = (props) => {
   const { IconLib } = useContext(IconToolsContext)
   const { open } = useContext(DrawerContext)
   const navigate = useNavigate()
+  const [searching, setSearching] = useState(false)
+  const searchOpen = !!search && (searching || search.value !== '')
 
   let actionButton = null
   if (action === 'return') {
@@ -83,9 +112,22 @@ const ContentWithHeader: FC<ContentWithHeaderProps> = (props) => {
       <Header position="static">
         <Toolbar>
           {actionButton}
-          <Typography variant="h6" sx={{ flexGrow: 1 }}>
-            {title}
-          </Typography>
+          {searchOpen ? (
+            <SearchField
+              {...search}
+              onClose={() => {
+                search.onChange('')
+                setSearching(false)
+              }}
+            />
+          ) : (
+            <>
+              <Typography variant="h6" sx={{ flexGrow: 1 }}>
+                {title}
+              </Typography>
+              {search && <ActionButtom Icon={IconLib.BiSearch} onClick={() => setSearching(true)} />}
+            </>
+          )}
           {typeof rightContent !== 'undefined' && rightContent}
         </Toolbar>
       </Header>

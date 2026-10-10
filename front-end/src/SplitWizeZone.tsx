@@ -1,4 +1,4 @@
-import { Alert, Box, Button, Stack, TextField, Typography } from '@mui/material'
+import { Alert, Stack, TextField, Typography } from '@mui/material'
 import { GrpcWebFetchTransport } from '@protobuf-ts/grpcweb-transport'
 import React, { FC, ReactNode, useContext, useMemo, useState } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
@@ -6,6 +6,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { UserContext } from './App'
 import LoadingScreen from './components/LoadingScreen'
 import DrawerWrapper from './components/Menu'
+import FormWrapper from './components/shared/FormWrapper'
 import { Centered } from './components/shared/Layout'
 import CreateUnconfirmedTransactionPage from './pages/CreateUnconfirmedTransactionPage'
 import EditUnconfirmedTransactionPage from './pages/EditUnconfirmedTransactionPage'
@@ -266,42 +267,37 @@ const PersistenceSetup: FC<{ children: ReactNode; hasInternet: boolean }> = ({ c
 
 const AskDisplayName: FC<{ setDisplayName(name: string): Promise<void> }> = ({ setDisplayName }) => {
   const [name, setName] = useState('')
-  const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setSaving(true)
+  const submit = async () => {
+    if (name.trim() === '') {
+      setError('Enter the name the group should see.')
+      return
+    }
     setError('')
     try {
       await setDisplayName(name.trim())
     } catch {
       setError('Could not save your name. Please try again.')
-      setSaving(false)
     }
   }
 
   return (
     <Centered>
-      <Box component="form" onSubmit={submit} sx={{ p: 2, maxWidth: 400, width: '100%' }}>
-        <Stack spacing={2}>
-          <Typography variant="h6">What should the group call you?</Typography>
+      <Stack spacing={2} sx={{ p: 2, maxWidth: (t) => t.contentWidth.compact, width: '100%' }}>
+        <Typography variant="h5">What should the group call you?</Typography>
+        <FormWrapper onSubmit={submit} submitText="Continue">
           {error && <Alert severity="error">{error}</Alert>}
           <TextField
             label="Name"
             value={name}
             onChange={(e) => setName(e.target.value)}
             slotProps={{ htmlInput: { maxLength: 64 } }}
-            required
             autoFocus
-            disabled={saving}
             fullWidth
           />
-          <Button type="submit" variant="contained" disabled={saving || name.trim() === ''}>
-            Continue
-          </Button>
-        </Stack>
-      </Box>
+        </FormWrapper>
+      </Stack>
     </Centered>
   )
 }

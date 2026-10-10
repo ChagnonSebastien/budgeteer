@@ -1,8 +1,9 @@
+import { Button } from '@mui/material'
 import { DateCalendar, DateField, DateView, PickerValidDate } from '@mui/x-date-pickers'
 import dayjs from 'dayjs'
 import React, { useState } from 'react'
 
-import BasicModal from '../shared/BasicModal'
+import AppDialog from '../shared/AppDialog'
 
 interface Props {
   label: string
@@ -30,7 +31,19 @@ function DatePicker(props: Props) {
         sx={{ width: '100%' }}
       />
 
-      <BasicModal open={showDateModal} onClose={() => setShowDateModal(false)} disableRestoreFocus>
+      <AppDialog
+        open={showDateModal}
+        onClose={() => setShowDateModal(false)}
+        disableRestoreFocus
+        title={label || 'Pick a date'}
+        actions={
+          <>
+            <Button color="inherit" onClick={() => setShowDateModal(false)}>
+              Close
+            </Button>
+          </>
+        }
+      >
         <DateCalendar
           views={['year', 'month', 'day']}
           value={dayjs(date)}
@@ -43,7 +56,7 @@ function DatePicker(props: Props) {
             setDateView(view)
           }}
         />
-      </BasicModal>
+      </AppDialog>
     </>
   )
 }

@@ -1,4 +1,4 @@
-import { Alert, Button, Stack, TextField, Typography } from '@mui/material'
+import { Alert, Stack, TextField, Typography } from '@mui/material'
 import { FC, useContext, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
@@ -8,6 +8,7 @@ import { FixedPointInput } from '../components/inputs/FixedPointInput'
 import SelectOne from '../components/inputs/SelectOne'
 import LoadingScreen from '../components/LoadingScreen'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
+import FormWrapper from '../components/shared/FormWrapper'
 import { useToast } from '../components/shared/ToastProvider'
 import useAugmentedTransactionGroup from '../components/transactionGroup/useAugmentedTransactionGroup'
 import TransactionForm from '../components/transactions/TransactionForm'
@@ -178,50 +179,56 @@ const SettlementPage: FC<{ mode: SettlementPageMode }> = ({ mode }) => {
   return (
     <ContentWithHeader title={titles[mode]} action="return" withPadding withScrolling>
       {step === 'details' ? (
-        <Stack sx={{ gap: 3, maxWidth: (t) => t.contentWidth.compact, mx: 'auto', width: '100%' }}>
-          {mode === 'new' && (
-            <>
-              <SelectOne
-                label="Direction"
-                value={direction}
-                onChange={(value) => setDirection(value as 'paid' | 'received')}
-                options={[
-                  { value: 'paid', label: 'I paid' },
-                  { value: 'received', label: 'I received from' },
-                ]}
-                type="toggle"
-              />
-              <SelectOne
-                label="Who"
-                value={chosenCounterpart}
-                onChange={setCounterpart}
-                options={others.map((m) => ({ value: m.email, label: m.name }))}
-                type="dropdown"
-              />
-            </>
-          )}
+        <Stack sx={{ gap: 2, maxWidth: (t) => t.contentWidth.compact, mx: 'auto', width: '100%' }}>
           {mode === 'edit' && (
-            <Typography>
+            <Typography color="text.secondary">
               {iPaid ? `You paid ${counterpartName}` : `${counterpartName} paid you`}. {counterpartName} will have to
               confirm your changes.
             </Typography>
           )}
-          <FixedPointInput
-            label={`Amount (${currency.symbol})`}
-            value={amount}
-            onChange={setAmount}
-            decimalPoints={currency.decimalPoints}
-          />
-          <DatePicker label="Date" date={date} onChange={setDate} />
-          <TextField label="Note" value={note} onChange={(e) => setNote(e.target.value)} fullWidth />
-          {error && <Alert severity="error">{error}</Alert>}
-          <Button
-            variant="contained"
-            disabled={amount <= 0 || counterpartEmail === ''}
-            onClick={() => (isGuest ? save(null) : setStep('books'))}
+          <FormWrapper
+            submitText={isGuest ? 'Save' : 'Next'}
+            onSubmit={async () => {
+              if (amount <= 0 || counterpartEmail === '') {
+                setError('Enter an amount and who the settlement is with.')
+                return
+              }
+              setError('')
+              if (isGuest) await save(null)
+              else setStep('books')
+            }}
           >
-            {isGuest ? 'Save' : 'Next'}
-          </Button>
+            {mode === 'new' && (
+              <>
+                <SelectOne
+                  label="Direction"
+                  value={direction}
+                  onChange={(value) => setDirection(value as 'paid' | 'received')}
+                  options={[
+                    { value: 'paid', label: 'I paid' },
+                    { value: 'received', label: 'I received from' },
+                  ]}
+                  type="toggle"
+                />
+                <SelectOne
+                  label="Who"
+                  value={chosenCounterpart}
+                  onChange={setCounterpart}
+                  options={others.map((m) => ({ value: m.email, label: m.name }))}
+                  type="dropdown"
+                />
+              </>
+            )}
+            <FixedPointInput
+              label={`Amount (${currency.symbol})`}
+              value={amount}
+              onChange={setAmount}
+              decimalPoints={currency.decimalPoints}
+            />
+            <DatePicker label="Date" date={date} onChange={setDate} />
+            <TextField label="Note" value={note} onChange={(e) => setNote(e.target.value)} fullWidth />
+            {error && <Alert severity="error">{error}</Alert>}
+          </FormWrapper>
         </Stack>
       ) : (
         <Stack sx={{ gap: 2 }}>

@@ -1,12 +1,13 @@
-import { FC, useContext, useRef, useState } from 'react'
+import { FC, useContext, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import { CategoryCard } from '../components/categories/CategoryCard'
 import { CategoryList } from '../components/categories/CategoryList'
 import { IconToolsContext } from '../components/icons/IconTools'
+import ActionSpeedDial from '../components/shared/ActionSpeedDial'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
+import { CustomScrolling } from '../components/shared/CustomScrolling'
 import { DetailCard, DetailHeading, FancyDialog, FancyModal } from '../components/shared/FancyModal'
-import ScrollingOverButton, { CustomScrolling } from '../components/shared/ScrollingOverButton'
 import Category from '../domain/model/category'
 import { CategoryServiceContext } from '../service/ServiceContext'
 
@@ -16,30 +17,31 @@ const CategoryPage: FC = () => {
   const { state: categories } = useContext(CategoryServiceContext)
   const [clickedCategory, setClickedCategory] = useState<Category | null>(null)
 
-  const scrollingContainerRef = useRef<HTMLDivElement>(null)
-
   return (
     <ContentWithHeader title="Categories" action="menu" withPadding>
-      <ScrollingOverButton
-        button={{ text: 'New', onClick: () => navigate('/categories/new') }}
-        scrollingContainerRef={scrollingContainerRef}
-        contentWidth="medium"
-      >
-        <CustomScrolling
-          ref={scrollingContainerRef}
-          sx={{ overflowY: 'auto', flexGrow: 1, pb: 8, position: 'relative' }}
-        >
-          <CategoryList
-            items={categories}
-            selectConfiguration={{
-              mode: 'click',
-              onClick: setClickedCategory,
-            }}
-            ItemComponent={CategoryCard}
-            additionalItemsProps={{}}
-          />
-        </CustomScrolling>
-      </ScrollingOverButton>
+      <CustomScrolling sx={{ width: '100%', height: '100%', maxWidth: (t) => t.contentWidth.medium, pb: 11 }}>
+        <CategoryList
+          items={categories}
+          selectConfiguration={{
+            mode: 'click',
+            onClick: setClickedCategory,
+          }}
+          ItemComponent={CategoryCard}
+          additionalItemsProps={{}}
+        />
+      </CustomScrolling>
+
+      <ActionSpeedDial
+        ariaLabel="Create category"
+        actions={[
+          {
+            label: 'New category',
+            Icon: IconLib.FaPlus,
+            color: 'primary.main',
+            onClick: () => navigate('/categories/new'),
+          },
+        ]}
+      />
       <FancyDialog open={clickedCategory !== null} onClose={() => setClickedCategory(null)}>
         {clickedCategory !== null && (
           <FancyModal

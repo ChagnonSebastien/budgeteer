@@ -1,4 +1,4 @@
-import { Alert, Button, Dialog, DialogActions, DialogContent, DialogTitle, Stack, Typography } from '@mui/material'
+import { Alert, Button, Stack, Typography } from '@mui/material'
 import { FC, useContext, useMemo, useState } from 'react'
 
 import SplitValuesEditor, { splitValuesError, SplitValueKind } from './SplitValuesEditor'
@@ -21,6 +21,7 @@ import {
 } from '../../service/ServiceContext'
 import SelectOne from '../inputs/SelectOne'
 import { DrawerContext } from '../Menu'
+import AppDialog from '../shared/AppDialog'
 
 type Choice = 'default' | SplitType
 
@@ -105,57 +106,61 @@ const TransactionSplitDialog: FC<{ transaction: AugmentedTransaction; onClose():
   }
 
   return (
-    <Dialog open onClose={saving ? undefined : onClose} fullWidth maxWidth="sm">
-      <DialogTitle>Split of this transaction</DialogTitle>
-      <DialogContent>
-        <Stack sx={{ gap: 3, pt: 1 }}>
-          <SelectOne
-            label="Split"
-            value={String(choice)}
-            onChange={(value) => {
-              const next: Choice = value === 'default' ? 'default' : (Number(value) as SplitType)
-              setChoice(next)
-              setValues(initialValues(next))
-            }}
-            options={choices.map((c) => ({
-              value: String(c.choice),
-              label: c.choice === 'default' ? `Group default (${SplitTypeToString(group.splitType)})` : c.label,
-            }))}
-            type="dropdown"
+    <AppDialog
+      open
+      onClose={() => !saving && onClose()}
+      fullWidth
+      title="Split of this transaction"
+      actions={
+        <>
+          <Button color="inherit" onClick={onClose} disabled={saving}>
+            Cancel
+          </Button>
+          <Button variant="contained" onClick={save} disabled={saving || valuesError !== null}>
+            {saving ? 'Saving...' : 'Save'}
+          </Button>
+        </>
+      }
+    >
+      <Stack sx={{ gap: 3, pt: 1 }}>
+        <SelectOne
+          label="Split"
+          value={String(choice)}
+          onChange={(value) => {
+            const next: Choice = value === 'default' ? 'default' : (Number(value) as SplitType)
+            setChoice(next)
+            setValues(initialValues(next))
+          }}
+          options={choices.map((c) => ({
+            value: String(c.choice),
+            label: c.choice === 'default' ? `Group default (${SplitTypeToString(group.splitType)})` : c.label,
+          }))}
+          type="dropdown"
+        />
+        {kind && (
+          <SplitValuesEditor
+            kind={kind}
+            members={group.members}
+            values={values}
+            onChange={setValues}
+            currency={transaction.currency}
+            amount={transaction.amount}
           />
-          {kind && (
-            <SplitValuesEditor
-              kind={kind}
-              members={group.members}
-              values={values}
-              onChange={setValues}
-              currency={transaction.currency}
-              amount={transaction.amount}
-            />
-          )}
-          {!valuesError && (
-            <Stack sx={{ gap: 0.5 }}>
-              <Typography variant="subtitle2">Each member's part</Typography>
-              {shares.map(({ name, share }) => (
-                <Stack direction="row" key={name} sx={{ justifyContent: 'space-between' }}>
-                  <Typography variant="body1">{name}</Typography>
-                  <Typography fontFamily="monospace">{formatFull(transaction.currency, share, privacyMode)}</Typography>
-                </Stack>
-              ))}
-            </Stack>
-          )}
-          {error && <Alert severity="error">{error}</Alert>}
-        </Stack>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose} disabled={saving}>
-          Cancel
-        </Button>
-        <Button variant="contained" onClick={save} disabled={saving || valuesError !== null}>
-          {saving ? 'Saving...' : 'Save'}
-        </Button>
-      </DialogActions>
-    </Dialog>
+        )}
+        {!valuesError && (
+          <Stack sx={{ gap: 0.5 }}>
+            <Typography variant="subtitle2">Each member's part</Typography>
+            {shares.map(({ name, share }) => (
+              <Stack direction="row" key={name} sx={{ justifyContent: 'space-between' }}>
+                <Typography variant="body1">{name}</Typography>
+                <Typography fontFamily="monospace">{formatFull(transaction.currency, share, privacyMode)}</Typography>
+              </Stack>
+            ))}
+          </Stack>
+        )}
+        {error && <Alert severity="error">{error}</Alert>}
+      </Stack>
+    </AppDialog>
   )
 }
 

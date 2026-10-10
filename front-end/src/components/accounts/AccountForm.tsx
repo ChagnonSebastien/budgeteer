@@ -7,7 +7,7 @@ import { AccountServiceContext, CurrencyServiceContext } from '../../service/Ser
 import CurrencyPicker from '../currencies/CurrencyPicker'
 import { IconToolsContext } from '../icons/IconTools'
 import { FixedPointInput } from '../inputs/FixedPointInput'
-import FormWrapper from '../shared/FormWrapper'
+import FormWrapper, { FormSection } from '../shared/FormWrapper'
 import { useToast } from '../shared/ToastProvider'
 
 const IconButton = styled('div')({ display: 'flex', flexShrink: 0, cursor: 'pointer' })
@@ -175,11 +175,8 @@ const AccountForm: FC<Props> = (props) => {
         onChange={(ev) => setFinancialInstitution(ev.target.value as string)}
       />
 
-      <div>
-        <Typography variant="caption" color="text.secondary">
-          Starting balance
-        </Typography>
-        <Typography variant="body2" color="textSecondary" sx={{ mt: 1, mb: 2 }}>
+      <FormSection title="Starting balance">
+        <Typography variant="body2" color="textSecondary">
           How much is in this account right now. If you plan to record past transactions, enter the balance from before
           the first one instead. You can change it later.
         </Typography>
@@ -231,13 +228,12 @@ const AccountForm: FC<Props> = (props) => {
                   decimalPoints={currency?.decimalPoints ?? 2}
                 />
 
-                {initialAmounts.length > 1 && (
-                  <IconButton
-                    onClick={() => setInitialAmount((prevState) => prevState.filter((state) => state.uid !== i.uid))}
-                  >
-                    <IconLib.BsDashCircle size="1.25rem" />
-                  </IconButton>
-                )}
+                <IconButton
+                  aria-label="remove starting balance"
+                  onClick={() => setInitialAmount((prevState) => prevState.filter((state) => state.uid !== i.uid))}
+                >
+                  <IconLib.BsDashCircle size="1.25rem" />
+                </IconButton>
               </Stack>
             )
           })}
@@ -247,7 +243,7 @@ const AccountForm: FC<Props> = (props) => {
           <Button
             size="small"
             startIcon={<IconLib.BsPlusCircle />}
-            sx={{ mt: 1 }}
+            sx={{ alignSelf: 'flex-start' }}
             onClick={() =>
               setInitialAmount((prevState) => [
                 ...prevState,
@@ -255,10 +251,10 @@ const AccountForm: FC<Props> = (props) => {
               ])
             }
           >
-            Add a balance in another currency
+            {initialAmounts.length === 0 ? 'Add a starting balance' : 'Add a balance in another currency'}
           </Button>
         )}
-      </div>
+      </FormSection>
     </FormWrapper>
   )
 }

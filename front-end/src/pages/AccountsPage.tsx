@@ -1,4 +1,4 @@
-import { Checkbox, IconButton, Menu, MenuItem, Stack } from '@mui/material'
+import { Box, Checkbox, IconButton, Menu, MenuItem, Stack } from '@mui/material'
 import { FC, useContext, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 
@@ -6,9 +6,9 @@ import AccountCard from '../components/accounts/AccountCard'
 import GroupedAccountList, { isAccountUnused } from '../components/accounts/GroupedAccountList'
 import { IconToolsContext } from '../components/icons/IconTools'
 import { DrawerContext } from '../components/Menu'
+import ActionSpeedDial from '../components/shared/ActionSpeedDial'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
 import { DetailCard, DetailHeading, FancyDialog, FancyModal } from '../components/shared/FancyModal'
-import ScrollingOverButton from '../components/shared/ScrollingOverButton'
 import Account from '../domain/model/account'
 import { formatAmount } from '../domain/model/currency'
 import MixedAugmentation from '../service/MixedAugmentation'
@@ -29,6 +29,7 @@ const AccountsPage: FC = () => {
   const open = Boolean(anchorEl)
 
   const [clickedAccount, setClickedAccount] = useState<Account | null>(null)
+  const [filter, setFilter] = useState('')
 
   const scrollingContainerRef = useRef<HTMLDivElement>(null)
 
@@ -50,6 +51,7 @@ const AccountsPage: FC = () => {
       title="Accounts"
       action="menu"
       withPadding
+      search={{ value: filter, onChange: setFilter, placeholder: 'Search accounts...' }}
       rightContent={
         <>
           <IconButton onClick={(e) => setAnchorEl(e.currentTarget)}>
@@ -85,11 +87,7 @@ const AccountsPage: FC = () => {
         </>
       }
     >
-      <ScrollingOverButton
-        button={{ text: 'New', onClick: () => navigate('/accounts/new') }}
-        scrollingContainerRef={scrollingContainerRef}
-        contentWidth="wide"
-      >
+      <Box sx={{ width: '100%', height: '100%', overflow: 'hidden', maxWidth: (t) => t.contentWidth.wide }}>
         <GroupedAccountList
           ItemComponent={AccountCard}
           items={accounts}
@@ -102,9 +100,21 @@ const AccountsPage: FC = () => {
           showGroupTotals={true}
           groupBy={groupBy}
           scrollingContainerRef={scrollingContainerRef}
-          filterable
+          searchQuery={filter}
         />
-      </ScrollingOverButton>
+      </Box>
+
+      <ActionSpeedDial
+        ariaLabel="Create account"
+        actions={[
+          {
+            label: 'New account',
+            Icon: IconLib.FaPlus,
+            color: 'primary.main',
+            onClick: () => navigate('/accounts/new'),
+          },
+        ]}
+      />
 
       <FancyDialog open={clickedAccount !== null} onClose={handleClose}>
         {clickedAccount !== null && (

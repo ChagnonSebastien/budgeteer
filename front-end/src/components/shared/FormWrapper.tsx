@@ -1,7 +1,6 @@
-import { Stack } from '@mui/material'
+import { Box, Stack, Typography } from '@mui/material'
 import { FC, FormEvent, ReactNode, useState } from 'react'
 
-import { Section } from './Layout'
 import { SecureButton } from './SecureButton'
 
 interface Props {
@@ -37,11 +36,9 @@ const FormWrapper: FC<Props> = (props) => {
       noValidate
       onSubmit={handleSubmit}
       spacing={2}
-      sx={{ mt: 2, maxWidth: (t) => t.contentWidth.default }}
+      sx={{ mt: 2, width: '100%', maxWidth: (t) => t.contentWidth.default }}
     >
-      <Section title="Form">
-        <Stack spacing={2}>{children}</Stack>
-      </Section>
+      {children}
 
       <SecureButton fullWidth variant="contained" type="submit" loading={submitting}>
         {submitText}
@@ -49,5 +46,17 @@ const FormWrapper: FC<Props> = (props) => {
     </Stack>
   )
 }
+
+export const FormSection: FC<{ title: string; children: ReactNode }> = ({ title, children }) => (
+  <Stack spacing={2}>
+    <Stack direction="row" alignItems="center" spacing={1.5}>
+      <Typography variant="label" color="text.secondary">
+        {title}
+      </Typography>
+      <Box sx={{ flexGrow: 1, borderBottom: 1, borderColor: 'border.subtle' }} />
+    </Stack>
+    {children}
+  </Stack>
+)
 
 export default FormWrapper

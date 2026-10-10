@@ -1,4 +1,4 @@
-import { Box, Chip, Stack, Tab, Tabs, Typography } from '@mui/material'
+import { Box, Chip, Stack, Tab, Tabs, TextField, Typography } from '@mui/material'
 import { differenceInDays } from 'date-fns'
 import { LegacyRef, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 
@@ -7,10 +7,9 @@ import ItemList, { ItemListProps } from './ItemList'
 import Account, { AccountID } from '../../domain/model/account'
 import { formatFull } from '../../domain/model/currency'
 import MixedAugmentation from '../../service/MixedAugmentation'
-import { SearchOverlay } from '../inputs/SearchOverlay'
 import { DrawerContext } from '../Menu'
+import { CustomScrolling } from '../shared/CustomScrolling'
 import { Column, Row } from '../shared/Layout'
-import { CustomScrolling } from '../shared/ScrollingOverButton'
 
 type tabs = 'mine' | 'others'
 const groupOther = 'Other'
@@ -20,7 +19,7 @@ type GroupedAccountListProps = {
   showGroupTotals?: boolean
   groupBy?: 'institution' | 'type'
   filterable?: boolean
-  hideSearchOverlay?: boolean
+  searchQuery?: string
   focusedAccount?: AccountID | null
   onFilteredAccountsChange?: (accounts: Account[]) => void
   scrollingContainerRef?: LegacyRef<HTMLDivElement> | undefined
@@ -43,7 +42,8 @@ const GroupedAccountList = (props: Props) => {
     ItemComponent = AccountCard,
 
     scrollingContainerRef,
-    filterable = false,
+    filterable: inlineSearch = false,
+    searchQuery,
     showZeroBalances = false,
     groupBy = 'institution',
     showGroupTotals = false,
@@ -58,7 +58,9 @@ const GroupedAccountList = (props: Props) => {
   const myOwnAccounts = useMemo(() => items.filter((account) => account.isMine), [items])
   const otherAccounts = useMemo(() => items.filter((account) => !account.isMine), [items])
 
-  const [filter, setFilter] = useState('')
+  const [inlineFilter, setInlineFilter] = useState('')
+  const filterable = inlineSearch || typeof searchQuery === 'string'
+  const filter = searchQuery ?? inlineFilter
 
   const filterAccounts = useCallback(
     (account: Account) => {
@@ -226,9 +228,19 @@ const GroupedAccountList = (props: Props) => {
 
   return (
     <Column style={{ position: 'relative', height: '100%' }}>
+      {inlineSearch && (
+        <TextField
+          size="small"
+          fullWidth
+          placeholder="Search accounts..."
+          value={inlineFilter}
+          onChange={(ev) => setInlineFilter(ev.target.value)}
+          sx={{ mb: 1 }}
+        />
+      )}
       {segments}
 
-      <CustomScrolling ref={scrollingContainerRef} sx={{ pt: 2, pb: 8 }}>
+      <CustomScrolling ref={scrollingContainerRef} sx={{ pt: 2, pb: 11 }}>
         {groups.map(([type, accounts]) => (
           <Column key={`account-group-${type}`} sx={{ mb: 4, gap: 1.5 }}>
             {type !== groupOther && (
@@ -265,8 +277,6 @@ const GroupedAccountList = (props: Props) => {
           </Column>
         ))}
       </CustomScrolling>
-
-      {filterable && <SearchOverlay filter={filter} setFilter={setFilter} placeholder="Search accounts..." />}
     </Column>
   )
 }

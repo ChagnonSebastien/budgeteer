@@ -7,9 +7,7 @@ import { CurrencyServiceContext } from '../../service/ServiceContext'
 import ExchangeRateHistory from '../graphing/ExchangeRateHistory'
 import CodeEditor from '../inputs/CodeEditor'
 import DatePicker from '../inputs/DatePicker'
-import { DetailHeading } from '../shared/FancyModal'
-import FormWrapper from '../shared/FormWrapper'
-import { Section } from '../shared/Layout'
+import FormWrapper, { FormSection } from '../shared/FormWrapper'
 import { SecureButton } from '../shared/SecureButton'
 import { useToast } from '../shared/ToastProvider'
 
@@ -441,13 +439,12 @@ const CurrencyForm: FC<Props> = (props) => {
 
       {showExchangeRate && (
         <>
-          <Section title="Formatting example" compact>
+          <FormSection title="Formatting example">
             <Typography textAlign="center">
               {formatExample(123.456789)} {symbol}
             </Typography>
-          </Section>
-          <Stack spacing={1} sx={{ pt: 2 }}>
-            <Typography color="text.disabled">Exchange Rates</Typography>
+          </FormSection>
+          <FormSection title="Exchange rate">
             <Stack direction="row" alignItems="flex-end" spacing={2}>
               <Box sx={{ flexShrink: 0 }}>{`1 ${symbol === '' ? '___' : symbol}`}</Box>
               <Box sx={{ flexShrink: 0 }}>=</Box>
@@ -471,22 +468,20 @@ const CurrencyForm: FC<Props> = (props) => {
               <Box sx={{ flexShrink: 0 }}>{tentativeDefaultCurrency!.symbol} on</Box>
               <DatePicker date={initialExchangeRateDate} onChange={setInitialExchangeRateDate} label="" />
             </Stack>
-          </Stack>
+          </FormSection>
         </>
       )}
       {tentativeDefaultCurrency?.id !== initialCurrency?.id && initialCurrency && tentativeDefaultCurrency && (
-        <>
-          <DetailHeading>Exchange rate history</DetailHeading>
+        <FormSection title="Exchange rate history">
           <Box sx={{ height: 200, display: 'flex' }}>
             <ExchangeRateHistory currency={initialCurrency} against={tentativeDefaultCurrency} />
           </Box>
-        </>
+        </FormSection>
       )}
       {tentativeDefaultCurrency?.id !== initialCurrency?.id && (
         <>
-          <DetailHeading>Exchange rate fetcher</DetailHeading>
-          <CodeEditor content={getRateScript} onChange={setRateAutoupdateScript} />
-          <Section title="Test and Submit" compact>
+          <FormSection title="Exchange rate fetcher">
+            <CodeEditor content={getRateScript} onChange={setRateAutoupdateScript} />
             <Stack direction="row" justifyContent="space-between" alignItems="center" textAlign="center">
               <SecureButton variant="contained" onClick={testScript}>
                 Test Run
@@ -505,9 +500,9 @@ const CurrencyForm: FC<Props> = (props) => {
                 </Button>
               )}
             </Stack>
-          </Section>
+          </FormSection>
 
-          <Section title="Rate Auto Update" compact>
+          <FormSection title="Rate auto update">
             <Stack direction="row" justifyContent="space-between" alignItems="center" textAlign="center">
               <Box sx={{ mx: 4 }}>
                 {errors.autoupdateScriptValidated.hasVisited && !!errors.autoupdateScriptValidated.errorText ? (
@@ -529,7 +524,7 @@ const CurrencyForm: FC<Props> = (props) => {
                 label="Enabled"
               />
             </Stack>
-          </Section>
+          </FormSection>
         </>
       )}
     </FormWrapper>

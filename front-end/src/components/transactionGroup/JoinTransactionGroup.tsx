@@ -14,7 +14,7 @@ import {
 } from '../../service/ServiceContext'
 import CategoryPicker from '../categories/CategoryPicker'
 import CurrencyPicker from '../currencies/CurrencyPicker'
-import BasicModal from '../shared/BasicModal'
+import AppDialog from '../shared/AppDialog'
 import FormWrapper from '../shared/FormWrapper'
 import { useToast } from '../shared/ToastProvider'
 
@@ -147,14 +147,13 @@ const JoinTransactionGroup: FC<Props> = ({ transactionGroup }) => {
           labelText="Category"
         />
       </FormWrapper>
-      <BasicModal open={confirmingCurrency} onClose={() => setConfirmingCurrency(false)}>
-        <Stack sx={{ p: 3, gap: 2, maxWidth: (t) => t.contentWidth.dialog }}>
-          <Typography variant="h6">Add {groupCurrencyLabel} to your currencies?</Typography>
-          <Typography color="text.secondary">
-            You already have {lookAlikes.map((c) => `${c.name} (${c.symbol})`).join(', ')}. If one of them is the
-            currency this group uses, pick it instead of adding a duplicate.
-          </Typography>
-          <Stack direction="row" sx={{ gap: 2, justifyContent: 'end' }}>
+      <AppDialog
+        open={confirmingCurrency}
+        onClose={() => setConfirmingCurrency(false)}
+        title={`Add ${groupCurrencyLabel} to your currencies?`}
+        maxWidth="xs"
+        actions={
+          <>
             <Button color="inherit" onClick={() => setConfirmingCurrency(false)}>
               Cancel
             </Button>
@@ -167,9 +166,14 @@ const JoinTransactionGroup: FC<Props> = ({ transactionGroup }) => {
             >
               Add anyway
             </Button>
-          </Stack>
-        </Stack>
-      </BasicModal>
+          </>
+        }
+      >
+        <Typography color="text.secondary">
+          You already have {lookAlikes.map((c) => `${c.name} (${c.symbol})`).join(', ')}. If one of them is the currency
+          this group uses, pick it instead of adding a duplicate.
+        </Typography>
+      </AppDialog>
     </Stack>
   )
 }

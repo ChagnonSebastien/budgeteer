@@ -6,6 +6,7 @@ import Category, { CategoryUpdatableFields } from '../../domain/model/category'
 import MixedAugmentation from '../../service/MixedAugmentation'
 import { CategoryServiceContext } from '../../service/ServiceContext'
 import IconCapsule from '../icons/IconCapsule'
+import { Section } from '../shared/Layout'
 import { SecureButton } from '../shared/SecureButton'
 import { useToast } from '../shared/ToastProvider'
 
@@ -198,31 +199,24 @@ const CategoryTutorial: FC<{ onDone(): void }> = ({ onDone }) => {
         Add a ready-made set of common categories in one click. Everything stays yours to rename, move or delete later
         from the Categories page.
       </Typography>
-      <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(14rem, 1fr))',
-          gap: 2,
-          border: '1px solid rgba(128,128,128,0.3)',
-          borderRadius: 1,
-          p: 2,
-        }}
-      >
-        {commonCategories.map((group) => (
-          <Stack key={group.name} spacing={0.75}>
-            <Stack direction="row" spacing={1} alignItems="center">
-              <IconCapsule iconName={group.icon} color={iconColor} backgroundColor={group.color} size="1.75rem" />
-              <Typography fontWeight="600">{group.name}</Typography>
-            </Stack>
-            {group.children?.map((child) => (
-              <Stack key={child.name} direction="row" spacing={1} alignItems="center" sx={{ pl: 2 }}>
-                <IconCapsule iconName={child.icon} color={iconColor} backgroundColor={group.color} size="1.25rem" />
-                <Typography variant="body2">{child.name}</Typography>
+      <Section title="Common categories">
+        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(14rem, 1fr))', gap: 2 }}>
+          {commonCategories.map((group) => (
+            <Stack key={group.name} spacing={0.75}>
+              <Stack direction="row" spacing={1} alignItems="center">
+                <IconCapsule iconName={group.icon} color={iconColor} backgroundColor={group.color} size="1.75rem" />
+                <Typography fontWeight="600">{group.name}</Typography>
               </Stack>
-            ))}
-          </Stack>
-        ))}
-      </Box>
+              {group.children?.map((child) => (
+                <Stack key={child.name} direction="row" spacing={1} alignItems="center" sx={{ pl: 2 }}>
+                  <IconCapsule iconName={child.icon} color={iconColor} backgroundColor={group.color} size="1.25rem" />
+                  <Typography variant="body2">{child.name}</Typography>
+                </Stack>
+              ))}
+            </Stack>
+          ))}
+        </Box>
+      </Section>
       <SecureButton variant="contained" onClick={applyTemplate} loading={applying}>
         Add these categories
       </SecureButton>

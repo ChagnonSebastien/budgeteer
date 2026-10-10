@@ -1,5 +1,7 @@
-import { Alert, Box, Button, Divider, Paper, Stack, TextField, Typography } from '@mui/material'
+import { Alert, Box, Button, Stack, TextField, Typography } from '@mui/material'
 import { useState } from 'react'
+
+import FormWrapper from './components/shared/FormWrapper'
 
 const BACKEND_URL = (import.meta.env.VITE_BACKEND_URL || window.location.origin) + '/'
 
@@ -13,6 +15,10 @@ export function GuestLogin() {
 
   const handleSendCode = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (email.trim() === '') {
+      setError('Enter your email.')
+      return
+    }
     setLoading(true)
     setError('')
     setMessage('')
@@ -42,6 +48,10 @@ export function GuestLogin() {
 
   const handleVerifyCode = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (code.trim() === '') {
+      setError('Enter the code from the email.')
+      return
+    }
     setLoading(true)
     setError('')
 
@@ -81,87 +91,50 @@ export function GuestLogin() {
   }
 
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        minHeight: '100vh',
-        p: 2.5,
-        bgcolor: 'background.default',
-      }}
-    >
-      <Paper elevation={3} sx={{ p: 4, maxWidth: 400, width: '100%' }}>
-        <Typography variant="h4" align="center" gutterBottom>
-          Budgeteer
-        </Typography>
-        <Typography variant="h6" align="center" color="text.secondary" sx={{ fontWeight: 'normal', mb: 3 }}>
-          Guest Login
+    <Box sx={{ display: 'flex', minHeight: '100vh', p: 2, bgcolor: 'background.default' }}>
+      <Stack spacing={2} sx={{ maxWidth: (t) => t.contentWidth.compact, width: '100%', m: 'auto' }}>
+        <Typography variant="h5">Budgeteer guest login</Typography>
+        <Typography color="text.secondary">
+          We'll email you a verification code. Guest accounts can only see the groups they're invited to.
         </Typography>
 
-        {error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {error}
-          </Alert>
-        )}
-        {message && (
-          <Alert severity="success" sx={{ mb: 2 }}>
-            {message}
-          </Alert>
-        )}
+        {error && <Alert severity="error">{error}</Alert>}
+        {message && <Alert severity="success">{message}</Alert>}
 
         {step === 'email' ? (
-          <Box component="form" onSubmit={handleSendCode}>
-            <Stack spacing={2}>
-              <TextField
-                id="email"
-                type="email"
-                label="Email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="your@email.com"
-                required
-                disabled={loading}
-                fullWidth
-              />
-              <Button type="submit" variant="contained" disabled={loading} fullWidth>
-                {loading ? 'Sending...' : 'Send Login Code'}
-              </Button>
-            </Stack>
-          </Box>
+          <FormWrapper onSubmit={handleSendCode} submitText="Send login code">
+            <TextField
+              id="email"
+              type="email"
+              label="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="your@email.com"
+              disabled={loading}
+              fullWidth
+            />
+          </FormWrapper>
         ) : (
-          <Box component="form" onSubmit={handleVerifyCode}>
-            <Stack spacing={2}>
+          <>
+            <FormWrapper onSubmit={handleVerifyCode} submitText="Verify and log in">
               <TextField
                 id="code"
-                label="Verification Code"
+                label="Verification code"
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
                 placeholder="Enter 6-digit code"
-                required
                 disabled={loading}
                 slotProps={{ htmlInput: { maxLength: 8 } }}
                 autoFocus
                 fullWidth
               />
-              <Button type="submit" variant="contained" disabled={loading} fullWidth>
-                {loading ? 'Verifying...' : 'Verify & Login'}
-              </Button>
-              <Button type="button" variant="outlined" onClick={handleBackToEmail} disabled={loading} fullWidth>
-                Back
-              </Button>
-            </Stack>
-          </Box>
+            </FormWrapper>
+            <Button color="inherit" onClick={handleBackToEmail} disabled={loading}>
+              Use a different email
+            </Button>
+          </>
         )}
-
-        <Divider sx={{ mt: 2.5, mb: 2 }} />
-        <Typography variant="caption" component="p" align="center" color="text.secondary" sx={{ mb: 1 }}>
-          A verification code will be sent to your email address.
-        </Typography>
-        <Typography variant="caption" component="p" align="center" color="text.secondary">
-          Guest accounts have limited access to features.
-        </Typography>
-      </Paper>
+      </Stack>
     </Box>
   )
 }

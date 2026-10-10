@@ -1,4 +1,4 @@
-import { Button, DialogActions, DialogContent, DialogTitle, Stack, TextField } from '@mui/material'
+import { Button, Stack, TextField } from '@mui/material'
 import { FC, useContext, useMemo, useState } from 'react'
 
 import { CategoryCard } from './CategoryCard'
@@ -7,7 +7,7 @@ import Category, { CategoryID } from '../../domain/model/category'
 import { CategoryServiceContext } from '../../service/ServiceContext'
 import { MultiSelectConfiguration, SingleSelectConfiguration } from '../accounts/ItemList'
 import IconCapsule from '../icons/IconCapsule'
-import BasicModal from '../shared/BasicModal'
+import AppDialog from '../shared/AppDialog'
 
 interface Props {
   selectedConfig: MultiSelectConfiguration<CategoryID, Category> | SingleSelectConfiguration<CategoryID, Category>
@@ -68,37 +68,37 @@ const CategoryPicker: FC<Props> = (props) => {
           required={selectedConfig.mode === 'single'}
         />
       </Stack>
-      <BasicModal open={showModal} onClose={() => setShowModal(false)} disableRestoreFocus>
-        <DialogTitle>Select Category</DialogTitle>
-        <DialogContent
-          sx={{
-            height: '70vh',
-            overflowY: 'scroll',
-            px: 2.5,
-            py: 0,
-          }}
-        >
-          <CategoryList
-            items={categories}
-            selectConfiguration={
-              selectedConfig.mode === 'single'
-                ? {
-                    ...selectedConfig,
-                    onSelectItem: (item) => {
-                      setShowModal(false)
-                      selectedConfig.onSelectItem(item)
-                    },
-                  }
-                : selectedConfig
-            }
-            ItemComponent={CategoryCard}
-            additionalItemsProps={{}}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setShowModal(false)}>Close</Button>
-        </DialogActions>
-      </BasicModal>
+      <AppDialog
+        open={showModal}
+        onClose={() => setShowModal(false)}
+        disableRestoreFocus
+        title="Select Category"
+        actions={
+          <>
+            <Button color="inherit" onClick={() => setShowModal(false)}>
+              Close
+            </Button>
+          </>
+        }
+        contentSx={{ height: '70vh' }}
+      >
+        <CategoryList
+          items={categories}
+          selectConfiguration={
+            selectedConfig.mode === 'single'
+              ? {
+                  ...selectedConfig,
+                  onSelectItem: (item) => {
+                    setShowModal(false)
+                    selectedConfig.onSelectItem(item)
+                  },
+                }
+              : selectedConfig
+          }
+          ItemComponent={CategoryCard}
+          additionalItemsProps={{}}
+        />
+      </AppDialog>
     </>
   )
 }

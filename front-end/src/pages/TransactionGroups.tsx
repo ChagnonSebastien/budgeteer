@@ -1,12 +1,13 @@
-import { Checkbox, IconButton, Menu, MenuItem, Stack, useTheme } from '@mui/material'
-import React, { FC, useContext, useMemo, useRef, useState } from 'react'
+import { Checkbox, IconButton, Menu, MenuItem, Stack } from '@mui/material'
+import React, { FC, useContext, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import { UserContext } from '../App'
 import ItemList from '../components/accounts/ItemList'
 import { IconToolsContext } from '../components/icons/IconTools'
+import ActionSpeedDial from '../components/shared/ActionSpeedDial'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
-import ScrollingOverButton, { CustomScrolling } from '../components/shared/ScrollingOverButton'
+import { CustomScrolling } from '../components/shared/CustomScrolling'
 import useQueryParams from '../components/shared/useQueryParams'
 import BalanceOverview, { CurrencyTotals } from '../components/transactionGroup/BalanceOverview'
 import { GroupSummary, TransactionGroupCard } from '../components/transactionGroup/TransactionGroupCard'
@@ -26,7 +27,6 @@ interface Props {
 }
 
 const TransactionGroups: FC<Props> = ({ canCreate = true }) => {
-  const theme = useTheme()
   const navigate = useNavigate()
   const { IconLib } = useContext(IconToolsContext)
   const { email } = useContext(UserContext)
@@ -79,20 +79,11 @@ const TransactionGroups: FC<Props> = ({ canCreate = true }) => {
     return [...byCurrency.values()]
   }, [summaries])
 
-  const scrollingContainerRef = useRef<HTMLDivElement>(null)
   const [clickedGroupId, setClickedGroupId] = useState<TransactionGroupID | null>(null)
   const clickedGroup = transactionGroups.find((g) => g.id === clickedGroupId)
 
   const list = (
-    <CustomScrolling
-      ref={scrollingContainerRef}
-      style={{
-        overflowY: 'auto',
-        flexGrow: 1,
-        paddingBottom: theme.spacing(8),
-        position: 'relative',
-      }}
-    >
+    <CustomScrolling sx={{ width: '100%', height: '100%', maxWidth: (t) => t.contentWidth.medium, pb: 11 }}>
       <Stack sx={{ gap: 2 }}>
         {totals.length > 0 && <BalanceOverview totals={totals} />}
         <ItemList
@@ -133,13 +124,20 @@ const TransactionGroups: FC<Props> = ({ canCreate = true }) => {
         </>
       }
     >
-      <ScrollingOverButton
-        button={canCreate ? { text: 'New', onClick: () => navigate('/transaction-groups/new') } : undefined}
-        scrollingContainerRef={scrollingContainerRef}
-        contentWidth="medium"
-      >
-        {list}
-      </ScrollingOverButton>
+      {list}
+      {canCreate && (
+        <ActionSpeedDial
+          ariaLabel="Create transaction group"
+          actions={[
+            {
+              label: 'New group',
+              Icon: IconLib.FaPlus,
+              color: 'primary.main',
+              onClick: () => navigate('/transaction-groups/new'),
+            },
+          ]}
+        />
+      )}
       {clickedGroup && (
         <TransactionGroupModal
           group={clickedGroup}

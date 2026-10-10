@@ -1,14 +1,4 @@
-import {
-  Box,
-  Button,
-  Chip,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  Stack,
-  useMediaQuery,
-  useTheme,
-} from '@mui/material'
+import { Box, Button, Chip, Stack, useMediaQuery, useTheme } from '@mui/material'
 import { DateCalendar, DateView, PickerValidDate } from '@mui/x-date-pickers'
 import {
   addDays,
@@ -33,7 +23,7 @@ import AccountCard from '../accounts/AccountCard'
 import GroupedAccountList from '../accounts/GroupedAccountList'
 import { CategoryCard } from '../categories/CategoryCard'
 import { CategoryList } from '../categories/CategoryList'
-import BasicModal from '../shared/BasicModal'
+import AppDialog from '../shared/AppDialog'
 import useQueryParams from '../shared/useQueryParams'
 
 type DateFiltersQueryParams = {
@@ -280,27 +270,20 @@ const useTransactionFilter = ({
   const form = useMemo(
     () => (
       <>
-        <DialogTitle>Edit filters</DialogTitle>
-        <DialogContent>
-          {canFilterByAccount && (
-            <FilterRow label="Account:" onClick={() => setShowAccountModal(true)}>
-              {accountPills}
-            </FilterRow>
-          )}
-          {canFilterByCategory && (
-            <FilterRow label="Category:" onClick={() => setShowCategoryModal(true)}>
-              {categoryPills}
-            </FilterRow>
-          )}
-          <FilterRow label="Date:" onClick={() => setShowFromDateModal(true)}>
-            {fromPills}
-            {toPills}
+        {canFilterByAccount && (
+          <FilterRow label="Account:" onClick={() => setShowAccountModal(true)}>
+            {accountPills}
           </FilterRow>
-        </DialogContent>
-
-        <DialogActions>
-          <Button onClick={() => setShowFilterSelection(false)}>Close</Button>
-        </DialogActions>
+        )}
+        {canFilterByCategory && (
+          <FilterRow label="Category:" onClick={() => setShowCategoryModal(true)}>
+            {categoryPills}
+          </FilterRow>
+        )}
+        <FilterRow label="Date:" onClick={() => setShowFromDateModal(true)}>
+          {fromPills}
+          {toPills}
+        </FilterRow>
       </>
     ),
     [fromPills, categoryPills, accountPills],
@@ -342,119 +325,130 @@ const useTransactionFilter = ({
     </Stack>
   )
 
+  const dateCalendar = (value: Date, setView: (view: DateView) => void, onPick: (date: Date) => void) => (
+    <DateCalendar
+      views={['year', 'month', 'day']}
+      value={dayjs(value)}
+      onChange={(newDate: PickerValidDate | null) => {
+        if (newDate !== null) onPick(newDate.toDate())
+      }}
+      onViewChange={setView}
+    />
+  )
+
   const overview = showSlider ? (
     <>
-      <BasicModal
+      <AppDialog
         fullScreen={fullScreen}
         open={showFilterSelection && !showFromDateModal && !showToDateModal}
         onClose={() => {
           if (!showFromDateModal) setShowFilterSelection(false)
         }}
+        title="Edit filters"
+        actions={
+          <Button color="inherit" onClick={() => setShowFilterSelection(false)}>
+            Close
+          </Button>
+        }
       >
         {form}
-      </BasicModal>
+      </AppDialog>
 
-      <BasicModal fullScreen={fullScreen} open={showCategoryModal} onClose={() => setShowCategoryModal(false)}>
-        <DialogTitle>Filter by category</DialogTitle>
-        <DialogContent sx={{ height: '70vh', overflowY: 'auto', px: 2.5, py: 0 }}>
-          <CategoryList
-            ItemComponent={CategoryCard}
-            additionalItemsProps={{}}
-            items={categories}
-            selectConfiguration={{
-              mode: 'multi',
-              selectedItems: categoryFilter ?? [],
-              onSelectItems: (categoryIds) => {
-                if (categoryIds.length === 0) {
-                  updateQueryParams({ categories: null })
-                } else {
-                  updateQueryParams({ categories: JSON.stringify(categoryIds) })
-                }
-              },
-            }}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setShowCategoryModal(false)}>Close</Button>
-        </DialogActions>
-      </BasicModal>
+      <AppDialog
+        fullScreen={fullScreen}
+        open={showCategoryModal}
+        onClose={() => setShowCategoryModal(false)}
+        title="Filter by category"
+        contentSx={{ height: '70vh' }}
+        actions={
+          <Button color="inherit" onClick={() => setShowCategoryModal(false)}>
+            Close
+          </Button>
+        }
+      >
+        <CategoryList
+          ItemComponent={CategoryCard}
+          additionalItemsProps={{}}
+          items={categories}
+          selectConfiguration={{
+            mode: 'multi',
+            selectedItems: categoryFilter ?? [],
+            onSelectItems: (categoryIds) => {
+              if (categoryIds.length === 0) {
+                updateQueryParams({ categories: null })
+              } else {
+                updateQueryParams({ categories: JSON.stringify(categoryIds) })
+              }
+            },
+          }}
+        />
+      </AppDialog>
 
-      <BasicModal fullScreen={fullScreen} open={showAccountModal} onClose={() => setShowAccountModal(false)}>
-        <DialogTitle>Pick Account</DialogTitle>
-        <DialogContent sx={{ height: '70vh', overflow: 'hidden' }}>
-          <GroupedAccountList
-            items={accounts}
-            filterable
-            showZeroBalances={true}
-            selectConfiguration={{
-              mode: 'multi',
-              selectedItems: accountFilter ?? [],
-              onSelectItems: (items: AccountID[]) => {
-                if (items.length === 0) {
-                  updateQueryParams({ accounts: null })
-                } else {
-                  updateQueryParams({ accounts: JSON.stringify(items) })
-                }
-              },
-            }}
-            ItemComponent={AccountCard}
-            additionalItemsProps={{}}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setShowAccountModal(false)}>Close</Button>
-        </DialogActions>
-      </BasicModal>
+      <AppDialog
+        fullScreen={fullScreen}
+        open={showAccountModal}
+        onClose={() => setShowAccountModal(false)}
+        title="Filter by account"
+        contentSx={{ height: '70vh', overflow: 'hidden' }}
+        actions={
+          <Button color="inherit" onClick={() => setShowAccountModal(false)}>
+            Close
+          </Button>
+        }
+      >
+        <GroupedAccountList
+          items={accounts}
+          filterable
+          showZeroBalances={true}
+          selectConfiguration={{
+            mode: 'multi',
+            selectedItems: accountFilter ?? [],
+            onSelectItems: (items: AccountID[]) => {
+              if (items.length === 0) {
+                updateQueryParams({ accounts: null })
+              } else {
+                updateQueryParams({ accounts: JSON.stringify(items) })
+              }
+            },
+          }}
+          ItemComponent={AccountCard}
+          additionalItemsProps={{}}
+        />
+      </AppDialog>
 
-      <BasicModal
+      <AppDialog
         fullScreen={fullScreen}
         open={showFromDateModal}
-        onClose={() => {
-          setShowFromDateModal(false)
-        }}
+        onClose={() => setShowFromDateModal(false)}
+        title="From date"
+        actions={
+          <Button color="inherit" onClick={() => setShowFromDateModal(false)}>
+            Close
+          </Button>
+        }
       >
-        <DialogTitle>From Date</DialogTitle>
-        <DialogContent>
-          <DateCalendar
-            views={['year', 'month', 'day']}
-            value={dayjs(timeRange[0])}
-            onChange={(newDate: PickerValidDate | null) => {
-              if (newDate === null) return
-              updateQueryParams({ from: String(newDate.toDate().getTime()) })
-              if (fromView === 'day') setShowFromDateModal(false)
-            }}
-            onViewChange={(view) => setFromView(view)}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setShowFromDateModal(false)}>Close</Button>
-        </DialogActions>
-      </BasicModal>
+        {dateCalendar(timeRange[0], setFromView, (date) => {
+          updateQueryParams({ from: String(date.getTime()) })
+          if (fromView === 'day') setShowFromDateModal(false)
+        })}
+      </AppDialog>
 
-      <BasicModal
+      <AppDialog
         fullScreen={fullScreen}
         open={showToDateModal}
-        onClose={() => {
-          setShowToDateModal(false)
-        }}
+        onClose={() => setShowToDateModal(false)}
+        title="To date"
+        actions={
+          <Button color="inherit" onClick={() => setShowToDateModal(false)}>
+            Close
+          </Button>
+        }
       >
-        <DialogTitle>To Date</DialogTitle>
-        <DialogContent>
-          <DateCalendar
-            views={['year', 'month', 'day']}
-            value={dayjs(timeRange[1])}
-            onChange={(newDate: PickerValidDate | null) => {
-              if (newDate === null) return
-              updateQueryParams({ to: String(newDate.toDate().getTime()) })
-              if (toView === 'day') setShowToDateModal(false)
-            }}
-            onViewChange={(view) => setToView(view)}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setShowToDateModal(false)}>Close</Button>
-        </DialogActions>
-      </BasicModal>
+        {dateCalendar(timeRange[1], setToView, (date) => {
+          updateQueryParams({ to: String(date.getTime()) })
+          if (toView === 'day') setShowToDateModal(false)
+        })}
+      </AppDialog>
     </>
   ) : null
 

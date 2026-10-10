@@ -1,11 +1,15 @@
-import { Box, Palette, SpeedDial, SpeedDialAction, SpeedDialIcon, Tooltip } from '@mui/material'
+import { Box, Fab, Palette, SpeedDial, SpeedDialAction, SpeedDialIcon, Tooltip } from '@mui/material'
 import { FC, useContext } from 'react'
 import type { IconType } from 'react-icons'
 
 import usePinnableSpeedDial from './usePinnableSpeedDial'
 import { IconToolsContext } from '../icons/IconTools'
 
-export type ActionColor = `money.${keyof Palette['money']}` | `intent.${keyof Palette['intent']}` | 'grey.500'
+export type ActionColor =
+  | `money.${keyof Palette['money']}`
+  | `intent.${keyof Palette['intent']}`
+  | 'grey.500'
+  | 'primary.main'
 
 export interface DialAction {
   label: string
@@ -21,6 +25,28 @@ const ActionSpeedDial: FC<{ ariaLabel: string; actions: DialAction[]; hint?: str
 }) => {
   const { IconLib } = useContext(IconToolsContext)
   const dial = usePinnableSpeedDial()
+
+  if (actions.length === 1) {
+    const [{ label, Icon, color, onClick }] = actions
+    return (
+      <Tooltip open={hint ? true : undefined} title={hint ?? label} placement="left" arrow>
+        <Fab
+          aria-label={label}
+          onClick={onClick}
+          sx={{
+            position: 'absolute',
+            bottom: (t) => t.spacing(2),
+            right: (t) => t.spacing(2),
+            bgcolor: color,
+            color: 'common.white',
+            '&:hover': { bgcolor: color },
+          }}
+        >
+          <Icon />
+        </Fab>
+      </Tooltip>
+    )
+  }
 
   return (
     <>
