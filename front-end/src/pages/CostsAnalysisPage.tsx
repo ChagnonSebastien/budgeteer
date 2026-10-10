@@ -1,4 +1,4 @@
-import { Box, IconButton, Typography } from '@mui/material'
+import { Box, IconButton } from '@mui/material'
 import { decomposeColor, recomposeColor, styled, useTheme } from '@mui/material/styles'
 import { differenceInYears, startOfDay } from 'date-fns'
 import { FC, useContext, useEffect, useMemo, useState } from 'react'
@@ -298,16 +298,6 @@ const CostsAnalysisPage: FC = () => {
     }
     extraPercentages[biggestIndex] = 0
     percentages[biggestIndex] += 1
-  }
-
-  if (privacyMode) {
-    return (
-      <ContentWithHeader title="Costs Analysis" action="menu" withPadding>
-        <Typography color="text.secondary" sx={{ mt: 4, textAlign: 'center' }}>
-          Costs Analysis is hidden while privacy mode is on.
-        </Typography>
-      </ContentWithHeader>
-    )
   }
 
   return (

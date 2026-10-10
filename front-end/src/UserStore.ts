@@ -4,6 +4,7 @@ const KEY_USER = 'user'
 const KEY_GROSS_INCOME = 'gross_income'
 const KEY_INCOME_CATEGORY = 'incomeCategory'
 const KEY_PRIVACY_MODE = 'privacyMode'
+const KEY_NAV_COLLAPSED = 'navCollapsed'
 
 export default class UserStore {
   constructor(private storage: Storage) {}
@@ -50,6 +51,14 @@ export default class UserStore {
 
   public upsertPrivacyMode(privacyMode: boolean) {
     this.storage.setItem(KEY_PRIVACY_MODE, JSON.stringify(privacyMode))
+  }
+
+  public getNavCollapsed() {
+    return this.storage.getItem(KEY_NAV_COLLAPSED) === 'true'
+  }
+
+  public upsertNavCollapsed(collapsed: boolean) {
+    this.storage.setItem(KEY_NAV_COLLAPSED, JSON.stringify(collapsed))
   }
 
   public clear() {
