@@ -1,4 +1,4 @@
-import { Box, Checkbox, IconButton, Menu, MenuItem, Stack } from '@mui/material'
+import { Box, Checkbox, IconButton, ListItemText, Menu, MenuItem, Stack } from '@mui/material'
 import { FC, useContext, useRef, useState } from 'react'
 
 import AccountCard from '../components/accounts/AccountCard'
@@ -58,33 +58,40 @@ const AccountsPage: FC = () => {
       search={{ value: filter, onChange: setFilter, placeholder: 'Search accounts...' }}
       rightContent={
         <>
-          <IconButton onClick={(e) => setAnchorEl(e.currentTarget)}>
-            <IconLib.MdSettings size="1.5rem" />
-          </IconButton>
-          <Menu anchorEl={anchorEl} open={open} onClose={() => setAnchorEl(null)}>
-            {!allUnused && (
-              <MenuItem
-                onClick={() => {
-                  updateQueryParams({ showZero: (!showZeroBalances).toString() })
-                  setAnchorEl(null)
-                }}
-                sx={{ gap: 1 }}
-              >
-                <Checkbox checked={showZeroBalances} size="small" />
-                Show unused accounts
-              </MenuItem>
-            )}
-            <MenuItem
-              onClick={() => {
-                updateQueryParams({ groupBy: groupBy === 'institution' ? 'type' : 'institution' })
-                setAnchorEl(null)
-              }}
-              sx={{ gap: 1 }}
+          {groupBy === 'institution' ? (
+            <IconButton aria-label="Group by account type" onClick={() => updateQueryParams({ groupBy: 'type' })}>
+              <IconLib.TbCategory size="1.5rem" />
+            </IconButton>
+          ) : (
+            <IconButton
+              aria-label="Group by financial institution"
+              onClick={() => updateQueryParams({ groupBy: 'institution' })}
             >
-              <Checkbox checked={groupBy === 'type'} size="small" />
-              Group by type
-            </MenuItem>
-          </Menu>
+              <IconLib.TbBuildingBank size="1.5rem" />
+            </IconButton>
+          )}
+          {!allUnused && (
+            <>
+              <IconButton onClick={(e) => setAnchorEl(e.currentTarget)}>
+                <IconLib.MdSettings size="1.5rem" />
+              </IconButton>
+              <Menu anchorEl={anchorEl} open={open} onClose={() => setAnchorEl(null)}>
+                <MenuItem
+                  onClick={() => {
+                    updateQueryParams({ showZero: (!showZeroBalances).toString() })
+                    setAnchorEl(null)
+                  }}
+                  sx={{ gap: 1 }}
+                >
+                  <Checkbox checked={!showZeroBalances} size="small" />
+                  <ListItemText
+                    primary="Hide old unused accounts"
+                    secondary="No balance and created over a month ago"
+                  />
+                </MenuItem>
+              </Menu>
+            </>
+          )}
         </>
       }
     >
