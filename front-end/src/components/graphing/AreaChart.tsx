@@ -8,6 +8,7 @@ import {
   MarginConfig,
   monotoneSpline,
   TooltipDefinition,
+  tooltipAtPointer,
   useValueAxisConfiguration,
   ValueAxisConfig,
 } from './TimerangeGraphUtils'
@@ -251,19 +252,7 @@ const AreaChart: FC<Props> = ({
       }
     })
 
-  const showTooltipAt = (e: React.PointerEvent<SVGSVGElement>) => {
-    const boundingRect = e.currentTarget.getBoundingClientRect()
-    const sliceWidth = boundingRect.width / (data.length - 1)
-    const percentage = (e.clientX - boundingRect.left) / boundingRect.width
-    const index = Math.floor(percentage * data.length)
-    setTooltip({
-      index,
-      x: e.clientX,
-      y: e.clientY,
-      side: index < data.length / 2 ? 'right' : 'left',
-      slice: sliceWidth,
-    })
-  }
+  const showTooltipAt = (e: React.PointerEvent<SVGSVGElement>) => setTooltip(tooltipAtPointer(e, data.length))
 
   const graph = useMemo(
     () => (

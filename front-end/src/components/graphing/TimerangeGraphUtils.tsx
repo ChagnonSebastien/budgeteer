@@ -230,6 +230,20 @@ export type TooltipDefinition = {
   slice: number
 }
 
+// A touch keeps reporting to the plot after the finger slides past its edge: snap to the first or last point.
+export const tooltipAtPointer = (e: React.PointerEvent<Element>, datasetLength: number): TooltipDefinition => {
+  const boundingRect = e.currentTarget.getBoundingClientRect()
+  const percentage = (e.clientX - boundingRect.left) / boundingRect.width
+  const index = clamp(Math.floor(percentage * datasetLength), 0, datasetLength - 1)
+  return {
+    index,
+    x: e.clientX,
+    y: e.clientY,
+    side: index < datasetLength / 2 ? 'right' : 'left',
+    slice: boundingRect.width / (datasetLength - 1),
+  }
+}
+
 export const DateBasedGraph = (props: {
   margin: MarginConfig
   yAxisValues: {
