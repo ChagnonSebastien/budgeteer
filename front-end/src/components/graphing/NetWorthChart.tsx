@@ -23,12 +23,6 @@ import { TimeseriesIterator } from '../shared/useTimerangeSegmentation'
 export type BaseLineConfig = 'none' | 'showIndividualBaselines' | 'showGlobalBaseline'
 export type ScaleConfig = 'absolute' | 'cropped-absolute' | 'relative'
 
-const shortenLabel = (label: string, maxLength: number = 25): string => {
-  if (label.length <= maxLength) return label
-  const charsToKeep = Math.floor((maxLength - 3) / 2) // Reserve 3 chars for "..."
-  return `${label.slice(0, charsToKeep)}...${label.slice(-charsToKeep)}`
-}
-
 export const useNetWorthChartData = <Item extends object>(
   timeseriesIterator: TimeseriesIterator<AugmentedTransaction>,
   getInitialAmountIdentifier: (account: Account, currencyId: CurrencyID) => Item | undefined,
@@ -254,7 +248,7 @@ export const NetWorthTooltip: FC<NetWorthTooltipProps> = ({ tooltipProps, labels
                       <GraphTooltipColor style={{ backgroundColor: s.color }} />
                     </td>
                     <td>
-                      <GraphTooltipLabel>{shortenLabel(s.layerLabel)}</GraphTooltipLabel>
+                      <GraphTooltipLabel>{s.layerLabel}</GraphTooltipLabel>
                     </td>
 
                     {!privacyMode && (

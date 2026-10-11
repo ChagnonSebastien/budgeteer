@@ -1,4 +1,5 @@
 import { styled } from '@mui/material/styles'
+import React, { FC, useLayoutEffect, useRef } from 'react'
 
 import { Column, withoutTransientProps } from '../shared/Layout'
 
@@ -69,17 +70,47 @@ export const GraphTooltipColor = styled('div')(({ theme }) => ({
   marginRight: theme.spacing(1),
 }))
 
-export const GraphTooltipLabel = styled('div')(({ theme }) => ({
+const GraphTooltipLabelBox = styled('div')(({ theme }) => ({
   color: theme.palette.text.primary,
   fontSize: theme.typography.body2.fontSize,
   maxWidth: '20rem',
   overflow: 'hidden',
-  textOverflow: 'ellipsis',
   whiteSpace: 'nowrap',
   [theme.breakpoints.down('sm')]: {
     maxWidth: '40vw',
   },
 }))
+
+const middleEllipsis = (text: string, kept: number) =>
+  `${text.slice(0, Math.ceil(kept / 2)).trimEnd()}…${text.slice(text.length - Math.floor(kept / 2)).trimStart()}`
+
+export const GraphTooltipLabel: FC<{ children: string }> = ({ children }) => {
+  const ref = useRef<HTMLDivElement>(null)
+
+  // Writes the DOM directly: the fitting length is only known by measuring the rendered text.
+  useLayoutEffect(() => {
+    const el = ref.current
+    if (!el) return
+    // scrollWidth rounds to whole pixels, hiding a sub-pixel overflow.
+    const range = document.createRange()
+    const fits = (text: string) => {
+      el.textContent = text
+      range.selectNodeContents(el)
+      return range.getBoundingClientRect().width <= el.getBoundingClientRect().width
+    }
+    if (fits(children)) return
+    let low = 0
+    let high = children.length - 1
+    while (low < high) {
+      const kept = (low + high + 1) >> 1
+      if (fits(middleEllipsis(children, kept))) low = kept
+      else high = kept - 1
+    }
+    el.textContent = middleEllipsis(children, low)
+  }, [children])
+
+  return <GraphTooltipLabelBox ref={ref}>{children}</GraphTooltipLabelBox>
+}
 
 export const GraphTooltipValue = styled('div')(({ theme }) => ({
   marginLeft: 'auto',
