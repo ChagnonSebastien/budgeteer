@@ -54,12 +54,26 @@ const TECH = 5
 const BOND = 6
 
 const currencies: Currency[] = [
-  { id: CAD, name: 'Canadian dollar', symbol: 'CAD', type: 'Cash', risk: 'Low', decimalPoints: 2 },
-  { id: USD, name: 'US dollar', symbol: 'USD', type: 'Cash', risk: 'Low', decimalPoints: 2 },
-  { id: EUR, name: 'Euro', symbol: 'EUR', type: 'Cash', risk: 'Low', decimalPoints: 2 },
-  { id: GEQ, name: 'Global Equity Index ETF', symbol: 'GEQ', type: 'ETF', risk: 'High', decimalPoints: 4 },
-  { id: TECH, name: 'Technology Growth ETF', symbol: 'TECH', type: 'ETF', risk: 'Very high', decimalPoints: 4 },
-  { id: BOND, name: 'Canadian Bond Index ETF', symbol: 'BOND', type: 'ETF', risk: 'Low', decimalPoints: 4 },
+  { id: CAD, name: 'Canadian dollar', symbol: 'CAD', type: 'Cash', risk: '0. None', decimalPoints: 2 },
+  { id: USD, name: 'US dollar', symbol: 'USD', type: 'Cash', risk: '0. None', decimalPoints: 2 },
+  { id: EUR, name: 'Euro', symbol: 'EUR', type: 'Cash', risk: '0. None', decimalPoints: 2 },
+  { id: GEQ, name: 'Global Equity Index ETF', symbol: 'GEQ', type: 'Equity ETF', risk: '3. Medium', decimalPoints: 4 },
+  {
+    id: TECH,
+    name: 'Technology Growth ETF',
+    symbol: 'TECH',
+    type: 'Sector ETF',
+    risk: '4. Medium-High',
+    decimalPoints: 4,
+  },
+  {
+    id: BOND,
+    name: 'Canadian Bond Index ETF',
+    symbol: 'BOND',
+    type: 'Bond ETF',
+    risk: '2. Low-Medium',
+    decimalPoints: 4,
+  },
 ].map((c) => ({ ...c, rateFetchScript: '', autoUpdate: false }))
 
 const funds = [GEQ, TECH, BOND]

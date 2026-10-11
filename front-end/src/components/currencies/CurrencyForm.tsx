@@ -1,9 +1,16 @@
-import { Box, Stack, TextField, Typography } from '@mui/material'
+import { Autocomplete, Box, createFilterOptions, MenuItem, Stack, TextField, Typography } from '@mui/material'
 import { startOfDay } from 'date-fns'
 import { FC, FormEvent, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 
 import { validRate } from './exchangeRateUnits'
 import Currency, { CurrencyUpdatableFields, RateAutoupdateSettings } from '../../domain/model/currency'
+import {
+  currencyRisks,
+  CurrencyTypeOption,
+  currencyTypeOptions,
+  isCurrencyRisk,
+  suggestedRiskForType,
+} from '../../domain/model/currencyClassification'
 import { CurrencyServiceContext } from '../../service/ServiceContext'
 import DatePicker from '../inputs/DatePicker'
 import FormWrapper, { FormSection } from '../shared/FormWrapper'
@@ -35,6 +42,8 @@ interface FieldStatus {
 
 const NoError = ''
 
+const filterTypeOptions = createFilterOptions<CurrencyTypeOption>({ stringify: (o) => `${o.name} ${o.group}` })
+
 const CurrencyForm: FC<Props> = (props) => {
   const { initialCurrency, initialName, onSubmit, submitText } = props
 
@@ -42,13 +51,22 @@ const CurrencyForm: FC<Props> = (props) => {
 
   const [name, setName] = useState(initialCurrency?.name ?? initialName ?? '')
   const [symbol, setSymbol] = useState(initialCurrency?.symbol ?? '')
-  const [risk, setRisk] = useState(initialCurrency?.risk ?? '')
+  const initialRisk = initialCurrency?.risk ?? ''
+  const [risk, setRisk] = useState(isCurrencyRisk(initialRisk) ? initialRisk : '')
+  const [autofilledRisk, setAutofilledRisk] = useState<string | null>(null)
   const [type, setType] = useState(initialCurrency?.type ?? '')
   const [decimalPoints, setDecimalPoints] = useState(
     `${typeof initialCurrency === 'undefined' ? '2' : initialCurrency.decimalPoints}`,
   )
   const [initialExchangeRate, setInitialExchangeRate] = useState('1')
   const [initialExchangeRateDate, setInitialExchangeRateDate] = useState(startOfDay(new Date()))
+
+  const otherCurrencies = useMemo(
+    () => currencies.filter((c) => c.id !== initialCurrency?.id),
+    [currencies, initialCurrency],
+  )
+
+  const typeOptions = useMemo(() => currencyTypeOptions(otherCurrencies), [otherCurrencies])
 
   const showExchangeRate = useMemo(() => {
     return typeof initialCurrency === 'undefined' && tentativeDefaultCurrency !== null
@@ -58,6 +76,7 @@ const CurrencyForm: FC<Props> = (props) => {
   const [errors, setErrors] = useState<{
     accountName: FieldStatus
     symbol: FieldStatus
+    risk: FieldStatus
     decimalPoints: FieldStatus
     exchangeRate: FieldStatus
   }>({
@@ -67,6 +86,11 @@ const CurrencyForm: FC<Props> = (props) => {
       errorText: NoError,
     },
     symbol: {
+      hasVisited: false,
+      isValid: false,
+      errorText: NoError,
+    },
+    risk: {
       hasVisited: false,
       isValid: false,
       errorText: NoError,
@@ -180,6 +204,31 @@ const CurrencyForm: FC<Props> = (props) => {
   }, [validateSymbol, symbol])
 
   useEffect(() => {
+    const riskError = isCurrencyRisk(risk) ? NoError : 'Required'
+    setErrors((prevState) => ({
+      ...prevState,
+      risk: {
+        ...prevState.risk,
+        errorText: riskError,
+        isValid: riskError == NoError,
+      },
+    }))
+  }, [risk])
+
+  const changeType = (newType: string) => {
+    if (newType === type) return
+    setType(newType)
+
+    if (risk !== '' && risk !== autofilledRisk) return
+    const suggestion = suggestedRiskForType(newType, otherCurrencies)
+    if (suggestion === null || suggestion === risk) return
+
+    setRisk(suggestion)
+    setAutofilledRisk(suggestion)
+    showToast('Risk autofilled from type', 'info')
+  }
+
+  useEffect(() => {
     const decimalPointsError = validateDecimalPoints(decimalPoints)
     setErrors((prevState) => ({
       ...prevState,
@@ -218,6 +267,10 @@ const CurrencyForm: FC<Props> = (props) => {
           ...prevState.symbol,
           hasVisited: true,
         },
+        risk: {
+          ...prevState.risk,
+          hasVisited: true,
+        },
         decimalPoints: {
           ...prevState.decimalPoints,
           hasVisited: true,
@@ -234,7 +287,7 @@ const CurrencyForm: FC<Props> = (props) => {
       {
         name,
         type: type.trim(),
-        risk: risk.trim(),
+        risk,
         symbol: symbol,
         ...(typeof initialCurrency === 'undefined' && {
           decimalPoints: parseInt(decimalPoints),
@@ -281,25 +334,67 @@ const CurrencyForm: FC<Props> = (props) => {
         }
       />
 
-      <TextField
-        type="text"
-        label="Type"
-        variant="standard"
-        placeholder="e.g., Mutual Fund"
-        value={type}
-        helperText={NoError}
-        onChange={(ev) => setType(ev.target.value as string)}
+      <Autocomplete
+        freeSolo
+        options={typeOptions}
+        groupBy={(o) => o.group}
+        getOptionLabel={(o) => (typeof o === 'string' ? o : o.name)}
+        filterOptions={filterTypeOptions}
+        inputValue={type}
+        onInputChange={(_, value) => changeType(value)}
+        renderOption={({ key, ...optionProps }, option) => {
+          const suggestion = suggestedRiskForType(option.name, otherCurrencies)
+          return (
+            <Box component="li" key={key} {...optionProps}>
+              <Stack direction="row" justifyContent="space-between" spacing={2} sx={{ width: '100%' }}>
+                <span>{option.name}</span>
+                {suggestion !== null && (
+                  <Typography variant="caption" color="text.secondary">
+                    {suggestion}
+                  </Typography>
+                )}
+              </Stack>
+            </Box>
+          )
+        }}
+        renderInput={(params) => (
+          <TextField {...params} label="Type" variant="standard" placeholder="e.g., Equity ETF" />
+        )}
       />
 
       <TextField
-        type="text"
+        select
         label="Risk"
         variant="standard"
-        placeholder="e.g., High"
         value={risk}
-        helperText={NoError}
-        onChange={(ev) => setRisk(ev.target.value as string)}
-      />
+        onChange={(ev) => {
+          setRisk(ev.target.value)
+          setAutofilledRisk(null)
+        }}
+        helperText={
+          errors.risk.hasVisited && errors.risk.errorText
+            ? errors.risk.errorText
+            : initialRisk !== '' && !isCurrencyRisk(initialRisk) && risk === ''
+              ? `"${initialRisk}" is not on the risk scale, pick one`
+              : NoError
+        }
+        error={errors.risk.hasVisited && !!errors.risk.errorText}
+        onBlur={() =>
+          setErrors((prevState) => ({
+            ...prevState,
+            risk: {
+              ...prevState.risk,
+              hasVisited: true,
+            },
+          }))
+        }
+      >
+        {currencyRisks.map((r) => (
+          <MenuItem key={r} value={r}>
+            {r}
+          </MenuItem>
+        ))}
+      </TextField>
 
       <TextField
         type="text"
