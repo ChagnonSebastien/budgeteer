@@ -3,6 +3,7 @@ const similarityRange = 24
 const normalVisionShare = 0.8
 const maxPasses = 20
 const identicalPenalty = 2
+const reusePenalty = 0.5
 
 type Rgb = [number, number, number]
 
@@ -47,9 +48,10 @@ const perceivedDistance = (a: Rgb, b: Rgb) =>
   normalVisionShare * distance(a, b) +
   (1 - normalVisionShare) * Math.min(...deficiencies.map((m) => distance(simulate(a, m), simulate(b, m))))
 
-const adjacencyWeights = (layers: [number, number][][]): number[][] => {
+const adjacencyWeights = (layers: [number, number][][]) => {
   const n = layers.length
   const weights = Array.from({ length: n }, () => Array(n).fill(0))
+  const stacking = Array.from({ length: n }, () => Array(n).fill(0))
   const points = layers[0]?.length ?? 0
 
   for (let i = 0; i < points; i++) {
@@ -59,6 +61,11 @@ const adjacencyWeights = (layers: [number, number][][]): number[][] => {
     const visible = thickness.flatMap((t, index) => (t > 0 ? [index] : []))
 
     for (let a = 0; a < visible.length; a++) {
+      for (let b = a + 1; b < visible.length; b++) {
+        stacking[visible[a]][visible[b]] += 1 / (b - a)
+        stacking[visible[b]][visible[a]] += 1 / (b - a)
+      }
+
       let gap = 0
       for (let b = a + 1; b < visible.length; b++) {
         const closeness = 1 - gap / (total * closeGapRatio)
@@ -70,7 +77,8 @@ const adjacencyWeights = (layers: [number, number][][]): number[][] => {
     }
   }
 
-  return weights.map((row) => row.map((w) => w / Math.max(points, 1)))
+  const normalize = (matrix: number[][]) => matrix.map((row) => row.map((w) => w / Math.max(points, 1)))
+  return { weights: normalize(weights), stacking: normalize(stacking) }
 }
 
 const assignAreaColors = (layers: [number, number][][], palette: string[]): string[] => {
@@ -104,7 +112,7 @@ const assignAreaColors = (layers: [number, number][][], palette: string[]): stri
   const similarity = rgb.map((a, i) =>
     rgb.map((b, j) => (i === j ? identicalPenalty : Math.max(0, 1 - perceivedDistance(a, b) / similarityRange))),
   )
-  const weights = adjacencyWeights(layers)
+  const { weights, stacking } = adjacencyWeights(layers)
 
   const assignment: number[] = Array(n).fill(-1)
   const usage: number[] = Array(colors.length).fill(0)
@@ -114,6 +122,7 @@ const assignAreaColors = (layers: [number, number][][], palette: string[]): stri
     for (let other = 0; other < n; other++) {
       if (other === node || assignment[other] === -1) continue
       total += weights[node][other] * similarity[color][assignment[other]]
+      if (color === assignment[other]) total += reusePenalty * stacking[node][other]
     }
     return total
   }
