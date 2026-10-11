@@ -71,7 +71,7 @@ const currencies: Currency[] = [
     name: 'Canadian Bond Index ETF',
     symbol: 'BOND',
     type: 'Bond ETF',
-    risk: '2. Low-Medium',
+    risk: '1. Low',
     decimalPoints: 4,
   },
 ].map((c) => ({ ...c, rateFetchScript: '', autoUpdate: false }))
