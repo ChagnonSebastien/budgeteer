@@ -1,6 +1,6 @@
 import { Box, IconButton } from '@mui/material'
 import { decomposeColor, recomposeColor, styled, useTheme } from '@mui/material/styles'
-import { differenceInYears, startOfDay } from 'date-fns'
+import { differenceInDays, differenceInYears, startOfDay } from 'date-fns'
 import { FC, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 
@@ -230,6 +230,19 @@ const CostsAnalysisPage: FC = () => {
     return category
   }
 
+  const topLevelName = (category: AugmentedCategory) => {
+    const top = topLevelCategory(category)
+    return top.id === rootCategory.id ? 'Uncategorized' : top.name
+  }
+
+  const monthsCovered = useMemo(() => {
+    const today = startOfDay(new Date())
+    const earliest = transactions
+      .filter(isThisYear)
+      .reduce((min, transaction) => (transaction.date < min ? transaction.date : min), today)
+    return Math.min(12, Math.max(1, differenceInDays(today, earliest) / (365 / 12)))
+  }, [transactions])
+
   const fixedCosts = useMemo(() => {
     const fixedTransactions = transactions
       .filter(isThisYear)
@@ -245,9 +258,9 @@ const CostsAnalysisPage: FC = () => {
           value *= exchangeRateOnDay(currentValue.currencyId, defaultCurrency.id, startOfDay(new Date()))
         }
 
-        const category = topLevelCategory(currentValue.category!)
+        const name = topLevelName(currentValue.category!)
 
-        previousValue.set(category.name, (previousValue.get(category.name) ?? 0) + value)
+        previousValue.set(name, (previousValue.get(name) ?? 0) + value)
         return previousValue
       }, new Map<string, number>())
 
@@ -259,10 +272,10 @@ const CostsAnalysisPage: FC = () => {
           value *= exchangeRateOnDay(currentValue.receiverCurrencyId, defaultCurrency.id, startOfDay(new Date()))
         }
 
-        const category = topLevelCategory(currentValue.category!)
+        const name = topLevelName(currentValue.category!)
 
-        if (data.has(category.name)) {
-          data.set(category.name, data.get(category.name)! - value)
+        if (data.has(name)) {
+          data.set(name, data.get(name)! - value)
         }
       })
 
@@ -289,9 +302,9 @@ const CostsAnalysisPage: FC = () => {
           value *= exchangeRateOnDay(currentValue.currencyId, defaultCurrency.id, new Date())
         }
 
-        const category = topLevelCategory(currentValue.category!)
+        const name = topLevelName(currentValue.category!)
 
-        previousValue.set(category.name, (previousValue.get(category.name) ?? 0) + value)
+        previousValue.set(name, (previousValue.get(name) ?? 0) + value)
         return previousValue
       }, new Map<string, number>())
 
@@ -303,10 +316,10 @@ const CostsAnalysisPage: FC = () => {
           value *= exchangeRateOnDay(currentValue.receiverCurrencyId, defaultCurrency.id, startOfDay(new Date()))
         }
 
-        const category = topLevelCategory(currentValue.category!)
+        const name = topLevelName(currentValue.category!)
 
-        if (data.has(category.name) && data.get(category.name)! >= value) {
-          data.set(category.name, data.get(category.name)! - value)
+        if (data.has(name) && data.get(name)! >= value) {
+          data.set(name, data.get(name)! - value)
         }
       })
 
@@ -370,20 +383,9 @@ const CostsAnalysisPage: FC = () => {
     { id: leftover + netBorrowed < 0 ? 'From Savings' : 'Investments and Savings', amount: leftover + netBorrowed },
   ]
 
-  const percentages =
-    netIncome > 0
-      ? [
-          Math.floor((100 * fixedAmount) / netIncome),
-          Math.floor((100 * variableAmount) / netIncome),
-          Math.floor((100 * leftover) / netIncome),
-        ]
-      : [0, 0, 0]
-
-  const extraPercentages = [
-    ((100 * fixedAmount) / netIncome) % 1,
-    ((100 * variableAmount) / netIncome) % 1,
-    ((100 * leftover) / netIncome) % 1,
-  ]
+  const exactPercentages = [fixedAmount, variableAmount, leftover].map((amount) => (100 * amount) / netIncome)
+  const percentages = netIncome > 0 ? exactPercentages.map(Math.floor) : [0, 0, 0]
+  const extraPercentages = exactPercentages.map((percentage) => percentage - Math.floor(percentage))
 
   while (netIncome > 0 && percentages.reduce((a, b) => a + b) < 100) {
     let biggestIndex = 0
@@ -400,7 +402,7 @@ const CostsAnalysisPage: FC = () => {
   const amountCells = (value: number) => (
     <>
       <AmountCell>{formatSignedAmount(defaultCurrency, value, privacyMode)}</AmountCell>
-      <AmountCell>{formatSignedAmount(defaultCurrency, value / 12, privacyMode)}</AmountCell>
+      <AmountCell>{formatSignedAmount(defaultCurrency, value / monthsCovered, privacyMode)}</AmountCell>
     </>
   )
 
