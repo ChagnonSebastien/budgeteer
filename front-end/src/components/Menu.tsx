@@ -18,8 +18,7 @@ import { styled } from '@mui/material/styles'
 import { createContext, FC, ReactElement, useContext, useEffect, useMemo, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 
-import { UserContext } from '../App'
-import MixedAugmentation from '../service/MixedAugmentation'
+import { UpdatePreferencesContext, UserContext } from '../App'
 import { OnlineContext } from '../service/OnlineContext'
 import UserStore from '../UserStore'
 import { useRateFetchFailures } from './currencies/useRateFetchFailures'
@@ -36,6 +35,7 @@ const EXPANDED_WIDTH = 240
 const RAIL_WIDTH = 72
 
 const NavCollapsedContext = createContext(false)
+const UnvisitedPagesContext = createContext<string[]>([])
 
 const NavTooltip: FC<{ title: string; children: ReactElement }> = ({ title, children }) => {
   const collapsed = useContext(NavCollapsedContext)
@@ -51,7 +51,7 @@ const railItemSx = { justifyContent: 'center', px: 0 }
 class AppPage implements MenuElement {
   constructor(
     private title: string,
-    private url: string,
+    readonly url: string,
     private iconName: string,
     private keepQuery: string[],
     private useNeedsAttention: () => boolean = () => false,
@@ -64,6 +64,7 @@ class AppPage implements MenuElement {
       const { iconTypeFromName } = useContext(IconToolsContext)
       const needsAttention = this.useNeedsAttention()
       const collapsed = useContext(NavCollapsedContext)
+      const unvisited = useContext(UnvisitedPagesContext).includes(this.url)
 
       const Icon = iconTypeFromName(this.iconName)
       const selected = location.pathname === this.url
@@ -85,7 +86,12 @@ class AppPage implements MenuElement {
             sx={collapsed ? railItemSx : undefined}
           >
             <ListItemIcon sx={{ minWidth: collapsed ? 0 : 42, '& > .MuiBadge-root': { m: 1 } }}>
-              <Badge color="error" variant="dot" invisible={!needsAttention} overlap="circular">
+              <Badge
+                color={needsAttention ? 'error' : 'primary'}
+                variant="dot"
+                invisible={!needsAttention && !unvisited}
+                overlap="circular"
+              >
                 <Icon size={menuIconSize} />
               </Badge>
             </ListItemIcon>
@@ -127,7 +133,6 @@ const ContentContainer = styled(
 
 interface MenuEntry {
   guestView: boolean
-  requires?: 'transactions' | 'financialIncome'
   element: AppPage | Subsection
 }
 
@@ -146,25 +151,21 @@ const appPages: MenuEntry[] = [
     guestView: true,
     element: new AppPage('Shared expenses', '/transaction-groups', PreparedIcon.TbUsersGroup, []),
   },
-  { guestView: false, requires: 'transactions', element: new Subsection('Analysis') },
+  { guestView: false, element: new Subsection('Analysis') },
   {
     guestView: false,
-    requires: 'transactions',
     element: new AppPage('Net Worth', '/net-worth', PreparedIcon.TbPigMoney, ['from', 'to', 'accounts']),
   },
   {
     guestView: false,
-    requires: 'transactions',
     element: new AppPage('Trends', '/trends', PreparedIcon.TbChartBar, ['categories']),
   },
   {
     guestView: false,
-    requires: 'transactions',
     element: new AppPage('Costs Analysis', '/costs', PreparedIcon.TbReportMoney, []),
   },
   {
     guestView: false,
-    requires: 'financialIncome',
     element: new AppPage('Investments', '/investments', PreparedIcon.TbTrendingUp, []),
   },
   { guestView: false, element: new Subsection('Setup') },
@@ -190,25 +191,38 @@ type DrawerActions = {
   open?(): void
   privacyMode: boolean
   drawerWidth: number
+  hasUnvisitedPages: boolean
 }
 export const DrawerContext = createContext<DrawerActions>({
   privacyMode: false,
   drawerWidth: 0,
+  hasUnvisitedPages: false,
 })
 
 const DrawerWrapper: FC<Props> = ({ logout, children, userIsGuest = false }) => {
-  const { augmentedTransactions } = useContext(MixedAugmentation)
-  const hasFinancialIncome = useMemo(
-    () => augmentedTransactions.some((t) => t.financialIncomeData !== null),
-    [augmentedTransactions],
-  )
-  const { email, is_admin: isAdmin } = useContext(UserContext)
+  const { email, is_admin: isAdmin, preferences } = useContext(UserContext)
+  const updatePreferences = useContext(UpdatePreferencesContext)
   const online = useContext(OnlineContext)
   const { IconLib } = useContext(IconToolsContext)
 
   const [open, setOpen] = useState(false)
-  const { key: locationKey } = useLocation()
+  const { key: locationKey, pathname } = useLocation()
   useEffect(() => setOpen(false), [locationKey])
+
+  const visitedPages = preferences?.visitedPages
+  const unvisitedPages = useMemo(
+    () =>
+      userIsGuest
+        ? []
+        : appPages.flatMap(({ element }) =>
+            element instanceof AppPage && !visitedPages?.includes(element.url) ? [element.url] : [],
+          ),
+    [userIsGuest, visitedPages],
+  )
+  useEffect(() => {
+    if (!unvisitedPages.includes(pathname)) return
+    updatePreferences({ visitedPages: [...(visitedPages ?? []), pathname] }).catch(console.error)
+  }, [pathname, unvisitedPages, visitedPages, updatePreferences])
 
   const iOS = typeof navigator !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent)
 
@@ -228,119 +242,116 @@ const DrawerWrapper: FC<Props> = ({ logout, children, userIsGuest = false }) => 
 
   const drawer = (
     <NavCollapsedContext.Provider value={collapsed}>
-      <Box
-        ref={setDrawerRef}
-        sx={{
-          width: collapsed ? RAIL_WIDTH : EXPANDED_WIDTH,
-          minHeight: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-        }}
-      >
-        <Stack
-          direction="row"
-          alignItems="center"
-          spacing={1.5}
-          sx={{ px: collapsed ? 0 : 2.5, pt: 3, pb: 2.5, justifyContent: collapsed ? 'center' : 'flex-start' }}
+      <UnvisitedPagesContext.Provider value={unvisitedPages}>
+        <Box
+          ref={setDrawerRef}
+          sx={{
+            width: collapsed ? RAIL_WIDTH : EXPANDED_WIDTH,
+            minHeight: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+          }}
         >
-          <Box component="img" src="/icon.svg" alt="" sx={{ width: 36, height: 36, flexShrink: 0 }} />
-          {!collapsed && (
-            <Box sx={{ minWidth: 0 }}>
-              <Typography variant="subtitle1" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
-                {userIsGuest ? 'Shared expenses' : 'Fintrospect'}
-              </Typography>
-              <Typography variant="caption" color="text.disabled" noWrap title={email} sx={{ display: 'block' }}>
-                {email}
-              </Typography>
-            </Box>
-          )}
-        </Stack>
-
-        <Box sx={{ flexGrow: 1 }}>
-          {appPages
-            .filter((appPage) => !userIsGuest || appPage.guestView)
-            .filter(
-              (appPage) =>
-                !appPage.requires ||
-                (appPage.requires === 'transactions' ? augmentedTransactions.length > 0 : hasFinancialIncome),
-            )
-            .map((appPage) => (
-              <appPage.element.Element key={appPages.indexOf(appPage)} />
-            ))}
-        </Box>
-
-        {/* A block wrapper: ListItemButton grows along a flex column. */}
-        <Box sx={{ borderTop: 1, borderColor: 'border.subtle', pt: 1 }}>
-          {!userIsGuest && isAdmin && online && <usersPage.Element />}
-          {!userIsGuest && (
-            <NavTooltip title={privacyMode ? 'Privacy mode on' : 'Privacy mode off'}>
-              <ListItemButton
-                aria-label={collapsed ? 'Privacy mode' : undefined}
-                onClick={() => {
-                  const newValue = !privacyMode
-                  setPrivacyMode(newValue)
-                  userStore.upsertPrivacyMode(newValue)
-                }}
-                disableRipple
-                sx={{
-                  py: 1,
-                  ...(collapsed ? railItemSx : { px: 2 }),
-                  '&:hover': {
-                    backgroundColor: 'transparent',
-                  },
-                }}
-              >
-                <ListItemIcon sx={{ minWidth: collapsed ? 0 : 42, '& svg': { m: 1 } }}>
-                  {privacyMode ? (
-                    <IconLib.MdVisibilityOff size={menuIconSize} />
-                  ) : (
-                    <IconLib.MdVisibility size={menuIconSize} />
-                  )}
-                </ListItemIcon>
-                {!collapsed && (
-                  <>
-                    <ListItemText primary="Privacy mode" primaryTypographyProps={{ noWrap: true }} />
-                    <Switch edge="end" size="small" checked={privacyMode} />
-                  </>
-                )}
-              </ListItemButton>
-            </NavTooltip>
-          )}
-
-          {persistentDrawer && (
-            <NavTooltip title="Expand menu">
-              <ListItemButton
-                aria-label={collapsed ? 'Expand menu' : 'Collapse menu'}
-                onClick={toggleCollapsed}
-                sx={collapsed ? railItemSx : undefined}
-              >
-                <ListItemIcon sx={{ minWidth: collapsed ? 0 : 42, '& svg': { m: 1 } }}>
-                  {collapsed ? (
-                    <IconLib.TbLayoutSidebarLeftExpand size={menuIconSize} />
-                  ) : (
-                    <IconLib.TbLayoutSidebarLeftCollapse size={menuIconSize} />
-                  )}
-                </ListItemIcon>
-                {!collapsed && <ListItemText primary="Collapse" />}
-              </ListItemButton>
-            </NavTooltip>
-          )}
-
-          <Box sx={{ p: collapsed ? 1.5 : 2, display: 'flex', justifyContent: 'center' }}>
-            {collapsed ? (
-              <NavTooltip title="Logout">
-                <IconButton aria-label="Logout" onClick={logout}>
-                  <IconLib.MdLogout size={menuIconSize} />
-                </IconButton>
-              </NavTooltip>
-            ) : (
-              <Button fullWidth onClick={logout} variant="contained" disableElevation>
-                Logout
-              </Button>
+          <Stack
+            direction="row"
+            alignItems="center"
+            spacing={1.5}
+            sx={{ px: collapsed ? 0 : 2.5, pt: 3, pb: 2.5, justifyContent: collapsed ? 'center' : 'flex-start' }}
+          >
+            <Box component="img" src="/icon.svg" alt="" sx={{ width: 36, height: 36, flexShrink: 0 }} />
+            {!collapsed && (
+              <Box sx={{ minWidth: 0 }}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
+                  {userIsGuest ? 'Shared expenses' : 'Fintrospect'}
+                </Typography>
+                <Typography variant="caption" color="text.disabled" noWrap title={email} sx={{ display: 'block' }}>
+                  {email}
+                </Typography>
+              </Box>
             )}
+          </Stack>
+
+          <Box sx={{ flexGrow: 1 }}>
+            {appPages
+              .filter((appPage) => !userIsGuest || appPage.guestView)
+              .map((appPage) => (
+                <appPage.element.Element key={appPages.indexOf(appPage)} />
+              ))}
+          </Box>
+
+          {/* A block wrapper: ListItemButton grows along a flex column. */}
+          <Box sx={{ borderTop: 1, borderColor: 'border.subtle', pt: 1 }}>
+            {!userIsGuest && isAdmin && online && <usersPage.Element />}
+            {!userIsGuest && (
+              <NavTooltip title={privacyMode ? 'Privacy mode on' : 'Privacy mode off'}>
+                <ListItemButton
+                  aria-label={collapsed ? 'Privacy mode' : undefined}
+                  onClick={() => {
+                    const newValue = !privacyMode
+                    setPrivacyMode(newValue)
+                    userStore.upsertPrivacyMode(newValue)
+                  }}
+                  disableRipple
+                  sx={{
+                    py: 1,
+                    ...(collapsed ? railItemSx : { px: 2 }),
+                    '&:hover': {
+                      backgroundColor: 'transparent',
+                    },
+                  }}
+                >
+                  <ListItemIcon sx={{ minWidth: collapsed ? 0 : 42, '& svg': { m: 1 } }}>
+                    {privacyMode ? (
+                      <IconLib.MdVisibilityOff size={menuIconSize} />
+                    ) : (
+                      <IconLib.MdVisibility size={menuIconSize} />
+                    )}
+                  </ListItemIcon>
+                  {!collapsed && (
+                    <>
+                      <ListItemText primary="Privacy mode" primaryTypographyProps={{ noWrap: true }} />
+                      <Switch edge="end" size="small" checked={privacyMode} />
+                    </>
+                  )}
+                </ListItemButton>
+              </NavTooltip>
+            )}
+
+            {persistentDrawer && (
+              <NavTooltip title="Expand menu">
+                <ListItemButton
+                  aria-label={collapsed ? 'Expand menu' : 'Collapse menu'}
+                  onClick={toggleCollapsed}
+                  sx={collapsed ? railItemSx : undefined}
+                >
+                  <ListItemIcon sx={{ minWidth: collapsed ? 0 : 42, '& svg': { m: 1 } }}>
+                    {collapsed ? (
+                      <IconLib.TbLayoutSidebarLeftExpand size={menuIconSize} />
+                    ) : (
+                      <IconLib.TbLayoutSidebarLeftCollapse size={menuIconSize} />
+                    )}
+                  </ListItemIcon>
+                  {!collapsed && <ListItemText primary="Collapse" />}
+                </ListItemButton>
+              </NavTooltip>
+            )}
+
+            <Box sx={{ p: collapsed ? 1.5 : 2, display: 'flex', justifyContent: 'center' }}>
+              {collapsed ? (
+                <NavTooltip title="Logout">
+                  <IconButton aria-label="Logout" onClick={logout}>
+                    <IconLib.MdLogout size={menuIconSize} />
+                  </IconButton>
+                </NavTooltip>
+              ) : (
+                <Button fullWidth onClick={logout} variant="contained" disableElevation>
+                  Logout
+                </Button>
+              )}
+            </Box>
           </Box>
         </Box>
-      </Box>
+      </UnvisitedPagesContext.Provider>
     </NavCollapsedContext.Provider>
   )
 
@@ -350,6 +361,7 @@ const DrawerWrapper: FC<Props> = ({ logout, children, userIsGuest = false }) => 
         open: persistentDrawer ? undefined : () => setOpen(true),
         privacyMode: privacyMode,
         drawerWidth: drawerWidth,
+        hasUnvisitedPages: unvisitedPages.length > 0,
       }}
     >
       {persistentDrawer ? (

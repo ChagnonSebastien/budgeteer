@@ -87,8 +87,9 @@ const InvestmentsPerformancePage: FC = () => {
     ) : assets.length === 0 ? (
       <EmptyState
         compact
-        title="No investments yet"
-        description={`Add an asset other than ${defaultCurrency.symbol}, like a stock or an ETF, to follow its performance here.`}
+        title="Follow how your investments perform"
+        description={`Add an asset other than ${defaultCurrency.symbol}, like a stock or an ETF, to compare its performance and your gains here.`}
+        action={{ label: 'Add an asset', path: '/assets/new' }}
       />
     ) : selected.length === 0 ? (
       <EmptyState compact title="No asset selected" description="Pick the assets to compare." />

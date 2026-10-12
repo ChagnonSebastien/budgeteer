@@ -3,6 +3,7 @@ export type AuthMethod = 'oidc' | 'userPass' | 'guest' | 'demo'
 export interface UserPreferences {
   gettingStartedDismissed?: boolean
   categoryTutorialDone?: boolean
+  visitedPages?: string[]
   costsGrossIncome?: number
   costsEmploymentIncomeCategoryIds?: number[]
   costsOtherIncomeCategoryIds?: number[]

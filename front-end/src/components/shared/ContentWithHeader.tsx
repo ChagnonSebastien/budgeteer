@@ -1,4 +1,4 @@
-import { AppBar, IconButton, InputBase, SxProps, Theme, Toolbar, Typography } from '@mui/material'
+import { AppBar, Badge, IconButton, InputBase, SxProps, Theme, Toolbar, Typography } from '@mui/material'
 import { styled } from '@mui/material/styles'
 import { FC, ReactNode, useContext, useState } from 'react'
 import { IconType } from 'react-icons'
@@ -94,7 +94,7 @@ const ContentWithHeader: FC<ContentWithHeaderProps> = (props) => {
     scrollEndSx,
   } = props
   const { IconLib } = useContext(IconToolsContext)
-  const { open } = useContext(DrawerContext)
+  const { open, hasUnvisitedPages } = useContext(DrawerContext)
   const navigate = useNavigate()
   const [searching, setSearching] = useState(false)
   const searchOpen = !!search && (searching || search.value !== '')
@@ -104,7 +104,13 @@ const ContentWithHeader: FC<ContentWithHeaderProps> = (props) => {
     actionButton = <ActionButtom Icon={IconLib.MdKeyboardBackspace} onClick={() => navigate(-1)} />
   } else if (action === 'menu') {
     if (typeof open !== 'undefined') {
-      actionButton = <ActionButtom Icon={IconLib.MdMenu} onClick={open} />
+      actionButton = (
+        <IconButton aria-label="menu" onClick={open}>
+          <Badge color="primary" variant="dot" invisible={!hasUnvisitedPages}>
+            <IconLib.MdMenu />
+          </Badge>
+        </IconButton>
+      )
     }
   } else if (typeof action !== 'undefined') {
     actionButton = <ActionButtom {...action} />

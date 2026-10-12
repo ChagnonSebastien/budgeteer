@@ -1,6 +1,7 @@
-import { Box, Stack, SxProps, Theme, Typography } from '@mui/material'
+import { Box, Button, Stack, SxProps, Theme, Typography } from '@mui/material'
 import { alpha, styled } from '@mui/material/styles'
 import React, { FC, ReactNode } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 interface SectionProps {
   title: string
@@ -53,11 +54,21 @@ export const Stat: FC<{ label: string; value: ReactNode }> = ({ label, value }) 
   </Stack>
 )
 
-export const EmptyState: FC<{ title: string; description?: string; compact?: boolean }> = ({
-  title,
-  description,
-  compact = false,
-}) => (
+const EmptyStateAction: FC<{ label: string; path: string }> = ({ label, path }) => {
+  const navigate = useNavigate()
+  return (
+    <Button variant="contained" disableElevation onClick={() => navigate(path)} sx={{ mt: 1 }}>
+      {label}
+    </Button>
+  )
+}
+
+export const EmptyState: FC<{
+  title: string
+  description?: string
+  compact?: boolean
+  action?: { label: string; path: string }
+}> = ({ title, description, compact = false, action }) => (
   <Stack
     sx={{
       gap: 1,
@@ -77,6 +88,7 @@ export const EmptyState: FC<{ title: string; description?: string; compact?: boo
         {description}
       </Typography>
     )}
+    {action && <EmptyStateAction {...action} />}
   </Stack>
 )
 

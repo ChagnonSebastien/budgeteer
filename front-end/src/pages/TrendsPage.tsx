@@ -8,6 +8,7 @@ import TrendsChart, { Grouping } from '../components/graphing/TrendsChart'
 import CounterInput from '../components/inputs/CounterInput'
 import SelectOne from '../components/inputs/SelectOne'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
+import { EmptyState } from '../components/shared/Layout'
 import useQueryParams from '../components/shared/useQueryParams'
 import { CategoryID } from '../domain/model/category'
 import MixedAugmentation from '../service/MixedAugmentation'
@@ -35,7 +36,16 @@ const TrendsPage: FC = () => {
   return (
     <ContentWithHeader title="Trends" action="menu" withScrolling scrollEndSx={{ bgcolor: 'surface.subtle' }}>
       <GraphContainer sx={{ flex: '1 0 max(50vh, 300px)' }}>
-        <TrendsChart categories={selectedCategories} grouping={grouping} years={years} projection={projection} />
+        {augmentedTransactions.length === 0 ? (
+          <EmptyState
+            compact
+            title="See how your spending changes"
+            description="Record your expenses to chart each category week by week or month by month, with a projection for the current period."
+            action={{ label: 'Record an expense', path: '/transactions/new?type=expense' }}
+          />
+        ) : (
+          <TrendsChart categories={selectedCategories} grouping={grouping} years={years} projection={projection} />
+        )}
       </GraphContainer>
 
       <SecondDivision
