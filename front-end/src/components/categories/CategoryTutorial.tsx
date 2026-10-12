@@ -23,7 +23,7 @@ const CategoryTutorial: FC<{ onDone(): void }> = ({ onDone }) => {
   const { create, state: categories } = useContext(CategoryServiceContext)
   const { rootCategory } = useContext(MixedAugmentation)
   const { showToast } = useToast()
-  const [step, setStep] = useState<'intro' | 'template'>('intro')
+  const [step, setStep] = useState<'template' | 'own'>('template')
   const [applying, setApplying] = useState(false)
 
   const groceries = new Category(-1, 'Groceries', 'FaCartShopping', iconColor, '#43A047', rootCategory.id, true, 0)
@@ -38,7 +38,7 @@ const CategoryTutorial: FC<{ onDone(): void }> = ({ onDone }) => {
       fixedCosts: data.fixedCosts!,
       ordering: data.ordering!,
     })
-    setStep('template')
+    onDone()
   }
 
   const applyTemplate = async () => {
@@ -68,16 +68,15 @@ const CategoryTutorial: FC<{ onDone(): void }> = ({ onDone }) => {
     }
   }
 
-  if (step === 'intro') {
+  if (step === 'own') {
     return (
       <Screen>
-        <Typography variant="h5">Organize your spending with categories</Typography>
+        <Typography variant="h5">Create your first category</Typography>
         <Typography color="textSecondary">
-          Each transaction gets a category, like Groceries or Rent, so you can see where your money goes. Categories can
-          be nested: Groceries and Restaurants can both sit under Food. Let's start with the one almost everyone needs.
+          Start with the one almost everyone needs. You can add the rest later from the Categories page.
         </Typography>
         <CategoryForm initialCategory={groceries} onSubmit={createCategory} submitText="Create my first category" />
-        <Button color="inherit" onClick={() => setStep('template')}>
+        <Button color="inherit" onClick={onDone}>
           Skip
         </Button>
       </Screen>
@@ -86,10 +85,11 @@ const CategoryTutorial: FC<{ onDone(): void }> = ({ onDone }) => {
 
   return (
     <Screen>
-      <Typography variant="h5">Get a head start</Typography>
+      <Typography variant="h5">Organize your spending with categories</Typography>
       <Typography color="textSecondary">
-        Add a ready-made set of common categories in one click. Everything stays yours to rename, move or delete later
-        from the Categories page.
+        Each transaction gets a category, like Groceries or Rent, so you can see where your money goes. Categories can
+        be nested: Groceries and Restaurants both sit under Food. Start with this ready-made set, everything stays yours
+        to rename, move or delete later from the Categories page.
       </Typography>
       <Section title="Common categories">
         <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(14rem, 1fr))', gap: 2 }}>
@@ -112,7 +112,7 @@ const CategoryTutorial: FC<{ onDone(): void }> = ({ onDone }) => {
       <SecureButton variant="contained" onClick={applyTemplate} loading={applying}>
         Add these categories
       </SecureButton>
-      <Button color="inherit" onClick={onDone} disabled={applying}>
+      <Button color="inherit" onClick={() => setStep('own')} disabled={applying}>
         No thanks, I'll make my own
       </Button>
     </Screen>
