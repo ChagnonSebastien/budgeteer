@@ -2,8 +2,10 @@ import { Box, IconButton } from '@mui/material'
 import { decomposeColor, recomposeColor, styled, useTheme } from '@mui/material/styles'
 import { differenceInYears, startOfDay } from 'date-fns'
 import { FC, useContext, useEffect, useMemo, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 
 import { UpdatePreferencesContext, UserContext } from '../App'
+import { commonCategories, iconColor } from '../components/categories/commonCategories'
 import CostsAnalysisSetup from '../components/CostsAnalysisSetup'
 import EarningsBreakdownChart from '../components/graphing/EarningsBreakdownChart'
 import { IconToolsContext } from '../components/icons/IconTools'
@@ -12,10 +14,11 @@ import ContentWithHeader from '../components/shared/ContentWithHeader'
 import { EmptyState } from '../components/shared/Layout'
 import { useToast } from '../components/shared/ToastProvider'
 import { useElementDimensions } from '../components/shared/useDimensions'
-import { AugmentedCategory } from '../domain/model/category'
+import { AugmentedCategory, CategoryID } from '../domain/model/category'
 import { formatAmount } from '../domain/model/currency'
 import MixedAugmentation from '../service/MixedAugmentation'
 import UserStore from '../UserStore'
+import { CreateCategoryNavigationState } from './CreateCategoryPage'
 
 const StyledTable = styled('table')(({ theme }) => ({
   width: '100%',
@@ -107,6 +110,17 @@ const SpacerRow = styled('tr')(({ theme }) => ({
 
 const userStore = new UserStore(localStorage)
 
+const incomeTemplate = commonCategories.find((group) => group.name === 'Income')!
+
+interface SetupDraft {
+  grossIncome: number
+  incomeCategories: CategoryID[]
+  createdCategoryId?: CategoryID
+}
+
+const isSetupDraft = (state: unknown): state is SetupDraft =>
+  typeof state === 'object' && state !== null && Array.isArray((state as SetupDraft).incomeCategories)
+
 const CostsAnalysisPage: FC = () => {
   const {
     augmentedTransactions: transactions,
@@ -116,12 +130,15 @@ const CostsAnalysisPage: FC = () => {
   } = useContext(MixedAugmentation)
   const { privacyMode } = useContext(DrawerContext)
   const { IconLib } = useContext(IconToolsContext)
+  const navigate = useNavigate()
+  const location = useLocation()
+  const draft = isSetupDraft(location.state) ? location.state : null
 
   // Get the current URL search params
   const query = new URLSearchParams(window.location.search)
 
   const [showSetup, setShowSetup] = useState(false)
-  const [showOptions, setShowOptions] = useState(false)
+  const [showOptions, setShowOptions] = useState(draft !== null)
   const [viewType, setViewType] = useState<'table' | 'chart'>(query.get('view') === 'chart' ? 'chart' : 'table')
   const { preferences } = useContext(UserContext)
   const updatePreferences = useContext(UpdatePreferencesContext)
@@ -130,8 +147,10 @@ const CostsAnalysisPage: FC = () => {
   const legacyIncomeCategory = preferences?.costsIncomeCategoryId ?? userStore.getIncomeCategoryId()
   const savedIncomeCategories =
     preferences?.costsIncomeCategoryIds ?? (legacyIncomeCategory !== null ? [legacyIncomeCategory] : [])
-  const [incomeCategories, setIncomeCategories] = useState<number[]>(savedIncomeCategories)
-  const [grossIncome, setGrossIncome] = useState<number>(savedGrossIncome ?? 0)
+  const [incomeCategories, setIncomeCategories] = useState<number[]>(
+    draft ? draft.incomeCategories.concat(draft.createdCategoryId ?? []) : savedIncomeCategories,
+  )
+  const [grossIncome, setGrossIncome] = useState<number>(draft?.grossIncome ?? savedGrossIncome ?? 0)
   const { ref: setContentRef, ...dimensions } = useElementDimensions(0, 0)
 
   // Update URL when viewType changes
@@ -149,6 +168,9 @@ const CostsAnalysisPage: FC = () => {
   }
 
   useEffect(() => {
+    // Otherwise a reload reopens the dialog with the stale draft.
+    if (draft) navigate(`${location.pathname}${location.search}`, { replace: true })
+
     if (!savedGrossIncome || savedIncomeCategories.length === 0) {
       setShowSetup(true)
     } else if (preferences?.costsGrossIncome === undefined || preferences?.costsIncomeCategoryIds === undefined) {
@@ -349,6 +371,28 @@ const CostsAnalysisPage: FC = () => {
           }).catch(() => showToast('Could not save your costs analysis setup', 'error'))
           setShowSetup(false)
           setShowOptions(false)
+        }}
+        onDismiss={() => {
+          setGrossIncome(savedGrossIncome ?? 0)
+          setIncomeCategories(savedIncomeCategories)
+          setShowSetup(false)
+          setShowOptions(false)
+        }}
+        onCreateCategory={() => {
+          const state: CreateCategoryNavigationState = {
+            from: `${window.location.pathname}${window.location.search}`,
+            prefill: {
+              name: incomeTemplate.name,
+              iconName: incomeTemplate.icon,
+              iconColor,
+              iconBackground: incomeTemplate.color,
+              parentId: rootCategory.id,
+              fixedCosts: false,
+              ordering: 0,
+            },
+            returnState: { grossIncome, incomeCategories } satisfies SetupDraft,
+          }
+          navigate('/categories/new', { state })
         }}
       />
 

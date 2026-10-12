@@ -11,6 +11,8 @@ interface Props {
   incomeCategories: number[]
   setIncomeCategories: (value: number[]) => void
   onComplete: () => void
+  onDismiss: () => void
+  onCreateCategory: () => void
 }
 
 const CostsAnalysisSetup: FC<Props> = ({
@@ -20,16 +22,23 @@ const CostsAnalysisSetup: FC<Props> = ({
   incomeCategories,
   setIncomeCategories,
   onComplete,
+  onDismiss,
+  onCreateCategory,
 }) => (
   <AppDialog
     open={open}
-    onClose={() => {}}
+    onClose={onDismiss}
     title="Costs Analysis Setup"
     fullWidth
     actions={
-      <Button onClick={onComplete} variant="contained" disabled={grossIncome === 0 || incomeCategories.length === 0}>
-        Complete Setup
-      </Button>
+      <>
+        <Button color="inherit" onClick={onDismiss}>
+          Cancel
+        </Button>
+        <Button onClick={onComplete} variant="contained" disabled={grossIncome === 0 || incomeCategories.length === 0}>
+          Complete Setup
+        </Button>
+      </>
     }
   >
     <Stack spacing={3} sx={{ pt: 1 }}>
@@ -52,6 +61,7 @@ const CostsAnalysisSetup: FC<Props> = ({
           onSelectItems: setIncomeCategories,
         }}
         labelText="Your net income categories"
+        onCreateCategory={onCreateCategory}
       />
     </Stack>
   </AppDialog>

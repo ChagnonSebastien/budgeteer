@@ -18,10 +18,11 @@ interface Props {
     iconColor: string
     iconBackground: string
   }
+  onCreateCategory?: () => void
 }
 
 const CategoryPicker: FC<Props> = (props) => {
-  const { selectedConfig, labelText, valueText, icon } = props
+  const { selectedConfig, labelText, valueText, icon, onCreateCategory } = props
   const { state: categories } = useContext(CategoryServiceContext)
 
   const selectedCategories = useMemo(() => {
@@ -75,6 +76,11 @@ const CategoryPicker: FC<Props> = (props) => {
         title="Select Category"
         actions={
           <>
+            {onCreateCategory && (
+              <Button onClick={onCreateCategory} sx={{ mr: 'auto' }}>
+                Create new
+              </Button>
+            )}
             <Button color="inherit" onClick={() => setShowModal(false)}>
               Close
             </Button>
