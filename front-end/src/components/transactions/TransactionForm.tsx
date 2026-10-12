@@ -220,7 +220,7 @@ const TransactionForm: FC<Props> = (props) => {
   useEffect(() => {
     const amountError = validateAmount(amount)
     const senderError = validateAccount(senderAccount.name, baseType === 'expense' || baseType === 'transfer')
-    const receiverError = validateAccount(senderAccount.name, type === 'income' || type === 'transfer')
+    const receiverError = validateAccount(receiverAccount.name, type === 'income' || type === 'transfer')
     setErrors((prevState) => ({
       ...prevState,
       amount: {
@@ -239,7 +239,7 @@ const TransactionForm: FC<Props> = (props) => {
         errorText: receiverError,
       },
     }))
-  }, [amount, senderAccount.id, receiverAccount.id, type, baseType])
+  }, [amount, senderAccount.name, receiverAccount.name, type, baseType])
 
   useEffect(() => {
     const receiverAmountError = validateAmount(receiverAmount)
