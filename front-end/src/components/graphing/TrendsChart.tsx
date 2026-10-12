@@ -1,5 +1,5 @@
 import { Box, useTheme } from '@mui/material'
-import { ResponsiveBar } from '@nivo/bar'
+import { BarCustomLayerProps, ResponsiveBar } from '@nivo/bar'
 import {
   addMonths,
   addWeeks,
@@ -35,6 +35,8 @@ const chartMargin = { top: 20, right: 25, bottom: 60, left: 70 }
 // Horizontal room a 12px label rotated -45deg needs to stay readable next to its neighbour.
 const minTickSpacingPx = 36
 const shortWeekLabelBelowPx = 600
+const noDataLabelMinWidthPx = 56
+const barPadding = 0.2
 
 interface Props {
   categories: number[]
@@ -48,6 +50,8 @@ const TrendsChart: FC<Props> = (props) => {
   const { privacyMode } = useContext(DrawerContext)
   const theme = useTheme()
   const { ref: containerRef, width: containerWidth } = useElementDimensions(0, 0)
+
+  const visiblePeriods = years * periodsPerYear[grouping]
 
   const filteredTransactions = useMemo(() => {
     return augmentedTransactions.filter((t) => {
@@ -63,8 +67,7 @@ const TrendsChart: FC<Props> = (props) => {
     })
   }, [augmentedTransactions, categories, rootCategory.id])
 
-  const data = useMemo(() => {
-    if (filteredTransactions.length === 0) return null
+  const { data, firstDataIndex } = useMemo(() => {
     const today = new Date()
     let toDate = addMonths(today, 1)
     toDate.setDate(1)
@@ -85,25 +88,24 @@ const TrendsChart: FC<Props> = (props) => {
       }
     }
 
-    const fromDate = filteredTransactions[filteredTransactions.length - 1].date
-
-    const diffMonths = differenceInMonths(toDate, fromDate)
-    const diffQuarters = differenceInQuarters(toDate, fromDate)
-    const diffYears = differenceInYears(toDate, fromDate)
+    const fromDate = filteredTransactions[filteredTransactions.length - 1]?.date ?? toDate
 
     let subN = subMonths
-    let i = diffMonths
+    let i = differenceInMonths(toDate, fromDate)
 
     if (grouping === 'weeks') {
       subN = subWeeks
       i = differenceInWeeks(toDate, startOfWeek(fromDate, weekOptions)) - 1
     } else if (grouping === 'quarters') {
       subN = subQuarters
-      i = diffQuarters
+      i = differenceInQuarters(toDate, fromDate)
     } else if (grouping === 'years') {
       subN = subYears
-      i = diffYears
+      i = differenceInYears(toDate, fromDate)
     }
+
+    const firstDataIndex = filteredTransactions.length === 0 ? Infinity : Math.max(0, visiblePeriods - 1 - i)
+    i = Math.max(i, visiblePeriods - 1)
 
     let transactionIndex = filteredTransactions.length - 1
     const data: { date: string; total: number }[] = []
@@ -148,8 +150,8 @@ const TrendsChart: FC<Props> = (props) => {
       i -= 1
     }
 
-    return data
-  }, [filteredTransactions, defaultCurrency, grouping])
+    return { data, firstDataIndex: Math.min(firstDataIndex, data.length) }
+  }, [filteredTransactions, defaultCurrency, grouping, visiblePeriods])
 
   const label = useCallback(
     (d: Date): string => {
@@ -170,16 +172,19 @@ const TrendsChart: FC<Props> = (props) => {
   const rollingTail = rollingTails[grouping]
 
   const trendlineData = useMemo(() => {
-    if (!data) return null
-
     if (data.length < 2) {
       return null
     }
 
-    const movingAverages: { index: number; value: number }[] = []
+    const movingAverages: { index: number; value: number | null }[] = []
 
     for (let i = 0; i < data.length; i++) {
-      const windowSize = Math.min(i + 1, rollingTail)
+      if (i < firstDataIndex) {
+        movingAverages.push({ index: i, value: null })
+        continue
+      }
+
+      const windowSize = Math.min(i - firstDataIndex + 1, rollingTail)
       let sum = 0
 
       for (let j = 0; j < windowSize; j++) {
@@ -190,14 +195,40 @@ const TrendsChart: FC<Props> = (props) => {
       movingAverages.push({ index: i, value: average })
     }
 
-    return movingAverages.slice(data.length - Math.min(data.length, years * periodsPerYear[grouping]))
-  }, [data, years, grouping, rollingTail])
+    return movingAverages.slice(data.length - visiblePeriods)
+  }, [data, firstDataIndex, visiblePeriods, rollingTail])
 
-  // Calculate the visible data points
-  const visibleData = useMemo(() => {
-    if (!data) return []
-    return data.slice(data.length - Math.min(data.length, years * periodsPerYear[grouping]))
-  }, [data, years, grouping])
+  const visibleData = useMemo(() => data.slice(data.length - visiblePeriods), [data, visiblePeriods])
+  const visibleNoDataCount = Math.max(0, firstDataIndex - (data.length - visiblePeriods))
+
+  const noDataLayer = useCallback(
+    ({ xScale, innerWidth, innerHeight }: BarCustomLayerProps<{ date: string; total: number }>) => {
+      if (visibleNoDataCount === 0) return null
+      const band = xScale as unknown as { (value: string): number; step(): number }
+      const width =
+        visibleNoDataCount >= visibleData.length
+          ? innerWidth
+          : band(visibleData[visibleNoDataCount].date) - (band.step() * barPadding) / 2
+      return (
+        <g pointerEvents="none">
+          <rect width={width} height={innerHeight} fill={theme.palette.surface.strong} rx={4} />
+          {width >= noDataLabelMinWidthPx && (
+            <text
+              x={width / 2}
+              y={innerHeight / 2}
+              textAnchor="middle"
+              dominantBaseline="middle"
+              fontSize={theme.typography.caption.fontSize}
+              fill={theme.palette.text.secondary}
+            >
+              No data
+            </text>
+          )}
+        </g>
+      )
+    },
+    [visibleNoDataCount, visibleData, theme],
+  )
 
   const tickValues = useMemo(() => {
     const plotWidth = containerWidth - chartMargin.left - chartMargin.right
@@ -207,7 +238,7 @@ const TrendsChart: FC<Props> = (props) => {
     return visibleData.filter((_, index) => (visibleData.length - 1 - index) % step === 0).map((d) => d.date)
   }, [visibleData, containerWidth])
 
-  return data ? (
+  return (
     <div ref={containerRef} style={{ position: 'relative', width: '100%', height: '100%' }}>
       {/* Trendline overlay */}
       {visibleData.length >= 2 && trendlineData && (
@@ -224,9 +255,8 @@ const TrendsChart: FC<Props> = (props) => {
         >
           <svg viewBox="0 0 100 100" preserveAspectRatio="none">
             {trendlineData.map((point, index) => {
-              if (index === 0) return null
-
               const prevPoint = trendlineData[index - 1]
+              if (point.value === null || prevPoint?.value == null) return null
 
               const x1 =
                 ((index - 1) / Math.max(trendlineData.length - 1, 1)) *
@@ -308,8 +338,14 @@ const TrendsChart: FC<Props> = (props) => {
         tooltip={(props) => (
           <GraphTooltip style={{ whiteSpace: 'nowrap' }}>
             <GraphTooltipDate>{label(new Date(props.indexValue))}</GraphTooltipDate>
-            {!privacyMode && (
-              <Box sx={{ color: gainColor(props.value!) }}>{formatFull(defaultCurrency, props.value, privacyMode)}</Box>
+            {props.index < visibleNoDataCount ? (
+              <Box sx={{ color: 'text.secondary' }}>No data</Box>
+            ) : (
+              !privacyMode && (
+                <Box sx={{ color: gainColor(props.value!) }}>
+                  {formatFull(defaultCurrency, props.value, privacyMode)}
+                </Box>
+              )
             )}
           </GraphTooltip>
         )}
@@ -333,11 +369,12 @@ const TrendsChart: FC<Props> = (props) => {
           return props.value! < 0 ? theme.palette.error.light : theme.palette.success.light
         }}
         borderRadius={4}
-        padding={0.2}
+        padding={barPadding}
+        layers={['grid', 'axes', noDataLayer, 'bars', 'markers', 'legends', 'annotations']}
         animate={false}
       />
     </div>
-  ) : null
+  )
 }
 
 export default TrendsChart
