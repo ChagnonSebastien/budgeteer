@@ -20,6 +20,7 @@ message Currency {
   string type = 8;
   string rate_fetch_failed_at = 9;
   string rate_fetch_error = 10;
+  string created_at = 11;
 }
 
 message GetAllCurrenciesRequest {

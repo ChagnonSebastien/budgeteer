@@ -13,6 +13,7 @@ interface Currency {
   rateFetchScript: string
   autoUpdate: boolean
   rateFetchFailure?: { at: Date; message: string }
+  createdAt?: Date
 }
 
 interface Account {

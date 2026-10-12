@@ -23,4 +23,5 @@ type Currency struct {
 	DecimalPoints          int
 	RateAutoUpdateSettings RateAutoUpdateSettings
 	LastRateFetchFailure   *RateFetchFailure
+	CreatedAt              time.Time
 }

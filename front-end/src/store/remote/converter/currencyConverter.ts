@@ -19,6 +19,7 @@ export class CurrencyConverter
       dto.decimalPoints,
       new RateAutoupdateSettings(dto.autoUpdateSettingsScript, dto.autoUpdateSettingsEnabled),
       dto.rateFetchFailedAt === '' ? null : new RateFetchFailure(new Date(dto.rateFetchFailedAt), dto.rateFetchError),
+      new Date(dto.createdAt),
     )
   }
 
@@ -34,6 +35,7 @@ export class CurrencyConverter
       autoUpdateSettingsEnabled: model.rateAutoupdateSettings.enabled,
       rateFetchFailedAt: model.rateFetchFailure?.at.toISOString() ?? '',
       rateFetchError: model.rateFetchFailure?.message ?? '',
+      createdAt: model.createdAt.toISOString(),
     })
   }
 

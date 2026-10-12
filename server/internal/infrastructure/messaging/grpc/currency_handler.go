@@ -151,6 +151,7 @@ func (s *CurrencyHandler) GetAllCurrencies(
 			DecimalPoints:             uint32(currency.DecimalPoints),
 			AutoUpdateSettingsScript:  currency.RateAutoUpdateSettings.Script,
 			AutoUpdateSettingsEnabled: currency.RateAutoUpdateSettings.Enabled,
+			CreatedAt:                 currency.CreatedAt.Format(time.RFC3339),
 		}
 
 		if failure := currency.LastRateFetchFailure; failure != nil {

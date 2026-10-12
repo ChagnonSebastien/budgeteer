@@ -1,16 +1,17 @@
 import { Box, Chip, Stack, Tab, Tabs, TextField, Typography } from '@mui/material'
-import { differenceInMonths } from 'date-fns'
 import { LegacyRef, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 
 import AccountCard, { AdditionalAccountCardProps } from './AccountCard'
 import ItemList, { ItemListProps } from './ItemList'
 import Account, { AccountID } from '../../domain/model/account'
 import { formatFull } from '../../domain/model/currency'
+import { isOldAndUnused } from '../../domain/model/usage'
 import MixedAugmentation from '../../service/MixedAugmentation'
 import { matchesSearch } from '../../utils'
 import { DrawerContext } from '../Menu'
 import { CustomScrolling } from '../shared/CustomScrolling'
-import { Column, Row } from '../shared/Layout'
+import GroupHeader from '../shared/GroupHeader'
+import { Column } from '../shared/Layout'
 
 type tabs = 'mine' | 'others'
 const groupOther = 'Other'
@@ -28,12 +29,8 @@ type GroupedAccountListProps = {
 
 type Props = ItemListProps<AccountID, Account, AdditionalAccountCardProps> & GroupedAccountListProps
 
-// New accounts get a grace period so a fresh setup is not hidden before its first transaction.
-const youngAccountMonths = 1
-
 export const isAccountUnused = (account: Account, balances: Map<number, number> | undefined): boolean =>
-  differenceInMonths(new Date(), account.createdAt) >= youngAccountMonths &&
-  ![...(balances?.values() ?? [])].some((balance) => balance !== 0)
+  isOldAndUnused(account.createdAt, balances?.values() ?? [])
 
 const GroupedAccountList = (props: Props) => {
   const {
@@ -245,19 +242,10 @@ const GroupedAccountList = (props: Props) => {
         {groups.map(([type, accounts]) => (
           <Column key={`account-group-${type}`} sx={{ mb: { xs: 3, sm: 4 }, gap: { xs: 1, sm: 1.5 } }}>
             {type !== groupOther && (
-              <>
-                <Typography variant="subtitle1" textTransform="uppercase" color="textDisabled">
-                  {type}
-                </Typography>
-
-                {showGroupTotals && (
-                  <Row sx={{ pl: 1, borderLeft: 2, borderColor: 'border.subtle' }}>
-                    <Typography variant="subtitle2" fontFamily="monospace" color="textDisabled">
-                      {formatFull(defaultCurrency, getTotal(accounts), privacyMode)}
-                    </Typography>
-                  </Row>
-                )}
-              </>
+              <GroupHeader
+                title={type}
+                total={showGroupTotals ? formatFull(defaultCurrency, getTotal(accounts), privacyMode) : undefined}
+              />
             )}
 
             <Box

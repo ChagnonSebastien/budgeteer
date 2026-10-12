@@ -10,7 +10,7 @@ FROM currencies c
 WHERE c.id = sqlc.arg(currency_id);
 
 -- name: GetAllCurrencies :many
-SELECT id, name, symbol, risk, type, decimal_points, rate_fetch_script, auto_update, rate_fetch_failed_at, rate_fetch_error
+SELECT id, name, symbol, risk, type, decimal_points, rate_fetch_script, auto_update, rate_fetch_failed_at, rate_fetch_error, created_at
 FROM currencies
 WHERE user_id = sqlc.arg(user_id);
 

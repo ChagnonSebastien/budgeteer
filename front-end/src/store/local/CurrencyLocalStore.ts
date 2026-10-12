@@ -28,6 +28,7 @@ export default class CurrencyLocalStore {
           currency.rateFetchFailure
             ? new RateFetchFailure(currency.rateFetchFailure.at, currency.rateFetchFailure.message)
             : null,
+          currency.createdAt,
         ),
     )
   }
@@ -61,6 +62,7 @@ export default class CurrencyLocalStore {
       risk: data.risk,
       type: data.type,
       decimalPoints: data.decimalPoints,
+      createdAt: data.createdAt,
     })
   }
 
@@ -89,6 +91,7 @@ export default class CurrencyLocalStore {
         type: currency.type,
         decimalPoints: currency.decimalPoints,
         rateFetchFailure: currency.rateFetchFailure ?? undefined,
+        createdAt: currency.createdAt,
       })),
     )
   }

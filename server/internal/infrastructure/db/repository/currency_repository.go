@@ -30,6 +30,7 @@ func (r *Repository) GetAllCurrencies(ctx context.Context, userId uuid.UUID) ([]
 				Script:  currencyDao.RateFetchScript,
 				Enabled: currencyDao.AutoUpdate,
 			},
+			CreatedAt: currencyDao.CreatedAt,
 		}
 
 		if currencyDao.RateFetchFailedAt.Valid {

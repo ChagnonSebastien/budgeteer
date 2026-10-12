@@ -36,6 +36,7 @@ export default class Currency implements NamedItem<CurrencyID, Currency> {
     public readonly decimalPoints: number,
     public readonly rateAutoupdateSettings: RateAutoupdateSettings,
     public readonly rateFetchFailure: RateFetchFailure | null = null,
+    public readonly createdAt: Date = new Date(),
   ) {}
 
   hasName(name: string): boolean {
@@ -50,6 +51,7 @@ export default class Currency implements NamedItem<CurrencyID, Currency> {
     if (this.type !== other.type) return false
     if (this.decimalPoints !== other.decimalPoints) return false
     if (!RateFetchFailure.same(this.rateFetchFailure, other.rateFetchFailure)) return false
+    if (this.createdAt.getTime() !== other.createdAt.getTime()) return false
     return this.rateAutoupdateSettings.equals(other.rateAutoupdateSettings)
   }
 }

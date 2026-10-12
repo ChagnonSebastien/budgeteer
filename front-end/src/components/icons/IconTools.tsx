@@ -51,6 +51,7 @@ export enum PreparedIcon {
   TbBuildingBank = 'TbBuildingBank',
   TbCoins = 'TbCoins',
   TbScale = 'TbScale',
+  TbGauge = 'TbGauge',
   TbChartBar = 'TbChartBar',
   TbReportMoney = 'TbReportMoney',
   TbTrendingUp = 'TbTrendingUp',

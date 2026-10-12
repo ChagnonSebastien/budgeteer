@@ -1,4 +1,4 @@
-import { Box, Checkbox, IconButton, ListItemText, Menu, MenuItem, Stack } from '@mui/material'
+import { Box, IconButton, Stack } from '@mui/material'
 import { FC, useContext, useRef, useState } from 'react'
 
 import AccountCard from '../components/accounts/AccountCard'
@@ -9,7 +9,8 @@ import { DrawerContext } from '../components/Menu'
 import ActionSpeedDial from '../components/shared/ActionSpeedDial'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
 import { DetailCard, DetailHeading, FancyDialog, FancyModal } from '../components/shared/FancyModal'
-import useCloseOnBack, { useNavigateFromDialog } from '../components/shared/useCloseOnBack'
+import HideUnusedMenu from '../components/shared/HideUnusedMenu'
+import { useNavigateFromDialog } from '../components/shared/useCloseOnBack'
 import useQueryParams from '../components/shared/useQueryParams'
 import Account from '../domain/model/account'
 import { formatAmount } from '../domain/model/currency'
@@ -27,9 +28,6 @@ const AccountsPage: FC = () => {
   const allUnused = accounts.every((account) => isAccountUnused(account, accountBalances.get(account.id)))
   const showZeroBalances = allUnused || queryParams.showZero === 'true'
   const groupBy = (queryParams.groupBy || 'institution') as 'institution' | 'type'
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
-  useCloseOnBack(anchorEl !== null, () => setAnchorEl(null))
-  const open = Boolean(anchorEl)
 
   const [clickedAccount, setClickedAccount] = useState<Account | null>(null)
   const [accountToDelete, setAccountToDelete] = useState<Account | null>(null)
@@ -71,26 +69,11 @@ const AccountsPage: FC = () => {
             </IconButton>
           )}
           {!allUnused && (
-            <>
-              <IconButton onClick={(e) => setAnchorEl(e.currentTarget)}>
-                <IconLib.MdSettings size="1.5rem" />
-              </IconButton>
-              <Menu anchorEl={anchorEl} open={open} onClose={() => setAnchorEl(null)}>
-                <MenuItem
-                  onClick={() => {
-                    updateQueryParams({ showZero: (!showZeroBalances).toString() })
-                    setAnchorEl(null)
-                  }}
-                  sx={{ gap: 1 }}
-                >
-                  <Checkbox checked={!showZeroBalances} size="small" />
-                  <ListItemText
-                    primary="Hide old unused accounts"
-                    secondary="No balance and created over a month ago"
-                  />
-                </MenuItem>
-              </Menu>
-            </>
+            <HideUnusedMenu
+              hidden={!showZeroBalances}
+              onToggle={() => updateQueryParams({ showZero: (!showZeroBalances).toString() })}
+              label="Hide old unused accounts"
+            />
           )}
         </>
       }
