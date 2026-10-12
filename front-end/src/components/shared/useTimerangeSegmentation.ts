@@ -2,6 +2,7 @@ import {
   differenceInDays,
   differenceInMonths,
   differenceInWeeks,
+  formatDate,
   isBefore,
   isSameDay,
   subDays,
@@ -174,6 +175,14 @@ export class TimeseriesIterator<Item extends Datable> implements Iterable<Timese
       },
     }
   }
+}
+
+export const dateAxisLabels = (dates: Date[], showLabelEveryFactor: number) => {
+  const labels = new Map<number, string>()
+  dates.forEach((date, i) => {
+    if ((dates.length - i - 1) % showLabelEveryFactor === 0) labels.set(date.getTime(), formatDate(date, 'MMM d, yyyy'))
+  })
+  return labels
 }
 
 const useTimerangeSegmentation = (fromDate: Date, toDate: Date, density: 'light' | 'dense' = 'light') => {

@@ -16,7 +16,7 @@ import { AugmentedTransaction } from '../../domain/model/transaction'
 import MixedAugmentation from '../../service/MixedAugmentation'
 import { darkColors } from '../../utils'
 import { DrawerContext } from '../Menu'
-import useTimerangeSegmentation from '../shared/useTimerangeSegmentation'
+import useTimerangeSegmentation, { dateAxisLabels } from '../shared/useTimerangeSegmentation'
 
 type TooltipProps = {
   tooltipProps: TooltipSlice
@@ -114,12 +114,7 @@ const AggregatedDiffChart: FC<Props> = (props) => {
       }
     }
 
-    const dateVisibility = data.reduce((map, bucket, i) => {
-      if ((data.length - i - 1) % showLabelEveryFactor === 0) {
-        map.set(bucket.date.getTime(), labels[i] && formatDate(labels[i], 'MMM d, yyyy'))
-      }
-      return map
-    }, new Map<number, string>())
+    const dateVisibility = dateAxisLabels(labels, showLabelEveryFactor)
 
     return (
       <LineChart

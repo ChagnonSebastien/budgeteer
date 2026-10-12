@@ -1,6 +1,6 @@
 import { Box } from '@mui/material'
 import { formatDate, isSameDay, startOfDay } from 'date-fns'
-import { FC, useCallback, useContext, useMemo } from 'react'
+import { FC, useContext, useMemo } from 'react'
 
 import {
   GraphTooltip,
@@ -15,9 +15,20 @@ import { DateNavigation } from './TimerangeGraphUtils'
 import { CurrencyID } from '../../domain/model/currency'
 import MixedAugmentation from '../../service/MixedAugmentation'
 import { AccountServiceContext, CurrencyServiceContext } from '../../service/ServiceContext'
-import { darkColors } from '../../utils'
-import { EmptyState } from '../shared/Layout'
-import useTimerangeSegmentation from '../shared/useTimerangeSegmentation'
+import useTimerangeSegmentation, { dateAxisLabels } from '../shared/useTimerangeSegmentation'
+
+export const useHeldCurrencyIds = () => {
+  const { accountBalances } = useContext(MixedAugmentation)
+  const { myOwnAccounts } = useContext(AccountServiceContext)
+
+  return useMemo(() => {
+    const totals = new Map<CurrencyID, number>()
+    for (const account of myOwnAccounts) {
+      accountBalances.get(account.id)?.forEach((amount, id) => totals.set(id, (totals.get(id) ?? 0) + amount))
+    }
+    return new Set([...totals].filter(([, amount]) => amount !== 0).map(([id]) => id))
+  }, [accountBalances, myOwnAccounts])
+}
 
 type TooltipProps = {
   tooltipProps: TooltipSlice
@@ -55,30 +66,23 @@ const Tooltip: FC<TooltipProps> = ({ tooltipProps, labels }) => {
 type Props = {
   startDate: Date
   endDate: Date
-  selectedCurrenciesIDs?: CurrencyID[]
+  currencyIds: CurrencyID[]
+  colorOf(id: CurrencyID): string
   navigation?: DateNavigation
 }
 
 const ExchangeRateComparison: FC<Props> = (props) => {
-  const { startDate, endDate, selectedCurrenciesIDs = [], navigation } = props
+  const { startDate, endDate, currencyIds, colorOf, navigation } = props
 
-  const { exchangeRates, exchangeRateOnDay, augmentedTransactions, defaultCurrency, accountBalances } =
-    useContext(MixedAugmentation)
+  const { exchangeRates, exchangeRateOnDay, augmentedTransactions, defaultCurrency } = useContext(MixedAugmentation)
   const { state: currencies } = useContext(CurrencyServiceContext)
   const { myOwnAccounts } = useContext(AccountServiceContext)
+  const heldCurrencyIds = useHeldCurrencyIds()
 
-  const isSelected = useCallback(
-    (id: CurrencyID) => {
-      if (id === defaultCurrency.id) return false
-      if (selectedCurrenciesIDs.length === 0) {
-        return accountBalances.values().some((ab) => (ab.get(id) ?? 0) > 0)
-      }
-      return selectedCurrenciesIDs.includes(id)
-    },
-    [selectedCurrenciesIDs],
+  const selected = useMemo(
+    () => currencies.filter((c) => c.id !== defaultCurrency.id && currencyIds.includes(c.id)),
+    [currencies, currencyIds, defaultCurrency],
   )
-
-  const group = useCallback((id: CurrencyID) => currencies.find((c) => c.id === id)?.name ?? 'Unknown', [currencies])
 
   const { timeseriesIteratorGenerator, showLabelEveryFactor, hop, amountHop } = useTimerangeSegmentation(
     startDate,
@@ -96,8 +100,9 @@ const ExchangeRateComparison: FC<Props> = (props) => {
     const dividends = new Map<CurrencyID, number>()
     const initialRate = new Map<CurrencyID, number>()
     const data: SparseBucket[] = []
-    for (const currency of currencies) {
-      if (!isSelected(currency.id)) continue
+    const ended = new Set<CurrencyID>()
+    const isSelected = (id: CurrencyID) => currentlyHeld.has(id)
+    for (const currency of selected) {
       currentlyHeld.set(currency.id, 0)
       dividends.set(currency.id, 1)
       initialRate.set(currency.id, exchangeRateOnDay(currency.id, defaultCurrency.id, hop(endDate, amountHop)))
@@ -135,6 +140,7 @@ const ExchangeRateComparison: FC<Props> = (props) => {
       const commitDividends = (_d: Date) => {
         for (const [cId, gains] of gainToday) {
           const held = heldYesterday.get(cId)!
+          if (held === 0) continue
           const prevDividend = dividends.get(cId)!
           dividends.set(cId, prevDividend * ((held + gains) / held))
         }
@@ -203,39 +209,46 @@ const ExchangeRateComparison: FC<Props> = (props) => {
       commitDividends(startOfDay(date))
 
       const values: Record<string, { amount: number | null }> = {}
-      for (const currency of currencies) {
-        if (!isSelected(currency.id)) continue
-        const firstRate = exchangeRates.get(currency.id)?.get(defaultCurrency.id)?.[0]?.date
-        if (typeof firstRate === 'undefined' || upTo.getTime() < firstRate.getTime()) {
-          values[group(currency.id)] = { amount: null }
+      for (const currency of selected) {
+        const rates = exchangeRates.get(currency.id)?.get(defaultCurrency.id)
+        const firstRate = rates?.[0]?.date
+        if (typeof firstRate === 'undefined' || upTo.getTime() < firstRate.getTime() || ended.has(currency.id)) {
+          values[currency.name] = { amount: null }
           continue
         }
         const currentRate = exchangeRateOnDay(currency.id, defaultCurrency.id, upTo)
         const wouldBe = initialRate.get(currency.id)! / dividends.get(currency.id)!
-        values[group(currency.id)] = { amount: currentRate / wouldBe }
+        values[currency.name] = { amount: currentRate / wouldBe }
+        if (!heldCurrencyIds.has(currency.id) && upTo.getTime() >= rates!.at(-1)!.date.getTime()) {
+          ended.add(currency.id)
+        }
       }
       data.push({ date: upTo, values: values })
     }
 
     return data
-  }, [currencies, isSelected, exchangeRates, exchangeRateOnDay, augmentedTransactions])
+  }, [
+    selected,
+    heldCurrencyIds,
+    myOwnAccounts,
+    exchangeRates,
+    exchangeRateOnDay,
+    augmentedTransactions,
+    defaultCurrency,
+    timeseriesIterator,
+    hop,
+    endDate,
+    amountHop,
+  ])
 
-  const dateVisibility = data.reduce((map, bucket, i) => {
-    if ((data.length - i - 1) % showLabelEveryFactor === 0) {
-      map.set(bucket.date.getTime(), data[i].date && formatDate(data[i].date, 'MMM d, yyyy'))
-    }
-    return map
-  }, new Map<number, string>())
-
-  if (!currencies.some((c) => isSelected(c.id))) {
-    return (
-      <EmptyState
-        compact
-        title="No investments yet"
-        description={`Hold an asset other than ${defaultCurrency.symbol}, like a stock or an ETF, in one of your accounts to follow its performance here.`}
-      />
-    )
-  }
+  const dateVisibility = useMemo(
+    () =>
+      dateAxisLabels(
+        data.map((bucket) => bucket.date),
+        showLabelEveryFactor,
+      ),
+    [data, showLabelEveryFactor],
+  )
 
   return (
     <LineChart
@@ -250,7 +263,8 @@ const ExchangeRateComparison: FC<Props> = (props) => {
         grid: true,
       }}
       valueFormat={(value) => `${(value * 100).toFixed(2)}%`}
-      colors={darkColors}
+      datasetsLabels={selected.map((c) => c.name)}
+      colors={selected.map((c) => colorOf(c.id))}
       navigation={navigation}
       stackTooltip={(tooltipProps) => <Tooltip tooltipProps={tooltipProps} labels={data.map((d) => d.date)} />}
     />

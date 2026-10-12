@@ -1,4 +1,3 @@
-import { formatDate } from 'date-fns'
 import { FC, useContext, useMemo } from 'react'
 
 import { Tooltip } from './AggregatedDiffChart'
@@ -12,7 +11,7 @@ import MixedAugmentation from '../../service/MixedAugmentation'
 import { AccountServiceContext } from '../../service/ServiceContext'
 import { darkColors } from '../../utils'
 import { DrawerContext } from '../Menu'
-import useTimerangeSegmentation from '../shared/useTimerangeSegmentation'
+import useTimerangeSegmentation, { dateAxisLabels } from '../shared/useTimerangeSegmentation'
 
 interface Props {
   filterByAccounts?: number[]
@@ -80,12 +79,10 @@ const NetWorthHistoryChart: FC<Props> = ({ fromDate, toDate, filterByAccounts, n
 
   const dateVisibility = useMemo(
     () =>
-      series.reduce((map, bucket, i) => {
-        if ((series.length - i - 1) % showLabelEveryFactor === 0) {
-          map.set(bucket.date.getTime(), formatDate(bucket.date, 'MMM d, yyyy'))
-        }
-        return map
-      }, new Map<number, string>()),
+      dateAxisLabels(
+        series.map((bucket) => bucket.date),
+        showLabelEveryFactor,
+      ),
     [series, showLabelEveryFactor],
   )
 

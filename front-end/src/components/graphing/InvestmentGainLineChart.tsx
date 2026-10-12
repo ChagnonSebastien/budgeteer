@@ -1,27 +1,33 @@
-import { differenceInDays, formatDate } from 'date-fns'
 import React, { FC, useContext, useMemo } from 'react'
 
 import { Tooltip } from './AggregatedDiffChart'
 import { Bucket } from './AreaChart'
 import LineChart, { Bucket as LineBucket } from './LineChart'
+import { DateNavigation } from './TimerangeGraphUtils'
 import { formatFull } from '../../domain/model/currency'
 import MixedAugmentation from '../../service/MixedAugmentation'
 import { AccountServiceContext } from '../../service/ServiceContext'
 import { darkColors } from '../../utils'
 import { DrawerContext } from '../Menu'
-import useTimerangeSegmentation from '../shared/useTimerangeSegmentation'
+import useTimerangeSegmentation, { dateAxisLabels } from '../shared/useTimerangeSegmentation'
 
 interface GainChartProps {
   fromDate: Date
   toDate: Date
+  navigation?: DateNavigation
 }
 
-const InvestmentGainLineChart: FC<GainChartProps> = ({ fromDate, toDate }) => {
+const InvestmentGainLineChart: FC<GainChartProps> = ({ fromDate, toDate, navigation }) => {
   const { augmentedTransactions, exchangeRateOnDay, defaultCurrency } = useContext(MixedAugmentation)
   const { myOwnAccounts } = useContext(AccountServiceContext)
   const { privacyMode } = useContext(DrawerContext)
 
-  const { hop: subN, amountHop, timeseriesIteratorGenerator } = useTimerangeSegmentation(fromDate, toDate, 'dense')
+  const {
+    hop: subN,
+    amountHop,
+    showLabelEveryFactor,
+    timeseriesIteratorGenerator,
+  } = useTimerangeSegmentation(fromDate, toDate, 'dense')
 
   const timeseriesIterator = useMemo(
     () => timeseriesIteratorGenerator(augmentedTransactions),
@@ -204,18 +210,15 @@ const InvestmentGainLineChart: FC<GainChartProps> = ({ fromDate, toDate }) => {
     [data, labels, groups],
   )
 
+  const dateVisibility = useMemo(() => dateAxisLabels(labels, showLabelEveryFactor), [labels, showLabelEveryFactor])
+
   return (
     <LineChart
       data={gainSeries}
       valueFormat={(value) => `${formatFull(defaultCurrency, value, privacyMode)}`}
       margin={{ top: 20, right: 20, bottom: 60, left: 60 }}
       xAxisConfig={{
-        format: (date) => {
-          const i = differenceInDays(date, gainSeries[0].date)
-          return (differenceInDays(gainSeries[gainSeries.length - 1].date, gainSeries[0].date) - i) % 73 === 0
-            ? labels[i] && formatDate(labels[i], 'MMM d, yyyy')
-            : ''
-        },
+        format: (date) => dateVisibility.get(date.getTime()) ?? '',
         grid: true,
       }}
       yAxisConfig={{
@@ -230,6 +233,7 @@ const InvestmentGainLineChart: FC<GainChartProps> = ({ fromDate, toDate }) => {
         grid: !privacyMode,
       }}
       colors={darkColors}
+      navigation={navigation}
       stackTooltip={(tooltipProps) => <Tooltip tooltipProps={tooltipProps} labels={labels} />}
     />
   )
