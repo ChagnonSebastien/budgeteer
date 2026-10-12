@@ -63,9 +63,12 @@ const useAuthentication = () => {
   const [hasInternet, setHasInternet] = useState(navigator.onLine)
 
   const setDefaultCurrency = useCallback((id: number) => {
-    if (user === null) return
-    setUser({ ...user, default_currency: id })
-    userStore.upsertUser({ ...user, default_currency: id })
+    setUser((prev) => {
+      if (prev === null) return prev
+      const updated = { ...prev, default_currency: id }
+      userStore.upsertUser(updated)
+      return updated
+    })
   }, [])
 
   const setDisplayName = useCallback(async (name: string) => {
