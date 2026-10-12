@@ -230,6 +230,24 @@ const TrendsChart: FC<Props> = (props) => {
     [visibleNoDataCount, visibleData, theme],
   )
 
+  const trendlinePoints = useMemo(() => {
+    if (!trendlineData) return ''
+    const n = trendlineData.length
+    const xSpan = (100 * ((n - 0.2) / n) * (n - 1)) / n
+    const xOffset = 100 - (100 * ((n - 0.1) / n) * (n - 0.5)) / n
+    const allValues = visibleData.map((d) => d.total)
+    const minValue = Math.min(...allValues, 0)
+    const valueRange = Math.max(...allValues, 0) - minValue
+    return trendlineData
+      .filter((point) => point.value !== null)
+      .map((point) => {
+        const x = ((point.index - (data.length - n)) / Math.max(n - 1, 1)) * xSpan + xOffset
+        const y = 100 - ((point.value! - minValue) / valueRange) * 100
+        return `${x},${y}`
+      })
+      .join(' ')
+  }, [trendlineData, visibleData, data.length])
+
   const tickValues = useMemo(() => {
     const plotWidth = containerWidth - chartMargin.left - chartMargin.right
     const maxTicks = Math.max(1, Math.floor(plotWidth / minTickSpacingPx))
@@ -254,46 +272,15 @@ const TrendsChart: FC<Props> = (props) => {
           }}
         >
           <svg viewBox="0 0 100 100" preserveAspectRatio="none">
-            {trendlineData.map((point, index) => {
-              const prevPoint = trendlineData[index - 1]
-              if (point.value === null || prevPoint?.value == null) return null
-
-              const x1 =
-                ((index - 1) / Math.max(trendlineData.length - 1, 1)) *
-                  ((100 * ((trendlineData.length - 0.2) / trendlineData.length) * (trendlineData.length - 1)) /
-                    trendlineData.length) +
-                (100 -
-                  (100 * ((trendlineData.length - 0.1) / trendlineData.length) * (trendlineData.length - 0.5)) /
-                    trendlineData.length)
-              const x2 =
-                (index / Math.max(trendlineData.length - 1, 1)) *
-                  ((100 * ((trendlineData.length - 0.2) / trendlineData.length) * (trendlineData.length - 1)) /
-                    trendlineData.length) +
-                (100 -
-                  (100 * ((trendlineData.length - 0.1) / trendlineData.length) * (trendlineData.length - 0.5)) /
-                    trendlineData.length)
-
-              const allValues = visibleData.map((d) => d.total)
-              const minValue = Math.min(...allValues, 0)
-              const maxValue = Math.max(...allValues, 0)
-              const valueRange = maxValue - minValue
-
-              const y1 = 100 - ((prevPoint.value - minValue) / valueRange) * 100
-              const y2 = 100 - ((point.value - minValue) / valueRange) * 100
-
-              return (
-                <line
-                  key={index}
-                  x1={`${x1}%`}
-                  y1={`${y1}%`}
-                  x2={`${x2}%`}
-                  y2={`${y2}%`}
-                  stroke={theme.palette.text.primary}
-                  strokeWidth="0.2"
-                  strokeDasharray="1,0.5"
-                />
-              )
-            })}
+            <polyline
+              points={trendlinePoints}
+              fill="none"
+              stroke={theme.palette.text.primary}
+              strokeWidth={1.5}
+              strokeDasharray="4,3"
+              strokeLinejoin="round"
+              vectorEffect="non-scaling-stroke"
+            />
           </svg>
 
           {/* Add a small legend for the moving average */}
