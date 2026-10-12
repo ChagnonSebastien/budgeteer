@@ -48,7 +48,7 @@ export function monotoneSpline(pts: [number, number][]): string {
 export type MarginConfig = { top: number; right: number; bottom: number; left: number }
 export type AxisConfig = { tickSize: number; tickPadding: number; grid: boolean }
 export type DateAxisConfig = AxisConfig & { format: (date: Date) => string }
-export type ValueAxisConfig = AxisConfig & { format: (i: number) => string; nice: boolean }
+export type ValueAxisConfig = AxisConfig & { format: (i: number) => string; nice: boolean; reference?: number }
 
 export const useValueAxisConfiguration = (dataMinY: number, dataMaxY: number, scaleToNice: boolean) =>
   useMemo(() => {
@@ -417,7 +417,7 @@ export const DateBasedGraph = (props: {
   }, [hasTooltip, setTooltip])
 
   const { format: fmtX = (i) => String(i), tickSize: tickHeightX = 5, grid: gridX = false } = xAxisConfig
-  const { format: fmtY = (v) => String(v), tickSize: tickSizeY = 5, grid: gridY = false } = yAxisConfig
+  const { format: fmtY = (v) => String(v), tickSize: tickSizeY = 5, grid: gridY = false, reference } = yAxisConfig
 
   return (
     <div style={{ position: 'relative', flexGrow: 1, userSelect: 'none', WebkitUserSelect: 'none' }}>
@@ -529,6 +529,19 @@ export const DateBasedGraph = (props: {
                 ))}
                 <div style={{ flexGrow: (graphMaxY - endTick) / step }} />
               </Column>
+            )}
+
+            {reference !== undefined && reference >= graphMinY && reference <= graphMaxY && (
+              <Box
+                sx={{
+                  position: 'absolute',
+                  top: `${((graphMaxY - reference) / (graphMaxY - graphMinY)) * 100}%`,
+                  width: '100%',
+                  borderTop: 1,
+                  borderColor: 'text.secondary',
+                  zIndex: -1,
+                }}
+              />
             )}
           </div>
 

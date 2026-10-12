@@ -138,6 +138,7 @@ const AggregatedDiffChart: FC<Props> = (props) => {
                 })
           },
           grid: !privacyMode,
+          reference: 0,
         }}
         colors={darkColors}
         stackTooltip={(tooltipProps) => <Tooltip tooltipProps={tooltipProps} labels={labels} />}

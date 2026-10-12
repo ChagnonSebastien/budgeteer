@@ -231,6 +231,7 @@ const InvestmentGainLineChart: FC<GainChartProps> = ({ fromDate, toDate, navigat
                 notation: 'compact',
               }),
         grid: !privacyMode,
+        reference: 0,
       }}
       colors={darkColors}
       navigation={navigation}

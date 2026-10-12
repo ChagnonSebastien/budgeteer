@@ -261,6 +261,7 @@ const ExchangeRateComparison: FC<Props> = (props) => {
       yAxisConfig={{
         format: (n) => `${(n * 100 - 100).toFixed(0)}%`,
         grid: true,
+        reference: 1,
       }}
       valueFormat={(value) => `${(value * 100).toFixed(2)}%`}
       datasetsLabels={selected.map((c) => c.name)}
