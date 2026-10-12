@@ -16,6 +16,7 @@ type QueryParams = {
   grouping: string
   years: string
   categories: string
+  projection: string
 }
 
 const TrendsPage: FC = () => {
@@ -28,12 +29,13 @@ const TrendsPage: FC = () => {
     [oldestDate],
   )
   const years = Math.min(parseInt(qp.years || '1'), maxYears)
+  const projection = qp.projection !== 'off'
   const selectedCategories = useMemo<CategoryID[]>(() => JSON.parse(qp.categories || '[]'), [qp.categories])
 
   return (
-    <ContentWithHeader title="Trends" action="menu" withScrolling>
+    <ContentWithHeader title="Trends" action="menu" withScrolling scrollEndSx={{ bgcolor: 'surface.subtle' }}>
       <GraphContainer sx={{ flex: '1 0 max(50vh, 300px)' }}>
-        <TrendsChart categories={selectedCategories} grouping={grouping} years={years} />
+        <TrendsChart categories={selectedCategories} grouping={grouping} years={years} projection={projection} />
       </GraphContainer>
 
       <SecondDivision
@@ -78,6 +80,18 @@ const TrendsPage: FC = () => {
               { value: 'months', label: 'Monthly' },
               { value: 'quarters', label: 'Quarterly' },
               { value: 'years', label: 'Yearly' },
+            ]}
+            type="toggle"
+          />
+        </Box>
+        <Box sx={{ flexGrow: 1, minWidth: (t) => `min(${t.fieldWidth.md}, 100%)` }}>
+          <SelectOne
+            label="Projection"
+            value={projection ? 'past' : 'off'}
+            onChange={(value) => value && updateQueryParams({ projection: value === 'off' ? 'off' : null })}
+            options={[
+              { value: 'past', label: 'Past behavior' },
+              { value: 'off', label: 'Off' },
             ]}
             type="toggle"
           />

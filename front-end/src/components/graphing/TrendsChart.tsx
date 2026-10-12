@@ -1,8 +1,10 @@
-import { Box, useTheme } from '@mui/material'
+import { alpha, Box, useTheme } from '@mui/material'
 import { BarCustomLayerProps, ResponsiveBar } from '@nivo/bar'
 import {
+  addDays,
   addMonths,
   addWeeks,
+  differenceInCalendarDays,
   differenceInMonths,
   differenceInQuarters,
   differenceInWeeks,
@@ -36,6 +38,8 @@ const chartMargin = { top: 20, right: 25, bottom: 60, left: 70 }
 const minTickSpacingPx = 36
 const shortWeekLabelBelowPx = 600
 const noDataLabelMinWidthPx = 56
+const projectedLabelLengthPx = 64
+const projectedLabelThicknessPx = 18
 const barPadding = 0.2
 // Share of each segment, on both sides of a point, bent into its curve; above 0.5 the curves overlap.
 const trendlineCornerRounding = 0.35
@@ -44,10 +48,11 @@ interface Props {
   categories: number[]
   years: number
   grouping: Grouping
+  projection: boolean
 }
 
 const TrendsChart: FC<Props> = (props) => {
-  const { categories, years = 1, grouping = 'months' } = props
+  const { categories, years = 1, grouping = 'months', projection } = props
   const { augmentedTransactions, exchangeRateOnDay, rootCategory, defaultCurrency } = useContext(MixedAugmentation)
   const { privacyMode } = useContext(DrawerContext)
   const theme = useTheme()
@@ -69,7 +74,27 @@ const TrendsChart: FC<Props> = (props) => {
     })
   }, [augmentedTransactions, categories, rootCategory.id])
 
-  const { data, firstDataIndex } = useMemo(() => {
+  const netAmount = useCallback(
+    (t: (typeof filteredTransactions)[number]) => {
+      let amount = 0
+      if (t.receiver?.isMine) {
+        const multiplier =
+          t.receiverCurrencyId === defaultCurrency.id
+            ? 1
+            : exchangeRateOnDay(t.receiverCurrencyId, defaultCurrency.id, t.date)
+        amount += t.receiverAmount * multiplier
+      }
+      if (t.sender?.isMine) {
+        const multiplier =
+          t.currencyId === defaultCurrency.id ? 1 : exchangeRateOnDay(t.currencyId, defaultCurrency.id, t.date)
+        amount -= t.amount * multiplier
+      }
+      return amount
+    },
+    [defaultCurrency, exchangeRateOnDay],
+  )
+
+  const { data, firstDataIndex, projected } = useMemo(() => {
     const today = new Date()
     let toDate = addMonths(today, 1)
     toDate.setDate(1)
@@ -127,24 +152,7 @@ const TrendsChart: FC<Props> = (props) => {
           continue
         }
 
-        if (t.receiver?.isMine) {
-          let multiplier = 1
-          if (t.receiverCurrencyId !== defaultCurrency.id) {
-            multiplier = exchangeRateOnDay(t.receiverCurrencyId, defaultCurrency.id, t.date)
-          }
-
-          bucket += t.receiverAmount * multiplier
-        }
-
-        if (t.sender?.isMine) {
-          let multiplier = 1
-          if (t.currencyId !== defaultCurrency.id) {
-            multiplier = exchangeRateOnDay(t.currencyId, defaultCurrency.id, t.date)
-          }
-
-          bucket -= t.amount * multiplier
-        }
-
+        bucket += netAmount(t)
         transactionIndex -= 1
       }
 
@@ -152,8 +160,28 @@ const TrendsChart: FC<Props> = (props) => {
       i -= 1
     }
 
-    return { data, firstDataIndex: Math.min(firstDataIndex, data.length) }
-  }, [filteredTransactions, defaultCurrency, grouping, visiblePeriods])
+    const currentStart = subN(toDate, 1)
+    const elapsedDays = differenceInCalendarDays(today, currentStart) + 1
+    const pastPeriods = Math.min(rollingTails[grouping], data.length - 1 - firstDataIndex)
+    let projected: number | null = null
+    if (projection && pastPeriods > 0) {
+      const remainders = Array.from({ length: pastPeriods }, (_, k) => ({
+        from: addDays(subN(currentStart, k + 1), elapsedDays),
+        to: subN(currentStart, k),
+      }))
+      const oldest = remainders[remainders.length - 1].from
+      let remaindersTotal = 0
+      for (const t of filteredTransactions) {
+        if (isBefore(t.date, oldest)) break
+        if (remainders.some((r) => !isBefore(t.date, r.from) && isBefore(t.date, r.to))) {
+          remaindersTotal += netAmount(t)
+        }
+      }
+      projected = data[data.length - 1].total + remaindersTotal / pastPeriods
+    }
+
+    return { data, firstDataIndex: Math.min(firstDataIndex, data.length), projected }
+  }, [filteredTransactions, netAmount, grouping, visiblePeriods, projection])
 
   const label = useCallback(
     (d: Date): string => {
@@ -190,7 +218,7 @@ const TrendsChart: FC<Props> = (props) => {
       let sum = 0
 
       for (let j = 0; j < windowSize; j++) {
-        sum += data[i - j]?.total
+        sum += i - j === data.length - 1 && projected !== null ? projected : data[i - j].total
       }
 
       const average = sum / windowSize
@@ -198,10 +226,64 @@ const TrendsChart: FC<Props> = (props) => {
     }
 
     return movingAverages.slice(data.length - visiblePeriods)
-  }, [data, firstDataIndex, visiblePeriods, rollingTail])
+  }, [data, firstDataIndex, projected, visiblePeriods, rollingTail])
 
   const visibleData = useMemo(() => data.slice(data.length - visiblePeriods), [data, visiblePeriods])
   const visibleNoDataCount = Math.max(0, firstDataIndex - (data.length - visiblePeriods))
+
+  const valueDomain = useMemo(() => {
+    const values = [0, ...visibleData.map((d) => d.total), ...(projected === null ? [] : [projected])]
+    return { min: Math.min(...values), max: Math.max(...values) }
+  }, [visibleData, projected])
+
+  const projectionLayer = useCallback(
+    ({ bars, yScale }: BarCustomLayerProps<{ date: string; total: number }>) => {
+      const bar = bars[bars.length - 1]
+      if (projected === null || !bar) return null
+      const scale = yScale as unknown as (value: number) => number
+      const actual = bar.data.value ?? 0
+      const extendsBar = Math.sign(actual) === Math.sign(projected) && Math.abs(projected) > Math.abs(actual)
+      const base = scale(extendsBar ? actual : 0)
+      const end = scale(projected)
+      const color = projected < 0 ? theme.palette.error.light : theme.palette.success.light
+      const left = bar.x + 0.75
+      const right = bar.x + bar.width - 0.75
+      const zoneHeight = Math.abs(base - end)
+      const centerX = bar.x + bar.width / 2
+      const centerY = (base + end) / 2
+      const labelRotation =
+        bar.width >= projectedLabelLengthPx && zoneHeight >= projectedLabelThicknessPx
+          ? 0
+          : zoneHeight >= projectedLabelLengthPx && bar.width >= projectedLabelThicknessPx
+            ? -90
+            : null
+      return (
+        <g pointerEvents="none">
+          <path
+            d={`M${left},${base} L${left},${end} L${right},${end} L${right},${base}`}
+            fill={alpha(color, 0.12)}
+            stroke={color}
+            strokeWidth={1.5}
+            strokeDasharray="4,3"
+          />
+          {labelRotation !== null && (
+            <text
+              x={centerX}
+              y={centerY}
+              transform={`rotate(${labelRotation} ${centerX} ${centerY})`}
+              textAnchor="middle"
+              dominantBaseline="middle"
+              fontSize={theme.typography.caption.fontSize}
+              fill={theme.palette.text.secondary}
+            >
+              Projected
+            </text>
+          )}
+        </g>
+      )
+    },
+    [projected, theme],
+  )
 
   const noDataLayer = useCallback(
     ({ xScale, innerWidth, innerHeight }: BarCustomLayerProps<{ date: string; total: number }>) => {
@@ -237,9 +319,8 @@ const TrendsChart: FC<Props> = (props) => {
     const n = trendlineData.length
     const xSpan = (100 * ((n - 0.2) / n) * (n - 1)) / n
     const xOffset = 100 - (100 * ((n - 0.1) / n) * (n - 0.5)) / n
-    const allValues = visibleData.map((d) => d.total)
-    const minValue = Math.min(...allValues, 0)
-    const valueRange = Math.max(...allValues, 0) - minValue
+    const minValue = valueDomain.min
+    const valueRange = valueDomain.max - minValue
     const points = trendlineData
       .filter((point) => point.value !== null)
       .map((point) => ({
@@ -257,7 +338,7 @@ const TrendsChart: FC<Props> = (props) => {
     }
     const last = points[points.length - 1]
     return `${path} L${last.x},${last.y}`
-  }, [trendlineData, visibleData, data.length])
+  }, [trendlineData, valueDomain, data.length])
 
   const tickValues = useMemo(() => {
     const plotWidth = containerWidth - chartMargin.left - chartMargin.right
@@ -316,7 +397,7 @@ const TrendsChart: FC<Props> = (props) => {
       <ResponsiveBar
         enableGridY={!privacyMode}
         margin={chartMargin}
-        valueScale={{ type: 'linear', min: 'auto', nice: false }}
+        valueScale={{ type: 'linear', min: valueDomain.min, max: valueDomain.max, nice: false }}
         data={visibleData}
         axisBottom={{
           tickRotation: -45,
@@ -340,9 +421,16 @@ const TrendsChart: FC<Props> = (props) => {
               <Box sx={{ color: 'text.secondary' }}>No data</Box>
             ) : (
               !privacyMode && (
-                <Box sx={{ color: gainColor(props.value!) }}>
-                  {formatFull(defaultCurrency, props.value, privacyMode)}
-                </Box>
+                <>
+                  <Box sx={{ color: gainColor(props.value!) }}>
+                    {formatFull(defaultCurrency, props.value, privacyMode)}
+                  </Box>
+                  {props.index === visibleData.length - 1 && projected !== null && (
+                    <Box sx={{ color: 'text.secondary' }}>
+                      Projected {formatFull(defaultCurrency, projected, privacyMode)}
+                    </Box>
+                  )}
+                </>
               )
             )}
           </GraphTooltip>
@@ -368,7 +456,7 @@ const TrendsChart: FC<Props> = (props) => {
         }}
         borderRadius={4}
         padding={barPadding}
-        layers={['grid', 'axes', noDataLayer, 'bars', 'markers', 'legends', 'annotations']}
+        layers={['grid', 'axes', noDataLayer, 'bars', projectionLayer, 'markers', 'legends', 'annotations']}
         animate={false}
       />
     </div>
