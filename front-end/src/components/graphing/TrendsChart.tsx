@@ -37,6 +37,8 @@ const minTickSpacingPx = 36
 const shortWeekLabelBelowPx = 600
 const noDataLabelMinWidthPx = 56
 const barPadding = 0.2
+// Share of each segment, on both sides of a point, bent into its curve; above 0.5 the curves overlap.
+const trendlineCornerRounding = 0.35
 
 interface Props {
   categories: number[]
@@ -230,7 +232,7 @@ const TrendsChart: FC<Props> = (props) => {
     [visibleNoDataCount, visibleData, theme],
   )
 
-  const trendlinePoints = useMemo(() => {
+  const trendlinePath = useMemo(() => {
     if (!trendlineData) return ''
     const n = trendlineData.length
     const xSpan = (100 * ((n - 0.2) / n) * (n - 1)) / n
@@ -238,14 +240,23 @@ const TrendsChart: FC<Props> = (props) => {
     const allValues = visibleData.map((d) => d.total)
     const minValue = Math.min(...allValues, 0)
     const valueRange = Math.max(...allValues, 0) - minValue
-    return trendlineData
+    const points = trendlineData
       .filter((point) => point.value !== null)
-      .map((point) => {
-        const x = ((point.index - (data.length - n)) / Math.max(n - 1, 1)) * xSpan + xOffset
-        const y = 100 - ((point.value! - minValue) / valueRange) * 100
-        return `${x},${y}`
-      })
-      .join(' ')
+      .map((point) => ({
+        x: ((point.index - (data.length - n)) / Math.max(n - 1, 1)) * xSpan + xOffset,
+        y: 100 - ((point.value! - minValue) / valueRange) * 100,
+      }))
+    if (points.length === 0) return ''
+
+    const towards = (from: { x: number; y: number }, to: { x: number; y: number }) =>
+      `${from.x + (to.x - from.x) * trendlineCornerRounding},${from.y + (to.y - from.y) * trendlineCornerRounding}`
+    let path = `M${points[0].x},${points[0].y}`
+    for (let i = 1; i < points.length - 1; i++) {
+      const corner = points[i]
+      path += ` L${towards(corner, points[i - 1])} Q${corner.x},${corner.y} ${towards(corner, points[i + 1])}`
+    }
+    const last = points[points.length - 1]
+    return `${path} L${last.x},${last.y}`
   }, [trendlineData, visibleData, data.length])
 
   const tickValues = useMemo(() => {
@@ -272,8 +283,8 @@ const TrendsChart: FC<Props> = (props) => {
           }}
         >
           <svg viewBox="0 0 100 100" preserveAspectRatio="none">
-            <polyline
-              points={trendlinePoints}
+            <path
+              d={trendlinePath}
               fill="none"
               stroke={theme.palette.text.primary}
               strokeWidth={1.5}
