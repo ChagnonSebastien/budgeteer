@@ -1,5 +1,6 @@
 import { Box } from '@mui/material'
-import { FC, useMemo } from 'react'
+import { differenceInCalendarMonths } from 'date-fns'
+import { FC, useContext, useMemo } from 'react'
 
 import CategoryPicker from '../components/categories/CategoryPicker'
 import { GraphContainer, SecondDivision } from '../components/graphing/GraphStyledComponents'
@@ -9,6 +10,7 @@ import SelectOne from '../components/inputs/SelectOne'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
 import useQueryParams from '../components/shared/useQueryParams'
 import { CategoryID } from '../domain/model/category'
+import MixedAugmentation from '../service/MixedAugmentation'
 
 type QueryParams = {
   grouping: string
@@ -19,7 +21,13 @@ type QueryParams = {
 const TrendsPage: FC = () => {
   const { queryParams: qp, updateQueryParams } = useQueryParams<QueryParams>()
   const grouping = useMemo(() => (qp.grouping || 'months') as Grouping, [qp.grouping])
-  const years = useMemo(() => parseInt(qp.years || '1'), [qp.years])
+  const { augmentedTransactions } = useContext(MixedAugmentation)
+  const oldestDate = augmentedTransactions[augmentedTransactions.length - 1]?.date
+  const maxYears = useMemo(
+    () => (oldestDate ? Math.max(1, Math.ceil((differenceInCalendarMonths(new Date(), oldestDate) + 1) / 12)) : 1),
+    [oldestDate],
+  )
+  const years = Math.min(parseInt(qp.years || '1'), maxYears)
   const selectedCategories = useMemo<CategoryID[]>(() => JSON.parse(qp.categories || '[]'), [qp.categories])
 
   return (
@@ -55,6 +63,7 @@ const TrendsPage: FC = () => {
           <CounterInput
             label="Time Range"
             value={years}
+            max={maxYears}
             onChange={(newValue) => updateQueryParams({ years: String(newValue) })}
           />
         </Box>

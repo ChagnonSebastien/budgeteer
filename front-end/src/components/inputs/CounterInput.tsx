@@ -32,6 +32,7 @@ const stepButton: SxProps<Theme> = {
 type Props = {
   label?: string
   value: number
+  max?: number
   onChange(newValue: number): void
 }
 
@@ -62,10 +63,11 @@ const CounterInput = (props: Props) => (
         <Input
           type="number"
           min="1"
+          max={props.max}
           value={props.value}
           onChange={(e) => {
             const value = parseInt(e.target.value)
-            if (value >= 1) props.onChange(value)
+            if (value >= 1) props.onChange(Math.min(value, props.max ?? value))
           }}
           onFocus={(e) => e.target.select()}
         />
@@ -73,7 +75,13 @@ const CounterInput = (props: Props) => (
           {props.value === 1 ? 'Year' : 'Years'}
         </Box>
       </Stack>
-      <Button variant="outlined" size="small" onClick={() => props.onChange(props.value + 1)} sx={stepButton}>
+      <Button
+        variant="outlined"
+        size="small"
+        onClick={() => props.onChange(props.value + 1)}
+        disabled={props.max !== undefined && props.value >= props.max}
+        sx={stepButton}
+      >
         +
       </Button>
     </Stack>
