@@ -168,8 +168,8 @@ const appPages: MenuEntry[] = [
     element: new AppPage('Investments', '/investments', PreparedIcon.TbTrendingUp, []),
   },
   { guestView: false, element: new Subsection('Setup') },
-  { guestView: false, element: new AppPage('Accounts', '/accounts', PreparedIcon.TbBuildingBank, []) },
   { guestView: false, element: new AppPage('Categories', '/categories', PreparedIcon.TbCategory, []) },
+  { guestView: false, element: new AppPage('Accounts', '/accounts', PreparedIcon.TbBuildingBank, []) },
   {
     guestView: false,
     element: new AppPage('Assets', '/assets', PreparedIcon.TbCoins, [], () => useRateFetchFailures().length > 0),
