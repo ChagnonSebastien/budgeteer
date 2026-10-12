@@ -20,6 +20,7 @@ import { useLocation } from 'react-router-dom'
 
 import { UserContext } from '../App'
 import MixedAugmentation from '../service/MixedAugmentation'
+import { OnlineContext } from '../service/OnlineContext'
 import UserStore from '../UserStore'
 import { useRateFetchFailures } from './currencies/useRateFetchFailures'
 import { IconToolsContext, PreparedIcon } from './icons/IconTools'
@@ -211,6 +212,7 @@ const DrawerWrapper: FC<Props> = ({ logout, children, userIsGuest = false }) => 
     [augmentedTransactions],
   )
   const { email, is_admin: isAdmin } = useContext(UserContext)
+  const online = useContext(OnlineContext)
   const { IconLib } = useContext(IconToolsContext)
 
   const [open, setOpen] = useState(false)
@@ -266,7 +268,7 @@ const DrawerWrapper: FC<Props> = ({ logout, children, userIsGuest = false }) => 
         <Box sx={{ flexGrow: 1 }}>
           {appPages
             .filter((appPage) => !userIsGuest || appPage.guestView)
-            .filter((appPage) => !appPage.adminOnly || isAdmin)
+            .filter((appPage) => !appPage.adminOnly || (isAdmin && online))
             .filter(
               (appPage) =>
                 !appPage.requires ||
