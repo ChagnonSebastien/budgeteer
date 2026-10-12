@@ -11,6 +11,7 @@ import {
   GraphTooltipValue,
 } from './GraphStyledComponents'
 import LineChart, { Bucket, TooltipSlice } from './LineChart'
+import { DateNavigation } from './TimerangeGraphUtils'
 import { formatFull } from '../../domain/model/currency'
 import { AugmentedTransaction } from '../../domain/model/transaction'
 import MixedAugmentation from '../../service/MixedAugmentation'
@@ -59,10 +60,11 @@ interface Props {
   fromDate: Date
   toDate: Date
   hideFinancialIncome?: boolean
+  navigation?: DateNavigation
 }
 
 const AggregatedDiffChart: FC<Props> = (props) => {
-  const { fromDate, toDate, transactions, hideFinancialIncome } = props
+  const { fromDate, toDate, transactions, hideFinancialIncome, navigation } = props
 
   const { exchangeRateOnDay, defaultCurrency } = useContext(MixedAugmentation)
   const { privacyMode } = useContext(DrawerContext)
@@ -141,10 +143,11 @@ const AggregatedDiffChart: FC<Props> = (props) => {
           reference: 0,
         }}
         colors={darkColors}
+        navigation={navigation}
         stackTooltip={(tooltipProps) => <Tooltip tooltipProps={tooltipProps} labels={labels} />}
       />
     )
-  }, [defaultCurrency, privacyMode, showLabelEveryFactor, hideFinancialIncome, timeseriesIterator])
+  }, [defaultCurrency, privacyMode, showLabelEveryFactor, hideFinancialIncome, timeseriesIterator, navigation])
 }
 
 export default AggregatedDiffChart

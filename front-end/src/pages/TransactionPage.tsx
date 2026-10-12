@@ -57,7 +57,14 @@ const TransactionPage: FC = () => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
   useCloseOnBack(anchorEl !== null, () => setAnchorEl(null))
   const open = Boolean(anchorEl)
-  const { fromDate, toDate, accountFilter, categoryFilter, overview: filterOverview } = useTransactionFilter()
+  const {
+    fromDate,
+    toDate,
+    dateNavigation,
+    accountFilter,
+    categoryFilter,
+    overview: filterOverview,
+  } = useTransactionFilter()
   const prefillAccountId = accountFilter?.length === 1 ? accountFilter[0] : null
 
   const { IconLib } = useContext(IconToolsContext)
@@ -99,6 +106,7 @@ const TransactionPage: FC = () => {
             toDate={toDate}
             fromDate={fromDate}
             hideFinancialIncome={hideFinancialIncome}
+            navigation={dateNavigation}
           />
         ) : (
           <TransactionsPieChart
