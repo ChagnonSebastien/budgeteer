@@ -35,7 +35,12 @@ const TrendsPage: FC = () => {
 
   return (
     <ContentWithHeader title="Trends" action="menu" withScrolling scrollEndSx={{ bgcolor: 'surface.subtle' }}>
-      <GraphContainer sx={{ flex: '1 0 max(50vh, 300px)' }}>
+      <GraphContainer
+        sx={{
+          flex: '1 0 max(50vh, 300px)',
+          ...(augmentedTransactions.length === 0 && { display: 'flex', flexDirection: 'column' }),
+        }}
+      >
         {augmentedTransactions.length === 0 ? (
           <EmptyState
             compact
