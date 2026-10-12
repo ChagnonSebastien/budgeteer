@@ -88,10 +88,10 @@ const CurrenciesPage: FC = () => {
 
   return (
     <ContentWithHeader
-      title="Currencies"
+      title="Assets"
       action="menu"
       withPadding
-      search={{ value: filter, onChange: setFilter, placeholder: 'Search currencies...' }}
+      search={{ value: filter, onChange: setFilter, placeholder: 'Search assets...' }}
       rightContent={
         <>
           {groupBy === 'type' ? (
@@ -99,7 +99,7 @@ const CurrenciesPage: FC = () => {
               <IconLib.TbGauge size="1.5rem" />
             </IconButton>
           ) : (
-            <IconButton aria-label="Group by currency type" onClick={() => updateQueryParams({ groupBy: 'type' })}>
+            <IconButton aria-label="Group by asset type" onClick={() => updateQueryParams({ groupBy: 'type' })}>
               <IconLib.TbCategory size="1.5rem" />
             </IconButton>
           )}
@@ -107,7 +107,7 @@ const CurrenciesPage: FC = () => {
             <HideUnusedMenu
               hidden={!showZeroBalances}
               onToggle={() => updateQueryParams({ showZero: (!showZeroBalances).toString() })}
-              label="Hide old unused currencies"
+              label="Hide old unused assets"
             />
           )}
         </>
@@ -124,7 +124,7 @@ const CurrenciesPage: FC = () => {
                   component="button"
                   color="inherit"
                   sx={{ verticalAlign: 'baseline', fontWeight: 600 }}
-                  onClick={() => navigate(`/currencies/rates/${currency.id}?tab=fetcher`)}
+                  onClick={() => navigate(`/assets/rates/${currency.id}?tab=fetcher`)}
                 >
                   {currency.name}
                 </Link>
@@ -168,13 +168,13 @@ const CurrenciesPage: FC = () => {
       </CustomScrolling>
 
       <ActionSpeedDial
-        ariaLabel="Create currency"
+        ariaLabel="Create asset"
         actions={[
           {
-            label: 'New currency',
+            label: 'New asset',
             Icon: IconLib.FaPlus,
             color: 'primary.main',
-            onClick: () => navigate('/currencies/new'),
+            onClick: () => navigate('/assets/new'),
           },
         ]}
       />
@@ -183,7 +183,7 @@ const CurrenciesPage: FC = () => {
         {clickedCurrency !== null && (
           <FancyModal
             title={{
-              topCategory: 'Currency',
+              topCategory: 'Asset',
               bigTitle: clickedCurrency.name,
               bottomSpec: {
                 IconComponent: IconLib.BsCurrencyExchange,
@@ -193,10 +193,10 @@ const CurrenciesPage: FC = () => {
             bottomMenu={[
               {
                 Icon: IconLib.MdEdit,
-                label: 'Edit Currency',
+                label: 'Edit Asset',
                 intent: 'edit',
-                description: 'Modify currency details',
-                action: () => navigate(`/currencies/edit/${clickedCurrency.id}`),
+                description: 'Modify asset details',
+                action: () => navigate(`/assets/edit/${clickedCurrency.id}`),
                 disabled: false,
               },
               ...(clickedCurrency.id === defaultCurrency.id
@@ -207,14 +207,14 @@ const CurrenciesPage: FC = () => {
                       label: 'Exchange Rates',
                       intent: 'adjust' as const,
                       description: 'Edit rate points and automate fetching',
-                      action: () => navigate(`/currencies/rates/${clickedCurrency.id}`),
+                      action: () => navigate(`/assets/rates/${clickedCurrency.id}`),
                       disabled: false,
                       availableOffline: true,
                     },
                   ]),
               {
                 Icon: IconLib.MdDelete,
-                label: 'Delete Currency',
+                label: 'Delete Asset',
                 intent: 'destructive',
                 description: 'Move or delete its transactions, then remove it',
                 action: () => setCurrencyToDelete(clickedCurrency),

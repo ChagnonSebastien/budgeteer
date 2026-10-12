@@ -28,19 +28,19 @@ const EditCurrency: FC = () => {
 
       await updateCurrencies({ id: selectedCurrency!.id }, data)
 
-      showToast('Currency updated')
+      showToast('Asset updated')
       navigate(-1)
     },
     [updateCurrencies, selectedCurrency, navigate, showToast],
   )
 
   if (typeof selectedCurrency === 'undefined') {
-    navigate('/currencies', { replace: true })
+    navigate('/assets', { replace: true })
     return null
   }
 
   return (
-    <ContentWithHeader title="Edit currency" action="return" withPadding withScrolling>
+    <ContentWithHeader title="Edit asset" action="return" withPadding withScrolling>
       <CurrencyForm onSubmit={onSubmit} submitText="Save changes" initialCurrency={selectedCurrency} />
     </ContentWithHeader>
   )

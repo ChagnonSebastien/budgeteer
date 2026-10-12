@@ -230,7 +230,7 @@ const ExchangeRateComparison: FC<Props> = (props) => {
       <EmptyState
         compact
         title="No investments yet"
-        description={`Hold a currency other than ${defaultCurrency.symbol}, like a stock or an ETF, in one of your accounts to follow its performance here.`}
+        description={`Hold an asset other than ${defaultCurrency.symbol}, like a stock or an ETF, in one of your accounts to follow its performance here.`}
       />
     )
   }

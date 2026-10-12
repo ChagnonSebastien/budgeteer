@@ -391,13 +391,10 @@ const AuthenticatedZone: FC<Props> = (props) => {
         <DrawerWrapper logout={logout}>
           <Routes>
             <Route path="/" element={<Dashboard />} />
-            <Route path="/currencies" element={<CurrenciesPage />} />
-            <Route path="/currencies/new" element={<CreateCurrencyPage />} />
-            <Route path="/currencies/edit/:currencyId" element={<EditCurrencyPage />} />
-            <Route
-              path="/currencies/rates/:currencyId"
-              element={<CurrencyRatesPage scriptRunner={testGetRateScript} />}
-            />
+            <Route path="/assets" element={<CurrenciesPage />} />
+            <Route path="/assets/new" element={<CreateCurrencyPage />} />
+            <Route path="/assets/edit/:currencyId" element={<EditCurrencyPage />} />
+            <Route path="/assets/rates/:currencyId" element={<CurrencyRatesPage scriptRunner={testGetRateScript} />} />
             <Route path="/categories" element={<CategoryPage />} />
             <Route path="/categories/new" element={<CreateCategoryPage />} />
             <Route path="/categories/edit/:categoryId" element={<EditCategoryPage />} />

@@ -382,7 +382,7 @@ const TransactionForm: FC<Props> = (props) => {
           currencies={currencies}
           selectedCurrencyId={currency}
           setSelectedCurrencyId={setCurrency}
-          labelText="Currency"
+          labelText="Asset"
           errorText={NoError}
         />
       </Stack>
@@ -390,7 +390,7 @@ const TransactionForm: FC<Props> = (props) => {
       {!useTransactionGroup && (
         <FormControlLabel
           control={<Checkbox checked={differentCurrency} onChange={(ev) => setDifferentCurrency(ev.target.checked)} />}
-          label="Receive in a different Currency"
+          label="Receive a different asset"
         />
       )}
 
@@ -415,7 +415,7 @@ const TransactionForm: FC<Props> = (props) => {
             currencies={currencies}
             selectedCurrencyId={receiverCurrency}
             setSelectedCurrencyId={setReceiverCurrency}
-            labelText="Currency"
+            labelText="Asset"
             sx={{ width: '100%', flexShrink: 2 }}
             errorText={NoError}
           />

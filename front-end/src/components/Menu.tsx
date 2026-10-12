@@ -177,13 +177,7 @@ const appPages: MenuEntry[] = [
   { guestView: false, element: new AppPage('Categories', '/categories', PreparedIcon.TbCategory, []) },
   {
     guestView: false,
-    element: new AppPage(
-      'Currencies',
-      '/currencies',
-      PreparedIcon.TbCoins,
-      [],
-      () => useRateFetchFailures().length > 0,
-    ),
+    element: new AppPage('Assets', '/assets', PreparedIcon.TbCoins, [], () => useRateFetchFailures().length > 0),
   },
 ]
 

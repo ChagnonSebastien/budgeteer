@@ -50,7 +50,7 @@ const DeleteUserDialog: FC<{ user: ManagedUser; onClose(): void; onDeleted(): vo
         plural(impact.transactions, 'transaction'),
         plural(impact.accounts, 'account'),
         plural(impact.categories, 'category', 'categories'),
-        plural(impact.currencies, 'currency', 'currencies'),
+        plural(impact.currencies, 'asset', 'assets'),
       ]
     : []
 

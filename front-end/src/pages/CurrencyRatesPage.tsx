@@ -34,7 +34,7 @@ const CurrencyRatesPage: FC<Props> = ({ scriptRunner }) => {
   const isUnavailable = typeof currency === 'undefined' || currency.id === defaultCurrency.id
 
   useEffect(() => {
-    if (isUnavailable) navigate('/currencies', { replace: true })
+    if (isUnavailable) navigate('/assets', { replace: true })
   }, [isUnavailable, navigate])
 
   if (isUnavailable) return null

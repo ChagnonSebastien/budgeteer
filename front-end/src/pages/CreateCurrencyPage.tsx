@@ -15,14 +15,14 @@ const CreateCurrencyPage: FC = () => {
   const onSubmit = useCallback(
     async (data: Partial<CurrencyUpdatableFields>, exchangeRates?: ExchangeRateConfig[]) => {
       await createCurrency(data, exchangeRates)
-      showToast('Currency created')
-      navigate('/currency', { replace: true })
+      showToast('Asset created')
+      navigate('/assets', { replace: true })
     },
     [createCurrency, navigate, showToast],
   )
 
   return (
-    <ContentWithHeader title="Create new currency" action="return" withPadding withScrolling>
+    <ContentWithHeader title="Create new asset" action="return" withPadding withScrolling>
       <CurrencyForm onSubmit={onSubmit} submitText="Create" />
     </ContentWithHeader>
   )

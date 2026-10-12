@@ -241,7 +241,7 @@ const AccountForm: FC<Props> = (props) => {
                         prevState.map((ia) => (ia.uid === i.uid ? { ...ia, currencyId: selected } : ia)),
                       )
                     }
-                    labelText="Currency"
+                    labelText="Asset"
                   />
                 )}
 
@@ -278,7 +278,7 @@ const AccountForm: FC<Props> = (props) => {
               ])
             }
           >
-            {initialAmounts.length === 0 ? 'Add a starting balance' : 'Add a balance in another currency'}
+            {initialAmounts.length === 0 ? 'Add a starting balance' : 'Add a balance in another asset'}
           </Button>
         )}
       </FormSection>

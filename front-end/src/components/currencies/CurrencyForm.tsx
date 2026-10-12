@@ -306,7 +306,7 @@ const CurrencyForm: FC<Props> = (props) => {
           ]
         : undefined,
     ).catch((err) => {
-      showToast('Unexpected error while submitting the currency', 'error')
+      showToast('Unexpected error while submitting the asset', 'error')
       console.error(err)
     })
   }
@@ -315,9 +315,9 @@ const CurrencyForm: FC<Props> = (props) => {
     <FormWrapper onSubmit={handleSubmit} submitText={submitText}>
       <TextField
         type="text"
-        label="Currency name"
+        label="Name"
         variant="standard"
-        placeholder="e.g., Canadian dollars"
+        placeholder="e.g., Canadian dollars, VFV"
         value={name}
         onChange={(ev) => setName(ev.target.value as string)}
         helperText={errors.accountName.hasVisited ? errors.accountName.errorText : ''}

@@ -67,7 +67,7 @@ const RateAutomation: FC<Props> = ({ currency, against, scriptRunner, onUseRate 
   let validationError: string | null = null
   if (enabled && script === defaultScript) {
     validationError =
-      'You must edit the script before enabling autoupdates. Otherwise, this currency will be pinned to the default currency'
+      'You must edit the script before enabling autoupdates. Otherwise, this asset will be pinned to the default currency'
   } else if (enabled && script !== savedScript && (scriptError !== null || scriptOutput === null)) {
     validationError = 'You must have one successful run with the script before you can save it with autoupdate enabled.'
   }

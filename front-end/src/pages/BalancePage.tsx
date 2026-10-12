@@ -28,8 +28,8 @@ const groupByOptionsConfig = [
   { value: 'account', label: 'Account', majorType: 'accounts' },
   { value: 'accountType', label: 'Account Type', majorType: 'accounts' },
   { value: 'financialInstitution', label: 'Financial Institution', majorType: 'accounts' },
-  { value: 'currency', label: 'Currency', majorType: 'currencies' },
-  { value: 'currencyType', label: 'Currency Type', majorType: 'currencies' },
+  { value: 'currency', label: 'Asset', majorType: 'currencies' },
+  { value: 'currencyType', label: 'Asset Type', majorType: 'currencies' },
   { value: 'risk', label: 'Risk', majorType: 'currencies' },
 ]
 

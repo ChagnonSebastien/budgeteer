@@ -20,8 +20,8 @@ const features: { Icon: IconType; title: string; text: string }[] = [
   },
   {
     Icon: MdCurrencyExchange,
-    title: 'Any currency',
-    text: 'Track accounts in multiple currencies with exchange rates updated daily.',
+    title: 'Any currency or asset',
+    text: 'Track accounts in multiple currencies, stocks or ETFs with rates updated daily.',
   },
   {
     Icon: MdGroups,

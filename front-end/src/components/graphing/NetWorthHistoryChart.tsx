@@ -20,8 +20,8 @@ interface Props {
 }
 
 const NET_WORTH = 'Net Worth'
-const ASSETS = 'Assets'
-const LIABILITIES = 'Liabilities'
+const ASSETS = 'Holdings'
+const LIABILITIES = 'Debts'
 
 const ownAccount = (account: Account) => account
 const sender = (transaction: AugmentedTransaction) => transaction.sender

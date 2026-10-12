@@ -56,7 +56,7 @@ const JoinTransactionGroup: FC<Props> = ({ transactionGroup }) => {
         rateAutoupdateSettings: new RateAutoupdateSettings('', false),
       })
       setCurrency(created.id)
-      showToast(`${created.name} added to your currencies`)
+      showToast(`${created.name} added to your assets`)
     } catch {
       showToast('Could not add the currency', 'error')
     } finally {
@@ -84,7 +84,7 @@ const JoinTransactionGroup: FC<Props> = ({ transactionGroup }) => {
   const intro = (
     <Typography>
       You were invited to <b>{transactionGroup.name}</b>. Amounts in this group are in <b>{groupCurrencyLabel}</b>.
-      {!isGuest && ' Pick the currency you track it in, or add a copy of it to your currencies.'}
+      {!isGuest && ' Pick the currency you track it in, or add a copy of it to your assets.'}
     </Typography>
   )
 
@@ -150,7 +150,7 @@ const JoinTransactionGroup: FC<Props> = ({ transactionGroup }) => {
       <AppDialog
         open={confirmingCurrency}
         onClose={() => setConfirmingCurrency(false)}
-        title={`Add ${groupCurrencyLabel} to your currencies?`}
+        title={`Add ${groupCurrencyLabel} to your assets?`}
         maxWidth="xs"
         actions={
           <>

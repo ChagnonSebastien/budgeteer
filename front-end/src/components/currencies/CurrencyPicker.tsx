@@ -26,7 +26,7 @@ const CurrencyPicker: FC<Props> = (props) => {
       labelText={labelText}
       sx={sx}
       errorText={errorText}
-      searchPlaceholder="Search currency..."
+      searchPlaceholder="Search..."
       itemDisplayText={(currency) => currency?.symbol ?? ''}
       ItemComponent={CurrencyCard}
       additionalItemProps={{}}

@@ -191,7 +191,7 @@ const DeleteCurrencyDialog: FC<{ currency: Currency; onClose(): void; onDeleted(
             <FormControlLabel
               value="migrate"
               control={<Radio />}
-              label="Move them to another currency"
+              label="Move them to another asset"
               disabled={candidates.length === 0}
             />
             <FormControlLabel
@@ -226,8 +226,8 @@ const DeleteCurrencyDialog: FC<{ currency: Currency; onClose(): void; onDeleted(
                 renderInput={(params) => (
                   <TextField
                     {...params}
-                    label="Replacement currency"
-                    helperText={`Only currencies with ${plural(currency.decimalPoints, 'decimal place')} are listed`}
+                    label="Replacement asset"
+                    helperText={`Only assets with ${plural(currency.decimalPoints, 'decimal place')} are listed`}
                   />
                 )}
               />
