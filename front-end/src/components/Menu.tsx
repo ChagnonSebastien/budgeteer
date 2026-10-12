@@ -39,7 +39,7 @@ const NavCollapsedContext = createContext(false)
 const NavTooltip: FC<{ title: string; children: ReactElement }> = ({ title, children }) => {
   const collapsed = useContext(NavCollapsedContext)
   return (
-    <Tooltip title={title} placement="right" disableHoverListener={!collapsed} disableFocusListener={!collapsed}>
+    <Tooltip title={collapsed ? title : ''} placement="right">
       {children}
     </Tooltip>
   )
