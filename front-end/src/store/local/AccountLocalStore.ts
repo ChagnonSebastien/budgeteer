@@ -20,6 +20,7 @@ export default class AccountLocalStore {
           account.isMine,
           account.type,
           account.financialInstitution,
+          account.isDebt,
           account.createdAt,
           account.statementNames,
         ),
@@ -33,9 +34,18 @@ export default class AccountLocalStore {
       name: data.name,
       isMine: data.isMine,
       financialInstitution: data.financialInstitution,
+      isDebt: data.isDebt,
     })
 
-    return new Account(newID, data.name, data.initialAmounts, data.isMine, data.type, data.financialInstitution)
+    return new Account(
+      newID,
+      data.name,
+      data.initialAmounts,
+      data.isMine,
+      data.type,
+      data.financialInstitution,
+      data.isDebt,
+    )
   }
 
   public async createKnown(data: Account): Promise<void> {
@@ -46,6 +56,7 @@ export default class AccountLocalStore {
       name: data.name,
       isMine: data.isMine,
       financialInstitution: data.financialInstitution,
+      isDebt: data.isDebt,
       createdAt: data.createdAt,
       statementNames: data.statementNames,
     })
@@ -58,6 +69,7 @@ export default class AccountLocalStore {
       name: data.name,
       isMine: data.isMine,
       financialInstitution: data.financialInstitution,
+      isDebt: data.isDebt,
     })
   }
 
@@ -71,6 +83,7 @@ export default class AccountLocalStore {
         name: account.name,
         isMine: account.isMine,
         financialInstitution: account.financialInstitution,
+        isDebt: account.isDebt,
         createdAt: account.createdAt,
         statementNames: account.statementNames,
       })),

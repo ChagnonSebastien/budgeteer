@@ -35,6 +35,7 @@ export default class Ledger {
       type,
       financialInstitution: institution,
       isMine: true,
+      isDebt: type === 'Credit card' || type === 'Loan',
       createdAt,
       initialAmounts: initial.map(([currencyId, value]) => ({ currencyId, value })),
     })
@@ -53,6 +54,7 @@ export default class Ledger {
       type: '',
       financialInstitution: '',
       isMine: false,
+      isDebt: false,
       createdAt: date,
       initialAmounts: [],
     })

@@ -17,6 +17,7 @@ export class AccountConverter
       dto.isMine,
       dto.type,
       dto.financialInstitution,
+      dto.isDebt,
       new Date(dto.createdAt),
       dto.statementNames,
     )
@@ -35,6 +36,7 @@ export class AccountConverter
       isMine: model.isMine,
       type: model.type,
       financialInstitution: model.financialInstitution,
+      isDebt: model.isDebt,
     })
   }
 
@@ -50,6 +52,7 @@ export class AccountConverter
       ),
       type: model.type,
       financialInstitution: model.financialInstitution,
+      isDebt: model.isDebt,
     })
   }
 }

@@ -4,9 +4,16 @@ export interface UserPreferences {
   gettingStartedDismissed?: boolean
   categoryTutorialDone?: boolean
   costsGrossIncome?: number
-  costsIncomeCategoryId?: number
-  costsIncomeCategoryIds?: number[]
+  costsEmploymentIncomeCategoryIds?: number[]
+  costsOtherIncomeCategoryIds?: number[]
+  costsTaxesCategoryIds?: number[]
 }
+
+export const costsCategoryListKeys = [
+  'costsEmploymentIncomeCategoryIds',
+  'costsOtherIncomeCategoryIds',
+  'costsTaxesCategoryIds',
+] as const
 
 export type UserPreferencesPatch = { [K in keyof UserPreferences]?: UserPreferences[K] | null }
 

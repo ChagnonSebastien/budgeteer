@@ -18,6 +18,7 @@ message Account {
   string financial_institution = 6;
   string created_at = 7;
   repeated string statement_names = 8;
+  bool is_debt = 9;
 }
 
 message GetAllAccountsRequest {
@@ -33,6 +34,7 @@ message CreateAccountRequest {
   bool is_mine = 3;
   string type = 4;
   string financial_institution = 5;
+  bool is_debt = 6;
 }
 
 message CreateAccountResponse {
@@ -45,6 +47,7 @@ message EditableAccountFields {
   repeated CurrencyBalance balances = 3;
   optional string type = 5;
   optional string financial_institution = 6;
+  optional bool is_debt = 7;
 }
 
 message UpdateAccountRequest {

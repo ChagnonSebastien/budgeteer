@@ -18,6 +18,7 @@ export const useCreateAccount = (onCreated: () => void) => {
       if (typeof data.isMine === 'undefined') throw new Error('isMine cannot be undefined')
       if (typeof data.type === 'undefined') throw new Error('type cannot be undefined')
       if (typeof data.financialInstitution === 'undefined') throw new Error('financialInstitution cannot be undefined')
+      if (typeof data.isDebt === 'undefined') throw new Error('isDebt cannot be undefined')
 
       await createAccount({
         name: data.name,
@@ -25,6 +26,7 @@ export const useCreateAccount = (onCreated: () => void) => {
         isMine: data.isMine,
         type: data.type,
         financialInstitution: data.financialInstitution,
+        isDebt: data.isDebt,
       })
       showToast('Account created')
       onCreated()

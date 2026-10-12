@@ -1451,7 +1451,7 @@ export const generateDemoData = (now: Date, seed: number): DemoData => {
         gettingStartedDismissed: true,
         categoryTutorialDone: true,
         costsGrossIncome: story.currentSalary(),
-        costsIncomeCategoryIds: [story.categories.find((c) => c.name === 'Salary')!.id],
+        costsEmploymentIncomeCategoryIds: [story.categories.find((c) => c.name === 'Salary')!.id],
       },
     },
     currencies,

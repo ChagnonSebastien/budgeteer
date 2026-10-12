@@ -4,6 +4,7 @@ import { FC, ReactNode, useContext, useMemo, useState } from 'react'
 import CategoryPicker from './CategoryPicker'
 import { UpdatePreferencesContext, UserContext } from '../../App'
 import Category, { CategoryID } from '../../domain/model/category'
+import { costsCategoryListKeys } from '../../domain/model/user'
 import { ReadOnlyContext } from '../../service/ReadOnlyContext'
 import {
   CategoryServiceContext,
@@ -135,11 +136,15 @@ const DeleteCategoryDialog: FC<{ category: Category; onClose(): void; onDeleted(
         targetId: targetId === category.parentId ? undefined : targetId,
         deleteTransactions,
       })
-      const incomeCategories = preferences?.costsIncomeCategoryIds
-      if (incomeCategories?.includes(category.id)) {
-        await updatePreferences({
-          costsIncomeCategoryIds: [...new Set(incomeCategories.map((id) => (id === category.id ? targetId : id)))],
-        })
+      const remap = (ids: number[] | undefined) =>
+        ids?.includes(category.id) ? [...new Set(ids.map((id) => (id === category.id ? targetId : id)))] : undefined
+      const patch = Object.fromEntries(
+        costsCategoryListKeys
+          .map((key) => [key, remap(preferences?.[key])] as const)
+          .filter(([, ids]) => ids !== undefined),
+      )
+      if (Object.keys(patch).length > 0) {
+        await updatePreferences(patch)
       }
       await Promise.all([
         refreshCategories(),

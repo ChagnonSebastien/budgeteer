@@ -69,6 +69,7 @@ func (r *Repository) GetAllAccountsWithCurrencyIDs(ctx context.Context, userId u
 			Name:                 accountDao.Name,
 			InitialBalances:      balances,
 			IsMine:               accountDao.IsMine,
+			IsDebt:               accountDao.IsDebt,
 			Type:                 accountType,
 			FinancialInstitution: financialInstitution,
 			CreatedAt:            accountDao.CreatedAt,
@@ -84,7 +85,7 @@ func (r *Repository) CreateAccount(
 	userId uuid.UUID,
 	name string,
 	initialsAmounts []model.Balance,
-	isMine bool,
+	isMine, isDebt bool,
 	accountType, financialInstitution string,
 ) (model.AccountID, error) {
 	tx, err := r.db.BeginTx(ctx, nil)
@@ -99,6 +100,7 @@ func (r *Repository) CreateAccount(
 			Name:   name,
 			UserID: userId,
 			IsMine: isMine,
+			IsDebt: isDebt,
 			Type: sql.NullString{
 				String: accountType,
 				Valid:  accountType != "",
@@ -146,6 +148,7 @@ type UpdateAccountFields struct {
 	Name                              *string
 	InitialsAmounts                   *[]model.Balance
 	IsMine                            *bool
+	IsDebt                            *bool
 	AccountType, FinancialInstitution *string
 }
 
@@ -167,6 +170,17 @@ func (u *UpdateAccountFields) nullIsMine() sql.NullBool {
 
 	return sql.NullBool{
 		Bool:  *u.IsMine,
+		Valid: true,
+	}
+}
+
+func (u *UpdateAccountFields) nullIsDebt() sql.NullBool {
+	if u.IsDebt == nil {
+		return sql.NullBool{Valid: false}
+	}
+
+	return sql.NullBool{
+		Bool:  *u.IsDebt,
 		Valid: true,
 	}
 }
@@ -212,6 +226,7 @@ func (r *Repository) UpdateAccount(
 			ID:                         int32(id),
 			Name:                       fields.nullName(),
 			IsMine:                     fields.nullIsMine(),
+			IsDebt:                     fields.nullIsDebt(),
 			UpdateType:                 fields.AccountType != nil,
 			Type:                       fields.nullAccountType(),
 			UpdateFinancialInstitution: fields.FinancialInstitution != nil,

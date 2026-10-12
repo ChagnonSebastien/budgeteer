@@ -37,6 +37,7 @@ const AccountForm: FC<Props> = (props) => {
   const [name, setName] = useState(initialAccount?.name ?? '')
   const [type, setType] = useState(initialAccount?.type ?? '')
   const [financialInstitution, setFinancialInstitution] = useState(initialAccount?.financialInstitution ?? '')
+  const [isDebt, setIsDebt] = useState(initialAccount?.isDebt ?? false)
   const [initialAmounts, setInitialAmount] = useState<
     {
       uid: number
@@ -127,6 +128,7 @@ const AccountForm: FC<Props> = (props) => {
       isMine,
       type: type.trim(),
       financialInstitution: financialInstitution.trim(),
+      isDebt,
     }).catch((err) => {
       showToast('Unexpected error while submitting the account', 'error')
       console.error(err)
@@ -174,6 +176,31 @@ const AccountForm: FC<Props> = (props) => {
         helperText={NoError}
         onChange={(ev) => setFinancialInstitution(ev.target.value as string)}
       />
+
+      {isMine && (
+        <FormSection title="Account kind">
+          <ToggleButtonGroup
+            exclusive
+            size="small"
+            fullWidth
+            value={isDebt ? 'owe' : 'have'}
+            onChange={(_, side: 'have' | 'owe' | null) => {
+              if (side === null) return
+              setIsDebt(side === 'owe')
+              setInitialAmount((prevState) =>
+                prevState.map((ia) => (ia.value === 0 ? { ...ia, owed: side === 'owe' } : ia)),
+              )
+            }}
+          >
+            <ToggleButton value="have">Money I have</ToggleButton>
+            <ToggleButton value="owe">Money I owe</ToggleButton>
+          </ToggleButtonGroup>
+          <Typography variant="body2" color="textSecondary">
+            Credit cards, loans and lines of credit are money you owe. Costs Analysis shows spending they fund as
+            borrowed.
+          </Typography>
+        </FormSection>
+      )}
 
       <FormSection title="Starting balance">
         <Typography variant="body2" color="textSecondary">

@@ -1,13 +1,14 @@
 import { Box, IconButton } from '@mui/material'
 import { decomposeColor, recomposeColor, styled, useTheme } from '@mui/material/styles'
 import { differenceInYears, startOfDay } from 'date-fns'
-import { FC, useContext, useEffect, useMemo, useState } from 'react'
+import { FC, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 
 import { UpdatePreferencesContext, UserContext } from '../App'
-import { commonCategories, iconColor } from '../components/categories/commonCategories'
-import CostsAnalysisSetup from '../components/CostsAnalysisSetup'
-import EarningsBreakdownChart from '../components/graphing/EarningsBreakdownChart'
+import { CreateCategoryNavigationState } from './CreateCategoryPage'
+import { commonCategories, iconColor, TemplateGroup } from '../components/categories/commonCategories'
+import CostsAnalysisSetup, { CostsSetup, CostsSetupCategoryList } from '../components/CostsAnalysisSetup'
+import EarningsBreakdownChart, { Flow } from '../components/graphing/EarningsBreakdownChart'
 import { IconToolsContext } from '../components/icons/IconTools'
 import { DrawerContext } from '../components/Menu'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
@@ -15,10 +16,9 @@ import { EmptyState } from '../components/shared/Layout'
 import { useToast } from '../components/shared/ToastProvider'
 import { useElementDimensions } from '../components/shared/useDimensions'
 import { AugmentedCategory, CategoryID } from '../domain/model/category'
-import { formatAmount } from '../domain/model/currency'
+import { formatSignedAmount } from '../domain/model/currency'
+import { AugmentedTransaction } from '../domain/model/transaction'
 import MixedAugmentation from '../service/MixedAugmentation'
-import UserStore from '../UserStore'
-import { CreateCategoryNavigationState } from './CreateCategoryPage'
 
 const StyledTable = styled('table')(({ theme }) => ({
   width: '100%',
@@ -108,18 +108,43 @@ const SpacerRow = styled('tr')(({ theme }) => ({
   height: theme.spacing(2),
 }))
 
-const userStore = new UserStore(localStorage)
+const templateChild = (groupName: string, childName: string): TemplateGroup => {
+  const group = commonCategories.find((g) => g.name === groupName)!
+  return { ...group.children!.find((c) => c.name === childName)!, color: group.color }
+}
 
-const incomeTemplate = commonCategories.find((group) => group.name === 'Income')!
+const categoryTemplates: Partial<Record<CostsSetupCategoryList, TemplateGroup>> = {
+  employmentCategories: templateChild('Income', 'Salary'),
+  taxesCategories: templateChild('Fees and taxes', 'Taxes'),
+}
 
-interface SetupDraft {
-  grossIncome: number
-  incomeCategories: CategoryID[]
+interface SetupDraft extends CostsSetup {
   createdCategoryId?: CategoryID
+  createdCategoryList?: CostsSetupCategoryList
 }
 
 const isSetupDraft = (state: unknown): state is SetupDraft =>
-  typeof state === 'object' && state !== null && Array.isArray((state as SetupDraft).incomeCategories)
+  typeof state === 'object' && state !== null && Array.isArray((state as SetupDraft).employmentCategories)
+
+const withCreatedCategory = ({ createdCategoryId, createdCategoryList, ...setup }: SetupDraft): CostsSetup =>
+  createdCategoryId !== undefined && createdCategoryList
+    ? { ...setup, [createdCategoryList]: [...setup[createdCategoryList], createdCategoryId] }
+    : setup
+
+const closestList = <K extends string>(category: AugmentedCategory | undefined, lists: Record<K, CategoryID[]>) => {
+  for (; category; category = category.parent as AugmentedCategory | undefined) {
+    const id = category.id
+    const list = (Object.keys(lists) as K[]).find((key) => lists[key].includes(id))
+    if (list) return list
+  }
+  return undefined
+}
+
+const isInCategories = (category: AugmentedCategory | undefined, ids: CategoryID[]) =>
+  closestList(category, { ids }) !== undefined
+
+const isThisYear = (transaction: AugmentedTransaction) =>
+  differenceInYears(transaction.date, startOfDay(new Date())) === 0
 
 const CostsAnalysisPage: FC = () => {
   const {
@@ -143,14 +168,13 @@ const CostsAnalysisPage: FC = () => {
   const { preferences } = useContext(UserContext)
   const updatePreferences = useContext(UpdatePreferencesContext)
   const { showToast } = useToast()
-  const savedGrossIncome = preferences?.costsGrossIncome ?? userStore.getGrossIncome()
-  const legacyIncomeCategory = preferences?.costsIncomeCategoryId ?? userStore.getIncomeCategoryId()
-  const savedIncomeCategories =
-    preferences?.costsIncomeCategoryIds ?? (legacyIncomeCategory !== null ? [legacyIncomeCategory] : [])
-  const [incomeCategories, setIncomeCategories] = useState<number[]>(
-    draft ? draft.incomeCategories.concat(draft.createdCategoryId ?? []) : savedIncomeCategories,
-  )
-  const [grossIncome, setGrossIncome] = useState<number>(draft?.grossIncome ?? savedGrossIncome ?? 0)
+  const savedSetup: CostsSetup = {
+    grossIncome: preferences?.costsGrossIncome ?? 0,
+    employmentCategories: preferences?.costsEmploymentIncomeCategoryIds ?? [],
+    otherIncomeCategories: preferences?.costsOtherIncomeCategoryIds ?? [],
+    taxesCategories: preferences?.costsTaxesCategoryIds ?? [],
+  }
+  const [setup, setSetup] = useState<CostsSetup>(draft ? withCreatedCategory(draft) : savedSetup)
   const { ref: setContentRef, ...dimensions } = useElementDimensions(0, 0)
 
   // Update URL when viewType changes
@@ -171,41 +195,33 @@ const CostsAnalysisPage: FC = () => {
     // Otherwise a reload reopens the dialog with the stale draft.
     if (draft) navigate(`${location.pathname}${location.search}`, { replace: true })
 
-    if (!savedGrossIncome || savedIncomeCategories.length === 0) {
-      setShowSetup(true)
-    } else if (preferences?.costsGrossIncome === undefined || preferences?.costsIncomeCategoryIds === undefined) {
-      // Uploads values still only kept in this browser's storage.
-      updatePreferences({
-        costsGrossIncome: savedGrossIncome,
-        costsIncomeCategoryIds: savedIncomeCategories,
-        costsIncomeCategoryId: null,
-      }).catch(console.error)
-    }
+    if (preferences?.costsEmploymentIncomeCategoryIds === undefined) setShowSetup(true)
   }, [])
 
-  const income = useMemo(
-    () =>
-      transactions
-        .filter((value) => differenceInYears(value.date, startOfDay(new Date())) === 0)
-        .filter((value) => value.categoryId !== null)
-        .filter((value) => {
-          let category = value.category
-          while (typeof category !== 'undefined') {
-            if (incomeCategories.includes(category.id)) return true
-            category = category.parent
-          }
-          return false
-        })
-        .filter((value) => value.receiver?.isMine ?? false)
-        .reduce((previousValue, currentValue) => {
-          let value = currentValue.receiverAmount
-          if (currentValue.receiverCurrencyId !== defaultCurrency.id) {
-            value *= exchangeRateOnDay(currentValue.receiverCurrencyId, defaultCurrency.id, startOfDay(new Date()))
-          }
-          return previousValue + value
-        }, 0),
-    [incomeCategories, transactions, exchangeRateOnDay, defaultCurrency],
+  const convert = useCallback(
+    (amount: number, currencyId: number) =>
+      currencyId === defaultCurrency.id
+        ? amount
+        : amount * exchangeRateOnDay(currencyId, defaultCurrency.id, startOfDay(new Date())),
+    [exchangeRateOnDay, defaultCurrency],
   )
+
+  const { employmentIncome, investmentIncome, otherIncome } = useMemo(() => {
+    const lists = {
+      employmentIncome: setup.employmentCategories,
+      otherIncome: setup.otherIncomeCategories,
+    }
+    const totals = { employmentIncome: 0, investmentIncome: 0, otherIncome: 0 }
+    transactions.filter(isThisYear).forEach((transaction) => {
+      const list =
+        transaction.financialIncomeData !== null ? 'investmentIncome' : closestList(transaction.category, lists)
+      if (!list) return
+      if (transaction.receiver?.isMine)
+        totals[list] += convert(transaction.receiverAmount, transaction.receiverCurrencyId)
+      if (transaction.sender?.isMine) totals[list] -= convert(transaction.amount, transaction.currencyId)
+    })
+    return totals
+  }, [setup.employmentCategories, setup.otherIncomeCategories, transactions, convert])
 
   const topLevelCategory = (category: AugmentedCategory) => {
     while (category.parent && category.parentId !== rootCategory.id) {
@@ -216,8 +232,10 @@ const CostsAnalysisPage: FC = () => {
 
   const fixedCosts = useMemo(() => {
     const fixedTransactions = transactions
-      .filter((value) => differenceInYears(value.date, startOfDay(new Date())) === 0)
+      .filter(isThisYear)
+      .filter((value) => value.financialIncomeData === null)
       .filter((value) => value.category?.fixedCosts ?? false)
+      .filter((value) => !isInCategories(value.category, setup.taxesCategories))
 
     const data = fixedTransactions
       .filter((value) => value.sender?.isMine ?? false)
@@ -249,7 +267,7 @@ const CostsAnalysisPage: FC = () => {
       })
 
     return data
-  }, [incomeCategories, transactions, exchangeRateOnDay, defaultCurrency])
+  }, [setup.taxesCategories, transactions, exchangeRateOnDay, defaultCurrency])
 
   const fixedAmount = useMemo(() => {
     return [...fixedCosts.values()].reduce((previousValue, currentValue) => previousValue + currentValue, 0)
@@ -257,9 +275,11 @@ const CostsAnalysisPage: FC = () => {
 
   const variableCosts = useMemo(() => {
     const fixedTransactions = transactions
-      .filter((value) => differenceInYears(value.date, startOfDay(new Date())) === 0)
+      .filter(isThisYear)
+      .filter((value) => value.financialIncomeData === null)
       .filter((value) => typeof value.category !== 'undefined')
       .filter((value) => !(value.category?.fixedCosts ?? false))
+      .filter((value) => !isInCategories(value.category, setup.taxesCategories))
 
     const data = fixedTransactions
       .filter((value) => value.sender?.isMine ?? false)
@@ -291,28 +311,81 @@ const CostsAnalysisPage: FC = () => {
       })
 
     return data
-  }, [incomeCategories, transactions, exchangeRateOnDay, defaultCurrency])
+  }, [setup.taxesCategories, transactions, exchangeRateOnDay, defaultCurrency])
 
   const variableAmount = useMemo(() => {
     return [...variableCosts.values()].reduce((previousValue, currentValue) => previousValue + currentValue, 0)
   }, [variableCosts])
 
+  const { taxPayments, taxRefunds } = useMemo(
+    () =>
+      transactions
+        .filter(isThisYear)
+        .filter((value) => isInCategories(value.category, setup.taxesCategories))
+        .reduce(
+          (totals, transaction) => ({
+            taxPayments:
+              totals.taxPayments +
+              (transaction.sender?.isMine ? convert(transaction.amount, transaction.currencyId) : 0),
+            taxRefunds:
+              totals.taxRefunds +
+              (transaction.receiver?.isMine ? convert(transaction.receiverAmount, transaction.receiverCurrencyId) : 0),
+          }),
+          { taxPayments: 0, taxRefunds: 0 },
+        ),
+    [setup.taxesCategories, transactions, convert],
+  )
+
+  const netBorrowed = useMemo(
+    () =>
+      transactions
+        .filter(isThisYear)
+        .reduce(
+          (total, transaction) =>
+            total +
+            (transaction.sender?.isDebt ? convert(transaction.amount, transaction.currencyId) : 0) -
+            (transaction.receiver?.isDebt ? convert(transaction.receiverAmount, transaction.receiverCurrencyId) : 0),
+          0,
+        ),
+    [transactions, convert],
+  )
+
+  const grossIncomeAmount = setup.grossIncome * Math.pow(10, defaultCurrency.decimalPoints)
+  const withheldTaxes = grossIncomeAmount > 0 ? Math.max(0, grossIncomeAmount - employmentIncome) : 0
+  const flows: Flow[] = [
+    { id: 'Employment Income', amount: employmentIncome + withheldTaxes },
+    { id: investmentIncome < 0 ? 'Investment Losses' : 'Investment Income', amount: investmentIncome },
+    { id: 'Other Income', amount: otherIncome },
+    { id: 'Tax Refunds', amount: taxRefunds },
+    { id: 'Withheld Taxes', amount: -withheldTaxes },
+    { id: 'Tax Payments', amount: -taxPayments },
+  ]
+  const inflows = flows.filter((flow) => flow.amount > 0)
+  const outflows = flows.filter((flow) => flow.amount < 0).map((flow) => ({ ...flow, amount: -flow.amount }))
+  const netIncome = flows.reduce((total, flow) => total + flow.amount, 0)
+
+  const leftover = netIncome - variableAmount - fixedAmount
+  const leftoverFlows: Flow[] = [
+    { id: netBorrowed > 0 ? 'New Debt' : 'Debt Repayment', amount: -netBorrowed },
+    { id: leftover + netBorrowed < 0 ? 'From Savings' : 'Investments and Savings', amount: leftover + netBorrowed },
+  ]
+
   const percentages =
-    income > 0
+    netIncome > 0
       ? [
-          Math.floor((100 * fixedAmount) / income),
-          Math.floor((100 * variableAmount) / income),
-          Math.floor((100 * (income - variableAmount - fixedAmount)) / income),
+          Math.floor((100 * fixedAmount) / netIncome),
+          Math.floor((100 * variableAmount) / netIncome),
+          Math.floor((100 * leftover) / netIncome),
         ]
       : [0, 0, 0]
 
   const extraPercentages = [
-    ((100 * fixedAmount) / income) % 1,
-    ((100 * variableAmount) / income) % 1,
-    ((100 * (income - variableAmount - fixedAmount)) / income) % 1,
+    ((100 * fixedAmount) / netIncome) % 1,
+    ((100 * variableAmount) / netIncome) % 1,
+    ((100 * leftover) / netIncome) % 1,
   ]
 
-  while (income > 0 && percentages.reduce((a, b) => a + b) < 100) {
+  while (netIncome > 0 && percentages.reduce((a, b) => a + b) < 100) {
     let biggestIndex = 0
     for (let i = 1; i < extraPercentages.length; i += 1) {
       if (extraPercentages[i] > extraPercentages[biggestIndex]) {
@@ -323,9 +396,17 @@ const CostsAnalysisPage: FC = () => {
     percentages[biggestIndex] += 1
   }
 
+  const percentLabel = (index: number) => (netIncome > 0 ? `${percentages[index]}%` : 'n/a')
+  const amountCells = (value: number) => (
+    <>
+      <AmountCell>{formatSignedAmount(defaultCurrency, value, privacyMode)}</AmountCell>
+      <AmountCell>{formatSignedAmount(defaultCurrency, value / 12, privacyMode)}</AmountCell>
+    </>
+  )
+
   return (
     <ContentWithHeader
-      title="Costs Analysis"
+      title="Costs Analysis (Last 12 Months)"
       action="menu"
       withPadding
       withScrolling={viewType === 'table'}
@@ -359,38 +440,37 @@ const CostsAnalysisPage: FC = () => {
     >
       <CostsAnalysisSetup
         open={showSetup || showOptions}
-        grossIncome={grossIncome}
-        setGrossIncome={setGrossIncome}
-        incomeCategories={incomeCategories}
-        setIncomeCategories={setIncomeCategories}
+        setup={setup}
+        setSetup={setSetup}
         onComplete={() => {
           updatePreferences({
-            costsGrossIncome: grossIncome,
-            costsIncomeCategoryIds: incomeCategories,
-            costsIncomeCategoryId: null,
+            costsGrossIncome: setup.grossIncome,
+            costsEmploymentIncomeCategoryIds: setup.employmentCategories,
+            costsOtherIncomeCategoryIds: setup.otherIncomeCategories,
+            costsTaxesCategoryIds: setup.taxesCategories,
           }).catch(() => showToast('Could not save your costs analysis setup', 'error'))
           setShowSetup(false)
           setShowOptions(false)
         }}
         onDismiss={() => {
-          setGrossIncome(savedGrossIncome ?? 0)
-          setIncomeCategories(savedIncomeCategories)
+          setSetup(savedSetup)
           setShowSetup(false)
           setShowOptions(false)
         }}
-        onCreateCategory={() => {
+        onCreateCategory={(list) => {
+          const template = categoryTemplates[list]!
           const state: CreateCategoryNavigationState = {
             from: `${window.location.pathname}${window.location.search}`,
             prefill: {
-              name: incomeTemplate.name,
-              iconName: incomeTemplate.icon,
+              name: template.name,
+              iconName: template.icon,
               iconColor,
-              iconBackground: incomeTemplate.color,
+              iconBackground: template.color,
               parentId: rootCategory.id,
               fixedCosts: false,
               ordering: 0,
             },
-            returnState: { grossIncome, incomeCategories } satisfies SetupDraft,
+            returnState: { ...setup, createdCategoryList: list } satisfies SetupDraft,
           }
           navigate('/categories/new', { state })
         }}
@@ -410,8 +490,9 @@ const CostsAnalysisPage: FC = () => {
           />
         ) : viewType === 'chart' ? (
           <EarningsBreakdownChart
-            grossIncome={grossIncome * Math.pow(10, defaultCurrency.decimalPoints)}
-            netIncome={income}
+            inflows={inflows}
+            outflows={outflows}
+            netBorrowed={netBorrowed}
             fixedCosts={fixedCosts}
             variableCosts={variableCosts}
             dimensions={dimensions}
@@ -426,27 +507,17 @@ const CostsAnalysisPage: FC = () => {
                     <HeaderCell>Yearly ({defaultCurrency.symbol})</HeaderCell>
                     <HeaderCell>Monthly ({defaultCurrency.symbol})</HeaderCell>
                   </HeaderRow>
-                  <tr>
-                    <td>Gross Income</td>
-                    <AmountCell>
-                      {formatAmount(
-                        defaultCurrency,
-                        grossIncome * Math.pow(10, defaultCurrency.decimalPoints),
-                        privacyMode,
-                      )}
-                    </AmountCell>
-                    <AmountCell>
-                      {formatAmount(
-                        defaultCurrency,
-                        (grossIncome * Math.pow(10, defaultCurrency.decimalPoints)) / 12,
-                        privacyMode,
-                      )}
-                    </AmountCell>
-                  </tr>
+                  {flows
+                    .filter((flow) => flow.amount !== 0)
+                    .map((flow) => (
+                      <tr key={flow.id}>
+                        <td>{flow.id}</td>
+                        {amountCells(flow.amount)}
+                      </tr>
+                    ))}
                   <tr>
                     <td>Net Income</td>
-                    <AmountCell>{formatAmount(defaultCurrency, income, privacyMode)}</AmountCell>
-                    <AmountCell>{formatAmount(defaultCurrency, income / 12, privacyMode)}</AmountCell>
+                    {amountCells(netIncome)}
                   </tr>
                 </>
               )}
@@ -460,21 +531,19 @@ const CostsAnalysisPage: FC = () => {
                   </>
                 ) : (
                   <th colSpan={2}>
-                    {!privacyMode && `${privacyMode ? 'XX' : percentages[0]}%`}
+                    {percentLabel(0)}
                     <BudgetBar width={percentages[0]} badness={(percentages[0] - 50) / 10} />
                   </th>
                 )}
               </SectionHeader>
               <SectionHeader>
                 <th>Totals</th>
-                <AmountCell>{formatAmount(defaultCurrency, fixedAmount, privacyMode)}</AmountCell>
-                <AmountCell>{formatAmount(defaultCurrency, fixedAmount / 12, privacyMode)}</AmountCell>
+                {amountCells(fixedAmount)}
               </SectionHeader>
               {[...fixedCosts.entries()].map((entry) => (
                 <tr key={`fixed-${entry[0]}`}>
                   <td>{entry[0]}</td>
-                  <AmountCell>{formatAmount(defaultCurrency, entry[1], privacyMode)}</AmountCell>
-                  <AmountCell>{formatAmount(defaultCurrency, entry[1] / 12, privacyMode)}</AmountCell>
+                  {amountCells(entry[1])}
                 </tr>
               ))}
               <SpacerRow />
@@ -487,42 +556,43 @@ const CostsAnalysisPage: FC = () => {
                   </>
                 ) : (
                   <th colSpan={2}>
-                    {!privacyMode && `${privacyMode ? 'XX' : percentages[1]}%`}
+                    {percentLabel(1)}
                     <BudgetBar width={percentages[1]} badness={(percentages[1] - 30) / 10} />
                   </th>
                 )}
               </SectionHeader>
               <SectionHeader>
                 <th>Totals</th>
-                <AmountCell>{formatAmount(defaultCurrency, variableAmount, privacyMode)}</AmountCell>
-                <AmountCell>{formatAmount(defaultCurrency, variableAmount / 12, privacyMode)}</AmountCell>
+                {amountCells(variableAmount)}
               </SectionHeader>
               {[...variableCosts.entries()].map((entry) => (
                 <tr key={`variable-${entry[0]}`}>
                   <td>{entry[0]}</td>
-                  <AmountCell>{formatAmount(defaultCurrency, entry[1], privacyMode)}</AmountCell>
-                  <AmountCell>{formatAmount(defaultCurrency, entry[1] / 12, privacyMode)}</AmountCell>
+                  {amountCells(entry[1])}
                 </tr>
               ))}
               {!privacyMode && (
                 <>
                   <SpacerRow />
                   <SectionHeader>
-                    <th>Investments & Savings</th>
+                    <th>Unspent Income</th>
                     <th colSpan={2}>
-                      {privacyMode ? 'XX' : percentages[2]}%
+                      {percentLabel(2)}
                       <BudgetBar width={percentages[2]} badness={(20 - percentages[2]) / 10} />
                     </th>
                   </SectionHeader>
-                  <tr>
-                    <td>All</td>
-                    <AmountCell>
-                      {formatAmount(defaultCurrency, income - variableAmount - fixedAmount, privacyMode)}
-                    </AmountCell>
-                    <AmountCell>
-                      {formatAmount(defaultCurrency, (income - variableAmount - fixedAmount) / 12, privacyMode)}
-                    </AmountCell>
-                  </tr>
+                  <SectionHeader>
+                    <th>Totals</th>
+                    {amountCells(leftover)}
+                  </SectionHeader>
+                  {leftoverFlows
+                    .filter((flow) => flow.amount !== 0)
+                    .map((flow) => (
+                      <tr key={flow.id}>
+                        <td>{flow.id}</td>
+                        {amountCells(flow.amount)}
+                      </tr>
+                    ))}
                 </>
               )}
             </tbody>

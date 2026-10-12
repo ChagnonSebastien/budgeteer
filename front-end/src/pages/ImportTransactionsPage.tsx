@@ -343,6 +343,7 @@ const ImportTransactionsPage: FC = () => {
             current.isMine,
             current.type,
             current.financialInstitution,
+            current.isDebt,
             current.createdAt,
             names,
           )

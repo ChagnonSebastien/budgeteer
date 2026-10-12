@@ -22,6 +22,7 @@ export default class Account implements NamedItem<AccountID, Account> {
     public readonly isMine: boolean,
     public readonly type: string,
     public readonly financialInstitution: string,
+    public readonly isDebt: boolean,
     public readonly createdAt: Date = new Date(),
     public readonly statementNames: string[] = [],
   ) {}
@@ -36,6 +37,7 @@ export default class Account implements NamedItem<AccountID, Account> {
     if (this.isMine !== other.isMine) return false
     if (this.type !== other.type) return false
     if (this.financialInstitution !== other.financialInstitution) return false
+    if (this.isDebt !== other.isDebt) return false
     if (this.createdAt.getTime() !== other.createdAt.getTime()) return false
     if (this.statementNames.length !== other.statementNames.length) return false
     if (this.statementNames.some((name, i) => name !== other.statementNames[i])) return false
@@ -49,7 +51,7 @@ export default class Account implements NamedItem<AccountID, Account> {
 
 export type AccountUpdatableFields = Pick<
   Account,
-  'name' | 'initialAmounts' | 'type' | 'financialInstitution' | 'isMine'
+  'name' | 'initialAmounts' | 'type' | 'financialInstitution' | 'isMine' | 'isDebt'
 >
 
 export const payeeFields = (name: string): AccountUpdatableFields => ({
@@ -57,6 +59,7 @@ export const payeeFields = (name: string): AccountUpdatableFields => ({
   type: '',
   isMine: false,
   financialInstitution: '',
+  isDebt: false,
   initialAmounts: [],
 })
 

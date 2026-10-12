@@ -88,7 +88,7 @@ func TestDeleteUser(t *testing.T) {
 		shared := f.group(t, friend, target)
 		solo := f.group(t, target)
 
-		account, err := f.r.CreateAccount(f.ctx, target.id, unique("account"), nil, true, "", "")
+		account, err := f.r.CreateAccount(f.ctx, target.id, unique("account"), nil, true, false, "", "")
 		if err != nil {
 			t.Fatal(err)
 		}

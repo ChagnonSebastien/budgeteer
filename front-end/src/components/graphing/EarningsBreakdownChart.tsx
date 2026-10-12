@@ -8,128 +8,111 @@ import { darkColors, darkTheme } from '../../utils'
 import { DrawerContext } from '../Menu'
 import { GraphTooltip } from './GraphStyledComponents'
 
+export type Flow = { id: string; amount: number }
+
 interface Props {
-  grossIncome: number
-  netIncome: number
+  inflows: Flow[]
+  outflows: Flow[]
+  netBorrowed: number
   fixedCosts: Map<string, number>
   variableCosts: Map<string, number>
   dimensions: { width: number; height: number }
 }
 
-const EarningsBreakdownChart: FC<Props> = ({ grossIncome, netIncome, fixedCosts, variableCosts }) => {
+const TOTAL = 'Total Income'
+
+const EarningsBreakdownChart: FC<Props> = ({ inflows, outflows, netBorrowed, fixedCosts, variableCosts }) => {
   const theme = useTheme()
   const { defaultCurrency } = useContext(MixedAugmentation)
   const { privacyMode } = useContext(DrawerContext)
 
-  const taxes = grossIncome - netIncome
-  const investments =
-    netIncome -
-    [...fixedCosts.values()].reduce((a, b) => a + b, 0) -
-    [...variableCosts.values()].reduce((a, b) => a + b, 0)
+  const largestFirst = (costs: Map<string, number>) =>
+    [...costs.entries()].filter(([, value]) => value > 0).sort(([, a], [, b]) => b - a)
+  const positiveTotal = (amounts: number[]) => amounts.filter((value) => value > 0).reduce((a, b) => a + b, 0)
+  const uses = [
+    ...outflows,
+    { id: 'Essential Expenses', amount: positiveTotal([...fixedCosts.values()]) },
+    { id: 'Other Expenses', amount: positiveTotal([...variableCosts.values()]) },
+  ]
+  const fromDebt = Math.max(0, netBorrowed)
+  const debtRepayment = Math.max(0, -netBorrowed)
+  const balance =
+    positiveTotal(inflows.map((flow) => flow.amount)) +
+    fromDebt -
+    positiveTotal(uses.map((flow) => flow.amount)) -
+    debtRepayment
 
-  // Define node type with proper typing
   type SankeyNode = {
     id: string
     nodeColor: string
   }
 
-  // Prepare data for Sankey diagram
   const nodes: SankeyNode[] = [
-    { id: 'Income', nodeColor: darken(theme.palette.money.gain, 0.4) },
-    { id: 'Income Taxes', nodeColor: darkColors[0] },
+    { id: TOTAL, nodeColor: darken(theme.palette.money.gain, 0.4) },
+    ...inflows.map((flow, index) => ({
+      id: flow.id,
+      nodeColor: darken(theme.palette.money.gain, 0.1 + (0.3 * index) / inflows.length),
+    })),
+    { id: 'From Debt', nodeColor: darkColors[0] },
+    { id: 'From Savings', nodeColor: darkColors[3] },
+    ...outflows.map((flow) => ({ id: flow.id, nodeColor: darkColors[0] })),
     { id: 'Essential Expenses', nodeColor: darkColors[1] },
     { id: 'Other Expenses', nodeColor: darkColors[2] },
+    { id: 'Debt Repayment', nodeColor: darkColors[0] },
     { id: 'Investments and Savings', nodeColor: darkColors[3] },
   ]
 
-  // Add nodes for each fixed cost category
-  const fixedCostNodes: SankeyNode[] = [...fixedCosts.entries()]
-    .filter(([, value]) => value > 0)
-    .map(([name, _], index) => ({
-      id: `${name}`,
-      nodeColor: darkColors[(index + 4) % darkColors.length],
-    }))
+  const fixedCostNodes: SankeyNode[] = largestFirst(fixedCosts).map(([name, _], index) => ({
+    id: `${name}`,
+    nodeColor: darkColors[(index + 4) % darkColors.length],
+  }))
 
-  // Add nodes for each variable cost category
-  const variableCostNodes: SankeyNode[] = [...variableCosts.entries()]
-    .filter(([, value]) => value > 0)
-    .map(([name, _], index) => ({
-      id: `${name}`,
-      nodeColor: darkColors[(index + 4 + fixedCostNodes.length) % darkColors.length],
-    }))
+  const variableCostNodes: SankeyNode[] = largestFirst(variableCosts).map(([name, _], index) => ({
+    id: `${name}`,
+    nodeColor: darkColors[(index + 4 + fixedCostNodes.length) % darkColors.length],
+  }))
 
-  // Combine all nodes
+  const links = [
+    ...inflows.map((flow) => ({ source: flow.id, target: TOTAL, value: flow.amount })),
+    { source: 'From Debt', target: TOTAL, value: fromDebt },
+    { source: 'From Savings', target: TOTAL, value: -balance },
+    ...uses.map((flow) => ({ source: TOTAL, target: flow.id, value: flow.amount })),
+    { source: TOTAL, target: 'Debt Repayment', value: debtRepayment },
+    { source: TOTAL, target: 'Investments and Savings', value: balance },
+  ]
+
+  const fixedCostLinks = largestFirst(fixedCosts).map(([name, value]) => ({
+    source: 'Essential Expenses',
+    target: `${name}`,
+    value,
+  }))
+
+  const variableCostLinks = largestFirst(variableCosts).map(([name, value]) => ({
+    source: 'Other Expenses',
+    target: `${name}`,
+    value,
+  }))
+
+  const allLinks = [...links, ...fixedCostLinks, ...variableCostLinks].filter((link) => link.value > 0)
+  const linkedIds = new Set(allLinks.flatMap((link) => [link.source, link.target]))
+
   const allNodes = [...nodes, ...fixedCostNodes, ...variableCostNodes].reduce<SankeyNode[]>((prev, current) => {
-    if (prev.findIndex((e) => e.id === current.id) !== -1) {
+    if (!linkedIds.has(current.id) || prev.findIndex((e) => e.id === current.id) !== -1) {
       return prev
     }
 
     return [...prev, current]
   }, [])
 
-  // Create links
-  const links = [
-    { source: 'Income', target: 'Income Taxes', value: taxes },
-    {
-      source: 'Income',
-      target: 'Essential Expenses',
-      value: [...fixedCosts.values()].filter((value) => value > 0).reduce((a, b) => a + b, 0),
-    },
-    {
-      source: 'Income',
-      target: 'Other Expenses',
-      value: [...variableCosts.values()].filter((value) => value > 0).reduce((a, b) => a + b, 0),
-    },
-    { source: 'Income', target: 'Investments and Savings', value: investments },
-  ]
-
-  // Add links from Fixed Costs to individual categories
-  const fixedCostLinks = [...fixedCosts.entries()]
-    .filter(([, value]) => value > 0)
-    .map(([name, value]) => ({
-      source: 'Essential Expenses',
-      target: `${name}`,
-      value,
-    }))
-
-  // Add links from Variable Costs to individual categories
-  const variableCostLinks = [...variableCosts.entries()]
-    .filter(([, value]) => value > 0)
-    .map(([name, value]) => ({
-      source: 'Other Expenses',
-      target: `${name}`,
-      value,
-    }))
-
-  // Combine all links
-  const allLinks = [...links, ...fixedCostLinks, ...variableCostLinks]
-
   const data = {
     nodes: allNodes,
     links: allLinks,
   }
 
-  // Calculate total income (gross income)
-  const totalIncome = grossIncome
-
-  // Function to get node value
-  const getNodeValue = (nodeId: string): number => {
-    if (nodeId === 'Income') return totalIncome
-    if (nodeId === 'Income Taxes') return taxes
-    if (nodeId === 'Essential Expenses') return [...fixedCosts.values()].filter((v) => v > 0).reduce((a, b) => a + b, 0)
-    if (nodeId === 'Other Expenses') return [...variableCosts.values()].filter((v) => v > 0).reduce((a, b) => a + b, 0)
-    if (nodeId === 'Investments and Savings') return investments
-
-    // Check if it's a fixed cost category
-    const fixedCost = fixedCosts.get(nodeId)
-    if (fixedCost !== undefined) return fixedCost
-
-    // Check if it's a variable cost category
-    const variableCost = variableCosts.get(nodeId)
-    if (variableCost !== undefined) return variableCost
-
-    return 0
-  }
+  const sumLinks = (side: 'source' | 'target', nodeId: string) =>
+    allLinks.filter((link) => link[side] === nodeId).reduce((a, link) => a + link.value, 0)
+  const getNodeValue = (nodeId: string) => sumLinks('source', nodeId) || sumLinks('target', nodeId)
+  const totalIncome = getNodeValue(TOTAL)
 
   // Custom node tooltip
   const NodeTooltip = ({
@@ -139,13 +122,15 @@ const EarningsBreakdownChart: FC<Props> = ({ grossIncome, netIncome, fixedCosts,
   }) => {
     const nodeId = node.id as string
     const value = getNodeValue(nodeId)
-    const percentage = (value / totalIncome) * 100
+    const percentage = totalIncome > 0 ? (value / totalIncome) * 100 : 0
 
     return (
       <GraphTooltip style={{ whiteSpace: 'nowrap' }}>
         <div style={{ fontWeight: 'bold' }}>{nodeId}</div>
         {!privacyMode && <div>{formatFull(defaultCurrency, value, privacyMode)}</div>}
-        <div>{percentage.toFixed(1)}% of Income</div>
+        <div>
+          {percentage.toFixed(1)}% of {TOTAL}
+        </div>
       </GraphTooltip>
     )
   }
@@ -159,15 +144,18 @@ const EarningsBreakdownChart: FC<Props> = ({ grossIncome, netIncome, fixedCosts,
     const sourceId = link.source.id as string
     const targetId = link.target.id as string
     const value = link.value
-    const sourceValue = getNodeValue(sourceId)
-    const percentage = sourceValue > 0 ? (value / sourceValue) * 100 : 0
+    const isInflow = targetId === TOTAL
+    const flowId = isInflow ? sourceId : targetId
+    const baseId = isInflow ? targetId : sourceId
+    const baseValue = getNodeValue(baseId)
+    const percentage = baseValue > 0 ? (value / baseValue) * 100 : 0
 
     return (
       <GraphTooltip style={{ whiteSpace: 'nowrap' }}>
-        <div style={{ fontWeight: 'bold' }}>{targetId}</div>
+        <div style={{ fontWeight: 'bold' }}>{flowId}</div>
         {!privacyMode && <div>{formatFull(defaultCurrency, value, privacyMode)}</div>}
         <div>
-          {percentage.toFixed(1)}% of {sourceId}
+          {percentage.toFixed(1)}% of {baseId}
         </div>
       </GraphTooltip>
     )
@@ -178,6 +166,7 @@ const EarningsBreakdownChart: FC<Props> = ({ grossIncome, netIncome, fixedCosts,
       data={data}
       margin={{ top: 50, right: window.innerWidth / 40, bottom: 50, left: window.innerWidth / 40 }}
       align="start"
+      sort="input"
       colors={(node) => node.nodeColor || darkColors[0]}
       nodeOpacity={1}
       nodeHoverOpacity={1}
@@ -201,6 +190,7 @@ const EarningsBreakdownChart: FC<Props> = ({ grossIncome, netIncome, fixedCosts,
         modifiers: [['brighter', 1]],
       }}
       label={(node) => {
+        if (node.id === TOTAL) return ''
         const words = node.id.toString().split(' ')
         const lineHeight = 15
 

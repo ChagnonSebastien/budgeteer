@@ -65,3 +65,5 @@ databaseChangeLog:
       file: ./changelogs/032-currency-created-at.sql
   - include:
       file: ./changelogs/033-admin-users.sql
+  - include:
+      file: ./changelogs/034-account-is-debt.sql

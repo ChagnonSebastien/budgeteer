@@ -1,8 +1,6 @@
 import User from './domain/model/user'
 
 const KEY_USER = 'user'
-const KEY_GROSS_INCOME = 'gross_income'
-const KEY_INCOME_CATEGORY = 'incomeCategory'
 const KEY_PRIVACY_MODE = 'privacyMode'
 const KEY_NAV_COLLAPSED = 'navCollapsed'
 
@@ -20,24 +18,6 @@ export default class UserStore {
 
   public upsertUser(user: User) {
     this.storage.setItem(KEY_USER, JSON.stringify({ ...user }))
-  }
-
-  public getGrossIncome() {
-    const grossIncome = this.storage.getItem(KEY_GROSS_INCOME)
-    if (grossIncome == null) {
-      return null
-    }
-
-    return parseInt(grossIncome)
-  }
-
-  public getIncomeCategoryId() {
-    const incomeCategory = this.storage.getItem(KEY_INCOME_CATEGORY)
-    if (incomeCategory == null) {
-      return null
-    }
-
-    return parseInt(incomeCategory)
   }
 
   public getPrivacyMode() {
@@ -63,8 +43,6 @@ export default class UserStore {
 
   public clear() {
     this.storage.removeItem(KEY_USER)
-    this.storage.removeItem(KEY_GROSS_INCOME)
-    this.storage.removeItem(KEY_INCOME_CATEGORY)
     this.storage.removeItem(KEY_PRIVACY_MODE)
   }
 }

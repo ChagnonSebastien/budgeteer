@@ -53,6 +53,7 @@ export default class AccountRemoteStore {
       data.isMine,
       data.type,
       data.financialInstitution,
+      data.isDebt,
     )
   }
 

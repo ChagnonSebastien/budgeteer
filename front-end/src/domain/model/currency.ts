@@ -76,6 +76,11 @@ export function formatAmount(currency: Currency, rawValue: number, anonymity = f
   })
 }
 
+export function formatSignedAmount(currency: Currency, rawValue: number, anonymity = false): string {
+  const formatted = formatAmount(currency, rawValue, anonymity)
+  return rawValue < 0 ? `(${formatted})` : formatted
+}
+
 export function parseAmount(currency: Currency, rawValue: string): number {
   return Math.round(parseFloat(rawValue) * Math.pow(10, currency.decimalPoints))
 }

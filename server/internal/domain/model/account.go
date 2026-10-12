@@ -14,6 +14,7 @@ type Account struct {
 	Name                 string
 	InitialBalances      []Balance
 	IsMine               bool
+	IsDebt               bool
 	Type                 string
 	FinancialInstitution string
 	CreatedAt            time.Time

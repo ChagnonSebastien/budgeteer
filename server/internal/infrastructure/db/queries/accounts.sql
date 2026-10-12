@@ -1,11 +1,11 @@
 -- name: GetAllAccounts :many
-SELECT id, name, is_mine, type, financial_institution, created_at, statement_names
+SELECT id, name, is_mine, is_debt, type, financial_institution, created_at, statement_names
 FROM accounts
 WHERE user_id = sqlc.arg(user_id);
 
 -- name: CreateAccount :one
-INSERT INTO accounts (name, user_id, is_mine, type, financial_institution)
-VALUES (sqlc.arg(name), sqlc.arg(user_id), sqlc.arg(is_mine), sqlc.arg(type), sqlc.arg(financial_institution))
+INSERT INTO accounts (name, user_id, is_mine, is_debt, type, financial_institution)
+VALUES (sqlc.arg(name), sqlc.arg(user_id), sqlc.arg(is_mine), sqlc.arg(is_debt), sqlc.arg(type), sqlc.arg(financial_institution))
 RETURNING id;
 
 -- name: UpdateAccount :exec
@@ -13,6 +13,7 @@ UPDATE accounts
 SET
     name = COALESCE(sqlc.narg(name), name),
     is_mine = COALESCE(sqlc.narg(is_mine), is_mine),
+    is_debt = COALESCE(sqlc.narg(is_debt), is_debt),
     type = CASE
         WHEN sqlc.arg(update_type)::boolean THEN sqlc.narg(type)
         ELSE type

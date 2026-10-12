@@ -22,7 +22,7 @@ type accountRepository interface {
 		userId uuid.UUID,
 		name string,
 		balances []model.Balance,
-		isMine bool,
+		isMine, isDebt bool,
 		accountType, financialInstitution string,
 	) (model.AccountID, error)
 	UpdateAccount(
@@ -72,6 +72,7 @@ func (s *AccountHandler) CreateAccount(ctx context.Context, req *dto.CreateAccou
 		req.Name,
 		balances,
 		req.IsMine,
+		req.IsDebt,
 		req.Type,
 		req.FinancialInstitution,
 	)
@@ -114,6 +115,7 @@ func (s *AccountHandler) UpdateAccount(
 		repository.UpdateAccountFields{
 			Name:                 req.Fields.Name,
 			InitialsAmounts:      initialAmounts,
+			IsDebt:               req.Fields.IsDebt,
 			AccountType:          req.Fields.Type,
 			FinancialInstitution: req.Fields.FinancialInstitution,
 		},
@@ -156,6 +158,7 @@ func (s *AccountHandler) GetAllAccounts(ctx context.Context, _ *dto.GetAllAccoun
 			Name:                 account.Name,
 			Balances:             balances,
 			IsMine:               account.IsMine,
+			IsDebt:               account.IsDebt,
 			Type:                 account.Type,
 			FinancialInstitution: account.FinancialInstitution,
 			CreatedAt:            account.CreatedAt.Format(time.RFC3339),

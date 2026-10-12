@@ -43,7 +43,7 @@ func newImportFixture(t *testing.T) importFixture {
 
 func (f importFixture) account(t *testing.T, isMine bool) int {
 	t.Helper()
-	id, err := f.r.CreateAccount(f.ctx, f.userID, unique("account"), nil, isMine, "", "")
+	id, err := f.r.CreateAccount(f.ctx, f.userID, unique("account"), nil, isMine, false, "", "")
 	if err != nil {
 		t.Fatal(err)
 	}

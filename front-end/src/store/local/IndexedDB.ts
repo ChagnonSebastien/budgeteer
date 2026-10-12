@@ -25,6 +25,7 @@ interface Account {
   }[]
   isMine: boolean
   financialInstitution: string
+  isDebt: boolean
   type: string
   createdAt?: Date
   statementNames?: string[]
