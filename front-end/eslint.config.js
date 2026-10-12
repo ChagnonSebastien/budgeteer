@@ -27,6 +27,7 @@ export default [
       'import/resolver': { node: { extensions: ['.js', '.jsx', '.ts', '.tsx'] } },
     },
     rules: {
+      'import/no-unresolved': ['error', { ignore: ['^virtual:'] }],
       'import/order': [
         'error',
         {

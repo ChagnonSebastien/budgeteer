@@ -7,10 +7,13 @@ import { createRoot } from 'react-dom/client'
 
 import App from './App'
 import { ToastProvider } from './components/shared/ToastProvider'
+import { registerServiceWorker } from './registerServiceWorker'
 import { darkTheme } from './theme'
 
 const container = document.getElementById('root')
 const root = createRoot(container!)
+
+registerServiceWorker()
 
 loader.config({ paths: { vs: '/vs' } })
 
