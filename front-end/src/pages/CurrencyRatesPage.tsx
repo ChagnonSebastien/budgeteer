@@ -10,6 +10,7 @@ import ExchangeRateHistory from '../components/graphing/ExchangeRateHistory'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
 import { FormSection } from '../components/shared/FormWrapper'
 import useQueryParams from '../components/shared/useQueryParams'
+import { rateWording } from '../domain/model/currencyClassification'
 import MixedAugmentation from '../service/MixedAugmentation'
 import { CurrencyServiceContext } from '../service/ServiceContext'
 
@@ -39,8 +40,10 @@ const CurrencyRatesPage: FC<Props> = ({ scriptRunner }) => {
 
   if (isUnavailable) return null
 
+  const wording = rateWording(currency.type)
+
   return (
-    <ContentWithHeader title={`${currency.name} rates`} action="return" withPadding withScrolling>
+    <ContentWithHeader title={`${currency.name} ${wording.noun}s`} action="return" withPadding withScrolling>
       <Stack spacing={2} sx={{ mt: 2, width: '100%', maxWidth: (t) => t.contentWidth.default }}>
         <FormSection title="History">
           <Box sx={{ height: 200, display: 'flex' }}>
@@ -53,7 +56,7 @@ const CurrencyRatesPage: FC<Props> = ({ scriptRunner }) => {
           value={tab}
           onChange={(_ev, value) => updateQueryParams({ tab: value === 'rates' ? null : value }, true)}
         >
-          <Tab label={`Rates in ${defaultCurrency.symbol}`} value="rates" />
+          <Tab label={`${wording.title}s in ${defaultCurrency.symbol}`} value="rates" />
           <Tab
             label={
               <Badge color="error" variant="dot" invisible={!hasRateFetchFailure(currency)} sx={{ pr: 1 }}>

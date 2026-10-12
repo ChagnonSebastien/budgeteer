@@ -9,6 +9,7 @@ import {
   CurrencyTypeOption,
   currencyTypeOptions,
   isCurrencyRisk,
+  rateWording,
   suggestedRiskForType,
 } from '../../domain/model/currencyClassification'
 import { CurrencyServiceContext } from '../../service/ServiceContext'
@@ -452,7 +453,7 @@ const CurrencyForm: FC<Props> = (props) => {
               {formatExample(123.456789)} {symbol}
             </Typography>
           </FormSection>
-          <FormSection title="Exchange rate">
+          <FormSection title={rateWording(type).title}>
             <Stack direction="row" alignItems="flex-end" spacing={2}>
               <Box sx={{ flexShrink: 0 }}>{`1 ${symbol === '' ? '___' : symbol}`}</Box>
               <Box sx={{ flexShrink: 0 }}>=</Box>

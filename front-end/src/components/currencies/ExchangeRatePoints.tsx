@@ -4,6 +4,7 @@ import { FC, useCallback, useContext, useMemo, useState } from 'react'
 
 import { parseRate, toDisplayedRate, toStoredRate } from './exchangeRateUnits'
 import Currency from '../../domain/model/currency'
+import { rateWording } from '../../domain/model/currencyClassification'
 import ExchangeRate, { ExchangeRateIdentifiableFields } from '../../domain/model/exchangeRate'
 import { ReadOnlyContext } from '../../service/ReadOnlyContext'
 import { ExchangeRateServiceContext } from '../../service/ServiceContext'
@@ -97,7 +98,7 @@ const PointDialog: FC<{
     <AppDialog
       open
       onClose={onClose}
-      title={draft.editing === null ? 'Add exchange rate' : 'Edit exchange rate'}
+      title={`${draft.editing === null ? 'Add' : 'Edit'} ${rateWording(currency.type).noun}`}
       maxWidth="xs"
       fullWidth
       actions={
@@ -135,7 +136,8 @@ const PointDialog: FC<{
         </Stack>
         {overwritten && (
           <Typography variant="caption" color="warning">
-            Replaces the rate of {formatRate(overwritten.displayed)} {against.symbol} already recorded on this date
+            Replaces the {rateWording(currency.type).noun} of {formatRate(overwritten.displayed)} {against.symbol}{' '}
+            already recorded on this date
           </Typography>
         )}
       </Stack>
@@ -157,6 +159,7 @@ const ExchangeRatePoints: FC<Props> = ({ currency, against, draft, onDraftChange
   const readOnly = useContext(ReadOnlyContext) !== null
   const [expanded, setExpanded] = useState(false)
   const [toDelete, setToDelete] = useState<RatePoint | null>(null)
+  const wording = rateWording(currency.type)
 
   const visiblePoints = expanded ? points : points.slice(0, COLLAPSED_POINTS)
 
@@ -171,10 +174,10 @@ const ExchangeRatePoints: FC<Props> = ({ currency, against, draft, onDraftChange
           onDraftChange({ editing: null, date: startOfDay(new Date()), rate: rateInput(points[0]?.displayed ?? 1) })
         }
       >
-        Add rate
+        Add {wording.noun}
       </Button>
 
-      {points.length === 0 && <Typography color="text.secondary">No rate recorded yet</Typography>}
+      {points.length === 0 && <Typography color="text.secondary">No {wording.noun} recorded yet</Typography>}
 
       {visiblePoints.map((point) => (
         <Stack key={point.source.id} direction="row" alignItems="center" spacing={1}>
@@ -214,9 +217,9 @@ const ExchangeRatePoints: FC<Props> = ({ currency, against, draft, onDraftChange
           onSave={async (editing, date, displayed) => {
             try {
               await save(editing, date, displayed)
-              showToast('Exchange rate saved')
+              showToast(`${wording.title} saved`)
             } catch (err) {
-              showToast('Unexpected error while saving the exchange rate', 'error')
+              showToast(`Unexpected error while saving the ${wording.noun}`, 'error')
               console.error(err)
               throw err
             }
@@ -226,19 +229,19 @@ const ExchangeRatePoints: FC<Props> = ({ currency, against, draft, onDraftChange
 
       <ConfirmDeleteModal
         open={toDelete !== null}
-        title="Delete exchange rate"
+        title={`Delete ${wording.noun}`}
         description={
           toDelete === null
             ? ''
-            : `Delete the rate of ${formatRate(toDelete.displayed)} ${against.symbol} recorded on ${formatDate(toDelete.date, 'MMM d, yyyy')}?`
+            : `Delete the ${wording.noun} of ${formatRate(toDelete.displayed)} ${against.symbol} recorded on ${formatDate(toDelete.date, 'MMM d, yyyy')}?`
         }
         onCancel={() => setToDelete(null)}
         onConfirm={async () => {
           try {
             await remove(toDelete!)
-            showToast('Exchange rate deleted')
+            showToast(`${wording.title} deleted`)
           } catch (err) {
-            showToast('Unexpected error while deleting the exchange rate', 'error')
+            showToast(`Unexpected error while deleting the ${wording.noun}`, 'error')
             console.error(err)
           }
           setToDelete(null)

@@ -18,6 +18,7 @@ import { Column } from '../components/shared/Layout'
 import { useNavigateFromDialog } from '../components/shared/useCloseOnBack'
 import useQueryParams from '../components/shared/useQueryParams'
 import Currency, { CurrencyID, formatFull } from '../domain/model/currency'
+import { rateWording } from '../domain/model/currencyClassification'
 import { isOldAndUnused } from '../domain/model/usage'
 import MixedAugmentation from '../service/MixedAugmentation'
 import { AccountServiceContext, CurrencyServiceContext } from '../service/ServiceContext'
@@ -191,6 +192,19 @@ const CurrenciesPage: FC = () => {
               },
             }}
             bottomMenu={[
+              ...(clickedCurrency.id === defaultCurrency.id
+                ? []
+                : [
+                    {
+                      Icon: IconLib.BsGraphUp,
+                      label: `${rateWording(clickedCurrency.type).title}s`,
+                      intent: 'adjust' as const,
+                      description: `Edit ${rateWording(clickedCurrency.type).noun}s and automate fetching`,
+                      action: () => navigate(`/assets/rates/${clickedCurrency.id}`),
+                      disabled: false,
+                      availableOffline: true,
+                    },
+                  ]),
               {
                 Icon: IconLib.MdEdit,
                 label: 'Edit Asset',
@@ -199,19 +213,6 @@ const CurrenciesPage: FC = () => {
                 action: () => navigate(`/assets/edit/${clickedCurrency.id}`),
                 disabled: false,
               },
-              ...(clickedCurrency.id === defaultCurrency.id
-                ? []
-                : [
-                    {
-                      Icon: IconLib.BsGraphUp,
-                      label: 'Exchange Rates',
-                      intent: 'adjust' as const,
-                      description: 'Edit rate points and automate fetching',
-                      action: () => navigate(`/assets/rates/${clickedCurrency.id}`),
-                      disabled: false,
-                      availableOffline: true,
-                    },
-                  ]),
               {
                 Icon: IconLib.MdDelete,
                 label: 'Delete Asset',
@@ -226,7 +227,7 @@ const CurrenciesPage: FC = () => {
               <DetailCard title="Default Currency" value="" />
             ) : (
               <>
-                <DetailHeading>EXCHANGE RATE HISTORY</DetailHeading>
+                <DetailHeading>{rateWording(clickedCurrency.type).noun.toUpperCase()} HISTORY</DetailHeading>
                 <div
                   style={{
                     height: 'max(25vh, 200px)',

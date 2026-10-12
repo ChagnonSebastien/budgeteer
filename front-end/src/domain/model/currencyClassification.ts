@@ -102,3 +102,12 @@ export function suggestedRiskForType(type: string, currencies: Currency[]): Curr
 
   return proposedTypes.find((t) => t.name.toLowerCase() === normalized)?.risk ?? null
 }
+
+const cashTypes = new Set(Object.keys(proposedCurrencyTypes['Cash & deposits']).map((t) => t.toLowerCase()))
+
+export function rateWording(type: string): { noun: string; title: string } {
+  const normalized = type.trim().toLowerCase()
+  return normalized === '' || cashTypes.has(normalized)
+    ? { noun: 'exchange rate', title: 'Exchange rate' }
+    : { noun: 'price', title: 'Price' }
+}
