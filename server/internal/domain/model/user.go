@@ -3,6 +3,9 @@ package model
 import (
 	"encoding/json"
 	"errors"
+	"time"
+
+	"github.com/google/uuid"
 )
 
 type Email string
@@ -13,6 +16,23 @@ type UserParams struct {
 	DefaultCurrency      *CurrencyID
 	HiddenDefaultAccount AccountID
 	Preferences          json.RawMessage
+	IsAdmin              bool
+}
+
+type LoginMethod string
+
+const (
+	LoginMethodNone LoginMethod = ""
+	LoginMethodOidc LoginMethod = "oidc"
+)
+
+type UserSummary struct {
+	ID          uuid.UUID
+	Email       string
+	Name        string
+	LoginMethod LoginMethod
+	IsAdmin     bool
+	LastSeenAt  *time.Time
 }
 
 var (

@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package users;
+
+option go_package = "server/internal/infrastructure/messaging/dto";
+
+enum LoginMethod {
+  LOGIN_METHOD_NONE = 0;
+  LOGIN_METHOD_OIDC = 1;
+}
+
+message User {
+  string id = 1;
+  string email = 2;
+  string name = 3;
+  LoginMethod login_method = 4;
+  bool is_admin = 5;
+  optional string last_seen_at = 6;
+}
+
+message GetAllUsersRequest {
+}
+
+message GetAllUsersResponse {
+  repeated User users = 1;
+}
+
+service UserService {
+  rpc GetAllUsers(GetAllUsersRequest) returns (GetAllUsersResponse);
+}

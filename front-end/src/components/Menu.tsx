@@ -126,6 +126,7 @@ const ContentContainer = styled(
 
 interface MenuEntry {
   guestView: boolean
+  adminOnly?: boolean
   requires?: 'transactions' | 'financialIncome'
   element: AppPage | Subsection
 }
@@ -177,6 +178,12 @@ const appPages: MenuEntry[] = [
   },
   { guestView: false, element: new Subsection('Shared expenses') },
   { guestView: true, element: new AppPage('Groups', '/transaction-groups', PreparedIcon.TbUsersGroup, []) },
+  { guestView: false, adminOnly: true, element: new Subsection('Management') },
+  {
+    guestView: false,
+    adminOnly: true,
+    element: new AppPage('Users', '/management/users', PreparedIcon.TbUserShield, []),
+  },
 ]
 
 const userStore = new UserStore(localStorage)
@@ -203,7 +210,7 @@ const DrawerWrapper: FC<Props> = ({ logout, children, userIsGuest = false }) => 
     () => augmentedTransactions.some((t) => t.financialIncomeData !== null),
     [augmentedTransactions],
   )
-  const { email } = useContext(UserContext)
+  const { email, is_admin: isAdmin } = useContext(UserContext)
   const { IconLib } = useContext(IconToolsContext)
 
   const [open, setOpen] = useState(false)
@@ -259,6 +266,7 @@ const DrawerWrapper: FC<Props> = ({ logout, children, userIsGuest = false }) => 
         <Box sx={{ flexGrow: 1 }}>
           {appPages
             .filter((appPage) => !userIsGuest || appPage.guestView)
+            .filter((appPage) => !appPage.adminOnly || isAdmin)
             .filter(
               (appPage) =>
                 !appPage.requires ||

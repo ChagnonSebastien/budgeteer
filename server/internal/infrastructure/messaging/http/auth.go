@@ -47,6 +47,7 @@ type userRepository interface {
 	ResolveOidcUser(ctx context.Context, identity model.OidcIdentity) (uuid.UUID, string, error)
 	CreateSession(ctx context.Context, sessionID string, userID uuid.UUID, expiresAt time.Time) error
 	SessionIsActive(ctx context.Context, sessionID string, userID uuid.UUID) (bool, error)
+	TouchLastSeen(ctx context.Context, userID uuid.UUID) error
 	DeleteSession(ctx context.Context, sessionID string) error
 	EnsureGuestUser(ctx context.Context, email string) (uuid.UUID, error)
 	SetDisplayName(ctx context.Context, userId uuid.UUID, displayName string) error
@@ -302,6 +303,7 @@ type userInfoResponse struct {
 	HiddenDefaultAccount   *int              `json:"hidden_default_account"`
 	AuthentificationMethod shared.AuthMethod `json:"authentification_method"`
 	Preferences            json.RawMessage   `json:"preferences"`
+	IsAdmin                bool              `json:"is_admin"`
 }
 
 func (auth *Auth) userInfoHandler(resp http.ResponseWriter, req *http.Request) {
@@ -338,6 +340,7 @@ func (auth *Auth) userInfoHandler(resp http.ResponseWriter, req *http.Request) {
 		HiddenDefaultAccount:   &hiddenDefaultAccount,
 		AuthentificationMethod: user.AuthMethod,
 		Preferences:            params.Preferences,
+		IsAdmin:                user.HasAdminRights(params.IsAdmin),
 	}
 
 	resp.Header().Set("Content-Type", "application/json")

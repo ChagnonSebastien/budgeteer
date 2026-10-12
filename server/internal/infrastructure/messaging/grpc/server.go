@@ -18,6 +18,7 @@ type Services struct {
 	UnconfirmedTransaction unconfirmedTransactionRepository
 	Settlement             settlementRepository
 	Import                 importRepository
+	User                   userRepository
 }
 
 func NewServerWithHandlers(services Services) *grpc.Server {
@@ -31,6 +32,7 @@ func NewServerWithHandlers(services Services) *grpc.Server {
 	dto.RegisterUnconfirmedTransactionServiceServer(grpcServer, &UnconfirmedTransactionHandler{unconfirmedTransactionService: services.UnconfirmedTransaction})
 	dto.RegisterSettlementServiceServer(grpcServer, &SettlementHandler{settlementService: services.Settlement})
 	dto.RegisterImportServiceServer(grpcServer, &ImportHandler{importService: services.Import})
+	dto.RegisterUserServiceServer(grpcServer, &UserHandler{userService: services.User})
 
 	return grpcServer
 }

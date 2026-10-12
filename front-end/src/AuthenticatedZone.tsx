@@ -37,6 +37,7 @@ import SettlementPage from './pages/SettlementPage'
 import TransactionGroups from './pages/TransactionGroups'
 import TransactionPage from './pages/TransactionPage'
 import TrendsPage from './pages/TrendsPage'
+import UsersPage from './pages/UsersPage'
 import { makeAccountPersistenceAugmenter } from './service/AccountServiceAugmenter'
 import { BasicCrudServiceWithPersistence } from './service/BasicCrudServiceWithPersistence'
 import { makeCategoryPersistenceAugmenter } from './service/CategoryServiceAugmenter'
@@ -54,6 +55,7 @@ import {
   TransactionServiceContext,
   SettlementServiceContext,
   UnconfirmedTransactionServiceContext,
+  UserStoreContext,
 } from './service/ServiceContext'
 import { makeSettlementPersistenceAugmenter } from './service/SettlementServiceAugmenter'
 import { makeTransactionGroupPersistenceAugmenter } from './service/TransactionGroupServiceAugmenter'
@@ -78,6 +80,7 @@ import SettlementRemoteStore from './store/remote/SettlementRemoteStore'
 import TransactionGroupRemoteStore from './store/remote/TransactionGroupRemoteStore'
 import TransactionRemoteStore from './store/remote/TransactionRemoteStore'
 import UnconfirmedTransactionRemoteStore from './store/remote/UnconfirmedTransactionRemoteStore'
+import UserRemoteStore from './store/remote/UserRemoteStore'
 
 const transport = new GrpcWebFetchTransport({
   baseUrl: import.meta.env.VITE_BACKEND_URL || '/',
@@ -91,6 +94,7 @@ const transactionRemoteStore = new TransactionRemoteStore(transport)
 const exchangeRateRemoteStore = new ExchangeRateRemoteStore(transport)
 const unconfirmedTransactionRemoteStore = new UnconfirmedTransactionRemoteStore(transport)
 const importRemoteStore = new ImportRemoteStore(transport)
+const userRemoteStore = new UserRemoteStore(transport)
 
 const currencyLocalStore = new CurrencyLocalStore(IndexedDB)
 const categoryLocalStore = new CategoryLocalStore(IndexedDB)
@@ -376,6 +380,7 @@ interface Props {
 
 const AuthenticatedZone: FC<Props> = (props) => {
   const { logout, setDefaultCurrency } = props
+  const { is_admin: isAdmin } = useContext(UserContext)
 
   const testGetRateScript = useMemo(() => exchangeRateRemoteStore.testGetRateScript(), [])
 
@@ -437,12 +442,13 @@ const AuthenticatedZone: FC<Props> = (props) => {
               path="/transaction-groups/manage/:transactionGroupId/unconfirmed/:unconfirmedTransactionId/promote"
               element={<PromoteUnconfirmedTransactionPage />}
             />
+            {isAdmin && <Route path="/management/users" element={<UsersPage />} />}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </DrawerWrapper>
       </CategoryTutorialGate>
     ),
-    [logout, testGetRateScript],
+    [logout, testGetRateScript, isAdmin],
   )
 
   const CompleteView = useMemo<FC>(
@@ -452,9 +458,11 @@ const AuthenticatedZone: FC<Props> = (props) => {
 
   return (
     <ImportStoreContext.Provider value={importRemoteStore}>
-      <PersistenceSetup>
-        <WaitOnInitializedData NextComponent={CompleteView} setDefaultCurrency={setDefaultCurrency} />
-      </PersistenceSetup>
+      <UserStoreContext.Provider value={userRemoteStore}>
+        <PersistenceSetup>
+          <WaitOnInitializedData NextComponent={CompleteView} setDefaultCurrency={setDefaultCurrency} />
+        </PersistenceSetup>
+      </UserStoreContext.Provider>
     </ImportStoreContext.Provider>
   )
 }

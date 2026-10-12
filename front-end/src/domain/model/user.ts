@@ -19,4 +19,14 @@ export default interface User {
   hidden_default_account: number
   authentification_method: AuthMethod
   preferences?: UserPreferences
+  is_admin?: boolean
+}
+
+export interface ManagedUser {
+  id: string
+  email: string
+  name: string
+  loginMethod: 'oidc' | null
+  isAdmin: boolean
+  lastSeenAt: Date | null
 }

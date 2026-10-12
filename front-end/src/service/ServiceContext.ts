@@ -27,6 +27,7 @@ import UnconfirmedTransaction, {
 import Unique, { IdIdentifier } from '../domain/model/Unique'
 import { UpdateExchangeRateFields } from '../store/remote/dto/exchangeRate'
 import ImportRemoteStore from '../store/remote/ImportRemoteStore'
+import UserRemoteStore from '../store/remote/UserRemoteStore'
 
 const nilPersistence = {
   initialized: false,
@@ -165,3 +166,5 @@ export const SettlementServiceContext = createContext<
 })
 
 export const ImportStoreContext = createContext<ImportRemoteStore | null>(null)
+
+export const UserStoreContext = createContext<UserRemoteStore | null>(null)

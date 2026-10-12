@@ -12,6 +12,7 @@ import (
 	"github.com/google/uuid"
 
 	"chagnon.dev/budget-server/internal/infrastructure/messaging/shared"
+	"chagnon.dev/budget-server/internal/logging"
 )
 
 const sessionTokenTTL = 7 * 24 * time.Hour
@@ -122,6 +123,10 @@ func (auth *Auth) parseSessionToken(ctx context.Context, getCookie func(name str
 	}
 	if !active {
 		return nil, errSessionRevoked
+	}
+
+	if err := auth.UserService.TouchLastSeen(ctx, claims.user.ID); err != nil {
+		logging.FromContext(ctx).Error("recording last seen", "error", err)
 	}
 
 	return &claims.user, nil

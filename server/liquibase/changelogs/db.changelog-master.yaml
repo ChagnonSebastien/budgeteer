@@ -63,3 +63,5 @@ databaseChangeLog:
       file: ./changelogs/031-transaction-import.sql
   - include:
       file: ./changelogs/032-currency-created-at.sql
+  - include:
+      file: ./changelogs/033-admin-users.sql

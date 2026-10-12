@@ -49,7 +49,7 @@ SET display_name = sqlc.arg(display_name)
 WHERE id = sqlc.arg(user_id);
 
 -- name: GetUserParams :one
-SELECT default_currency, hidden_default_account, username, display_name, preferences
+SELECT default_currency, hidden_default_account, username, display_name, preferences, is_admin
 FROM users
 WHERE id = sqlc.arg(user_id);
 
@@ -58,3 +58,24 @@ UPDATE users
 SET preferences = jsonb_strip_nulls(preferences || sqlc.arg(patch)::jsonb)
 WHERE id = sqlc.arg(user_id)
   AND octet_length((preferences || sqlc.arg(patch)::jsonb)::text) <= sqlc.arg(max_size)::int;
+
+-- name: IsAdmin :one
+SELECT is_admin
+FROM users
+WHERE id = sqlc.arg(user_id);
+
+-- name: TouchLastSeen :exec
+UPDATE users
+SET last_seen_at = now()
+WHERE id = sqlc.arg(user_id)
+  AND (last_seen_at IS NULL OR last_seen_at < now() - interval '5 minutes');
+
+-- name: GetAllUsers :many
+SELECT id,
+       email,
+       coalesce(display_name, username)::text AS name,
+       (oidc_sub IS NOT NULL)::bool          AS has_oidc,
+       is_admin,
+       last_seen_at
+FROM users
+ORDER BY last_seen_at DESC NULLS LAST, email;

@@ -26,6 +26,10 @@ func (u *User) IsGuestUser() bool {
 	return u.AuthMethod == AuthMethodGuest
 }
 
+func (u *User) HasAdminRights(isAdmin bool) bool {
+	return isAdmin && !u.IsGuestUser()
+}
+
 func NewContext(ctx context.Context, u *User) context.Context {
 	return context.WithValue(ctx, userKey{}, u)
 }

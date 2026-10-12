@@ -135,7 +135,44 @@ func (r *Repository) UserParams(ctx context.Context, id uuid.UUID) (*model.UserP
 		DefaultCurrency:      defaultCurrency,
 		HiddenDefaultAccount: model.AccountID(hiddenDefaultAccount),
 		Preferences:          userParams.Preferences,
+		IsAdmin:              userParams.IsAdmin,
 	}, nil
+}
+
+func (r *Repository) IsAdmin(ctx context.Context, id uuid.UUID) (bool, error) {
+	return r.queries.IsAdmin(ctx, id)
+}
+
+func (r *Repository) TouchLastSeen(ctx context.Context, id uuid.UUID) error {
+	return r.queries.TouchLastSeen(ctx, id)
+}
+
+func (r *Repository) GetAllUsers(ctx context.Context) ([]model.UserSummary, error) {
+	rows, err := r.queries.GetAllUsers(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	users := make([]model.UserSummary, len(rows))
+	for i, row := range rows {
+		loginMethod := model.LoginMethodNone
+		if row.HasOidc {
+			loginMethod = model.LoginMethodOidc
+		}
+		var lastSeenAt *time.Time
+		if row.LastSeenAt.Valid {
+			lastSeenAt = &row.LastSeenAt.Time
+		}
+		users[i] = model.UserSummary{
+			ID:          row.ID,
+			Email:       row.Email,
+			Name:        row.Name,
+			LoginMethod: loginMethod,
+			IsAdmin:     row.IsAdmin,
+			LastSeenAt:  lastSeenAt,
+		}
+	}
+	return users, nil
 }
 
 func (r *Repository) MergePreferences(ctx context.Context, id uuid.UUID, patch json.RawMessage, maxSize int) (bool, error) {

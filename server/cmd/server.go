@@ -182,6 +182,7 @@ func (s *Server) Serve(ctx context.Context) error {
 				UnconfirmedTransaction: repos,
 				Settlement:             repos,
 				Import:                 repos,
+				User:                   repos,
 			},
 		),
 		http.NewAuth(

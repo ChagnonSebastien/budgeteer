@@ -145,6 +145,7 @@ func TestSessionIsRevokedOnLogout(t *testing.T) {
 		Return(nil).Once()
 	isIssued := mock.MatchedBy(func(id string) bool { return id == sessionID })
 	users.EXPECT().SessionIsActive(mock.Anything, isIssued, user.ID).Return(true, nil).Once()
+	users.EXPECT().TouchLastSeen(mock.Anything, user.ID).Return(nil).Once()
 	users.EXPECT().DeleteSession(mock.Anything, isIssued).Return(nil).Once()
 	users.EXPECT().SessionIsActive(mock.Anything, isIssued, user.ID).Return(false, nil).Once()
 
