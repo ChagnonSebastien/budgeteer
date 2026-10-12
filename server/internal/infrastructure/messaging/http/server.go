@@ -73,6 +73,10 @@ func (s *GrpcWebServer) catchAllHandler(resp http.ResponseWriter, req *http.Requ
 		filePath := filepath.Join(webDirectory, req.URL.Path)
 		_, err := os.Stat(filePath)
 		if err == nil {
+			// Unhashed files like sw.js must be revalidated, or the CDN keeps serving a stale service worker.
+			if !strings.HasPrefix(req.URL.Path, "/assets/") {
+				resp.Header().Set("Cache-Control", "no-cache")
+			}
 			http.ServeFile(resp, req, filePath)
 			return
 		}
@@ -96,6 +100,7 @@ func (s *GrpcWebServer) catchAllHandler(resp http.ResponseWriter, req *http.Requ
 		strings.Join(securityPolicies, " "),
 	)
 
+	resp.Header().Set("Cache-Control", "no-cache")
 	http.ServeFile(resp, req, filepath.Join(webDirectory, "index.html"))
 }
 
