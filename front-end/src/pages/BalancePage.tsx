@@ -171,7 +171,12 @@ const BalancePage: FC = () => {
   )
 
   return (
-    <ContentWithHeader title="Balances" action="menu" withScrolling={!splitHorizontal}>
+    <ContentWithHeader
+      title="Balances"
+      action="menu"
+      withScrolling={!splitHorizontal}
+      scrollEndSx={{ bgcolor: 'surface.subtle' }}
+    >
       <SplitView
         first={firstDivision}
         second={secondDivision}

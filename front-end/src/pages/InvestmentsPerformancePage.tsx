@@ -15,7 +15,12 @@ const InvestmentsPerformancePage: FC = () => {
   const timeRange = useMemo<[Date, Date]>(() => [fromDate, toDate], [fromDate, toDate])
 
   return (
-    <ContentWithHeader title="Investments Performance" action="menu" withScrolling>
+    <ContentWithHeader
+      title="Investments Performance"
+      action="menu"
+      withScrolling
+      scrollEndSx={{ bgcolor: 'surface.subtle' }}
+    >
       <GraphContainer sx={{ flex: '1 0 max(50vh, 300px)', display: 'flex' }}>
         <ExchangeRateComparison startDate={timeRange[0]} endDate={timeRange[1]} />
       </GraphContainer>
