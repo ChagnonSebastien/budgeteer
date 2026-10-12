@@ -32,6 +32,7 @@ import EditUnconfirmedTransactionPage from './pages/EditUnconfirmedTransactionPa
 import ImportTransactionsPage from './pages/ImportTransactionsPage'
 import InvestmentsPerformancePage from './pages/InvestmentsPerformancePage'
 import ManageTransactionGroup from './pages/ManageTransactionGroup'
+import NetWorthPage from './pages/NetWorthPage'
 import PromoteUnconfirmedTransactionPage from './pages/PromoteUnconfirmedTransactionPage'
 import SettlementPage from './pages/SettlementPage'
 import TransactionGroups from './pages/TransactionGroups'
@@ -407,6 +408,7 @@ const AuthenticatedZone: FC<Props> = (props) => {
             <Route path="/transactions/new" element={<CreateTransactionPage />} />
             <Route path="/transactions/import" element={<ImportTransactionsPage />} />
             <Route path="/transactions/edit/:transactionId" element={<EditTransactionPage />} />
+            <Route path="/net-worth" element={<NetWorthPage />} />
             <Route path="/balances" element={<BalancePage />} />
             <Route path="/costs" element={<CostsAnalysisPage />} />
             <Route path="/trends" element={<TrendsPage />} />

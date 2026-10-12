@@ -150,6 +150,11 @@ const appPages: MenuEntry[] = [
   {
     guestView: false,
     requires: 'transactions',
+    element: new AppPage('Net Worth', '/net-worth', PreparedIcon.TbPigMoney, ['from', 'to', 'accounts']),
+  },
+  {
+    guestView: false,
+    requires: 'transactions',
     element: new AppPage('Balances', '/balances', PreparedIcon.TbScale, ['from', 'to', 'accounts']),
   },
   {

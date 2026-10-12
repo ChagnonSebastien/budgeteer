@@ -1,5 +1,5 @@
 import { useTheme } from '@mui/material'
-import React, { FC, useCallback, useMemo, useState } from 'react'
+import React, { FC, useCallback, useId, useMemo, useState } from 'react'
 
 import {
   DateAxisConfig,
@@ -46,6 +46,7 @@ type Props = {
   yAxisConfig?: Partial<ValueAxisConfig>
   stackTooltip?: (tooltipProps: TooltipSlice) => React.ReactNode
   height?: number
+  signFillDataset?: string
 }
 
 const LineChart: FC<Props> = ({
@@ -57,9 +58,11 @@ const LineChart: FC<Props> = ({
   xAxisConfig = {},
   yAxisConfig = {},
   stackTooltip,
+  signFillDataset,
 }) => {
   const [tooltip, setTooltip] = useState<TooltipDefinition | null>(null)
   const theme = useTheme()
+  const clipId = useId().replace(/:/g, '')
 
   const datasetLabels = useMemo<DataSetLabel[]>(() => {
     if (propDatasetsLabels && propDatasetsLabels.length) return propDatasetsLabels
@@ -139,19 +142,36 @@ const LineChart: FC<Props> = ({
     [datasetLabels, colors, theme],
   )
 
-  const splines = useMemo(() => {
-    return datasets.map((values) => {
-      const segments: [number, number][][] = [[]]
-      values.forEach((value, i) => {
-        if (value === null) {
-          if (segments[segments.length - 1].length > 0) segments.push([])
-          return
-        }
-        segments[segments.length - 1].push([xScale(i), yNormalScale(value)])
-      })
-      return segments.map(monotoneSpline).join(' ')
-    })
-  }, [data, datasets, xScale, yNormalScale])
+  const segments = useMemo(
+    () =>
+      datasets.map((values) => {
+        const segments: [number, number][][] = [[]]
+        values.forEach((value, i) => {
+          if (value === null) {
+            if (segments[segments.length - 1].length > 0) segments.push([])
+            return
+          }
+          segments[segments.length - 1].push([xScale(i), yNormalScale(value)])
+        })
+        return segments
+      }),
+    [datasets, xScale, yNormalScale],
+  )
+
+  const splines = useMemo(() => segments.map((s) => s.map(monotoneSpline).join(' ')), [segments])
+
+  const zeroY = Math.min(1000, Math.max(0, yNormalScale(0)))
+
+  const signFillPath = useMemo(() => {
+    const index = signFillDataset === undefined ? -1 : datasetLabels.indexOf(signFillDataset)
+    if (index === -1) return null
+    return segments[index]
+      .filter((points) => points.length > 1)
+      .map(
+        (points) => `${monotoneSpline(points)} L${points[points.length - 1][0]},${zeroY} L${points[0][0]},${zeroY} Z`,
+      )
+      .join(' ')
+  }, [segments, signFillDataset, datasetLabels, zeroY])
 
   const computeStack = (idx: number) =>
     datasetLabels.flatMap((key, li) => {
@@ -184,6 +204,30 @@ const LineChart: FC<Props> = ({
         onPointerMove={showTooltipAt}
         onPointerDown={showTooltipAt}
       >
+        {signFillPath && (
+          <>
+            <defs>
+              <clipPath id={`${clipId}-above`}>
+                <rect x={0} y={0} width={1000} height={zeroY} />
+              </clipPath>
+              <clipPath id={`${clipId}-below`}>
+                <rect x={0} y={zeroY} width={1000} height={1000 - zeroY} />
+              </clipPath>
+            </defs>
+            <path
+              d={signFillPath}
+              fill={theme.palette.success.main}
+              fillOpacity={0.15}
+              clipPath={`url(#${clipId}-above)`}
+            />
+            <path
+              d={signFillPath}
+              fill={theme.palette.error.main}
+              fillOpacity={0.15}
+              clipPath={`url(#${clipId}-below)`}
+            />
+          </>
+        )}
         {/* Baselines */}
         {datasetLabels.map((datasetLabel, i) => {
           const path = splines[i]
@@ -202,7 +246,7 @@ const LineChart: FC<Props> = ({
         })}
       </svg>
     ),
-    [layers, datasetLabels, getColor],
+    [layers, datasetLabels, getColor, splines, signFillPath, zeroY, clipId, theme],
   )
 
   return (
