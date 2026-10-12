@@ -1,11 +1,10 @@
 import { FC, useCallback, useContext, useMemo } from 'react'
 
-import NetWorthChart, { useNetWorthChartData } from './NetWorthChart'
+import NetWorthChart, { useBalanceChartData } from './NetWorthChart'
+import { DateNavigation } from './TimerangeGraphUtils'
 import Account from '../../domain/model/account'
 import { CurrencyID } from '../../domain/model/currency'
-import MixedAugmentation from '../../service/MixedAugmentation'
 import { AccountServiceContext } from '../../service/ServiceContext'
-import useTimerangeSegmentation from '../shared/useTimerangeSegmentation'
 
 export type GroupType = 'financialInstitution' | 'accountType' | 'account' | 'none'
 
@@ -17,6 +16,7 @@ interface Props {
   baselineConfig?: 'none' | 'showIndividualBaselines' | 'showGlobalBaseline'
   scale?: 'absolute' | 'cropped-absolute' | 'relative'
   type?: 'passive' | 'active'
+  navigation?: DateNavigation
 }
 
 const AccountsBalanceChart: FC<Props> = (props) => {
@@ -28,9 +28,9 @@ const AccountsBalanceChart: FC<Props> = (props) => {
     baselineConfig = 'none',
     scale = 'absolute',
     type = 'active',
+    navigation,
   } = props
 
-  const { augmentedTransactions } = useContext(MixedAugmentation)
   const { myOwnAccounts } = useContext(AccountServiceContext)
 
   const group = useCallback(
@@ -60,19 +60,13 @@ const AccountsBalanceChart: FC<Props> = (props) => {
     return filtered.length === 0 ? myOwnAccounts : filtered
   }, [myOwnAccounts, filterByAccounts])
 
-  const { showLabelEveryFactor, timeseriesIteratorGenerator } = useTimerangeSegmentation(fromDate, toDate, 'dense')
-
-  const timeseriesIterator = useMemo(
-    () => timeseriesIteratorGenerator(augmentedTransactions),
-    [timeseriesIteratorGenerator, augmentedTransactions],
-  )
-
   const getInitialAmountIdentifier = (account: Account, _currencyId: CurrencyID) => {
     return account
   }
 
-  const { data, labels, groups } = useNetWorthChartData(
-    timeseriesIterator,
+  const { data, labels, groups, showLabelEveryFactor, colorReference } = useBalanceChartData(
+    fromDate,
+    toDate,
     getInitialAmountIdentifier,
     (transaction) => transaction.sender,
     (transaction) => transaction.receiver,
@@ -89,6 +83,8 @@ const AccountsBalanceChart: FC<Props> = (props) => {
       labels={labels}
       data={data}
       showLabelEveryFactor={showLabelEveryFactor}
+      navigation={navigation}
+      colorReference={colorReference}
     />
   )
 }

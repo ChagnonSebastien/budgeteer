@@ -4,10 +4,11 @@ import React, { FC, useCallback, useId, useMemo, useState } from 'react'
 import {
   DateAxisConfig,
   DateBasedGraph,
+  DateNavigation,
+  GraphSvg,
   MarginConfig,
   monotoneSpline,
   TooltipDefinition,
-  tooltipAtPointer,
   useValueAxisConfiguration,
   ValueAxisConfig,
 } from './TimerangeGraphUtils'
@@ -47,6 +48,7 @@ type Props = {
   stackTooltip?: (tooltipProps: TooltipSlice) => React.ReactNode
   height?: number
   signFillDataset?: string
+  navigation?: DateNavigation
 }
 
 const LineChart: FC<Props> = ({
@@ -59,6 +61,7 @@ const LineChart: FC<Props> = ({
   yAxisConfig = {},
   stackTooltip,
   signFillDataset,
+  navigation,
 }) => {
   const [tooltip, setTooltip] = useState<TooltipDefinition | null>(null)
   const theme = useTheme()
@@ -187,23 +190,9 @@ const LineChart: FC<Props> = ({
       ]
     })
 
-  const showTooltipAt = (e: React.PointerEvent<SVGSVGElement>) => setTooltip(tooltipAtPointer(e, data.length))
-
   const graph = useMemo(
     () => (
-      <svg
-        preserveAspectRatio="none"
-        viewBox={`0 0 1000 1000`}
-        style={{
-          height: '100%',
-          width: '100%',
-          position: 'absolute',
-          zIndex: 1,
-          touchAction: 'pan-y',
-        }}
-        onPointerMove={showTooltipAt}
-        onPointerDown={showTooltipAt}
-      >
+      <GraphSvg navigation={navigation} datasetLength={data.length} setTooltip={setTooltip}>
         {signFillPath && (
           <>
             <defs>
@@ -244,9 +233,9 @@ const LineChart: FC<Props> = ({
             />
           )
         })}
-      </svg>
+      </GraphSvg>
     ),
-    [layers, datasetLabels, getColor, splines, signFillPath, zeroY, clipId, theme],
+    [layers, datasetLabels, getColor, splines, signFillPath, zeroY, clipId, theme, navigation, data.length],
   )
 
   return (

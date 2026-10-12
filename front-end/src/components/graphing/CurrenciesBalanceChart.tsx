@@ -1,11 +1,10 @@
 import { FC, useCallback, useContext, useMemo } from 'react'
 
-import NetWorthChart, { useNetWorthChartData } from './NetWorthChart'
+import NetWorthChart, { useBalanceChartData } from './NetWorthChart'
+import { DateNavigation } from './TimerangeGraphUtils'
 import Account from '../../domain/model/account'
 import Currency, { CurrencyID } from '../../domain/model/currency'
-import MixedAugmentation from '../../service/MixedAugmentation'
 import { AccountServiceContext, CurrencyServiceContext } from '../../service/ServiceContext'
-import useTimerangeSegmentation from '../shared/useTimerangeSegmentation'
 
 export type GroupType = 'currency' | 'risk' | 'currencyType' | 'none'
 
@@ -17,6 +16,7 @@ interface Props {
   baselineConfig?: 'none' | 'showIndividualBaselines' | 'showGlobalBaseline'
   scale?: 'absolute' | 'cropped-absolute' | 'relative'
   type?: 'passive' | 'active'
+  navigation?: DateNavigation
 }
 
 const CurrenciesBalanceChart: FC<Props> = (props) => {
@@ -28,9 +28,9 @@ const CurrenciesBalanceChart: FC<Props> = (props) => {
     baselineConfig = 'none',
     scale = 'absolute',
     type = 'active',
+    navigation,
   } = props
 
-  const { augmentedTransactions } = useContext(MixedAugmentation)
   const { myOwnAccounts } = useContext(AccountServiceContext)
   const { state: currencies } = useContext(CurrencyServiceContext)
 
@@ -61,19 +61,13 @@ const CurrenciesBalanceChart: FC<Props> = (props) => {
     return filtered.length === 0 ? myOwnAccounts : filtered
   }, [myOwnAccounts, filterByAccounts])
 
-  const { showLabelEveryFactor, timeseriesIteratorGenerator } = useTimerangeSegmentation(fromDate, toDate, 'dense')
-
-  const timeseriesIterator = useMemo(
-    () => timeseriesIteratorGenerator(augmentedTransactions),
-    [timeseriesIteratorGenerator, augmentedTransactions],
-  )
-
   const getInitialAmountIdentifier = (_account: Account, currencyId?: CurrencyID) => {
     return currencies.find((c) => c.id === currencyId)
   }
 
-  const { data, labels, groups } = useNetWorthChartData(
-    timeseriesIterator,
+  const { data, labels, groups, showLabelEveryFactor, colorReference } = useBalanceChartData(
+    fromDate,
+    toDate,
     getInitialAmountIdentifier,
     (transaction) => transaction.currency,
     (transaction) => transaction.receiverCurrency,
@@ -91,6 +85,8 @@ const CurrenciesBalanceChart: FC<Props> = (props) => {
       labels={labels}
       data={data}
       showLabelEveryFactor={showLabelEveryFactor}
+      navigation={navigation}
+      colorReference={colorReference}
     />
   )
 }

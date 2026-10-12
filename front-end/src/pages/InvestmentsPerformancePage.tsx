@@ -10,6 +10,7 @@ const InvestmentsPerformancePage: FC = () => {
   const {
     fromDate,
     toDate,
+    dateNavigation,
     overview: filterOverview,
   } = useTransactionFilter({ canFilterByCategory: false, canFilterByAccount: false })
   const timeRange = useMemo<[Date, Date]>(() => [fromDate, toDate], [fromDate, toDate])
@@ -22,7 +23,7 @@ const InvestmentsPerformancePage: FC = () => {
       scrollEndSx={{ bgcolor: 'surface.subtle' }}
     >
       <GraphContainer sx={{ flex: '1 0 max(50vh, 300px)', display: 'flex' }}>
-        <ExchangeRateComparison startDate={timeRange[0]} endDate={timeRange[1]} />
+        <ExchangeRateComparison startDate={timeRange[0]} endDate={timeRange[1]} navigation={dateNavigation} />
       </GraphContainer>
 
       <SecondDivision

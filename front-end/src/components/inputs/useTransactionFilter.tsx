@@ -2,6 +2,7 @@ import { Box, Button, Chip, Stack, useMediaQuery, useTheme } from '@mui/material
 import { DateCalendar, DateView, PickerValidDate } from '@mui/x-date-pickers'
 import {
   addDays,
+  addHours,
   differenceInMonths,
   formatDate,
   isAfter,
@@ -14,7 +15,7 @@ import {
   subYears,
 } from 'date-fns'
 import dayjs from 'dayjs'
-import { FC, ReactNode, useContext, useMemo, useState } from 'react'
+import { FC, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 
 import TimeRange from './slider/TimeRange'
 import Account, { AccountID } from '../../domain/model/account'
@@ -23,6 +24,7 @@ import AccountCard from '../accounts/AccountCard'
 import GroupedAccountList from '../accounts/GroupedAccountList'
 import { CategoryCard } from '../categories/CategoryCard'
 import { CategoryList } from '../categories/CategoryList'
+import { DateNavigation } from '../graphing/TimerangeGraphUtils'
 import AppDialog from '../shared/AppDialog'
 import useQueryParams from '../shared/useQueryParams'
 
@@ -36,6 +38,7 @@ type DateFilters = {
   slider: ReactNode
   fromDate: Date
   toDate: Date
+  dateNavigation: DateNavigation
 }
 
 const presets: { label: string; from: (today: Date) => Date }[] = [
@@ -47,6 +50,10 @@ const presets: { label: string; from: (today: Date) => Date }[] = [
   { label: '1W', from: (today) => subWeeks(today, 1) },
 ]
 const maxPresets = 5
+
+const nearestDay = (time: number) => startOfDay(addHours(time, 12))
+const minNavigationSpanMs = 7 * 24 * 60 * 60 * 1000
+const sameDays = (a: [Date, Date], b: [Date, Date]) => isSameDay(a[0], b[0]) && isSameDay(a[1], b[1])
 
 const PresetButton: FC<{ label: string; onClick(): void }> = ({ label, onClick }) => (
   <Box
@@ -83,7 +90,7 @@ export const useDateFilter = (): DateFilters => {
   const today = startOfDay(new Date())
   const historyStart = min([startOfDay(transactions.at(-1)?.date ?? today), subWeeks(today, 1)])
 
-  const timeRange = useMemo(
+  const urlRange = useMemo<[Date, Date]>(
     () => [
       qp.from
         ? startOfDay(new Date(Number.parseInt(qp.from)!))
@@ -92,6 +99,52 @@ export const useDateFilter = (): DateFilters => {
     ],
     [qp.from, qp.to, historyStart.getTime()],
   )
+
+  const [pendingRange, setPendingRange] = useState<[Date, Date] | null>(null)
+  const pendingRef = useRef(pendingRange)
+  pendingRef.current = pendingRange
+  const committedRef = useRef<[Date, Date] | null>(null)
+  // A commit landing mid-gesture must not drop the range the gesture has since moved to.
+  useEffect(() => {
+    const ownCommit = committedRef.current !== null && sameDays(committedRef.current, urlRange)
+    committedRef.current = null
+    setPendingRange((pending) => (pending && ownCommit && !sameDays(pending, urlRange) ? pending : null))
+  }, [urlRange])
+  const timeRange = pendingRange ?? urlRange
+
+  const preview = useCallback(
+    (from: Date, to: Date): [Date, Date] => {
+      const span = Math.min(
+        Math.max(to.getTime() - from.getTime(), minNavigationSpanMs),
+        today.getTime() - historyStart.getTime(),
+      )
+      const end = Math.min(Math.max(to.getTime(), historyStart.getTime() + span), today.getTime())
+      const rounded: [Date, Date] = [nearestDay(end - span), nearestDay(end)]
+      const current = pendingRef.current ?? urlRange
+      if (!sameDays(rounded, current)) {
+        pendingRef.current = rounded
+        setPendingRange(rounded)
+      }
+      return [new Date(end - span), new Date(end)]
+    },
+    [urlRange, today.getTime(), historyStart.getTime()],
+  )
+
+  const commit = useCallback(
+    (replace = true) => {
+      const pending = pendingRef.current
+      if (!pending) return
+      if (sameDays(pending, urlRange)) {
+        setPendingRange(null)
+        return
+      }
+      committedRef.current = pending
+      updateQueryParams({ from: String(pending[0].getTime()), to: String(pending[1].getTime()) }, replace)
+    },
+    [urlRange, updateQueryParams],
+  )
+
+  const dateNavigation = useMemo(() => ({ range: timeRange, preview, commit }), [timeRange, preview, commit])
 
   const fittingPresets = presets.filter((preset) => isAfter(preset.from(today), historyStart)).slice(0, maxPresets)
 
@@ -124,18 +177,10 @@ export const useDateFilter = (): DateFilters => {
       timelineInterval={[historyStart, today]}
       step={20}
       formatTick={(a) => formatDate(new Date(a), differenceInMonths(today, historyStart) < 3 ? 'MMM d' : 'MMM yyyy')}
-      onUpdateCallback={(_data: { error: boolean; time: Date[] }) => {
-        /** Ignore */
-      }}
-      onChangeCallback={(data: Date[]) => {
-        if (isSameDay(data[0], timeRange[0]) && isSameDay(data[1], timeRange[1])) {
-          return
-        }
-
-        updateQueryParams({
-          from: String(startOfDay(data[0]).getTime()),
-          to: String(startOfDay(data[1]).getTime()),
-        })
+      onUpdateCallback={({ time }: { error: boolean; time: Date[] }) => preview(time[0], time[1])}
+      onChangeCallback={(time: Date[]) => {
+        preview(time[0], time[1])
+        commit(false)
       }}
     />
   )
@@ -145,6 +190,7 @@ export const useDateFilter = (): DateFilters => {
     slider: slider,
     fromDate: timeRange[0],
     toDate: timeRange[1],
+    dateNavigation,
   }
 }
 
@@ -161,6 +207,7 @@ type TransactionFilters = {
   categoryFilter: number[] | null
   fromDate: Date
   toDate: Date
+  dateNavigation: DateNavigation
 }
 
 interface TransactionFilterOptions {
@@ -180,7 +227,7 @@ const useTransactionFilter = ({
   const accountFilter = useMemo<number[] | null>(() => JSON.parse(qp.accounts ?? null), [qp.accounts])
   const categoryFilter = useMemo<number[] | null>(() => JSON.parse(qp.categories ?? null), [qp.categories])
 
-  const { quickFilter, toDate, fromDate, slider } = useDateFilter()
+  const { quickFilter, toDate, fromDate, slider, dateNavigation } = useDateFilter()
   const timeRange = useMemo<[Date, Date]>(() => [fromDate, toDate], [fromDate, toDate])
 
   const hasFilters = accountFilter !== null || categoryFilter !== null
@@ -474,6 +521,7 @@ const useTransactionFilter = ({
     categoryFilter,
     fromDate: timeRange[0],
     toDate: timeRange[1],
+    dateNavigation,
   }
 }
 

@@ -139,6 +139,31 @@ class TimeRange extends React.Component<TimeRangeProps> {
     onUpdateCallback({ error: false, time: formattedNewTime })
   }
 
+  dragSelection = (e: React.PointerEvent<HTMLDivElement>) => {
+    const track = e.currentTarget
+    const width = track.parentElement!.getBoundingClientRect().width
+    const [min, max] = this.props.timelineInterval.map(Number)
+    const [start, end] = this.props.selectedInterval.map(Number)
+    const startX = e.clientX
+    let time = this.props.selectedInterval
+    track.setPointerCapture(e.pointerId)
+
+    const move = (moveEvent: PointerEvent) => {
+      const shift = Math.min(Math.max(((moveEvent.clientX - startX) / width) * (max - min), min - start), max - end)
+      time = [new Date(start + shift), new Date(end + shift)]
+      this.props.onUpdateCallback({ error: false, time })
+    }
+    const release = () => {
+      track.removeEventListener('pointermove', move)
+      track.removeEventListener('pointerup', release)
+      track.removeEventListener('pointercancel', release)
+      this.props.onChangeCallback(time)
+    }
+    track.addEventListener('pointermove', move)
+    track.addEventListener('pointerup', release)
+    track.addEventListener('pointercancel', release)
+  }
+
   getDateTicks = () => {
     const { timelineInterval, ticksNumber } = this.props
     return scaleTime()
@@ -209,6 +234,7 @@ class TimeRange extends React.Component<TimeRangeProps> {
                     source={source}
                     target={target}
                     getTrackProps={getTrackProps}
+                    onPointerDown={this.dragSelection}
                     styles={trackStyles}
                   />
                 ))}

@@ -1,8 +1,8 @@
 import { Box } from '@mui/material'
-import { formatDate } from 'date-fns'
+import { formatDate, min, startOfDay } from 'date-fns'
 import React, { FC, Fragment, useContext, useMemo } from 'react'
 
-import AreaChart, { Bucket, TooltipSlice } from './AreaChart'
+import AreaChart, { Bucket, ColorReference, TooltipSlice } from './AreaChart'
 import {
   GraphTooltip,
   GraphTooltipColor,
@@ -12,13 +12,14 @@ import {
   GraphTooltipValue,
   gainColor,
 } from './GraphStyledComponents'
+import { DateNavigation } from './TimerangeGraphUtils'
 import Account from '../../domain/model/account'
 import { CurrencyID, formatFull } from '../../domain/model/currency'
 import { AugmentedTransaction } from '../../domain/model/transaction'
 import MixedAugmentation from '../../service/MixedAugmentation'
 import { darkColors } from '../../utils'
 import { DrawerContext } from '../Menu'
-import { TimeseriesIterator } from '../shared/useTimerangeSegmentation'
+import useTimerangeSegmentation, { TimeseriesIterator } from '../shared/useTimerangeSegmentation'
 
 export type BaseLineConfig = 'none' | 'showIndividualBaselines' | 'showGlobalBaseline'
 export type ScaleConfig = 'absolute' | 'cropped-absolute' | 'relative'
@@ -215,6 +216,37 @@ export const useNetWorthChartData = <Item extends object>(
   }, [defaultCurrency, accounts, group, exchangeRateOnDay, timeseriesIterator, type])
 }
 
+const sortGroups = (groups: Set<string>) => [...groups].sort((a, b) => b.localeCompare(a))
+
+export const useBalanceChartData = <Item extends object>(
+  fromDate: Date,
+  toDate: Date,
+  ...identifiers: Parameters<typeof useNetWorthChartData<Item>> extends [unknown, ...infer Rest] ? Rest : never
+) => {
+  const { augmentedTransactions } = useContext(MixedAugmentation)
+
+  const { showLabelEveryFactor, timeseriesIteratorGenerator } = useTimerangeSegmentation(fromDate, toDate, 'dense')
+  const timeseriesIterator = useMemo(
+    () => timeseriesIteratorGenerator(augmentedTransactions),
+    [timeseriesIteratorGenerator, augmentedTransactions],
+  )
+  const ranged = useNetWorthChartData(timeseriesIterator, ...identifiers)
+
+  const todayTime = startOfDay(new Date()).getTime()
+  const historyStartTime = min([startOfDay(augmentedTransactions.at(-1)?.date ?? todayTime), fromDate]).getTime()
+  const today = useMemo(() => new Date(todayTime), [todayTime])
+  const historyStart = useMemo(() => new Date(historyStartTime), [historyStartTime])
+  const history = useTimerangeSegmentation(historyStart, today)
+  const historyIterator = useMemo(
+    () => history.timeseriesIteratorGenerator(augmentedTransactions),
+    [history, augmentedTransactions],
+  )
+  const whole = useNetWorthChartData(historyIterator, ...identifiers)
+  const colorReference = useMemo(() => ({ data: whole.data, labels: sortGroups(whole.groups) }), [whole])
+
+  return { ...ranged, showLabelEveryFactor, colorReference }
+}
+
 type NetWorthTooltipProps = {
   tooltipProps: TooltipSlice
   labels: Date[]
@@ -324,6 +356,8 @@ type NetWorthChartProps = {
     }
   }[]
   showLabelEveryFactor: number
+  navigation?: DateNavigation
+  colorReference?: ColorReference
 }
 
 const NetWorthChart: FC<NetWorthChartProps> = ({
@@ -333,6 +367,8 @@ const NetWorthChart: FC<NetWorthChartProps> = ({
   data,
   baselineConfig,
   showLabelEveryFactor,
+  navigation,
+  colorReference,
 }) => {
   const { defaultCurrency } = useContext(MixedAugmentation)
   const { privacyMode } = useContext(DrawerContext)
@@ -370,7 +406,7 @@ const NetWorthChart: FC<NetWorthChartProps> = ({
     return (
       <AreaChart
         data={data}
-        datasetsLabels={[...groups.keys()].sort((a, b) => b.localeCompare(a))}
+        datasetsLabels={sortGroups(groups)}
         valueFormat={(value) => `${formatFull(defaultCurrency, value, privacyMode)}`}
         margin={{ top: 30, right: 25, bottom: 80, left: 60 }}
         showGlobalBaseline={baselineConfig === 'showGlobalBaseline'}
@@ -398,6 +434,8 @@ const NetWorthChart: FC<NetWorthChartProps> = ({
         }}
         offsetType={scale == 'relative' ? 'expand' : 'normal'}
         colors={darkColors}
+        navigation={navigation}
+        colorReference={colorReference}
         stackTooltip={(tooltipProps) => (
           <NetWorthTooltip
             tooltipProps={tooltipProps}
@@ -408,7 +446,7 @@ const NetWorthChart: FC<NetWorthChartProps> = ({
         )}
       />
     )
-  }, [baselineConfig, showLabelEveryFactor, data, labels, groups, scale, privacyMode])
+  }, [baselineConfig, showLabelEveryFactor, data, labels, groups, scale, privacyMode, navigation, colorReference])
 }
 
 export default NetWorthChart

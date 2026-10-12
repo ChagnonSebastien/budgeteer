@@ -44,6 +44,7 @@ const NetWorthPage: FC = () => {
     fromDate,
     toDate,
     accountFilter,
+    dateNavigation,
     overview: filterOverview,
   } = useTransactionFilter({
     accountPreFilter: (account: Account) => account.isMine,
@@ -76,7 +77,12 @@ const NetWorthPage: FC = () => {
 
   const chart =
     view === 'total' ? (
-      <NetWorthHistoryChart fromDate={fromDate} toDate={toDate} filterByAccounts={filterByAccounts} />
+      <NetWorthHistoryChart
+        fromDate={fromDate}
+        toDate={toDate}
+        filterByAccounts={filterByAccounts}
+        navigation={dateNavigation}
+      />
     ) : majorType === 'accounts' ? (
       <AccountsBalanceChart
         key="AccountsBalancePageFirstDivision"
@@ -84,6 +90,7 @@ const NetWorthPage: FC = () => {
         toDate={toDate}
         filterByAccounts={filterByAccounts}
         groupBy={groupBy as AccountsGroupType}
+        navigation={dateNavigation}
         baselineConfig={baselineConfig}
         scale={scale}
         type={type}
@@ -95,6 +102,7 @@ const NetWorthPage: FC = () => {
         toDate={toDate}
         filterByAccounts={filterByAccounts}
         groupBy={groupBy as CurrenciesGroupType}
+        navigation={dateNavigation}
         baselineConfig={baselineConfig}
         scale={scale}
         type={type}

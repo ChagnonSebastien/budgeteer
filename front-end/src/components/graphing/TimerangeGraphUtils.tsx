@@ -244,6 +244,128 @@ export const tooltipAtPointer = (e: React.PointerEvent<Element>, datasetLength: 
   }
 }
 
+export type DateNavigation = {
+  range: [Date, Date]
+  preview: (from: Date, to: Date) => [Date, Date]
+  commit: () => void
+}
+
+const wheelCommitDelayMs = 250
+const wheelPixelsPerDoubling = 500
+
+const wheelPixels = (e: WheelEvent) =>
+  e.deltaMode === WheelEvent.DOM_DELTA_LINE
+    ? e.deltaY * 16
+    : e.deltaMode === WheelEvent.DOM_DELTA_PAGE
+      ? e.deltaY * 400
+      : e.deltaY
+
+const useTimeNavigation = (navigation?: DateNavigation) => {
+  const svgRef = useRef<SVGSVGElement>(null)
+  const [dragging, setDragging] = useState(false)
+  const drag = useRef<{ x: number; start: number; end: number } | null>(null)
+  // Successive wheel ticks build on the clamped range they previewed, not on a range the chart has yet to render.
+  const wheelRange = useRef<[Date, Date] | null>(null)
+  const wheelTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
+  const latest = useRef(navigation)
+  latest.current = navigation
+  const navigable = navigation !== undefined
+
+  useEffect(() => {
+    const svg = svgRef.current
+    if (!svg || !navigable) return
+    const zoom = (e: WheelEvent) => {
+      const navigation = latest.current
+      if (!navigation || e.deltaY === 0 || drag.current) return
+      e.preventDefault()
+      const [start, end] = (wheelRange.current ?? navigation.range).map((d) => d.getTime())
+      const rect = svg.getBoundingClientRect()
+      const ratio = clamp((e.clientX - rect.left) / rect.width, 0, 1)
+      const pointer = start + ratio * (end - start)
+      const span = (end - start) * 2 ** (wheelPixels(e) / wheelPixelsPerDoubling)
+      wheelRange.current = navigation.preview(new Date(pointer - ratio * span), new Date(pointer + (1 - ratio) * span))
+      clearTimeout(wheelTimer.current)
+      wheelTimer.current = setTimeout(() => {
+        wheelRange.current = null
+        latest.current?.commit()
+      }, wheelCommitDelayMs)
+    }
+    svg.addEventListener('wheel', zoom, { passive: false })
+    return () => {
+      svg.removeEventListener('wheel', zoom)
+      clearTimeout(wheelTimer.current)
+    }
+  }, [navigable])
+
+  const endDrag = () => {
+    if (!drag.current) return
+    drag.current = null
+    setDragging(false)
+    latest.current?.commit()
+  }
+
+  const dragHandlers = {
+    onPointerDown: (e: React.PointerEvent<SVGSVGElement>) => {
+      if (!navigation || e.pointerType !== 'mouse' || e.button !== 0) return false
+      clearTimeout(wheelTimer.current)
+      wheelRange.current = null
+      e.currentTarget.setPointerCapture(e.pointerId)
+      const [start, end] = navigation.range.map((d) => d.getTime())
+      drag.current = { x: e.clientX, start, end }
+      setDragging(true)
+      return true
+    },
+    onPointerMove: (e: React.PointerEvent<SVGSVGElement>) => {
+      if (!drag.current || !navigation) return false
+      const { x, start, end } = drag.current
+      const shift = ((e.clientX - x) / e.currentTarget.getBoundingClientRect().width) * (end - start)
+      navigation.preview(new Date(start - shift), new Date(end - shift))
+      return true
+    },
+    onPointerUp: endDrag,
+    onPointerCancel: endDrag,
+  }
+
+  return { svgRef, dragging, navigable, dragHandlers }
+}
+
+export const GraphSvg: FC<{
+  navigation?: DateNavigation
+  datasetLength: number
+  setTooltip: Dispatch<SetStateAction<TooltipDefinition | null>>
+  children: ReactNode
+}> = ({ navigation, datasetLength, setTooltip, children }) => {
+  const { svgRef, dragging, navigable, dragHandlers } = useTimeNavigation(navigation)
+  const showTooltipAt = (e: React.PointerEvent<SVGSVGElement>) => setTooltip(tooltipAtPointer(e, datasetLength))
+
+  return (
+    <svg
+      ref={svgRef}
+      preserveAspectRatio="none"
+      viewBox="0 0 1000 1000"
+      style={{
+        height: '100%',
+        width: '100%',
+        position: 'absolute',
+        zIndex: 1,
+        touchAction: 'pan-y',
+        cursor: dragging ? 'grabbing' : navigable ? 'grab' : undefined,
+      }}
+      onPointerMove={(e) => {
+        if (!dragHandlers.onPointerMove(e)) showTooltipAt(e)
+      }}
+      onPointerDown={(e) => {
+        if (dragHandlers.onPointerDown(e)) setTooltip(null)
+        else showTooltipAt(e)
+      }}
+      onPointerUp={dragHandlers.onPointerUp}
+      onPointerCancel={dragHandlers.onPointerCancel}
+    >
+      {children}
+    </svg>
+  )
+}
+
 export const DateBasedGraph = (props: {
   margin: MarginConfig
   yAxisValues: {

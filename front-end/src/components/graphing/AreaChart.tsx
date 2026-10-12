@@ -5,10 +5,11 @@ import assignAreaColors from './assignAreaColors'
 import {
   DateAxisConfig,
   DateBasedGraph,
+  DateNavigation,
+  GraphSvg,
   MarginConfig,
   monotoneSpline,
   TooltipDefinition,
-  tooltipAtPointer,
   useValueAxisConfiguration,
   ValueAxisConfig,
 } from './TimerangeGraphUtils'
@@ -33,6 +34,19 @@ function darken(hex: string, amount = 0.45): string {
 }
 
 type DataSetLabel = string
+
+export type ColorReference = { data: Bucket[]; labels: DataSetLabel[] }
+
+const stackedLayers = (data: Bucket[], labels: DataSetLabel[]) => {
+  const offsets = Array(data.length).fill(0)
+  return labels.map((key) =>
+    data.map((b, i) => {
+      const y0 = offsets[i]
+      offsets[i] += b.values[key]?.amount || 0
+      return [y0, offsets[i]] as [number, number]
+    }),
+  )
+}
 export type Bucket = {
   date: Date
   values: Record<DataSetLabel, { amount: number; baseline?: number }>
@@ -69,6 +83,8 @@ type Props = {
   showGlobalBaseline?: boolean
   showIndividualBaselines?: boolean
   minYValue?: number
+  navigation?: DateNavigation
+  colorReference?: ColorReference
 }
 
 const AreaChart: FC<Props> = ({
@@ -84,6 +100,8 @@ const AreaChart: FC<Props> = ({
   showGlobalBaseline = false,
   showIndividualBaselines = false,
   minYValue = 0,
+  navigation,
+  colorReference,
 }) => {
   const [tooltip, setTooltip] = useState<TooltipDefinition | null>(null)
   const theme = useTheme()
@@ -117,8 +135,8 @@ const AreaChart: FC<Props> = ({
   }, [datasetLabels, data, datasetsStackedUpperBound])
 
   const layers = useMemo<[number, number][][]>(() => {
-    const offsets = Array(data.length).fill(0)
     if (offsetType === 'expand') {
+      const offsets = Array(data.length).fill(0)
       const totals = data.map((_, i) => datasets.reduce((sum, s) => sum + s[i], 0))
       return datasets.map((serie) =>
         serie.map((v, i) => {
@@ -130,14 +148,8 @@ const AreaChart: FC<Props> = ({
         }),
       )
     }
-    return datasets.map((serie) =>
-      serie.map((v, i) => {
-        const y0 = offsets[i]
-        offsets[i] += v
-        return [y0, offsets[i]] as [number, number]
-      }),
-    )
-  }, [datasets, offsetType, data.length])
+    return stackedLayers(data, datasetLabels)
+  }, [datasets, offsetType, data, datasetLabels])
 
   const rawMaxY = useMemo(() => {
     const totals = datasetsStackedUpperBound[datasetsStackedUpperBound.length - 1]
@@ -207,7 +219,17 @@ const AreaChart: FC<Props> = ({
     [xScale, yNormalScale],
   )
 
-  const assignedColors = useMemo(() => assignAreaColors(layers, colors), [layers, colors])
+  const referenceColors = useMemo(() => {
+    if (!colorReference) return null
+    const assigned = assignAreaColors(stackedLayers(colorReference.data, colorReference.labels), colors)
+    return new Map(colorReference.labels.map((label, i) => [label, assigned[i]]))
+  }, [colorReference, colors])
+
+  const assignedColors = useMemo(
+    () =>
+      referenceColors ? datasetLabels.map((label) => referenceColors.get(label)!) : assignAreaColors(layers, colors),
+    [referenceColors, datasetLabels, layers, colors],
+  )
 
   const getColor = useCallback(
     (id: string) => assignedColors[datasetLabels.indexOf(id)] ?? theme.palette.grey[400],
@@ -252,23 +274,11 @@ const AreaChart: FC<Props> = ({
       }
     })
 
-  const showTooltipAt = (e: React.PointerEvent<SVGSVGElement>) => setTooltip(tooltipAtPointer(e, data.length))
+  const range = useMemo<[Date, Date]>(() => [data[0].date, data[data.length - 1].date], [data])
 
-  const graph = useMemo(
+  const shapes = useMemo(
     () => (
-      <svg
-        preserveAspectRatio="none"
-        viewBox={`0 0 1000 1000`}
-        style={{
-          height: '100%',
-          width: '100%',
-          position: 'absolute',
-          zIndex: 1,
-          touchAction: 'pan-y',
-        }}
-        onPointerMove={showTooltipAt}
-        onPointerDown={showTooltipAt}
-      >
+      <>
         {/* Layers */}
         {layers.map((layer, li) => (
           <path
@@ -313,7 +323,7 @@ const AreaChart: FC<Props> = ({
             strokeDasharray="10 4"
           />
         )}
-      </svg>
+      </>
     ),
     [
       showGlobalBaseline,
@@ -322,11 +332,16 @@ const AreaChart: FC<Props> = ({
       datasetLabels,
       buildPath,
       getColor,
-      brighten,
       showIndividualBaselines,
       individualBaselineSplines,
       theme,
     ],
+  )
+
+  const graph = (
+    <GraphSvg navigation={navigation} datasetLength={data.length} setTooltip={setTooltip}>
+      {shapes}
+    </GraphSvg>
   )
 
   return (
@@ -336,7 +351,7 @@ const AreaChart: FC<Props> = ({
       graph={graph}
       tooltip={tooltip}
       setTooltip={setTooltip}
-      range={[data[0].date, data[data.length - 1].date]}
+      range={range}
       datasetLength={data.length}
       yAxisConfig={yAxisConfig}
       xAxisConfig={xAxisConfig}

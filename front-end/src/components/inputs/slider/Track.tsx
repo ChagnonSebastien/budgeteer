@@ -45,6 +45,7 @@ interface TrackProps {
     percent: number
   }
   getTrackProps: () => object
+  onPointerDown?: React.PointerEventHandler<HTMLDivElement>
   disabled?: boolean
   styles?: {
     error: object
@@ -52,7 +53,15 @@ interface TrackProps {
   }
 }
 
-const Track: React.FC<TrackProps> = ({ error, source, target, getTrackProps, disabled = false, styles }) => {
+const Track: React.FC<TrackProps> = ({
+  error,
+  source,
+  target,
+  getTrackProps,
+  onPointerDown,
+  disabled = false,
+  styles,
+}) => {
   const { slider } = useTheme().palette
   const edge = (color: string): TrackStyle => ({
     backgroundColor: color,
@@ -71,8 +80,11 @@ const Track: React.FC<TrackProps> = ({ error, source, target, getTrackProps, dis
   return (
     <div
       className={`react_time_range__track${disabled ? '__disabled' : ''}`}
-      style={getTrackConfig({ error, source, target, disabled, styles: trackStyles })}
-      {...getTrackProps()}
+      style={{
+        ...getTrackConfig({ error, source, target, disabled, styles: trackStyles }),
+        ...(onPointerDown && { cursor: 'grab', touchAction: 'pan-y' }),
+      }}
+      {...(onPointerDown ? { onPointerDown } : getTrackProps())}
     />
   )
 }

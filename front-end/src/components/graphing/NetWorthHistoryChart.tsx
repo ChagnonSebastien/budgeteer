@@ -4,6 +4,7 @@ import { FC, useContext, useMemo } from 'react'
 import { Tooltip } from './AggregatedDiffChart'
 import LineChart, { Bucket as LineBucket } from './LineChart'
 import { useNetWorthChartData } from './NetWorthChart'
+import { DateNavigation } from './TimerangeGraphUtils'
 import Account from '../../domain/model/account'
 import { formatFull } from '../../domain/model/currency'
 import { AugmentedTransaction } from '../../domain/model/transaction'
@@ -17,6 +18,7 @@ interface Props {
   filterByAccounts?: number[]
   fromDate: Date
   toDate: Date
+  navigation?: DateNavigation
 }
 
 const NET_WORTH = 'Net Worth'
@@ -31,7 +33,7 @@ const accountKey = (account?: Account) => account && String(account.id)
 const sum = (values: Record<string, { amount: number }>) =>
   Object.values(values).reduce((total, { amount }) => total + amount, 0)
 
-const NetWorthHistoryChart: FC<Props> = ({ fromDate, toDate, filterByAccounts }) => {
+const NetWorthHistoryChart: FC<Props> = ({ fromDate, toDate, filterByAccounts, navigation }) => {
   const { augmentedTransactions, defaultCurrency } = useContext(MixedAugmentation)
   const { myOwnAccounts } = useContext(AccountServiceContext)
   const { privacyMode } = useContext(DrawerContext)
@@ -112,6 +114,7 @@ const NetWorthHistoryChart: FC<Props> = ({ fromDate, toDate, filterByAccounts })
               }),
       }}
       colors={darkColors}
+      navigation={navigation}
       stackTooltip={(tooltipProps) => <Tooltip tooltipProps={tooltipProps} labels={assets.labels} />}
     />
   )

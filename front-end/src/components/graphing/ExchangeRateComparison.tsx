@@ -11,6 +11,7 @@ import {
   GraphTooltipValue,
 } from './GraphStyledComponents'
 import LineChart, { SparseBucket, TooltipSlice } from './LineChart'
+import { DateNavigation } from './TimerangeGraphUtils'
 import { CurrencyID } from '../../domain/model/currency'
 import MixedAugmentation from '../../service/MixedAugmentation'
 import { AccountServiceContext, CurrencyServiceContext } from '../../service/ServiceContext'
@@ -55,10 +56,11 @@ type Props = {
   startDate: Date
   endDate: Date
   selectedCurrenciesIDs?: CurrencyID[]
+  navigation?: DateNavigation
 }
 
 const ExchangeRateComparison: FC<Props> = (props) => {
-  const { startDate, endDate, selectedCurrenciesIDs = [] } = props
+  const { startDate, endDate, selectedCurrenciesIDs = [], navigation } = props
 
   const { exchangeRates, exchangeRateOnDay, augmentedTransactions, defaultCurrency, accountBalances } =
     useContext(MixedAugmentation)
@@ -249,6 +251,7 @@ const ExchangeRateComparison: FC<Props> = (props) => {
       }}
       valueFormat={(value) => `${(value * 100).toFixed(2)}%`}
       colors={darkColors}
+      navigation={navigation}
       stackTooltip={(tooltipProps) => <Tooltip tooltipProps={tooltipProps} labels={data.map((d) => d.date)} />}
     />
   )
