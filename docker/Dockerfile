@@ -20,13 +20,21 @@ RUN mkdir -p front-end/src/store/remote/dto
 RUN npx protoc --ts_out ./front-end/src/store/remote/dto --proto_path protobuf protobuf/*
 
 
+FROM alpine:3.22 AS commit
+RUN apk add --no-cache git
+WORKDIR /repo
+COPY .git .git
+RUN git rev-parse HEAD | cut -c1-7 > /commit
+
+
 FROM node:22-alpine AS web-build
 WORKDIR /app
 COPY front-end/package.json front-end/package-lock.json ./
 RUN npm install
 COPY front-end .
 COPY --from=protoc /app/front-end/src/store/remote/dto src/store/remote/dto
-RUN npm run build
+COPY --from=commit /commit /commit
+RUN VITE_COMMIT_HASH=$(cat /commit) npm run build
 
 
 FROM golang:1.25-bookworm AS server-build

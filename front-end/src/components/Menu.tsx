@@ -341,6 +341,16 @@ const DrawerWrapper: FC<Props> = ({ logout, children, userIsGuest = false }) => 
                 </Button>
               )}
             </Box>
+
+            {import.meta.env.VITE_COMMIT_HASH && (
+              <Typography
+                variant="caption"
+                color="text.disabled"
+                sx={{ display: 'block', textAlign: 'center', fontFamily: 'monospace', mt: -1, pb: 1 }}
+              >
+                {import.meta.env.VITE_COMMIT_HASH}
+              </Typography>
+            )}
           </Box>
         </Box>
       </UnvisitedPagesContext.Provider>
