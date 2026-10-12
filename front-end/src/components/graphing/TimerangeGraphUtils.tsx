@@ -454,7 +454,7 @@ export const DateBasedGraph = (props: {
               )
             }
           >
-            {Array.from({ length: Math.floor((endTick - startTick) / step) + 1 }, (_, i) => (
+            {Array.from({ length: Math.round((endTick - startTick) / step) + 1 }, (_, i) => (
               <div
                 key={`y-label-${i}`}
                 style={{ position: 'relative', flexGrow: i === 0 ? (startTick - graphMinY) / step : 1 }}
@@ -519,7 +519,7 @@ export const DateBasedGraph = (props: {
                   zIndex: -1,
                 }}
               >
-                {Array.from({ length: Math.floor((endTick - startTick) / step) + 1 }, (_, i) => (
+                {Array.from({ length: Math.round((endTick - startTick) / step) + 1 }, (_, i) => (
                   <div
                     key={`y-grid-${i}`}
                     style={{ position: 'relative', flexGrow: i === 0 ? (startTick - graphMinY) / step : 1 }}
