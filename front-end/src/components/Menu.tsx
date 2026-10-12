@@ -127,14 +127,12 @@ const ContentContainer = styled(
 
 interface MenuEntry {
   guestView: boolean
-  adminOnly?: boolean
   requires?: 'transactions' | 'financialIncome'
   element: AppPage | Subsection
 }
 
 const appPages: MenuEntry[] = [
   { guestView: false, element: new AppPage('Dashboard', '/', PreparedIcon.TbLayoutDashboard, []) },
-  { guestView: false, element: new Subsection('Data') },
   {
     guestView: false,
     element: new AppPage('Transactions', '/transactions', PreparedIcon.TbArrowsExchange, [
@@ -144,17 +142,9 @@ const appPages: MenuEntry[] = [
       'categories',
     ]),
   },
-  { guestView: false, element: new AppPage('Categories', '/categories', PreparedIcon.TbCategory, []) },
-  { guestView: false, element: new AppPage('Accounts', '/accounts', PreparedIcon.TbBuildingBank, []) },
   {
-    guestView: false,
-    element: new AppPage(
-      'Currencies',
-      '/currencies',
-      PreparedIcon.TbCoins,
-      [],
-      () => useRateFetchFailures().length > 0,
-    ),
+    guestView: true,
+    element: new AppPage('Shared expenses', '/transaction-groups', PreparedIcon.TbUsersGroup, []),
   },
   { guestView: false, requires: 'transactions', element: new Subsection('Analysis') },
   {
@@ -177,15 +167,22 @@ const appPages: MenuEntry[] = [
     requires: 'financialIncome',
     element: new AppPage('Investments', '/investments', PreparedIcon.TbTrendingUp, []),
   },
-  { guestView: false, element: new Subsection('Shared expenses') },
-  { guestView: true, element: new AppPage('Groups', '/transaction-groups', PreparedIcon.TbUsersGroup, []) },
-  { guestView: false, adminOnly: true, element: new Subsection('Management') },
+  { guestView: false, element: new Subsection('Setup') },
+  { guestView: false, element: new AppPage('Accounts', '/accounts', PreparedIcon.TbBuildingBank, []) },
+  { guestView: false, element: new AppPage('Categories', '/categories', PreparedIcon.TbCategory, []) },
   {
     guestView: false,
-    adminOnly: true,
-    element: new AppPage('Users', '/management/users', PreparedIcon.TbUserShield, []),
+    element: new AppPage(
+      'Currencies',
+      '/currencies',
+      PreparedIcon.TbCoins,
+      [],
+      () => useRateFetchFailures().length > 0,
+    ),
   },
 ]
+
+const usersPage = new AppPage('Users', '/management/users', PreparedIcon.TbUserShield, [])
 
 const userStore = new UserStore(localStorage)
 
@@ -268,7 +265,6 @@ const DrawerWrapper: FC<Props> = ({ logout, children, userIsGuest = false }) => 
         <Box sx={{ flexGrow: 1 }}>
           {appPages
             .filter((appPage) => !userIsGuest || appPage.guestView)
-            .filter((appPage) => !appPage.adminOnly || (isAdmin && online))
             .filter(
               (appPage) =>
                 !appPage.requires ||
@@ -281,6 +277,7 @@ const DrawerWrapper: FC<Props> = ({ logout, children, userIsGuest = false }) => 
 
         {/* A block wrapper: ListItemButton grows along a flex column. */}
         <Box sx={{ borderTop: 1, borderColor: 'border.subtle', pt: 1 }}>
+          {!userIsGuest && isAdmin && online && <usersPage.Element />}
           {!userIsGuest && (
             <NavTooltip title={privacyMode ? 'Privacy mode on' : 'Privacy mode off'}>
               <ListItemButton

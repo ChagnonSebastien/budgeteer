@@ -103,7 +103,7 @@ const TransactionGroups: FC<Props> = ({ canCreate = true }) => {
 
   return (
     <ContentWithHeader
-      title="Transaction Groups"
+      title="Shared expenses"
       action="menu"
       withPadding
       rightContent={
