@@ -348,7 +348,7 @@ const DrawerWrapper: FC<Props> = ({ logout, children, userIsGuest = false }) => 
                 color="text.disabled"
                 sx={{ display: 'block', textAlign: 'center', fontFamily: 'monospace', mt: -1, pb: 1 }}
               >
-                {import.meta.env.VITE_COMMIT_HASH}
+                {collapsed ? import.meta.env.VITE_COMMIT_HASH : `Build: ${import.meta.env.VITE_COMMIT_HASH}`}
               </Typography>
             )}
           </Box>
