@@ -1,14 +1,4 @@
-import {
-  Box,
-  Checkbox,
-  IconButton,
-  Menu,
-  MenuItem,
-  Stack,
-  ToggleButton,
-  ToggleButtonGroup,
-  Typography,
-} from '@mui/material'
+import { Box, Checkbox, IconButton, Menu, MenuItem, Stack, ToggleButton, ToggleButtonGroup } from '@mui/material'
 import { format, isAfter, isBefore, isSameDay } from 'date-fns'
 import { FC, useContext, useMemo, useState } from 'react'
 import { useLocation } from 'react-router-dom'
@@ -23,6 +13,7 @@ import ActionSpeedDial, { DialAction } from '../components/shared/ActionSpeedDia
 import ConfirmDeleteModal from '../components/shared/ConfirmDeleteModal'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
 import { DetailCard, DetailHeading, FancyDialog, FancyModal } from '../components/shared/FancyModal'
+import { EmptyState } from '../components/shared/Layout'
 import SplitView from '../components/shared/SplitView'
 import { useToast } from '../components/shared/ToastProvider'
 import useCloseOnBack, { useNavigateFromDialog } from '../components/shared/useCloseOnBack'
@@ -212,9 +203,10 @@ const TransactionPage: FC = () => {
       }
     >
       {!hasTransactions ? (
-        <Typography color="textDisabled" textAlign="center" marginTop="30vh">
-          No transactions yet
-        </Typography>
+        <EmptyState
+          title="No transactions yet"
+          description="Record what you spend and earn, and your balances, charts and trends fill in."
+        />
       ) : splitHorizontal ? (
         <SplitView
           first={firstDivision}

@@ -9,11 +9,12 @@ import SelectOne from '../components/inputs/SelectOne'
 import useTransactionFilter from '../components/inputs/useTransactionFilter'
 import { DrawerContext } from '../components/Menu'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
-import { Row } from '../components/shared/Layout'
+import { EmptyState, Row } from '../components/shared/Layout'
 import SplitView from '../components/shared/SplitView'
 import useQueryParams from '../components/shared/useQueryParams'
 import useWideLayout from '../components/shared/useWideLayout'
 import Account from '../domain/model/account'
+import { AccountServiceContext } from '../service/ServiceContext'
 
 type QueryParams = {
   groupBy: string
@@ -62,6 +63,7 @@ const BalancePage: FC = () => {
   )
 
   const splitHorizontal = useWideLayout()
+  const { myOwnAccounts } = useContext(AccountServiceContext)
 
   const firstDivision = (
     <FirstDivision>
@@ -74,7 +76,9 @@ const BalancePage: FC = () => {
           flexGrow: 1,
         }}
       >
-        {majorType === 'accounts' ? (
+        {myOwnAccounts.length === 0 ? (
+          <EmptyState compact title="No balances yet" description="Add an account to follow its balance over time." />
+        ) : majorType === 'accounts' ? (
           <AccountsBalanceChart
             key="AccountsBalancePageFirstDivision"
             fromDate={fromDate}

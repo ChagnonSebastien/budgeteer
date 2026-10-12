@@ -8,6 +8,7 @@ import { IconToolsContext } from '../components/icons/IconTools'
 import ActionSpeedDial from '../components/shared/ActionSpeedDial'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
 import { CustomScrolling } from '../components/shared/CustomScrolling'
+import { EmptyState } from '../components/shared/Layout'
 import useCloseOnBack from '../components/shared/useCloseOnBack'
 import useQueryParams from '../components/shared/useQueryParams'
 import BalanceOverview, { CurrencyTotals } from '../components/transactionGroup/BalanceOverview'
@@ -126,10 +127,27 @@ const TransactionGroups: FC<Props> = ({ canCreate = true }) => {
         </>
       }
     >
-      {list}
+      {orderedGroups.length > 0 ? (
+        list
+      ) : transactionGroups.length > 0 ? (
+        <EmptyState
+          title="All your groups are hidden"
+          description="Turn on Show hidden groups in the settings menu to see them."
+        />
+      ) : (
+        <EmptyState
+          title="No shared expenses yet"
+          description={
+            canCreate
+              ? 'Create a group to split costs with friends, roommates or a partner, and see who owes whom.'
+              : 'Groups you are invited to show up here.'
+          }
+        />
+      )}
       {canCreate && (
         <ActionSpeedDial
           ariaLabel="Create transaction group"
+          hint={transactionGroups.length === 0 ? 'Create your first group' : undefined}
           actions={[
             {
               label: 'New group',

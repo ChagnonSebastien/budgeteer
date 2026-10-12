@@ -15,6 +15,7 @@ import { CurrencyID } from '../../domain/model/currency'
 import MixedAugmentation from '../../service/MixedAugmentation'
 import { AccountServiceContext, CurrencyServiceContext } from '../../service/ServiceContext'
 import { darkColors } from '../../utils'
+import { EmptyState } from '../shared/Layout'
 import useTimerangeSegmentation from '../shared/useTimerangeSegmentation'
 
 type TooltipProps = {
@@ -223,6 +224,16 @@ const ExchangeRateComparison: FC<Props> = (props) => {
     }
     return map
   }, new Map<number, string>())
+
+  if (!currencies.some((c) => isSelected(c.id))) {
+    return (
+      <EmptyState
+        compact
+        title="No investments yet"
+        description={`Hold a currency other than ${defaultCurrency.symbol}, like a stock or an ETF, in one of your accounts to follow its performance here.`}
+      />
+    )
+  }
 
   return (
     <LineChart

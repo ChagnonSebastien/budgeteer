@@ -9,6 +9,7 @@ import EarningsBreakdownChart from '../components/graphing/EarningsBreakdownChar
 import { IconToolsContext } from '../components/icons/IconTools'
 import { DrawerContext } from '../components/Menu'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
+import { EmptyState } from '../components/shared/Layout'
 import { useToast } from '../components/shared/ToastProvider'
 import { useElementDimensions } from '../components/shared/useDimensions'
 import { AugmentedCategory } from '../domain/model/category'
@@ -358,7 +359,12 @@ const CostsAnalysisPage: FC = () => {
           height: viewType === 'chart' ? '100%' : undefined,
         }}
       >
-        {viewType === 'chart' ? (
+        {transactions.length === 0 ? (
+          <EmptyState
+            title="Nothing to analyze yet"
+            description="Record your income and expenses to see how they split between essentials, other spending and savings."
+          />
+        ) : viewType === 'chart' ? (
           <EarningsBreakdownChart
             grossIncome={grossIncome * Math.pow(10, defaultCurrency.decimalPoints)}
             netIncome={income}

@@ -10,6 +10,7 @@ import ActionSpeedDial from '../components/shared/ActionSpeedDial'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
 import { DetailCard, DetailHeading, FancyDialog, FancyModal } from '../components/shared/FancyModal'
 import HideUnusedMenu from '../components/shared/HideUnusedMenu'
+import { EmptyState } from '../components/shared/Layout'
 import { useNavigateFromDialog } from '../components/shared/useCloseOnBack'
 import useQueryParams from '../components/shared/useQueryParams'
 import Account from '../domain/model/account'
@@ -78,25 +79,33 @@ const AccountsPage: FC = () => {
         </>
       }
     >
-      <Box sx={{ width: '100%', height: '100%', overflow: 'hidden', maxWidth: (t) => t.contentWidth.wide }}>
-        <GroupedAccountList
-          ItemComponent={AccountCard}
-          items={accounts}
-          selectConfiguration={{
-            mode: 'click',
-            onClick: (account) => setClickedAccount(account),
-          }}
-          additionalItemsProps={{ showBalances: true }}
-          showZeroBalances={showZeroBalances}
-          showGroupTotals={true}
-          groupBy={groupBy}
-          scrollingContainerRef={scrollingContainerRef}
-          searchQuery={filter}
+      {accounts.length === 0 ? (
+        <EmptyState
+          title="No accounts yet"
+          description="Add the bank accounts, credit cards and cash you want to track."
         />
-      </Box>
+      ) : (
+        <Box sx={{ width: '100%', height: '100%', overflow: 'hidden', maxWidth: (t) => t.contentWidth.wide }}>
+          <GroupedAccountList
+            ItemComponent={AccountCard}
+            items={accounts}
+            selectConfiguration={{
+              mode: 'click',
+              onClick: (account) => setClickedAccount(account),
+            }}
+            additionalItemsProps={{ showBalances: true }}
+            showZeroBalances={showZeroBalances}
+            showGroupTotals={true}
+            groupBy={groupBy}
+            scrollingContainerRef={scrollingContainerRef}
+            searchQuery={filter}
+          />
+        </Box>
+      )}
 
       <ActionSpeedDial
         ariaLabel="Create account"
+        hint={accounts.length === 0 ? 'Add your first account' : undefined}
         actions={[
           {
             label: 'New account',

@@ -53,6 +53,33 @@ export const Stat: FC<{ label: string; value: ReactNode }> = ({ label, value }) 
   </Stack>
 )
 
+export const EmptyState: FC<{ title: string; description?: string; compact?: boolean }> = ({
+  title,
+  description,
+  compact = false,
+}) => (
+  <Stack
+    sx={{
+      gap: 1,
+      alignItems: 'center',
+      textAlign: 'center',
+      maxWidth: (t) => t.contentWidth.compact,
+      px: 2,
+      mx: 'auto',
+      ...(compact ? { my: 'auto' } : { mt: '30vh' }),
+    }}
+  >
+    <Typography variant="h6" color="text.secondary">
+      {title}
+    </Typography>
+    {description && (
+      <Typography variant="body2" color="text.disabled">
+        {description}
+      </Typography>
+    )}
+  </Stack>
+)
+
 export const withoutTransientProps = {
   shouldForwardProp: (prop: PropertyKey) => !String(prop).startsWith('$'),
 }

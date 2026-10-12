@@ -13,6 +13,7 @@ import { AugmentedTransactionGroup, SplitTypeToString } from '../../domain/model
 import { IconToolsContext } from '../icons/IconTools'
 import ActionSpeedDial, { DialAction } from '../shared/ActionSpeedDial'
 import ContentWithHeader from '../shared/ContentWithHeader'
+import { EmptyState } from '../shared/Layout'
 import SplitView from '../shared/SplitView'
 import useWideLayout from '../shared/useWideLayout'
 import GroupTransactionCard from '../transactions/GroupTransactionCard'
@@ -67,9 +68,11 @@ const TransactionGroupView: FC<{
         second={
           <SecondDivision>
             {groupTransactions.length === 0 ? (
-              <Typography color="textDisabled" alignSelf="center">
-                No payments yet
-              </Typography>
+              <EmptyState
+                compact
+                title="No payments yet"
+                description="Add what you or others paid for the group, and the balances update for everyone."
+              />
             ) : (
               <TransactionList
                 items={groupTransactions}
