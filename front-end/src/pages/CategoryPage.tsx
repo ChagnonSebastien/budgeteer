@@ -57,6 +57,15 @@ const CategoryPage: FC = () => {
             }}
             bottomMenu={[
               {
+                Icon: IconLib.MdList,
+                label: 'View Transactions',
+                intent: 'navigate',
+                description: 'See all category transactions',
+                action: () => navigate(`/transactions?categories=[${clickedCategory.id}]`),
+                disabled: false,
+                availableOffline: true,
+              },
+              {
                 Icon: IconLib.MdEdit,
                 label: 'Edit Category',
                 intent: 'edit',
@@ -71,15 +80,6 @@ const CategoryPage: FC = () => {
                 description: 'Move or delete its transactions, then remove it',
                 action: () => setCategoryToDelete(clickedCategory),
                 disabled: clickedCategory.parentId === null,
-              },
-              {
-                Icon: IconLib.MdList,
-                label: 'View Transactions',
-                intent: 'navigate',
-                description: 'See all category transactions',
-                action: () => navigate(`/transactions?categories=[${clickedCategory.id}]`),
-                disabled: false,
-                availableOffline: true,
               },
             ]}
           >

@@ -129,6 +129,15 @@ const AccountsPage: FC = () => {
             }}
             bottomMenu={[
               {
+                Icon: IconLib.MdList,
+                label: 'View Transactions',
+                intent: 'navigate',
+                description: 'See all account activity',
+                action: () => navigate(`/transactions?accounts=[${clickedAccount.id}]`),
+                disabled: false,
+                availableOffline: true,
+              },
+              {
                 Icon: IconLib.MdEdit,
                 label: 'Edit Account',
                 intent: 'edit',
@@ -143,15 +152,6 @@ const AccountsPage: FC = () => {
                 description: 'Move or drop its transactions, then remove it',
                 action: () => setAccountToDelete(clickedAccount),
                 disabled: false,
-              },
-              {
-                Icon: IconLib.MdList,
-                label: 'View Transactions',
-                intent: 'navigate',
-                description: 'See all account activity',
-                action: () => navigate(`/transactions?accounts=[${clickedAccount.id}]`),
-                disabled: false,
-                availableOffline: true,
               },
             ]}
           >
