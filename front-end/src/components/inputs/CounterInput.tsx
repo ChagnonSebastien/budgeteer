@@ -71,8 +71,9 @@ const CounterInput = (props: Props) => (
           }}
           onFocus={(e) => e.target.select()}
         />
-        <Box component="span" sx={{ ml: 1 }}>
-          {props.value === 1 ? 'Year' : 'Years'}
+        <Box component="span" sx={{ ml: 1, display: 'inline-grid', '& > *': { gridArea: '1 / 1' } }}>
+          <span style={{ visibility: props.value === 1 ? 'visible' : 'hidden' }}>Year</span>
+          <span style={{ visibility: props.value === 1 ? 'hidden' : 'visible' }}>Years</span>
         </Box>
       </Stack>
       <Button
