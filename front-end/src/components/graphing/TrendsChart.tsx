@@ -1,5 +1,5 @@
 import { alpha, Box, useTheme } from '@mui/material'
-import { BarCustomLayerProps, ResponsiveBar } from '@nivo/bar'
+import { BarCanvasCustomLayerProps, ResponsiveBarCanvas } from '@nivo/bar'
 import {
   addDays,
   addMonths,
@@ -41,8 +41,11 @@ const noDataLabelMinWidthPx = 56
 const projectedLabelLengthPx = 64
 const projectedLabelThicknessPx = 18
 const barPadding = 0.2
+const chartFontPx = 12
 // Share of each segment, on both sides of a point, bent into its curve; above 0.5 the curves overlap.
 const trendlineCornerRounding = 0.35
+
+type TrendDatum = { date: string; total: number }
 
 interface Props {
   categories: number[]
@@ -135,7 +138,7 @@ const TrendsChart: FC<Props> = (props) => {
     i = Math.max(i, visiblePeriods - 1)
 
     let transactionIndex = filteredTransactions.length - 1
-    const data: { date: string; total: number }[] = []
+    const data: TrendDatum[] = []
 
     while (i >= 0) {
       const upTo = subDays(subN(toDate, i), 1)
@@ -236,10 +239,25 @@ const TrendsChart: FC<Props> = (props) => {
     return { min: Math.min(...values), max: Math.max(...values) }
   }, [visibleData, projected])
 
+  const drawLabel = useCallback(
+    (ctx: CanvasRenderingContext2D, text: string, x: number, y: number, rotation = 0) => {
+      ctx.save()
+      ctx.translate(x, y)
+      ctx.rotate(rotation)
+      ctx.font = `${chartFontPx}px ${darkTheme.text.fontFamily}`
+      ctx.fillStyle = theme.palette.text.secondary
+      ctx.textAlign = 'center'
+      ctx.textBaseline = 'middle'
+      ctx.fillText(text, 0, 0)
+      ctx.restore()
+    },
+    [theme],
+  )
+
   const projectionLayer = useCallback(
-    ({ bars, yScale }: BarCustomLayerProps<{ date: string; total: number }>) => {
+    (ctx: CanvasRenderingContext2D, { bars, yScale }: BarCanvasCustomLayerProps<TrendDatum>) => {
       const bar = bars[bars.length - 1]
-      if (projected === null || !bar) return null
+      if (projected === null || !bar) return
       const scale = yScale as unknown as (value: number) => number
       const actual = bar.data.value ?? 0
       const extendsBar = Math.sign(actual) === Math.sign(projected) && Math.abs(projected) > Math.abs(actual)
@@ -248,70 +266,52 @@ const TrendsChart: FC<Props> = (props) => {
       const color = projected < 0 ? theme.palette.error.light : theme.palette.success.light
       const left = bar.x + 0.75
       const right = bar.x + bar.width - 0.75
+
+      ctx.save()
+      ctx.beginPath()
+      ctx.moveTo(left, base)
+      ctx.lineTo(left, end)
+      ctx.lineTo(right, end)
+      ctx.lineTo(right, base)
+      ctx.fillStyle = alpha(color, 0.12)
+      ctx.fill()
+      ctx.strokeStyle = color
+      ctx.lineWidth = 1.5
+      ctx.setLineDash([4, 3])
+      ctx.stroke()
+      ctx.restore()
+
       const zoneHeight = Math.abs(base - end)
       const centerX = bar.x + bar.width / 2
       const centerY = (base + end) / 2
-      const labelRotation =
-        bar.width >= projectedLabelLengthPx && zoneHeight >= projectedLabelThicknessPx
-          ? 0
-          : zoneHeight >= projectedLabelLengthPx && bar.width >= projectedLabelThicknessPx
-            ? -90
-            : null
-      return (
-        <g pointerEvents="none">
-          <path
-            d={`M${left},${base} L${left},${end} L${right},${end} L${right},${base}`}
-            fill={alpha(color, 0.12)}
-            stroke={color}
-            strokeWidth={1.5}
-            strokeDasharray="4,3"
-          />
-          {labelRotation !== null && (
-            <text
-              x={centerX}
-              y={centerY}
-              transform={`rotate(${labelRotation} ${centerX} ${centerY})`}
-              textAnchor="middle"
-              dominantBaseline="middle"
-              fontSize={theme.typography.caption.fontSize}
-              fill={theme.palette.text.secondary}
-            >
-              Projected
-            </text>
-          )}
-        </g>
-      )
+      if (bar.width >= projectedLabelLengthPx && zoneHeight >= projectedLabelThicknessPx) {
+        drawLabel(ctx, 'Projected', centerX, centerY)
+      } else if (zoneHeight >= projectedLabelLengthPx && bar.width >= projectedLabelThicknessPx) {
+        drawLabel(ctx, 'Projected', centerX, centerY, -Math.PI / 2)
+      }
     },
-    [projected, theme],
+    [projected, theme, drawLabel],
   )
 
   const noDataLayer = useCallback(
-    ({ xScale, innerWidth, innerHeight }: BarCustomLayerProps<{ date: string; total: number }>) => {
-      if (visibleNoDataCount === 0) return null
+    (ctx: CanvasRenderingContext2D, { xScale, innerWidth, innerHeight }: BarCanvasCustomLayerProps<TrendDatum>) => {
+      if (visibleNoDataCount === 0) return
       const band = xScale as unknown as { (value: string): number; step(): number }
       const width =
         visibleNoDataCount >= visibleData.length
           ? innerWidth
           : band(visibleData[visibleNoDataCount].date) - (band.step() * barPadding) / 2
-      return (
-        <g pointerEvents="none">
-          <rect width={width} height={innerHeight} fill={theme.palette.surface.strong} rx={4} />
-          {width >= noDataLabelMinWidthPx && (
-            <text
-              x={width / 2}
-              y={innerHeight / 2}
-              textAnchor="middle"
-              dominantBaseline="middle"
-              fontSize={theme.typography.caption.fontSize}
-              fill={theme.palette.text.secondary}
-            >
-              No data
-            </text>
-          )}
-        </g>
-      )
+
+      ctx.save()
+      ctx.beginPath()
+      ctx.roundRect(0, 0, width, innerHeight, 4)
+      ctx.fillStyle = theme.palette.surface.strong
+      ctx.fill()
+      ctx.restore()
+
+      if (width >= noDataLabelMinWidthPx) drawLabel(ctx, 'No data', width / 2, innerHeight / 2)
     },
-    [visibleNoDataCount, visibleData, theme],
+    [visibleNoDataCount, visibleData, theme, drawLabel],
   )
 
   const trendlinePath = useMemo(() => {
@@ -394,7 +394,7 @@ const TrendsChart: FC<Props> = (props) => {
         </svg>
       )}
 
-      <ResponsiveBar
+      <ResponsiveBarCanvas
         enableGridY={!privacyMode}
         margin={chartMargin}
         valueScale={{ type: 'linear', min: valueDomain.min, max: valueDomain.max, nice: false }}
@@ -446,7 +446,7 @@ const TrendsChart: FC<Props> = (props) => {
               ...darkTheme.axis.ticks,
               text: {
                 ...darkTheme.axis.ticks.text,
-                fontSize: 12,
+                fontSize: chartFontPx,
               },
             },
           },
@@ -456,8 +456,7 @@ const TrendsChart: FC<Props> = (props) => {
         }}
         borderRadius={4}
         padding={barPadding}
-        layers={['grid', 'axes', noDataLayer, 'bars', projectionLayer, 'markers', 'legends', 'annotations']}
-        animate={false}
+        layers={['grid', 'axes', noDataLayer, 'bars', projectionLayer]}
       />
     </div>
   )
