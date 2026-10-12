@@ -27,12 +27,13 @@ export type Props = {
   onChange(value: string): void
   options: Option[]
   type: 'radio' | 'dropdown' | 'toggle'
+  disabled?: boolean
 }
 
 const SelectOne: FC<Props> = (props) => {
   if (props.type === 'radio')
     return (
-      <FormControl>
+      <FormControl disabled={props.disabled}>
         <FormLabel id={`${props.label}-label`} sx={{ color: 'text.secondary', mb: 1 }}>
           {props.label}
         </FormLabel>
@@ -66,6 +67,7 @@ const SelectOne: FC<Props> = (props) => {
             },
           }}
           select
+          disabled={props.disabled}
           value={props.value}
           onChange={(event) => props.onChange(event.target.value)}
           variant="standard"
@@ -90,6 +92,7 @@ const SelectOne: FC<Props> = (props) => {
       <ToggleButtonGroup
         value={props.value}
         exclusive
+        disabled={props.disabled}
         onChange={(_event, value) => props.onChange(value)}
         size="small"
         sx={{

@@ -148,53 +148,53 @@ const NetWorthPage: FC = () => {
       ]}
       type={selectType}
     />,
-    ...(view === 'allocation'
-      ? [
-          <SelectOne
-            key="holdings-or-debts"
-            label="Show"
-            value={type}
-            onChange={(newValue) => updateQueryParams({ type: newValue })}
-            options={[
-              { value: 'active', label: 'Holdings' },
-              { value: 'passive', label: 'Debts' },
-            ]}
-            type={selectType}
-          />,
-          <SelectOne
-            key="group-by-option"
-            label="Group by"
-            value={groupBy}
-            onChange={(newValue) => updateQueryParams({ groupBy: newValue })}
-            options={groupByOptionsConfig}
-            type={selectType}
-          />,
-          <SelectOne
-            key="baseline-option"
-            label="Book value"
-            value={baselineConfig}
-            onChange={(newValue) => updateQueryParams({ baselineConfig: newValue })}
-            options={[
-              { value: 'none', label: 'Hidden' },
-              { value: 'showIndividualBaselines', label: 'Per group' },
-              { value: 'showGlobalBaseline', label: 'Total' },
-            ]}
-            type={selectType}
-          />,
-          <SelectOne
-            key="scale-option"
-            label="Scale"
-            value={scale}
-            onChange={(newValue) => updateQueryParams({ scale: newValue })}
-            options={[
-              { value: 'absolute', label: 'From zero' },
-              { value: 'cropped-absolute', label: 'Zoomed', disabled: !canZoom },
-              { value: 'relative', label: 'Share of total (%)' },
-            ]}
-            type={selectType}
-          />,
-        ]
-      : []),
+    <SelectOne
+      key="holdings-or-debts"
+      label="Show"
+      value={type}
+      onChange={(newValue) => updateQueryParams({ type: newValue })}
+      options={[
+        { value: 'active', label: 'Holdings' },
+        { value: 'passive', label: 'Debts' },
+      ]}
+      type={selectType}
+      disabled={view === 'total'}
+    />,
+    <SelectOne
+      key="group-by-option"
+      label="Group by"
+      value={groupBy}
+      onChange={(newValue) => updateQueryParams({ groupBy: newValue })}
+      options={groupByOptionsConfig}
+      type={selectType}
+      disabled={view === 'total'}
+    />,
+    <SelectOne
+      key="baseline-option"
+      label="Book value"
+      value={baselineConfig}
+      onChange={(newValue) => updateQueryParams({ baselineConfig: newValue })}
+      options={[
+        { value: 'none', label: 'Hidden' },
+        { value: 'showIndividualBaselines', label: 'Per group' },
+        { value: 'showGlobalBaseline', label: 'Total' },
+      ]}
+      type={selectType}
+      disabled={view === 'total'}
+    />,
+    <SelectOne
+      key="scale-option"
+      label="Scale"
+      value={scale}
+      onChange={(newValue) => updateQueryParams({ scale: newValue })}
+      options={[
+        { value: 'absolute', label: 'From zero' },
+        { value: 'cropped-absolute', label: 'Zoomed', disabled: !canZoom },
+        { value: 'relative', label: 'Share of total (%)' },
+      ]}
+      type={selectType}
+      disabled={view === 'total'}
+    />,
   ]
 
   const secondDivision = (
