@@ -10,7 +10,6 @@ import {
   ListItemText,
   SwipeableDrawer,
   Stack,
-  Switch,
   Tooltip,
   Typography,
 } from '@mui/material'
@@ -283,38 +282,31 @@ const DrawerWrapper: FC<Props> = ({ logout, children, userIsGuest = false }) => 
           <Box sx={{ borderTop: 1, borderColor: 'border.subtle', pt: 1 }}>
             {!userIsGuest && isAdmin && online && <usersPage.Element />}
             {!userIsGuest && (
-              <NavTooltip title={privacyMode ? 'Privacy mode on' : 'Privacy mode off'}>
+              <Tooltip
+                title={
+                  privacyMode
+                    ? 'Amounts are hidden. Click to show them again.'
+                    : 'Hide amounts to show the app to friends, family or on a shared screen.'
+                }
+                placement="right"
+              >
                 <ListItemButton
-                  aria-label={collapsed ? 'Privacy mode' : undefined}
+                  aria-label={collapsed ? 'Presentation mode' : undefined}
+                  aria-pressed={privacyMode}
+                  selected={privacyMode}
                   onClick={() => {
                     const newValue = !privacyMode
                     setPrivacyMode(newValue)
                     userStore.upsertPrivacyMode(newValue)
                   }}
-                  disableRipple
-                  sx={{
-                    py: 1,
-                    ...(collapsed ? railItemSx : { px: 2 }),
-                    '&:hover': {
-                      backgroundColor: 'transparent',
-                    },
-                  }}
+                  sx={collapsed ? railItemSx : undefined}
                 >
                   <ListItemIcon sx={{ minWidth: collapsed ? 0 : 42, '& svg': { m: 1 } }}>
-                    {privacyMode ? (
-                      <IconLib.MdVisibilityOff size={menuIconSize} />
-                    ) : (
-                      <IconLib.MdVisibility size={menuIconSize} />
-                    )}
+                    <IconLib.TbPresentation size={menuIconSize} />
                   </ListItemIcon>
-                  {!collapsed && (
-                    <>
-                      <ListItemText primary="Privacy mode" primaryTypographyProps={{ noWrap: true }} />
-                      <Switch edge="end" size="small" checked={privacyMode} />
-                    </>
-                  )}
+                  {!collapsed && <ListItemText primary="Presentation mode" />}
                 </ListItemButton>
-              </NavTooltip>
+              </Tooltip>
             )}
 
             {persistentDrawer && (
