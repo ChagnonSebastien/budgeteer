@@ -1,8 +1,8 @@
 import { RpcTransport } from '@protobuf-ts/runtime-rpc'
 
-import { GetAllUsersRequest, LoginMethod } from './dto/user'
+import { DeleteUserRequest, GetAllUsersRequest, GetUserDeletionImpactRequest, LoginMethod } from './dto/user'
 import { UserServiceClient } from './dto/user.client'
-import { ManagedUser } from '../../domain/model/user'
+import { ManagedUser, UserDeletionImpact } from '../../domain/model/user'
 
 export default class UserRemoteStore {
   private client: UserServiceClient
@@ -21,5 +21,30 @@ export default class UserRemoteStore {
       isAdmin: dto.isAdmin,
       lastSeenAt: dto.lastSeenAt ? new Date(dto.lastSeenAt) : null,
     }))
+  }
+
+  public async getDeletionImpact(id: string): Promise<UserDeletionImpact> {
+    const {
+      accounts,
+      transactions,
+      categories,
+      currencies,
+      movedToUnconfirmed,
+      deletedTransactionGroups,
+      blockingTransactionGroups,
+    } = await this.client.getUserDeletionImpact(GetUserDeletionImpactRequest.create({ id })).response
+    return {
+      accounts,
+      transactions,
+      categories,
+      currencies,
+      movedToUnconfirmed,
+      deletedTransactionGroups,
+      blockingTransactionGroups,
+    }
+  }
+
+  public async delete(id: string): Promise<void> {
+    await this.client.deleteUser(DeleteUserRequest.create({ id }))
   }
 }

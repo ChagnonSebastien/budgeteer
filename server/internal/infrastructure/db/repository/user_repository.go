@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"slices"
 	"time"
 
 	"chagnon.dev/budget-server/internal/domain/model"
@@ -230,4 +232,129 @@ func (r *Repository) IncrementGuestLoginFailedAttempts(ctx context.Context, emai
 
 func (r *Repository) DeleteExpiredGuestLogins(ctx context.Context) error {
 	return r.queries.DeleteIfExpired(ctx)
+}
+
+type userDeletionPlan struct {
+	email         string
+	impact        model.UserDeletionImpact
+	deletedGroups []int32
+	grouped       []groupedTransactionSnapshot
+}
+
+func planUserDeletion(ctx context.Context, queries *dao.Queries, id uuid.UUID) (*userDeletionPlan, error) {
+	target, err := queries.GetUserForDeletion(ctx, id)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, model.ErrUserNotFound
+	}
+	if err != nil {
+		return nil, err
+	}
+	if target.IsAdmin {
+		return nil, model.ErrUserIsAdmin
+	}
+
+	counts, err := queries.CountUserData(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	plan := &userDeletionPlan{
+		email: target.Email,
+		impact: model.UserDeletionImpact{
+			Accounts:     int(counts.Accounts),
+			Transactions: int(counts.Transactions),
+			Categories:   int(counts.Categories),
+			Currencies:   int(counts.Currencies),
+		},
+	}
+
+	created, err := queries.GetCreatedTransactionGroups(ctx, &dao.GetCreatedTransactionGroupsParams{UserID: id, UserEmail: target.Email})
+	if err != nil {
+		return nil, err
+	}
+	for _, group := range created {
+		// The group's amounts are in the creator's currency, so it cannot outlive that currency.
+		if group.OtherMembers > 0 {
+			plan.impact.BlockingTransactionGroups = append(plan.impact.BlockingTransactionGroups, group.Name)
+			continue
+		}
+		plan.deletedGroups = append(plan.deletedGroups, group.ID)
+		plan.impact.DeletedTransactionGroups = append(plan.impact.DeletedTransactionGroups, group.Name)
+	}
+
+	rows, err := queries.GetGroupedTransactionsForUser(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	for _, row := range rows {
+		if slices.Contains(plan.deletedGroups, row.TransactionGroupID) {
+			continue
+		}
+		plan.grouped = append(plan.grouped, groupedTransactionSnapshot(row))
+	}
+	plan.impact.MovedToUnconfirmed = len(plan.grouped)
+	return plan, nil
+}
+
+func (r *Repository) GetUserDeletionImpact(ctx context.Context, id uuid.UUID) (impact model.UserDeletionImpact, err error) {
+	err = r.inTx(ctx, func(queries *dao.Queries) error {
+		plan, err := planUserDeletion(ctx, queries, id)
+		if err != nil {
+			return err
+		}
+		impact = plan.impact
+		return nil
+	})
+	return impact, err
+}
+
+func (r *Repository) DeleteUser(ctx context.Context, id uuid.UUID) error {
+	return r.inTx(ctx, func(queries *dao.Queries) error {
+		plan, err := planUserDeletion(ctx, queries, id)
+		if err != nil {
+			return err
+		}
+		if len(plan.impact.BlockingTransactionGroups) > 0 {
+			return model.ErrUserCreatedSharedGroups
+		}
+
+		for _, group := range plan.deletedGroups {
+			if err := queries.DeleteTransactionGroup(ctx, group); err != nil {
+				return fmt.Errorf("deleting transaction group %d: %w", group, err)
+			}
+		}
+		if _, err := copyGroupedTransactionsToUnconfirmed(ctx, queries, plan.email, plan.grouped); err != nil {
+			return err
+		}
+
+		steps := []struct {
+			name string
+			run  func(context.Context, uuid.UUID) error
+		}{
+			{"clearing the default account", queries.ClearHiddenDefaultAccount},
+			{"deleting transactions", queries.DeleteUserTransactions},
+			{"deleting account balances", queries.DeleteUserAccountCurrencies},
+			{"deleting accounts", queries.DeleteUserAccounts},
+			{"deleting financial incomes", queries.DeleteUserFinancialIncomes},
+			{"deleting exchange rates", queries.DeleteUserExchangeRates},
+			{"deleting currencies", queries.DeleteUserCurrencies},
+			{"deleting categories", queries.DeleteUserCategories},
+		}
+		for _, step := range steps {
+			if err := step.run(ctx, id); err != nil {
+				return fmt.Errorf("%s: %w", step.name, err)
+			}
+		}
+
+		if err := queries.DeleteGuestLogin(ctx, plan.email); err != nil {
+			return fmt.Errorf("deleting guest login: %w", err)
+		}
+		deleted, err := queries.DeleteUser(ctx, id)
+		if err != nil {
+			return fmt.Errorf("deleting user: %w", err)
+		}
+		if deleted != 1 {
+			return model.ErrUserNotFound
+		}
+		return nil
+	})
 }

@@ -30,3 +30,13 @@ export interface ManagedUser {
   isAdmin: boolean
   lastSeenAt: Date | null
 }
+
+export interface UserDeletionImpact {
+  accounts: number
+  transactions: number
+  categories: number
+  currencies: number
+  movedToUnconfirmed: number
+  deletedTransactionGroups: string[]
+  blockingTransactionGroups: string[]
+}

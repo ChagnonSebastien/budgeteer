@@ -25,6 +25,29 @@ message GetAllUsersResponse {
   repeated User users = 1;
 }
 
+message GetUserDeletionImpactRequest {
+  string id = 1;
+}
+
+message GetUserDeletionImpactResponse {
+  uint32 accounts = 1;
+  uint32 transactions = 2;
+  uint32 categories = 3;
+  uint32 currencies = 4;
+  uint32 moved_to_unconfirmed = 5;
+  repeated string deleted_transaction_groups = 6;
+  repeated string blocking_transaction_groups = 7;
+}
+
+message DeleteUserRequest {
+  string id = 1;
+}
+
+message DeleteUserResponse {
+}
+
 service UserService {
   rpc GetAllUsers(GetAllUsersRequest) returns (GetAllUsersResponse);
+  rpc GetUserDeletionImpact(GetUserDeletionImpactRequest) returns (GetUserDeletionImpactResponse);
+  rpc DeleteUser(DeleteUserRequest) returns (DeleteUserResponse);
 }

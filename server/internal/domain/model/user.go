@@ -35,9 +35,22 @@ type UserSummary struct {
 	LastSeenAt  *time.Time
 }
 
+type UserDeletionImpact struct {
+	Accounts                  int
+	Transactions              int
+	Categories                int
+	Currencies                int
+	MovedToUnconfirmed        int
+	DeletedTransactionGroups  []string
+	BlockingTransactionGroups []string
+}
+
 var (
-	ErrOidcEmailUnverified = errors.New("the identity provider has not verified this email")
-	ErrOidcEmailTaken      = errors.New("this email is already linked to another identity")
+	ErrUserNotFound            = errors.New("user not found")
+	ErrUserIsAdmin             = errors.New("admins cannot be deleted")
+	ErrUserCreatedSharedGroups = errors.New("the user created shared groups that other people are in")
+	ErrOidcEmailUnverified     = errors.New("the identity provider has not verified this email")
+	ErrOidcEmailTaken          = errors.New("this email is already linked to another identity")
 )
 
 type OidcIdentity struct {
