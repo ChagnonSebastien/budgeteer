@@ -12,7 +12,6 @@ import { Centered } from './components/shared/Layout'
 import Currency, { CurrencyUpdatableFields, RateAutoupdateSettings } from './domain/model/currency'
 import { IdIdentifier } from './domain/model/Unique'
 import AccountsPage from './pages/AccountsPage'
-import BalancePage from './pages/BalancePage'
 import CategoryPage from './pages/CategoryPage'
 import CostsAnalysisPage from './pages/CostsAnalysisPage'
 import CreateAccountPage from './pages/CreateAccountPage'
@@ -406,7 +405,6 @@ const AuthenticatedZone: FC<Props> = (props) => {
             <Route path="/transactions/import" element={<ImportTransactionsPage />} />
             <Route path="/transactions/edit/:transactionId" element={<EditTransactionPage />} />
             <Route path="/net-worth" element={<NetWorthPage />} />
-            <Route path="/balances" element={<BalancePage />} />
             <Route path="/costs" element={<CostsAnalysisPage />} />
             <Route path="/trends" element={<TrendsPage />} />
             <Route path="/investments" element={<InvestmentsPerformancePage />} />

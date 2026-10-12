@@ -18,6 +18,7 @@ import { FC } from 'react'
 type Option = {
   value: string
   label: string
+  disabled?: boolean
 }
 
 export type Props = {
@@ -45,6 +46,7 @@ const SelectOne: FC<Props> = (props) => {
               key={`${props.label}-label-${option.value}`}
               value={option.value}
               control={<Radio />}
+              disabled={option.disabled}
               label={option.label}
             />
           ))}
@@ -69,7 +71,7 @@ const SelectOne: FC<Props> = (props) => {
           variant="standard"
         >
           {props.options.map((option) => (
-            <MenuItem key={`${props.label}-label-${option.value}`} value={option.value}>
+            <MenuItem key={`${props.label}-label-${option.value}`} value={option.value} disabled={option.disabled}>
               {option.label}
             </MenuItem>
           ))}
@@ -103,7 +105,7 @@ const SelectOne: FC<Props> = (props) => {
         }}
       >
         {props.options.map((option) => (
-          <ToggleButton key={option.value} value={option.value}>
+          <ToggleButton key={option.value} value={option.value} disabled={option.disabled}>
             {option.label}
           </ToggleButton>
         ))}
