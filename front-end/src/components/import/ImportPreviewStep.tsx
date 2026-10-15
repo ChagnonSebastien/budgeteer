@@ -3,7 +3,15 @@ import { formatDate } from 'date-fns'
 import { FC, memo, useContext, useMemo } from 'react'
 
 import { outflowKinds, ParsedRow } from '../../domain/import/mapping'
-import { effectiveCategory, isTransferChoice, PreviewRow, RowChoice, RowStatus } from '../../domain/import/preview'
+import {
+  effectiveCategory,
+  isImportable,
+  isTrade,
+  isTransferChoice,
+  PreviewRow,
+  RowChoice,
+  RowStatus,
+} from '../../domain/import/preview'
 import Account, { AccountID } from '../../domain/model/account'
 import Currency, { formatFull } from '../../domain/model/currency'
 import Transaction from '../../domain/model/transaction'
@@ -21,6 +29,7 @@ const statusLabels: Record<RowStatus, string> = {
   transferSuggestion: 'Transfer suggestion',
   unparseable: 'Unparseable',
   blocked: 'Unknown symbol',
+  combined: 'Combined',
 }
 
 const statusColors: Record<RowStatus, 'default' | 'success' | 'warning' | 'info' | 'error'> = {
@@ -31,10 +40,10 @@ const statusColors: Record<RowStatus, 'default' | 'success' | 'warning' | 'info'
   transferSuggestion: 'info',
   unparseable: 'error',
   blocked: 'error',
+  combined: 'default',
 }
 
-const isImportable = (row: PreviewRow) =>
-  row.status !== 'unparseable' && row.status !== 'blocked' && row.status !== 'imported'
+const tradeLabels: Partial<Record<ParsedRow['kind'], string>> = { buy: 'Buy ', sell: 'Sell ', conversion: 'Convert ' }
 
 interface RowProps {
   row: PreviewRow
@@ -54,7 +63,7 @@ const ImportRowCard: FC<RowProps> = memo(
     const parsed: ParsedRow | null = row.parse.outcome === 'parsed' ? row.parse.row : null
     const currency = parsed ? currencies.find((c) => c.id === parsed.currencyId) : undefined
     const outflow = parsed ? outflowKinds.includes(parsed.kind) : false
-    const trade = parsed?.kind === 'buy' || parsed?.kind === 'sell'
+    const trade = parsed !== null && isTrade(parsed)
     const transfer = isTransferChoice(choice, accounts)
     const categoryId = parsed ? effectiveCategory(parsed, choice, accounts, transactions) : null
     const category = categories.find((c) => c.id === categoryId)
@@ -91,7 +100,7 @@ const ImportRowCard: FC<RowProps> = memo(
               fontWeight={700}
               sx={{ whiteSpace: 'nowrap', color: trade ? 'text.primary' : outflow ? 'money.loss' : 'money.gain' }}
             >
-              {trade ? (parsed.kind === 'buy' ? 'Buy ' : 'Sell ') : outflow ? '-' : '+'}
+              {trade ? tradeLabels[parsed.kind] : outflow ? '-' : '+'}
               {formatFull(currency, parsed.cash)}
             </Typography>
           )}
@@ -105,6 +114,11 @@ const ImportRowCard: FC<RowProps> = memo(
           {row.parse.outcome === 'unparseable' && (
             <Typography variant="caption" color="error">
               {row.parse.reason}
+            </Typography>
+          )}
+          {row.parse.outcome === 'combined' && (
+            <Typography variant="caption" color="text.secondary">
+              Folded into line {row.parse.into}
             </Typography>
           )}
           {row.parse.outcome === 'blocked' && (

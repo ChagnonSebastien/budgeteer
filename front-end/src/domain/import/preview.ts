@@ -20,6 +20,7 @@ export type RowStatus =
   | 'transferSuggestion'
   | 'unparseable'
   | 'blocked'
+  | 'combined'
 
 export interface Counterparty {
   id: AccountID | null
@@ -75,7 +76,9 @@ export const computeFingerprints = async (account: AccountID, parses: RowParse[]
 
 const isOutflow = (row: ParsedRow) => outflowKinds.includes(row.kind)
 
-const isTrade = (row: ParsedRow) => row.kind === 'buy' || row.kind === 'sell'
+export const isTrade = (row: ParsedRow) => row.kind === 'buy' || row.kind === 'sell' || row.kind === 'conversion'
+
+const movesCash = (row: ParsedRow) => !isTrade(row) && row.kind !== 'stockDividend'
 
 const sideOf = (transaction: Transaction, account: AccountID, outflow: boolean) =>
   outflow
@@ -132,8 +135,7 @@ export const buildPreview = (
     if (parse.outcome !== 'parsed') return { ...base, status: parse.outcome }
     if (known.has(base.fingerprint)) return { ...base, status: 'imported' }
 
-    const match =
-      parse.row.kind === 'buy' || parse.row.kind === 'sell' ? null : matchPayee(parse.row.statementName, payees)
+    const match = isTrade(parse.row) ? null : matchPayee(parse.row.statementName, payees)
     const payeeAccount = match ? accounts.find((a) => a.id === match.accountId) : undefined
     return {
       ...base,
@@ -146,7 +148,7 @@ export const buildPreview = (
   const open = () =>
     rows.filter(
       (r): r is PreviewRow & { parse: { outcome: 'parsed'; row: ParsedRow } } =>
-        r.status === 'new' && r.parse.outcome === 'parsed' && !isTrade(r.parse.row),
+        r.status === 'new' && r.parse.outcome === 'parsed' && movesCash(r.parse.row),
     )
   const parsedOf = (key: number) => (rows[key].parse as { row: ParsedRow }).row
 
@@ -229,8 +231,11 @@ export const buildPreview = (
   return rows
 }
 
+export const isImportable = (row: PreviewRow) =>
+  row.status !== 'unparseable' && row.status !== 'blocked' && row.status !== 'imported' && row.status !== 'combined'
+
 export const initialChoice = (row: PreviewRow, accounts: Account[]): RowChoice => {
-  const importable = row.status !== 'unparseable' && row.status !== 'blocked' && row.status !== 'imported'
+  const importable = isImportable(row)
   const autoMerge =
     row.status === 'transferMatch' &&
     row.transfer?.stored !== null &&
@@ -300,6 +305,10 @@ export const toCommitRow = (
         return { ...transfer, from: cashSide, to: securitySide }
       case 'sell':
         return { ...transfer, from: securitySide, to: cashSide }
+      case 'conversion':
+        return { ...transfer, from: cashSide, to: securitySide }
+      case 'stockDividend':
+        return { sender, receiver, from: cashSide, to: securitySide }
       default:
         return { sender, receiver, from: cashSide, to: cashSide }
     }
@@ -318,7 +327,7 @@ export const toCommitRow = (
       receiverCurrencyId: shape.to.currency,
       receiverAmount: shape.to.amount,
       financialIncomeData:
-        (row.kind === 'dividend' || row.kind === 'fee') && security
+        (row.kind === 'dividend' || row.kind === 'fee' || row.kind === 'stockDividend') && security
           ? new FinancialIncomeData(security.currencyId)
           : null,
       transactionGroupData: null,

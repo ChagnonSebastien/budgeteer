@@ -29,6 +29,8 @@ const kindLabels = {
   sell: 'Sell',
   dividend: 'Dividend',
   fee: 'Fee',
+  conversion: 'Conversion',
+  stockDividend: 'Stock dividend',
 }
 
 interface Props {
@@ -241,6 +243,13 @@ const ImportMappingStep: FC<Props> = (props) => {
             value={mapping.quantityColumn}
             onChange={(v) => set({ quantityColumn: v })}
           />
+          <ColumnSelect
+            label="Unit price"
+            optional
+            headers={headers}
+            value={mapping.priceColumn}
+            onChange={(v) => set({ priceColumn: v })}
+          />
         </Row>
       </Stack>
 
@@ -282,7 +291,9 @@ const ImportMappingStep: FC<Props> = (props) => {
                         ? `Unknown symbol ${parse.symbol}`
                         : parse.outcome === 'unparseable'
                           ? parse.reason
-                          : ''}
+                          : parse.outcome === 'combined'
+                            ? `Folded into line ${parse.into}`
+                            : ''}
                   </TableCell>
                 </TableRow>
               )

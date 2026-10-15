@@ -21,6 +21,7 @@ import {
   computeFingerprints,
   effectiveCategory,
   initialChoice,
+  isTrade,
   isTransferChoice,
   PreviewRow,
   RowChoice,
@@ -207,7 +208,7 @@ const ImportTransactionsPage: FC = () => {
       selected.filter((row) => {
         if (row.parse.outcome !== 'parsed') return false
         const parsed = row.parse.row
-        if (parsed.kind === 'buy' || parsed.kind === 'sell' || isTransferChoice(choiceOf(row), accounts)) return false
+        if (isTrade(parsed) || isTransferChoice(choiceOf(row), accounts)) return false
         return effectiveCategory(parsed, choiceOf(row), accounts, transactions) === null
       }).length,
     [selected, choiceOf, accounts, transactions],
@@ -253,7 +254,7 @@ const ImportTransactionsPage: FC = () => {
         const choice = choiceOf(row)
         const counterpartyId = choice.counterparty.id ?? payees.get(foldText(choice.counterparty.name.trim())) ?? null
         const transfer = isTransferChoice(choice, accounts)
-        const trade = parsed.kind === 'buy' || parsed.kind === 'sell'
+        const trade = isTrade(parsed)
         const categoryId =
           trade || transfer ? null : (effectiveCategory(parsed, choice, accounts, transactions) ?? rootCategory.id)
         return {
