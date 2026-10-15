@@ -1,5 +1,5 @@
 import { Box } from '@mui/material'
-import { FC, useContext, useMemo } from 'react'
+import { FC, useContext, useEffect, useMemo, useRef } from 'react'
 
 import AccountsBalanceChart, { GroupType as AccountsGroupType } from '../components/graphing/AccountsBalanceChart'
 import CurrenciesBalanceChart, { GroupType as CurrenciesGroupType } from '../components/graphing/CurrenciesBalanceChart'
@@ -70,6 +70,14 @@ const NetWorthPage: FC = () => {
     const chosen = (qp.scale ?? (privacyMode ? 'relative' : 'cropped-absolute')) as ScaleConfig
     return chosen === 'cropped-absolute' && !canZoom ? 'absolute' : chosen
   }, [qp.scale, privacyMode, canZoom])
+
+  const previousPrivacyMode = useRef(privacyMode)
+  useEffect(() => {
+    if (previousPrivacyMode.current === privacyMode) return
+    previousPrivacyMode.current = privacyMode
+    // leaving with no scale chosen would fall back to the non-presentation default
+    if (privacyMode || !qp.scale) updateQueryParams({ scale: 'relative' }, true)
+  }, [privacyMode, qp.scale, updateQueryParams])
 
   const splitHorizontal = useWideLayout()
   const { myOwnAccounts } = useContext(AccountServiceContext)

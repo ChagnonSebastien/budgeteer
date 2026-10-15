@@ -247,6 +247,9 @@ export const useBalanceChartData = <Item extends object>(
   return { ...ranged, showLabelEveryFactor, colorReference }
 }
 
+const gainPercent = (gain: number, baseline: number | undefined) =>
+  baseline ? `${gain >= 0 ? '+' : ''}${((gain / baseline) * 100).toFixed(1)}%` : '+0.0%'
+
 type NetWorthTooltipProps = {
   tooltipProps: TooltipSlice
   labels: Date[]
@@ -259,7 +262,8 @@ export const NetWorthTooltip: FC<NetWorthTooltipProps> = ({ tooltipProps, labels
   const { defaultCurrency } = useContext(MixedAugmentation)
   const date = formatDate(labels[tooltipProps.slice.index], 'MMM d, yyyy')
   const totalGain = tooltipProps.slice.stack.map((s) => s.gain ?? 0).reduce((sum, g) => sum + g, 0)
-  const showGlobalGain = !privacyMode && totalGain !== 0 && baselineConfig === 'showGlobalBaseline'
+  const totalBaseline = tooltipProps.slice.stack.map((s) => s.baseline ?? 0).reduce((sum, b) => sum + b, 0)
+  const showGlobalGain = totalGain !== 0 && baselineConfig === 'showGlobalBaseline'
   const totalValue = tooltipProps.slice.stack.map((s) => s.value).reduce((sum, v) => sum + v, 0)
 
   return (
@@ -271,7 +275,7 @@ export const NetWorthTooltip: FC<NetWorthTooltipProps> = ({ tooltipProps, labels
           {tooltipProps.slice.stack
             .filter((s) => s.value !== 0)
             .map((s) => {
-              const showGain = !privacyMode && s.gain !== 0 && baselineConfig === 'showIndividualBaselines'
+              const showGain = s.gain !== 0 && baselineConfig === 'showIndividualBaselines'
               return (
                 <Fragment key={`${date}-${s.layerLabel}`}>
                   {/* main row */}
@@ -303,21 +307,18 @@ export const NetWorthTooltip: FC<NetWorthTooltipProps> = ({ tooltipProps, labels
                     <tr>
                       <td />
                       <td />
-                      <Box component="td" sx={{ textAlign: 'end' }}>
-                        <Box component={GraphTooltipValue} sx={{ typography: 'caption', color: gainColor(s.gain) }}>
-                          {s.gainFormatted}
-                        </Box>
-                      </Box>
-
-                      {scaleConfig === 'relative' && (
-                        <Box component="td" sx={{ textAlign: 'end', pl: 2 }}>
-                          <Box component={GraphTooltipValue} sx={{ color: gainColor(s.gain) }}>
-                            {s.baseline !== undefined && s.baseline !== 0
-                              ? `${s.gain >= 0 ? '+' : ''}${((s.gain / s.baseline) * 100).toFixed(1)}%`
-                              : '+0.0%'}
+                      {!privacyMode && (
+                        <Box component="td" sx={{ textAlign: 'end' }}>
+                          <Box component={GraphTooltipValue} sx={{ typography: 'caption', color: gainColor(s.gain) }}>
+                            {s.gainFormatted}
                           </Box>
                         </Box>
                       )}
+                      <Box component="td" sx={{ textAlign: 'end', pl: 2 }}>
+                        <Box component={GraphTooltipValue} sx={{ color: gainColor(s.gain) }}>
+                          {gainPercent(s.gain, s.baseline)}
+                        </Box>
+                      </Box>
                     </tr>
                   )}
                 </Fragment>
@@ -331,7 +332,8 @@ export const NetWorthTooltip: FC<NetWorthTooltipProps> = ({ tooltipProps, labels
           <hr />
           <GraphTooltipRow>
             <Box component={GraphTooltipValue} sx={{ color: gainColor(totalGain) }}>
-              Total Gains: {formatFull(defaultCurrency, totalGain, privacyMode)}
+              Total Gains: {!privacyMode && `${formatFull(defaultCurrency, totalGain)} `}
+              {gainPercent(totalGain, totalBaseline)}
             </Box>
           </GraphTooltipRow>
         </div>
