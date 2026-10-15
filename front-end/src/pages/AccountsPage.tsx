@@ -14,7 +14,7 @@ import { EmptyState } from '../components/shared/Layout'
 import { useNavigateFromDialog } from '../components/shared/useCloseOnBack'
 import useQueryParams from '../components/shared/useQueryParams'
 import Account from '../domain/model/account'
-import { formatAmount } from '../domain/model/currency'
+import { formatSignedAmount } from '../domain/model/currency'
 import MixedAugmentation from '../service/MixedAugmentation'
 import { AccountServiceContext, CurrencyServiceContext } from '../service/ServiceContext'
 
@@ -165,7 +165,7 @@ const AccountsPage: FC = () => {
                       delay={index}
                       title={currency.symbol}
                       subTitle={currency.name}
-                      value={formatAmount(currency, amount, privacyMode)}
+                      value={formatSignedAmount(currency, amount, privacyMode)}
                     />
                   ))}
                 </Stack>
