@@ -46,8 +46,8 @@ func NewAutoUpdater(
 	}
 }
 
-func (r *Runner) NewRunner(ctx context.Context) func() error {
-	return func() error {
+func (r *Runner) NewRunner() func(context.Context) error {
+	return func(ctx context.Context) error {
 		logger := logging.FromContext(ctx)
 		logger.Info("Starting exchange rate autoupdates")
 
@@ -64,7 +64,15 @@ func (r *Runner) NewRunner(ctx context.Context) func() error {
 			for _, currency := range currencies {
 				logger := logger.With("currencyID", currency.ID)
 
+				if ctx.Err() != nil {
+					logger.Warn("stopping exchange rate autoupdates before the remaining currencies", "error", ctx.Err())
+					return nil
+				}
+
 				if failure := r.updateCurrency(ctx, currency); failure != nil {
+					if ctx.Err() != nil {
+						continue // the deadline cut the script short: not the owner's failure
+					}
 					logger.Error("auto updating exchange rate for currency", "error", failure.cause)
 
 					message := []rune(failure.userMessage)

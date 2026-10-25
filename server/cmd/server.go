@@ -205,7 +205,7 @@ func (s *Server) Serve(ctx context.Context) error {
 	)
 
 	exchangeRateAutoUpdater := autoupdate.NewAutoUpdater(ctx, repos, autoupdate.RunJavascript)
-	exchangeRateAutoUpdateScheduler, err := autoupdate.NewScheduler("0 6 * * *", exchangeRateAutoUpdater.NewRunner(ctx))
+	exchangeRateAutoUpdateScheduler, err := autoupdate.NewScheduler("exchange rate auto update", "0 6 * * *", exchangeRateAutoUpdater.NewRunner())
 	if err != nil {
 		return fmt.Errorf("setting up the exchange rate auto update scheduler: %s", err)
 	}
