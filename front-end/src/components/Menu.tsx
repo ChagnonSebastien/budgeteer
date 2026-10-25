@@ -10,6 +10,7 @@ import {
   ListItemText,
   SwipeableDrawer,
   Stack,
+  Switch,
   Tooltip,
   Typography,
 } from '@mui/material'
@@ -293,7 +294,6 @@ const DrawerWrapper: FC<Props> = ({ logout, children, userIsGuest = false }) => 
                 <ListItemButton
                   aria-label={collapsed ? 'Presentation mode' : undefined}
                   aria-pressed={privacyMode}
-                  selected={privacyMode}
                   onClick={() => {
                     const newValue = !privacyMode
                     setPrivacyMode(newValue)
@@ -301,10 +301,26 @@ const DrawerWrapper: FC<Props> = ({ logout, children, userIsGuest = false }) => 
                   }}
                   sx={collapsed ? railItemSx : undefined}
                 >
-                  <ListItemIcon sx={{ minWidth: collapsed ? 0 : 42, '& svg': { m: 1 } }}>
+                  <ListItemIcon
+                    sx={{
+                      minWidth: collapsed ? 0 : 42,
+                      '& svg': { m: 1 },
+                      color: collapsed && privacyMode ? 'warning.main' : undefined,
+                    }}
+                  >
                     <IconLib.TbPresentation size={menuIconSize} />
                   </ListItemIcon>
                   {!collapsed && <ListItemText primary="Presentation mode" />}
+                  {!collapsed && (
+                    <Switch
+                      size="small"
+                      edge="end"
+                      checked={privacyMode}
+                      tabIndex={-1}
+                      inputProps={{ 'aria-hidden': true }}
+                      sx={{ pointerEvents: 'none' }}
+                    />
+                  )}
                 </ListItemButton>
               </Tooltip>
             )}
