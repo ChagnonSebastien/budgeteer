@@ -547,6 +547,11 @@ type guestVerifyCodeResponse struct {
 }
 
 func (auth *Auth) guestSendCodeHandler(w http.ResponseWriter, r *http.Request) {
+	if !auth.AuthMethods.Guest {
+		http.NotFound(w, r)
+		return
+	}
+
 	logger := logging.FromContext(r.Context())
 
 	if r.Method != http.MethodPost {
@@ -580,6 +585,11 @@ func (auth *Auth) guestSendCodeHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (auth *Auth) guestVerifyCodeHandler(w http.ResponseWriter, r *http.Request) {
+	if !auth.AuthMethods.Guest {
+		http.NotFound(w, r)
+		return
+	}
+
 	logger := logging.FromContext(r.Context())
 
 	if r.Method != http.MethodPost {

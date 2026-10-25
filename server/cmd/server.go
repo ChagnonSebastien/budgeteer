@@ -109,10 +109,9 @@ func (s *Server) Serve(ctx context.Context) error {
 	var mailerService interface {
 		Send(ctx context.Context, to []string, subject, textBody, htmlBody string) error
 	}
-	mailerService = mailer.NewNilMailer()
-
 	if s.config.Mailer.UseMock {
 		logging.FromContext(ctx).Info("Nil mailer is enabled. Printing mails into logs.")
+		mailerService = mailer.NewNilMailer()
 	} else if s.config.Mailer.Host != "" && s.config.Mailer.Username != "" && s.config.Mailer.Password != "" {
 		mailerService = mailer.NewMailer(mailer.Config{
 			Host:        s.config.Mailer.Host,
@@ -124,13 +123,17 @@ func (s *Server) Serve(ctx context.Context) error {
 			FromAddress: s.config.Mailer.FromAddress,
 			ReplyTo:     s.config.Mailer.ReplyTo,
 		})
-	} else {
+	}
+
+	guestLoginEnabled := s.config.Auth.GuestLogin.Enabled
+	if guestLoginEnabled && mailerService == nil {
 		logging.FromContext(ctx).Info("Mailer is not configured. Guest login is disabled.")
+		guestLoginEnabled = false
 	}
 
 	// Create guest login service from config
 	var guestLoginService *service.GuestLoginService
-	if s.config.Auth.GuestLogin.Enabled {
+	if guestLoginEnabled {
 		codeLength := s.config.Auth.GuestLogin.CodeLength
 		if codeLength == 0 {
 			codeLength = 8
@@ -186,16 +189,16 @@ func (s *Server) Serve(ctx context.Context) error {
 			},
 		),
 		http.NewAuth(
-			repos,                            // userService
-			guestLoginService,                // guestLoginService
-			s.config.Auth.Oidc.Enabled,       // oidcEnabled
-			s.config.Auth.UserPass.Enabled,   // userPassEnabled
-			s.config.Auth.GuestLogin.Enabled, // guestEnabled
-			oidcConfig,                       // oidcConfig
-			verifier,                         // verifier
-			s.config.PublicUrl,               // serverPublicUrl
-			s.config.Auth.Oidc.ProviderUrl,   // oidcIssuer
-			oidcRevocationEndpoint,           // oidcRevocationEndpoint
+			repos,                          // userService
+			guestLoginService,              // guestLoginService
+			s.config.Auth.Oidc.Enabled,     // oidcEnabled
+			s.config.Auth.UserPass.Enabled, // userPassEnabled
+			guestLoginEnabled,              // guestEnabled
+			oidcConfig,                     // oidcConfig
+			verifier,                       // verifier
+			s.config.PublicUrl,             // serverPublicUrl
+			s.config.Auth.Oidc.ProviderUrl, // oidcIssuer
+			oidcRevocationEndpoint,         // oidcRevocationEndpoint
 		),
 	)
 

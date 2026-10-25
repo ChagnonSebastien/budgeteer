@@ -32,4 +32,4 @@ mailer:
   authAuto: true
   fromAddress: "noreply@budgeteer.app"
   replyTo: ""
-  useMock: true
+  useMock: false
