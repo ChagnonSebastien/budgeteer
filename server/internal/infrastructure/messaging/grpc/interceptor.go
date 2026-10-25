@@ -3,6 +3,8 @@ package grpc
 import (
 	"context"
 	"errors"
+	"fmt"
+	"runtime/debug"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -49,4 +51,20 @@ func sanitizeErrorInterceptor(
 		"error", err,
 	)
 	return resp, status.Error(codes.Internal, "internal error")
+}
+
+func recoverPanicInterceptor(
+	ctx context.Context,
+	req interface{},
+	info *grpc.UnaryServerInfo,
+	handler grpc.UnaryHandler,
+) (resp interface{}, err error) {
+	// grpc runs handlers on its own goroutines, so an unrecovered panic exits the whole process
+	defer func() {
+		if r := recover(); r != nil {
+			logging.FromContext(ctx).Error("grpc handler panic", "method", info.FullMethod, "panic", r, "stack", string(debug.Stack()))
+			resp, err = nil, fmt.Errorf("handler panicked: %v", r)
+		}
+	}()
+	return handler(ctx, req)
 }

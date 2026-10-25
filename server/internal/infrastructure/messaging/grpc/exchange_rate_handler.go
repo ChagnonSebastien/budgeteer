@@ -10,6 +10,8 @@ import (
 
 	"chagnon.dev/budget-server/internal/infrastructure/messaging/dto"
 	"chagnon.dev/budget-server/internal/infrastructure/messaging/shared"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type scriptRunner func(context.Context, string) (string, error)
@@ -60,6 +62,10 @@ func (s *ExchangeRateHandler) UpdateExchangeRate(ctx context.Context, req *dto.U
 	user, ok := shared.FromContext(ctx)
 	if !ok {
 		return nil, fmt.Errorf("getting user from context")
+	}
+
+	if req.Fields == nil {
+		return nil, status.Error(codes.InvalidArgument, "fields are required")
 	}
 
 	date, err := time.Parse(layout, req.Date)

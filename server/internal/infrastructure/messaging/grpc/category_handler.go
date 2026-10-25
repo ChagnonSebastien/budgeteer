@@ -85,6 +85,10 @@ func (s *CategoryHandler) UpdateCategory(
 		return nil, fmt.Errorf("getting user from context")
 	}
 
+	if req.Fields == nil {
+		return nil, status.Error(codes.InvalidArgument, "fields are required")
+	}
+
 	var parentId *int
 	if req.Fields.UpdateParentId {
 		if req.Fields.ParentId != nil {

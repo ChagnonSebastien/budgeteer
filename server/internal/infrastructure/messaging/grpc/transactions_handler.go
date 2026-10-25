@@ -10,6 +10,8 @@ import (
 	"chagnon.dev/budget-server/internal/infrastructure/messaging/dto"
 	"chagnon.dev/budget-server/internal/infrastructure/messaging/shared"
 	"github.com/google/uuid"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 const layout = "2006-01-02 15:04:05"
@@ -190,6 +192,10 @@ func (s *TransactionHandler) UpdateTransaction(
 	user, ok := shared.FromContext(ctx)
 	if !ok {
 		return nil, fmt.Errorf("getting user from context")
+	}
+
+	if req.Fields == nil {
+		return nil, status.Error(codes.InvalidArgument, "fields are required")
 	}
 
 	receiver := model.None[model.Optional[int]]()

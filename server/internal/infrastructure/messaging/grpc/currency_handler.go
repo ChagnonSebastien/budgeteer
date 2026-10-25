@@ -93,6 +93,10 @@ func (s *CurrencyHandler) UpdateCurrency(
 		return nil, fmt.Errorf("getting user from context")
 	}
 
+	if req.Fields == nil {
+		return nil, status.Error(codes.InvalidArgument, "fields are required")
+	}
+
 	script := req.GetFields().GetAutoUpdateSettingsScript()
 	setsScript := script != "" || req.GetFields().GetAutoUpdateSettingsEnabled()
 	if err := checkRateScriptAllowed(user, setsScript, len(script)); err != nil {

@@ -94,6 +94,10 @@ func (s *AccountHandler) UpdateAccount(
 		return nil, fmt.Errorf("getting user from context")
 	}
 
+	if req.Fields == nil {
+		return nil, status.Error(codes.InvalidArgument, "fields are required")
+	}
+
 	var initialAmounts *[]model.Balance
 	if req.Fields.UpdateBalances {
 		balances := make([]model.Balance, 0, len(req.Fields.Balances))

@@ -22,7 +22,7 @@ type Services struct {
 }
 
 func NewServerWithHandlers(services Services) *grpc.Server {
-	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(sanitizeErrorInterceptor))
+	grpcServer := grpc.NewServer(grpc.ChainUnaryInterceptor(sanitizeErrorInterceptor, recoverPanicInterceptor))
 	dto.RegisterAccountServiceServer(grpcServer, &AccountHandler{accountService: services.Account})
 	dto.RegisterCategoryServiceServer(grpcServer, &CategoryHandler{categoryService: services.Category})
 	dto.RegisterCurrencyServiceServer(grpcServer, &CurrencyHandler{currencyService: services.Currency})
