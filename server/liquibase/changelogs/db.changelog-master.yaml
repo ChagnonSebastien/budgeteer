@@ -71,3 +71,5 @@ databaseChangeLog:
       file: ./changelogs/035-transaction-group-currency.sql
   - include:
       file: ./changelogs/036-backfill-usage-choice.sql
+  - include:
+      file: ./changelogs/037-drop-foreign-account-balances.sql

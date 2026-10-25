@@ -92,6 +92,7 @@ func (r *Repository) CreateAccount(
 	if err != nil {
 		return 0, err
 	}
+	defer func() { _ = tx.Rollback() }()
 
 	queries := r.queries.WithTx(tx)
 
@@ -121,18 +122,14 @@ func (r *Repository) CreateAccount(
 				AccountID:  accountId,
 				CurrencyID: int32(balance.CurrencyId),
 				Value:      int32(balance.Value),
+				UserID:     userId,
 			},
 		)
 		if err != nil {
 			return 0, err
 		}
 		if changedRows == 0 {
-			return 0, fmt.Errorf(
-				"inserting new account(%d)-currency(%d) relationship for user %s",
-				accountId,
-				balance.CurrencyId,
-				userId,
-			)
+			return 0, ErrForeignReference
 		}
 	}
 
@@ -217,6 +214,7 @@ func (r *Repository) UpdateAccount(
 	if err != nil {
 		return err
 	}
+	defer func() { _ = tx.Rollback() }()
 
 	queries := r.queries.WithTx(tx)
 
@@ -254,18 +252,14 @@ func (r *Repository) UpdateAccount(
 					AccountID:  int32(id),
 					CurrencyID: int32(balance.CurrencyId),
 					Value:      int32(balance.Value),
+					UserID:     userId,
 				},
 			)
 			if err != nil {
 				return err
 			}
 			if changedRows == 0 {
-				return fmt.Errorf(
-					"inserting new account(%d)-currency(%d) relationship for user %s",
-					id,
-					balance.CurrencyId,
-					userId,
-				)
+				return ErrForeignReference
 			}
 		}
 	}
