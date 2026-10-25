@@ -268,6 +268,10 @@ func (r *Repository) UpdateTransactionGroup(
 		err = fmt.Errorf("cannot update a transaction group you are not a part of: %w", err)
 		return
 	}
+	if !userInPreviousMembersOption.GetOrPanic().Joined && (fields.Members.IsSome() || fields.SplitType.IsSome()) {
+		err = fmt.Errorf("cannot change members or split type of a transaction group before joining it")
+		return
+	}
 
 	if newMembers, isSome := fields.Members.Value(); isSome {
 		//

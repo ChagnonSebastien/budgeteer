@@ -15,7 +15,13 @@ SELECT
         SELECT json_agg(
                        json_build_object(
                                'user_email', utg2.user_email,
-                               'user_name', COALESCE(u.display_name, u.username),
+                               'user_name', CASE WHEN utg2.locked OR EXISTS (
+                                   SELECT 1
+                                   FROM user_transaction_group theirs
+                                   JOIN user_transaction_group mine ON mine.transaction_group_id = theirs.transaction_group_id
+                                   WHERE theirs.user_email = utg2.user_email AND theirs.locked
+                                     AND mine.user_email = sqlc.arg(user_email) AND mine.locked
+                               ) THEN COALESCE(u.display_name, u.username) END,
                                'split_value', utg2.split_value,
                                'joined', utg2.locked
                        )
