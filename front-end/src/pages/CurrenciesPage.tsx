@@ -187,7 +187,7 @@ const CurrenciesPage: FC = () => {
               topCategory: 'Asset',
               bigTitle: clickedCurrency.name,
               bottomSpec: {
-                IconComponent: IconLib.BsCurrencyExchange,
+                IconComponent: IconLib.MdCurrencyExchange,
                 text: clickedCurrency.symbol,
               },
             }}
@@ -196,7 +196,7 @@ const CurrenciesPage: FC = () => {
                 ? []
                 : [
                     {
-                      Icon: IconLib.BsGraphUp,
+                      Icon: IconLib.TbTrendingUp,
                       label: `${rateWording(clickedCurrency.type).title}s`,
                       intent: 'adjust' as const,
                       description: `Edit ${rateWording(clickedCurrency.type).noun}s and automate fetching`,

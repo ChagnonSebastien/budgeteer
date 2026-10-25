@@ -517,7 +517,7 @@ const TransactionForm: FC<Props> = (props) => {
       {baseType !== 'transfer' && typeof groupContext === 'undefined' && (
         <Stack direction="row" useFlexGap spacing={1.5} flexWrap="wrap">
           <Chip
-            icon={baseType === 'expense' ? <IconLib.BsGraphDown /> : <IconLib.BsGraphUp />}
+            icon={baseType === 'expense' ? <IconLib.TbTrendingDown /> : <IconLib.TbTrendingUp />}
             label={baseType === 'expense' ? 'Financial loss' : 'Financial income'}
             variant={isFinancialIncome ? 'filled' : 'outlined'}
             color={isFinancialIncome ? 'primary' : 'default'}
@@ -573,7 +573,7 @@ const TransactionForm: FC<Props> = (props) => {
                 additionalItemProps={{}}
               />
               <IconButton onClick={() => setTransactionGroupId(null)}>
-                <IconLib.IoCloseCircle />
+                <IconLib.MdCancel />
               </IconButton>
             </>
           )}

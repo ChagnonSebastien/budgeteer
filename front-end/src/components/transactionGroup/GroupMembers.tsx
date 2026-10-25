@@ -47,7 +47,7 @@ const GroupMembers: FC<{ transactionGroup: TransactionGroup; style?: CSSProperti
         onPersonSelected={addMember}
         OverrideTextLabel={({ onClick }) => (
           <IconButton aria-label="add someone to transaction group" onClick={onClick} disabled={readOnly}>
-            <IconLib.BsPlusCircle />
+            <IconLib.TbCirclePlus />
           </IconButton>
         )}
         allowNew

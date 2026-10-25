@@ -189,7 +189,7 @@ const ImportRowCard: FC<RowProps> = memo(
                   aria-label="Clear account"
                   onClick={() => set({ counterparty: { id: null, name: '' }, mergeInto: null })}
                 >
-                  <IconLib.IoCloseCircle />
+                  <IconLib.MdCancel />
                 </IconButton>
               )}
             </Stack>

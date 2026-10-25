@@ -8,28 +8,23 @@ export enum PreparedIcon {
   FaPlus = 'FaPlus',
   FaMinus = 'FaMinus',
   FaQuestion = 'FaQuestion',
-  GrTransaction = 'GrTransaction',
   MdOutput = 'MdOutput',
   MdInput = 'MdInput',
-  BsGraphUp = 'BsGraphUp',
-  BsGraphDown = 'BsGraphDown',
+  TbTrendingDown = 'TbTrendingDown',
   FaChartPie = 'FaChartPie',
-  IoCloseCircle = 'IoCloseCircle',
+  MdCancel = 'MdCancel',
   MdKeyboardBackspace = 'MdKeyboardBackspace',
   MdMenu = 'MdMenu',
   FaRegSquare = 'FaRegSquare',
   FaRegSquareCheck = 'FaRegSquareCheck',
-  BiSolidBarChartAlt2 = 'BiSolidBarChartAlt2',
   FaScaleUnbalanced = 'FaScaleUnbalanced',
   TbArrowsExchange = 'TbArrowsExchange',
   MdCategory = 'MdCategory',
   MdAccountBalance = 'MdAccountBalance',
-  BsCurrencyExchange = 'BsCurrencyExchange',
-  BiSolidFileImport = 'BiSolidFileImport',
-  BsFileEarmarkSpreadsheet = 'BsFileEarmarkSpreadsheet',
-  BsFileEarmarkText = 'BsFileEarmarkText',
+  MdCurrencyExchange = 'MdCurrencyExchange',
+  TbFileText = 'TbFileText',
   MdArrowForwardIos = 'MdArrowForwardIos',
-  BiSearch = 'BiSearch',
+  TbSearch = 'TbSearch',
   MdVisibility = 'MdVisibility',
   MdVisibilityOff = 'MdVisibilityOff',
   MdSettings = 'MdSettings',
@@ -43,8 +38,8 @@ export enum PreparedIcon {
   MdCalendarToday = 'MdCalendarToday',
   TbChartSankey = 'TbChartSankey',
   TbLayoutDashboardFilled = 'TbLayoutDashboardFilled',
-  BsPlusCircle = 'BsPlusCircle',
-  BsDashCircle = 'BsDashCircle',
+  TbCirclePlus = 'TbCirclePlus',
+  TbCircleMinus = 'TbCircleMinus',
   MdCheckCircle = 'MdCheckCircle',
   TbLayoutDashboard = 'TbLayoutDashboard',
   TbCategory = 'TbCategory',
@@ -92,12 +87,8 @@ export const useIconTools = (): IconTools => {
     const loaders: Promise<{ prefix: string; icons: Omit<{ default: unknown } | IconLibrary, 'default'> }>[] = [
       loadLibrary('Fa', import('react-icons/fa6')),
       loadLibrary('Md', import('react-icons/md')),
-      loadLibrary('Bi', import('react-icons/bi')),
-      loadLibrary('Bs', import('react-icons/bs')),
       loadLibrary('Tb', import('react-icons/tb')),
       loadLibrary('Gi', import('react-icons/gi')),
-      loadLibrary('Gr', import('react-icons/gr')),
-      loadLibrary('Io', import('react-icons/io5')),
     ]
 
     Promise.all(loaders).then((loadedLibraries) => {
@@ -132,7 +123,7 @@ export const useIconTools = (): IconTools => {
 
   const iconTypeFromNameWithFallback = useCallback(
     (iconName: string): IconType => {
-      return iconTypeFromName(iconName) ?? iconTypeFromName('GrDocumentMissing') ?? (() => <div />)
+      return iconTypeFromName(iconName) ?? iconTypeFromName('TbFileUnknown') ?? (() => <div />)
     },
     [iconLibraries, iconTypeFromName],
   )

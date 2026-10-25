@@ -259,7 +259,7 @@ const AccountForm: FC<Props> = (props) => {
                   aria-label="remove starting balance"
                   onClick={() => setInitialAmount((prevState) => prevState.filter((state) => state.uid !== i.uid))}
                 >
-                  <IconLib.BsDashCircle size="1.25rem" />
+                  <IconLib.TbCircleMinus size="1.25rem" />
                 </IconButton>
               </Stack>
             )
@@ -269,7 +269,7 @@ const AccountForm: FC<Props> = (props) => {
         {availableCurrencies.length > 0 && (
           <Button
             size="small"
-            startIcon={<IconLib.BsPlusCircle />}
+            startIcon={<IconLib.TbCirclePlus />}
             sx={{ alignSelf: 'flex-start' }}
             onClick={() =>
               setInitialAmount((prevState) => [

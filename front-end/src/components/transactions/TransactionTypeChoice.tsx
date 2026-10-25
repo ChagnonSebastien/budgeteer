@@ -38,7 +38,7 @@ export const useTransactionTypeOptions = (): TransactionTypeOption[] => {
         type: 'transfer',
         label: 'Transfer',
         description: 'Money you moved between two of your accounts.',
-        Icon: IconLib.GrTransaction,
+        Icon: IconLib.TbArrowsExchange,
         color: 'grey.500',
       },
     ],

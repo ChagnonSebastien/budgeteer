@@ -12,7 +12,7 @@ import { DrawerContext } from '../Menu'
 const defaultCategory = new Category(
   0,
   'Transfer Between accounts',
-  'GrTransaction',
+  'TbArrowsExchange',
   'var(--ion-color-dark-contrast)',
   'var(--ion-color-dark)',
   null,

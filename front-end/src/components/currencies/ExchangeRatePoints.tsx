@@ -167,7 +167,7 @@ const ExchangeRatePoints: FC<Props> = ({ currency, against, draft, onDraftChange
     <Stack spacing={1}>
       <Button
         size="small"
-        startIcon={<IconLib.BsPlusCircle />}
+        startIcon={<IconLib.TbCirclePlus />}
         sx={{ alignSelf: 'flex-start' }}
         disabled={readOnly}
         onClick={() =>

@@ -54,7 +54,7 @@ const GroupTransactionCard: FC<ItemProps<TransactionID, AugmentedTransaction, ob
               )
             }
             color="primary.main"
-            icon={<IconLib.BsPlusCircle />}
+            icon={<IconLib.TbCirclePlus />}
             label="Confirm and add to my transactions"
           />
         )

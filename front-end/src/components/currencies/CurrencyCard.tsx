@@ -41,7 +41,7 @@ const CurrencyCard = (props: ItemProps<CurrencyID, Currency, AdditionalCurrencyC
       >
         <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
           <Box sx={{ color: iconColor, display: 'flex', flexShrink: 0, fontSize: { xs: '1.25rem', sm: '1.5rem' } }}>
-            <IconLib.BsCurrencyExchange size="1em" />
+            <IconLib.MdCurrencyExchange size="1em" />
           </Box>
           <Typography variant="subtitle2" color="textDisabled" noWrap title={item.symbol} sx={{ minWidth: 0 }}>
             {item.symbol}
@@ -104,7 +104,7 @@ const CurrencyCard = (props: ItemProps<CurrencyID, Currency, AdditionalCurrencyC
           fontSize: { xs: '1.25rem', sm: '1.5rem' },
         }}
       >
-        <IconLib.BsCurrencyExchange size="1em" />
+        <IconLib.MdCurrencyExchange size="1em" />
       </Box>
 
       <Typography

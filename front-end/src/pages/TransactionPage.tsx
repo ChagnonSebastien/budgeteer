@@ -166,7 +166,7 @@ const TransactionPage: FC = () => {
                   updateQueryParams({ chart: 'line' })
                 }}
               >
-                <IconLib.BsGraphUp size="1.5rem" />
+                <IconLib.TbTrendingUp size="1.5rem" />
               </IconButton>
             )}
             <IconButton onClick={(e) => setAnchorEl(e.currentTarget)}>

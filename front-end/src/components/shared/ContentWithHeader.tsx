@@ -63,7 +63,7 @@ const SearchField: FC<HeaderSearch & { onClose(): void }> = ({ value, onChange, 
         sx={{ flexGrow: 1, mx: 1, px: 1.5, py: 0.5, bgcolor: 'surface.raised', borderRadius: (t) => t.radius.md }}
       />
       <IconButton aria-label="close search" onClick={onClose}>
-        <IconLib.IoCloseCircle />
+        <IconLib.MdCancel />
       </IconButton>
     </>
   )
@@ -140,7 +140,7 @@ const ContentWithHeader: FC<ContentWithHeaderProps> = (props) => {
               <Typography variant="h6" sx={{ flexGrow: 1 }}>
                 {title}
               </Typography>
-              {search && <ActionButtom Icon={IconLib.BiSearch} onClick={() => setSearching(true)} />}
+              {search && <ActionButtom Icon={IconLib.TbSearch} onClick={() => setSearching(true)} />}
             </>
           )}
           {typeof rightContent !== 'undefined' && rightContent}

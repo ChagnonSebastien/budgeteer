@@ -431,7 +431,7 @@ const CostsAnalysisPage: FC = () => {
                 updateViewTypeInUrl('table')
               }}
             >
-              <IconLib.BsFileEarmarkText size="1.5rem" />
+              <IconLib.TbFileText size="1.5rem" />
             </IconButton>
           )}
           <IconButton onClick={() => setShowOptions(true)}>
