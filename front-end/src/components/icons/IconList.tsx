@@ -1,7 +1,7 @@
 import { Box, Stack } from '@mui/material'
 import { FC, useContext, useEffect, useMemo, useRef, useState } from 'react'
 
-import { IconToolsContext } from './IconTools'
+import { IconToolsContext, useIconNameList } from './IconTools'
 import { matchesSearch } from '../../utils'
 
 const perfectMultiplier = 4 * 3 * 5 * 7
@@ -13,7 +13,8 @@ interface Props {
 
 const IconList: FC<Props> = ({ filter, onSelect }) => {
   const [amountItems, setAmountItems] = useState<number>(perfectMultiplier)
-  const { iconNameList, iconTypeFromName } = useContext(IconToolsContext)
+  const { iconTypeFromName } = useContext(IconToolsContext)
+  const iconNameList = useIconNameList()
 
   useEffect(() => setAmountItems(perfectMultiplier), [filter])
 

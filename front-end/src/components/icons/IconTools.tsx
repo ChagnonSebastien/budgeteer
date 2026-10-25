@@ -1,8 +1,65 @@
-import { createContext, useCallback, useEffect, useMemo, useState } from 'react'
-import type { IconType } from 'react-icons'
-
-type IconLibrary = { [iconName: string]: IconType }
-type IconLibraries = Map<string, IconLibrary>
+import { createContext, useEffect, useState } from 'react'
+import type { IconBaseProps, IconType } from 'react-icons'
+import {
+  FaChartPie,
+  FaFileImport,
+  FaMinus,
+  FaPlus,
+  FaQuestion,
+  FaRegSquare,
+  FaRegSquareCheck,
+  FaScaleUnbalanced,
+} from 'react-icons/fa6'
+import {
+  MdAccountBalance,
+  MdArrowForwardIos,
+  MdCalendarToday,
+  MdCancel,
+  MdCategory,
+  MdCheckCircle,
+  MdCurrencyExchange,
+  MdDelete,
+  MdEdit,
+  MdGroups,
+  MdInput,
+  MdKeyboardBackspace,
+  MdList,
+  MdLogout,
+  MdMenu,
+  MdOutput,
+  MdSettings,
+  MdUndo,
+  MdVisibility,
+  MdVisibilityOff,
+} from 'react-icons/md'
+import {
+  TbArrowsExchange,
+  TbBuildingBank,
+  TbCategory,
+  TbChartBar,
+  TbChartSankey,
+  TbCircleMinus,
+  TbCirclePlus,
+  TbCoins,
+  TbFileText,
+  TbFileUnknown,
+  TbGauge,
+  TbLayoutDashboard,
+  TbLayoutDashboardFilled,
+  TbLayoutSidebarLeftCollapse,
+  TbLayoutSidebarLeftExpand,
+  TbLockOpen,
+  TbPigMoney,
+  TbPresentation,
+  TbReportMoney,
+  TbScale,
+  TbSearch,
+  TbTrendingDown,
+  TbTrendingUp,
+  TbUserShield,
+  TbUsersGroup,
+} from 'react-icons/tb'
+import { loadIcon, loadIconNames } from 'virtual:icon-chunks'
 
 export enum PreparedIcon {
   FaPlus = 'FaPlus',
@@ -63,86 +120,116 @@ type PreparedIconLib = {
   [iconName in PreparedIcon]: IconType
 }
 
-function generatePreparedIcons(fetcher: (iconName: string) => IconType): PreparedIconLib {
-  return Object.values(PreparedIcon)
-    .map((name) => ({ [name]: fetcher(name as string) }))
-    .reduce((lib, icon) => ({ ...lib, ...icon }), {}) as unknown as PreparedIconLib
+const IconLib: PreparedIconLib = {
+  FaPlus,
+  FaMinus,
+  FaQuestion,
+  MdOutput,
+  MdInput,
+  TbTrendingDown,
+  FaChartPie,
+  MdCancel,
+  MdKeyboardBackspace,
+  MdMenu,
+  FaRegSquare,
+  FaRegSquareCheck,
+  FaScaleUnbalanced,
+  TbArrowsExchange,
+  MdCategory,
+  MdAccountBalance,
+  MdCurrencyExchange,
+  TbFileText,
+  MdArrowForwardIos,
+  TbSearch,
+  MdVisibility,
+  MdVisibilityOff,
+  MdSettings,
+  MdEdit,
+  MdLogout,
+  TbLayoutSidebarLeftCollapse,
+  TbLayoutSidebarLeftExpand,
+  MdDelete,
+  MdList,
+  MdGroups,
+  MdCalendarToday,
+  TbChartSankey,
+  TbLayoutDashboardFilled,
+  TbCirclePlus,
+  TbCircleMinus,
+  MdCheckCircle,
+  TbLayoutDashboard,
+  TbCategory,
+  TbBuildingBank,
+  TbCoins,
+  TbScale,
+  TbGauge,
+  TbChartBar,
+  TbReportMoney,
+  TbTrendingUp,
+  TbUsersGroup,
+  TbUserShield,
+  TbPigMoney,
+  TbPresentation,
+  FaFileImport,
+  MdUndo,
+  TbLockOpen,
 }
 
-const loadLibrary = async (prefix: string, library: Promise<{ default: unknown } | IconLibrary>) => {
-  const { default: d, ...icons } = await library
-  return { prefix, icons }
+const loadedIcons = new Map<string, IconType>(Object.entries(IconLib))
+const lazyIcons = new Map<string, IconType>()
+
+const lazyIcon = (iconName: string): IconType => {
+  const LazyIcon = (props: IconBaseProps) => {
+    const [Icon, setIcon] = useState(() => loadedIcons.get(iconName))
+
+    useEffect(() => {
+      if (Icon) return
+      let cancelled = false
+      loadIcon(iconName).then(
+        (loaded) => {
+          const resolved = loaded ?? TbFileUnknown
+          loadedIcons.set(iconName, resolved)
+          if (!cancelled) setIcon(() => resolved)
+        },
+        () => {
+          if (!cancelled) setIcon(() => TbFileUnknown)
+        },
+      )
+      return () => {
+        cancelled = true
+      }
+    }, [Icon])
+
+    return Icon ? <Icon {...props} /> : <svg width={props.size ?? '1em'} height={props.size ?? '1em'} />
+  }
+  return LazyIcon
+}
+
+const iconTypeFromName = (iconName: string): IconType => {
+  const prepared = IconLib[iconName as PreparedIcon]
+  if (prepared) return prepared
+
+  let Icon = lazyIcons.get(iconName)
+  if (!Icon) {
+    Icon = lazyIcon(iconName)
+    lazyIcons.set(iconName, Icon)
+  }
+  return Icon
 }
 
 type IconTools = {
   IconLib: PreparedIconLib
-  iconNameList: string[]
   iconTypeFromName(iconName: string): IconType
 }
 
-export const useIconTools = (): IconTools => {
-  const [iconLibraries, setIconLibraries] = useState<IconLibraries>(new Map())
+export const useIconNameList = (): string[] => {
+  const [iconNameList, setIconNameList] = useState<string[]>([])
 
   useEffect(() => {
-    const loaders: Promise<{ prefix: string; icons: Omit<{ default: unknown } | IconLibrary, 'default'> }>[] = [
-      loadLibrary('Fa', import('react-icons/fa6')),
-      loadLibrary('Md', import('react-icons/md')),
-      loadLibrary('Tb', import('react-icons/tb')),
-      loadLibrary('Gi', import('react-icons/gi')),
-    ]
-
-    Promise.all(loaders).then((loadedLibraries) => {
-      setIconLibraries(
-        loadedLibraries.reduce<IconLibraries>((acc, item) => {
-          acc.set(item.prefix, item.icons)
-          return acc
-        }, new Map()),
-      )
-    })
+    loadIconNames().then(setIconNameList)
   }, [])
 
-  const iconNameList = useMemo(() => {
-    if (!iconLibraries) return []
-
-    return [...(iconLibraries?.values() ?? [])]
-      .map((library) => Object.getOwnPropertyNames(library))
-      .reduce((prev, curr) => [...prev, ...curr], [])
-      .sort((a, b) => a.length - b.length)
-  }, [iconLibraries])
-
-  const iconTypeFromName = useCallback(
-    (iconName: string): IconType | undefined => {
-      const Library = iconLibraries.get(iconName.slice(0, 2))
-      if (typeof Library === 'undefined') {
-        return undefined
-      }
-      return Library[iconName as keyof typeof Library]
-    },
-    [iconLibraries],
-  )
-
-  const iconTypeFromNameWithFallback = useCallback(
-    (iconName: string): IconType => {
-      return iconTypeFromName(iconName) ?? iconTypeFromName('TbFileUnknown') ?? (() => <div />)
-    },
-    [iconLibraries, iconTypeFromName],
-  )
-
-  const IconLib = useMemo(() => {
-    return generatePreparedIcons(iconTypeFromNameWithFallback)
-  }, [iconTypeFromNameWithFallback])
-
-  return {
-    IconLib,
-    iconNameList,
-    iconTypeFromName: iconTypeFromNameWithFallback,
-  }
+  return iconNameList
 }
 
-export const IconToolsContext = createContext<IconTools>({
-  iconNameList: [],
-  iconTypeFromName(_iconName: string) {
-    return () => <div />
-  },
-  IconLib: generatePreparedIcons((_iconName) => () => <div />),
-})
+export const IconToolsContext = createContext<IconTools>({ IconLib, iconTypeFromName })

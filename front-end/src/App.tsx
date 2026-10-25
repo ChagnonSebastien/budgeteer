@@ -1,7 +1,6 @@
 import { createContext, FC, useContext } from 'react'
 
 import AuthenticatedZone from './AuthenticatedZone'
-import { IconToolsContext, useIconTools } from './components/icons/IconTools'
 import LandingPage from './components/LandingPage'
 import LoadingScreen from './components/LoadingScreen'
 import { Centered } from './components/shared/Layout'
@@ -37,8 +36,6 @@ const App: FC = () => {
     updatePreferences,
   } = useAuthentication()
 
-  const iconTools = useIconTools()
-
   if (user !== null) {
     // The demo lives only in IndexedDB, so it must never reach the server.
     const demo = user.authentification_method === 'demo'
@@ -48,13 +45,11 @@ const App: FC = () => {
       return (
         <OnlineContext.Provider value={hasInternet}>
           <ReadOnlyContext.Provider value={readOnly}>
-            <IconToolsContext.Provider value={iconTools}>
-              <UserContext.Provider value={user}>
-                <UpdatePreferencesContext.Provider value={updatePreferences}>
-                  <GuestZone logout={logout} setDisplayName={setDisplayName} />
-                </UpdatePreferencesContext.Provider>
-              </UserContext.Provider>
-            </IconToolsContext.Provider>
+            <UserContext.Provider value={user}>
+              <UpdatePreferencesContext.Provider value={updatePreferences}>
+                <GuestZone logout={logout} setDisplayName={setDisplayName} />
+              </UpdatePreferencesContext.Provider>
+            </UserContext.Provider>
           </ReadOnlyContext.Provider>
         </OnlineContext.Provider>
       )
@@ -63,13 +58,11 @@ const App: FC = () => {
     return (
       <OnlineContext.Provider value={hasInternet && !demo}>
         <ReadOnlyContext.Provider value={readOnly}>
-          <IconToolsContext.Provider value={iconTools}>
-            <UserContext.Provider value={user}>
-              <UpdatePreferencesContext.Provider value={updatePreferences}>
-                <AuthenticatedZone logout={logout} setDefaultCurrency={setDefaultCurrency} />
-              </UpdatePreferencesContext.Provider>
-            </UserContext.Provider>
-          </IconToolsContext.Provider>
+          <UserContext.Provider value={user}>
+            <UpdatePreferencesContext.Provider value={updatePreferences}>
+              <AuthenticatedZone logout={logout} setDefaultCurrency={setDefaultCurrency} />
+            </UpdatePreferencesContext.Provider>
+          </UserContext.Provider>
         </ReadOnlyContext.Provider>
       </OnlineContext.Provider>
     )
