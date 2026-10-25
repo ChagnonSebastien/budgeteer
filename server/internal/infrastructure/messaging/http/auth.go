@@ -11,11 +11,13 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"net/mail"
 	"net/url"
 	"os"
 	"slices"
 	"strings"
 	"time"
+	"unicode"
 	"unicode/utf8"
 
 	"chagnon.dev/budget-server/internal/domain/model"
@@ -50,7 +52,7 @@ type userRepository interface {
 	SessionIsActive(ctx context.Context, sessionID string, userID uuid.UUID) (bool, error)
 	TouchLastSeen(ctx context.Context, userID uuid.UUID) error
 	DeleteSession(ctx context.Context, sessionID string) error
-	EnsureGuestUser(ctx context.Context, email string) (uuid.UUID, error)
+	EnsureGuestUser(ctx context.Context, email string) (uuid.UUID, string, error)
 	SetDisplayName(ctx context.Context, userId uuid.UUID, displayName string) error
 	MergePreferences(ctx context.Context, userId uuid.UUID, patch json.RawMessage, maxSize int) (bool, error)
 }
@@ -71,8 +73,10 @@ type Auth struct {
 
 	oidcRevocationEndpoint string
 
-	guestJWTSecret  []byte
-	sendCodeLimiter *rateLimiter
+	clientIP          clientIPSource
+	guestJWTSecret    []byte
+	sendCodeLimiter   *rateLimiter
+	verifyCodeLimiter *rateLimiter
 }
 
 func NewAuth(
@@ -85,7 +89,8 @@ func NewAuth(
 	verifier *oidc.IDTokenVerifier,
 	serverPublicUrl,
 	oidcIssuer,
-	oidcRevocationEndpoint string,
+	oidcRevocationEndpoint,
+	clientIPHeader string,
 ) *Auth {
 	frontendUrl := os.Getenv("OVERRIDE_FRONT_END_URL")
 	if frontendUrl == "" {
@@ -114,8 +119,10 @@ func NewAuth(
 			UserPass: userPassEnabled,
 			Guest:    guestLoginEnabled,
 		},
-		guestJWTSecret:  jwtSecret,
-		sendCodeLimiter: newRateLimiter(5, 15*time.Minute),
+		clientIP:          newClientIPSource(clientIPHeader),
+		guestJWTSecret:    jwtSecret,
+		sendCodeLimiter:   newRateLimiter(5, 15*time.Minute),
+		verifyCodeLimiter: newRateLimiter(20, 15*time.Minute),
 	}
 	return auth
 }
@@ -559,7 +566,7 @@ func (auth *Auth) guestSendCodeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	clientIP := getClientIP(r)
+	clientIP := auth.clientIP.of(r)
 	if !auth.sendCodeLimiter.allow(clientIP) {
 		logger.Warn("guest send-code rate limited", "ip", clientIP)
 		http.Error(w, "Too many requests, please try again later", http.StatusTooManyRequests)
@@ -567,19 +574,29 @@ func (auth *Auth) guestSendCodeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req guestSendCodeRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 4096)).Decode(&req); err != nil {
 		logger.Error("decoding request", "error", err)
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
+	email, ok := canonicalEmail(req.Email)
+	if !ok {
+		http.Error(w, "Invalid email", http.StatusBadRequest)
+		return
+	}
+	name := strings.TrimSpace(req.Name)
+	if !validGuestName(name) {
+		http.Error(w, "Invalid name", http.StatusBadRequest)
+		return
+	}
 
-	if err := auth.GuestLoginService.SendLoginCode(r.Context(), req.Email, req.Name); err != nil {
-		logger.Error("sending login code", "error", err, "email", req.Email)
+	if err := auth.GuestLoginService.SendLoginCode(r.Context(), email, name); err != nil {
+		logger.Error("sending login code", "error", err, "email", email)
 		http.Error(w, "Failed to send code", http.StatusInternalServerError)
 		return
 	}
 
-	logger.Info("sent guest login code", "email", req.Email)
+	logger.Info("sent guest login code", "email", email)
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]string{"message": "Code sent successfully"})
 }
@@ -597,64 +614,56 @@ func (auth *Auth) guestVerifyCodeHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	clientIP := auth.clientIP.of(r)
+	if !auth.verifyCodeLimiter.allow(clientIP) {
+		logger.Warn("guest verify-code rate limited", "ip", clientIP)
+		writeGuestVerifyFailure(w, http.StatusTooManyRequests, "Too many attempts, please try again later")
+		return
+	}
+
 	var req guestVerifyCodeRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 4096)).Decode(&req); err != nil {
 		logger.Error("decoding request", "error", err)
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
+	email, ok := canonicalEmail(req.Email)
+	if !ok {
+		writeGuestVerifyFailure(w, http.StatusBadRequest, "Invalid email")
+		return
+	}
 
-	valid, err := auth.GuestLoginService.VerifyLoginCode(r.Context(), req.Email, req.Code)
+	valid, err := auth.GuestLoginService.VerifyLoginCode(r.Context(), email, req.Code)
 	if err != nil {
-		logger.Error("verifying login code", "error", err, "email", req.Email)
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusUnauthorized)
-		json.NewEncoder(w).Encode(guestVerifyCodeResponse{
-			Success: false,
-			Message: "Invalid or expired code",
-		})
+		logger.Error("verifying login code", "error", err, "email", email)
+		writeGuestVerifyFailure(w, http.StatusUnauthorized, "Invalid or expired code")
 		return
 	}
 
 	if !valid {
-		logger.Warn("invalid guest login code", "email", req.Email)
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusUnauthorized)
-		json.NewEncoder(w).Encode(guestVerifyCodeResponse{
-			Success: false,
-			Message: "Invalid code",
-		})
+		logger.Warn("invalid guest login code", "email", email)
+		writeGuestVerifyFailure(w, http.StatusUnauthorized, "Invalid code")
 		return
 	}
 
-	logger.Info("guest login code verified successfully", "email", req.Email)
+	logger.Info("guest login code verified successfully", "email", email)
 
 	// The DB-assigned id, so the session token and persisted rows name the same user.
-	userID, err := auth.UserService.EnsureGuestUser(r.Context(), req.Email)
+	userID, storedEmail, err := auth.UserService.EnsureGuestUser(r.Context(), email)
 	if err != nil {
-		logger.Error("upserting guest user", "error", err, "email", req.Email)
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(guestVerifyCodeResponse{
-			Success: false,
-			Message: "Failed to create user session",
-		})
+		logger.Error("upserting guest user", "error", err, "email", email)
+		writeGuestVerifyFailure(w, http.StatusInternalServerError, "Failed to create user session")
 		return
 	}
 
-	guest := &shared.User{ID: userID, Email: req.Email, AuthMethod: shared.AuthMethodGuest}
+	guest := &shared.User{ID: userID, Email: storedEmail, AuthMethod: shared.AuthMethodGuest}
 	if err := auth.issueSession(r.Context(), w, guest); err != nil {
-		logger.Error("issuing guest session", "error", err, "email", req.Email)
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(guestVerifyCodeResponse{
-			Success: false,
-			Message: "Failed to generate authentication tokens",
-		})
+		logger.Error("issuing guest session", "error", err, "email", email)
+		writeGuestVerifyFailure(w, http.StatusInternalServerError, "Failed to generate authentication tokens")
 		return
 	}
 
-	logger.Info("guest user authenticated successfully", "email", req.Email, "userID", userID)
+	logger.Info("guest user authenticated successfully", "email", email, "userID", userID)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
@@ -662,6 +671,29 @@ func (auth *Auth) guestVerifyCodeHandler(w http.ResponseWriter, r *http.Request)
 		Success: true,
 		Message: "Authentication successful",
 	})
+}
+
+func writeGuestVerifyFailure(w http.ResponseWriter, status int, message string) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	json.NewEncoder(w).Encode(guestVerifyCodeResponse{Success: false, Message: message})
+}
+
+func canonicalEmail(raw string) (string, bool) {
+	trimmed := strings.TrimSpace(raw)
+	// ParseAddress also accepts "Name <addr>", which would dodge the per-email cooldown.
+	addr, err := mail.ParseAddress(trimmed)
+	if err != nil || addr.Address != trimmed {
+		return "", false
+	}
+	return strings.ToLower(addr.Address), true
+}
+
+func validGuestName(name string) bool {
+	if utf8.RuneCountInString(name) > maxDisplayNameLength {
+		return false
+	}
+	return !strings.ContainsFunc(name, unicode.IsControl)
 }
 
 const maxDisplayNameLength = 64

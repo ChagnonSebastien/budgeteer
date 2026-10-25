@@ -30,20 +30,18 @@ ON CONFLICT (email) DO UPDATE
         code_expiry = EXCLUDED.code_expiry,
         failed_attempts = 0;
 
--- name: GetLoginForVerify :one
-SELECT email, code_hash, code_expiry, failed_attempts
-FROM guest_logins
-WHERE email = $1;
-
--- name: ConsumeLoginCode :exec
-DELETE FROM guest_logins
-WHERE email = $1;
-
--- name: IncFailedAttempts :one
+-- name: ClaimLoginAttempt :one
 UPDATE guest_logins
 SET failed_attempts = failed_attempts + 1
-WHERE email = $1
-RETURNING failed_attempts;
+WHERE email = sqlc.arg(email)
+  AND failed_attempts < sqlc.arg(max_attempts)::int
+  AND code_expiry > now()
+RETURNING code_hash, failed_attempts;
+
+-- name: ConsumeLoginCode :execrows
+DELETE FROM guest_logins
+WHERE email = sqlc.arg(email)
+  AND code_hash = sqlc.arg(code_hash);
 
 -- name: DeleteIfExpired :exec
 DELETE FROM guest_logins

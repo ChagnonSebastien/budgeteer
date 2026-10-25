@@ -1,5 +1,7 @@
 server:
   publicUrl: ""
+  # Header the nearest proxy sets to the client IP, or "none" when clients connect directly.
+  clientIpHeader: "X-Forwarded-For"
 database:
   host: 127.0.0.1
   port: 5432

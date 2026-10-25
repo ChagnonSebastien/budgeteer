@@ -7,22 +7,20 @@ import (
 
 // rateLimiter is a simple in-memory sliding-window limiter keyed by an
 // arbitrary string (e.g. a client IP). It is safe for concurrent use.
-//
-// Note: entries are pruned lazily on access, so an IP that hits once and
-// never returns lingers until the process restarts. That is acceptable for
-// the expected deployment scale; swap in a bounded cache if that changes.
 type rateLimiter struct {
-	mu     sync.Mutex
-	hits   map[string][]time.Time
-	limit  int
-	window time.Duration
+	mu        sync.Mutex
+	hits      map[string][]time.Time
+	limit     int
+	window    time.Duration
+	lastSweep time.Time
 }
 
 func newRateLimiter(limit int, window time.Duration) *rateLimiter {
 	return &rateLimiter{
-		hits:   make(map[string][]time.Time),
-		limit:  limit,
-		window: window,
+		hits:      make(map[string][]time.Time),
+		limit:     limit,
+		window:    window,
+		lastSweep: time.Now(),
 	}
 }
 
@@ -35,13 +33,12 @@ func (rl *rateLimiter) allow(key string) bool {
 	rl.mu.Lock()
 	defer rl.mu.Unlock()
 
-	kept := rl.hits[key][:0]
-	for _, t := range rl.hits[key] {
-		if t.After(cutoff) {
-			kept = append(kept, t)
-		}
+	if now.Sub(rl.lastSweep) > rl.window {
+		rl.sweep(cutoff)
+		rl.lastSweep = now
 	}
 
+	kept := recentHits(rl.hits[key], cutoff)
 	if len(kept) >= rl.limit {
 		rl.hits[key] = kept
 		return false
@@ -49,4 +46,24 @@ func (rl *rateLimiter) allow(key string) bool {
 
 	rl.hits[key] = append(kept, now)
 	return true
+}
+
+func (rl *rateLimiter) sweep(cutoff time.Time) {
+	for key, hits := range rl.hits {
+		if kept := recentHits(hits, cutoff); len(kept) > 0 {
+			rl.hits[key] = kept
+		} else {
+			delete(rl.hits, key)
+		}
+	}
+}
+
+func recentHits(hits []time.Time, cutoff time.Time) []time.Time {
+	kept := hits[:0]
+	for _, t := range hits {
+		if t.After(cutoff) {
+			kept = append(kept, t)
+		}
+	}
+	return kept
 }

@@ -103,8 +103,9 @@ func (r *Repository) DeleteSession(ctx context.Context, sessionID string) error 
 	return r.queries.DeleteSession(ctx, sessionID)
 }
 
-func (r *Repository) EnsureGuestUser(ctx context.Context, email string) (uuid.UUID, error) {
-	return r.queries.EnsureGuestUser(ctx, email)
+func (r *Repository) EnsureGuestUser(ctx context.Context, email string) (uuid.UUID, string, error) {
+	user, err := r.queries.EnsureGuestUser(ctx, email)
+	return user.ID, user.Email, err
 }
 
 func (r *Repository) SetDisplayName(ctx context.Context, id uuid.UUID, displayName string) error {
@@ -227,21 +228,23 @@ func (r *Repository) UpsertGuestLogin(ctx context.Context, email, codeHash strin
 	})
 }
 
-func (r *Repository) GetGuestLoginForVerify(ctx context.Context, email string) (*dao.GuestLogins, error) {
-	gl, err := r.queries.GetLoginForVerify(ctx, email)
+func (r *Repository) ClaimGuestLoginAttempt(ctx context.Context, email string, maxAttempts int) (*dao.ClaimLoginAttemptRow, error) {
+	claim, err := r.queries.ClaimLoginAttempt(ctx, &dao.ClaimLoginAttemptParams{
+		Email:       email,
+		MaxAttempts: int32(maxAttempts),
+	})
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, nil
+	}
 	if err != nil {
 		return nil, err
 	}
-	return &gl, nil
+	return &claim, nil
 }
 
-func (r *Repository) ConsumeGuestLogin(ctx context.Context, email string) error {
-	return r.queries.ConsumeLoginCode(ctx, email)
-}
-
-func (r *Repository) IncrementGuestLoginFailedAttempts(ctx context.Context, email string) (int, error) {
-	count, err := r.queries.IncFailedAttempts(ctx, email)
-	return int(count), err
+func (r *Repository) ConsumeGuestLogin(ctx context.Context, email, codeHash string) (bool, error) {
+	rows, err := r.queries.ConsumeLoginCode(ctx, &dao.ConsumeLoginCodeParams{Email: email, CodeHash: codeHash})
+	return rows == 1, err
 }
 
 func (r *Repository) DeleteExpiredGuestLogins(ctx context.Context) error {

@@ -56,10 +56,6 @@ func NewGuestLoginService(repo *repository.Repository, mailer Mailer, cfg GuestL
 }
 
 func (s *GuestLoginService) SendLoginCode(ctx context.Context, email, name string) error {
-	email = strings.ToLower(strings.TrimSpace(email))
-	if email == "" {
-		return errors.New("email required")
-	}
 	if name == "" {
 		name = "there"
 	}
@@ -99,40 +95,35 @@ func (s *GuestLoginService) SendLoginCode(ctx context.Context, email, name strin
 }
 
 func (s *GuestLoginService) VerifyLoginCode(ctx context.Context, email, code string) (bool, error) {
-	email = strings.ToLower(strings.TrimSpace(email))
 	code = strings.TrimSpace(code)
-	if email == "" || code == "" {
-		return false, errors.New("email and code required")
+	if code == "" {
+		return false, errors.New("code required")
 	}
 
-	gl, err := s.repo.GetGuestLoginForVerify(ctx, email)
+	// Counted before bcrypt, so concurrent guesses can't all slip under the limit.
+	claim, err := s.repo.ClaimGuestLoginAttempt(ctx, email, s.cfg.MaxFailedAttempts)
 	if err != nil {
-		return false, errors.New("no code found or expired")
+		return false, fmt.Errorf("claim attempt: %w", err)
+	}
+	if claim == nil {
+		return false, errors.New("no code found, expired or out of attempts")
 	}
 
-	if int(gl.FailedAttempts) >= s.cfg.MaxFailedAttempts {
-		return false, errors.New("no code found or expired")
-	}
-
-	if time.Now().After(gl.CodeExpiry) {
-		_ = s.repo.ConsumeGuestLogin(ctx, email)
-		return false, errors.New("no code found or expired")
-	}
-
-	if bcrypt.CompareHashAndPassword([]byte(gl.CodeHash), []byte(code)) == nil {
-		// Success: consume entry
-		if err := s.repo.ConsumeGuestLogin(ctx, email); err != nil {
-			return false, fmt.Errorf("consume code: %w", err)
+	if bcrypt.CompareHashAndPassword([]byte(claim.CodeHash), []byte(code)) != nil {
+		if int(claim.FailedAttempts) >= s.cfg.MaxFailedAttempts {
+			return false, errors.New("too many failed attempts; please request a new code")
 		}
-		return true, nil
+		return false, errors.New("invalid code")
 	}
 
-	// Wrong code: increment failed attempts
-	count, err := s.repo.IncrementGuestLoginFailedAttempts(ctx, email)
-	if err == nil && count >= s.cfg.MaxFailedAttempts {
-		return false, errors.New("too many failed attempts; please request a new code")
+	consumed, err := s.repo.ConsumeGuestLogin(ctx, email, claim.CodeHash)
+	if err != nil {
+		return false, fmt.Errorf("consume code: %w", err)
 	}
-	return false, errors.New("invalid code")
+	if !consumed {
+		return false, errors.New("code already used")
+	}
+	return true, nil
 }
 
 func (s *GuestLoginService) CleanupExpired(ctx context.Context) error {

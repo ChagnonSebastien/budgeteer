@@ -25,7 +25,7 @@ type deletionUser struct {
 func (f deletionFixture) user(t *testing.T) deletionUser {
 	t.Helper()
 	email := unique("deletion") + "@example.com"
-	id, err := f.r.EnsureGuestUser(f.ctx, email)
+	id, _, err := f.r.EnsureGuestUser(f.ctx, email)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -26,7 +26,7 @@ func newImportFixture(t *testing.T) importFixture {
 	r := migratedRepository(t)
 	ctx := context.Background()
 	email := unique("import") + "@example.com"
-	userID, err := r.EnsureGuestUser(ctx, email)
+	userID, _, err := r.EnsureGuestUser(ctx, email)
 	if err != nil {
 		t.Fatal(err)
 	}

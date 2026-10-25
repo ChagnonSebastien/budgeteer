@@ -72,7 +72,7 @@ func newTestAuth(t *testing.T) (*Auth, *mockuserRepository, testIdP) {
 	users := newMockuserRepository(t)
 	keySet := oidc.NewRemoteKeySet(context.Background(), jwks.URL)
 	verifier := oidc.NewVerifier(testIssuer, keySet, &oidc.Config{SkipClientIDCheck: true})
-	auth := NewAuth(users, nil, true, false, true, &oauth2.Config{ClientID: testClientID}, verifier, "https://app.example.com", testIssuer, "")
+	auth := NewAuth(users, nil, true, false, true, &oauth2.Config{ClientID: testClientID}, verifier, "https://app.example.com", testIssuer, "", "X-Forwarded-For")
 	return auth, users, testIdP{key}
 }
 
@@ -223,5 +223,66 @@ func TestPreferencesRejectsANonBooleanSharedExpensesOnly(t *testing.T) {
 		if rec.Code != want {
 			t.Errorf("%s: expected %d, got %d", body, want, rec.Code)
 		}
+	}
+}
+
+func TestCanonicalEmail(t *testing.T) {
+	for raw, want := range map[string]string{
+		" Victim@Example.com ":      "victim@example.com",
+		"a1 <victim@example.com>":   "",
+		"<victim@example.com>":      "",
+		"victim@example.com, x@y.z": "",
+		"not-an-email":              "",
+	} {
+		got, ok := canonicalEmail(raw)
+		if got != want || ok != (want != "") {
+			t.Errorf("%q: expected %q, got %q %v", raw, want, got, ok)
+		}
+	}
+}
+
+func TestGuestSendCodeRejectsUnsafeInput(t *testing.T) {
+	auth, _, _ := newTestAuth(t)
+	for _, body := range []string{
+		`{"email":"a1 <victim@example.com>"}`,
+		`{"email":"victim@example.com","name":"x\nVisit evil.example"}`,
+		`{"email":"victim@example.com","name":"` + strings.Repeat("x", maxDisplayNameLength+1) + `"}`,
+		`{"email":"victim@example.com","name":"` + strings.Repeat("x", 5000) + `"}`,
+	} {
+		rec := httptest.NewRecorder()
+		auth.guestSendCodeHandler(rec, httptest.NewRequest(http.MethodPost, "/guest/send-code", strings.NewReader(body)))
+		if rec.Code != http.StatusBadRequest {
+			t.Errorf("%.60s: expected 400, got %d", body, rec.Code)
+		}
+	}
+}
+
+func TestClientIP(t *testing.T) {
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req.RemoteAddr = "10.0.0.1:1234"
+	req.Header.Set("X-Forwarded-For", "6.6.6.6, 1.2.3.4")
+	req.Header.Set("CF-Connecting-IP", "5.6.7.8")
+
+	for header, want := range map[string]string{
+		"X-Forwarded-For":  "1.2.3.4",
+		"CF-Connecting-IP": "5.6.7.8",
+		"X-Real-IP":        "10.0.0.1",
+		"none":             "10.0.0.1",
+	} {
+		if ip := newClientIPSource(header).of(req); ip != want {
+			t.Errorf("%s: expected %q, got %q", header, want, ip)
+		}
+	}
+}
+
+func TestRateLimiterForgetsIdleKeys(t *testing.T) {
+	rl := newRateLimiter(1, time.Millisecond)
+	rl.allow("a")
+	time.Sleep(5 * time.Millisecond)
+	if !rl.allow("b") {
+		t.Fatal("expected a fresh key to be allowed")
+	}
+	if _, ok := rl.hits["a"]; ok {
+		t.Fatal("expected the idle key to be pruned")
 	}
 }

@@ -55,7 +55,8 @@ type Config struct {
 		UseMock     bool   `mapstructure:"useMock"`
 	} `mapstructure:"mailer"`
 	Server struct {
-		PublicUrl string `mapstructure:"publicUrl"`
+		PublicUrl      string `mapstructure:"publicUrl"`
+		ClientIPHeader string `mapstructure:"clientIpHeader"`
 	} `mapstructure:"server"`
 }
 
@@ -106,7 +107,8 @@ var startCmd = &cobra.Command{
 				ReplyTo:     config.Mailer.ReplyTo,
 				UseMock:     config.Mailer.UseMock,
 			},
-			PublicUrl: config.Server.PublicUrl,
+			PublicUrl:      config.Server.PublicUrl,
+			ClientIPHeader: config.Server.ClientIPHeader,
 		}}
 
 		logger := logging.NewLogger(slog.LevelInfo, false)

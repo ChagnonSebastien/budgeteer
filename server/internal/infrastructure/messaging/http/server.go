@@ -45,8 +45,10 @@ func (s *GrpcWebServer) Serve(ctx context.Context) error {
 	mux.HandleFunc("/", s.catchAllHandler)
 
 	httpServer := &http.Server{
-		Handler: withLogging(mux),
-		Addr:    fmt.Sprintf(":%d", serverPort),
+		Handler:           withLogging(mux, s.auth.clientIP),
+		Addr:              fmt.Sprintf(":%d", serverPort),
+		ReadHeaderTimeout: 10 * time.Second,
+		IdleTimeout:       2 * time.Minute,
 	}
 
 	logging.FromContext(ctx).Info("running http server", "port", serverPort)
@@ -114,11 +116,11 @@ func (lrw *LoggingResponseWriter) WriteHeader(code int) {
 	lrw.ResponseWriter.WriteHeader(code)
 }
 
-func withLogging(next http.Handler) http.Handler {
+func withLogging(next http.Handler, clientIP clientIPSource) http.Handler {
 	return http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
 			logger := logging.FromContext(r.Context()).With("correlationId", uuid.NewString())
-			logger.Info("received http request", "method", r.URL.Path, "peer", getClientIP(r))
+			logger.Info("received http request", "method", r.URL.Path, "peer", clientIP.of(r))
 
 			// Ignored by browsers over plain HTTP, so safe to always send.
 			w.Header().Set("Strict-Transport-Security", "max-age=31536000")
@@ -133,14 +135,26 @@ func withLogging(next http.Handler) http.Handler {
 	)
 }
 
-func getClientIP(r *http.Request) string {
-	// Try to get the IP from the X-Forwarded-For header (if behind a proxy)
-	forwarded := r.Header.Get("X-Forwarded-For")
-	if forwarded != "" {
-		return forwarded
+type clientIPSource struct {
+	header string
+}
+
+func newClientIPSource(header string) clientIPSource {
+	if strings.EqualFold(header, "none") {
+		header = ""
+	}
+	return clientIPSource{header: header}
+}
+
+func (c clientIPSource) of(r *http.Request) string {
+	if c.header != "" {
+		// Only the last entry was written by our proxy; earlier ones come from the client.
+		values := strings.Split(r.Header.Get(c.header), ",")
+		if ip := strings.TrimSpace(values[len(values)-1]); ip != "" {
+			return ip
+		}
 	}
 
-	// Fall back to the remote address directly
 	ip, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
 		return r.RemoteAddr

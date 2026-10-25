@@ -71,8 +71,9 @@ type DatabaseConfig struct {
 type ServerConfig struct {
 	Database  DatabaseConfig
 	Auth      AuthConfig
-	Mailer    MailerConfig
-	PublicUrl string
+	Mailer         MailerConfig
+	PublicUrl      string
+	ClientIPHeader string
 }
 
 type Server struct {
@@ -199,6 +200,7 @@ func (s *Server) Serve(ctx context.Context) error {
 			s.config.PublicUrl,             // serverPublicUrl
 			s.config.Auth.Oidc.ProviderUrl, // oidcIssuer
 			oidcRevocationEndpoint,         // oidcRevocationEndpoint
+			s.config.ClientIPHeader,        // clientIPHeader
 		),
 	)
 

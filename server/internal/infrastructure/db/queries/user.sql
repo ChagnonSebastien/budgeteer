@@ -39,11 +39,23 @@ VALUES (sqlc.arg(username), sqlc.arg(email), sqlc.arg(oidc_sub), sqlc.arg(displa
 RETURNING id;
 
 -- name: EnsureGuestUser :one
-INSERT INTO users as u (username, email)
-VALUES (sqlc.arg(email), sqlc.arg(email))
-ON CONFLICT (email)
-    DO UPDATE SET email = u.email
-RETURNING u.id;
+WITH existing AS (
+    SELECT id, email
+    FROM users
+    WHERE lower(email) = lower(sqlc.arg(email))
+    ORDER BY email = sqlc.arg(email) DESC, email
+    LIMIT 1
+), inserted AS (
+    INSERT INTO users as u (username, email)
+    SELECT sqlc.arg(email), sqlc.arg(email)
+    WHERE NOT EXISTS (SELECT 1 FROM existing)
+    ON CONFLICT (email)
+        DO UPDATE SET email = u.email
+    RETURNING u.id, u.email
+)
+SELECT id, email FROM existing
+UNION ALL
+SELECT id, email FROM inserted;
 
 -- name: SetDisplayName :exec
 UPDATE users

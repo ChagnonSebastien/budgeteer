@@ -5,6 +5,9 @@ import (
 	"database/sql"
 	"errors"
 	"os"
+	"strings"
+	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -65,7 +68,7 @@ func TestResolveOidcUser(t *testing.T) {
 
 	t.Run("links a verified identity to a guest user with the same email", func(t *testing.T) {
 		email := unique("guest") + "@example.com"
-		guestID, err := r.EnsureGuestUser(ctx, email)
+		guestID, _, err := r.EnsureGuestUser(ctx, email)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -105,7 +108,7 @@ func TestSessions(t *testing.T) {
 	r := migratedRepository(t)
 	ctx := context.Background()
 
-	userID, err := r.EnsureGuestUser(ctx, unique("session")+"@example.com")
+	userID, _, err := r.EnsureGuestUser(ctx, unique("session")+"@example.com")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -133,4 +136,81 @@ func TestSessions(t *testing.T) {
 		t.Fatal(err)
 	}
 	check(active, userID, false)
+}
+
+func TestEnsureGuestUserMatchesEmailCaseInsensitively(t *testing.T) {
+	r := migratedRepository(t)
+	ctx := context.Background()
+
+	mixed := unique("Mixed") + "@Example.com"
+	id, _, err := r.EnsureGuestUser(ctx, mixed)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	again, stored, err := r.EnsureGuestUser(ctx, strings.ToLower(mixed))
+	if err != nil || again != id || stored != mixed {
+		t.Fatalf("expected the existing row %v %q, got %v %q %v", id, mixed, again, stored, err)
+	}
+}
+
+func TestGuestLoginAttemptsAreClaimedAtomically(t *testing.T) {
+	r := migratedRepository(t)
+	ctx := context.Background()
+	email := unique("claim") + "@example.com"
+	if err := r.UpsertGuestLogin(ctx, email, "hash", time.Now().Add(time.Hour)); err != nil {
+		t.Fatal(err)
+	}
+
+	const maxAttempts, callers = 3, 10
+	var claimed atomic.Int32
+	var wg sync.WaitGroup
+	for range callers {
+		wg.Go(func() {
+			claim, err := r.ClaimGuestLoginAttempt(ctx, email, maxAttempts)
+			if err != nil {
+				t.Error(err)
+			}
+			if claim != nil {
+				claimed.Add(1)
+			}
+		})
+	}
+	wg.Wait()
+	if claimed.Load() != maxAttempts {
+		t.Fatalf("expected %d claims, got %d", maxAttempts, claimed.Load())
+	}
+
+	var consumed atomic.Int32
+	if err := r.UpsertGuestLogin(ctx, email, "hash", time.Now().Add(time.Hour)); err != nil {
+		t.Fatal(err)
+	}
+	for range callers {
+		wg.Go(func() {
+			ok, err := r.ConsumeGuestLogin(ctx, email, "hash")
+			if err != nil {
+				t.Error(err)
+			}
+			if ok {
+				consumed.Add(1)
+			}
+		})
+	}
+	wg.Wait()
+	if consumed.Load() != 1 {
+		t.Fatalf("a code must be consumed once, got %d", consumed.Load())
+	}
+}
+
+func TestExpiredGuestLoginCannotBeClaimed(t *testing.T) {
+	r := migratedRepository(t)
+	ctx := context.Background()
+	email := unique("expired") + "@example.com"
+	if err := r.UpsertGuestLogin(ctx, email, "hash", time.Now().Add(-time.Minute)); err != nil {
+		t.Fatal(err)
+	}
+	claim, err := r.ClaimGuestLoginAttempt(ctx, email, 3)
+	if err != nil || claim != nil {
+		t.Fatalf("expected no claim, got %v %v", claim, err)
+	}
 }
