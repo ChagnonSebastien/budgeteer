@@ -21,19 +21,21 @@ FOR UPDATE;
 
 -- name: UpdateOidcUserProfile :exec
 UPDATE users
-SET username = sqlc.arg(username),
-    email    = sqlc.arg(email)
+SET username     = sqlc.arg(username),
+    email        = sqlc.arg(email),
+    display_name = sqlc.arg(display_name)
 WHERE id = sqlc.arg(user_id);
 
 -- name: LinkOidcSub :execrows
 UPDATE users
-SET oidc_sub = sqlc.arg(oidc_sub),
-    username = sqlc.arg(username)
+SET oidc_sub     = sqlc.arg(oidc_sub),
+    username     = sqlc.arg(username),
+    display_name = sqlc.arg(display_name)
 WHERE id = sqlc.arg(user_id) AND oidc_sub IS NULL;
 
 -- name: CreateOidcUser :one
-INSERT INTO users (username, email, oidc_sub)
-VALUES (sqlc.arg(username), sqlc.arg(email), sqlc.arg(oidc_sub))
+INSERT INTO users (username, email, oidc_sub, display_name)
+VALUES (sqlc.arg(username), sqlc.arg(email), sqlc.arg(oidc_sub), sqlc.arg(display_name))
 RETURNING id;
 
 -- name: EnsureGuestUser :one

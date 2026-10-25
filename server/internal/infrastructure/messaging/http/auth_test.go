@@ -103,14 +103,14 @@ func TestResolveOidcUserChecksTheClient(t *testing.T) {
 func TestResolveOidcUserPassesEmailVerification(t *testing.T) {
 	auth, users, idp := newTestAuth(t)
 	users.EXPECT().ResolveOidcUser(mock.Anything, model.OidcIdentity{
-		Sub: "sub-1", Email: "a@example.com", EmailVerified: true, Username: "a",
+		Sub: "sub-1", Email: "a@example.com", EmailVerified: true, Username: "a", DisplayName: "Alice A",
 	}).Return(uuid.New(), "a@example.com", nil).Once()
 	users.EXPECT().ResolveOidcUser(mock.Anything, model.OidcIdentity{
-		Sub: "sub-1", Email: "b@example.com", Username: "b",
+		Sub: "sub-1", Email: "b@example.com", Username: "b", DisplayName: "b",
 	}).Return(uuid.Nil, "", model.ErrOidcEmailUnverified).Once()
 
 	_, err := auth.resolveOidcUser(context.Background(), idp.token(t, map[string]any{
-		"azp": testClientID, "email": "a@example.com", "email_verified": true, "preferred_username": "a",
+		"azp": testClientID, "email": "a@example.com", "email_verified": true, "preferred_username": "a", "name": "Alice A",
 	}))
 	if err != nil {
 		t.Fatal(err)

@@ -1,6 +1,7 @@
 package http
 
 import (
+	"cmp"
 	"context"
 	"crypto/rand"
 	"crypto/subtle"
@@ -406,6 +407,7 @@ func (auth *Auth) resolveOidcUser(ctx context.Context, accessToken string) (*sha
 		Email:         claims.Email,
 		EmailVerified: claims.EmailVerified,
 		Username:      claims.Username,
+		DisplayName:   cmp.Or(claims.Name, claims.Username),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("resolving user for sub %s: %w", claims.Sub, err)

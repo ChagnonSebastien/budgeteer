@@ -58,4 +58,5 @@ type OidcIdentity struct {
 	Email         string
 	EmailVerified bool
 	Username      string
+	DisplayName   string
 }

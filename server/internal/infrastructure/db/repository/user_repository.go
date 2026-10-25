@@ -32,9 +32,10 @@ func (r *Repository) ResolveOidcUser(ctx context.Context, identity model.OidcIde
 			email = identity.Email
 		}
 		if err := queries.UpdateOidcUserProfile(ctx, &dao.UpdateOidcUserProfileParams{
-			Username: identity.Username,
-			Email:    email,
-			UserID:   known.ID,
+			Username:    identity.Username,
+			Email:       email,
+			DisplayName: displayName(identity),
+			UserID:      known.ID,
 		}); err != nil {
 			return uuid.Nil, "", err
 		}
@@ -59,9 +60,10 @@ func linkOrCreateOidcUser(ctx context.Context, queries *dao.Queries, identity mo
 	existing, err := queries.GetUserByEmail(ctx, identity.Email)
 	if errors.Is(err, sql.ErrNoRows) {
 		return queries.CreateOidcUser(ctx, &dao.CreateOidcUserParams{
-			Username: identity.Username,
-			Email:    identity.Email,
-			OidcSub:  sub,
+			Username:    identity.Username,
+			Email:       identity.Email,
+			OidcSub:     sub,
+			DisplayName: displayName(identity),
 		})
 	}
 	if err != nil {
@@ -72,13 +74,18 @@ func linkOrCreateOidcUser(ctx context.Context, queries *dao.Queries, identity mo
 	}
 
 	if _, err := queries.LinkOidcSub(ctx, &dao.LinkOidcSubParams{
-		OidcSub:  sub,
-		Username: identity.Username,
-		UserID:   existing.ID,
+		OidcSub:     sub,
+		Username:    identity.Username,
+		DisplayName: displayName(identity),
+		UserID:      existing.ID,
 	}); err != nil {
 		return uuid.Nil, err
 	}
 	return existing.ID, nil
+}
+
+func displayName(identity model.OidcIdentity) sql.NullString {
+	return sql.NullString{String: identity.DisplayName, Valid: identity.DisplayName != ""}
 }
 
 func (r *Repository) CreateSession(ctx context.Context, sessionID string, userID uuid.UUID, expiresAt time.Time) error {

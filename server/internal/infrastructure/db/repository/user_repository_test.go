@@ -69,9 +69,16 @@ func TestResolveOidcUser(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		id, _, err := r.ResolveOidcUser(ctx, model.OidcIdentity{Sub: unique("sub"), Email: email, EmailVerified: true, Username: unique("u")})
+		if err := r.SetDisplayName(ctx, guestID, "Guest name"); err != nil {
+			t.Fatal(err)
+		}
+		id, _, err := r.ResolveOidcUser(ctx, model.OidcIdentity{Sub: unique("sub"), Email: email, EmailVerified: true, Username: unique("u"), DisplayName: "Oidc name"})
 		if err != nil || id != guestID {
 			t.Fatalf("expected guest row %v, got %v %v", guestID, id, err)
+		}
+		params, err := r.UserParams(ctx, id)
+		if err != nil || params.DisplayName == nil || *params.DisplayName != "Oidc name" {
+			t.Fatalf("the identity provider's name must replace the guest one: %v %v", params, err)
 		}
 	})
 

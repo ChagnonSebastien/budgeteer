@@ -201,7 +201,7 @@ export const DrawerContext = createContext<DrawerActions>({
 })
 
 const DrawerWrapper: FC<Props> = ({ logout, children, userIsGuest = false }) => {
-  const { email, is_admin: isAdmin, preferences } = useContext(UserContext)
+  const { email, is_admin: isAdmin, preferences, authentification_method } = useContext(UserContext)
   const updatePreferences = useContext(UpdatePreferencesContext)
   const online = useContext(OnlineContext)
   const { IconLib } = useContext(IconToolsContext)
@@ -284,7 +284,7 @@ const DrawerWrapper: FC<Props> = ({ logout, children, userIsGuest = false }) => 
           {/* A block wrapper: ListItemButton grows along a flex column. */}
           <Box sx={{ borderTop: 1, borderColor: 'border.subtle', pt: 1 }}>
             {!userIsGuest && isAdmin && online && <administrationPage.Element />}
-            {preferences?.sharedExpensesOnly && online && (
+            {preferences?.sharedExpensesOnly && authentification_method !== 'guest' && online && (
               <NavTooltip title="Unlock all features">
                 <ListItemButton
                   aria-label={collapsed ? 'Unlock all features' : undefined}
