@@ -3,10 +3,18 @@ package autoupdate
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 	"testing"
 	"time"
 )
+
+func TestMain(m *testing.M) {
+	if IsScriptHost() {
+		ServeScriptHost()
+	}
+	os.Exit(m.Run())
+}
 
 func runWithin(t *testing.T, timeout time.Duration, script string) (string, error) {
 	t.Helper()
@@ -79,5 +87,29 @@ func TestHttpGetEnforcesFetchBudget(t *testing.T) {
 	result, err := runWithin(t, 10*time.Second, script)
 	if err != nil || !strings.Contains(result, "at most") {
 		t.Fatalf("expected budget message, got %q, %v", result, err)
+	}
+}
+
+func TestRunJavascriptSurvivesAMemoryBomb(t *testing.T) {
+	for name, script := range map[string]string{
+		"heap":         `(async () => { const a = []; while (true) a.push(new Array(1e6).fill(1)) })()`,
+		"array buffer": `(async () => { const a = []; while (true) a.push(new Uint8Array(64 << 20).fill(1)) })()`,
+	} {
+		_, err := runWithin(t, 30*time.Second, script)
+		if err == nil {
+			t.Errorf("%s: expected an error", name)
+		}
+	}
+
+	result, err := runWithin(t, 5*time.Second, `(async () => "still alive")()`)
+	if err != nil || result != "still alive" {
+		t.Fatalf("got %q, %v", result, err)
+	}
+}
+
+func TestRunJavascriptCapsOutput(t *testing.T) {
+	_, err := runWithin(t, 10*time.Second, fmt.Sprintf(`(async () => "x".repeat(%d))()`, maxHostOutputBytes))
+	if err == nil || !strings.Contains(err.Error(), "output") {
+		t.Fatalf("expected output error, got %v", err)
 	}
 }

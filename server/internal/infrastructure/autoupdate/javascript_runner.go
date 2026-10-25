@@ -2,29 +2,28 @@ package autoupdate
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
-	"sync"
+	"io"
+	"os"
+	"os/exec"
 	"time"
 
 	"github.com/go-rod/rod"
 	"github.com/go-rod/rod/lib/launcher"
 	"github.com/go-rod/rod/lib/launcher/flags"
 	"github.com/go-rod/stealth"
-	v8 "rogchap.com/v8go"
 
 	"chagnon.dev/budget-server/internal/logging"
 )
 
 const (
-	MaxScriptBytes    = 64 << 10
-	scriptTimeout     = 60 * time.Second
-	maxFetchesPerRun  = 10
-	maxResponseBytes  = 2 << 20
-	maxConcurrentRuns = 2
+	MaxScriptBytes   = 64 << 10
+	scriptTimeout    = 60 * time.Second
+	maxFetchesPerRun = 10
+	maxResponseBytes = 2 << 20
 )
-
-var runSlots = make(chan struct{}, maxConcurrentRuns)
 
 var errFetchBudgetExceeded = fmt.Errorf("a script may fetch at most %d pages per run", maxFetchesPerRun)
 
@@ -33,126 +32,105 @@ func RunJavascript(ctx context.Context, script string) (string, error) {
 		return "", fmt.Errorf("script is larger than %d bytes", MaxScriptBytes)
 	}
 
-	select {
-	case runSlots <- struct{}{}:
-		defer func() { <-runSlots }()
-	case <-ctx.Done():
-		return "", errors.New("too many scripts are running, try again later")
-	}
-
 	ctx, cancel := context.WithTimeout(ctx, scriptTimeout)
 	defer cancel()
 
-	iso := v8.NewIsolate()
-	v8Ctx := v8.NewContext(iso)
+	executable, err := os.Executable()
+	if err != nil {
+		return "", fmt.Errorf("locating the script host: %w", err)
+	}
 
-	// TerminateExecution must not race Dispose: stop the watchdog before freeing the isolate.
-	finished := make(chan struct{})
-	var watchdog sync.WaitGroup
-	watchdog.Add(1)
-	go func() {
-		defer watchdog.Done()
-		select {
-		case <-ctx.Done():
-			iso.TerminateExecution()
-		case <-finished:
-		}
-	}()
-	defer func() {
-		close(finished)
-		watchdog.Wait()
-		v8Ctx.Close()
-		iso.Dispose()
-	}()
+	// The host gets no inherited environment, so the script's process never sees server secrets.
+	host := exec.CommandContext(ctx, executable)
+	host.Env = []string{scriptHostEnv + "=1"}
+	host.WaitDelay = time.Second
+	stdin, err := host.StdinPipe()
+	if err != nil {
+		return "", err
+	}
+	stdout, err := host.StdoutPipe()
+	if err != nil {
+		return "", err
+	}
+	if err := host.Start(); err != nil {
+		return "", fmt.Errorf("starting the script host: %w", err)
+	}
 
-	fetches := 0
-	budget := func() error {
-		fetches++
-		if fetches > maxFetchesPerRun {
-			return errFetchBudgetExceeded
-		}
+	output := &io.LimitedReader{R: stdout, N: maxHostOutputBytes}
+	result, protocolErr := driveScriptHost(ctx, script, stdin, output)
+	if protocolErr != nil {
+		_ = host.Process.Kill()
+	}
+	_ = stdin.Close()
+	waitErr := host.Wait()
+
+	switch {
+	case ctx.Err() != nil:
+		return "", fmt.Errorf("script did not finish within %s", scriptTimeout)
+	case protocolErr != nil && output.N <= 0:
+		return "", fmt.Errorf("script produced more than %d MB of output", maxHostOutputBytes>>20)
+	case protocolErr != nil:
+		logging.FromContext(ctx).Warn("script host failed", "error", protocolErr, "exit", waitErr)
+		return "", errors.New("script crashed, most likely by running out of memory")
+	}
+	return result.Result, result.err()
+}
+
+func (m hostMessage) err() error {
+	if m.Error == "" {
 		return nil
 	}
+	return errors.New(m.Error)
+}
 
-	if err := bindFunction(v8Ctx, "httpGet", fetchCallback(ctx, budget, fetchWithLimits)); err != nil {
-		return "", fmt.Errorf("binding HttpGet: %s", err)
+func driveScriptHost(ctx context.Context, script string, stdin io.Writer, stdout io.Reader) (hostMessage, error) {
+	encoder := json.NewEncoder(stdin)
+	decoder := json.NewDecoder(stdout)
+
+	if err := encoder.Encode(scriptInput{Script: script}); err != nil {
+		return hostMessage{}, fmt.Errorf("sending the script: %w", err)
 	}
 
-	if err := bindFunction(v8Ctx, "httpGetWithStealth", fetchCallback(ctx, budget, fetchWithBrowser)); err != nil {
-		return "", fmt.Errorf("binding HttpGetWithStealth: %s", err)
-	}
+	fetches := 0
+	for {
+		var message hostMessage
+		if err := decoder.Decode(&message); err != nil {
+			return hostMessage{}, fmt.Errorf("reading from the script host: %w", err)
+		}
+		if message.Done {
+			return message, nil
+		}
 
-	val, err := v8Ctx.RunScript(script, "user.js")
-	if ctx.Err() != nil {
-		return "", fmt.Errorf("script did not finish within %s", scriptTimeout)
-	}
-	if err != nil {
-		return "", fmt.Errorf("running script: %s", err)
-	}
-
-	prom, err := val.AsPromise()
-	if err != nil {
-		return "", fmt.Errorf("converting to promise: %s", err)
-	}
-
-	v8Ctx.PerformMicrotaskCheckpoint() // one drain suffices only while every binding stays synchronous
-	if ctx.Err() != nil {
-		return "", fmt.Errorf("script did not finish within %s", scriptTimeout)
-	}
-
-	switch prom.State() {
-	case v8.Fulfilled:
-		return prom.Result().String(), nil
-	case v8.Rejected:
-		return "", fmt.Errorf("script rejected: %s", prom.Result().String())
-	default:
-		return "", errors.New("script promise never settled")
+		body := fetchForScript(ctx, message.FetchURL, message.Stealth, &fetches)
+		if err := encoder.Encode(fetchReply{Body: body}); err != nil {
+			return hostMessage{}, fmt.Errorf("answering the script host: %w", err)
+		}
 	}
 }
 
-func bindFunction(v8Ctx *v8.Context, name string, function v8.FunctionCallback) error {
-	iso := v8Ctx.Isolate()
-	tmpl := v8.NewFunctionTemplate(iso, function)
-	fn := tmpl.GetFunction(v8Ctx)
-	return v8Ctx.Global().Set(name, fn)
-}
-
-type fetcher func(ctx context.Context, url string) (string, error)
-
-func fetchCallback(ctx context.Context, budget func() error, fetch fetcher) v8.FunctionCallback {
-	return func(info *v8.FunctionCallbackInfo) *v8.Value {
-		iso := info.Context().Isolate()
-		failure := func(message string) *v8.Value {
-			value, _ := v8.NewValue(iso, message)
-			return value
-		}
-
-		if len(info.Args()) == 0 {
-			return failure("A URL is required")
-		}
-		url := info.Args()[0].String()
-		logger := logging.FromContext(ctx).With("url", url)
-
-		if err := budget(); err != nil {
-			return failure(err.Error())
-		}
-
-		body, err := fetch(ctx, url)
-		if errors.Is(err, errDestinationNotAllowed) {
-			return failure("Destination not allowed: only public http(s) addresses on ports 80 and 443 can be fetched")
-		}
-		if err != nil {
-			logger.Error("fetching url for script", "error", err)
-			return failure("Internal Server Error")
-		}
-
-		result, err := v8.NewValue(iso, body)
-		if err != nil {
-			logger.Error("creating return value", "error", err)
-			return failure("Internal Server Error")
-		}
-		return result
+func fetchForScript(ctx context.Context, url string, stealth bool, fetches *int) string {
+	if url == "" {
+		return "A URL is required"
 	}
+
+	*fetches++
+	if *fetches > maxFetchesPerRun {
+		return errFetchBudgetExceeded.Error()
+	}
+
+	fetch := fetchWithLimits
+	if stealth {
+		fetch = fetchWithBrowser
+	}
+	body, err := fetch(ctx, url)
+	if errors.Is(err, errDestinationNotAllowed) {
+		return "Destination not allowed: only public http(s) addresses on ports 80 and 443 can be fetched"
+	}
+	if err != nil {
+		logging.FromContext(ctx).With("url", url).Error("fetching url for script", "error", err)
+		return "Internal Server Error"
+	}
+	return body
 }
 
 func fetchWithBrowser(ctx context.Context, rawURL string) (string, error) {
