@@ -85,6 +85,7 @@ type Props = {
   minYValue?: number
   navigation?: DateNavigation
   colorReference?: ColorReference
+  emptyMessage?: string
 }
 
 const AreaChart: FC<Props> = ({
@@ -102,6 +103,7 @@ const AreaChart: FC<Props> = ({
   minYValue = 0,
   navigation,
   colorReference,
+  emptyMessage,
 }) => {
   const [tooltip, setTooltip] = useState<TooltipDefinition | null>(null)
   const theme = useTheme()
@@ -363,6 +365,7 @@ const AreaChart: FC<Props> = ({
       setTooltip={setTooltip}
       range={range}
       datasetLength={data.length}
+      emptyMessage={emptyMessage}
       yAxisConfig={yAxisConfig}
       xAxisConfig={xAxisConfig}
       Tooltip={({ def }) =>

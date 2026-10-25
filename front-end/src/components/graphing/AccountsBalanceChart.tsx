@@ -85,6 +85,7 @@ const AccountsBalanceChart: FC<Props> = (props) => {
       showLabelEveryFactor={showLabelEveryFactor}
       navigation={navigation}
       colorReference={colorReference}
+      type={type}
     />
   )
 }

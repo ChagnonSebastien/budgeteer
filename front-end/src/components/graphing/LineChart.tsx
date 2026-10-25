@@ -49,6 +49,7 @@ type Props = {
   height?: number
   signFillDataset?: string
   navigation?: DateNavigation
+  emptyMessage?: string
 }
 
 const LineChart: FC<Props> = ({
@@ -62,6 +63,7 @@ const LineChart: FC<Props> = ({
   stackTooltip,
   signFillDataset,
   navigation,
+  emptyMessage,
 }) => {
   const [tooltip, setTooltip] = useState<TooltipDefinition | null>(null)
   const theme = useTheme()
@@ -251,6 +253,7 @@ const LineChart: FC<Props> = ({
       graph={graph}
       range={[data[0].date, data[data.length - 1].date]}
       datasetLength={data.length}
+      emptyMessage={emptyMessage}
       xAxisConfig={xAxisConfig}
       yAxisConfig={yAxisConfig}
       Tooltip={({ def }) =>

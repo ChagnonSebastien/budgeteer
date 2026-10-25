@@ -77,6 +77,8 @@ const NetWorthHistoryChart: FC<Props> = ({ fromDate, toDate, filterByAccounts, n
     [assets.data, liabilities.data],
   )
 
+  const isEmpty = assets.groups.size === 0 && liabilities.groups.size === 0
+
   const dateVisibility = useMemo(
     () =>
       dateAxisLabels(
@@ -112,6 +114,7 @@ const NetWorthHistoryChart: FC<Props> = ({ fromDate, toDate, filterByAccounts, n
       }}
       colors={darkColors}
       navigation={navigation}
+      emptyMessage={isEmpty ? 'No balance recorded for this period' : undefined}
       stackTooltip={(tooltipProps) => <Tooltip tooltipProps={tooltipProps} labels={assets.labels} />}
     />
   )

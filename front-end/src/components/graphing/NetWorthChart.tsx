@@ -373,6 +373,7 @@ type NetWorthChartProps = {
   showLabelEveryFactor: number
   navigation?: DateNavigation
   colorReference?: ColorReference
+  type: 'active' | 'passive'
 }
 
 const NetWorthChart: FC<NetWorthChartProps> = ({
@@ -384,6 +385,7 @@ const NetWorthChart: FC<NetWorthChartProps> = ({
   showLabelEveryFactor,
   navigation,
   colorReference,
+  type,
 }) => {
   const { defaultCurrency } = useContext(MixedAugmentation)
   const { privacyMode } = useContext(DrawerContext)
@@ -446,6 +448,9 @@ const NetWorthChart: FC<NetWorthChartProps> = ({
         colors={darkColors}
         navigation={navigation}
         colorReference={colorReference}
+        emptyMessage={
+          groups.size > 0 ? undefined : type === 'passive' ? 'No debts for this period' : 'No holdings for this period'
+        }
         stackTooltip={(tooltipProps) => (
           <NetWorthTooltip
             tooltipProps={tooltipProps}
@@ -456,7 +461,7 @@ const NetWorthChart: FC<NetWorthChartProps> = ({
         )}
       />
     )
-  }, [baselineConfig, showLabelEveryFactor, data, labels, groups, scale, privacyMode, navigation, colorReference])
+  }, [baselineConfig, showLabelEveryFactor, data, labels, groups, scale, privacyMode, navigation, colorReference, type])
 }
 
 export default NetWorthChart

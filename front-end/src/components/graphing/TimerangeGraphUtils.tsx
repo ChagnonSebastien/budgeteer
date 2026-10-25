@@ -386,6 +386,7 @@ export const DateBasedGraph = (props: {
   yAxisConfig?: Partial<ValueAxisConfig>
   range: [Date, Date]
   datasetLength: number
+  emptyMessage?: string
 }) => {
   const theme = useTheme()
   const {
@@ -399,6 +400,7 @@ export const DateBasedGraph = (props: {
     yAxisConfig = {},
     range,
     datasetLength,
+    emptyMessage,
   } = props
   const { step, graphMinY, graphMaxY, startTick, endTick } = yAxisValues
 
@@ -485,6 +487,25 @@ export const DateBasedGraph = (props: {
 
           <div ref={plotRef} style={{ flexGrow: 1, position: 'relative' }}>
             {graph}
+
+            {emptyMessage && (
+              <Box
+                sx={{
+                  position: 'absolute',
+                  inset: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  textAlign: 'center',
+                  px: 2,
+                  pointerEvents: 'none',
+                }}
+              >
+                <Typography variant="body2" color="text.secondary">
+                  {emptyMessage}
+                </Typography>
+              </Box>
+            )}
 
             {tooltip && (
               <div

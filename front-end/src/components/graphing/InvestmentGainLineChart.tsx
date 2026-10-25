@@ -66,6 +66,8 @@ const InvestmentGainLineChart: FC<GainChartProps> = ({ fromDate, toDate, navigat
     [data, labels, groups],
   )
 
+  const isEmpty = gainSeries.every((bucket) => Object.values(bucket.values).every(({ amount }) => amount === 0))
+
   const dateVisibility = useMemo(() => dateAxisLabels(labels, showLabelEveryFactor), [labels, showLabelEveryFactor])
 
   return (
@@ -91,6 +93,7 @@ const InvestmentGainLineChart: FC<GainChartProps> = ({ fromDate, toDate, navigat
       }}
       colors={darkColors}
       navigation={navigation}
+      emptyMessage={isEmpty ? 'No gains or losses for this period' : undefined}
       stackTooltip={(tooltipProps) => <Tooltip tooltipProps={tooltipProps} labels={labels} />}
     />
   )
