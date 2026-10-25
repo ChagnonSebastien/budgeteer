@@ -7,4 +7,4 @@ LIQUIBASE_COMMAND_PASSWORD="$DATABASE_PASSWORD" \
   --url="jdbc:postgresql://$DATABASE_HOST:$DATABASE_PORT/$DATABASE_NAME?sslmode=${DATABASE_SSLMODE:-require}" \
   --changeLogFile=./changelogs/db.changelog-master.yaml
 
-./budget-server start
+exec ./budget-server start

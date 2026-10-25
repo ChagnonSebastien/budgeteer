@@ -149,6 +149,7 @@ func fetchWithBrowser(ctx context.Context, rawURL string) (string, error) {
 	l := launcher.New().
 		Context(ctx).
 		Bin("chromium").
+		Env("PATH=/usr/bin:/bin", "HOME="+os.TempDir()).
 		Headless(true).
 		Proxy(proxyAddr).
 		Set(flags.Flag("proxy-bypass-list"), "<-loopback>").
