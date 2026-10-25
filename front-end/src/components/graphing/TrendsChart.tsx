@@ -260,12 +260,36 @@ const TrendsChart: FC<Props> = (props) => {
       if (projected === null || !bar) return
       const scale = yScale as unknown as (value: number) => number
       const actual = bar.data.value ?? 0
-      const extendsBar = Math.sign(actual) === Math.sign(projected) && Math.abs(projected) > Math.abs(actual)
+      const sameSign = Math.sign(actual) === Math.sign(projected)
+      const extendsBar = sameSign && Math.abs(projected) > Math.abs(actual)
       const base = scale(extendsBar ? actual : 0)
       const end = scale(projected)
       const color = projected < 0 ? theme.palette.error.light : theme.palette.success.light
       const left = bar.x + 0.75
       const right = bar.x + bar.width - 0.75
+
+      if (!extendsBar) {
+        const keptEdge = scale(sameSign ? projected : 0)
+        ctx.save()
+        // Fades by erasing, so it relies on the nivo theme keeping a transparent background.
+        ctx.globalCompositeOperation = 'destination-out'
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.65)'
+        ctx.fillRect(bar.x, Math.min(keptEdge, scale(actual)), bar.width, Math.abs(scale(actual) - keptEdge))
+        ctx.restore()
+      }
+
+      if (sameSign && !extendsBar) {
+        ctx.save()
+        ctx.beginPath()
+        ctx.moveTo(left, end)
+        ctx.lineTo(right, end)
+        ctx.strokeStyle = color
+        ctx.lineWidth = 1.5
+        ctx.setLineDash([4, 3])
+        ctx.stroke()
+        ctx.restore()
+        return
+      }
 
       ctx.save()
       ctx.beginPath()
