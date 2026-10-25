@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -118,8 +120,11 @@ var startCmd = &cobra.Command{
 		logger := logging.NewLogger(slog.LevelInfo, false)
 		slog.SetDefault(logger)
 
-		err := server.Serve(logging.WithLogger(context.Background(), logger))
-		if err != nil {
+		ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
+		defer stop()
+
+		err := server.Serve(logging.WithLogger(ctx, logger))
+		if err != nil && !errors.Is(err, context.Canceled) {
 			logger.Error("running server", "error", err)
 			panic(err)
 		}

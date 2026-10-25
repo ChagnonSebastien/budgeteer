@@ -122,7 +122,7 @@ Build and run the entire stack (server, Chromium sidecar and PostgreSQL):
 docker compose up --build
 ```
 
-Exchange rate scripts that call `httpGetWithStealth` run in the `chromium` service, which sits alone on an internal network and reaches the internet only through the server's egress proxy. Keep that network `internal: true`: attached to any other network, Chromium could reach private addresses directly.
+The server image is distroless and runs as a non-root user. Exchange rate scripts that call `httpGetWithStealth` run in the `chromium` service, which sits alone on an internal network and reaches the internet only through the server's egress proxy. Keep that network `internal: true`: attached to any other network, Chromium could reach private addresses directly.
 
 ### Upgrading from the Liquibase image
 
@@ -131,7 +131,7 @@ Releases up to the `ci: remove the broken publish job` commit ran Liquibase from
 - The server applies migrations itself at startup with goose. On first start it reads Liquibase's `databasechangelog` table, records the migrations already applied in `goose_db_version`, and applies only the missing ones. No action is needed, and the database user needs the same rights as before.
 - It refuses to start, with an error naming the file, if Liquibase left a migration half applied or still holds `databasechangeloglock`. Run the previous image once so Liquibase finishes (or clear a stale lock), then upgrade.
 - Chromium moved to the `chromium` service. If you deploy with your own compose file, add the `chromium` service, the internal `browser` network, the `browser` network on `budget-server`, and `BROWSER_URL: http://chromium:9222`, as in `docker-compose.yaml`. Without `BROWSER_URL` the server starts, logs a warning, and scripts using `httpGetWithStealth` fail with a message saying stealth fetching is not available.
-- The image no longer runs `entrypoint.sh`: drop any `entrypoint` or `command` override.
+- The image no longer has a shell or `entrypoint.sh`: drop any `entrypoint` or `command` override.
 - The `databasechangelog` and `databasechangeloglock` tables stay in place so the previous image can still be rolled back to. Drop them once you no longer need that.
 
 ## Project Structure

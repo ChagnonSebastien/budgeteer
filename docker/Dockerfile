@@ -73,15 +73,11 @@ ENTRYPOINT ["/usr/bin/tini", "--"]
 CMD ["/bin/bash", "/usr/local/bin/chromium.sh"]
 
 
-FROM debian:bookworm-20261020@sha256:854dd8ab51d62866dbd8f5431d15ce77b12983a2a4a1e1fe43a2395dc7ef9f61
+FROM gcr.io/distroless/cc-debian12:nonroot@sha256:9dac0a79194e45a7da0158a9c6da57b217585af0786db3845d1f0ec1a0dd182f
 WORKDIR /app
-RUN useradd --create-home --uid 10001 appuser
-ENV HOME=/home/appuser
 COPY --from=server-build /app/budget-server .
 COPY --from=server-build /app/configs configs
 COPY --from=web-build /app/dist static/web
-RUN chown -R appuser:appuser /app
-USER appuser
 EXPOSE 8080
 ENTRYPOINT ["/app/budget-server"]
 CMD ["start"]

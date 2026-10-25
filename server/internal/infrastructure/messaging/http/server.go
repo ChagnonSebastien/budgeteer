@@ -2,6 +2,7 @@ package http
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -50,8 +51,18 @@ func (s *GrpcWebServer) Serve(ctx context.Context) error {
 		IdleTimeout:       2 * time.Minute,
 	}
 
+	go func() {
+		<-ctx.Done()
+		shutdownCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 5*time.Second)
+		defer cancel()
+		_ = httpServer.Shutdown(shutdownCtx)
+	}()
+
 	logging.FromContext(ctx).Info("running http server", "port", serverPort)
-	return httpServer.ListenAndServe()
+	if err := httpServer.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
+		return err
+	}
+	return nil
 }
 
 func (s *GrpcWebServer) catchAllHandler(resp http.ResponseWriter, req *http.Request) {
