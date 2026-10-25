@@ -238,13 +238,23 @@ const AreaChart: FC<Props> = ({
 
   const individualBaselineSplines = useMemo(() => {
     return datasetsBaselineStackedValue.map((baselineStackedValues, n) => {
-      const pts: [number, number][] = []
-      for (let i = 0; i < baselineStackedValues.length; i += 1) {
-        const value = baselineStackedValues[i]
-        if (datasets[n][i] === 0 || data[i].values[datasetLabels[n]].baseline === datasets[n][i]) continue
-        pts.push([xScale(i), offsetType === 'expand' ? yExpandedScale(value, i) : yNormalScale(value)])
+      const deviates = (i: number) => {
+        const values = data[i]?.values[datasetLabels[n]]
+        return values !== undefined && values.baseline !== values.amount
       }
-      return monotoneSpline(pts)
+      const segments: [number, number][][] = []
+      let segment: [number, number][] = []
+      for (let i = 0; i < baselineStackedValues.length; i += 1) {
+        if (!(deviates(i) || deviates(i - 1) || deviates(i + 1))) {
+          if (segment.length > 1) segments.push(segment)
+          segment = []
+          continue
+        }
+        const value = baselineStackedValues[i]
+        segment.push([xScale(i), offsetType === 'expand' ? yExpandedScale(value, i) : yNormalScale(value)])
+      }
+      if (segment.length > 1) segments.push(segment)
+      return segments.map(monotoneSpline).join(' ')
     })
   }, [data, datasets, datasetsBaselineStackedValue, offsetType, xScale, yNormalScale, yExpandedScale])
 

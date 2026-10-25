@@ -24,6 +24,22 @@ import useTimerangeSegmentation, { dateAxisLabels, TimeseriesIterator } from '..
 export type BaseLineConfig = 'none' | 'showIndividualBaselines' | 'showGlobalBaseline'
 export type ScaleConfig = 'absolute' | 'cropped-absolute' | 'relative'
 
+type GroupData = { bookValue: number; holdings: Map<string, { currencyId: CurrencyID; amount: number }> }
+
+// Float leftovers from fractional units must not keep a sold-out group alive.
+const EMPTY_HOLDING_TOLERANCE = 1e-9
+
+const hold = (data: GroupData, accountId: number, currencyId: CurrencyID, delta: number) => {
+  const key = `${accountId}-${currencyId}`
+  const amount = (data.holdings.get(key)?.amount ?? 0) + delta
+  if (Math.abs(amount) < EMPTY_HOLDING_TOLERANCE) data.holdings.delete(key)
+  else data.holdings.set(key, { currencyId, amount })
+}
+
+const resetBookValueIfEmpty = (data: GroupData) => {
+  if (data.holdings.size === 0) data.bookValue = 0
+}
+
 export const useNetWorthChartData = <Item extends object>(
   timeseriesIterator: TimeseriesIterator<AugmentedTransaction>,
   getInitialAmountIdentifier: (account: Account, currencyId: CurrencyID) => Item | undefined,
@@ -43,25 +59,40 @@ export const useNetWorthChartData = <Item extends object>(
 
   return useMemo(() => {
     const accountIds = new Set(accounts.map((a) => a.id))
-    const Investments = accounts.reduce((totals, account) => {
+    const Investments = new Map<string, GroupData>()
+    const groupData = (groupLabel: string) => {
+      const existing = Investments.get(groupLabel)
+      if (existing) return existing
+      const created: GroupData = { bookValue: 0, holdings: new Map() }
+      Investments.set(groupLabel, created)
+      return created
+    }
+    const marketValueOn = (data: GroupData, upTo: Date) => {
+      let marketValue = 0
+      for (const { currencyId, amount } of data.holdings.values()) {
+        let factor = 1
+        if (currencyId !== defaultCurrency.id) {
+          factor = exchangeRateOnDay(currencyId, defaultCurrency.id, upTo)
+        }
+        marketValue += amount * factor
+      }
+      return marketValue
+    }
+
+    for (const account of accounts) {
       for (const initialAmount of account.initialAmounts) {
         const groupLabel = group(getInitialAmountIdentifier(account, initialAmount.currencyId))!
-        const groupData = totals.get(groupLabel) ?? { bookValue: 0, assets: new Map() }
-        groupData.assets.set(
-          initialAmount.currencyId,
-          (groupData.assets.get(initialAmount.currencyId) ?? 0) + initialAmount.value,
-        )
-        totals.set(groupLabel, groupData)
+        hold(groupData(groupLabel), account.id, initialAmount.currencyId, initialAmount.value)
       }
-      return totals
-    }, new Map<string, { bookValue: number; assets: Map<number, number> }>())
+    }
 
     const data: Bucket[] = []
     const labels: Date[] = []
     const groups = new Set<string>()
 
+    let anchored = false
     for (const { items, upTo, section } of timeseriesIterator) {
-      if (section === 'before') {
+      if (!anchored) {
         for (const transaction of items) {
           if (
             typeof transaction.receiver !== 'undefined' && // Has a Receiver
@@ -69,12 +100,12 @@ export const useNetWorthChartData = <Item extends object>(
             accountIds.has(transaction.receiver?.id ?? -1) // The account respects filters
           ) {
             const groupLabel = group(getToIdentifier(transaction))!
-            const data = Investments.get(groupLabel) ?? { bookValue: 0, assets: new Map() }
-            data.assets.set(
+            hold(
+              groupData(groupLabel),
+              transaction.receiver.id,
               transaction.receiverCurrencyId,
-              (data.assets.get(transaction.receiverCurrencyId) ?? 0) + transaction.receiverAmount,
+              transaction.receiverAmount,
             )
-            Investments.set(groupLabel, data)
           }
           if (
             typeof transaction.sender !== 'undefined' &&
@@ -82,122 +113,104 @@ export const useNetWorthChartData = <Item extends object>(
             accountIds.has(transaction.sender?.id ?? -1)
           ) {
             const groupLabel = group(getFromIdentifier(transaction))!
-            const data = Investments.get(groupLabel) ?? { bookValue: 0, assets: new Map() }
-            data.assets.set(transaction.currencyId, (data.assets.get(transaction.currencyId) ?? 0) - transaction.amount)
-            Investments.set(groupLabel, data)
+            hold(groupData(groupLabel), transaction.sender.id, transaction.currencyId, -transaction.amount)
           }
         }
 
         for (const groupData of Investments.values()) {
-          let marketValue = 0
-          for (const [currencyId, amount] of groupData.assets) {
-            let factor = 1
-            if (currencyId !== defaultCurrency.id) {
-              factor = exchangeRateOnDay(currencyId, defaultCurrency.id, upTo)
-            }
-            marketValue += amount * factor
-          }
-          groupData.bookValue = marketValue
+          groupData.bookValue = marketValueOn(groupData, upTo)
         }
 
-        continue
-      }
-
-      for (const transaction of items) {
-        if (
-          typeof transaction.receiver !== 'undefined' && // Has a Receiver
-          transaction.receiver.isMine && // I am the receiver
-          accountIds.has(transaction.receiver?.id ?? -1) // The account respects filters
-        ) {
-          const groupLabel = group(getToIdentifier(transaction))!
-          const data = Investments.get(groupLabel) ?? { bookValue: 0, assets: new Map() }
-          data.assets.set(
-            transaction.receiverCurrencyId,
-            (data.assets.get(transaction.receiverCurrencyId) ?? 0) + transaction.receiverAmount,
-          )
-
+        if (section === 'before') continue
+        anchored = true
+      } else {
+        for (const transaction of items) {
           if (
-            !(
-              typeof transaction.sender !== 'undefined' &&
-              transaction.sender.isMine &&
-              accountIds.has(transaction.sender?.id ?? -1) &&
-              group(getFromIdentifier(transaction)) === groupLabel
-            )
+            typeof transaction.receiver !== 'undefined' && // Has a Receiver
+            transaction.receiver.isMine && // I am the receiver
+            accountIds.has(transaction.receiver?.id ?? -1) // The account respects filters
           ) {
-            // I received it from someone else OR from myself with a category change
-            // Update book value
-            let bookValueChange
-            if (transaction.receiverCurrencyId === defaultCurrency.id) {
-              bookValueChange = transaction.receiverAmount
-            } else if (transaction.currencyId === defaultCurrency.id) {
-              bookValueChange = transaction.amount
-            } else {
-              const factor = exchangeRateOnDay(transaction.receiverCurrencyId, defaultCurrency.id, upTo)
-              bookValueChange = transaction.receiverAmount * factor
-            }
+            const groupLabel = group(getToIdentifier(transaction))!
+            const data = groupData(groupLabel)
+            hold(data, transaction.receiver.id, transaction.receiverCurrencyId, transaction.receiverAmount)
 
-            data.bookValue += bookValueChange
-            if (transaction.getType() === 'financialIncome') {
-              const financialGroupLabel = group(getFinancialIncomeToIdentifier(transaction))!
-              if (financialGroupLabel === groupLabel) {
-                data.bookValue -= bookValueChange
+            if (
+              !(
+                typeof transaction.sender !== 'undefined' &&
+                transaction.sender.isMine &&
+                accountIds.has(transaction.sender?.id ?? -1) &&
+                group(getFromIdentifier(transaction)) === groupLabel
+              )
+            ) {
+              // I received it from someone else OR from myself with a category change
+              // Update book value
+              let bookValueChange
+              if (transaction.receiverCurrencyId === defaultCurrency.id) {
+                bookValueChange = transaction.receiverAmount
+              } else if (transaction.currencyId === defaultCurrency.id) {
+                bookValueChange = transaction.amount
               } else {
-                const financialData = Investments.get(financialGroupLabel) ?? { bookValue: 0, assets: new Map() }
-                financialData.bookValue -= bookValueChange
-                Investments.set(financialGroupLabel, financialData)
+                const factor = exchangeRateOnDay(transaction.receiverCurrencyId, defaultCurrency.id, upTo)
+                bookValueChange = transaction.receiverAmount * factor
+              }
+
+              data.bookValue += bookValueChange
+              if (transaction.getType() === 'financialIncome') {
+                const financialGroupLabel = group(getFinancialIncomeToIdentifier(transaction))!
+                if (financialGroupLabel === groupLabel) {
+                  data.bookValue -= bookValueChange
+                } else {
+                  const financialData = groupData(financialGroupLabel)
+                  financialData.bookValue -= bookValueChange
+                  resetBookValueIfEmpty(financialData)
+                }
               }
             }
+
+            resetBookValueIfEmpty(data)
           }
-
-          Investments.set(groupLabel, data)
-        }
-        if (
-          typeof transaction.sender !== 'undefined' && // Has a Sender
-          transaction.sender.isMine && // I am the sender
-          accountIds.has(transaction.sender?.id ?? -1) // The account respects filters
-        ) {
-          const groupLabel = group(getFromIdentifier(transaction))!
-          const data = Investments.get(groupLabel) ?? { bookValue: 0, assets: new Map() }
-          data.assets.set(transaction.currencyId, (data.assets.get(transaction.currencyId) ?? 0) - transaction.amount)
-
           if (
-            !(
-              (typeof transaction.receiver !== 'undefined' &&
-                transaction.receiver.isMine &&
-                accountIds.has(transaction.receiver?.id ?? -1) &&
-                group(getToIdentifier(transaction)) === groupLabel) ||
-              transaction.getType() === 'financialIncome'
-            )
+            typeof transaction.sender !== 'undefined' && // Has a Sender
+            transaction.sender.isMine && // I am the sender
+            accountIds.has(transaction.sender?.id ?? -1) // The account respects filters
           ) {
-            // I did not receive it from myself without changing category and it is not a financial income
-            // Update book value
-            if (transaction.receiverCurrencyId === defaultCurrency.id) {
-              data.bookValue -= transaction.receiverAmount
-            } else if (transaction.currencyId === defaultCurrency.id) {
-              data.bookValue -= transaction.amount
-            } else {
-              const factor = exchangeRateOnDay(transaction.currencyId, defaultCurrency.id, upTo)
-              data.bookValue -= transaction.amount * factor
-            }
-          }
+            const groupLabel = group(getFromIdentifier(transaction))!
+            const data = groupData(groupLabel)
+            hold(data, transaction.sender.id, transaction.currencyId, -transaction.amount)
 
-          Investments.set(groupLabel, data)
+            if (
+              !(
+                (typeof transaction.receiver !== 'undefined' &&
+                  transaction.receiver.isMine &&
+                  accountIds.has(transaction.receiver?.id ?? -1) &&
+                  group(getToIdentifier(transaction)) === groupLabel) ||
+                transaction.getType() === 'financialIncome'
+              )
+            ) {
+              // I did not receive it from myself without changing category and it is not a financial income
+              // Update book value
+              if (transaction.receiverCurrencyId === defaultCurrency.id) {
+                data.bookValue -= transaction.receiverAmount
+              } else if (transaction.currencyId === defaultCurrency.id) {
+                data.bookValue -= transaction.amount
+              } else {
+                const factor = exchangeRateOnDay(transaction.currencyId, defaultCurrency.id, upTo)
+                data.bookValue -= transaction.amount * factor
+              }
+            }
+
+            resetBookValueIfEmpty(data)
+          }
         }
       }
 
       const todaysData: { [account: string]: { amount: number; baseline?: number } } = {}
       let todaysBookValue = 0
       for (const [groupLabel, groupData] of Investments.entries()) {
-        let marketValue = 0
-        for (const [currencyId, amount] of groupData.assets) {
-          let factor = 1
-          if (currencyId !== defaultCurrency.id) {
-            factor = exchangeRateOnDay(currencyId, defaultCurrency.id, upTo)
-          }
-          marketValue += amount * factor
-        }
+        if (groupData.holdings.size === 0) continue
+        const marketValue = marketValueOn(groupData, upTo)
 
-        if (marketValue !== 0 && marketValue > 0 === (type === 'active')) {
+        if (marketValue >= 0 === (type === 'active')) {
           const optionalInverse = type === 'passive' ? -1 : 1
           todaysBookValue += groupData.bookValue * optionalInverse
           todaysData[groupLabel] = {
