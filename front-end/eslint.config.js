@@ -2,6 +2,7 @@ import js from '@eslint/js'
 import tsPlugin from '@typescript-eslint/eslint-plugin'
 import importPlugin from 'eslint-plugin-import'
 import prettierRecommended from 'eslint-plugin-prettier/recommended'
+import reactHooks from 'eslint-plugin-react-hooks'
 import globals from 'globals'
 
 const styleProps = 'JSXAttribute[name.name=/^(sx|style)$/]'
@@ -15,6 +16,7 @@ export default [
   importPlugin.flatConfigs.errors,
   importPlugin.flatConfigs.warnings,
   importPlugin.flatConfigs.typescript,
+  reactHooks.configs.flat['recommended-latest'],
   prettierRecommended,
   {
     files: ['src/**/*.{ts,tsx,js,jsx}'],
