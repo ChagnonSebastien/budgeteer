@@ -23,8 +23,10 @@ func TestCheckDialAddress(t *testing.T) {
 		"[fe80::1]:443":          false,
 		"[::ffff:127.0.0.1]:443": false,
 		"[64:ff9b::a00:1]:443":   false,
-		"not-an-address":         false,
-		"example.com:443":        false,
+		"[2001:0:4136:e378:8000:63bf:3fff:fdd2]:443": false,
+		"[2002:a00:1::1]:443":                        false,
+		"not-an-address":                             false,
+		"example.com:443":                            false,
 	}
 
 	for address, allowed := range cases {
