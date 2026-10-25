@@ -4,7 +4,7 @@ import { FC, useContext, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import useSettlementSide from './useSettlementSide'
-import { UserContext } from '../../App'
+import { UserContext, useGuestView } from '../../App'
 import { formatFull } from '../../domain/model/currency'
 import { SettlementAugmentedTransaction } from '../../domain/model/settlement'
 import { ReadOnlyContext } from '../../service/ReadOnlyContext'
@@ -17,7 +17,7 @@ import { CardAction, CardShell, CardTitleRow, ellipsis } from '../transactions/T
 const SettlementCard: FC<{ item: SettlementAugmentedTransaction; onClick?(): void }> = ({ item, onClick }) => {
   const navigate = useNavigate()
   const { privacyMode } = useContext(DrawerContext)
-  const { email, authentification_method } = useContext(UserContext)
+  const { email } = useContext(UserContext)
   const { IconLib } = useContext(IconToolsContext)
   const readOnly = useContext(ReadOnlyContext) !== null
   const { confirmSettlement, refresh: refreshSettlements } = useContext(SettlementServiceContext)
@@ -31,7 +31,7 @@ const SettlementCard: FC<{ item: SettlementAugmentedTransaction; onClick?(): voi
   const nameOf = (memberEmail: string) => group.members.find((m) => m.email === memberEmail)?.name ?? memberEmail
   const awaiting = settlement.payer === settlement.proposedBy ? settlement.receiver : settlement.payer
   const canConfirm = !settlement.completed && settlement.isEnd(email) && settlement.proposedBy !== email
-  const isGuest = authentification_method === 'guest'
+  const isGuest = useGuestView()
 
   const confirm = async () => {
     if (!isGuest) {
@@ -68,7 +68,7 @@ const SettlementCard: FC<{ item: SettlementAugmentedTransaction; onClick?(): voi
   const strip = canConfirm
     ? { action: confirm, color: 'primary.main', label: confirming ? 'Confirming...' : 'Confirm this settlement' }
     : side.state === 'missing'
-      ? { action: restore, color: 'warning.main', label: 'Your side is no longer in your transactions. Restore it' }
+      ? { action: restore, color: 'warning.main', label: "Your side isn't in your transactions. Record it" }
       : side.state === 'differs'
         ? {
             action: restore,

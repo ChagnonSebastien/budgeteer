@@ -28,9 +28,18 @@ const ManageTransactionGroup: FC = () => {
   const rawTransactionGroup = useMemo(() => rawTransactionGroups.find((t) => t.id === id), [rawTransactionGroups, id])
   const selectedTransactionGroup = useMemo(() => transactionGroups.find((t) => t.id === id), [transactionGroups, id])
 
-  if (rawTransactionGroup && !rawTransactionGroup.members.find((m) => m.email === email)?.joined) {
+  const joined = rawTransactionGroup?.hasJoined(email) ?? false
+  if (
+    rawTransactionGroup &&
+    (!joined || rawTransactionGroup.currency === null || rawTransactionGroup.category === null)
+  ) {
     return (
-      <ContentWithHeader title="Join transaction group" action="menu" withPadding withScrolling>
+      <ContentWithHeader
+        title={joined ? 'Set up transaction group' : 'Join transaction group'}
+        action="menu"
+        withPadding
+        withScrolling
+      >
         <JoinTransactionGroup transactionGroup={rawTransactionGroup} />
       </ContentWithHeader>
     )

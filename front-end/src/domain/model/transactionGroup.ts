@@ -133,5 +133,13 @@ export class AugmentedTransactionGroup extends TransactionGroup {
 
 export type TransactionGroupUpdatableFields = Pick<
   TransactionGroup,
-  'name' | 'splitType' | 'currency' | 'category' | 'members' | 'hidden'
+  | 'name'
+  | 'splitType'
+  | 'currency'
+  | 'category'
+  | 'members'
+  | 'hidden'
+  | 'originalCurrency'
+  | 'originalCurrencySymbol'
+  | 'originalCurrencyDecimalPoints'
 >

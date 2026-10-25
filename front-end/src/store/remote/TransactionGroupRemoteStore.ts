@@ -59,6 +59,9 @@ export default class TransactionGroupRemoteStore {
         splitType: splitTypeToDto(data.splitType),
         currency: data.currency ?? undefined,
         category: data.category ?? undefined,
+        initialCurrency: data.originalCurrency,
+        initialCurrencySymbol: data.originalCurrencySymbol,
+        initialCurrencyDecimalPoints: data.originalCurrencyDecimalPoints,
       }),
     ).response
     return new TransactionGroup(
@@ -70,6 +73,8 @@ export default class TransactionGroupRemoteStore {
       data.currency,
       data.category,
       data.hidden,
+      data.originalCurrencySymbol,
+      data.originalCurrencyDecimalPoints,
     )
   }
 

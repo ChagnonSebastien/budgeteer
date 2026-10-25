@@ -80,14 +80,11 @@ func personalTransactionFieldsFromDto(fields *dto.PersonalTransactionFields) (mo
 }
 
 func ownTransaction(user *shared.User, fields *dto.PersonalTransactionFields) (model.Optional[model.PersonalTransactionFields], error) {
-	if user.IsGuestUser() {
-		if fields != nil {
-			return model.None[model.PersonalTransactionFields](), status.Error(codes.InvalidArgument, "guests don't record transactions")
-		}
+	if fields == nil {
 		return model.None[model.PersonalTransactionFields](), nil
 	}
-	if fields == nil {
-		return model.None[model.PersonalTransactionFields](), status.Error(codes.InvalidArgument, "record the settlement in your transactions")
+	if user.IsGuestUser() {
+		return model.None[model.PersonalTransactionFields](), status.Error(codes.InvalidArgument, "guests don't record transactions")
 	}
 	parsed, err := personalTransactionFieldsFromDto(fields)
 	if err != nil {

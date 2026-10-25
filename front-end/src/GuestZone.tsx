@@ -8,6 +8,7 @@ import LoadingScreen from './components/LoadingScreen'
 import DrawerWrapper from './components/Menu'
 import FormWrapper from './components/shared/FormWrapper'
 import { Centered } from './components/shared/Layout'
+import CreateTransactionGroupPage from './pages/CreateTransactionGroupPage'
 import CreateUnconfirmedTransactionPage from './pages/CreateUnconfirmedTransactionPage'
 import EditUnconfirmedTransactionPage from './pages/EditUnconfirmedTransactionPage'
 import GuestTransactionGroupPage from './pages/GuestTransactionGroupPage'
@@ -301,7 +302,7 @@ interface Props {
 
 const GuestZone: FC<Props> = (props) => {
   const { logout, setDisplayName } = props
-  const { display_name } = useContext(UserContext)
+  const { display_name, authentification_method } = useContext(UserContext)
 
   const testGetRateScript = useMemo(() => exchangeRateRemoteStore.testGetRateScript(), [])
 
@@ -310,7 +311,8 @@ const GuestZone: FC<Props> = (props) => {
       <BrowserRouter>
         <DrawerWrapper logout={logout} userIsGuest>
           <Routes>
-            <Route path="/transaction-groups" element={<TransactionGroups canCreate={false} />} />
+            <Route path="/transaction-groups" element={<TransactionGroups />} />
+            <Route path="/transaction-groups/new" element={<CreateTransactionGroupPage />} />
             <Route path="/transaction-groups/manage/:transactionGroupId" element={<GuestTransactionGroupPage />} />
             <Route
               path="/transaction-groups/manage/:transactionGroupId/unconfirmed/new"
@@ -337,7 +339,7 @@ const GuestZone: FC<Props> = (props) => {
   )
 
   // Only a server-confirmed null prompts: a user cached before display names existed has none.
-  if (display_name === null) {
+  if (display_name === null && authentification_method === 'guest') {
     return <AskDisplayName setDisplayName={setDisplayName} />
   }
 

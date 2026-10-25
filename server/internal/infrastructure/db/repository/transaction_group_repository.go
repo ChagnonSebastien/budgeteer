@@ -100,9 +100,9 @@ func (r *Repository) GetUserTransactionGroups(ctx context.Context, userEmail str
 		transactionGroups[i] = model.TransactionGroup{
 			ID:                            model.TransactionGroupID(transactionGroupDao.ID),
 			Name:                          transactionGroupDao.Name,
-			OriginalCurrency:              transactionGroupDao.CreatorCurrency,
-			OriginalCurrencySymbol:        transactionGroupDao.CreatorCurrencySymbol,
-			OriginalCurrencyDecimalPoints: int(transactionGroupDao.CreatorCurrencyDecimalPoints),
+			OriginalCurrency:              transactionGroupDao.CurrencyName,
+			OriginalCurrencySymbol:        transactionGroupDao.CurrencySymbol,
+			OriginalCurrencyDecimalPoints: int(transactionGroupDao.CurrencyDecimalPoints),
 			SplitType:                     splitType,
 			Currency:                      currency,
 			Category:                      category,
@@ -115,25 +115,26 @@ func (r *Repository) GetUserTransactionGroups(ctx context.Context, userEmail str
 	return transactionGroups, nil
 }
 
+func nullID[T ~int](id model.Optional[T]) sql.NullInt32 {
+	if value, ok := id.Value(); ok {
+		return sql.NullInt32{Int32: int32(value), Valid: true}
+	}
+	return sql.NullInt32{}
+}
+
 func (r *Repository) CreateTransactionGroup(
 	ctx context.Context,
+	userId uuid.UUID,
 	email, name string,
 	splitType model.SplitType,
-	currencyId model.CurrencyID,
-	categoryId model.CategoryID,
+	groupCurrency model.GroupCurrency,
+	currencyId model.Optional[model.CurrencyID],
+	categoryId model.Optional[model.CategoryID],
 ) (model.TransactionGroupID, error) {
-	currency, err := r.queries.GetCurrency(ctx, int32(currencyId))
-	if err != nil {
-		return 0, fmt.Errorf("retrieving curency details")
-	}
-
-	if currency.Email != email {
-		return 0, ErrForeignReference
-	}
 	if err := ensureOwnedGroupReferences(
 		ctx, r.queries, email,
-		validIds(sql.NullInt32{Valid: true, Int32: int32(categoryId)}),
-		validIds(sql.NullInt32{Valid: true, Int32: int32(currencyId)}),
+		validIds(nullID(categoryId)),
+		validIds(nullID(currencyId)),
 	); err != nil {
 		return 0, err
 	}
@@ -144,20 +145,16 @@ func (r *Repository) CreateTransactionGroup(
 	}
 
 	transactionGroupId, err := r.queries.CreateTransactionGroupWithCreator(ctx, &dao.CreateTransactionGroupWithCreatorParams{
-		Name:      name,
-		SplitType: splitTypeDao,
-		UserEmail: email,
-		CategoryID: sql.NullInt32{
-			Int32: int32(categoryId),
-			Valid: true,
-		},
-		CurrencyID: sql.NullInt32{
-			Int32: int32(currencyId),
-			Valid: true,
-		},
-		SplitValue: sql.NullInt32{
-			Valid: false,
-		},
+		Name:                  name,
+		SplitType:             splitTypeDao,
+		CreatorID:             userId,
+		CurrencyName:          groupCurrency.Name,
+		CurrencySymbol:        groupCurrency.Symbol,
+		CurrencyDecimalPoints: int32(groupCurrency.DecimalPoints),
+		UserEmail:             email,
+		CategoryID:            nullID(categoryId),
+		CurrencyID:            nullID(currencyId),
+		SplitValue:            sql.NullInt32{},
 	})
 
 	if err != nil {

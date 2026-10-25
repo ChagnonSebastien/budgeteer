@@ -8,6 +8,7 @@ export interface UserPreferences {
   costsEmploymentIncomeCategoryIds?: number[]
   costsOtherIncomeCategoryIds?: number[]
   costsTaxesCategoryIds?: number[]
+  sharedExpensesOnly?: boolean
 }
 
 export const costsCategoryListKeys = [
@@ -29,6 +30,12 @@ export default interface User {
   preferences?: UserPreferences
   is_admin?: boolean
 }
+
+export const hasGuestView = (user: User) =>
+  user.authentification_method === 'guest' || user.preferences?.sharedExpensesOnly === true
+
+export const needsUsageChoice = (user: User) =>
+  user.preferences?.sharedExpensesOnly === undefined && user.default_currency === null
 
 export interface ManagedUser {
   id: string

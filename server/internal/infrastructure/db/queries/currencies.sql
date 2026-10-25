@@ -55,8 +55,7 @@ JOIN users u ON u.id = c.user_id
 WHERE c.id = sqlc.arg(currency_id) AND c.user_id = sqlc.arg(user_id);
 
 -- name: CountCurrencyGroupUses :one
-SELECT (SELECT count(*) FROM user_transaction_group utg WHERE utg.currency_id = sqlc.arg(currency_id))
-     + (SELECT count(*) FROM transaction_group tg WHERE tg.creator_currency = sqlc.arg(currency_id));
+SELECT count(*) FROM user_transaction_group utg WHERE utg.currency_id = sqlc.arg(currency_id);
 
 -- name: MigrateTransactionCurrency :execrows
 UPDATE transactions
@@ -82,11 +81,6 @@ WHERE related_currency_id = sqlc.arg(currency_id);
 UPDATE user_transaction_group
 SET currency_id = sqlc.arg(target_id)
 WHERE currency_id = sqlc.arg(currency_id);
-
--- name: MigrateGroupCreatorCurrency :exec
-UPDATE transaction_group
-SET creator_currency = sqlc.arg(target_id)
-WHERE creator_currency = sqlc.arg(currency_id);
 
 -- name: GetGroupedTransactionsForCurrency :many
 SELECT t.id, t.amount, t.date, t.note, ttg.transaction_group_id, ttg.split_type_override

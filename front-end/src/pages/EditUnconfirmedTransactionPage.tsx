@@ -2,7 +2,7 @@ import { Button, Stack } from '@mui/material'
 import { FC, useCallback, useContext, useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
-import { UserContext } from '../App'
+import { UserContext, useGuestView } from '../App'
 import LoadingScreen from '../components/LoadingScreen'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
 import { SecureButton } from '../components/shared/SecureButton'
@@ -22,7 +22,8 @@ const EditUnconfirmedTransactionPage: FC = () => {
   const { transactionGroupId, unconfirmedTransactionId } = useParams<Params>()
   const navigate = useNavigate()
 
-  const { email, authentification_method } = useContext(UserContext)
+  const { email } = useContext(UserContext)
+  const isGuest = useGuestView()
   const readOnly = useContext(ReadOnlyContext) !== null
   const { state: transactionGroups } = useContext(TransactionGroupServiceContext)
   const {
@@ -70,7 +71,7 @@ const EditUnconfirmedTransactionPage: FC = () => {
     return <LoadingScreen />
   }
 
-  const canPromote = unconfirmedTransaction.owner === email && authentification_method !== 'guest'
+  const canPromote = unconfirmedTransaction.owner === email && !isGuest
 
   return (
     <ContentWithHeader title="Unconfirmed transaction" action="return" withPadding withScrolling>

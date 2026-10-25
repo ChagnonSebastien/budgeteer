@@ -1,11 +1,22 @@
 import { TextField } from '@mui/material'
 import { FC, useContext, useEffect, useMemo, useState } from 'react'
 
-import TransactionGroup, { ParseSplitType, SplitType, SplitTypeToString } from '../../domain/model/transactionGroup'
+import { useGuestView } from '../../App'
+import {
+  ParseSplitType,
+  SplitType,
+  SplitTypeToString,
+  TransactionGroupUpdatableFields,
+} from '../../domain/model/transactionGroup'
 import MixedAugmentation from '../../service/MixedAugmentation'
 import { CategoryServiceContext, CurrencyServiceContext } from '../../service/ServiceContext'
 import CategoryPicker from '../categories/CategoryPicker'
 import CurrencyPicker from '../currencies/CurrencyPicker'
+import IsoCurrencyPicker, {
+  CurrencyChoice,
+  defaultCurrencyCode,
+  useCurrencyChoices,
+} from '../currencies/IsoCurrencyPicker'
 import SelectOne from '../inputs/SelectOne'
 import FormWrapper from '../shared/FormWrapper'
 import { useToast } from '../shared/ToastProvider'
@@ -26,24 +37,30 @@ interface FieldStatus {
   errorText: string
 }
 
+export type TransactionGroupFormFields = Omit<TransactionGroupUpdatableFields, 'members' | 'hidden'>
+
 interface Props {
-  initialTransactionGroup?: TransactionGroup
-  onSubmit: (data: Partial<Omit<TransactionGroup, 'id' | 'members' | 'originalCurrency'>>) => Promise<void>
+  onSubmit: (data: TransactionGroupFormFields) => Promise<void>
   submitText: string
 }
 
 const TransactionGroupForm: FC<Props> = (props) => {
-  const { initialTransactionGroup, onSubmit, submitText } = props
+  const { onSubmit, submitText } = props
+  const isGuest = useGuestView()
 
   const { state: currencies } = useContext(CurrencyServiceContext)
   const { state: categories } = useContext(CategoryServiceContext)
   const { defaultCurrency } = useContext(MixedAugmentation)
 
-  const [note, setNote] = useState(initialTransactionGroup?.name ?? '')
-  const [splitType, setSplitType] = useState(SplitTypeToString(initialTransactionGroup?.splitType ?? SplitType.EQUAL))
-  const [category, setCategory] = useState(initialTransactionGroup?.category ?? null)
+  const [note, setNote] = useState('')
+  const [splitType, setSplitType] = useState(SplitTypeToString(SplitType.EQUAL))
+  const [category, setCategory] = useState<number | null>(null)
   const augmentedCategory = useMemo(() => categories.find((c) => c.id === category), [category, categories])
-  const [currency, setCurrency] = useState(initialTransactionGroup?.currency ?? defaultCurrency.id)
+  const [currency, setCurrency] = useState(defaultCurrency.id)
+  const currencyChoices = useCurrencyChoices()
+  const [currencyChoice, setCurrencyChoice] = useState<CurrencyChoice | null>(
+    () => currencyChoices.find((c) => c.code === defaultCurrencyCode) ?? null,
+  )
 
   const { showToast } = useToast()
   const [errors, setErrors] = useState<{
@@ -83,11 +100,26 @@ const TransactionGroupForm: FC<Props> = (props) => {
       return
     }
 
+    const groupCurrency = isGuest
+      ? currencyChoice && {
+          name: currencyChoice.name,
+          symbol: currencyChoice.code,
+          decimalPoints: currencyChoice.decimalPoints,
+        }
+      : currencies.find((c) => c.id === currency)
+    if (!groupCurrency) {
+      showToast('Choose a currency', 'error')
+      return
+    }
+
     return onSubmit({
       name: note,
-      splitType: ParseSplitType(splitType),
-      currency: currency,
-      category: category,
+      splitType: ParseSplitType(splitType)!,
+      currency: isGuest ? null : currency,
+      category: isGuest ? null : category,
+      originalCurrency: groupCurrency.name,
+      originalCurrencySymbol: groupCurrency.symbol,
+      originalCurrencyDecimalPoints: groupCurrency.decimalPoints,
     }).catch((err) => {
       showToast('Unexpected error while submitting the transaction group', 'error')
       console.error(err)
@@ -138,22 +170,33 @@ const TransactionGroupForm: FC<Props> = (props) => {
         type="dropdown"
       />
 
-      <CategoryPicker
-        selectedConfig={{
-          mode: 'single',
-          onSelectItem: setCategory,
-          selectedItem: category,
-        }}
-        labelText="Category"
-        icon={augmentedCategory}
-      />
+      {isGuest ? (
+        <IsoCurrencyPicker
+          choices={currencyChoices}
+          value={currencyChoice}
+          onChange={setCurrencyChoice}
+          label="Currency"
+        />
+      ) : (
+        <>
+          <CategoryPicker
+            selectedConfig={{
+              mode: 'single',
+              onSelectItem: setCategory,
+              selectedItem: category,
+            }}
+            labelText="Category"
+            icon={augmentedCategory}
+          />
 
-      <CurrencyPicker
-        selectedCurrencyId={currency}
-        setSelectedCurrencyId={setCurrency}
-        labelText="Currency"
-        currencies={currencies}
-      />
+          <CurrencyPicker
+            selectedCurrencyId={currency}
+            setSelectedCurrencyId={setCurrency}
+            labelText="Currency"
+            currencies={currencies}
+          />
+        </>
+      )}
     </FormWrapper>
   )
 }

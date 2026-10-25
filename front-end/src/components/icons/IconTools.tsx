@@ -61,6 +61,7 @@ export enum PreparedIcon {
   TbPresentation = 'TbPresentation',
   FaFileImport = 'FaFileImport',
   MdUndo = 'MdUndo',
+  TbLockOpen = 'TbLockOpen',
 }
 
 type PreparedIconLib = {

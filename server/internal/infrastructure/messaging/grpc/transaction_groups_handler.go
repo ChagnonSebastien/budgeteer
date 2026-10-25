@@ -19,10 +19,12 @@ type transactionGroupRepository interface {
 	GetUserTransactionGroups(ctx context.Context, userEmail string) ([]model.TransactionGroup, error)
 	CreateTransactionGroup(
 		ctx context.Context,
+		userId uuid.UUID,
 		email, name string,
 		splitType model.SplitType,
-		id model.CurrencyID,
-		id2 model.CategoryID,
+		groupCurrency model.GroupCurrency,
+		currency model.Optional[model.CurrencyID],
+		category model.Optional[model.CategoryID],
 	) (model.TransactionGroupID, error)
 	UpdateTransactionGroup(
 		ctx context.Context,
@@ -158,7 +160,28 @@ func (h *TransactionGroupHandler) CreateTransactionGroup(ctx context.Context, re
 		return nil, fmt.Errorf("parsing split type from dto")
 	}
 
-	id, err := h.transactionGroupService.CreateTransactionGroup(ctx, user.Email, req.Name, splitType, model.CurrencyID(req.Currency), model.CategoryID(req.Category))
+	if req.Name == "" {
+		return nil, status.Error(codes.InvalidArgument, "a group needs a name")
+	}
+	if req.InitialCurrency == "" || req.InitialCurrencySymbol == "" {
+		return nil, status.Error(codes.InvalidArgument, "a group needs a valid currency")
+	}
+	groupCurrency := model.GroupCurrency{
+		Name:          req.InitialCurrency,
+		Symbol:        req.InitialCurrencySymbol,
+		DecimalPoints: int(req.InitialCurrencyDecimalPoints),
+	}
+
+	currency := model.None[model.CurrencyID]()
+	if req.Currency != nil {
+		currency = model.Some(model.CurrencyID(*req.Currency))
+	}
+	category := model.None[model.CategoryID]()
+	if req.Category != nil {
+		category = model.Some(model.CategoryID(*req.Category))
+	}
+
+	id, err := h.transactionGroupService.CreateTransactionGroup(ctx, user.ID, user.Email, req.Name, splitType, groupCurrency, currency, category)
 	if err != nil {
 		return nil, fmt.Errorf("creating transaction group for user %s: %s", user.Email, err)
 	}

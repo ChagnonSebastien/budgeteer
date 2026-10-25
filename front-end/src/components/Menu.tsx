@@ -26,6 +26,7 @@ import { IconToolsContext, PreparedIcon } from './icons/IconTools'
 import { withoutTransientProps } from './shared/Layout'
 import useCloseOnBack, { useNavigateFromDialog } from './shared/useCloseOnBack'
 import { useElementDimensions, useWindowDimensions } from './shared/useDimensions'
+import UnlockAllFeaturesDialog from './usage/UnlockAllFeaturesDialog'
 
 interface MenuElement {
   readonly Element: FC
@@ -206,6 +207,7 @@ const DrawerWrapper: FC<Props> = ({ logout, children, userIsGuest = false }) => 
   const { IconLib } = useContext(IconToolsContext)
 
   const [open, setOpen] = useState(false)
+  const [unlocking, setUnlocking] = useState(false)
   const { key: locationKey, pathname } = useLocation()
   useEffect(() => setOpen(false), [locationKey])
 
@@ -282,6 +284,23 @@ const DrawerWrapper: FC<Props> = ({ logout, children, userIsGuest = false }) => 
           {/* A block wrapper: ListItemButton grows along a flex column. */}
           <Box sx={{ borderTop: 1, borderColor: 'border.subtle', pt: 1 }}>
             {!userIsGuest && isAdmin && online && <administrationPage.Element />}
+            {preferences?.sharedExpensesOnly && online && (
+              <NavTooltip title="Unlock all features">
+                <ListItemButton
+                  aria-label={collapsed ? 'Unlock all features' : undefined}
+                  onClick={() => {
+                    setOpen(false)
+                    setUnlocking(true)
+                  }}
+                  sx={collapsed ? railItemSx : undefined}
+                >
+                  <ListItemIcon sx={{ minWidth: collapsed ? 0 : 42, '& svg': { m: 1 } }}>
+                    <IconLib.TbLockOpen size={menuIconSize} />
+                  </ListItemIcon>
+                  {!collapsed && <ListItemText primary="Unlock all features" />}
+                </ListItemButton>
+              </NavTooltip>
+            )}
             {!userIsGuest && (
               <Tooltip
                 title={
@@ -398,6 +417,8 @@ const DrawerWrapper: FC<Props> = ({ logout, children, userIsGuest = false }) => 
           {drawer}
         </SwipeableDrawer>
       )}
+
+      <UnlockAllFeaturesDialog open={unlocking} onClose={() => setUnlocking(false)} />
 
       <ContentContainer $persistentDrawer={persistentDrawer} $totalWidth={totalWidth} $drawerWidth={drawerWidth}>
         {children}

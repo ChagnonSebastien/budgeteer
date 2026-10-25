@@ -1,6 +1,6 @@
 import { useContext, useMemo } from 'react'
 
-import { UserContext } from '../../App'
+import { useGuestView } from '../../App'
 import Settlement, { SettlementAugmentedTransaction } from '../../domain/model/settlement'
 import Transaction, { AugmentedTransaction, AugmentedTransactionGroupData } from '../../domain/model/transaction'
 import { AugmentedTransactionGroup } from '../../domain/model/transactionGroup'
@@ -22,7 +22,7 @@ interface GroupTransactionSources {
 }
 
 export const useGroupTransactionSources = (): GroupTransactionSources => {
-  const { authentification_method } = useContext(UserContext)
+  const isGuest = useGuestView()
   const { augmentedTransactions, augmentedTransactionsFromGroupMembers } = useContext(MixedAugmentation)
   const { state: ownTransactions, transactionsFromGroupMembers } = useContext(TransactionServiceContext)
   const { state: unconfirmedTransactions } = useContext(UnconfirmedTransactionServiceContext)
@@ -30,7 +30,7 @@ export const useGroupTransactionSources = (): GroupTransactionSources => {
 
   return useMemo(
     () => ({
-      isGuest: authentification_method === 'guest',
+      isGuest,
       augmentedTransactions,
       augmentedTransactionsFromGroupMembers,
       rawTransactions: [...ownTransactions, ...transactionsFromGroupMembers],
@@ -38,7 +38,7 @@ export const useGroupTransactionSources = (): GroupTransactionSources => {
       settlements,
     }),
     [
-      authentification_method,
+      isGuest,
       augmentedTransactions,
       augmentedTransactionsFromGroupMembers,
       ownTransactions,

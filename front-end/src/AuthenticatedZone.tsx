@@ -9,8 +9,10 @@ import WelcomeCurrencySetup from './components/currencies/WelcomeCurrencySetup'
 import LoadingScreen from './components/LoadingScreen'
 import DrawerWrapper from './components/Menu'
 import { Centered } from './components/shared/Layout'
+import UsageChoice from './components/usage/UsageChoice'
 import Currency, { CurrencyUpdatableFields, RateAutoupdateSettings } from './domain/model/currency'
 import { IdIdentifier } from './domain/model/Unique'
+import { needsUsageChoice } from './domain/model/user'
 import AccountsPage from './pages/AccountsPage'
 import AdministrationPage from './pages/AdministrationPage'
 import CategoryPage from './pages/CategoryPage'
@@ -194,19 +196,26 @@ const WaitOnAtLeastOneCategory: FC<{ NextComponent: FC }> = ({ NextComponent }) 
 const AssureMinimumConfig: FC<{
   NextComponent: FC
   setDefaultCurrency(id: number): void
-}> = ({ NextComponent, setDefaultCurrency }) => (
-  <BrowserRouter>
-    <CurrencyServiceContext.Consumer>
-      {(currencyContext) =>
-        !currencyContext.tentativeDefaultCurrency ? (
-          <CreateDefaultCurrency create={currencyContext.create} setDefaultCurrency={setDefaultCurrency} />
-        ) : (
-          <WaitOnAtLeastOneCategory NextComponent={NextComponent} />
-        )
-      }
-    </CurrencyServiceContext.Consumer>
-  </BrowserRouter>
-)
+}> = ({ NextComponent, setDefaultCurrency }) => {
+  const user = useContext(UserContext)
+  return (
+    <BrowserRouter>
+      <CurrencyServiceContext.Consumer>
+        {(currencyContext) =>
+          needsUsageChoice(user) ? (
+            <MustBeConnectedToInternetOnFirstSetup>
+              <UsageChoice />
+            </MustBeConnectedToInternetOnFirstSetup>
+          ) : !currencyContext.tentativeDefaultCurrency ? (
+            <CreateDefaultCurrency create={currencyContext.create} setDefaultCurrency={setDefaultCurrency} />
+          ) : (
+            <WaitOnAtLeastOneCategory NextComponent={NextComponent} />
+          )
+        }
+      </CurrencyServiceContext.Consumer>
+    </BrowserRouter>
+  )
+}
 
 const WaitOnInitializedData: FC<{
   NextComponent: FC

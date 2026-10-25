@@ -4,7 +4,7 @@ import { FC, memo, useContext, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import { CardAction, CardShell, CardTitleRow, ellipsis } from './TransactionCard'
-import { UserContext } from '../../App'
+import { UserContext, useGuestView } from '../../App'
 import { formatFull } from '../../domain/model/currency'
 import { SettlementAugmentedTransaction } from '../../domain/model/settlement'
 import { AugmentedTransaction, TransactionID } from '../../domain/model/transaction'
@@ -18,10 +18,10 @@ const GroupTransactionCard: FC<ItemProps<TransactionID, AugmentedTransaction, ob
   const { item, onClick } = props
 
   const { privacyMode } = useContext(DrawerContext)
-  const { email, authentification_method } = useContext(UserContext)
+  const { email } = useContext(UserContext)
   const { IconLib } = useContext(IconToolsContext)
   const navigate = useNavigate()
-  const isGuest = authentification_method === 'guest'
+  const isGuest = useGuestView()
 
   const userContribution = useMemo(() => item.getUserContribution(email), [item, email])
 

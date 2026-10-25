@@ -3,7 +3,7 @@ import { format } from 'date-fns'
 import { FC, useContext, useState } from 'react'
 
 import TransactionSplitDialog from './TransactionSplitDialog'
-import { UserContext } from '../../App'
+import { UserContext, useGuestView } from '../../App'
 import { formatAmount, formatFull } from '../../domain/model/currency'
 import { AugmentedTransaction, SplitTypeOverrideToString } from '../../domain/model/transaction'
 import { SplitTypeToString } from '../../domain/model/transactionGroup'
@@ -21,7 +21,7 @@ const GroupTransactionModal: FC<{ transaction: AugmentedTransaction | null; onCl
   onClose,
 }) => {
   const navigate = useNavigateFromDialog()
-  const { email, authentification_method } = useContext(UserContext)
+  const { email } = useContext(UserContext)
   const { IconLib } = useContext(IconToolsContext)
   const { privacyMode } = useContext(DrawerContext)
   const { delete: deleteTransaction } = useContext(TransactionServiceContext)
@@ -35,7 +35,7 @@ const GroupTransactionModal: FC<{ transaction: AugmentedTransaction | null; onCl
 
   const group = groupData.transactionGroup
   const unconfirmed = transaction instanceof UnconfirmedAugmentedTransaction ? transaction.unconfirmed : null
-  const isGuest = authentification_method === 'guest'
+  const isGuest = useGuestView()
   const isMine = transaction.owner === email
   const payer = group.members.find((m) => m.email === transaction.owner)?.name ?? transaction.owner
   const contribution = transaction.getUserContribution(email)

@@ -1,7 +1,7 @@
 import { TextField } from '@mui/material'
 import { FC, useContext, useMemo, useState } from 'react'
 
-import { UserContext } from '../../App'
+import { UserContext, useGuestView } from '../../App'
 import TransactionGroup, { Email } from '../../domain/model/transactionGroup'
 import UnconfirmedTransaction from '../../domain/model/unconfirmedTransaction'
 import DatePicker from '../inputs/DatePicker'
@@ -27,7 +27,8 @@ interface Props {
 const UnconfirmedTransactionForm: FC<Props> = (props) => {
   const { transactionGroup, initialUnconfirmedTransaction, onSubmit, submitText, payer } = props
 
-  const { email, authentification_method } = useContext(UserContext)
+  const { email } = useContext(UserContext)
+  const isGuest = useGuestView()
 
   // Full accounts record their own payments as regular transactions; only guests may pick themselves.
   const payerOptions = useMemo(
@@ -35,10 +36,10 @@ const UnconfirmedTransactionForm: FC<Props> = (props) => {
       transactionGroup.members.filter((member) => {
         if (member.email === initialUnconfirmedTransaction?.owner) return true
         if (payer === 'me') return member.email === email
-        if (payer === 'others' || authentification_method !== 'guest') return member.email !== email
+        if (payer === 'others' || !isGuest) return member.email !== email
         return true
       }),
-    [transactionGroup.members, authentification_method, email, initialUnconfirmedTransaction?.owner, payer],
+    [transactionGroup.members, isGuest, email, initialUnconfirmedTransaction?.owner, payer],
   )
 
   const [owner, setOwner] = useState<Email>(

@@ -100,8 +100,7 @@ SELECT tg.id,
         FROM user_transaction_group utg
         WHERE utg.transaction_group_id = tg.id AND utg.user_email <> sqlc.arg(user_email))::int AS other_members
 FROM transaction_group tg
-JOIN currencies c ON c.id = tg.creator_currency
-WHERE c.user_id = sqlc.arg(user_id)
+WHERE tg.creator_id = sqlc.arg(user_id)
 ORDER BY tg.name;
 
 -- name: GetGroupedTransactionsForUser :many

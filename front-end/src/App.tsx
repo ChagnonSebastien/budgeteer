@@ -1,11 +1,11 @@
-import { createContext, FC } from 'react'
+import { createContext, FC, useContext } from 'react'
 
 import AuthenticatedZone from './AuthenticatedZone'
 import { IconToolsContext, useIconTools } from './components/icons/IconTools'
 import LandingPage from './components/LandingPage'
 import LoadingScreen from './components/LoadingScreen'
 import { Centered } from './components/shared/Layout'
-import User, { UserPreferencesPatch } from './domain/model/user'
+import User, { hasGuestView, UserPreferencesPatch } from './domain/model/user'
 import GuestZone from './GuestZone'
 import { OnlineContext } from './service/OnlineContext'
 import { demoReason, offlineReason, ReadOnlyContext } from './service/ReadOnlyContext'
@@ -21,6 +21,8 @@ export const UserContext = createContext<User>({
 })
 
 export const UpdatePreferencesContext = createContext<(patch: UserPreferencesPatch) => Promise<void>>(async () => {})
+
+export const useGuestView = () => hasGuestView(useContext(UserContext))
 
 const App: FC = () => {
   const {
@@ -42,13 +44,15 @@ const App: FC = () => {
     const demo = user.authentification_method === 'demo'
     const readOnly = demo ? demoReason : hasInternet ? null : offlineReason
 
-    if (user.authentification_method === 'guest') {
+    if (hasGuestView(user)) {
       return (
         <OnlineContext.Provider value={hasInternet}>
           <ReadOnlyContext.Provider value={readOnly}>
             <IconToolsContext.Provider value={iconTools}>
               <UserContext.Provider value={user}>
-                <GuestZone logout={logout} setDisplayName={setDisplayName} />
+                <UpdatePreferencesContext.Provider value={updatePreferences}>
+                  <GuestZone logout={logout} setDisplayName={setDisplayName} />
+                </UpdatePreferencesContext.Provider>
               </UserContext.Provider>
             </IconToolsContext.Provider>
           </ReadOnlyContext.Provider>

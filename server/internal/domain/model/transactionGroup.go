@@ -27,6 +27,12 @@ type Member struct {
 	Joined     bool
 }
 
+type GroupCurrency struct {
+	Name          string
+	Symbol        string
+	DecimalPoints int
+}
+
 type TransactionGroup struct {
 	ID                            TransactionGroupID
 	Name                          string

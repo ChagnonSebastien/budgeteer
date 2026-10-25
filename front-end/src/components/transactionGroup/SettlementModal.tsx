@@ -4,7 +4,7 @@ import { FC, useContext, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import useSettlementSide from './useSettlementSide'
-import { UserContext } from '../../App'
+import { UserContext, useGuestView } from '../../App'
 import { formatAmount } from '../../domain/model/currency'
 import { SettlementAugmentedTransaction } from '../../domain/model/settlement'
 import { SettlementServiceContext, TransactionServiceContext } from '../../service/ServiceContext'
@@ -19,7 +19,7 @@ const SettlementModal: FC<{ settlement: SettlementAugmentedTransaction; onClose(
   onClose,
 }) => {
   const navigate = useNavigate()
-  const { email, authentification_method } = useContext(UserContext)
+  const { email } = useContext(UserContext)
   const { IconLib } = useContext(IconToolsContext)
   const { privacyMode } = useContext(DrawerContext)
   const {
@@ -35,7 +35,7 @@ const SettlementModal: FC<{ settlement: SettlementAugmentedTransaction; onClose(
   const { settlement } = item
   const group = item.augmentedTransactionGroupData!.transactionGroup
   const nameOf = (memberEmail: string) => group.members.find((m) => m.email === memberEmail)?.name ?? memberEmail
-  const isGuest = authentification_method === 'guest'
+  const isGuest = useGuestView()
   const isEnd = settlement.isEnd(email)
   const canConfirm = !settlement.completed && isEnd && settlement.proposedBy !== email
   const pages = `/transaction-groups/manage/${group.id}/settle/${settlement.id}`

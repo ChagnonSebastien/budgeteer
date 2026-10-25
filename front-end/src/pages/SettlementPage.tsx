@@ -2,7 +2,7 @@ import { Alert, Stack, TextField, Typography } from '@mui/material'
 import { FC, useContext, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
-import { UserContext } from '../App'
+import { UserContext, useGuestView } from '../App'
 import DatePicker from '../components/inputs/DatePicker'
 import { FixedPointInput } from '../components/inputs/FixedPointInput'
 import SelectOne from '../components/inputs/SelectOne'
@@ -34,7 +34,7 @@ type Params = {
 const SettlementPage: FC<{ mode: SettlementPageMode }> = ({ mode }) => {
   const { transactionGroupId, settlementId } = useParams<Params>()
   const navigate = useNavigate()
-  const { email, authentification_method } = useContext(UserContext)
+  const { email } = useContext(UserContext)
   const {
     state: settlements,
     createSettlement,
@@ -50,7 +50,7 @@ const SettlementPage: FC<{ mode: SettlementPageMode }> = ({ mode }) => {
   const groupId = parseInt(transactionGroupId!)
   const transactionGroup = useAugmentedTransactionGroup(groupId)
   const settlement = settlements.find((s) => s.id === Number(settlementId))
-  const isGuest = authentification_method === 'guest'
+  const isGuest = useGuestView()
   const groupPage = `/transaction-groups/manage/${groupId}`
 
   const others = useMemo(

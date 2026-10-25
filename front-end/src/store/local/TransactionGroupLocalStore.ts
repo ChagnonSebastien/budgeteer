@@ -44,6 +44,8 @@ export default class TransactionGroupLocalStore {
       currency: data.currency,
       category: data.category,
       hidden: data.hidden,
+      originalCurrencySymbol: data.originalCurrencySymbol,
+      originalCurrencyDecimalPoints: data.originalCurrencyDecimalPoints,
     })
 
     return new TransactionGroup(
@@ -55,6 +57,8 @@ export default class TransactionGroupLocalStore {
       data.currency,
       data.category,
       data.hidden,
+      data.originalCurrencySymbol,
+      data.originalCurrencyDecimalPoints,
     )
   }
 

@@ -1,7 +1,7 @@
 import { Alert, Button, Stack, Typography } from '@mui/material'
 import { FC, useContext, useMemo, useState } from 'react'
 
-import { UserContext } from '../../App'
+import { UserContext, useGuestView } from '../../App'
 import { CategoryID } from '../../domain/model/category'
 import { CurrencyID, RateAutoupdateSettings } from '../../domain/model/currency'
 import TransactionGroup from '../../domain/model/transactionGroup'
@@ -23,7 +23,6 @@ interface Props {
 }
 
 const JoinTransactionGroup: FC<Props> = ({ transactionGroup }) => {
-  const { authentification_method } = useContext(UserContext)
   const { update: updateTransactionGroup, refresh: refreshTransactionGroups } =
     useContext(TransactionGroupServiceContext)
   const { refresh: refreshTransactions } = useContext(TransactionServiceContext)
@@ -32,7 +31,9 @@ const JoinTransactionGroup: FC<Props> = ({ transactionGroup }) => {
   const { tentativeRoot } = useContext(CategoryServiceContext)
   const { showToast } = useToast()
 
-  const isGuest = authentification_method === 'guest'
+  const { email } = useContext(UserContext)
+  const isGuest = useGuestView()
+  const joined = transactionGroup.hasJoined(email)
 
   const matchingCurrencies = useMemo(
     () => currencies.filter((c) => c.decimalPoints === transactionGroup.originalCurrencyDecimalPoints),
@@ -75,15 +76,17 @@ const JoinTransactionGroup: FC<Props> = ({ transactionGroup }) => {
 
   const join = async (fields: { currency?: CurrencyID; category?: CategoryID }) => {
     // Updating any personal property of the group accepts the invitation.
-    await updateTransactionGroup({ id: transactionGroup.id }, { hidden: false, ...fields })
+    await updateTransactionGroup({ id: transactionGroup.id }, joined ? fields : { hidden: false, ...fields })
     // The group's transactions only reach members, so they were not fetched before joining.
     await Promise.all([refreshTransactionGroups(), refreshTransactions(), refreshUnconfirmedTransactions()])
-    showToast(`Joined ${transactionGroup.name}`)
+    showToast(joined ? `${transactionGroup.name} is set up` : `Joined ${transactionGroup.name}`)
   }
 
   const intro = (
     <Typography>
-      You were invited to <b>{transactionGroup.name}</b>. Amounts in this group are in <b>{groupCurrencyLabel}</b>.
+      {joined ? 'You joined ' : 'You were invited to '}
+      <b>{transactionGroup.name}</b>
+      {joined ? ' before tracking your own finances.' : '.'} Amounts in this group are in <b>{groupCurrencyLabel}</b>.
       {!isGuest && ' Pick the currency you track it in, or add a copy of it to your assets.'}
     </Typography>
   )
@@ -110,7 +113,7 @@ const JoinTransactionGroup: FC<Props> = ({ transactionGroup }) => {
           }
           await join({ currency, category })
         }}
-        submitText="Join group"
+        submitText={joined ? 'Save' : 'Join group'}
       >
         {matchingCurrencies.length === 0 ? (
           <Alert

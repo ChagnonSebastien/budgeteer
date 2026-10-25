@@ -69,12 +69,12 @@ WHERE t.user_id = sqlc.arg(user_id)
 ORDER BY date DESC;
 
 -- name: GetGroupTransactionsFromOtherMembers :many
--- currency_id is the requester's own currency for the group (the creator's for guests), not the owner's.
+-- currency_id is the requester's own currency for the group, 0 until they pick one, not the owner's.
 SELECT
     t.id,
     u.email AS owner,
     t.amount,
-    COALESCE(viewer.currency_id, tg.creator_currency)::integer AS viewer_currency,
+    COALESCE(viewer.currency_id, 0)::integer AS viewer_currency,
     t.date,
     t.note,
     ttg.transaction_group_id,
@@ -100,7 +100,6 @@ SELECT
 FROM transactions t
     JOIN transaction_transaction_group ttg ON t.id = ttg.transaction_id
     JOIN users u ON u.id = t.user_id
-    JOIN transaction_group tg ON tg.id = ttg.transaction_group_id
     JOIN user_transaction_group viewer ON viewer.transaction_group_id = ttg.transaction_group_id
     JOIN users vu ON vu.email = viewer.user_email
 WHERE vu.id = sqlc.arg(user_id)

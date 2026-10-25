@@ -2,7 +2,7 @@ import { Stack, Typography, useTheme } from '@mui/material'
 import { format, isSameDay, isSameYear } from 'date-fns'
 import { FC, useContext, useMemo } from 'react'
 
-import { UserContext } from '../../App'
+import { UserContext, useGuestView } from '../../App'
 import Currency, { formatFull } from '../../domain/model/currency'
 import TransactionGroup, { TransactionGroupID } from '../../domain/model/transactionGroup'
 import { CategoryServiceContext } from '../../service/ServiceContext'
@@ -57,7 +57,8 @@ export const TransactionGroupCard = (props: Props) => {
   const summary = summaries?.get(item.id)
 
   const { state: categories } = useContext(CategoryServiceContext)
-  const { email, authentification_method } = useContext(UserContext)
+  const { email } = useContext(UserContext)
+  const isGuest = useGuestView()
 
   const invited = !item.hasJoined(email)
 
@@ -80,7 +81,7 @@ export const TransactionGroupCard = (props: Props) => {
         opacity: item.hidden ? 0.55 : 1,
       }}
     >
-      {authentification_method !== 'guest' && (
+      {!isGuest && (
         <IconCapsule
           iconName={tgCategory?.iconName ?? PreparedIcon.FaQuestion}
           color={tgCategory?.iconColor ?? theme.palette.text.secondary}

@@ -44,8 +44,10 @@ message CreateTransactionGroupRequest {
   string name = 1;
   string initial_currency = 2;
   SplitType splitType = 3;
-  uint32 currency = 4;
-  uint32 category = 5;
+  optional uint32 currency = 4;
+  optional uint32 category = 5;
+  string initial_currency_symbol = 6;
+  uint32 initial_currency_decimal_points = 7;
 }
 
 message CreateTransactionGroupResponse {

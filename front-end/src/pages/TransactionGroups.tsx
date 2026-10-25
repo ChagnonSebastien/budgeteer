@@ -23,12 +23,7 @@ import {
 import { TransactionGroupID } from '../domain/model/transactionGroup'
 import { TransactionGroupServiceContext } from '../service/ServiceContext'
 
-interface Props {
-  // Guests have no currencies or categories, so they can join groups but not create them.
-  canCreate?: boolean
-}
-
-const TransactionGroups: FC<Props> = ({ canCreate = true }) => {
+const TransactionGroups: FC = () => {
   const navigate = useNavigate()
   const { IconLib } = useContext(IconToolsContext)
   const { email } = useContext(UserContext)
@@ -137,27 +132,21 @@ const TransactionGroups: FC<Props> = ({ canCreate = true }) => {
       ) : (
         <EmptyState
           title="No shared expenses yet"
-          description={
-            canCreate
-              ? 'Create a group to split costs with friends, roommates or a partner, and see who owes whom.'
-              : 'Groups you are invited to show up here.'
-          }
+          description="Create a group to split costs with friends, roommates or a partner, and see who owes whom."
         />
       )}
-      {canCreate && (
-        <ActionSpeedDial
-          ariaLabel="Create transaction group"
-          hint={transactionGroups.length === 0 ? 'Create your first group' : undefined}
-          actions={[
-            {
-              label: 'New group',
-              Icon: IconLib.FaPlus,
-              color: 'primary.main',
-              onClick: () => navigate('/transaction-groups/new'),
-            },
-          ]}
-        />
-      )}
+      <ActionSpeedDial
+        ariaLabel="Create transaction group"
+        hint={transactionGroups.length === 0 ? 'Create your first group' : undefined}
+        actions={[
+          {
+            label: 'New group',
+            Icon: IconLib.FaPlus,
+            color: 'primary.main',
+            onClick: () => navigate('/transaction-groups/new'),
+          },
+        ]}
+      />
       {clickedGroup && (
         <TransactionGroupModal
           group={clickedGroup}

@@ -1,28 +1,11 @@
-import { Alert, Autocomplete, Box, Stack, TextField, Typography } from '@mui/material'
-import { FC, useMemo, useState } from 'react'
+import { Alert, Box, Stack, Typography } from '@mui/material'
+import { FC, useState } from 'react'
 
-import { searchFilterOptions } from '../../utils'
+import IsoCurrencyPicker, { CurrencyChoice, defaultCurrencyCode, useCurrencyChoices } from './IsoCurrencyPicker'
 import FormWrapper from '../shared/FormWrapper'
 
-const defaultCurrencyCode = 'CAD'
-
-export interface CurrencyChoice {
-  code: string
-  name: string
-  decimalPoints: number
-}
-
-const currencyNames = new Intl.DisplayNames(['en'], { type: 'currency' })
-
-const toChoice = (code: string): CurrencyChoice => ({
-  code,
-  name: currencyNames.of(code) ?? code,
-  decimalPoints: new Intl.NumberFormat('en', { style: 'currency', currency: code }).resolvedOptions()
-    .maximumFractionDigits!,
-})
-
 const WelcomeCurrencySetup: FC<{ onSubmit(choice: CurrencyChoice): Promise<void> }> = ({ onSubmit }) => {
-  const choices = useMemo(() => Intl.supportedValuesOf('currency').map(toChoice), [])
+  const choices = useCurrencyChoices()
   const [choice, setChoice] = useState<CurrencyChoice | null>(
     () => choices.find((c) => c.code === defaultCurrencyCode) ?? null,
   )
@@ -48,15 +31,7 @@ const WelcomeCurrencySetup: FC<{ onSubmit(choice: CurrencyChoice): Promise<void>
         </Typography>
         <FormWrapper onSubmit={submit} submitText="Continue">
           {error && <Alert severity="error">{error}</Alert>}
-          <Autocomplete
-            filterOptions={searchFilterOptions}
-            options={choices}
-            value={choice}
-            onChange={(_, value) => setChoice(value)}
-            getOptionLabel={(option) => `${option.name} (${option.code})`}
-            isOptionEqualToValue={(a, b) => a.code === b.code}
-            renderInput={(params) => <TextField {...params} label="Main currency" />}
-          />
+          <IsoCurrencyPicker choices={choices} value={choice} onChange={setChoice} label="Main currency" />
           <Typography variant="caption" color="textDisabled">
             Your main currency can't be changed later. You can add other currencies, stocks or funds at any time.
           </Typography>

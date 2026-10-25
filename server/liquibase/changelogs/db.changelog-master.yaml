@@ -67,3 +67,5 @@ databaseChangeLog:
       file: ./changelogs/033-admin-users.sql
   - include:
       file: ./changelogs/034-account-is-debt.sql
+  - include:
+      file: ./changelogs/035-transaction-group-currency.sql

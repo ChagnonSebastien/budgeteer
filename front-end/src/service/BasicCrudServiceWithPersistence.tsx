@@ -86,13 +86,14 @@ export const BasicCrudServiceWithPersistence = <
   const hasInternet = useContext(OnlineContext)
 
   const [state, setState] = useState<{ version: number; data: Item[] }>({ version: 0, data: initialState ?? [] })
-  const [initialized, setInitialized] = useState<boolean>(typeof initialState !== 'undefined')
+  const [localCount, setLocalCount] = useState<number | null>(null)
+  const [remoteSettled, setRemoteSettled] = useState(false)
   // A fresh IndexedDB can resolve after the remote fetch; its stale read must not overwrite it.
   const remoteLoaded = useRef(false)
 
   useEffect(() => {
     localStore.getAll().then((items) => {
-      setInitialized(true)
+      setLocalCount(items.length)
       if (remoteLoaded.current) return
       setState((prev) => {
         const ordered = items.sort(sorter)
@@ -123,7 +124,15 @@ export const BasicCrudServiceWithPersistence = <
     if (!hasInternet || !synced) return
 
     refresh()
+      .catch(console.error)
+      .finally(() => setRemoteSettled(true))
   }, [synced, hasInternet])
+
+  // An empty local store may just be IndexedDB wiped at logout: wait for the server before showing first-use screens.
+  const initialized =
+    typeof initialState !== 'undefined' ||
+    remoteSettled ||
+    (localCount !== null && (localCount > 0 || !hasInternet || !synced))
 
   const create = useCallback(
     async (data: ItemUpdatableFields, identity?: ItemIdentifiableFields): Promise<Item> => {

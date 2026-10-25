@@ -313,11 +313,6 @@ func (r *Repository) DeleteCurrency(
 			}); err != nil {
 				return err
 			}
-			if err := queries.MigrateGroupCreatorCurrency(
-				ctx, &dao.MigrateGroupCreatorCurrencyParams{TargetID: target.ID, CurrencyID: currency.ID},
-			); err != nil {
-				return err
-			}
 		} else {
 			groupUses, err := queries.CountCurrencyGroupUses(ctx, sql.NullInt32{Int32: currency.ID, Valid: true})
 			if err != nil {

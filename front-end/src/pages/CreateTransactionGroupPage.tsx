@@ -1,11 +1,11 @@
 import { FC, useCallback, useContext } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-import { UserContext } from '../App'
+import { UserContext, useGuestView } from '../App'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
 import { useToast } from '../components/shared/ToastProvider'
-import TransactionGroupForm from '../components/transactionGroup/TransactionGroupForm'
-import { Person, TransactionGroupUpdatableFields } from '../domain/model/transactionGroup'
+import TransactionGroupForm, { TransactionGroupFormFields } from '../components/transactionGroup/TransactionGroupForm'
+import { Person } from '../domain/model/transactionGroup'
 import { TransactionGroupServiceContext } from '../service/ServiceContext'
 
 const CreateTransactionGroupPage: FC = () => {
@@ -14,27 +14,22 @@ const CreateTransactionGroupPage: FC = () => {
   const { create: createTransactionGroup } = useContext(TransactionGroupServiceContext)
   const { email, name } = useContext(UserContext)
   const { showToast } = useToast()
+  const isGuest = useGuestView()
 
   const onSubmit = useCallback(
-    async (data: Partial<TransactionGroupUpdatableFields>) => {
-      if (typeof data.name === 'undefined') throw new Error('name cannot be undefined')
+    async (data: TransactionGroupFormFields) => {
       if (data.name === '') throw new Error('name cannot be empty')
-      if (typeof data.splitType === 'undefined') throw new Error('split type cannot be undefined')
-      if (typeof data.currency === 'undefined' || data.currency === 0) throw new Error('currency cannot be undefined')
-      if (typeof data.category === 'undefined' || data.category === 0) throw new Error('category cannot be undefined')
+      if (!isGuest && (!data.currency || !data.category)) throw new Error('currency and category are required')
 
       const created = await createTransactionGroup({
-        name: data.name,
-        splitType: data.splitType,
-        currency: data.currency,
-        category: data.category,
+        ...data,
         hidden: false,
         members: [new Person(email, name, null, true)],
       })
       showToast('Transaction group created')
       navigate(`/transaction-groups/manage/${created.id}`, { replace: true })
     },
-    [navigate, showToast],
+    [navigate, showToast, isGuest, email, name, createTransactionGroup],
   )
 
   return (

@@ -4,9 +4,9 @@ SELECT
     COALESCE(utg.name_override, tg.name)::text AS name,
     tg.split_type,
     tg.created_at,
-    c.name as creator_currency,
-    c.symbol as creator_currency_symbol,
-    c.decimal_points as creator_currency_decimal_points,
+    tg.currency_name,
+    tg.currency_symbol,
+    tg.currency_decimal_points,
     utg.category_id,
     utg.currency_id,
     utg.split_value,
@@ -26,7 +26,6 @@ SELECT
     ) AS members
 FROM transaction_group tg
          JOIN user_transaction_group utg ON utg.transaction_group_id = tg.id
-         JOIN currencies c ON c.id = tg.creator_currency
 WHERE utg.user_email = sqlc.arg(user_email)
 ORDER BY tg.id DESC;
 
@@ -51,11 +50,14 @@ SELECT EXISTS (
 
 -- name: CreateTransactionGroupWithCreator :one
 WITH new_group AS (
-         INSERT INTO transaction_group (name, split_type, creator_currency)
+         INSERT INTO transaction_group (name, split_type, creator_id, currency_name, currency_symbol, currency_decimal_points)
              SELECT
                  sqlc.arg(name),
                  sqlc.arg(split_type)::group_split_type,
-                 sqlc.arg(currency_id)          -- creator_currency inferred from currency_row
+                 sqlc.arg(creator_id),
+                 sqlc.arg(currency_name),
+                 sqlc.arg(currency_symbol),
+                 sqlc.arg(currency_decimal_points)
              RETURNING id
      ),
      creator_link AS (
@@ -95,10 +97,8 @@ WHERE utg.user_email = sqlc.arg(user_email) AND utg.transaction_group_id = sqlc.
 WITH tg_creator_email AS (
     SELECT u.email
     FROM transaction_group tg
-             JOIN currencies c
-                  ON c.id = tg.creator_currency
              JOIN users u
-                  ON u.id = c.user_id
+                  ON u.id = tg.creator_id
     WHERE tg.id = sqlc.arg(transaction_group_id)
     LIMIT 1
 )
