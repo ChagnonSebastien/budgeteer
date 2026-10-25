@@ -5,6 +5,14 @@ JOIN user_transaction_group utg ON utg.transaction_group_id = s.transaction_grou
 WHERE utg.user_email = sqlc.arg(user_email) AND utg.locked = true
 ORDER BY s.date DESC, s.id DESC;
 
+-- name: HasMemberSettlements :one
+SELECT EXISTS (
+    SELECT 1
+    FROM settlements s
+    WHERE s.transaction_group_id = sqlc.arg(transaction_group_id)
+      AND sqlc.arg(user_email)::text IN (s.payer_email, s.receiver_email)
+)::boolean AS has_settlements;
+
 -- name: GetSettlementForUpdate :one
 SELECT *
 FROM settlements

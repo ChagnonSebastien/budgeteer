@@ -127,7 +127,7 @@ func (r *Repository) CreateSettlement(
 			return fmt.Errorf("a settlement can only be recorded by one of its two ends")
 		}
 		for _, end := range []model.Email{payer, receiver} {
-			if err := ensureTransactionGroupMember(ctx, queries, string(end), int32(groupId), true); err != nil {
+			if err := ensureTransactionGroupMember(ctx, queries, string(end), int32(groupId), string(end) == userEmail); err != nil {
 				return err
 			}
 		}

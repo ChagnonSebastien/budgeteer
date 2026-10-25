@@ -54,7 +54,7 @@ const SettlementPage: FC<{ mode: SettlementPageMode }> = ({ mode }) => {
   const groupPage = `/transaction-groups/manage/${groupId}`
 
   const others = useMemo(
-    () => transactionGroup?.members.filter((m) => m.joined && m.email !== email) ?? [],
+    () => transactionGroup?.members.filter((m) => m.email !== email) ?? [],
     [transactionGroup, email],
   )
 

@@ -285,6 +285,19 @@ func (r *Repository) UpdateTransactionGroup(
 				return
 			}
 
+			hasSettlements, settlementsErr := r.queries.WithTx(tx).HasMemberSettlements(ctx, &dao.HasMemberSettlementsParams{
+				TransactionGroupID: int32(id),
+				UserEmail:          previousMember.UserEmail,
+			})
+			if settlementsErr != nil {
+				err = fmt.Errorf("checking settlements of member: %s: %w", previousMember.UserEmail, settlementsErr)
+				return
+			}
+			if hasSettlements {
+				err = fmt.Errorf("cannot remove a member that has settlements in the transaction group: %s", previousMember.UserEmail)
+				return
+			}
+
 			removedData, removalErr := r.queries.WithTx(tx).RemoveUserFromTransactionGroup(ctx, &dao.RemoveUserFromTransactionGroupParams{
 				TransactionGroupID: int32(id),
 				UserEmail:          previousMember.UserEmail,

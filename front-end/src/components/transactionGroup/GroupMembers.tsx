@@ -3,7 +3,7 @@ import { CSSProperties, FC, useCallback, useContext } from 'react'
 
 import TransactionGroup, { Email, Person } from '../../domain/model/transactionGroup'
 import { ReadOnlyContext } from '../../service/ReadOnlyContext'
-import { TransactionGroupServiceContext } from '../../service/ServiceContext'
+import { SettlementServiceContext, TransactionGroupServiceContext } from '../../service/ServiceContext'
 import { IconToolsContext } from '../icons/IconTools'
 import PersonPicker from '../inputs/PersonPicker'
 import PersonAvatar from '../shared/PersonAvatar'
@@ -15,6 +15,9 @@ const GroupMembers: FC<{ transactionGroup: TransactionGroup; style?: CSSProperti
   const { IconLib } = useContext(IconToolsContext)
   const readOnly = useContext(ReadOnlyContext) !== null
   const { update: updateTransactionGroup } = useContext(TransactionGroupServiceContext)
+  const { state: settlements } = useContext(SettlementServiceContext)
+  const hasSettlements = (email: Email) =>
+    settlements.some((s) => s.transactionGroupId === transactionGroup.id && s.isEnd(email))
 
   const addMember = useCallback(
     ({ existing, id, name }: { existing: boolean; id: Email | null; name: string }) => {
@@ -59,7 +62,9 @@ const GroupMembers: FC<{ transactionGroup: TransactionGroup; style?: CSSProperti
           avatar={<PersonAvatar email={member.email} displayName={member.name} small />}
           label={member.name}
           variant={member.joined ? 'filled' : 'outlined'}
-          onDelete={member.joined || readOnly ? undefined : () => removeMember(member.email)}
+          onDelete={
+            member.joined || readOnly || hasSettlements(member.email) ? undefined : () => removeMember(member.email)
+          }
         />
       ))}
     </Stack>
