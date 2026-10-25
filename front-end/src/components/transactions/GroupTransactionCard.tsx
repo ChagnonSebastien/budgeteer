@@ -105,7 +105,7 @@ const GroupTransactionCard: FC<ItemProps<TransactionID, AugmentedTransaction, ob
 
       <Stack direction="row" alignItems="center" spacing={0.5} sx={{ minWidth: 0 }}>
         <Typography variant="body2" fontWeight={500} sx={ellipsis}>
-          Payed by: <b>{payedBy?.name ?? item.owner}</b>
+          Paid by: <b>{payedBy?.name ?? item.owner}</b>
         </Typography>
         {!isUnconfirmed && (
           <Tooltip
