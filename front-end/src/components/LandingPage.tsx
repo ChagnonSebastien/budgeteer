@@ -64,7 +64,7 @@ const LandingPage: FC<Props> = ({ oidcLogin, userPassLogin, guestLogin, demoLogi
               Explore a demo
             </SecureButton>
             <Typography variant="caption" color="text.disabled" sx={{ textAlign: 'center' }}>
-              Ten years of generated finances, read-only, kept in this browser until you log out.
+              Ten years of generated finances, read-only.
             </Typography>
           </Stack>
         </Stack>
