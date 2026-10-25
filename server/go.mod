@@ -16,12 +16,12 @@ require (
 	github.com/spf13/viper v1.21.0
 	github.com/stretchr/testify v1.11.1
 	github.com/thejerf/suture/v4 v4.0.6
+	github.com/tommie/v8go v0.40.0
 	github.com/wneessen/go-mail v0.7.2
 	golang.org/x/crypto v0.57.0
 	golang.org/x/oauth2 v0.36.0
 	google.golang.org/grpc v1.84.0
 	google.golang.org/protobuf v1.36.11
-	rogchap.com/v8go v0.9.0
 )
 
 require (
@@ -44,6 +44,13 @@ require (
 	github.com/spf13/pflag v1.0.10 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
+	github.com/tommie/v8go/deps/android_amd64 v0.0.0-20261021084352-c4d9b35b7a21 // indirect
+	github.com/tommie/v8go/deps/android_arm64 v0.0.0-20261021084352-c4d9b35b7a21 // indirect
+	github.com/tommie/v8go/deps/darwin_amd64 v0.0.0-20261021084352-c4d9b35b7a21 // indirect
+	github.com/tommie/v8go/deps/darwin_arm64 v0.0.0-20261021084352-c4d9b35b7a21 // indirect
+	github.com/tommie/v8go/deps/linux_amd64 v0.0.0-20261021084352-c4d9b35b7a21 // indirect
+	github.com/tommie/v8go/deps/linux_arm64 v0.0.0-20261021084352-c4d9b35b7a21 // indirect
+	github.com/tommie/v8go/deps/windows_amd64 v0.0.0-20261021084352-c4d9b35b7a21 // indirect
 	github.com/ysmood/fetchup v0.2.3 // indirect
 	github.com/ysmood/goob v0.4.0 // indirect
 	github.com/ysmood/got v0.40.0 // indirect

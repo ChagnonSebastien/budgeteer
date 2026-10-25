@@ -39,16 +39,15 @@ RUN VITE_COMMIT_HASH=$(cat /commit) npm run build
 
 
 FROM golang:1.27.3-bookworm@sha256:972b4110ba0f47539a975c31e52c64765e1ff19f2d74469ae4a595c6676e80a5 AS server-build
-RUN apt-get update && apt-get install -y \
+# v8go's prebuilt V8 links Chromium's libc++, whose headers need the Clang version its README names.
+RUN curl -fsSL https://apt.llvm.org/llvm-snapshot.gpg.key | gpg --dearmor -o /usr/share/keyrings/llvm.gpg && \
+  echo "deb [signed-by=/usr/share/keyrings/llvm.gpg] http://apt.llvm.org/bookworm/ llvm-toolchain-bookworm-21 main" > /etc/apt/sources.list.d/llvm.list && \
+  apt-get update && apt-get install -y --no-install-recommends \
   build-essential \
   pkg-config \
-  libv8-dev \
-  python3 \
-  ninja-build \
-  libc++-dev \
-  libc++abi-dev
+  clang-21
 
-ENV CGO_ENABLED=1
+ENV CGO_ENABLED=1 CC=clang-21 CXX=clang++-21 CGO_CXXFLAGS=-nostdinc++
 
 WORKDIR /app
 COPY server/go.mod server/go.sum ./

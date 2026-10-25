@@ -15,6 +15,11 @@ FROM categories
 WHERE user_id = sqlc.arg(user_id);
 
 -- name: UpdateCategory :execrows
+WITH RECURSIVE ancestors AS (
+    SELECT a.id, a.parent FROM categories a WHERE a.id = sqlc.narg(parent) AND a.user_id = sqlc.arg(user_id)
+    UNION
+    SELECT a.id, a.parent FROM categories a JOIN ancestors s ON a.id = s.parent
+)
 UPDATE categories c
 SET
     name = COALESCE(sqlc.narg(name), name),
@@ -34,7 +39,8 @@ WHERE c.id = sqlc.arg(id)
     FROM categories p
     WHERE p.id = sqlc.narg(parent)
       AND p.user_id = sqlc.arg(user_id)
-  ));
+  ))
+  AND (NOT sqlc.arg(update_parent)::boolean OR c.id NOT IN (SELECT id FROM ancestors));
 
 -- name: GetCategoryForDeletion :one
 SELECT id, parent
@@ -44,7 +50,7 @@ WHERE id = sqlc.arg(category_id) AND user_id = sqlc.arg(user_id);
 -- name: IsCategoryInSubtree :one
 WITH RECURSIVE subtree AS (
     SELECT c.id FROM categories c WHERE c.id = sqlc.arg(subtree_root) AND c.user_id = sqlc.arg(user_id)
-    UNION ALL
+    UNION
     SELECT c.id FROM categories c JOIN subtree s ON c.parent = s.id
 )
 SELECT EXISTS (SELECT 1 FROM subtree st WHERE st.id = sqlc.arg(candidate)::int)::bool;

@@ -245,9 +245,7 @@ func TestGuestSendCodeRejectsUnsafeInput(t *testing.T) {
 	auth, _, _ := newTestAuth(t)
 	for _, body := range []string{
 		`{"email":"a1 <victim@example.com>"}`,
-		`{"email":"victim@example.com","name":"x\nVisit evil.example"}`,
-		`{"email":"victim@example.com","name":"` + strings.Repeat("x", maxDisplayNameLength+1) + `"}`,
-		`{"email":"victim@example.com","name":"` + strings.Repeat("x", 5000) + `"}`,
+		`{"email":"victim@example.com","pad":"` + strings.Repeat("x", 5000) + `"}`,
 	} {
 		rec := httptest.NewRecorder()
 		auth.guestSendCodeHandler(rec, httptest.NewRequest(http.MethodPost, "/guest/send-code", strings.NewReader(body)))

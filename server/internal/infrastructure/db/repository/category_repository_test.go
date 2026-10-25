@@ -34,3 +34,23 @@ func TestCategoryParentMustBelongToTheCaller(t *testing.T) {
 		t.Fatalf("victim updating its own category: %v", err)
 	}
 }
+
+func TestCategoryCannotMoveUnderItsOwnDescendant(t *testing.T) {
+	f := newImportFixture(t)
+
+	parent, err := f.r.CreateCategory(f.ctx, f.userID, unique("parent"), "", "", "", f.category, false, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	child, err := f.r.CreateCategory(f.ctx, f.userID, unique("child"), "", "", "", int(parent), false, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for _, newParent := range []int{int(child), int(parent)} {
+		err = f.r.UpdateCategory(f.ctx, f.userID, parent, UpdateCategoryFields{ParentId: &newParent})
+		if !errors.Is(err, ErrForeignReference) {
+			t.Fatalf("moving under %d: expected ErrForeignReference, got %v", newParent, err)
+		}
+	}
+}

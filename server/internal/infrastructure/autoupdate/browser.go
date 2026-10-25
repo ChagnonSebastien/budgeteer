@@ -93,10 +93,12 @@ func (b *remoteBrowser) fetch(ctx context.Context, rawURL string) (string, error
 		return "", fmt.Errorf("getting pre element: %w", err)
 	}
 
-	body, err := preElement.Text()
+	// Truncated in the page, or a huge <pre> gets buffered whole in this process.
+	text, err := preElement.Eval(`(limit) => this.innerText.slice(0, limit)`, maxResponseBytes+1)
 	if err != nil {
 		return "", fmt.Errorf("converting pre element to text: %w", err)
 	}
+	body := text.Value.String()
 	if len(body) > maxResponseBytes {
 		return "", errors.New("response too large")
 	}

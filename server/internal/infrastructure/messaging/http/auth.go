@@ -17,7 +17,6 @@ import (
 	"slices"
 	"strings"
 	"time"
-	"unicode"
 	"unicode/utf8"
 
 	"chagnon.dev/budget-server/internal/domain/model"
@@ -59,7 +58,7 @@ type userRepository interface {
 }
 
 type guestLoginService interface {
-	SendLoginCode(ctx context.Context, email, name string) error
+	SendLoginCode(ctx context.Context, email string) error
 	VerifyLoginCode(ctx context.Context, email, code string) (bool, error)
 }
 
@@ -74,11 +73,17 @@ type Auth struct {
 
 	oidcRevocationEndpoint string
 
-	clientIP          clientIPSource
-	guestJWTSecret    []byte
-	sendCodeLimiter   *ratelimit.Limiter
-	verifyCodeLimiter *ratelimit.Limiter
+	clientIP              clientIPSource
+	guestJWTSecret        []byte
+	sendCodeLimiter       *ratelimit.Limiter
+	sendCodeGlobalLimiter *ratelimit.Limiter
+	verifyCodeLimiter     *ratelimit.Limiter
 }
+
+const minJWTSecretLength = 32
+
+// Caps all outgoing login mail, so rotating client IPs can't turn send-code into a spam relay.
+const maxLoginCodesPerHour = 60
 
 func NewAuth(
 	userService userRepository,
@@ -98,13 +103,14 @@ func NewAuth(
 		frontendUrl = serverPublicUrl
 	}
 
-	// Generate a secure secret for guest JWT tokens if not provided
 	jwtSecret := []byte(os.Getenv("GUEST_JWT_SECRET"))
 	if len(jwtSecret) == 0 {
-		jwtSecret = make([]byte, 32)
+		jwtSecret = make([]byte, minJWTSecretLength)
 		if _, err := rand.Read(jwtSecret); err != nil {
 			panic(fmt.Sprintf("failed to generate JWT secret: %v", err))
 		}
+	} else if len(jwtSecret) < minJWTSecretLength {
+		panic(fmt.Sprintf("GUEST_JWT_SECRET must be at least %d bytes", minJWTSecretLength))
 	}
 
 	auth := &Auth{
@@ -120,10 +126,11 @@ func NewAuth(
 			UserPass: userPassEnabled,
 			Guest:    guestLoginEnabled,
 		},
-		clientIP:          newClientIPSource(clientIPHeader),
-		guestJWTSecret:    jwtSecret,
-		sendCodeLimiter:   ratelimit.New(5, 15*time.Minute),
-		verifyCodeLimiter: ratelimit.New(20, 15*time.Minute),
+		clientIP:              newClientIPSource(clientIPHeader),
+		guestJWTSecret:        jwtSecret,
+		sendCodeLimiter:       ratelimit.New(5, 15*time.Minute),
+		sendCodeGlobalLimiter: ratelimit.New(maxLoginCodesPerHour, time.Hour),
+		verifyCodeLimiter:     ratelimit.New(20, 15*time.Minute),
 	}
 	return auth
 }
@@ -546,7 +553,6 @@ func (auth *Auth) revokeRefreshToken(r *http.Request) {
 
 type guestSendCodeRequest struct {
 	Email string `json:"email"`
-	Name  string `json:"name"`
 }
 
 type guestVerifyCodeRequest struct {
@@ -590,13 +596,13 @@ func (auth *Auth) guestSendCodeHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid email", http.StatusBadRequest)
 		return
 	}
-	name := strings.TrimSpace(req.Name)
-	if !validGuestName(name) {
-		http.Error(w, "Invalid name", http.StatusBadRequest)
+	if !auth.sendCodeGlobalLimiter.Allow("") {
+		logger.Warn("guest send-code global cap reached")
+		http.Error(w, "Too many requests, please try again later", http.StatusTooManyRequests)
 		return
 	}
 
-	if err := auth.GuestLoginService.SendLoginCode(r.Context(), email, name); err != nil {
+	if err := auth.GuestLoginService.SendLoginCode(r.Context(), email); err != nil {
 		logger.Error("sending login code", "error", err, "email", email)
 		http.Error(w, "Failed to send code", http.StatusInternalServerError)
 		return
@@ -693,13 +699,6 @@ func canonicalEmail(raw string) (string, bool) {
 		return "", false
 	}
 	return strings.ToLower(addr.Address), true
-}
-
-func validGuestName(name string) bool {
-	if utf8.RuneCountInString(name) > maxDisplayNameLength {
-		return false
-	}
-	return !strings.ContainsFunc(name, unicode.IsControl)
 }
 
 const maxDisplayNameLength = 64

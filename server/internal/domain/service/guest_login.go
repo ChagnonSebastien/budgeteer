@@ -5,7 +5,6 @@ import (
 	"crypto/rand"
 	"errors"
 	"fmt"
-	"html"
 	"math"
 	"strings"
 	"time"
@@ -55,11 +54,7 @@ func NewGuestLoginService(repo *repository.Repository, mailer Mailer, cfg GuestL
 	return &GuestLoginService{repo: repo, mailer: mailer, cfg: cfg}, nil
 }
 
-func (s *GuestLoginService) SendLoginCode(ctx context.Context, email, name string) error {
-	if name == "" {
-		name = "there"
-	}
-
+func (s *GuestLoginService) SendLoginCode(ctx context.Context, email string) error {
 	can, nextAllowed, err := s.repo.CanIssueGuestLoginNow(ctx, email, s.cfg.CodeTTL, s.cfg.CodeResendCooldown)
 	if err != nil {
 		return fmt.Errorf("cooldown check failed: %w", err)
@@ -85,8 +80,8 @@ func (s *GuestLoginService) SendLoginCode(ctx context.Context, email, name strin
 	}
 
 	subject := fmt.Sprintf("%s — your sign-in code", s.cfg.BrandName)
-	textBody := s.makePlain(name, code, s.cfg.CodeTTL)
-	htmlBody := s.makeHTML(name, code, s.cfg.CodeTTL)
+	textBody := s.makePlain(code, s.cfg.CodeTTL)
+	htmlBody := s.makeHTML(code, s.cfg.CodeTTL)
 
 	if err := s.mailer.Send(ctx, []string{email}, subject, textBody, htmlBody); err != nil {
 		return fmt.Errorf("send mail: %w", err)
@@ -130,15 +125,13 @@ func (s *GuestLoginService) CleanupExpired(ctx context.Context) error {
 	return s.repo.DeleteExpiredGuestLogins(ctx)
 }
 
-func (s *GuestLoginService) makePlain(name, code string, ttl time.Duration) string {
+func (s *GuestLoginService) makePlain(code string, ttl time.Duration) string {
 	return fmt.Sprintf(
-		"Hi %s,\n\nYour sign-in code is: %s\n\nThis code expires in %d minutes.\nIf you didn’t request it, ignore this email.\n\n— %s\n%s",
-		name, code, int(ttl.Minutes()), s.cfg.BrandName, s.cfg.BrandURL)
+		"Hi,\n\nYour sign-in code is: %s\n\nThis code expires in %d minutes.\nIf you didn’t request it, ignore this email.\n\n— %s\n%s",
+		code, int(ttl.Minutes()), s.cfg.BrandName, s.cfg.BrandURL)
 }
 
-func (s *GuestLoginService) makeHTML(name, code string, ttl time.Duration) string {
-	// name is user-supplied and embedded into HTML; escape to prevent injection.
-	name = html.EscapeString(name)
+func (s *GuestLoginService) makeHTML(code string, ttl time.Duration) string {
 	return fmt.Sprintf(
 		`<!DOCTYPE html>
 <html>
@@ -148,7 +141,7 @@ func (s *GuestLoginService) makeHTML(name, code string, ttl time.Duration) strin
 </head>
 <body>
 <body style="font-family:Arial,sans-serif;color:#333">
-  <p>Hi %s,</p>
+  <p>Hi,</p>
   <p>Your sign-in code is:</p>
   <p style="font-size:20px;font-weight:bold;letter-spacing:2px">%s</p>
   <p>This code expires in %d minutes.</p>
@@ -162,7 +155,7 @@ func (s *GuestLoginService) makeHTML(name, code string, ttl time.Duration) strin
   </p>
 </body>
 </html>`,
-		name, code, int(ttl.Minutes()),
+		code, int(ttl.Minutes()),
 		s.cfg.BrandName, s.cfg.BrandURL, s.cfg.BrandURL,
 		func() string {
 			if s.cfg.SupportEmail != "" {

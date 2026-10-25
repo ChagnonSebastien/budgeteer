@@ -8,7 +8,7 @@ import (
 	"os"
 	"syscall"
 
-	v8 "rogchap.com/v8go"
+	v8 "github.com/tommie/v8go"
 )
 
 const scriptHostEnv = "BUDGETEER_SCRIPT_HOST"
