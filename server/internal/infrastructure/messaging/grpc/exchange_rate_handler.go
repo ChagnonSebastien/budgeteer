@@ -14,7 +14,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-type scriptRunner func(context.Context, string) (string, error)
+type scriptRunner func(ctx context.Context, userID uuid.UUID, script string) (string, error)
 
 type exchangeRateRepository interface {
 	GetAllExchangeRate(ctx context.Context, userId uuid.UUID) ([]model.ExchangeRate, error)
@@ -138,7 +138,7 @@ func (s *ExchangeRateHandler) TestGetCurrencyRate(ctx context.Context, req *dto.
 		return nil, fmt.Errorf("running currency rate scripts is not available to guest users")
 	}
 
-	returnedValue, err := s.javascriptRunner(ctx, req.Script)
+	returnedValue, err := s.javascriptRunner(ctx, user.ID, req.Script)
 	if err != nil {
 		returnedValue = fmt.Sprintf("Error running script: %s", err)
 	}

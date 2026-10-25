@@ -1,13 +1,13 @@
-package http
+package ratelimit
 
 import (
 	"sync"
 	"time"
 )
 
-// rateLimiter is a simple in-memory sliding-window limiter keyed by an
+// Limiter is a simple in-memory sliding-window limiter keyed by an
 // arbitrary string (e.g. a client IP). It is safe for concurrent use.
-type rateLimiter struct {
+type Limiter struct {
 	mu        sync.Mutex
 	hits      map[string][]time.Time
 	limit     int
@@ -15,8 +15,8 @@ type rateLimiter struct {
 	lastSweep time.Time
 }
 
-func newRateLimiter(limit int, window time.Duration) *rateLimiter {
-	return &rateLimiter{
+func New(limit int, window time.Duration) *Limiter {
+	return &Limiter{
 		hits:      make(map[string][]time.Time),
 		limit:     limit,
 		window:    window,
@@ -24,9 +24,7 @@ func newRateLimiter(limit int, window time.Duration) *rateLimiter {
 	}
 }
 
-// allow records an attempt for key and reports whether it is within the
-// configured limit over the trailing window.
-func (rl *rateLimiter) allow(key string) bool {
+func (rl *Limiter) Allow(key string) bool {
 	now := time.Now()
 	cutoff := now.Add(-rl.window)
 
@@ -48,7 +46,7 @@ func (rl *rateLimiter) allow(key string) bool {
 	return true
 }
 
-func (rl *rateLimiter) sweep(cutoff time.Time) {
+func (rl *Limiter) sweep(cutoff time.Time) {
 	for key, hits := range rl.hits {
 		if kept := recentHits(hits, cutoff); len(kept) > 0 {
 			rl.hits[key] = kept

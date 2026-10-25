@@ -69,8 +69,8 @@ type DatabaseConfig struct {
 }
 
 type ServerConfig struct {
-	Database  DatabaseConfig
-	Auth      AuthConfig
+	Database       DatabaseConfig
+	Auth           AuthConfig
 	Mailer         MailerConfig
 	PublicUrl      string
 	ClientIPHeader string

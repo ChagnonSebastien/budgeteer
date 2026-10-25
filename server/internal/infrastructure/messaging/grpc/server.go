@@ -27,7 +27,7 @@ func NewServerWithHandlers(services Services) *grpc.Server {
 	dto.RegisterCategoryServiceServer(grpcServer, &CategoryHandler{categoryService: services.Category})
 	dto.RegisterCurrencyServiceServer(grpcServer, &CurrencyHandler{currencyService: services.Currency})
 	dto.RegisterTransactionServiceServer(grpcServer, &TransactionHandler{transactionService: services.Transaction})
-	dto.RegisterExchangeRateServiceServer(grpcServer, &ExchangeRateHandler{exchangeRateService: services.ExchangeRate, javascriptRunner: autoupdate.RunJavascript})
+	dto.RegisterExchangeRateServiceServer(grpcServer, &ExchangeRateHandler{exchangeRateService: services.ExchangeRate, javascriptRunner: autoupdate.NewOnDemandRunner(autoupdate.RunJavascript).Run})
 	dto.RegisterTransactionGroupServiceServer(grpcServer, &TransactionGroupHandler{transactionGroupService: services.TransactionGroup})
 	dto.RegisterUnconfirmedTransactionServiceServer(grpcServer, &UnconfirmedTransactionHandler{unconfirmedTransactionService: services.UnconfirmedTransaction})
 	dto.RegisterSettlementServiceServer(grpcServer, &SettlementHandler{settlementService: services.Settlement})

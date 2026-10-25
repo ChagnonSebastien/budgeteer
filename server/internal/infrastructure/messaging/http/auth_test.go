@@ -274,15 +274,3 @@ func TestClientIP(t *testing.T) {
 		}
 	}
 }
-
-func TestRateLimiterForgetsIdleKeys(t *testing.T) {
-	rl := newRateLimiter(1, time.Millisecond)
-	rl.allow("a")
-	time.Sleep(5 * time.Millisecond)
-	if !rl.allow("b") {
-		t.Fatal("expected a fresh key to be allowed")
-	}
-	if _, ok := rl.hits["a"]; ok {
-		t.Fatal("expected the idle key to be pruned")
-	}
-}

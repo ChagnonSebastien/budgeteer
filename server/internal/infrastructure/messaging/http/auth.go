@@ -28,6 +28,7 @@ import (
 
 	"chagnon.dev/budget-server/internal/infrastructure/messaging/shared"
 	"chagnon.dev/budget-server/internal/logging"
+	"chagnon.dev/budget-server/internal/ratelimit"
 )
 
 type AuthMethods struct {
@@ -75,8 +76,8 @@ type Auth struct {
 
 	clientIP          clientIPSource
 	guestJWTSecret    []byte
-	sendCodeLimiter   *rateLimiter
-	verifyCodeLimiter *rateLimiter
+	sendCodeLimiter   *ratelimit.Limiter
+	verifyCodeLimiter *ratelimit.Limiter
 }
 
 func NewAuth(
@@ -121,8 +122,8 @@ func NewAuth(
 		},
 		clientIP:          newClientIPSource(clientIPHeader),
 		guestJWTSecret:    jwtSecret,
-		sendCodeLimiter:   newRateLimiter(5, 15*time.Minute),
-		verifyCodeLimiter: newRateLimiter(20, 15*time.Minute),
+		sendCodeLimiter:   ratelimit.New(5, 15*time.Minute),
+		verifyCodeLimiter: ratelimit.New(20, 15*time.Minute),
 	}
 	return auth
 }
@@ -567,7 +568,7 @@ func (auth *Auth) guestSendCodeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	clientIP := auth.clientIP.of(r)
-	if !auth.sendCodeLimiter.allow(clientIP) {
+	if !auth.sendCodeLimiter.Allow(clientIP) {
 		logger.Warn("guest send-code rate limited", "ip", clientIP)
 		http.Error(w, "Too many requests, please try again later", http.StatusTooManyRequests)
 		return
@@ -615,7 +616,7 @@ func (auth *Auth) guestVerifyCodeHandler(w http.ResponseWriter, r *http.Request)
 	}
 
 	clientIP := auth.clientIP.of(r)
-	if !auth.verifyCodeLimiter.allow(clientIP) {
+	if !auth.verifyCodeLimiter.Allow(clientIP) {
 		logger.Warn("guest verify-code rate limited", "ip", clientIP)
 		writeGuestVerifyFailure(w, http.StatusTooManyRequests, "Too many attempts, please try again later")
 		return
