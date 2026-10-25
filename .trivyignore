@@ -1,6 +1,2 @@
-# x/crypto/ssh is not in the build graph
-CVE-2026-56854
-# go-mail only uses the precis OpaqueString profile, not Nickname
-CVE-2026-56851
 # build stage only, the runtime image is distroless
 DS-0029

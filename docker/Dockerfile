@@ -1,4 +1,4 @@
-FROM golang:1.26.10-alpine3.24@sha256:27f2d3b83cfc5803c8078f8e730af0f7c431bf067afaec8f60a36fb763187cba AS sqlc
+FROM golang:1.27.3-alpine3.24@sha256:b8c9b82affbbb82a020bbcf998dad2ba9516944ac7e883524642a481a9505e9c AS sqlc
 WORKDIR /app
 RUN go install github.com/sqlc-dev/sqlc/cmd/sqlc@v1.31.1
 COPY server/internal/infrastructure/db/queries internal/infrastructure/db/queries
@@ -7,7 +7,7 @@ COPY server/sqlc.yaml sqlc.yaml
 RUN sqlc generate
 
 
-FROM golang:1.25.14-alpine3.24@sha256:1ae0735f00daffa3aaf1363a5184c0d2dc55c78e3db4ec70241cdac97bf84b59 AS protoc
+FROM golang:1.27.3-alpine3.24@sha256:b8c9b82affbbb82a020bbcf998dad2ba9516944ac7e883524642a481a9505e9c AS protoc
 WORKDIR /app
 RUN apk update && apk add --no-cache make protobuf-dev nodejs npm
 RUN go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.36.12
@@ -38,7 +38,7 @@ COPY --from=commit /commit /commit
 RUN VITE_COMMIT_HASH=$(cat /commit) npm run build
 
 
-FROM golang:1.25.14-bookworm@sha256:3b4a11519ad929d1e1d261a12cff056f0c85b735253d7d861346b9c6f8b36437 AS server-build
+FROM golang:1.27.3-bookworm@sha256:972b4110ba0f47539a975c31e52c64765e1ff19f2d74469ae4a595c6676e80a5 AS server-build
 RUN apt-get update && apt-get install -y \
   build-essential \
   pkg-config \
