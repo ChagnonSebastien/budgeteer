@@ -42,6 +42,7 @@ export interface ManagedUser {
   email: string
   name: string
   loginMethod: 'oidc' | null
+  sharedExpensesOnly: boolean | null
   isAdmin: boolean
   lastSeenAt: Date | null
 }

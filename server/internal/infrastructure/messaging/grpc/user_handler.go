@@ -60,12 +60,13 @@ func (s *UserHandler) GetAllUsers(ctx context.Context, _ *dto.GetAllUsersRequest
 			lastSeenAt = &formatted
 		}
 		response.Users[i] = &dto.User{
-			Id:          u.ID.String(),
-			Email:       u.Email,
-			Name:        u.Name,
-			LoginMethod: newLoginMethodDto(u.LoginMethod),
-			IsAdmin:     u.IsAdmin,
-			LastSeenAt:  lastSeenAt,
+			Id:                 u.ID.String(),
+			Email:              u.Email,
+			Name:               u.Name,
+			LoginMethod:        newLoginMethodDto(u.LoginMethod),
+			IsAdmin:            u.IsAdmin,
+			LastSeenAt:         lastSeenAt,
+			SharedExpensesOnly: u.SharedExpensesOnly,
 		}
 	}
 	return response, nil

@@ -16,6 +16,7 @@ message User {
   LoginMethod login_method = 4;
   bool is_admin = 5;
   optional string last_seen_at = 6;
+  optional bool shared_expenses_only = 7;
 }
 
 message GetAllUsersRequest {

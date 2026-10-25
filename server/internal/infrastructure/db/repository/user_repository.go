@@ -172,13 +172,24 @@ func (r *Repository) GetAllUsers(ctx context.Context) ([]model.UserSummary, erro
 		if row.LastSeenAt.Valid {
 			lastSeenAt = &row.LastSeenAt.Time
 		}
+		var preferences struct {
+			SharedExpensesOnly *bool `json:"sharedExpensesOnly"`
+		}
+		if err := json.Unmarshal(row.Preferences, &preferences); err != nil {
+			return nil, fmt.Errorf("decoding preferences of user %s: %w", row.ID, err)
+		}
+		// mirrors the front end's needsUsageChoice: users with a default currency skip the choice
+		if preferences.SharedExpensesOnly == nil && row.HasDefaultCurrency {
+			preferences.SharedExpensesOnly = new(bool)
+		}
 		users[i] = model.UserSummary{
-			ID:          row.ID,
-			Email:       row.Email,
-			Name:        row.Name,
-			LoginMethod: loginMethod,
-			IsAdmin:     row.IsAdmin,
-			LastSeenAt:  lastSeenAt,
+			ID:                 row.ID,
+			Email:              row.Email,
+			Name:               row.Name,
+			LoginMethod:        loginMethod,
+			SharedExpensesOnly: preferences.SharedExpensesOnly,
+			IsAdmin:            row.IsAdmin,
+			LastSeenAt:         lastSeenAt,
 		}
 	}
 	return users, nil

@@ -27,12 +27,13 @@ const (
 )
 
 type UserSummary struct {
-	ID          uuid.UUID
-	Email       string
-	Name        string
-	LoginMethod LoginMethod
-	IsAdmin     bool
-	LastSeenAt  *time.Time
+	ID                 uuid.UUID
+	Email              string
+	Name               string
+	LoginMethod        LoginMethod
+	SharedExpensesOnly *bool
+	IsAdmin            bool
+	LastSeenAt         *time.Time
 }
 
 type UserDeletionImpact struct {

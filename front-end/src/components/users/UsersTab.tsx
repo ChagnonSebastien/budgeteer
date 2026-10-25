@@ -13,6 +13,9 @@ const loginMethodLabels: Record<NonNullable<ManagedUser['loginMethod']>, string>
   oidc: 'OIDC',
 }
 
+const experienceLabel = (sharedExpensesOnly: boolean | null) =>
+  sharedExpensesOnly === null ? 'Not chosen yet' : sharedExpensesOnly ? 'Shared expenses only' : 'Full experience'
+
 const UserRow: FC<{ user: ManagedUser; onDelete(): void }> = ({ user, onDelete }) => {
   const { IconLib } = useContext(IconToolsContext)
   return (
@@ -26,7 +29,10 @@ const UserRow: FC<{ user: ManagedUser; onDelete(): void }> = ({ user, onDelete }
       <Stack direction="row" spacing={1} alignItems="center" sx={{ flexShrink: 0 }}>
         {user.isAdmin && <Chip size="small" color="primary" label="Admin" />}
         {user.loginMethod ? (
-          <Chip size="small" variant="outlined" label={`Full account · ${loginMethodLabels[user.loginMethod]}`} />
+          <>
+            <Chip size="small" variant="outlined" label={loginMethodLabels[user.loginMethod]} />
+            <Chip size="small" variant="outlined" label={experienceLabel(user.sharedExpensesOnly)} />
+          </>
         ) : (
           <Chip size="small" variant="outlined" label="Guest" />
         )}

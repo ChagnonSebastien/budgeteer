@@ -18,6 +18,7 @@ export default class UserRemoteStore {
       email: dto.email,
       name: dto.name,
       loginMethod: dto.loginMethod === LoginMethod.OIDC ? 'oidc' : null,
+      sharedExpensesOnly: dto.sharedExpensesOnly ?? null,
       isAdmin: dto.isAdmin,
       lastSeenAt: dto.lastSeenAt ? new Date(dto.lastSeenAt) : null,
     }))
