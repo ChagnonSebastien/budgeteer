@@ -41,11 +41,10 @@ func (s *GrpcWebServer) Serve(ctx context.Context) error {
 	mux := http.NewServeMux()
 
 	mux.Handle("/auth/", http.StripPrefix("/auth", s.auth.ServeMux()))
-	mux.Handle("/api/", http.StripPrefix("/api", s.wrappedGrpc))
 	mux.HandleFunc("/", s.catchAllHandler)
 
 	httpServer := &http.Server{
-		Handler:           withLogging(mux, s.auth.clientIP),
+		Handler:           withLogging(withSecurityHeaders(mux, s.auth.FrontendPublicUrl), s.auth.clientIP),
 		Addr:              fmt.Sprintf(":%d", serverPort),
 		ReadHeaderTimeout: 10 * time.Second,
 		IdleTimeout:       2 * time.Minute,
@@ -84,26 +83,31 @@ func (s *GrpcWebServer) catchAllHandler(resp http.ResponseWriter, req *http.Requ
 		}
 	}
 
-	securityPolicies := []string{
+	resp.Header().Set("Cache-Control", "no-cache")
+	http.ServeFile(resp, req, filepath.Join(webDirectory, "index.html"))
+}
+
+func withSecurityHeaders(next http.Handler, frontendPublicUrl string) http.Handler {
+	contentSecurityPolicy := strings.Join([]string{
 		"upgrade-insecure-requests;",
 		"default-src 'self';",
 		"style-src 'self' 'unsafe-inline';",
 		"script-src 'self';",
 		"script-src-elem 'self' 'unsafe-inline';",
 		"worker-src 'self';",
-		fmt.Sprintf("base-uri %s;", s.auth.FrontendPublicUrl),
+		fmt.Sprintf("base-uri %s;", frontendPublicUrl),
 		"form-action 'none';",
 		"frame-ancestors 'none';",
 		"object-src 'none';",
-	}
+	}, " ")
 
-	resp.Header().Set(
-		"Content-Security-Policy",
-		strings.Join(securityPolicies, " "),
-	)
-
-	resp.Header().Set("Cache-Control", "no-cache")
-	http.ServeFile(resp, req, filepath.Join(webDirectory, "index.html"))
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Security-Policy", contentSecurityPolicy)
+		w.Header().Set("Referrer-Policy", "same-origin")
+		w.Header().Set("Strict-Transport-Security", "max-age=31536000") // browsers ignore it over plain HTTP
+		w.Header().Set("X-Content-Type-Options", "nosniff")
+		next.ServeHTTP(w, r)
+	})
 }
 
 type LoggingResponseWriter struct {
@@ -121,10 +125,6 @@ func withLogging(next http.Handler, clientIP clientIPSource) http.Handler {
 		func(w http.ResponseWriter, r *http.Request) {
 			logger := logging.FromContext(r.Context()).With("correlationId", uuid.NewString())
 			logger.Info("received http request", "method", r.URL.Path, "peer", clientIP.of(r))
-
-			// Ignored by browsers over plain HTTP, so safe to always send.
-			w.Header().Set("Strict-Transport-Security", "max-age=31536000")
-			w.Header().Set("X-Content-Type-Options", "nosniff")
 
 			start := time.Now()
 			lrw := &LoggingResponseWriter{ResponseWriter: w, statusCode: http.StatusOK}
