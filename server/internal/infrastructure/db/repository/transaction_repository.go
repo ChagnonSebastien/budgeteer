@@ -349,6 +349,9 @@ func insertTransaction(
 
 		if hasSplitOverride {
 			for _, member := range splitOverride.Members {
+				if err := ensureTransactionGroupMember(ctx, queries, string(member.Email), int32(transactionGroup.TransactionGroup), false); err != nil {
+					return 0, err
+				}
 				splitValue, hasSplitValue := member.SplitValue.Value()
 
 				_, err := queries.UpsertGroupedTransactionMemberSplitValue(ctx, &dao.UpsertGroupedTransactionMemberSplitValueParams{
@@ -639,6 +642,15 @@ func (r *Repository) UpdateTransaction(
 
 				if splitOverride, isSome := updateSplitOverrideData.Value(); isSome {
 					if newMembersData, isSome := splitOverride.Members.Value(); isSome {
+						groupId := transactionGroupId
+						if !groupId.Valid {
+							groupId = previousTransaction.TransactionGroupID
+						}
+						for _, member := range newMembersData {
+							if err = ensureTransactionGroupMember(ctx, r.queries.WithTx(tx), string(member.Email), groupId.Int32, false); err != nil {
+								return
+							}
+						}
 						newMembers = newMembersData
 					} else {
 						// members stay the same

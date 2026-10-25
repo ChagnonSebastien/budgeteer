@@ -281,6 +281,7 @@ func (s *TransactionHandler) UpdateTransaction(
 								SplitValue: splitValue,
 							}
 						}
+						members = model.Some(memberList)
 					}
 
 					splitOverrideFields = model.Some(repository.UpdateTransactionGroupSplitOverride{
