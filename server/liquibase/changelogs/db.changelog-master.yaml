@@ -73,3 +73,5 @@ databaseChangeLog:
       file: ./changelogs/036-backfill-usage-choice.sql
   - include:
       file: ./changelogs/037-drop-foreign-account-balances.sql
+  - include:
+      file: ./changelogs/038-reparent-foreign-child-categories.sql

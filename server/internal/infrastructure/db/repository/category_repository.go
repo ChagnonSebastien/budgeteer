@@ -62,6 +62,9 @@ func (r *Repository) CreateCategory(
 			Ordering:       ordering,
 		},
 	)
+	if errors.Is(err, sql.ErrNoRows) {
+		return 0, ErrForeignReference
+	}
 	if err != nil {
 		return 0, err
 	}
@@ -159,7 +162,7 @@ func (r *Repository) UpdateCategory(
 	id model.CategoryID,
 	fields UpdateCategoryFields,
 ) error {
-	return r.queries.UpdateCategory(
+	rows, err := r.queries.UpdateCategory(
 		ctx, &dao.UpdateCategoryParams{
 			UserID:         userId,
 			ID:             int32(id),
@@ -173,6 +176,13 @@ func (r *Repository) UpdateCategory(
 			Ordering:       fields.nullOrdering(),
 		},
 	)
+	if err != nil {
+		return err
+	}
+	if rows == 0 {
+		return ErrForeignReference
+	}
+	return nil
 }
 
 var (
