@@ -6,6 +6,7 @@ import { ReadOnlyContext } from '../../service/ReadOnlyContext'
 import { TransactionGroupServiceContext } from '../../service/ServiceContext'
 import { IconToolsContext } from '../icons/IconTools'
 import PersonPicker from '../inputs/PersonPicker'
+import PersonAvatar from '../shared/PersonAvatar'
 
 const GroupMembers: FC<{ transactionGroup: TransactionGroup; style?: CSSProperties }> = ({
   transactionGroup,
@@ -50,10 +51,12 @@ const GroupMembers: FC<{ transactionGroup: TransactionGroup; style?: CSSProperti
         excludeEmails={transactionGroup.members.map((m) => m.email)}
         value={null}
         labelText={''}
+        dialogTitle="Add someone to the group"
       />
       {transactionGroup.members.map((member) => (
         <Chip
           key={member.email}
+          avatar={<PersonAvatar email={member.email} displayName={member.name} small />}
           label={member.name}
           variant={member.joined ? 'filled' : 'outlined'}
           onDelete={member.joined || readOnly ? undefined : () => removeMember(member.email)}

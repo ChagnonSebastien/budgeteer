@@ -12,6 +12,7 @@ interface Props {
   value: Email | null
   onPersonSelected: (newUser: { existing: boolean; id: Email | null; name: string }) => void
   labelText: string
+  dialogTitle?: string
   errorText?: string
   allowNew?: boolean
   OverrideTextLabel?: FC<{ onClick(): void }>
@@ -19,7 +20,16 @@ interface Props {
 }
 
 const PersonPicker: FC<Props> = (props) => {
-  const { value, onPersonSelected, allowNew = false, labelText, errorText, OverrideTextLabel, excludeEmails } = props
+  const {
+    value,
+    onPersonSelected,
+    allowNew = false,
+    labelText,
+    dialogTitle,
+    errorText,
+    OverrideTextLabel,
+    excludeEmails,
+  } = props
   const { knownPeople: allKnownPeople } = useContext(TransactionGroupServiceContext)
   const knownPeople = useMemo(
     () => allKnownPeople.filter((person) => !excludeEmails?.includes(person.email)),
@@ -59,6 +69,7 @@ const PersonPicker: FC<Props> = (props) => {
       selectedItemId={value}
       onSelectItem={handleAccountSelected}
       labelText={labelText}
+      dialogTitle={dialogTitle}
       errorText={errorText}
       searchPlaceholder={allowNew ? 'Search or create person...' : 'Search person...'}
       allowNew={allowNew}
