@@ -77,7 +77,7 @@ func SplitTypeToDto(splitType model.SplitType) (dto.SplitType, error) {
 	case model.SplitTypeShare:
 		return dto.SplitType_Share, nil
 	default:
-		return dto.SplitType_Equal, fmt.Errorf("unknown SplitType %s", splitType)
+		return dto.SplitType_Equal, fmt.Errorf("unknown SplitType %d", splitType)
 	}
 }
 

@@ -116,7 +116,7 @@ var startCmd = &cobra.Command{
 
 		err := server.Serve(logging.WithLogger(context.Background(), logger))
 		if err != nil {
-			logger.Error("running server: %s", err)
+			logger.Error("running server", "error", err)
 			panic(err)
 		}
 	},

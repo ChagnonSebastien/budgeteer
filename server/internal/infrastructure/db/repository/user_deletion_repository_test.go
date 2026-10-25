@@ -40,8 +40,9 @@ func (f deletionFixture) group(t *testing.T, creator deletionUser, members ...de
 	t.Helper()
 	var id int32
 	if err := f.r.db.QueryRowContext(f.ctx,
-		`INSERT INTO transaction_group (name, split_type, creator_currency) VALUES ($1, 'EQUAL', $2) RETURNING id`,
-		unique("group"), creator.currency,
+		`INSERT INTO transaction_group (name, split_type, creator_id, currency_name, currency_symbol, currency_decimal_points)
+		 VALUES ($1, 'EQUAL', $2, 'CAD', '$', 2) RETURNING id`,
+		unique("group"), creator.id,
 	).Scan(&id); err != nil {
 		t.Fatal(err)
 	}

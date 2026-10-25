@@ -78,7 +78,7 @@ func SplitTypeOverrideToDto(splitType model.SplitTypeOverride) (dto.SplitTypeOve
 	case model.SplitTypeOverrideExactAmount:
 		return dto.SplitTypeOverride_OverrideExactAmount, nil
 	default:
-		return dto.SplitTypeOverride_OverrideEqual, fmt.Errorf("unknown SplitType %s", splitType)
+		return dto.SplitTypeOverride_OverrideEqual, fmt.Errorf("unknown SplitType %d", splitType)
 	}
 }
 

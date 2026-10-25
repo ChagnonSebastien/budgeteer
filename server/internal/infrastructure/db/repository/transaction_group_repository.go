@@ -36,7 +36,7 @@ func SplitTypeToDao(splitType model.SplitType) (dao.GroupSplitType, error) {
 	case model.SplitTypeShare:
 		return dao.GroupSplitTypeSHARES, nil
 	default:
-		return dao.GroupSplitTypeEQUAL, fmt.Errorf("unknown SplitType %s", splitType)
+		return dao.GroupSplitTypeEQUAL, fmt.Errorf("unknown SplitType %d", splitType)
 	}
 }
 

@@ -41,7 +41,7 @@ func SplitTypeOverrideToDao(splitType model.SplitTypeOverride) (value dao.Transa
 	case model.SplitTypeOverrideExactAmount:
 		return dao.TransactionSplitTypeEXACTAMOUNT, nil
 	default:
-		return value, fmt.Errorf("unknown SplitType %s", splitType)
+		return value, fmt.Errorf("unknown SplitType %d", splitType)
 	}
 }
 
