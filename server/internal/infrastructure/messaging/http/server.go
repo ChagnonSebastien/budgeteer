@@ -118,7 +118,7 @@ func withLogging(next http.Handler) http.Handler {
 	return http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
 			logger := logging.FromContext(r.Context()).With("correlationId", uuid.NewString())
-			logger.Info("received http request", "method", r.URL, "peer", getClientIP(r))
+			logger.Info("received http request", "method", r.URL.Path, "peer", getClientIP(r))
 
 			// Ignored by browsers over plain HTTP, so safe to always send.
 			w.Header().Set("Strict-Transport-Security", "max-age=31536000")
