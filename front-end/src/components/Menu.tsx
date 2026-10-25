@@ -209,7 +209,11 @@ const DrawerWrapper: FC<Props> = ({ logout, children, userIsGuest = false }) => 
   const [open, setOpen] = useState(false)
   const [unlocking, setUnlocking] = useState(false)
   const { key: locationKey, pathname } = useLocation()
-  useEffect(() => setOpen(false), [locationKey])
+  const [openedAt, setOpenedAt] = useState(locationKey)
+  if (openedAt !== locationKey) {
+    setOpenedAt(locationKey)
+    setOpen(false)
+  }
 
   const visitedPages = preferences?.visitedPages
   const unvisitedPages = useMemo(

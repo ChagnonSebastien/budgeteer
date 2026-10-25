@@ -147,7 +147,15 @@ const AggregatedDiffChart: FC<Props> = (props) => {
         stackTooltip={(tooltipProps) => <Tooltip tooltipProps={tooltipProps} labels={labels} />}
       />
     )
-  }, [defaultCurrency, privacyMode, showLabelEveryFactor, hideFinancialIncome, timeseriesIterator, navigation])
+  }, [
+    defaultCurrency,
+    exchangeRateOnDay,
+    privacyMode,
+    showLabelEveryFactor,
+    hideFinancialIncome,
+    timeseriesIterator,
+    navigation,
+  ])
 }
 
 export default AggregatedDiffChart

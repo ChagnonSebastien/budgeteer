@@ -1,6 +1,6 @@
 import { Typography } from '@mui/material'
 import { ResponsiveSunburst } from '@nivo/sunburst'
-import { FC, useContext, useEffect, useMemo, useState } from 'react'
+import { FC, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 
 import Category, { AugmentedCategory } from '../../domain/model/category'
 import { formatFull } from '../../domain/model/currency'
@@ -54,18 +54,23 @@ const TransactionsPieChart: FC<Props> = (props) => {
     })
 
     return diffs
-  }, [categories, augmentedTransactions, exchangeRateOnDay, defaultCurrency])
+  }, [augmentedTransactions, exchangeRateOnDay, defaultCurrency])
 
   // Non-negative magnitude of a category's subtree in the currently-shown
   // direction. Income contributions count only in income view and expense
   // contributions only in expense view, so this always matches the value the
   // sunburst renders for the corresponding arc.
-  const getCategoryTotal = (category: Category): number => {
-    const selfAmount = differences.get(category.id) ?? 0
-    const self = showIncomes ? Math.max(0, selfAmount) : Math.max(0, -selfAmount)
-    const childrenAmount = (subCategories[category.id] ?? []).map(getCategoryTotal).reduce((a, b) => a + b, 0)
-    return self + childrenAmount
-  }
+  const getCategoryTotal = useCallback(
+    (category: Category): number => {
+      const total = (category: Category): number => {
+        const selfAmount = differences.get(category.id) ?? 0
+        const self = showIncomes ? Math.max(0, selfAmount) : Math.max(0, -selfAmount)
+        return self + (subCategories[category.id] ?? []).map(total).reduce((a, b) => a + b, 0)
+      }
+      return total(category)
+    },
+    [differences, showIncomes, subCategories],
+  )
 
   const crunchedData = useMemo(() => {
     const buildGraph = (
@@ -119,7 +124,12 @@ const TransactionsPieChart: FC<Props> = (props) => {
     }
 
     return buildGraph(root)
-  }, [augmentedTransactions, differences, subCategories, root])
+  }, [differences, subCategories, root])
+
+  const latestOnShowIncomesChange = useRef(onShowIncomesChange)
+  useLayoutEffect(() => {
+    latestOnShowIncomesChange.current = onShowIncomesChange
+  })
 
   useEffect(() => {
     if (
@@ -127,16 +137,16 @@ const TransactionsPieChart: FC<Props> = (props) => {
       typeof crunchedData.incomeTree === 'undefined' &&
       typeof crunchedData.expenseTree !== 'undefined'
     ) {
-      onShowIncomesChange(false)
+      latestOnShowIncomesChange.current(false)
     }
     if (
       !showIncomes &&
       typeof crunchedData.incomeTree !== 'undefined' &&
       typeof crunchedData.expenseTree === 'undefined'
     ) {
-      onShowIncomesChange(true)
+      latestOnShowIncomesChange.current(true)
     }
-  }, [showIncomes, crunchedData.incomeTotal, crunchedData.expenseTotal])
+  }, [showIncomes, crunchedData.incomeTree, crunchedData.expenseTree])
 
   const data = useMemo(() => {
     const current = showIncomes ? crunchedData.incomeTree : crunchedData.expenseTree
@@ -237,7 +247,7 @@ const TransactionsPieChart: FC<Props> = (props) => {
         />
       </>
     )
-  }, [data, clickedCategory, privacyMode, showIncomes, crunchedData, defaultCurrency])
+  }, [data, clickedCategory, privacyMode, showIncomes, crunchedData, defaultCurrency, categories, getCategoryTotal])
 
   return <>{sunburst}</>
 }

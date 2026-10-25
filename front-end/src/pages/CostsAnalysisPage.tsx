@@ -162,10 +162,10 @@ const CostsAnalysisPage: FC = () => {
   // Get the current URL search params
   const query = new URLSearchParams(window.location.search)
 
-  const [showSetup, setShowSetup] = useState(false)
+  const { preferences } = useContext(UserContext)
+  const [showSetup, setShowSetup] = useState(preferences?.costsEmploymentIncomeCategoryIds === undefined)
   const [showOptions, setShowOptions] = useState(draft !== null)
   const [viewType, setViewType] = useState<'table' | 'chart'>(query.get('view') === 'chart' ? 'chart' : 'table')
-  const { preferences } = useContext(UserContext)
   const updatePreferences = useContext(UpdatePreferencesContext)
   const { showToast } = useToast()
   const savedSetup: CostsSetup = {
@@ -191,12 +191,11 @@ const CostsAnalysisPage: FC = () => {
     window.history.pushState({ path: newUrl }, '', newUrl)
   }
 
+  const [draftlessUrl] = useState(draft ? `${location.pathname}${location.search}` : null)
   useEffect(() => {
     // Otherwise a reload reopens the dialog with the stale draft.
-    if (draft) navigate(`${location.pathname}${location.search}`, { replace: true })
-
-    if (preferences?.costsEmploymentIncomeCategoryIds === undefined) setShowSetup(true)
-  }, [])
+    if (draftlessUrl !== null) navigate(draftlessUrl, { replace: true })
+  }, [draftlessUrl, navigate])
 
   const convert = useCallback(
     (amount: number, currencyId: number) =>
@@ -223,17 +222,16 @@ const CostsAnalysisPage: FC = () => {
     return totals
   }, [setup.employmentCategories, setup.otherIncomeCategories, transactions, convert])
 
-  const topLevelCategory = (category: AugmentedCategory) => {
-    while (category.parent && category.parentId !== rootCategory.id) {
-      category = category.parent as AugmentedCategory
-    }
-    return category
-  }
-
-  const topLevelName = (category: AugmentedCategory) => {
-    const top = topLevelCategory(category)
-    return top.id === rootCategory.id ? 'Uncategorized' : top.name
-  }
+  const topLevelName = useCallback(
+    (category: AugmentedCategory) => {
+      let top = category
+      while (top.parent && top.parentId !== rootCategory.id) {
+        top = top.parent as AugmentedCategory
+      }
+      return top.id === rootCategory.id ? 'Uncategorized' : top.name
+    },
+    [rootCategory],
+  )
 
   const monthsCovered = useMemo(() => {
     const today = startOfDay(new Date())
@@ -280,7 +278,7 @@ const CostsAnalysisPage: FC = () => {
       })
 
     return data
-  }, [setup.taxesCategories, transactions, exchangeRateOnDay, defaultCurrency])
+  }, [setup.taxesCategories, transactions, exchangeRateOnDay, defaultCurrency, topLevelName])
 
   const fixedAmount = useMemo(() => {
     return [...fixedCosts.values()].reduce((previousValue, currentValue) => previousValue + currentValue, 0)
@@ -324,7 +322,7 @@ const CostsAnalysisPage: FC = () => {
       })
 
     return data
-  }, [setup.taxesCategories, transactions, exchangeRateOnDay, defaultCurrency])
+  }, [setup.taxesCategories, transactions, exchangeRateOnDay, defaultCurrency, topLevelName])
 
   const variableAmount = useMemo(() => {
     return [...variableCosts.values()].reduce((previousValue, currentValue) => previousValue + currentValue, 0)

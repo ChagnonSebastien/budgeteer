@@ -29,9 +29,6 @@ export const useElementDimensions = (defaultHeight: number, defaultWidth: number
   useEffect(() => {
     if (!contentRef) return
 
-    // Initial measurement
-    updateDimensions()
-
     // Use ResizeObserver for more reliable dimension tracking
     const resizeObserver = new ResizeObserver(() => {
       updateDimensions()

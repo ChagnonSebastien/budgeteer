@@ -61,7 +61,7 @@ const CreateTransactionPage: FC = () => {
       showToast('Transaction recorded')
       navigate(returnTo, { replace: true })
     },
-    [navigate, showToast, returnTo],
+    [navigate, showToast, returnTo, createTransaction, email],
   )
 
   return (

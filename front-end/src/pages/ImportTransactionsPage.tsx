@@ -138,36 +138,43 @@ const ImportTransactionsPage: FC = () => {
     return held.length > 0 ? held : currencies
   }, [account, currencies])
 
+  const encoding = mapping?.encoding
+  const skipLines = mapping?.skipLines
+  const hasHeader = mapping?.hasHeader
+
   useEffect(() => {
-    if (file === null || mapping === null) return
+    if (file === null || encoding === undefined) return
     let cancelled = false
-    decodeFile(file, mapping.encoding).then((decoded) => !cancelled && setText(decoded))
+    decodeFile(file, encoding).then((decoded) => !cancelled && setText(decoded))
     return () => {
       cancelled = true
     }
-  }, [file, mapping?.encoding])
+  }, [file, encoding])
 
   const table = useMemo(
-    () => (text && mapping ? parseCsv(text, mapping.skipLines, mapping.hasHeader) : null),
-    [text, mapping?.skipLines, mapping?.hasHeader],
+    () => (text && skipLines !== undefined && hasHeader !== undefined ? parseCsv(text, skipLines, hasHeader) : null),
+    [text, skipLines, hasHeader],
   )
   const parses = useMemo(
     () => (table && mapping ? parseRows({ ...table, rows: table.rows.slice(0, maxRows) }, mapping, currencies) : []),
     [table, mapping, currencies],
   )
 
-  useEffect(() => {
+  const [fingerprintedFor, setFingerprintedFor] = useState({ table, mapping })
+  if (fingerprintedFor.table !== table || fingerprintedFor.mapping !== mapping) {
+    setFingerprintedFor({ table, mapping })
     setFingerprinted(null)
     setOverrides(new Map())
-  }, [table, mapping])
+  }
 
+  const selectedAccountId = account?.id
   useEffect(() => {
-    if (step !== 2 || typeof account === 'undefined') return
+    if (step !== 2 || selectedAccountId === undefined) return
     let cancelled = false
-    computeFingerprints(account.id, parses)
+    computeFingerprints(selectedAccountId, parses)
       .then(async (fingerprints) => {
         const known = await importStore.knownFingerprints(
-          account.id,
+          selectedAccountId,
           fingerprints.filter((f) => f !== ''),
         )
         if (!cancelled) setFingerprinted({ fingerprints, known })
@@ -179,7 +186,7 @@ const ImportTransactionsPage: FC = () => {
     return () => {
       cancelled = true
     }
-  }, [step, parses, account?.id])
+  }, [step, parses, selectedAccountId, importStore, showToast])
 
   const preview = useMemo(
     () =>

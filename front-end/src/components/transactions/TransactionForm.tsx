@@ -55,10 +55,30 @@ const validateAccount = (value: string | null, required: boolean) => {
   return NoError
 }
 
-interface FieldStatus {
-  isValid: boolean
-  hasVisited: boolean
-  errorText: string
+type Field = 'amount' | 'sender' | 'receiver' | 'receiverAmount'
+
+type AutofillBasis = {
+  type: TransactionType
+  baseType: ChoosableType
+  senderId: AccountID | null
+  receiverId: AccountID | null
+  parent: CategoryID | null
+  rootCategoryId: CategoryID
+  augmentedTransactions: Transaction[]
+}
+
+const sameAutofillBasis = (a: AutofillBasis | null, b: AutofillBasis) =>
+  a !== null && (Object.keys(b) as (keyof AutofillBasis)[]).every((key) => a[key] === b[key])
+
+const inferredCategory = (basis: AutofillBasis): CategoryID | null => {
+  if (basis.type === 'transfer' || basis.parent !== basis.rootCategoryId) return null
+
+  const inferFromSender = basis.baseType === 'income'
+  const partyId = inferFromSender ? basis.senderId : basis.receiverId
+  if (partyId === null) return null
+
+  const latestCategory = latestCategoryWith(basis.augmentedTransactions, partyId, inferFromSender)
+  return latestCategory === basis.parent ? null : latestCategory
 }
 
 export type TransactionType = 'income' | 'expense' | 'transfer' | 'financialIncome'
@@ -196,105 +216,56 @@ const TransactionForm: FC<Props> = (props) => {
   )
   const visibleTransactionGroups = useMemo(() => {
     return transactionGroups.filter((tg) => tg.hasJoined(email) && !tg.hidden)
-  }, [transactionGroups])
+  }, [transactionGroups, email])
 
   const transactionGroup = useMemo(() => {
     return transactionGroups.find((c) => c.id === transactionGroupId)
   }, [transactionGroups, transactionGroupId])
 
   const { showToast } = useToast()
-  const [errors, setErrors] = useState<{
-    amount: FieldStatus
-    sender: FieldStatus
-    receiver: FieldStatus
-    receiverAmount: FieldStatus
-  }>({
-    amount: {
-      hasVisited: false,
-      isValid: false,
-      errorText: NoError,
-    },
-    sender: {
-      hasVisited: false,
-      isValid: false,
-      errorText: NoError,
-    },
-    receiver: {
-      hasVisited: false,
-      isValid: false,
-      errorText: NoError,
-    },
-    receiverAmount: {
-      hasVisited: false,
-      isValid: false,
-      errorText: NoError,
-    },
+  const [visited, setVisited] = useState<Record<Field, boolean>>({
+    amount: false,
+    sender: false,
+    receiver: false,
+    receiverAmount: false,
   })
 
-  useEffect(() => {
-    const amountError = validateAmount(amount)
-    const senderError = validateAccount(senderAccount.name, baseType === 'expense' || baseType === 'transfer')
-    const receiverError = validateAccount(receiverAccount.name, type === 'income' || type === 'transfer')
-    setErrors((prevState) => ({
-      ...prevState,
-      amount: {
-        ...prevState.amount,
-        isValid: amountError === NoError,
-        errorText: amountError,
-      },
-      sender: {
-        ...prevState.sender,
-        isValid: senderError === NoError,
-        errorText: senderError,
-      },
-      receiver: {
-        ...prevState.receiver,
-        isValid: receiverError === NoError,
-        errorText: receiverError,
-      },
-    }))
-  }, [amount, senderAccount.name, receiverAccount.name, type, baseType])
+  const fieldErrors: Record<Field, string> = {
+    amount: validateAmount(amount),
+    sender: validateAccount(senderAccount.name, baseType === 'expense' || baseType === 'transfer'),
+    receiver: validateAccount(receiverAccount.name, type === 'income' || type === 'transfer'),
+    receiverAmount: validateAmount(receiverAmount),
+  }
 
-  useEffect(() => {
-    const receiverAmountError = validateAmount(receiverAmount)
-    setErrors((prevState) => ({
-      ...prevState,
-      receiverAmount: {
-        ...prevState.receiverAmount,
-        isValid: receiverAmountError === NoError || !differentCurrency,
-        errorText: receiverAmountError,
-      },
-    }))
-  }, [receiverAmount, differentCurrency])
-
-  useEffect(() => {
-    if (typeof initialTransaction !== 'undefined') return
-    if (type === 'transfer') return
-    if (parent !== rootCategory.id) return
-
-    const inferFromSender = baseType === 'income'
-    const partyId = inferFromSender ? senderAccount.id : receiverAccount.id
-    if (partyId === null) return
-
-    const latestCategory = latestCategoryWith(augmentedTransactions, partyId, inferFromSender)
-    if (latestCategory === null || latestCategory === parent) return
-
-    setParent(latestCategory)
-    showToast('Category autofilled from past behavior', 'info')
-  }, [
+  const autofillBasis: AutofillBasis = {
     type,
-    senderAccount.id,
-    receiverAccount.id,
+    baseType,
+    senderId: senderAccount.id,
+    receiverId: receiverAccount.id,
     parent,
+    rootCategoryId: rootCategory.id,
     augmentedTransactions,
-    initialTransaction,
-    rootCategory.id,
-    showToast,
-  ])
+  }
+  const [lastAutofillBasis, setLastAutofillBasis] = useState<AutofillBasis | null>(null)
+  const [autofillCount, setAutofillCount] = useState(0)
+  if (typeof initialTransaction === 'undefined' && !sameAutofillBasis(lastAutofillBasis, autofillBasis)) {
+    setLastAutofillBasis(autofillBasis)
+    const latestCategory = inferredCategory(autofillBasis)
+    if (latestCategory !== null) {
+      setParent(latestCategory)
+      setAutofillCount((count) => count + 1)
+    }
+  }
 
-  const isFormValid = useMemo(() => {
-    return Object.values(errors).every((value) => value.isValid)
-  }, [errors])
+  useEffect(() => {
+    if (autofillCount > 0) showToast('Category autofilled from past behavior', 'info')
+  }, [autofillCount, showToast])
+
+  const isFormValid =
+    fieldErrors.amount === NoError &&
+    fieldErrors.sender === NoError &&
+    fieldErrors.receiver === NoError &&
+    (fieldErrors.receiverAmount === NoError || !differentCurrency)
 
   const toggleFinancialIncome = () => {
     if (isFinancialIncome) {
@@ -340,24 +311,7 @@ const TransactionForm: FC<Props> = (props) => {
 
   const handleSubmit = () => {
     if (!isFormValid) {
-      setErrors((prevState) => ({
-        amount: {
-          ...prevState.amount,
-          hasVisited: true,
-        },
-        sender: {
-          ...prevState.sender,
-          hasVisited: true,
-        },
-        receiver: {
-          ...prevState.receiver,
-          hasVisited: true,
-        },
-        receiverAmount: {
-          ...prevState.receiverAmount,
-          hasVisited: true,
-        },
-      }))
+      setVisited({ amount: true, sender: true, receiver: true, receiverAmount: true })
       return
     }
 
@@ -420,14 +374,9 @@ const TransactionForm: FC<Props> = (props) => {
           value={amount}
           onChange={setAmount}
           decimalPoints={selectedCurrency.decimalPoints}
-          error={errors.amount.hasVisited && !!errors.amount.errorText}
-          helperText={errors.amount.hasVisited ? errors.amount.errorText : ''}
-          onBlur={() => {
-            setErrors((prevState) => ({
-              ...prevState,
-              amount: { ...prevState.amount, hasVisited: true },
-            }))
-          }}
+          error={visited.amount && !!fieldErrors.amount}
+          helperText={visited.amount ? fieldErrors.amount : ''}
+          onBlur={() => setVisited((prevState) => ({ ...prevState, amount: true }))}
         />
         <CurrencyPicker
           sx={{ width: '100%', flexShrink: 2 }}
@@ -454,14 +403,9 @@ const TransactionForm: FC<Props> = (props) => {
             value={receiverAmount}
             onChange={setReceiverAmount}
             decimalPoints={selectedReceiverCurrency.decimalPoints}
-            helperText={errors.receiverAmount.hasVisited ? errors.receiverAmount.errorText : ''}
-            error={errors.receiverAmount.hasVisited && !!errors.receiverAmount.errorText}
-            onBlur={() =>
-              setErrors((prevState) => ({
-                ...prevState,
-                receiverAmount: { ...prevState.receiverAmount, hasVisited: true },
-              }))
-            }
+            helperText={visited.receiverAmount ? fieldErrors.receiverAmount : ''}
+            error={visited.receiverAmount && !!fieldErrors.receiverAmount}
+            onBlur={() => setVisited((prevState) => ({ ...prevState, receiverAmount: true }))}
           />
           <CurrencyPicker
             currencies={currencies}
@@ -478,7 +422,7 @@ const TransactionForm: FC<Props> = (props) => {
 
       <AccountPicker
         labelText="From"
-        errorText={errors.sender.hasVisited ? errors.sender.errorText : ''}
+        errorText={visited.sender ? fieldErrors.sender : ''}
         onAccountSelected={setSenderAccount}
         itemDisplayText={(item) => item?.name ?? senderAccount.name}
         valueText={senderAccount.name}
@@ -488,7 +432,7 @@ const TransactionForm: FC<Props> = (props) => {
 
       <AccountPicker
         labelText="To"
-        errorText={errors.receiver.hasVisited ? errors.receiver.errorText : ''}
+        errorText={visited.receiver ? fieldErrors.receiver : ''}
         itemDisplayText={(item) => item?.name ?? receiverAccount.name}
         onAccountSelected={setReceiverAccount}
         valueText={receiverAccount.name}

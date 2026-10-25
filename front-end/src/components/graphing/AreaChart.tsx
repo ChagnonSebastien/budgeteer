@@ -184,7 +184,16 @@ const AreaChart: FC<Props> = ({
       })
       return m
     }
-  }, [data, layers, datasetLabels, offsetType, datasetsStackedUpperBound])
+  }, [
+    data,
+    layers,
+    datasetLabels,
+    offsetType,
+    datasetsStackedUpperBound,
+    datasetsBaselineStackedValue,
+    showIndividualBaselines,
+    showGlobalBaseline,
+  ])
 
   const { minY, maxY } = useMemo(() => {
     const minY = minYValue
@@ -258,7 +267,7 @@ const AreaChart: FC<Props> = ({
       if (segment.length > 1) segments.push(segment)
       return segments.map(monotoneSpline).join(' ')
     })
-  }, [data, datasets, datasetsBaselineStackedValue, offsetType, xScale, yNormalScale, yExpandedScale])
+  }, [data, datasetLabels, datasetsBaselineStackedValue, offsetType, xScale, yNormalScale, yExpandedScale])
 
   const globalBaselineSpline = useMemo<string>(() => {
     const pts: [number, number][] = []

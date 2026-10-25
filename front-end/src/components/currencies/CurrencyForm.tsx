@@ -1,6 +1,6 @@
 import { Autocomplete, Box, createFilterOptions, MenuItem, Stack, TextField, Typography } from '@mui/material'
 import { startOfDay } from 'date-fns'
-import { FC, FormEvent, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { FC, FormEvent, useCallback, useContext, useMemo, useState } from 'react'
 
 import { validRate } from './exchangeRateUnits'
 import Currency, { CurrencyUpdatableFields, RateAutoupdateSettings } from '../../domain/model/currency'
@@ -35,13 +35,37 @@ interface Props {
   submitText: string
 }
 
-interface FieldStatus {
-  isValid: boolean
-  hasVisited: boolean
-  errorText: string
-}
+type Field = 'accountName' | 'symbol' | 'risk' | 'decimalPoints' | 'exchangeRate'
 
 const NoError = ''
+
+const validateDecimalPoints = (value: string) => {
+  if (!value) {
+    return 'Required'
+  }
+
+  if (!validAmount.test(value)) {
+    return 'Must be a integer value'
+  }
+
+  return NoError
+}
+
+const validateExchangeRate = (value: string) => {
+  if (!value) {
+    return 'Required'
+  }
+
+  if (!validRate.test(value)) {
+    return 'Must be a valid rate'
+  }
+
+  if (parseFloat(value) === 0) {
+    return 'Rate must be above 0'
+  }
+
+  return NoError
+}
 
 const filterTypeOptions = createFilterOptions<CurrencyTypeOption>({ stringify: (o) => `${o.name} ${o.group}` })
 
@@ -74,38 +98,12 @@ const CurrencyForm: FC<Props> = (props) => {
   }, [initialCurrency, tentativeDefaultCurrency])
 
   const { showToast } = useToast()
-  const [errors, setErrors] = useState<{
-    accountName: FieldStatus
-    symbol: FieldStatus
-    risk: FieldStatus
-    decimalPoints: FieldStatus
-    exchangeRate: FieldStatus
-  }>({
-    accountName: {
-      hasVisited: false,
-      isValid: false,
-      errorText: NoError,
-    },
-    symbol: {
-      hasVisited: false,
-      isValid: false,
-      errorText: NoError,
-    },
-    risk: {
-      hasVisited: false,
-      isValid: false,
-      errorText: NoError,
-    },
-    decimalPoints: {
-      hasVisited: false,
-      isValid: false,
-      errorText: NoError,
-    },
-    exchangeRate: {
-      hasVisited: false,
-      isValid: !showExchangeRate,
-      errorText: NoError,
-    },
+  const [visited, setVisited] = useState<Record<Field, boolean>>({
+    accountName: false,
+    symbol: false,
+    risk: false,
+    decimalPoints: false,
+    exchangeRate: false,
   })
 
   const formatExample = useCallback(
@@ -126,95 +124,26 @@ const CurrencyForm: FC<Props> = (props) => {
     [decimalPoints],
   )
 
-  const validateAccountName = useCallback(
-    (newName: string) => {
-      if (!newName) {
-        return 'Required'
-      }
-
-      if (currencies?.find((a) => a.id !== initialCurrency?.id && a.name === newName)) {
-        return 'Name is already being used'
-      }
-
-      return NoError
-    },
-    [currencies],
-  )
-
-  const validateSymbol = useCallback(
-    (newName: string) => {
-      if (!newName) {
-        return 'Required'
-      }
-
-      return NoError
-    },
-    [currencies],
-  )
-
-  const validateDecimalPoints = useCallback((newName: string) => {
-    if (!newName) {
+  const initialCurrencyId = initialCurrency?.id
+  const accountNameError = useMemo(() => {
+    if (!name) {
       return 'Required'
     }
 
-    if (!validAmount.test(newName)) {
-      return 'Must be a integer value'
+    if (currencies?.find((a) => a.id !== initialCurrencyId && a.name === name)) {
+      return 'Name is already being used'
     }
 
     return NoError
-  }, [])
+  }, [currencies, initialCurrencyId, name])
 
-  const validateExchangeRate = useCallback((newName: string) => {
-    if (!newName) {
-      return 'Required'
-    }
-
-    if (!validRate.test(newName)) {
-      return 'Must be a valid rate'
-    }
-
-    if (parseFloat(newName) === 0) {
-      return 'Rate must be above 0'
-    }
-
-    return NoError
-  }, [])
-
-  useEffect(() => {
-    const accountNameError = validateAccountName(name)
-    setErrors((prevState) => ({
-      ...prevState,
-      accountName: {
-        ...prevState.accountName,
-        errorText: accountNameError,
-        isValid: accountNameError == NoError,
-      },
-    }))
-  }, [validateAccountName, name])
-
-  useEffect(() => {
-    const symbolError = validateSymbol(symbol)
-    setErrors((prevState) => ({
-      ...prevState,
-      symbol: {
-        ...prevState.symbol,
-        errorText: symbolError,
-        isValid: symbolError == NoError,
-      },
-    }))
-  }, [validateSymbol, symbol])
-
-  useEffect(() => {
-    const riskError = isCurrencyRisk(risk) ? NoError : 'Required'
-    setErrors((prevState) => ({
-      ...prevState,
-      risk: {
-        ...prevState.risk,
-        errorText: riskError,
-        isValid: riskError == NoError,
-      },
-    }))
-  }, [risk])
+  const fieldErrors: Record<Field, string> = {
+    accountName: accountNameError,
+    symbol: symbol ? NoError : 'Required',
+    risk: isCurrencyRisk(risk) ? NoError : 'Required',
+    decimalPoints: validateDecimalPoints(decimalPoints),
+    exchangeRate: validateExchangeRate(initialExchangeRate),
+  }
 
   const changeType = (newType: string) => {
     if (newType === type) return
@@ -229,58 +158,11 @@ const CurrencyForm: FC<Props> = (props) => {
     showToast('Risk autofilled from type', 'info')
   }
 
-  useEffect(() => {
-    const decimalPointsError = validateDecimalPoints(decimalPoints)
-    setErrors((prevState) => ({
-      ...prevState,
-      decimalPoints: {
-        ...prevState.decimalPoints,
-        errorText: decimalPointsError,
-        isValid: decimalPointsError == NoError,
-      },
-    }))
-  }, [validateDecimalPoints, decimalPoints])
-
-  useEffect(() => {
-    const exchangeRateError = validateExchangeRate(initialExchangeRate)
-    setErrors((prevState) => ({
-      ...prevState,
-      exchangeRate: {
-        ...prevState.exchangeRate,
-        errorText: exchangeRateError,
-        isValid: exchangeRateError == NoError,
-      },
-    }))
-  }, [validateExchangeRate, initialExchangeRate])
-
-  const isFormValid = useMemo(() => {
-    return Object.values(errors).every((value) => value.isValid)
-  }, [errors])
+  const isFormValid = Object.values(fieldErrors).every((error) => error === NoError)
 
   const handleSubmit = (_: FormEvent<HTMLFormElement>) => {
     if (!isFormValid) {
-      setErrors((prevState) => ({
-        accountName: {
-          ...prevState.accountName,
-          hasVisited: true,
-        },
-        symbol: {
-          ...prevState.symbol,
-          hasVisited: true,
-        },
-        risk: {
-          ...prevState.risk,
-          hasVisited: true,
-        },
-        decimalPoints: {
-          ...prevState.decimalPoints,
-          hasVisited: true,
-        },
-        exchangeRate: {
-          ...prevState.exchangeRate,
-          hasVisited: true,
-        },
-      }))
+      setVisited({ accountName: true, symbol: true, risk: true, decimalPoints: true, exchangeRate: true })
       return
     }
 
@@ -321,18 +203,10 @@ const CurrencyForm: FC<Props> = (props) => {
         placeholder="e.g., Canadian dollars, VFV"
         value={name}
         onChange={(ev) => setName(ev.target.value as string)}
-        helperText={errors.accountName.hasVisited ? errors.accountName.errorText : ''}
-        error={errors.accountName.hasVisited && !!errors.accountName.errorText}
+        helperText={visited.accountName ? fieldErrors.accountName : ''}
+        error={visited.accountName && !!fieldErrors.accountName}
         sx={{ width: '100%' }}
-        onBlur={() =>
-          setErrors((prevState) => ({
-            ...prevState,
-            accountName: {
-              ...prevState.accountName,
-              hasVisited: true,
-            },
-          }))
-        }
+        onBlur={() => setVisited((prevState) => ({ ...prevState, accountName: true }))}
       />
 
       <Autocomplete
@@ -373,22 +247,14 @@ const CurrencyForm: FC<Props> = (props) => {
           setAutofilledRisk(null)
         }}
         helperText={
-          errors.risk.hasVisited && errors.risk.errorText
-            ? errors.risk.errorText
+          visited.risk && fieldErrors.risk
+            ? fieldErrors.risk
             : initialRisk !== '' && !isCurrencyRisk(initialRisk) && risk === ''
               ? `"${initialRisk}" is not on the risk scale, pick one`
               : NoError
         }
-        error={errors.risk.hasVisited && !!errors.risk.errorText}
-        onBlur={() =>
-          setErrors((prevState) => ({
-            ...prevState,
-            risk: {
-              ...prevState.risk,
-              hasVisited: true,
-            },
-          }))
-        }
+        error={visited.risk && !!fieldErrors.risk}
+        onBlur={() => setVisited((prevState) => ({ ...prevState, risk: true }))}
       >
         {currencyRisks.map((r) => (
           <MenuItem key={r} value={r}>
@@ -405,17 +271,9 @@ const CurrencyForm: FC<Props> = (props) => {
         sx={{ width: '100%' }}
         value={symbol}
         onChange={(ev) => setSymbol(ev.target.value as string)}
-        helperText={errors.symbol.hasVisited ? errors.symbol.errorText : ''}
-        error={errors.symbol.hasVisited && !!errors.symbol.errorText}
-        onBlur={() =>
-          setErrors((prevState) => ({
-            ...prevState,
-            symbol: {
-              ...prevState.symbol,
-              hasVisited: true,
-            },
-          }))
-        }
+        helperText={visited.symbol ? fieldErrors.symbol : ''}
+        error={visited.symbol && !!fieldErrors.symbol}
+        onBlur={() => setVisited((prevState) => ({ ...prevState, symbol: true }))}
       />
 
       {typeof initialCurrency === 'undefined' && (
@@ -427,17 +285,9 @@ const CurrencyForm: FC<Props> = (props) => {
             value={decimalPoints}
             sx={{ width: '100%' }}
             onChange={(ev) => setDecimalPoints(ev.target.value as string)}
-            helperText={errors.decimalPoints.hasVisited ? errors.decimalPoints.errorText : ''}
-            error={errors.decimalPoints.hasVisited && !!errors.decimalPoints.errorText}
-            onBlur={() =>
-              setErrors((prevState) => ({
-                ...prevState,
-                decimalPoints: {
-                  ...prevState.decimalPoints,
-                  hasVisited: true,
-                },
-              }))
-            }
+            helperText={visited.decimalPoints ? fieldErrors.decimalPoints : ''}
+            error={visited.decimalPoints && !!fieldErrors.decimalPoints}
+            onBlur={() => setVisited((prevState) => ({ ...prevState, decimalPoints: true }))}
           />
 
           <Typography variant="caption" color="warning">
@@ -462,17 +312,9 @@ const CurrencyForm: FC<Props> = (props) => {
                 variant="standard"
                 value={initialExchangeRate}
                 onChange={(ev) => setInitialExchangeRate(ev.target.value as string)}
-                error={errors.exchangeRate.hasVisited && !!errors.exchangeRate.errorText}
+                error={visited.exchangeRate && !!fieldErrors.exchangeRate}
                 sx={{ width: '100%' }}
-                onBlur={() =>
-                  setErrors((prevState) => ({
-                    ...prevState,
-                    exchangeRate: {
-                      ...prevState.exchangeRate,
-                      hasVisited: true,
-                    },
-                  }))
-                }
+                onBlur={() => setVisited((prevState) => ({ ...prevState, exchangeRate: true }))}
               />
               <Box sx={{ flexShrink: 0 }}>{tentativeDefaultCurrency!.symbol} on</Box>
               <DatePicker date={initialExchangeRateDate} onChange={setInitialExchangeRateDate} label="" />

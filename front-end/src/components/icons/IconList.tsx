@@ -16,7 +16,11 @@ const IconList: FC<Props> = ({ filter, onSelect }) => {
   const { iconTypeFromName } = useContext(IconToolsContext)
   const iconNameList = useIconNameList()
 
-  useEffect(() => setAmountItems(perfectMultiplier), [filter])
+  const [shownFilter, setShownFilter] = useState(filter)
+  if (shownFilter !== filter) {
+    setShownFilter(filter)
+    setAmountItems(perfectMultiplier)
+  }
 
   const filteredIcons = useMemo(() => {
     return iconNameList.filter((value) => matchesSearch(value, filter)).slice(0, amountItems)
@@ -35,11 +39,7 @@ const IconList: FC<Props> = ({ filter, onSelect }) => {
       observer.observe(loadMoreRef.current)
     }
 
-    return () => {
-      if (loadMoreRef.current) {
-        observer.unobserve(loadMoreRef.current)
-      }
-    }
+    return () => observer.disconnect()
   }, [])
 
   return (

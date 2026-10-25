@@ -29,13 +29,13 @@ const GroupTransactionModal: FC<{ transaction: AugmentedTransaction | null; onCl
   const { showToast } = useToast()
   const [confirmingDelete, setConfirmingDelete] = useState(false)
   const [editingSplit, setEditingSplit] = useState(false)
+  const isGuest = useGuestView()
 
   const groupData = transaction?.augmentedTransactionGroupData ?? null
   if (transaction === null || groupData === null) return null
 
   const group = groupData.transactionGroup
   const unconfirmed = transaction instanceof UnconfirmedAugmentedTransaction ? transaction.unconfirmed : null
-  const isGuest = useGuestView()
   const isMine = transaction.owner === email
   const payer = group.members.find((m) => m.email === transaction.owner)?.name ?? transaction.owner
   const contribution = transaction.getUserContribution(email)

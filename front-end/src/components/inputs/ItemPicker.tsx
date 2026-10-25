@@ -97,7 +97,7 @@ function ItemPicker<ItemID, T extends NamedItem<ItemID, T>, AdditionalItemProps>
   const [focusedItemId, setFocusedItemId] = useState<ItemID | null>(null)
   const [failedCreatingOnce, setFailedCreatingOnce] = useState(false)
 
-  const anchorRef = useRef<HTMLDivElement>(null)
+  const [anchorEl, setAnchorEl] = useState<HTMLDivElement | null>(null)
   const focusedItemRef = useRef<HTMLLIElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -105,26 +105,28 @@ function ItemPicker<ItemID, T extends NamedItem<ItemID, T>, AdditionalItemProps>
   // longer looks selected/active after a selection.
   const blurInput = () => inputRef.current?.blur()
 
-  const displayedItems = useMemo(() => {
-    if (filter === '') return items
-    return items.filter((i) => doesStringMatchItem(filter, i))
-  }, [items, filter, itemDisplayText])
+  const displayedItems = filter === '' ? items : items.filter((i) => doesStringMatchItem(filter, i))
 
   const filterAsNewValueValidation = useMemo(
     () => newItemStringValidator.validate(filter),
     [newItemStringValidator, filter],
   )
 
-  useEffect(() => {
+  const [focusFilter, setFocusFilter] = useState(filter)
+  if (focusFilter !== filter) {
+    setFocusFilter(filter)
     setFocusedItemId(null)
-  }, [filter])
+  }
 
-  useEffect(() => {
-    if (cleanFilterOnModalOpen && showModal) {
+  const cleaningOpen = cleanFilterOnModalOpen && showModal
+  const [wasCleaningOpen, setWasCleaningOpen] = useState(cleaningOpen)
+  if (wasCleaningOpen !== cleaningOpen) {
+    setWasCleaningOpen(cleaningOpen)
+    if (cleaningOpen) {
       setFilter('')
       setFailedCreatingOnce(false)
     }
-  }, [cleanFilterOnModalOpen, showModal])
+  }
 
   useEffect(() => {
     focusedItemRef.current?.scrollIntoView({ block: 'nearest' })
@@ -226,7 +228,7 @@ function ItemPicker<ItemID, T extends NamedItem<ItemID, T>, AdditionalItemProps>
   if (variant === 'dropdown') {
     return (
       <ClickAwayListener onClickAway={() => setShowModal(false)}>
-        <Box ref={anchorRef} sx={[...(Array.isArray(sx) ? sx : [sx]), { width: '100%' }]}>
+        <Box ref={setAnchorEl} sx={[...(Array.isArray(sx) ? sx : [sx]), { width: '100%' }]}>
           <TextField
             fullWidth
             variant="standard"
@@ -257,9 +259,9 @@ function ItemPicker<ItemID, T extends NamedItem<ItemID, T>, AdditionalItemProps>
           />
           <Popper
             open={showModal}
-            anchorEl={anchorRef.current}
+            anchorEl={anchorEl}
             placement="bottom-start"
-            sx={{ zIndex: (t) => t.zIndex.modal, width: anchorRef.current?.clientWidth }}
+            sx={{ zIndex: (t) => t.zIndex.modal, width: anchorEl?.clientWidth }}
           >
             <Paper elevation={3} sx={{ maxHeight: '40vh', overflowY: 'auto' }}>
               <MenuList dense>

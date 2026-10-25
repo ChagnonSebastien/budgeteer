@@ -1,5 +1,5 @@
 import { styled } from '@mui/material/styles'
-import { useContext, useMemo } from 'react'
+import { createElement, useContext, useMemo } from 'react'
 
 import { IconToolsContext } from './IconTools'
 
@@ -37,8 +37,6 @@ const IconCapsule = (props: Props) => {
 
   const { iconTypeFromName } = useContext(IconToolsContext)
 
-  const Icon = useMemo(() => iconTypeFromName(iconName), [iconName, iconTypeFromName])
-
   const { sizeNumber, unit } = useMemo(() => {
     if (typeof size === 'number') {
       return { sizeNumber: size, unit: '' }
@@ -61,7 +59,7 @@ const IconCapsule = (props: Props) => {
       $bordered={bordered}
       style={{ backgroundColor }}
     >
-      <Icon size={`${sizeNumber * 0.625}${unit}`} color={color} />
+      {createElement(iconTypeFromName(iconName), { size: `${sizeNumber * 0.625}${unit}`, color })}
     </CapsuleContainer>
   )
 }

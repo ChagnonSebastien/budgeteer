@@ -18,22 +18,24 @@ const ExchangeRateHistory: FC<Props> = ({ currency, against }) => {
   const { exchangeRates, exchangeRateOnDay, augmentedTransactions } = useContext(MixedAugmentation)
   const { myOwnAccounts } = useContext(AccountServiceContext)
 
-  let rates = exchangeRates.get(currency.id)?.get(against.id)
-  if (currency.id === against.id) {
-    rates = [new ExchangeRate(new ExchangeRateIdentifiableFields(against.id, against.id, new Date()), 1)]
-  }
-  if (typeof rates === 'undefined' || rates.length === 0) return []
+  const rates =
+    currency.id === against.id
+      ? [new ExchangeRate(new ExchangeRateIdentifiableFields(against.id, against.id, new Date()), 1)]
+      : exchangeRates.get(currency.id)?.get(against.id)
+  const hasRates = typeof rates !== 'undefined' && rates.length > 0
 
-  let startDate = startOfDay(new Date(Math.min(...rates.map((r) => new Date(r.date).getTime()))))
-  if (currency.id === against.id) {
-    startDate = startOfDay(startOfMonth(augmentedTransactions.at(-1)?.date ?? startDate))
+  const endTime = startOfDay(new Date()).getTime()
+  let startTime = endTime
+  if (hasRates) {
+    startTime = startOfDay(new Date(Math.min(...rates.map((r) => new Date(r.date).getTime())))).getTime()
+    if (currency.id === against.id) {
+      startTime = startOfDay(startOfMonth(augmentedTransactions.at(-1)?.date ?? startTime)).getTime()
+    }
   }
+  const startDate = useMemo(() => new Date(startTime), [startTime])
+  const endDate = useMemo(() => new Date(endTime), [endTime])
 
-  const { timeseriesIteratorGenerator, showLabelEveryFactor } = useTimerangeSegmentation(
-    startDate,
-    startOfDay(new Date()),
-    'dense',
-  )
+  const { timeseriesIteratorGenerator, showLabelEveryFactor } = useTimerangeSegmentation(startDate, endDate, 'dense')
 
   const timeseriesIterator = useMemo(
     () => timeseriesIteratorGenerator(augmentedTransactions),
@@ -41,6 +43,8 @@ const ExchangeRateHistory: FC<Props> = ({ currency, against }) => {
   )
 
   const data = useMemo(() => {
+    if (!hasRates) return []
+
     let currentlyHeld = 0
     myOwnAccounts.forEach((account) => {
       for (const initialAmount of account.initialAmounts) {
@@ -96,7 +100,9 @@ const ExchangeRateHistory: FC<Props> = ({ currency, against }) => {
     }
 
     return data
-  }, [currency, against, exchangeRates, exchangeRateOnDay, augmentedTransactions])
+  }, [hasRates, currency.id, against.id, myOwnAccounts, exchangeRateOnDay, startDate, timeseriesIterator])
+
+  if (!hasRates) return []
 
   const dateVisibility = data.reduce((map, bucket, i) => {
     if ((data.length - i - 1) % showLabelEveryFactor === 0) {

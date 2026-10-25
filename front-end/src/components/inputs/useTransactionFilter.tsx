@@ -15,7 +15,7 @@ import {
   subYears,
 } from 'date-fns'
 import dayjs from 'dayjs'
-import { FC, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { FC, ReactNode, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 
 import TimeRange from './slider/TimeRange'
 import Account, { AccountID } from '../../domain/model/account'
@@ -87,22 +87,26 @@ export const useDateFilter = (): DateFilters => {
   const { queryParams: qp, updateQueryParams } = useQueryParams<DateFiltersQueryParams>()
   const { state: transactions } = useContext(TransactionServiceContext)
 
-  const today = startOfDay(new Date())
-  const historyStart = min([startOfDay(transactions.at(-1)?.date ?? today), subWeeks(today, 1)])
+  const todayTime = Number(startOfDay(new Date()))
+  const historyStartTime = Number(min([startOfDay(transactions.at(-1)?.date ?? todayTime), subWeeks(todayTime, 1)]))
+  const today = new Date(todayTime)
+  const historyStart = new Date(historyStartTime)
 
   const urlRange = useMemo<[Date, Date]>(
     () => [
       qp.from
         ? startOfDay(new Date(Number.parseInt(qp.from)!))
-        : max([startOfDay(addDays(subYears(new Date(), 1), 1)), historyStart]),
+        : max([startOfDay(addDays(subYears(new Date(), 1), 1)), new Date(historyStartTime)]),
       qp.to ? startOfDay(new Date(Number.parseInt(qp.to)!)) : startOfDay(new Date()),
     ],
-    [qp.from, qp.to, historyStart.getTime()],
+    [qp.from, qp.to, historyStartTime],
   )
 
   const [pendingRange, setPendingRange] = useState<[Date, Date] | null>(null)
   const pendingRef = useRef(pendingRange)
-  pendingRef.current = pendingRange
+  useLayoutEffect(() => {
+    pendingRef.current = pendingRange
+  }, [pendingRange])
   const committedRef = useRef<[Date, Date] | null>(null)
   // A commit landing mid-gesture must not drop the range the gesture has since moved to.
   useEffect(() => {
@@ -114,11 +118,8 @@ export const useDateFilter = (): DateFilters => {
 
   const preview = useCallback(
     (from: Date, to: Date): [Date, Date] => {
-      const span = Math.min(
-        Math.max(to.getTime() - from.getTime(), minNavigationSpanMs),
-        today.getTime() - historyStart.getTime(),
-      )
-      const end = Math.min(Math.max(to.getTime(), historyStart.getTime() + span), today.getTime())
+      const span = Math.min(Math.max(to.getTime() - from.getTime(), minNavigationSpanMs), todayTime - historyStartTime)
+      const end = Math.min(Math.max(to.getTime(), historyStartTime + span), todayTime)
       const rounded: [Date, Date] = [nearestDay(end - span), nearestDay(end)]
       const current = pendingRef.current ?? urlRange
       if (!sameDays(rounded, current)) {
@@ -127,7 +128,7 @@ export const useDateFilter = (): DateFilters => {
       }
       return [new Date(end - span), new Date(end)]
     },
-    [urlRange, today.getTime(), historyStart.getTime()],
+    [urlRange, todayTime, historyStartTime],
   )
 
   const commit = useCallback(
@@ -272,7 +273,7 @@ const useTransactionFilter = ({
         label={accounts.find((a) => a.id === accountId)?.name ?? accountId}
       />
     ))
-  }, [accountFilter, updateQueryParams])
+  }, [accountFilter, accounts, updateQueryParams])
 
   const categoryPills = useMemo(() => {
     if (categoryFilter === null) return null
@@ -295,7 +296,7 @@ const useTransactionFilter = ({
         label={categories.find((c) => c.id === categoryId)?.name ?? categoryId}
       />
     ))
-  }, [categoryFilter, updateQueryParams])
+  }, [categoryFilter, categories, updateQueryParams])
 
   const fromPills = useMemo(() => {
     return (
@@ -305,10 +306,10 @@ const useTransactionFilter = ({
           ev.stopPropagation()
           setShowFromDateModal(true)
         }}
-        label={`From: ${timeRange[0].toDateString()}`}
+        label={`From: ${fromDate.toDateString()}`}
       />
     )
-  }, [timeRange[0]])
+  }, [fromDate])
 
   const toPills = useMemo(() => {
     return (
@@ -318,10 +319,10 @@ const useTransactionFilter = ({
           ev.stopPropagation()
           setShowToDateModal(true)
         }}
-        label={`To: ${timeRange[1].toDateString()}`}
+        label={`To: ${toDate.toDateString()}`}
       />
     )
-  }, [timeRange[1]])
+  }, [toDate])
 
   const form = useMemo(
     () => (
@@ -342,7 +343,7 @@ const useTransactionFilter = ({
         </FilterRow>
       </>
     ),
-    [fromPills, categoryPills, accountPills],
+    [canFilterByAccount, canFilterByCategory, fromPills, toPills, categoryPills, accountPills],
   )
 
   const quickDates = (

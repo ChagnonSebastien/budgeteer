@@ -1,6 +1,6 @@
 import { Box, Button, Checkbox, FormControlLabel, Stack, TextField, useTheme } from '@mui/material'
 import { styled } from '@mui/material/styles'
-import { FC, FormEvent, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { FC, FormEvent, useContext, useMemo, useState } from 'react'
 import { HexColorPicker } from 'react-colorful'
 
 import CategoryPicker from './CategoryPicker'
@@ -64,7 +64,6 @@ const CategoryForm: FC<Props> = (props) => {
   const [showOuterColorModal, setShowOuterColorModal] = useState(false)
 
   const { showToast } = useToast()
-  const [errors, setErrors] = useState<{ categoryName?: string }>({})
   const [isTouched, setIsTouched] = useState(false)
 
   function onIconSelect(newIconName: string) {
@@ -73,31 +72,20 @@ const CategoryForm: FC<Props> = (props) => {
     setShowIconModal(false)
   }
 
-  const validateCategoryName = useCallback(
-    (categoryName: string) => {
-      if (!categoryName) {
-        return 'Required'
-      }
+  const initialCategoryId = initialCategory?.id
+  const categoryNameError = useMemo(() => {
+    if (!name) {
+      return 'Required'
+    }
 
-      if (categories?.find((c) => c.id !== initialCategory?.id && c.name === categoryName)) {
-        return 'Name is already being used'
-      }
+    if (categories?.find((c) => c.id !== initialCategoryId && c.name === name)) {
+      return 'Name is already being used'
+    }
 
-      return undefined
-    },
-    [categories],
-  )
+    return undefined
+  }, [categories, initialCategoryId, name])
 
-  useEffect(() => {
-    setErrors((prevState) => ({
-      ...prevState,
-      accountName: validateCategoryName(name),
-    }))
-  }, [validateCategoryName, name])
-
-  const isFormValid = useMemo(() => {
-    return !Object.values(errors).some((value) => typeof value !== 'undefined')
-  }, [errors])
+  const isFormValid = categoryNameError === undefined
 
   const handleSubmit = (_e: FormEvent<HTMLFormElement>) => {
     if (!isFormValid) {
@@ -127,12 +115,9 @@ const CategoryForm: FC<Props> = (props) => {
         variant="standard"
         placeholder="e.g., Groceries"
         value={name}
-        onChange={(ev) => {
-          setName(ev.target.value as string)
-          setErrors({ categoryName: validateCategoryName(ev.target.value as string) })
-        }}
-        helperText={isTouched ? errors.categoryName : ''}
-        error={isTouched && !!errors.categoryName}
+        onChange={(ev) => setName(ev.target.value as string)}
+        helperText={isTouched ? categoryNameError : ''}
+        error={isTouched && !!categoryNameError}
         onBlur={() => setIsTouched(true)}
       />
 

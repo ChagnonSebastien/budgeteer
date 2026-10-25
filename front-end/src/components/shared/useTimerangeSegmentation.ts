@@ -202,7 +202,7 @@ const useTimerangeSegmentation = (fromDate: Date, toDate: Date, density: 'light'
         return new TimeseriesIterator(toDate, hop, amountHop, items)
       },
     }
-  }, [fromDate, toDate])
+  }, [fromDate, toDate, density])
 }
 
 export default useTimerangeSegmentation

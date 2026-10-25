@@ -4,6 +4,7 @@ import NetWorthChart, { useBalanceChartData } from './NetWorthChart'
 import { DateNavigation } from './TimerangeGraphUtils'
 import Account from '../../domain/model/account'
 import Currency, { CurrencyID } from '../../domain/model/currency'
+import { AugmentedTransaction } from '../../domain/model/transaction'
 import { AccountServiceContext, CurrencyServiceContext } from '../../service/ServiceContext'
 
 export type GroupType = 'currency' | 'risk' | 'currencyType' | 'none'
@@ -18,6 +19,11 @@ interface Props {
   type?: 'passive' | 'active'
   navigation?: DateNavigation
 }
+
+const senderCurrency = (transaction: AugmentedTransaction) => transaction.currency
+const receiverCurrency = (transaction: AugmentedTransaction) => transaction.receiverCurrency
+const financialIncomeCurrency = (transaction: AugmentedTransaction) =>
+  transaction.augmentedFinancialIncomeData?.relatedCurrency
 
 const CurrenciesBalanceChart: FC<Props> = (props) => {
   const {
@@ -61,20 +67,21 @@ const CurrenciesBalanceChart: FC<Props> = (props) => {
     return filtered.length === 0 ? myOwnAccounts : filtered
   }, [myOwnAccounts, filterByAccounts])
 
-  const getInitialAmountIdentifier = (_account: Account, currencyId?: CurrencyID) => {
-    return currencies.find((c) => c.id === currencyId)
-  }
+  const getInitialAmountIdentifier = useCallback(
+    (_account: Account, currencyId?: CurrencyID) => currencies.find((c) => c.id === currencyId),
+    [currencies],
+  )
 
   const { data, labels, groups, showLabelEveryFactor, colorReference } = useBalanceChartData(
     fromDate,
     toDate,
     getInitialAmountIdentifier,
-    (transaction) => transaction.currency,
-    (transaction) => transaction.receiverCurrency,
+    senderCurrency,
+    receiverCurrency,
     group,
     accounts,
     type,
-    (transaction) => transaction.augmentedFinancialIncomeData?.relatedCurrency,
+    financialIncomeCurrency,
   )
 
   return (

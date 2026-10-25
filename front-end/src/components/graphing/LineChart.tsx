@@ -86,17 +86,6 @@ const LineChart: FC<Props> = ({
     )
   }, [data, datasetLabels])
 
-  const layers = useMemo<[number, number][][]>(() => {
-    const offsets = Array(data.length).fill(0)
-    return datasets.map((serie) =>
-      serie.map((v, i) => {
-        const y0 = offsets[i]
-        offsets[i] += v ?? 0
-        return [y0, offsets[i]] as [number, number]
-      }),
-    )
-  }, [datasets, data.length])
-
   const dataMaxY = useMemo(
     () =>
       datasets.reduce(
@@ -237,7 +226,7 @@ const LineChart: FC<Props> = ({
         })}
       </GraphSvg>
     ),
-    [layers, datasetLabels, getColor, splines, signFillPath, zeroY, clipId, theme, navigation, data.length],
+    [datasetLabels, getColor, splines, signFillPath, zeroY, clipId, theme, navigation, data.length],
   )
 
   return (

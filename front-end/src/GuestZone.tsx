@@ -304,8 +304,6 @@ const GuestZone: FC<Props> = (props) => {
   const { logout, setDisplayName } = props
   const { display_name, authentification_method } = useContext(UserContext)
 
-  const testGetRateScript = useMemo(() => exchangeRateRemoteStore.testGetRateScript(), [])
-
   const FullyAugmentedView = useMemo<FC>(
     () => () => (
       <BrowserRouter>
@@ -335,7 +333,7 @@ const GuestZone: FC<Props> = (props) => {
         </DrawerWrapper>
       </BrowserRouter>
     ),
-    [logout, testGetRateScript],
+    [logout],
   )
 
   // Only a server-confirmed null prompts: a user cached before display names existed has none.

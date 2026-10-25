@@ -4,6 +4,7 @@ import NetWorthChart, { useBalanceChartData } from './NetWorthChart'
 import { DateNavigation } from './TimerangeGraphUtils'
 import Account from '../../domain/model/account'
 import { CurrencyID } from '../../domain/model/currency'
+import { AugmentedTransaction } from '../../domain/model/transaction'
 import { AccountServiceContext } from '../../service/ServiceContext'
 
 export type GroupType = 'financialInstitution' | 'accountType' | 'account' | 'none'
@@ -18,6 +19,10 @@ interface Props {
   type?: 'passive' | 'active'
   navigation?: DateNavigation
 }
+
+const getInitialAmountIdentifier = (account: Account, _currencyId: CurrencyID) => account
+const sender = (transaction: AugmentedTransaction) => transaction.sender
+const receiver = (transaction: AugmentedTransaction) => transaction.receiver
 
 const AccountsBalanceChart: FC<Props> = (props) => {
   const {
@@ -60,16 +65,12 @@ const AccountsBalanceChart: FC<Props> = (props) => {
     return filtered.length === 0 ? myOwnAccounts : filtered
   }, [myOwnAccounts, filterByAccounts])
 
-  const getInitialAmountIdentifier = (account: Account, _currencyId: CurrencyID) => {
-    return account
-  }
-
   const { data, labels, groups, showLabelEveryFactor, colorReference } = useBalanceChartData(
     fromDate,
     toDate,
     getInitialAmountIdentifier,
-    (transaction) => transaction.sender,
-    (transaction) => transaction.receiver,
+    sender,
+    receiver,
     group,
     accounts,
     type,

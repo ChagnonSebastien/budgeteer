@@ -236,7 +236,7 @@ const useAuthentication = () => {
         setUserVerified(true)
       })
       .finally(() => setAttemptedUserVerification(true))
-  }, [userVerified, hasInternet, user, loginMethods])
+  }, [userVerified, hasInternet, user, loginMethods, fetchUserInfo])
 
   const logout = useMemo(() => {
     if (user === null) return () => console.error('cannot logout if not logged in')

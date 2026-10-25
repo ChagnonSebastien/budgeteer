@@ -36,7 +36,7 @@ const InvestmentGainLineChart: FC<GainChartProps> = ({ fromDate, toDate, navigat
     [timeseriesIteratorGenerator, augmentedTransactions],
   )
 
-  const { data, labels, groups } = useNetWorthChartData(
+  const { data, labels } = useNetWorthChartData(
     timeseriesIterator,
     ownAccount,
     sender,
@@ -63,7 +63,7 @@ const InvestmentGainLineChart: FC<GainChartProps> = ({ fromDate, toDate, navigat
           return prev
         }, {}),
       })),
-    [data, labels, groups],
+    [data, labels],
   )
 
   const isEmpty = gainSeries.every((bucket) => Object.values(bucket.values).every(({ amount }) => amount === 0))

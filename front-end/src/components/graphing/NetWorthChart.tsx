@@ -226,7 +226,18 @@ export const useNetWorthChartData = <Item extends object>(
     }
 
     return { data, labels, groups }
-  }, [defaultCurrency, accounts, group, exchangeRateOnDay, timeseriesIterator, type])
+  }, [
+    defaultCurrency,
+    accounts,
+    group,
+    exchangeRateOnDay,
+    timeseriesIterator,
+    type,
+    getInitialAmountIdentifier,
+    getFromIdentifier,
+    getToIdentifier,
+    getFinancialIncomeToIdentifier,
+  ])
 }
 
 const sortGroups = (groups: Set<string>) => [...groups].sort((a, b) => b.localeCompare(a))
@@ -461,7 +472,19 @@ const NetWorthChart: FC<NetWorthChartProps> = ({
         )}
       />
     )
-  }, [baselineConfig, showLabelEveryFactor, data, labels, groups, scale, privacyMode, navigation, colorReference, type])
+  }, [
+    baselineConfig,
+    showLabelEveryFactor,
+    data,
+    labels,
+    groups,
+    scale,
+    privacyMode,
+    navigation,
+    colorReference,
+    type,
+    defaultCurrency,
+  ])
 }
 
 export default NetWorthChart

@@ -1,5 +1,5 @@
 import { TextField } from '@mui/material'
-import { FC, useContext, useEffect, useMemo, useState } from 'react'
+import { FC, useContext, useMemo, useState } from 'react'
 
 import { useGuestView } from '../../App'
 import {
@@ -31,12 +31,6 @@ const validateName = (value: string) => {
   return NoError
 }
 
-interface FieldStatus {
-  isValid: boolean
-  hasVisited: boolean
-  errorText: string
-}
-
 export type TransactionGroupFormFields = Omit<TransactionGroupUpdatableFields, 'members' | 'hidden'>
 
 interface Props {
@@ -63,40 +57,12 @@ const TransactionGroupForm: FC<Props> = (props) => {
   )
 
   const { showToast } = useToast()
-  const [errors, setErrors] = useState<{
-    name: FieldStatus
-  }>({
-    name: {
-      hasVisited: false,
-      isValid: false,
-      errorText: NoError,
-    },
-  })
-
-  useEffect(() => {
-    const nameError = validateName(note)
-    setErrors((prevState) => ({
-      ...prevState,
-      name: {
-        ...prevState.name,
-        isValid: nameError === NoError,
-        errorText: nameError,
-      },
-    }))
-  }, [note])
-
-  const isFormValid = useMemo(() => {
-    return Object.values(errors).every((value) => value.isValid)
-  }, [errors])
+  const [nameVisited, setNameVisited] = useState(false)
+  const nameError = validateName(note)
 
   const handleSubmit = () => {
-    if (!isFormValid) {
-      setErrors((prevState) => ({
-        name: {
-          ...prevState.name,
-          hasVisited: true,
-        },
-      }))
+    if (nameError !== NoError) {
+      setNameVisited(true)
       return
     }
 
@@ -136,17 +102,9 @@ const TransactionGroupForm: FC<Props> = (props) => {
         placeholder="Optional details"
         value={note}
         onChange={(ev) => setNote(ev.target.value as string)}
-        helperText={errors.name.hasVisited ? errors.name.errorText : ''}
-        error={errors.name.hasVisited && !!errors.name.errorText}
-        onBlur={() =>
-          setErrors((prevState) => ({
-            ...prevState,
-            name: {
-              ...prevState.name,
-              hasVisited: true,
-            },
-          }))
-        }
+        helperText={nameVisited ? nameError : ''}
+        error={nameVisited && !!nameError}
+        onBlur={() => setNameVisited(true)}
       />
 
       <SelectOne

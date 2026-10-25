@@ -180,7 +180,7 @@ const ChartTooltip: FC<{ def: TooltipDefinition; offsetTop: number; children: Re
   const ref = useRef<HTMLDivElement>(null)
   const [position, setPosition] = useState<{ left: number; top: number } | null>(null)
 
-  // Runs after every render: the tooltip's size depends on the hovered data, known only once drawn.
+  // Depends on children: the tooltip's size is known only once the hovered data is drawn.
   useLayoutEffect(() => {
     if (!ref.current) return
     const { width, height } = ref.current.getBoundingClientRect()
@@ -203,7 +203,7 @@ const ChartTooltip: FC<{ def: TooltipDefinition; offsetTop: number; children: Re
       top = below <= maxTop ? below : above >= tooltipScreenEdge ? above : clamp(below, tooltipScreenEdge, maxTop)
     }
     if (position?.left !== left || position?.top !== top) setPosition({ left, top })
-  })
+  }, [def, offsetTop, children, position])
 
   return (
     <div
@@ -269,7 +269,9 @@ const useTimeNavigation = (navigation?: DateNavigation) => {
   const wheelRange = useRef<[Date, Date] | null>(null)
   const wheelTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
   const latest = useRef(navigation)
-  latest.current = navigation
+  useLayoutEffect(() => {
+    latest.current = navigation
+  })
   const navigable = navigation !== undefined
   // Stacked above the page content, the chart must let the wheel scroll the page.
   const zoomOnWheel = useWideLayout()

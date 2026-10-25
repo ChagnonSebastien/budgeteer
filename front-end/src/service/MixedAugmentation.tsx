@@ -113,7 +113,7 @@ export const MixedAugmentationProvider: FC<Props> = ({ NextComponent }) => {
         return new AugmentedTransactionGroup(transactionGroup, currency, category)
       })
       .filter((atg) => atg !== null)
-  }, [transactionGroups, categories, currencies])
+  }, [transactionGroups, categories, currencies, email])
 
   const augmentedTransactions = useMemo<AugmentedTransaction[]>(() => {
     const currencyById = new Map(currencies.map((c) => [c.id, c]))

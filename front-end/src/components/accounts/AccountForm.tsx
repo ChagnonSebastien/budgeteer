@@ -1,6 +1,6 @@
 import { Button, Stack, TextField, ToggleButton, ToggleButtonGroup, Tooltip, Typography } from '@mui/material'
 import { styled } from '@mui/material/styles'
-import { FC, FormEvent, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { FC, FormEvent, useContext, useMemo, useState } from 'react'
 
 import Account, { Balance } from '../../domain/model/account'
 import { AccountServiceContext, CurrencyServiceContext } from '../../service/ServiceContext'
@@ -16,12 +16,6 @@ interface Props {
   initialAccount?: Account
   onSubmit: (data: Partial<Omit<Account, 'id' | 'hasName'>>) => Promise<void>
   submitText: string
-}
-
-interface FieldStatus {
-  isValid: boolean
-  hasVisited: boolean
-  errorText: string
 }
 
 const NoError = ''
@@ -46,12 +40,13 @@ const AccountForm: FC<Props> = (props) => {
       owed: boolean
     }[]
   >(
-    initialAccount?.initialAmounts.map((balance) => ({
-      uid: Math.random(),
-      currencyId: balance.currencyId,
-      value: Math.abs(balance.value),
-      owed: balance.value < 0,
-    })) ??
+    () =>
+      initialAccount?.initialAmounts.map((balance) => ({
+        uid: Math.random(),
+        currencyId: balance.currencyId,
+        value: Math.abs(balance.value),
+        owed: balance.value < 0,
+      })) ??
       (tentativeDefaultCurrency
         ? [{ uid: Math.random(), currencyId: tentativeDefaultCurrency.id, value: 0, owed: false }]
         : []),
@@ -62,61 +57,26 @@ const AccountForm: FC<Props> = (props) => {
   }, [currencies, initialAmounts])
 
   const { showToast } = useToast()
-  const [errors, setErrors] = useState<{ accountName: FieldStatus }>({
-    accountName: {
-      hasVisited: false,
-      isValid: false,
-      errorText: NoError,
-    },
-  })
+  const [accountNameVisited, setAccountNameVisited] = useState(false)
 
-  const validateAccountName = useCallback(
-    (newName: string) => {
-      if (!newName) {
-        return 'Required'
-      }
-
-      if (accounts?.find((a) => a.id !== initialAccount?.id && a.name === newName)) {
-        return 'Name is already being used'
-      }
-
-      return NoError
-    },
-    [accounts],
-  )
-
-  useEffect(() => {
-    const accountNameError = validateAccountName(name)
-    setErrors((prevState) => ({
-      accountName: {
-        ...prevState.accountName,
-        errorText: accountNameError,
-        isValid: accountNameError == NoError,
-      },
-    }))
-  }, [validateAccountName, name])
-
-  const isFormValid = useMemo(() => {
-    let valid = Object.values(errors).every((value) => value.isValid)
-    if (valid) {
-      for (const state of initialAmounts) {
-        if (state.currencyId === null) {
-          valid = false
-          break
-        }
-      }
+  const initialAccountId = initialAccount?.id
+  const accountNameError = useMemo(() => {
+    if (!name) {
+      return 'Required'
     }
-    return valid
-  }, [errors, initialAmounts])
+
+    if (accounts?.find((a) => a.id !== initialAccountId && a.name === name)) {
+      return 'Name is already being used'
+    }
+
+    return NoError
+  }, [accounts, initialAccountId, name])
+
+  const isFormValid = accountNameError === NoError && initialAmounts.every((state) => state.currencyId !== null)
 
   const handleSubmit = (_e: FormEvent<HTMLFormElement>) => {
     if (!isFormValid) {
-      setErrors((prevState) => ({
-        accountName: {
-          ...prevState.accountName,
-          hasVisited: true,
-        },
-      }))
+      setAccountNameVisited(true)
       return
     }
 
@@ -144,17 +104,9 @@ const AccountForm: FC<Props> = (props) => {
         placeholder="e.g., Everyday chequing"
         value={name}
         onChange={(ev) => setName(ev.target.value as string)}
-        helperText={errors.accountName.hasVisited ? errors.accountName.errorText : ''}
-        error={errors.accountName.hasVisited && !!errors.accountName.errorText}
-        onBlur={() =>
-          setErrors((prevState) => ({
-            ...prevState,
-            accountName: {
-              ...prevState.accountName,
-              hasVisited: true,
-            },
-          }))
-        }
+        helperText={accountNameVisited ? accountNameError : ''}
+        error={accountNameVisited && !!accountNameError}
+        onBlur={() => setAccountNameVisited(true)}
       />
 
       <TextField

@@ -71,18 +71,8 @@ export const BasicCrudServiceWithPersistence = <
 >(
   props: Props<IdType, Item, ItemIdentifiableFields, ItemUpdatableFields, Augmentation>,
 ) => {
-  const {
-    initialState,
-    itemName,
-    children,
-    context,
-    longTermStore,
-    localStore,
-    actionStore,
-    sorter,
-    Augmenter,
-    synced,
-  } = props
+  const { initialState, itemName, children, context, longTermStore, localStore, actionStore, Augmenter, synced } = props
+  const [sorter] = useState(() => props.sorter)
   const hasInternet = useContext(OnlineContext)
 
   const [state, setState] = useState<{ version: number; data: Item[] }>({ version: 0, data: initialState ?? [] })
@@ -104,21 +94,24 @@ export const BasicCrudServiceWithPersistence = <
         return prev
       })
     })
-  }, [])
+  }, [localStore, sorter])
 
-  const refresh = useCallback(async (): Promise<void> => {
-    const items = await longTermStore.getAll()
-    remoteLoaded.current = true
-    setState((prev) => {
-      const ordered = items.sort(sorter)
-      if (prev.data.length != ordered.length) return { version: prev.version + 1, data: ordered }
-      for (let i = 0; i < ordered.length; i += 1) {
-        if (!prev.data[i].equals(ordered[i])) return { version: prev.version + 1, data: ordered }
-      }
-      return prev
-    })
-    await localStore.sync(items)
-  }, [])
+  const refresh = useCallback(
+    (): Promise<void> =>
+      longTermStore.getAll().then((items) => {
+        remoteLoaded.current = true
+        setState((prev) => {
+          const ordered = items.sort(sorter)
+          if (prev.data.length != ordered.length) return { version: prev.version + 1, data: ordered }
+          for (let i = 0; i < ordered.length; i += 1) {
+            if (!prev.data[i].equals(ordered[i])) return { version: prev.version + 1, data: ordered }
+          }
+          return prev
+        })
+        return localStore.sync(items)
+      }),
+    [localStore, longTermStore, sorter],
+  )
 
   useEffect(() => {
     if (!hasInternet || !synced) return
@@ -126,7 +119,7 @@ export const BasicCrudServiceWithPersistence = <
     refresh()
       .catch(console.error)
       .finally(() => setRemoteSettled(true))
-  }, [synced, hasInternet])
+  }, [synced, hasInternet, refresh])
 
   // An empty local store may just be IndexedDB wiped at logout: wait for the server before showing first-use screens.
   const initialized =
@@ -151,7 +144,7 @@ export const BasicCrudServiceWithPersistence = <
       }))
       return newItem
     },
-    [hasInternet],
+    [hasInternet, longTermStore, localStore, actionStore, itemName, sorter],
   )
 
   const update = useCallback(
@@ -172,7 +165,7 @@ export const BasicCrudServiceWithPersistence = <
         version: prevState.version + 1,
       }))
     },
-    [hasInternet],
+    [hasInternet, longTermStore, localStore, actionStore, itemName, sorter],
   )
 
   const deleteItem = useCallback(
@@ -194,18 +187,21 @@ export const BasicCrudServiceWithPersistence = <
         version: prevState.version + 1,
       }))
     },
-    [hasInternet],
+    [hasInternet, longTermStore, localStore, actionStore, itemName],
   )
 
-  const absorb = useCallback(async (items: Item[]): Promise<void> => {
-    for (const item of items) await localStore.createKnown(item)
+  const absorb = useCallback(
+    async (items: Item[]): Promise<void> => {
+      for (const item of items) await localStore.createKnown(item)
 
-    const absorbed = new Set(items.map((item) => item.id))
-    setState((prevState) => ({
-      data: [...prevState.data.filter((item) => !absorbed.has(item.id)), ...items].sort(sorter),
-      version: prevState.version + 1,
-    }))
-  }, [])
+      const absorbed = new Set(items.map((item) => item.id))
+      setState((prevState) => ({
+        data: [...prevState.data.filter((item) => !absorbed.has(item.id)), ...items].sort(sorter),
+        version: prevState.version + 1,
+      }))
+    },
+    [localStore, sorter],
+  )
 
   const baseValue = useMemo(
     () => ({

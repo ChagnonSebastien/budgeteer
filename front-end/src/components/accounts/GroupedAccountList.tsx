@@ -70,7 +70,7 @@ const GroupedAccountList = (props: Props) => {
 
       return true
     },
-    [filterable, filter, items, showZeroBalances, accountBalances],
+    [filterable, filter, showZeroBalances, accountBalances],
   )
 
   const myOwnOrderedAccounts = useMemo(() => {
@@ -133,12 +133,10 @@ const GroupedAccountList = (props: Props) => {
     return ordered.filter(filterAccounts)
   }, [otherAccounts, transactions, filterAccounts])
 
-  useEffect(() => {
-    if (activeTab === 'mine' && myOwnOrderedAccounts.length === 0 && otherOrderedAccounts.length > 0)
-      setActiveTab('others')
-    if (activeTab === 'others' && otherOrderedAccounts.length === 0 && myOwnOrderedAccounts.length > 0)
-      setActiveTab('mine')
-  }, [activeTab, myOwnOrderedAccounts, otherOrderedAccounts])
+  if (activeTab === 'mine' && myOwnOrderedAccounts.length === 0 && otherOrderedAccounts.length > 0)
+    setActiveTab('others')
+  if (activeTab === 'others' && otherOrderedAccounts.length === 0 && myOwnOrderedAccounts.length > 0)
+    setActiveTab('mine')
 
   const displayedAccount = useMemo(() => {
     return activeTab === 'mine' ? myOwnOrderedAccounts : otherOrderedAccounts
