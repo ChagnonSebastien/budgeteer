@@ -178,10 +178,6 @@ func (r *Repository) GetAllUsers(ctx context.Context) ([]model.UserSummary, erro
 		if err := json.Unmarshal(row.Preferences, &preferences); err != nil {
 			return nil, fmt.Errorf("decoding preferences of user %s: %w", row.ID, err)
 		}
-		// mirrors the front end's needsUsageChoice: users with a default currency skip the choice
-		if preferences.SharedExpensesOnly == nil && row.HasDefaultCurrency {
-			preferences.SharedExpensesOnly = new(bool)
-		}
 		users[i] = model.UserSummary{
 			ID:                 row.ID,
 			Email:              row.Email,

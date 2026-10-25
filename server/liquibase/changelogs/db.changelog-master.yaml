@@ -69,3 +69,5 @@ databaseChangeLog:
       file: ./changelogs/034-account-is-debt.sql
   - include:
       file: ./changelogs/035-transaction-group-currency.sql
+  - include:
+      file: ./changelogs/036-backfill-usage-choice.sql

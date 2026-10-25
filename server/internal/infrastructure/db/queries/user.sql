@@ -78,7 +78,6 @@ SELECT id,
        coalesce(display_name, username)::text AS name,
        (oidc_sub IS NOT NULL)::bool          AS has_oidc,
        preferences,
-       (default_currency IS NOT NULL)::bool  AS has_default_currency,
        is_admin,
        last_seen_at
 FROM users
