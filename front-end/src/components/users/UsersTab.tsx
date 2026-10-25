@@ -2,13 +2,12 @@ import { Box, Chip, Divider, IconButton, Stack, Typography } from '@mui/material
 import { formatDistanceToNow } from 'date-fns'
 import { FC, Fragment, useContext, useEffect, useState } from 'react'
 
-import { IconToolsContext } from '../components/icons/IconTools'
-import LoadingScreen from '../components/LoadingScreen'
-import ContentWithHeader from '../components/shared/ContentWithHeader'
-import { Centered, PageBody } from '../components/shared/Layout'
-import DeleteUserDialog from '../components/users/DeleteUserDialog'
-import { ManagedUser } from '../domain/model/user'
-import { UserStoreContext } from '../service/ServiceContext'
+import DeleteUserDialog from './DeleteUserDialog'
+import { ManagedUser } from '../../domain/model/user'
+import { UserStoreContext } from '../../service/ServiceContext'
+import { IconToolsContext } from '../icons/IconTools'
+import LoadingScreen from '../LoadingScreen'
+import { Centered } from '../shared/Layout'
 
 const loginMethodLabels: Record<NonNullable<ManagedUser['loginMethod']>, string> = {
   oidc: 'OIDC',
@@ -54,11 +53,10 @@ const UserRow: FC<{ user: ManagedUser; onDelete(): void }> = ({ user, onDelete }
   )
 }
 
-const UsersPage: FC = () => {
+const UsersTab: FC<{ filter: string }> = ({ filter }) => {
   const userStore = useContext(UserStoreContext)
   const [users, setUsers] = useState<ManagedUser[] | null>(null)
   const [error, setError] = useState(false)
-  const [filter, setFilter] = useState('')
   const [toDelete, setToDelete] = useState<ManagedUser | null>(null)
 
   useEffect(() => {
@@ -77,18 +75,13 @@ const UsersPage: FC = () => {
   )
 
   return (
-    <ContentWithHeader
-      title="Users"
-      action="menu"
-      withPadding
-      search={{ value: filter, onChange: setFilter, placeholder: 'Search users...' }}
-    >
+    <>
       {error ? (
         <Centered>Could not load users</Centered>
       ) : users === null ? (
         <LoadingScreen />
       ) : (
-        <PageBody>
+        <>
           <Typography variant="label" color="text.disabled">
             {shown.length} of {users.length} users
           </Typography>
@@ -100,7 +93,7 @@ const UsersPage: FC = () => {
               </Fragment>
             ))}
           </Box>
-        </PageBody>
+        </>
       )}
       {toDelete && (
         <DeleteUserDialog
@@ -112,8 +105,8 @@ const UsersPage: FC = () => {
           }}
         />
       )}
-    </ContentWithHeader>
+    </>
   )
 }
 
-export default UsersPage
+export default UsersTab

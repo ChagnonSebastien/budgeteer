@@ -12,6 +12,7 @@ import { Centered } from './components/shared/Layout'
 import Currency, { CurrencyUpdatableFields, RateAutoupdateSettings } from './domain/model/currency'
 import { IdIdentifier } from './domain/model/Unique'
 import AccountsPage from './pages/AccountsPage'
+import AdministrationPage from './pages/AdministrationPage'
 import CategoryPage from './pages/CategoryPage'
 import CostsAnalysisPage from './pages/CostsAnalysisPage'
 import CreateAccountPage from './pages/CreateAccountPage'
@@ -37,7 +38,6 @@ import SettlementPage from './pages/SettlementPage'
 import TransactionGroups from './pages/TransactionGroups'
 import TransactionPage from './pages/TransactionPage'
 import TrendsPage from './pages/TrendsPage'
-import UsersPage from './pages/UsersPage'
 import { makeAccountPersistenceAugmenter } from './service/AccountServiceAugmenter'
 import { BasicCrudServiceWithPersistence } from './service/BasicCrudServiceWithPersistence'
 import { makeCategoryPersistenceAugmenter } from './service/CategoryServiceAugmenter'
@@ -439,7 +439,7 @@ const AuthenticatedZone: FC<Props> = (props) => {
               path="/transaction-groups/manage/:transactionGroupId/unconfirmed/:unconfirmedTransactionId/promote"
               element={<PromoteUnconfirmedTransactionPage />}
             />
-            {isAdmin && <Route path="/management/users" element={<UsersPage />} />}
+            {isAdmin && <Route path="/administration" element={<AdministrationPage />} />}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </DrawerWrapper>

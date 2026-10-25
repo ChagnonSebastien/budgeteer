@@ -177,7 +177,7 @@ const appPages: MenuEntry[] = [
   },
 ]
 
-const usersPage = new AppPage('Users', '/management/users', PreparedIcon.TbUserShield, [])
+const administrationPage = new AppPage('Administration', '/administration', PreparedIcon.TbUserShield, [])
 
 const userStore = new UserStore(localStorage)
 
@@ -281,7 +281,7 @@ const DrawerWrapper: FC<Props> = ({ logout, children, userIsGuest = false }) => 
 
           {/* A block wrapper: ListItemButton grows along a flex column. */}
           <Box sx={{ borderTop: 1, borderColor: 'border.subtle', pt: 1 }}>
-            {!userIsGuest && isAdmin && online && <usersPage.Element />}
+            {!userIsGuest && isAdmin && online && <administrationPage.Element />}
             {!userIsGuest && (
               <Tooltip
                 title={
