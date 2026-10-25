@@ -213,6 +213,20 @@ func (s *Server) Serve(ctx context.Context) error {
 	rootSupervisor := suture.New("root", suture.Spec{})
 	rootSupervisor.Add(webServer)
 	rootSupervisor.Add(exchangeRateAutoUpdateScheduler)
+
+	if guestLoginService != nil {
+		guestLoginCleanupScheduler, err := autoupdate.NewScheduler("guest login cleanup", "@hourly", func(ctx context.Context) error {
+			if err := guestLoginService.CleanupExpired(ctx); err != nil {
+				logging.FromContext(ctx).Error("deleting expired guest logins", "error", err)
+			}
+			return nil
+		})
+		if err != nil {
+			return fmt.Errorf("setting up the guest login cleanup scheduler: %s", err)
+		}
+		rootSupervisor.Add(guestLoginCleanupScheduler)
+	}
+
 	return rootSupervisor.Serve(ctx)
 }
 
