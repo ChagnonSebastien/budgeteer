@@ -13,6 +13,7 @@ services:
       DATABASE_USER: postgres
       DATABASE_PASSWORD: changeme
       DATABASE_NAME: budgetapp
+      DATABASE_SSLMODE: disable
     restart: always
     depends_on:
       postgres:

@@ -8,7 +8,7 @@ database:
   user: postgres
   password: changeme
   name: budgetapp
-  sslmode: disable
+  sslmode: require
 auth:
   userpass:
     enabled: false
