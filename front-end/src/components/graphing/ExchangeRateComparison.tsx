@@ -84,11 +84,7 @@ const ExchangeRateComparison: FC<Props> = (props) => {
     [currencies, currencyIds, defaultCurrency],
   )
 
-  const { timeseriesIteratorGenerator, showLabelEveryFactor, hop, amountHop } = useTimerangeSegmentation(
-    startDate,
-    endDate,
-    'dense',
-  )
+  const { timeseriesIteratorGenerator, showLabelEveryFactor } = useTimerangeSegmentation(startDate, endDate, 'dense')
 
   const timeseriesIterator = useMemo(
     () => timeseriesIteratorGenerator(augmentedTransactions),
@@ -105,7 +101,6 @@ const ExchangeRateComparison: FC<Props> = (props) => {
     for (const currency of selected) {
       currentlyHeld.set(currency.id, 0)
       dividends.set(currency.id, 1)
-      initialRate.set(currency.id, exchangeRateOnDay(currency.id, defaultCurrency.id, hop(endDate, amountHop)))
     }
 
     myOwnAccounts.forEach((account) => {
@@ -217,6 +212,10 @@ const ExchangeRateComparison: FC<Props> = (props) => {
           continue
         }
         const currentRate = exchangeRateOnDay(currency.id, defaultCurrency.id, upTo)
+        if (!initialRate.has(currency.id)) {
+          initialRate.set(currency.id, currentRate)
+          dividends.set(currency.id, 1)
+        }
         const wouldBe = initialRate.get(currency.id)! / dividends.get(currency.id)!
         values[currency.name] = { amount: currentRate / wouldBe }
         if (!heldCurrencyIds.has(currency.id) && upTo.getTime() >= rates!.at(-1)!.date.getTime()) {
@@ -236,9 +235,6 @@ const ExchangeRateComparison: FC<Props> = (props) => {
     augmentedTransactions,
     defaultCurrency,
     timeseriesIterator,
-    hop,
-    endDate,
-    amountHop,
   ])
 
   const dateVisibility = useMemo(
