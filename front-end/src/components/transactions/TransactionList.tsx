@@ -17,6 +17,8 @@ type Row = { kind: 'month'; date: Date } | { kind: 'item'; transaction: Augmente
 const estimatedRowHeight = { month: 48, item: 96 }
 
 export const TransactionList = <T,>(props: Props<T>) => {
+  // The virtualizer instance is stable while its output changes: compiler memoization freezes the rendered rows.
+  'use no memo'
   const { items, ItemComponent, onClick, additionalItemsProps } = props
 
   const rows = useMemo<Row[]>(() => {

@@ -225,6 +225,8 @@ interface Props {
 }
 
 export const ImportPreviewList: FC<Props> = (props) => {
+  // The virtualizer instance is stable while its output changes: compiler memoization freezes the rendered rows.
+  'use no memo'
   const { rows, choices, ...rowProps } = props
   const { listRef, virtualizer, scrollMargin } = useScrollParentVirtualizer({
     count: rows.length,
