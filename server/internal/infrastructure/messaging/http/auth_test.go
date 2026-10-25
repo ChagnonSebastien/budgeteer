@@ -8,6 +8,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -194,5 +195,33 @@ func TestAuthenticateWithoutOidcRejectsMissingSession(t *testing.T) {
 	_, status, err := auth.authenticate(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "/", nil))
 	if err == nil || status != http.StatusUnauthorized {
 		t.Fatalf("expected 401, got %d %v", status, err)
+	}
+}
+
+func TestPreferencesRejectsANonBooleanSharedExpensesOnly(t *testing.T) {
+	auth, users, _ := newTestAuth(t)
+	user := &shared.User{ID: uuid.New(), Email: "g@example.com", AuthMethod: shared.AuthMethodGuest}
+	users.EXPECT().CreateSession(mock.Anything, mock.Anything, user.ID, mock.Anything).Return(nil).Once()
+	users.EXPECT().SessionIsActive(mock.Anything, mock.Anything, user.ID).Return(true, nil)
+	users.EXPECT().TouchLastSeen(mock.Anything, user.ID).Return(nil)
+	users.EXPECT().MergePreferences(mock.Anything, user.ID, mock.Anything, maxPreferencesSize).Return(true, nil).Once()
+
+	issued := httptest.NewRecorder()
+	if err := auth.issueSession(context.Background(), issued, user); err != nil {
+		t.Fatal(err)
+	}
+	sessionCookie, _ := cookiesFrom(issued)("session-token")
+
+	for body, want := range map[string]int{
+		`{"sharedExpensesOnly":"x"}`:  http.StatusBadRequest,
+		`{"sharedExpensesOnly":true}`: http.StatusNoContent,
+	} {
+		req := httptest.NewRequest(http.MethodPatch, "/preferences", strings.NewReader(body))
+		req.AddCookie(sessionCookie)
+		rec := httptest.NewRecorder()
+		auth.preferencesHandler(rec, req)
+		if rec.Code != want {
+			t.Errorf("%s: expected %d, got %d", body, want, rec.Code)
+		}
 	}
 }

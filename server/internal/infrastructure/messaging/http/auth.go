@@ -696,6 +696,15 @@ func (auth *Auth) displayNameHandler(w http.ResponseWriter, r *http.Request) {
 
 const maxPreferencesSize = 16 * 1024
 
+func validPreferencesPatch(patch map[string]json.RawMessage) bool {
+	raw, ok := patch["sharedExpensesOnly"]
+	if !ok {
+		return true
+	}
+	var sharedExpensesOnly *bool
+	return json.Unmarshal(raw, &sharedExpensesOnly) == nil
+}
+
 func (auth *Auth) preferencesHandler(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 
@@ -711,7 +720,7 @@ func (auth *Auth) preferencesHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var patch map[string]json.RawMessage
-	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 4096)).Decode(&patch); err != nil || patch == nil {
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 4096)).Decode(&patch); err != nil || patch == nil || !validPreferencesPatch(patch) {
 		http.Error(w, "invalid request body", http.StatusBadRequest)
 		return
 	}
