@@ -23,6 +23,7 @@ import { FC, useCallback, useContext, useMemo } from 'react'
 
 import { gainColor, GraphTooltip, GraphTooltipDate } from './GraphStyledComponents'
 import { formatAmount, formatFull } from '../../domain/model/currency'
+import { detectRecurringIncomes } from '../../domain/recurringIncome'
 import MixedAugmentation from '../../service/MixedAugmentation'
 import { darkTheme } from '../../utils'
 import { DrawerContext } from '../Menu'
@@ -172,15 +173,22 @@ const TrendsChart: FC<Props> = (props) => {
         from: addDays(subN(currentStart, k + 1), elapsedDays),
         to: subN(currentStart, k),
       }))
+      const recurringIncomes = detectRecurringIncomes(filteredTransactions, today)
+      const recurringSenders = new Set(recurringIncomes.map((income) => income.senderId))
       const oldest = remainders[remainders.length - 1].from
       let remaindersTotal = 0
       for (const t of filteredTransactions) {
         if (isBefore(t.date, oldest)) break
+        if (t.senderId !== null && recurringSenders.has(t.senderId)) continue
         if (remainders.some((r) => !isBefore(t.date, r.from) && isBefore(t.date, r.to))) {
           remaindersTotal += netAmount(t)
         }
       }
-      projected = data[data.length - 1].total + remaindersTotal / pastPeriods
+      const expectedIncome = recurringIncomes.reduce(
+        (sum, income) => sum + income.upcomingPaydays(currentStart, toDate).length * netAmount(income.lastPayment),
+        0,
+      )
+      projected = data[data.length - 1].total + remaindersTotal / pastPeriods + expectedIncome
     }
 
     return { data, firstDataIndex: Math.min(firstDataIndex, data.length), projected }
