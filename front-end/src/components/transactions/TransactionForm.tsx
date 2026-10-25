@@ -1,6 +1,17 @@
-import { Checkbox, Chip, FormControlLabel, IconButton, Stack, TextField, Typography } from '@mui/material'
+import {
+  Checkbox,
+  Chip,
+  FormControlLabel,
+  IconButton,
+  Stack,
+  TextField,
+  ToggleButton,
+  ToggleButtonGroup,
+  Typography,
+} from '@mui/material'
 import { FC, useContext, useEffect, useMemo, useState } from 'react'
 
+import { ChoosableType, useTransactionTypeOptions } from './TransactionTypeChoice'
 import { UserContext } from '../../App'
 import Account, { AccountID, payeeFields } from '../../domain/model/account'
 import { CategoryID } from '../../domain/model/category'
@@ -60,7 +71,12 @@ interface Props {
   prefillAccountId?: AccountID | null
   prefillTransactionGroupId?: TransactionGroupID | null
   groupContext?: 'hidden' | 'locked'
+  onTypeChange?: (type: ChoosableType) => void
 }
+
+type AccountSlot = { existing: boolean; id: AccountID | null; name: string }
+
+const emptySlot: AccountSlot = { existing: false, id: null, name: '' }
 
 const TransactionForm: FC<Props> = (props) => {
   const {
@@ -71,6 +87,7 @@ const TransactionForm: FC<Props> = (props) => {
     prefillAccountId,
     prefillTransactionGroupId,
     groupContext,
+    onTypeChange,
   } = props
 
   const { create: createAccount, state: accounts } = useContext(AccountServiceContext)
@@ -83,17 +100,18 @@ const TransactionForm: FC<Props> = (props) => {
   } = useContext(MixedAugmentation)
   const { default_currency, email } = useContext(UserContext)
   const { IconLib } = useContext(IconToolsContext)
+  const typeOptions = useTransactionTypeOptions()
 
   // Financial income and transaction-group membership are now opt-in toggles within
   // the form (mutually exclusive), so the base type is only income/expense/transfer.
-  const baseType: 'income' | 'expense' | 'transfer' = useMemo(() => {
+  const [baseType, setBaseType] = useState<ChoosableType>(() => {
     if (rawType === 'income' || rawType === 'expense' || rawType === 'transfer') return rawType
     if (rawType === 'financialIncome') return 'income'
     if (initialTransaction?.financialIncomeData)
       return initialTransaction.sender?.isMine && !initialTransaction.receiver?.isMine ? 'expense' : 'income'
     if (initialTransaction?.categoryId === null) return 'transfer'
     return (initialTransaction?.sender?.isMine ?? false) ? 'expense' : 'income'
-  }, [initialTransaction, rawType])
+  })
 
   const [isFinancialIncome, setIsFinancialIncome] = useState(
     () => rawType === 'financialIncome' || !!initialTransaction?.financialIncomeData,
@@ -151,24 +169,20 @@ const TransactionForm: FC<Props> = (props) => {
       ? prefillAccount
       : null
 
-  const [senderAccount, setSenderAccount] = useState<{ existing: boolean; id: AccountID | null; name: string }>(() => {
+  const [senderAccount, setSenderAccount] = useState<AccountSlot>(() => {
     if (typeof initialTransaction?.sender?.id !== 'undefined')
       return { existing: true, id: initialTransaction.sender.id, name: initialTransaction.sender.name }
     if (prefillSenderAccount !== null)
       return { existing: true, id: prefillSenderAccount.id, name: prefillSenderAccount.name }
-    return { existing: false, id: null, name: '' }
+    return emptySlot
   })
 
-  const [receiverAccount, setReceiverAccount] = useState<{
-    existing: boolean
-    id: AccountID | null
-    name: string
-  }>(() => {
+  const [receiverAccount, setReceiverAccount] = useState<AccountSlot>(() => {
     if (typeof initialTransaction?.receiver?.id !== 'undefined')
       return { existing: true, id: initialTransaction.receiver.id, name: initialTransaction.receiver.name }
     if (prefillReceiverAccount !== null)
       return { existing: true, id: prefillReceiverAccount.id, name: prefillReceiverAccount.name }
-    return { existing: false, id: null, name: '' }
+    return emptySlot
   })
 
   const [note, setNote] = useState(initialTransaction?.note ?? '')
@@ -303,6 +317,27 @@ const TransactionForm: FC<Props> = (props) => {
     }
   }
 
+  const changeType = (newType: ChoosableType) => {
+    if (newType === baseType) return
+    const isPayeeSwap = newType !== 'transfer' && baseType !== 'transfer'
+    if (isPayeeSwap) {
+      setSenderAccount(receiverAccount)
+      setReceiverAccount(senderAccount)
+    } else {
+      // Only an account of mine can stay: the other side held a payee, which a transfer cannot use.
+      if (newType === 'income' || baseType === 'income') setSenderAccount(emptySlot)
+      if (newType === 'expense' || baseType === 'expense') setReceiverAccount(emptySlot)
+    }
+    setParent(newType === 'transfer' ? null : rootCategory.id)
+    if (newType === 'transfer') {
+      setIsFinancialIncome(false)
+      setUseTransactionGroup(false)
+      setTransactionGroupId(null)
+    }
+    setBaseType(newType)
+    onTypeChange?.(newType)
+  }
+
   const handleSubmit = () => {
     if (!isFormValid) {
       setErrors((prevState) => ({
@@ -360,6 +395,23 @@ const TransactionForm: FC<Props> = (props) => {
 
   return (
     <FormWrapper onSubmit={handleSubmit} submitText={submitText}>
+      {onTypeChange && (
+        <ToggleButtonGroup
+          exclusive
+          fullWidth
+          size="small"
+          value={baseType}
+          onChange={(_event, value: ChoosableType | null) => value && changeType(value)}
+        >
+          {typeOptions.map(({ type, label, Icon }) => (
+            <ToggleButton key={type} value={type} sx={{ gap: 1 }}>
+              <Icon />
+              {label}
+            </ToggleButton>
+          ))}
+        </ToggleButtonGroup>
+      )}
+
       <Stack direction="row" spacing={2}>
         <FixedPointInput
           sx={{ width: '100%' }}

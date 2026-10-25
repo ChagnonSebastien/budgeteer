@@ -1,4 +1,4 @@
-import { FC, useCallback, useContext, useMemo } from 'react'
+import { FC, useCallback, useContext } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 
 import { UserContext } from '../App'
@@ -6,6 +6,7 @@ import ContentWithHeader from '../components/shared/ContentWithHeader'
 import { useToast } from '../components/shared/ToastProvider'
 import useQueryParams from '../components/shared/useQueryParams'
 import TransactionForm, { TransactionType } from '../components/transactions/TransactionForm'
+import TransactionTypeChoice from '../components/transactions/TransactionTypeChoice'
 import { TransactionUpdatableFields } from '../domain/model/transaction'
 import { TransactionServiceContext } from '../service/ServiceContext'
 
@@ -25,7 +26,7 @@ const CreateTransactionPage: FC = () => {
   const prefillAccountId = navigationState?.prefillAccountId ?? null
   const prefillTransactionGroupId = navigationState?.prefillTransactionGroupId ?? null
   const { queryParams } = useQueryParams<QueryParams>()
-  const type = useMemo(() => (queryParams.type ?? 'expense') as TransactionType, [queryParams.type])
+  const type = queryParams.type as TransactionType | undefined
 
   const { create: createTransaction } = useContext(TransactionServiceContext)
   const { email } = useContext(UserContext)
@@ -70,14 +71,21 @@ const CreateTransactionPage: FC = () => {
       withPadding
       withScrolling
     >
-      <TransactionForm
-        onSubmit={onSubmit}
-        submitText="Record"
-        type={type}
-        prefillAccountId={prefillAccountId}
-        prefillTransactionGroupId={prefillTransactionGroupId}
-        groupContext={prefillTransactionGroupId !== null ? 'locked' : undefined}
-      />
+      {type === undefined ? (
+        <TransactionTypeChoice
+          onChoose={(chosen) => navigate({ search: `?type=${chosen}` }, { state: location.state })}
+        />
+      ) : (
+        <TransactionForm
+          onSubmit={onSubmit}
+          submitText="Record"
+          type={type}
+          prefillAccountId={prefillAccountId}
+          prefillTransactionGroupId={prefillTransactionGroupId}
+          groupContext={prefillTransactionGroupId !== null ? 'locked' : undefined}
+          onTypeChange={(changed) => navigate({ search: `?type=${changed}` }, { replace: true, state: location.state })}
+        />
+      )}
     </ContentWithHeader>
   )
 }

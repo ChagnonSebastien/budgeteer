@@ -58,7 +58,7 @@ const ManageTransactionGroup: FC = () => {
           Icon: IconLib.MdOutput,
           color: 'money.loss',
           onClick: () =>
-            navigate('/transactions/new', {
+            navigate('/transactions/new?type=expense', {
               state: { from: `/transaction-groups/manage/${id}`, prefillTransactionGroupId: id },
             }),
         },

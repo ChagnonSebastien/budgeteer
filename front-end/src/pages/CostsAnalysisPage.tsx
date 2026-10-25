@@ -489,7 +489,7 @@ const CostsAnalysisPage: FC = () => {
           <EmptyState
             title="Find out where your income goes"
             description="Record your income and expenses to see how they split between essentials, other spending and savings."
-            action={{ label: 'Record a transaction', path: '/transactions/new?type=expense' }}
+            action={{ label: 'Record a transaction', path: '/transactions/new' }}
           />
         ) : viewType === 'chart' ? (
           <EarningsBreakdownChart

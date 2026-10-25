@@ -21,6 +21,7 @@ import useQueryParams from '../components/shared/useQueryParams'
 import useWideLayout from '../components/shared/useWideLayout'
 import TransactionCard from '../components/transactions/TransactionCard'
 import { TransactionList } from '../components/transactions/TransactionList'
+import { useTransactionTypeOptions } from '../components/transactions/TransactionTypeChoice'
 import { AugmentedCategory } from '../domain/model/category'
 import { formatAmount } from '../domain/model/currency'
 import { AugmentedTransaction } from '../domain/model/transaction'
@@ -68,6 +69,7 @@ const TransactionPage: FC = () => {
   const prefillAccountId = accountFilter?.length === 1 ? accountFilter[0] : null
 
   const { IconLib } = useContext(IconToolsContext)
+  const transactionTypeOptions = useTransactionTypeOptions()
 
   const filteredTransaction = useMemo(() => {
     return augmentedTransactions
@@ -234,14 +236,8 @@ const TransactionPage: FC = () => {
         ariaLabel="Create new transaction"
         hint={hasTransactions ? undefined : 'Record your first transaction'}
         actions={[
-          ...(
-            [
-              ['Expense', 'expense', IconLib.MdOutput, 'money.loss'],
-              ['Income', 'income', IconLib.MdInput, 'money.gain'],
-              ['Transfer', 'transfer', IconLib.GrTransaction, 'grey.500'],
-            ] as const
-          ).map(
-            ([label, type, Icon, color]): DialAction => ({
+          ...transactionTypeOptions.map(
+            ({ label, type, Icon, color }): DialAction => ({
               label,
               Icon,
               color,
