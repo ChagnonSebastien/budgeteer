@@ -178,32 +178,34 @@ const IconLib: PreparedIconLib = {
 const loadedIcons = new Map<string, IconType>(Object.entries(IconLib))
 const lazyIcons = new Map<string, IconType>()
 
-const lazyIcon = (iconName: string): IconType => {
-  const LazyIcon = (props: IconBaseProps) => {
-    const [Icon, setIcon] = useState(() => loadedIcons.get(iconName))
+const LazyIcon = ({ iconName, ...props }: IconBaseProps & { iconName: string }) => {
+  const [Icon, setIcon] = useState(() => loadedIcons.get(iconName))
 
-    useEffect(() => {
-      if (Icon) return
-      let cancelled = false
-      loadIcon(iconName).then(
-        (loaded) => {
-          const resolved = loaded ?? TbFileUnknown
-          loadedIcons.set(iconName, resolved)
-          if (!cancelled) setIcon(() => resolved)
-        },
-        () => {
-          if (!cancelled) setIcon(() => TbFileUnknown)
-        },
-      )
-      return () => {
-        cancelled = true
-      }
-    }, [Icon])
+  useEffect(() => {
+    if (Icon) return
+    let cancelled = false
+    loadIcon(iconName).then(
+      (loaded) => {
+        const resolved = loaded ?? TbFileUnknown
+        loadedIcons.set(iconName, resolved)
+        if (!cancelled) setIcon(() => resolved)
+      },
+      () => {
+        if (!cancelled) setIcon(() => TbFileUnknown)
+      },
+    )
+    return () => {
+      cancelled = true
+    }
+  }, [Icon, iconName])
 
-    return Icon ? <Icon {...props} /> : <svg width={props.size ?? '1em'} height={props.size ?? '1em'} />
-  }
-  return LazyIcon
+  return Icon ? <Icon {...props} /> : <svg width={props.size ?? '1em'} height={props.size ?? '1em'} />
 }
+
+const lazyIcon =
+  (iconName: string): IconType =>
+  (props: IconBaseProps) => <LazyIcon iconName={iconName} {...props} />
+
 
 const iconTypeFromName = (iconName: string): IconType => {
   const prepared = IconLib[iconName as PreparedIcon]
