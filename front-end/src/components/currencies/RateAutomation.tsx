@@ -106,7 +106,10 @@ const RateAutomation: FC<Props> = ({ currency, against, scriptRunner, onUseRate 
           <Box component="span" sx={{ fontFamily: 'monospace', overflowWrap: 'anywhere' }}>
             {currency.rateFetchFailure!.message}
           </Box>
-          <Box sx={{ mt: 1 }}>Fix the script and save to clear this, or wait for the next successful run.</Box>
+          <Box sx={{ mt: 1 }}>
+            Fix the script and save, record a rate for the missed day, or wait for the next successful run to clear
+            this.
+          </Box>
         </Alert>
       )}
 

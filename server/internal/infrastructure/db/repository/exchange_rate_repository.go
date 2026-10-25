@@ -42,15 +42,17 @@ func (r *Repository) CreateExchangeRate(
 	date time.Time,
 	rate float64,
 ) error {
-	return r.queries.CreateExchangeRate(
-		ctx, &dao.CreateExchangeRateParams{
-			A:      int32(currencyA),
-			B:      int32(currencyB),
-			Rate:   rate,
-			Date:   date,
-			UserID: userId,
-		},
-	)
+	return r.recordExchangeRate(ctx, userId, currencyA, currencyB, date, func(queries *dao.Queries) error {
+		return queries.CreateExchangeRate(
+			ctx, &dao.CreateExchangeRateParams{
+				A:      int32(currencyA),
+				B:      int32(currencyB),
+				Rate:   rate,
+				Date:   date,
+				UserID: userId,
+			},
+		)
+	})
 }
 
 type UpdateExchangeRateFields struct {
@@ -75,15 +77,50 @@ func (r *Repository) UpsertExchangeRate(
 	date time.Time,
 	rate float64,
 ) error {
-	return r.queries.UpsertExchangeRate(
-		ctx, &dao.UpsertExchangeRateParams{
+	return r.recordExchangeRate(ctx, userId, currencyA, currencyB, date, func(queries *dao.Queries) error {
+		return queries.UpsertExchangeRate(
+			ctx, &dao.UpsertExchangeRateParams{
+				A:      int32(currencyA),
+				B:      int32(currencyB),
+				Rate:   rate,
+				Date:   date,
+				UserID: userId,
+			},
+		)
+	})
+}
+
+func (r *Repository) recordExchangeRate(
+	ctx context.Context,
+	userId uuid.UUID,
+	currencyA, currencyB model.CurrencyID,
+	date time.Time,
+	write func(queries *dao.Queries) error,
+) error {
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	queries := r.queries.WithTx(tx)
+	if err := write(queries); err != nil {
+		return err
+	}
+
+	err = queries.ClearRateFetchFailureCoveredBy(
+		ctx, &dao.ClearRateFetchFailureCoveredByParams{
 			A:      int32(currencyA),
 			B:      int32(currencyB),
-			Rate:   rate,
-			Date:   date,
 			UserID: userId,
+			Date:   date,
 		},
 	)
+	if err != nil {
+		return err
+	}
+
+	return tx.Commit()
 }
 
 func (r *Repository) DeleteExchangeRate(

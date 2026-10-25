@@ -109,3 +109,10 @@ WHERE a = sqlc.arg(currency_id) OR b = sqlc.arg(currency_id);
 -- name: DeleteCurrency :execrows
 DELETE FROM currencies
 WHERE id = sqlc.arg(currency_id) AND user_id = sqlc.arg(user_id);
+
+-- name: ClearRateFetchFailureCoveredBy :exec
+UPDATE currencies
+SET rate_fetch_failed_at = NULL, rate_fetch_error = NULL
+WHERE id IN (sqlc.arg(a)::int, sqlc.arg(b)::int)
+  AND user_id = sqlc.arg(user_id)
+  AND sqlc.arg(date)::date >= (rate_fetch_failed_at - interval '1 day')::date;

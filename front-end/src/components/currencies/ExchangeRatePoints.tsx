@@ -7,7 +7,7 @@ import Currency from '../../domain/model/currency'
 import { rateWording } from '../../domain/model/currencyClassification'
 import ExchangeRate, { ExchangeRateIdentifiableFields } from '../../domain/model/exchangeRate'
 import { ReadOnlyContext } from '../../service/ReadOnlyContext'
-import { ExchangeRateServiceContext } from '../../service/ServiceContext'
+import { CurrencyServiceContext, ExchangeRateServiceContext } from '../../service/ServiceContext'
 import { IconToolsContext } from '../icons/IconTools'
 import DatePicker from '../inputs/DatePicker'
 import AppDialog from '../shared/AppDialog'
@@ -36,6 +36,7 @@ export const rateInput = (rate: number) => `${Number(rate.toPrecision(10))}`
 
 const useRatePoints = (currency: Currency, against: Currency) => {
   const { state: rates, create, update, delete: deleteRate } = useContext(ExchangeRateServiceContext)
+  const { refresh: refreshCurrencies } = useContext(CurrencyServiceContext)
 
   const points = useMemo<RatePoint[]>(
     () =>
@@ -72,8 +73,12 @@ const useRatePoints = (currency: Currency, against: Currency) => {
       } else {
         await create({ rate: stored }, new ExchangeRateIdentifiableFields(currency.id, against.id, day))
       }
+
+      if (currency.rateFetchFailure !== null) {
+        await refreshCurrencies()
+      }
     },
-    [points, currency, against, create, update, deleteRate],
+    [points, currency, against, create, update, deleteRate, refreshCurrencies],
   )
 
   const remove = useCallback((point: RatePoint) => deleteRate(point.source), [deleteRate])
