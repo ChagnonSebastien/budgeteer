@@ -53,7 +53,7 @@ const NetWorthPage: FC = () => {
 
   const { queryParams: qp, updateQueryParams } = useQueryParams<QueryParams>()
   const view = (qp.view ?? 'total') as View
-  const groupBy = useMemo(() => (qp.groupBy ?? 'account') as AccountsGroupType | CurrenciesGroupType, [qp.groupBy])
+  const groupBy = useMemo(() => (qp.groupBy ?? 'none') as AccountsGroupType | CurrenciesGroupType, [qp.groupBy])
   const baselineConfig = useMemo(() => (qp.baselineConfig ?? 'none') as BaseLineConfig, [qp.baselineConfig])
   const type = useMemo(() => (qp.type ?? 'active') as ActiveOrPassive, [qp.type])
 

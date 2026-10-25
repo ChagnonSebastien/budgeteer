@@ -50,7 +50,7 @@ const InvestmentsPerformancePage: FC = () => {
   } = useTransactionFilter({ canFilterByCategory: false, canFilterByAccount: false })
 
   const { queryParams: qp, updateQueryParams } = useQueryParams<QueryParams>()
-  const view = (qp.view ?? 'returns') as View
+  const view = (qp.view ?? 'gains') as View
 
   const { defaultCurrency } = useContext(MixedAugmentation)
   const { state: currencies } = useContext(CurrencyServiceContext)
@@ -126,10 +126,10 @@ const InvestmentsPerformancePage: FC = () => {
       key="view-option"
       label="Show"
       value={view}
-      onChange={(newValue) => updateQueryParams({ view: newValue === 'returns' ? null : newValue })}
+      onChange={(newValue) => updateQueryParams({ view: newValue === 'gains' ? null : newValue })}
       options={[
-        { value: 'returns', label: 'Asset returns (%)' },
         { value: 'gains', label: 'Total gains' },
+        { value: 'returns', label: 'Asset returns (%)' },
       ]}
       type={splitHorizontal ? 'radio' : 'dropdown'}
     />

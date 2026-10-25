@@ -157,15 +157,15 @@ const appPages: MenuEntry[] = [
   },
   {
     guestView: false,
+    element: new AppPage('Investments', '/investments', PreparedIcon.TbTrendingUp, []),
+  },
+  {
+    guestView: false,
     element: new AppPage('Trends', '/trends', PreparedIcon.TbChartBar, ['categories']),
   },
   {
     guestView: false,
     element: new AppPage('Costs Analysis', '/costs', PreparedIcon.TbReportMoney, []),
-  },
-  {
-    guestView: false,
-    element: new AppPage('Investments', '/investments', PreparedIcon.TbTrendingUp, []),
   },
   { guestView: false, element: new Subsection('Setup') },
   { guestView: false, element: new AppPage('Categories', '/categories', PreparedIcon.TbCategory, []) },
