@@ -47,7 +47,7 @@ export const useNetWorthChartData = <Item extends object>(
   getToIdentifier: (transaction: AugmentedTransaction) => Item | undefined,
   group: (account?: Item | undefined) => string | undefined,
   accounts: Account[],
-  type: 'active' | 'passive',
+  type: 'active' | 'passive' | 'all',
   getFinancialIncomeToIdentifierOverwrite?: (transaction: AugmentedTransaction) => Item | undefined,
 ) => {
   const { exchangeRateOnDay, defaultCurrency } = useContext(MixedAugmentation)
@@ -210,7 +210,7 @@ export const useNetWorthChartData = <Item extends object>(
         if (groupData.holdings.size === 0) continue
         const marketValue = marketValueOn(groupData, upTo)
 
-        if (marketValue >= 0 === (type === 'active')) {
+        if (type === 'all' || marketValue >= 0 === (type === 'active')) {
           const optionalInverse = type === 'passive' ? -1 : 1
           todaysBookValue += groupData.bookValue * optionalInverse
           todaysData[groupLabel] = {

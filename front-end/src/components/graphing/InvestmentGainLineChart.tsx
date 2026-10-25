@@ -1,10 +1,12 @@
-import React, { FC, useContext, useMemo } from 'react'
+import { FC, useContext, useMemo } from 'react'
 
 import { Tooltip } from './AggregatedDiffChart'
-import { Bucket } from './AreaChart'
 import LineChart, { Bucket as LineBucket } from './LineChart'
+import { useNetWorthChartData } from './NetWorthChart'
 import { DateNavigation } from './TimerangeGraphUtils'
+import Account from '../../domain/model/account'
 import { formatFull } from '../../domain/model/currency'
+import { AugmentedTransaction } from '../../domain/model/transaction'
 import MixedAugmentation from '../../service/MixedAugmentation'
 import { AccountServiceContext } from '../../service/ServiceContext'
 import { darkColors } from '../../utils'
@@ -17,178 +19,32 @@ interface GainChartProps {
   navigation?: DateNavigation
 }
 
+const ownAccount = (account: Account) => account
+const sender = (transaction: AugmentedTransaction) => transaction.sender
+const receiver = (transaction: AugmentedTransaction) => transaction.receiver
+const total = () => 'Total'
+
 const InvestmentGainLineChart: FC<GainChartProps> = ({ fromDate, toDate, navigation }) => {
-  const { augmentedTransactions, exchangeRateOnDay, defaultCurrency } = useContext(MixedAugmentation)
+  const { augmentedTransactions, defaultCurrency } = useContext(MixedAugmentation)
   const { myOwnAccounts } = useContext(AccountServiceContext)
   const { privacyMode } = useContext(DrawerContext)
 
-  const {
-    hop: subN,
-    amountHop,
-    showLabelEveryFactor,
-    timeseriesIteratorGenerator,
-  } = useTimerangeSegmentation(fromDate, toDate, 'dense')
+  const { showLabelEveryFactor, timeseriesIteratorGenerator } = useTimerangeSegmentation(fromDate, toDate, 'dense')
 
   const timeseriesIterator = useMemo(
     () => timeseriesIteratorGenerator(augmentedTransactions),
     [timeseriesIteratorGenerator, augmentedTransactions],
   )
 
-  const { data, labels, groups } = useMemo(() => {
-    const myAccountIds = new Set(myOwnAccounts.map((a) => a.id))
-    const groupLabel = 'Total'
-    const Investments = myOwnAccounts.reduce((totals, account) => {
-      const groupData = totals.get(groupLabel) ?? { bookValue: 0, assets: new Map() }
-      for (const initialAmount of account.initialAmounts) {
-        groupData.assets.set(
-          initialAmount.currencyId,
-          (groupData.assets.get(initialAmount.currencyId) ?? 0) + initialAmount.value,
-        )
-      }
-      totals.set(groupLabel, groupData)
-      return totals
-    }, new Map<string, { bookValue: number; assets: Map<number, number> }>())
-
-    const data: Bucket[] = []
-    const labels: Date[] = []
-    const groups = new Set<string>()
-
-    for (const { items, upTo, section } of timeseriesIterator) {
-      if (section === 'before') {
-        for (const transaction of items) {
-          if (
-            typeof transaction.receiver !== 'undefined' && // Has a Receiver
-            transaction.receiver.isMine && // I am the receiver
-            myAccountIds.has(transaction.receiver?.id ?? -1) // The account respects filters
-          ) {
-            const data = Investments.get(groupLabel) ?? { bookValue: 0, assets: new Map() }
-            data.assets.set(
-              transaction.receiverCurrencyId,
-              (data.assets.get(transaction.receiverCurrencyId) ?? 0) + transaction.receiverAmount,
-            )
-            Investments.set(groupLabel, data)
-          }
-          if (
-            typeof transaction.sender !== 'undefined' &&
-            transaction.sender.isMine &&
-            myAccountIds.has(transaction.sender?.id ?? -1)
-          ) {
-            const data = Investments.get(groupLabel) ?? { bookValue: 0, assets: new Map() }
-            data.assets.set(transaction.currencyId, (data.assets.get(transaction.currencyId) ?? 0) - transaction.amount)
-            Investments.set(groupLabel, data)
-          }
-        }
-
-        for (const groupData of Investments.values()) {
-          let marketValue = 0
-          for (const [currencyId, amount] of groupData.assets) {
-            let factor = 1
-            if (currencyId !== defaultCurrency.id) {
-              factor = exchangeRateOnDay(currencyId, defaultCurrency.id, upTo)
-            }
-            marketValue += amount * factor
-          }
-          groupData.bookValue = marketValue
-        }
-
-        continue
-      }
-
-      for (const transaction of items) {
-        if (
-          typeof transaction.receiver !== 'undefined' && // Has a Receiver
-          transaction.receiver.isMine && // I am the receiver
-          myAccountIds.has(transaction.receiver?.id ?? -1) // The account respects filters
-        ) {
-          const data = Investments.get(groupLabel) ?? { bookValue: 0, assets: new Map() }
-          data.assets.set(
-            transaction.receiverCurrencyId,
-            (data.assets.get(transaction.receiverCurrencyId) ?? 0) + transaction.receiverAmount,
-          )
-
-          if (
-            !(
-              (typeof transaction.sender !== 'undefined' &&
-                transaction.sender.isMine &&
-                myAccountIds.has(transaction.sender?.id ?? -1)) ||
-              transaction.getType() === 'financialIncome'
-            )
-          ) {
-            if (transaction.receiverCurrencyId === defaultCurrency.id) {
-              data.bookValue += transaction.receiverAmount
-            } else if (transaction.currencyId === defaultCurrency.id) {
-              data.bookValue += transaction.amount
-            } else {
-              const factor = exchangeRateOnDay(transaction.receiverCurrencyId, defaultCurrency.id, upTo)
-              data.bookValue += transaction.receiverAmount * factor
-            }
-          }
-
-          Investments.set(groupLabel, data)
-        }
-        if (
-          typeof transaction.sender !== 'undefined' &&
-          transaction.sender.isMine &&
-          myAccountIds.has(transaction.sender?.id ?? -1)
-        ) {
-          const data = Investments.get(groupLabel) ?? { bookValue: 0, assets: new Map() }
-          data.assets.set(transaction.currencyId, (data.assets.get(transaction.currencyId) ?? 0) - transaction.amount)
-
-          if (
-            !(
-              (typeof transaction.receiver !== 'undefined' &&
-                transaction.receiver.isMine &&
-                myAccountIds.has(transaction.receiver?.id ?? -1)) ||
-              transaction.getType() === 'financialIncome'
-            )
-          ) {
-            if (transaction.receiverCurrencyId === defaultCurrency.id) {
-              data.bookValue -= transaction.receiverAmount
-            } else if (transaction.currencyId === defaultCurrency.id) {
-              data.bookValue -= transaction.amount
-            } else {
-              const factor = exchangeRateOnDay(transaction.currencyId, defaultCurrency.id, upTo)
-              data.bookValue -= transaction.amount * factor
-            }
-          }
-
-          Investments.set(groupLabel, data)
-        }
-      }
-
-      const todaysData: { [account: string]: { amount: number; baseline?: number } } = {}
-      let todaysBookValue = 0
-      for (const [groupLabel, groupData] of Investments.entries()) {
-        let marketValue = 0
-        for (const [currencyId, amount] of groupData.assets) {
-          let factor = 1
-          if (currencyId !== defaultCurrency.id) {
-            factor = exchangeRateOnDay(currencyId, defaultCurrency.id, upTo)
-          }
-          marketValue += amount * factor
-        }
-
-        todaysBookValue += groupData.bookValue
-        todaysData[groupLabel] = { amount: marketValue, baseline: groupData.bookValue }
-        groups.add(groupLabel)
-      }
-
-      labels.push(upTo)
-      data.push({ date: upTo, values: { ...todaysData }, baseline: todaysBookValue })
-    }
-
-    return { data, labels, groups }
-  }, [
-    augmentedTransactions,
-    myOwnAccounts,
-    exchangeRateOnDay,
-    defaultCurrency,
-    fromDate,
-    toDate,
-    subN,
-    amountHop,
+  const { data, labels, groups } = useNetWorthChartData(
     timeseriesIterator,
-  ])
+    ownAccount,
+    sender,
+    receiver,
+    total,
+    myOwnAccounts,
+    'all',
+  )
 
   const gainSeries = useMemo<LineBucket[]>(
     () =>
