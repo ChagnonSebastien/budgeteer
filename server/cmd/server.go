@@ -13,6 +13,7 @@ import (
 	"chagnon.dev/budget-server/internal/domain/service"
 	"chagnon.dev/budget-server/internal/infrastructure/autoupdate"
 	"chagnon.dev/budget-server/internal/infrastructure/db/dao"
+	"chagnon.dev/budget-server/internal/infrastructure/db/migrations"
 	"chagnon.dev/budget-server/internal/infrastructure/db/repository"
 	"chagnon.dev/budget-server/internal/infrastructure/mailer"
 	"chagnon.dev/budget-server/internal/infrastructure/messaging/grpc"
@@ -93,6 +94,9 @@ func (s *Server) Serve(ctx context.Context) error {
 	)
 	if err != nil {
 		return fmt.Errorf("creating connection to database: %s", err)
+	}
+	if err := migrations.Apply(ctx, db); err != nil {
+		return fmt.Errorf("migrating the database: %w", err)
 	}
 
 	repos := repository.NewRepository(dao.New(db), db)

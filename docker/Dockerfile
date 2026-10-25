@@ -2,7 +2,7 @@ FROM golang:1.26.10-alpine3.24@sha256:27f2d3b83cfc5803c8078f8e730af0f7c431bf067a
 WORKDIR /app
 RUN go install github.com/sqlc-dev/sqlc/cmd/sqlc@v1.31.1
 COPY server/internal/infrastructure/db/queries internal/infrastructure/db/queries
-COPY server/liquibase/changelogs liquibase/changelogs
+COPY server/internal/infrastructure/db/migrations internal/infrastructure/db/migrations
 COPY server/sqlc.yaml sqlc.yaml
 RUN sqlc generate
 
@@ -61,24 +61,10 @@ COPY --from=protoc /app/server/internal/infrastructure/messaging/dto internal/in
 RUN go build -o budget-server .
 
 
-FROM alpine:3.22.7@sha256:2e0b81d60597f449baa56dc25d355367869d2dca4cd57e866f1e2b52af3eb55f AS liquibase
-WORKDIR /liquibase
-RUN apk add --no-cache curl \
-    && curl -fsSL -o /tmp/liquibase.tar.gz https://github.com/liquibase/liquibase/releases/download/v5.0.1/liquibase-5.0.1.tar.gz \
-    && echo "3ae11ccdcd4c080e421e5fd043bdbd624d56fcfc9b294d5d9d898cb8b074e449  /tmp/liquibase.tar.gz" | sha256sum -c - \
-    && tar -xzf /tmp/liquibase.tar.gz \
-    && rm /tmp/liquibase.tar.gz \
-    && curl -fsSL -o /liquibase/lib/postgresql-42.7.4.jar https://jdbc.postgresql.org/download/postgresql-42.7.4.jar \
-    && echo "188976721ead8e8627eb6d8389d500dccc0c9bebd885268a3047180274a6031e  /liquibase/lib/postgresql-42.7.4.jar" | sha256sum -c -
-
-
 FROM debian:bookworm-20261020@sha256:854dd8ab51d62866dbd8f5431d15ce77b12983a2a4a1e1fe43a2395dc7ef9f61
 WORKDIR /app
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-      bash \
-      default-jre-headless \
-      chromium && \
+    apt-get install -y --no-install-recommends chromium && \
     rm -rf /var/lib/apt/lists/*
 # Run as a non-root user. The container mounts no volumes, binds an
 # unprivileged port (8080), and Chromium runs better unprivileged than as root.
@@ -87,15 +73,9 @@ ENV HOME=/home/appuser
 COPY --from=server-build /app/budget-server .
 COPY --from=server-build /app/configs configs
 COPY --from=web-build /app/dist static/web
-COPY --from=liquibase /liquibase /liquibase
-COPY server/liquibase/changelogs changelogs
-#RUN chmod -R +r liquibase/changelogs
-ENV PATH="/liquibase:${PATH}"
-COPY docker/entrypoint.sh entrypoint.sh
-RUN chmod +x budget-server
-RUN chmod +x entrypoint.sh
-RUN chown -R appuser:appuser /app /liquibase
+RUN chown -R appuser:appuser /app
 USER appuser
 EXPOSE 8080
-CMD ["/bin/bash", "entrypoint.sh"]
+ENTRYPOINT ["/app/budget-server"]
+CMD ["start"]
 

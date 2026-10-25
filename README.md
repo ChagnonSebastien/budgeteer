@@ -48,7 +48,7 @@ A sophisticated personal finance management application that helps you track exp
 - Go server with domain-driven design
 - gRPC and HTTP APIs
 - PostgreSQL database
-- Liquibase for database migrations
+- goose for database migrations, applied by the server at startup
 - JWT authentication
 - Multi-user support
 
@@ -94,17 +94,9 @@ make proto-gen
      -p 5432:5432 \
      -v postgres_data:/var/lib/postgresql/data \
      postgres:latest
-
-   # Run migrations
-   docker run --rm --network budgetapp-net \
-     -v ./server/liquibase/changelogs:/liquibase/changelogs \
-     liquibase update \
-     --driver=org.postgresql.Driver \
-     --changelog-file=changelogs/db.changelog-master.yaml \
-     "--url=jdbc:postgresql://budgetapp-postgres:5432/budgetapp?user=postgres&password=changeme"
    ```
 
-2. Start the backend server:
+2. Start the backend server. It applies pending migrations from `server/internal/infrastructure/db/migrations` before serving (`make new-migration NAME=<name>` creates the next one):
    ```bash
    cd server
    go run . start
@@ -121,12 +113,17 @@ make proto-gen
 
 Build and run the entire stack:
 ```bash
-# Build server
-docker build -f docker/Dockerfile -t budgeteer .
-
-# Start all services
 docker compose up --build
 ```
+
+### Upgrading from the Liquibase image
+
+Releases up to the `ci: remove the broken publish job` commit ran Liquibase from a shell entrypoint. Since then:
+
+- The server applies migrations itself at startup with goose. On first start it reads Liquibase's `databasechangelog` table, records the migrations already applied in `goose_db_version`, and applies only the missing ones. No action is needed, and the database user needs the same rights as before.
+- It refuses to start, with an error naming the file, if Liquibase left a migration half applied or still holds `databasechangeloglock`. Run the previous image once so Liquibase finishes (or clear a stale lock), then upgrade.
+- The image no longer runs `entrypoint.sh`: drop any `entrypoint` or `command` override.
+- The `databasechangelog` and `databasechangeloglock` tables stay in place so the previous image can still be rolled back to. Drop them once you no longer need that.
 
 ## Project Structure
 
