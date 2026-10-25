@@ -14,6 +14,7 @@ import React, {
 
 import { Column, Row } from '../shared/Layout'
 import { useElementDimensions } from '../shared/useDimensions'
+import useWideLayout from '../shared/useWideLayout'
 
 export function monotoneSpline(pts: [number, number][]): string {
   const n = pts.length
@@ -270,10 +271,12 @@ const useTimeNavigation = (navigation?: DateNavigation) => {
   const latest = useRef(navigation)
   latest.current = navigation
   const navigable = navigation !== undefined
+  // Stacked above the page content, the chart must let the wheel scroll the page.
+  const zoomOnWheel = useWideLayout()
 
   useEffect(() => {
     const svg = svgRef.current
-    if (!svg || !navigable) return
+    if (!svg || !navigable || !zoomOnWheel) return
     const zoom = (e: WheelEvent) => {
       const navigation = latest.current
       if (!navigation || e.deltaY === 0 || drag.current) return
@@ -295,7 +298,7 @@ const useTimeNavigation = (navigation?: DateNavigation) => {
       svg.removeEventListener('wheel', zoom)
       clearTimeout(wheelTimer.current)
     }
-  }, [navigable])
+  }, [navigable, zoomOnWheel])
 
   const endDrag = () => {
     if (!drag.current) return
