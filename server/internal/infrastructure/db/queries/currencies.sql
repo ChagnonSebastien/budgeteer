@@ -18,6 +18,7 @@ WHERE user_id = sqlc.arg(user_id);
 SELECT id, name, symbol, risk, type, decimal_points, rate_fetch_script, auto_update
 FROM currencies
 WHERE auto_update = true
+ORDER BY row_number() OVER (PARTITION BY user_id ORDER BY id), user_id
 LIMIT sqlc.arg(page_size) OFFSET sqlc.arg(page_offset);
 
 -- name: UpdateCurrency :exec
