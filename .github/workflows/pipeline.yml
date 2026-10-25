@@ -1,4 +1,4 @@
-name: Build and Publish Docker Image
+name: Build Docker Image
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
   pull_request:
     branches:
       - main
-  workflow_dispatch:  # Allow manual trigger for publish job
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -23,68 +23,3 @@ jobs:
       - name: Build Docker image
         run: |
           docker build -f docker/Dockerfile -t ${{ secrets.DOCKERHUB_USERNAME }}/budgeteer:latest .
-
-      - name: Save Docker image to a tarball
-        run: docker save ${{ secrets.DOCKERHUB_USERNAME }}/budgeteer:latest -o budgeteer-image.tar
-
-      - name: Upload Docker image as artifact
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        with:
-          name: built-image
-          path: budgeteer-image.tar
-          retention-days: 1
-
-  publish:
-    needs: build
-    runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
-    permissions: # semantic-release: tag, GitHub release, issue and PR comments
-      contents: write
-      issues: write
-      pull-requests: write
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@a37ce9120846195fa4ece8f58b268e6043cb2f26 # v3.7.0
-
-      - name: Download built Docker image
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
-        with:
-          name: built-image
-
-      - name: Load Docker image
-        run: docker load -i budgeteer-image.tar
-
-      - name: Set up Node.js
-        uses: actions/setup-node@3235b876344d2a9aa001b8d1453c930bba69e610 # v3.9.1
-        with:
-          node-version: '20'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Determine next version with semantic-release
-        id: version
-        run: |
-          npx semantic-release version --dry-run | tee version.txt
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Log in to Docker Hub
-        uses: docker/login-action@465a07811f14bebb1938fbed4728c6a1ff8901fc # v2.2.0
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Tag and push Docker image with semantic version
-        run: |
-          version=$(cat version.txt | grep "Next release version" | sed -E 's/.*Next release version: (.*)/\1/')
-          docker tag ${{ secrets.DOCKERHUB_USERNAME }}/budgeteer:latest ${{ secrets.DOCKERHUB_USERNAME }}/budgeteer:$version
-          docker push ${{ secrets.DOCKERHUB_USERNAME }}/budgeteer:$version
-          docker push ${{ secrets.DOCKERHUB_USERNAME }}/budgeteer:latest
-
-      - name: Finalize release with semantic-release
-        run: npx semantic-release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
