@@ -19,7 +19,11 @@ const PersonAvatar: FC<{ email: Email; displayName: string; small?: boolean; cla
 }) => (
   <Avatar
     className={className}
-    sx={{ bgcolor: personColor(email), flexShrink: 0, ...(small ? {} : { width: 32, height: 32 }) }}
+    sx={{
+      bgcolor: personColor(email),
+      flexShrink: 0,
+      ...(small ? { width: 24, height: 24 } : { width: 32, height: 32 }),
+    }}
   >
     <Typography variant={small ? 'caption' : 'body2'} sx={{ color: 'common.white' }}>
       {displayName.charAt(0).toUpperCase()}

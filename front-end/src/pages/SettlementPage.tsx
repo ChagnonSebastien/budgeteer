@@ -9,6 +9,7 @@ import SelectOne from '../components/inputs/SelectOne'
 import LoadingScreen from '../components/LoadingScreen'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
 import FormWrapper from '../components/shared/FormWrapper'
+import PersonAvatar from '../components/shared/PersonAvatar'
 import { useToast } from '../components/shared/ToastProvider'
 import useAugmentedTransactionGroup from '../components/transactionGroup/useAugmentedTransactionGroup'
 import TransactionForm from '../components/transactions/TransactionForm'
@@ -214,7 +215,11 @@ const SettlementPage: FC<{ mode: SettlementPageMode }> = ({ mode }) => {
                   label="Who"
                   value={chosenCounterpart}
                   onChange={setCounterpart}
-                  options={others.map((m) => ({ value: m.email, label: m.name }))}
+                  options={others.map((m) => ({
+                    value: m.email,
+                    label: m.name,
+                    icon: <PersonAvatar email={m.email} displayName={m.name} small />,
+                  }))}
                   type="dropdown"
                 />
               </>

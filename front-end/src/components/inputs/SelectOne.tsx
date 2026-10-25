@@ -13,11 +13,12 @@ import {
   ToggleButtonGroup,
   Typography,
 } from '@mui/material'
-import { FC } from 'react'
+import { FC, ReactNode } from 'react'
 
 type Option = {
   value: string
   label: string
+  icon?: ReactNode
   disabled?: boolean
 }
 
@@ -74,7 +75,14 @@ const SelectOne: FC<Props> = (props) => {
         >
           {props.options.map((option) => (
             <MenuItem key={`${props.label}-label-${option.value}`} value={option.value} disabled={option.disabled}>
-              {option.label}
+              {option.icon ? (
+                <Stack direction="row" sx={{ alignItems: 'center', gap: 1 }}>
+                  {option.icon}
+                  {option.label}
+                </Stack>
+              ) : (
+                option.label
+              )}
             </MenuItem>
           ))}
         </TextField>

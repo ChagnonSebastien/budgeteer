@@ -8,6 +8,7 @@ import DatePicker from '../inputs/DatePicker'
 import { FixedPointInput } from '../inputs/FixedPointInput'
 import SelectOne from '../inputs/SelectOne'
 import FormWrapper from '../shared/FormWrapper'
+import PersonAvatar from '../shared/PersonAvatar'
 
 export interface UnconfirmedTransactionFormFields {
   owner: Email
@@ -68,10 +69,14 @@ const UnconfirmedTransactionForm: FC<Props> = (props) => {
     <FormWrapper onSubmit={handleSubmit} submitText={submitText}>
       {payer !== 'me' && (
         <SelectOne
-          label="Payed by"
+          label="Paid by"
           value={owner}
           onChange={setOwner}
-          options={payerOptions.map((member) => ({ value: member.email, label: member.name }))}
+          options={payerOptions.map((member) => ({
+            value: member.email,
+            label: member.name,
+            icon: <PersonAvatar email={member.email} displayName={member.name} small />,
+          }))}
           type="dropdown"
         />
       )}
