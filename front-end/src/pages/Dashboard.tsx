@@ -9,6 +9,7 @@ import InvestmentGainLineChart from '../components/graphing/InvestmentGainLineCh
 import { DrawerContext } from '../components/Menu'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
 import { PageBody, Section, Stat } from '../components/shared/Layout'
+import NewTransactionSpeedDial from '../components/transactions/NewTransactionSpeedDial'
 import { formatFull } from '../domain/model/currency'
 import MixedAugmentation from '../service/MixedAugmentation'
 import { AccountServiceContext } from '../service/ServiceContext'
@@ -196,6 +197,7 @@ const Dashboard: FC = () => {
           </Section>
         )}
       </PageBody>
+      <NewTransactionSpeedDial />
     </ContentWithHeader>
   )
 }

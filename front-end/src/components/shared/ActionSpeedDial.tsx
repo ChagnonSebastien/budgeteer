@@ -17,6 +17,7 @@ const fabPosition = {
   bottom: (t: Theme) => `calc(${t.spacing(2)} + env(safe-area-inset-bottom))`,
   right: (t: Theme) => `calc(${t.spacing(2)} + env(safe-area-inset-right))`,
 } as const
+const fabIconSize = 18
 
 export interface DialAction {
   label: string
@@ -40,7 +41,7 @@ const ActionSpeedDial: FC<{ ariaLabel: string; actions: DialAction[]; hint?: str
       <Tooltip title={readOnly.label} placement="left" arrow>
         <Box component="span" sx={fabPosition}>
           <Fab disabled aria-label={actions.length === 1 ? label : ariaLabel}>
-            {actions.length === 1 ? <Icon /> : <IconLib.FaPlus />}
+            {actions.length === 1 ? <Icon size={fabIconSize} /> : <IconLib.FaPlus size={fabIconSize} />}
           </Fab>
         </Box>
       </Tooltip>
@@ -48,20 +49,11 @@ const ActionSpeedDial: FC<{ ariaLabel: string; actions: DialAction[]; hint?: str
   }
 
   if (actions.length === 1) {
-    const [{ label, Icon, color, onClick }] = actions
+    const [{ label, Icon, onClick }] = actions
     return (
       <Tooltip open={hint ? true : undefined} title={hint ?? label} placement="left" arrow>
-        <Fab
-          aria-label={label}
-          onClick={onClick}
-          sx={{
-            ...fabPosition,
-            bgcolor: color,
-            color: 'common.white',
-            '&:hover': { bgcolor: color },
-          }}
-        >
-          <Icon />
+        <Fab color="primary" aria-label={label} onClick={onClick} sx={fabPosition}>
+          <Icon size={fabIconSize} />
         </Fab>
       </Tooltip>
     )
@@ -87,12 +79,15 @@ const ActionSpeedDial: FC<{ ariaLabel: string; actions: DialAction[]; hint?: str
         {...dial}
         icon={
           <SpeedDialIcon
+            icon={<IconLib.FaPlus />}
             openIcon={<IconLib.FaPlus />}
             sx={{
+              height: fabIconSize,
+              width: fabIconSize,
               '& .MuiSpeedDialIcon-icon, & .MuiSpeedDialIcon-openIcon': {
                 transition: 'all 0.2s ease-in-out',
-                height: 24,
-                width: 24,
+                height: fabIconSize,
+                width: fabIconSize,
               },
               '& .MuiSpeedDialIcon-openIcon': { transform: 'rotate(45deg)' },
             }}

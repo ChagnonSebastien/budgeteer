@@ -33,7 +33,7 @@ const GettingStarted: FC = () => {
       description: 'Your charts, balances and trends fill in as you record what you spend and earn.',
       done: augmentedTransactions.length > 0,
       action: 'Record one',
-      path: '/transactions/new?type=expense',
+      path: '/transactions/new',
     },
     {
       title: 'Share expenses with others',

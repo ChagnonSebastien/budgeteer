@@ -1,7 +1,6 @@
 import { Box, Checkbox, IconButton, Menu, MenuItem, Stack, ToggleButton, ToggleButtonGroup } from '@mui/material'
 import { format, isAfter, isBefore, isSameDay } from 'date-fns'
 import { FC, useContext, useMemo, useState } from 'react'
-import { useLocation } from 'react-router-dom'
 
 import AggregatedDiffChart from '../components/graphing/AggregatedDiffChart'
 import { FirstDivision, GraphContainer } from '../components/graphing/GraphStyledComponents'
@@ -9,7 +8,6 @@ import TransactionsPieChart from '../components/graphing/PieChart'
 import { IconToolsContext } from '../components/icons/IconTools'
 import useTransactionFilter from '../components/inputs/useTransactionFilter'
 import { DrawerContext } from '../components/Menu'
-import ActionSpeedDial, { DialAction } from '../components/shared/ActionSpeedDial'
 import ConfirmDeleteModal from '../components/shared/ConfirmDeleteModal'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
 import { DetailCard, DetailHeading, FancyDialog, FancyModal } from '../components/shared/FancyModal'
@@ -19,9 +17,9 @@ import { useToast } from '../components/shared/ToastProvider'
 import useCloseOnBack, { useNavigateFromDialog } from '../components/shared/useCloseOnBack'
 import useQueryParams from '../components/shared/useQueryParams'
 import useWideLayout from '../components/shared/useWideLayout'
+import NewTransactionSpeedDial from '../components/transactions/NewTransactionSpeedDial'
 import TransactionCard from '../components/transactions/TransactionCard'
 import { TransactionList } from '../components/transactions/TransactionList'
-import { useTransactionTypeOptions } from '../components/transactions/TransactionTypeChoice'
 import { AugmentedCategory } from '../domain/model/category'
 import { formatAmount } from '../domain/model/currency'
 import { AugmentedTransaction } from '../domain/model/transaction'
@@ -36,8 +34,6 @@ type QueryParams = {
 
 const TransactionPage: FC = () => {
   const navigate = useNavigateFromDialog()
-  const location = useLocation()
-  const currentUrl = `${location.pathname}${location.search}`
   const { privacyMode } = useContext(DrawerContext)
   const [clickedTransaction, setClickedTransaction] = useState<AugmentedTransaction | null>(null)
   const [transactionToDelete, setTransactionToDelete] = useState<AugmentedTransaction | null>(null)
@@ -69,7 +65,6 @@ const TransactionPage: FC = () => {
   const prefillAccountId = accountFilter?.length === 1 ? accountFilter[0] : null
 
   const { IconLib } = useContext(IconToolsContext)
-  const transactionTypeOptions = useTransactionTypeOptions()
 
   const filteredTransaction = useMemo(() => {
     return augmentedTransactions
@@ -232,26 +227,9 @@ const TransactionPage: FC = () => {
         </Stack>
       )}
 
-      <ActionSpeedDial
-        ariaLabel="Create new transaction"
+      <NewTransactionSpeedDial
         hint={hasTransactions ? undefined : 'Record your first transaction'}
-        actions={[
-          ...transactionTypeOptions.map(
-            ({ label, type, Icon, color }): DialAction => ({
-              label,
-              Icon,
-              color,
-              onClick: () =>
-                navigate(`/transactions/new?type=${type}`, { state: { from: currentUrl, prefillAccountId } }),
-            }),
-          ),
-          {
-            label: 'Import CSV',
-            Icon: IconLib.FaFileImport,
-            color: 'primary.main',
-            onClick: () => navigate('/transactions/import', { state: { prefillAccountId } }),
-          },
-        ]}
+        prefillAccountId={prefillAccountId}
       />
 
       <FancyDialog open={clickedTransaction !== null} onClose={() => setClickedTransaction(null)}>
