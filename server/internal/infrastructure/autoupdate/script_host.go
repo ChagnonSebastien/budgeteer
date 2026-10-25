@@ -8,13 +8,13 @@ import (
 	"os"
 	"syscall"
 
-	v8 "github.com/tommie/v8go"
+	"github.com/dop251/goja"
+	"github.com/dop251/goja/parser"
 )
 
 const scriptHostEnv = "BUDGETEER_SCRIPT_HOST"
 
 const (
-	scriptHeapLimitMB  = 128
 	scriptMemoryLimit  = 512 << 20
 	maxHostOutputBytes = 1 << 20
 )
@@ -82,55 +82,49 @@ func hostScript(in io.Reader, out io.Writer) error {
 }
 
 func evaluate(script string, fetch func(url string, stealth bool) (string, error)) (string, error) {
-	v8.SetFlags(fmt.Sprintf("--max-old-space-size=%d", scriptHeapLimitMB))
-	iso := v8.NewIsolate()
-	defer iso.Dispose()
-	v8Ctx := v8.NewContext(iso)
-	defer v8Ctx.Close()
+	vm := goja.New()
+	// Otherwise a sourceMappingURL comment makes the parser read that path from disk.
+	vm.SetParserOptions(parser.WithDisableSourceMaps)
 
-	if err := bindFetch(v8Ctx, "httpGet", false, fetch); err != nil {
+	if err := bindFetch(vm, "httpGet", false, fetch); err != nil {
 		return "", fmt.Errorf("binding httpGet: %s", err)
 	}
-	if err := bindFetch(v8Ctx, "httpGetWithStealth", true, fetch); err != nil {
+	if err := bindFetch(vm, "httpGetWithStealth", true, fetch); err != nil {
 		return "", fmt.Errorf("binding httpGetWithStealth: %s", err)
 	}
 
-	val, err := v8Ctx.RunScript(script, "user.js")
+	val, err := vm.RunScript("user.js", script)
 	if err != nil {
 		return "", fmt.Errorf("running script: %s", err)
 	}
 
-	prom, err := val.AsPromise()
-	if err != nil {
-		return "", fmt.Errorf("converting to promise: %s", err)
+	prom, ok := val.Export().(*goja.Promise)
+	if !ok {
+		return "", errors.New("converting to promise: the script did not return a promise")
 	}
 
-	v8Ctx.PerformMicrotaskCheckpoint() // one drain suffices only while every binding stays synchronous
-
+	// Jobs drain once RunScript returns, enough only while every binding stays synchronous.
 	switch prom.State() {
-	case v8.Fulfilled:
+	case goja.PromiseStateFulfilled:
 		return prom.Result().String(), nil
-	case v8.Rejected:
+	case goja.PromiseStateRejected:
 		return "", fmt.Errorf("script rejected: %s", prom.Result().String())
 	default:
 		return "", errors.New("script promise never settled")
 	}
 }
 
-func bindFetch(v8Ctx *v8.Context, name string, stealth bool, fetch func(url string, stealth bool) (string, error)) error {
-	iso := v8Ctx.Isolate()
-	tmpl := v8.NewFunctionTemplate(iso, func(info *v8.FunctionCallbackInfo) *v8.Value {
+func bindFetch(vm *goja.Runtime, name string, stealth bool, fetch func(url string, stealth bool) (string, error)) error {
+	return vm.Set(name, func(call goja.FunctionCall) goja.Value {
 		url := ""
-		if len(info.Args()) > 0 {
-			url = info.Args()[0].String()
+		if len(call.Arguments) > 0 {
+			url = call.Argument(0).String()
 		}
 		body, err := fetch(url, stealth)
 		if err != nil {
-			iso.TerminateExecution()
-			return nil
+			vm.Interrupt(err)
+			return goja.Undefined()
 		}
-		value, _ := v8.NewValue(iso, body)
-		return value
+		return vm.ToValue(body)
 	})
-	return v8Ctx.Global().Set(name, tmpl.GetFunction(v8Ctx))
 }

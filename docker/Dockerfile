@@ -39,15 +39,7 @@ RUN VITE_COMMIT_HASH=$(cat /commit) npm run build
 
 
 FROM golang:1.27.3-bookworm@sha256:972b4110ba0f47539a975c31e52c64765e1ff19f2d74469ae4a595c6676e80a5 AS server-build
-# v8go's prebuilt V8 links Chromium's libc++, whose headers need the Clang version its README names.
-RUN curl -fsSL https://apt.llvm.org/llvm-snapshot.gpg.key | gpg --dearmor -o /usr/share/keyrings/llvm.gpg && \
-  echo "deb [signed-by=/usr/share/keyrings/llvm.gpg] http://apt.llvm.org/bookworm/ llvm-toolchain-bookworm-21 main" > /etc/apt/sources.list.d/llvm.list && \
-  apt-get update && apt-get install -y --no-install-recommends \
-  build-essential \
-  pkg-config \
-  clang-21
-
-ENV CGO_ENABLED=1 CC=clang-21 CXX=clang++-21 CGO_CXXFLAGS=-nostdinc++
+ENV CGO_ENABLED=0
 
 WORKDIR /app
 COPY server/go.mod server/go.sum ./
@@ -72,7 +64,7 @@ ENTRYPOINT ["/usr/bin/tini", "--"]
 CMD ["/bin/bash", "/usr/local/bin/chromium.sh"]
 
 
-FROM gcr.io/distroless/cc-debian12:nonroot@sha256:9dac0a79194e45a7da0158a9c6da57b217585af0786db3845d1f0ec1a0dd182f
+FROM gcr.io/distroless/static-debian12:nonroot@sha256:afa5c872c891853ca7fcf1f12c3edb23f7eeef36189728842dd51042ff57f7ab
 WORKDIR /app
 COPY --from=server-build /app/budget-server .
 COPY --from=server-build /app/configs configs
