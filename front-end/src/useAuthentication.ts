@@ -24,9 +24,20 @@ const clearLocalSession = async () => {
   localStorage.clear()
 }
 
+const postLogout = async () => {
+  try {
+    const response = await fetch(`${serverUrl}/auth/logout`, { method: 'POST', credentials: 'include' })
+    const { redirect } = (await response.json()) as { redirect: string }
+    window.location.href = redirect
+  } catch (error) {
+    console.error('logging out', error)
+    window.location.href = '/'
+  }
+}
+
 const oidcLogout = async () => {
   await clearLocalSession()
-  window.location.href = `${serverUrl}/auth/logout`
+  await postLogout()
 }
 
 const userPassLogin = () => {
@@ -44,7 +55,7 @@ const guestLogin = () => {
 
 const guestLogout = async () => {
   await clearLocalSession()
-  window.location.href = `${serverUrl}/auth/logout`
+  await postLogout()
 }
 
 const demoLogout = async () => {

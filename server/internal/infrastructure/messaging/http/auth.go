@@ -143,7 +143,7 @@ func (auth *Auth) ServeMux() *http.ServeMux {
 	mux.HandleFunc("/login", auth.loginHandler)
 	mux.HandleFunc("/callback", auth.callbackHandler)
 	mux.HandleFunc("/userinfo", auth.userInfoHandler)
-	mux.HandleFunc("/logout", auth.logoutHandler)
+	mux.HandleFunc("POST /logout", auth.logoutHandler)
 	mux.HandleFunc("/guest/send-code", auth.guestSendCodeHandler)
 	mux.HandleFunc("/guest/verify-code", auth.guestVerifyCodeHandler)
 	mux.HandleFunc("/display-name", auth.displayNameHandler)
@@ -289,19 +289,24 @@ func (auth *Auth) logoutHandler(w http.ResponseWriter, r *http.Request) {
 		},
 	)
 
-	if (sessionErr == nil && session.user.IsGuestUser()) || auth.OidcConfig == nil {
-		http.Redirect(w, r, auth.FrontendPublicUrl, http.StatusTemporaryRedirect)
-		return
+	redirect := auth.FrontendPublicUrl
+	if (sessionErr != nil || !session.user.IsGuestUser()) && auth.OidcConfig != nil {
+		redirect = fmt.Sprintf(
+			"%s/protocol/openid-connect/logout?client_id=%s&post_logout_redirect_uri=%s",
+			auth.OidcIssuer,
+			auth.OidcConfig.ClientID,
+			url.QueryEscape(auth.FrontendPublicUrl),
+		)
 	}
 
-	logoutURL := fmt.Sprintf(
-		"%s/protocol/openid-connect/logout?client_id=%s&post_logout_redirect_uri=%s",
-		auth.OidcIssuer,
-		auth.OidcConfig.ClientID,
-		url.QueryEscape(auth.FrontendPublicUrl),
-	)
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(logoutResponse{Redirect: redirect}); err != nil {
+		logger.Error("encoding response", "error", err)
+	}
+}
 
-	http.Redirect(w, r, logoutURL, http.StatusTemporaryRedirect)
+type logoutResponse struct {
+	Redirect string `json:"redirect"`
 }
 
 type userInfoResponse struct {

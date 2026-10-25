@@ -161,7 +161,7 @@ func TestSessionIsRevokedOnLogout(t *testing.T) {
 		t.Fatalf("expected a valid session, got %v %v", got, err)
 	}
 
-	logoutReq := httptest.NewRequest(http.MethodGet, "/logout", nil)
+	logoutReq := httptest.NewRequest(http.MethodPost, "/logout", nil)
 	logoutReq.AddCookie(sessionCookie)
 	auth.logoutHandler(httptest.NewRecorder(), logoutReq)
 
