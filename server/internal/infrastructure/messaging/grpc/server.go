@@ -1,6 +1,8 @@
 package grpc
 
 import (
+	"context"
+
 	"google.golang.org/grpc"
 
 	"chagnon.dev/budget-server/internal/domain/service"
@@ -19,6 +21,7 @@ type Services struct {
 	Settlement             settlementRepository
 	Import                 importRepository
 	User                   userRepository
+	ScriptRunner           func(context.Context, string) (string, error)
 }
 
 func NewServerWithHandlers(services Services) *grpc.Server {
@@ -27,7 +30,7 @@ func NewServerWithHandlers(services Services) *grpc.Server {
 	dto.RegisterCategoryServiceServer(grpcServer, &CategoryHandler{categoryService: services.Category})
 	dto.RegisterCurrencyServiceServer(grpcServer, &CurrencyHandler{currencyService: services.Currency})
 	dto.RegisterTransactionServiceServer(grpcServer, &TransactionHandler{transactionService: services.Transaction})
-	dto.RegisterExchangeRateServiceServer(grpcServer, &ExchangeRateHandler{exchangeRateService: services.ExchangeRate, javascriptRunner: autoupdate.NewOnDemandRunner(autoupdate.RunJavascript).Run})
+	dto.RegisterExchangeRateServiceServer(grpcServer, &ExchangeRateHandler{exchangeRateService: services.ExchangeRate, javascriptRunner: autoupdate.NewOnDemandRunner(services.ScriptRunner).Run})
 	dto.RegisterTransactionGroupServiceServer(grpcServer, &TransactionGroupHandler{transactionGroupService: services.TransactionGroup})
 	dto.RegisterUnconfirmedTransactionServiceServer(grpcServer, &UnconfirmedTransactionHandler{unconfirmedTransactionService: services.UnconfirmedTransaction})
 	dto.RegisterSettlementServiceServer(grpcServer, &SettlementHandler{settlementService: services.Settlement})

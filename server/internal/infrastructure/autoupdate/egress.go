@@ -190,8 +190,8 @@ func (p *egressProxy) tunnel(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func startEgressProxy(ctx context.Context) (string, func(), error) {
-	listener, err := (&net.ListenConfig{}).Listen(ctx, "tcp", "127.0.0.1:0")
+func startEgressProxy(ctx context.Context, listen, peer netip.Addr) (string, func(), error) {
+	listener, err := (&net.ListenConfig{}).Listen(ctx, "tcp", netip.AddrPortFrom(listen, 0).String())
 	if err != nil {
 		return "", nil, fmt.Errorf("listening for egress proxy: %w", err)
 	}
@@ -201,7 +201,25 @@ func startEgressProxy(ctx context.Context) (string, func(), error) {
 		ReadHeaderTimeout: 10 * time.Second,
 		BaseContext:       func(net.Listener) context.Context { return ctx },
 	}
-	go func() { _ = server.Serve(listener) }()
+	go func() { _ = server.Serve(peerListener{Listener: listener, peer: peer}) }()
 
 	return listener.Addr().String(), func() { _ = server.Close() }, nil
+}
+
+type peerListener struct {
+	net.Listener
+	peer netip.Addr
+}
+
+func (l peerListener) Accept() (net.Conn, error) {
+	for {
+		conn, err := l.Listener.Accept()
+		if err != nil {
+			return nil, err
+		}
+		if remote, ok := conn.RemoteAddr().(*net.TCPAddr); ok && remote.AddrPort().Addr().Unmap() == l.peer {
+			return conn, nil
+		}
+		_ = conn.Close()
+	}
 }

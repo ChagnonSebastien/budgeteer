@@ -10,11 +10,6 @@ import (
 	"os/exec"
 	"time"
 
-	"github.com/go-rod/rod"
-	"github.com/go-rod/rod/lib/launcher"
-	"github.com/go-rod/rod/lib/launcher/flags"
-	"github.com/go-rod/stealth"
-
 	"chagnon.dev/budget-server/internal/logging"
 )
 
@@ -27,7 +22,19 @@ const (
 
 var errFetchBudgetExceeded = fmt.Errorf("a script may fetch at most %d pages per run", maxFetchesPerRun)
 
-func RunJavascript(ctx context.Context, script string) (string, error) {
+type JavascriptRunner struct {
+	browser *remoteBrowser
+}
+
+func NewJavascriptRunner(browserURL string) (*JavascriptRunner, error) {
+	browser, err := newRemoteBrowser(browserURL)
+	if err != nil {
+		return nil, err
+	}
+	return &JavascriptRunner{browser: browser}, nil
+}
+
+func (r *JavascriptRunner) Run(ctx context.Context, script string) (string, error) {
 	if len(script) > MaxScriptBytes {
 		return "", fmt.Errorf("script is larger than %d bytes", MaxScriptBytes)
 	}
@@ -57,7 +64,7 @@ func RunJavascript(ctx context.Context, script string) (string, error) {
 	}
 
 	output := &io.LimitedReader{R: stdout, N: maxHostOutputBytes}
-	result, protocolErr := driveScriptHost(ctx, script, stdin, output)
+	result, protocolErr := r.driveScriptHost(ctx, script, stdin, output)
 	if protocolErr != nil {
 		_ = host.Process.Kill()
 	}
@@ -83,7 +90,7 @@ func (m hostMessage) err() error {
 	return errors.New(m.Error)
 }
 
-func driveScriptHost(ctx context.Context, script string, stdin io.Writer, stdout io.Reader) (hostMessage, error) {
+func (r *JavascriptRunner) driveScriptHost(ctx context.Context, script string, stdin io.Writer, stdout io.Reader) (hostMessage, error) {
 	encoder := json.NewEncoder(stdin)
 	decoder := json.NewDecoder(stdout)
 
@@ -101,14 +108,14 @@ func driveScriptHost(ctx context.Context, script string, stdin io.Writer, stdout
 			return message, nil
 		}
 
-		body := fetchForScript(ctx, message.FetchURL, message.Stealth, &fetches)
+		body := r.fetchForScript(ctx, message.FetchURL, message.Stealth, &fetches)
 		if err := encoder.Encode(fetchReply{Body: body}); err != nil {
 			return hostMessage{}, fmt.Errorf("answering the script host: %w", err)
 		}
 	}
 }
 
-func fetchForScript(ctx context.Context, url string, stealth bool, fetches *int) string {
+func (r *JavascriptRunner) fetchForScript(ctx context.Context, url string, stealth bool, fetches *int) string {
 	if url == "" {
 		return "A URL is required"
 	}
@@ -120,79 +127,18 @@ func fetchForScript(ctx context.Context, url string, stealth bool, fetches *int)
 
 	fetch := fetchWithLimits
 	if stealth {
-		fetch = fetchWithBrowser
+		fetch = r.browser.fetch
 	}
 	body, err := fetch(ctx, url)
 	if errors.Is(err, errDestinationNotAllowed) {
 		return "Destination not allowed: only public http(s) addresses on ports 80 and 443 can be fetched"
+	}
+	if errors.Is(err, errStealthUnavailable) {
+		return err.Error()
 	}
 	if err != nil {
 		logging.FromContext(ctx).With("url", url).Error("fetching url for script", "error", err)
 		return "Internal Server Error"
 	}
 	return body
-}
-
-func fetchWithBrowser(ctx context.Context, rawURL string) (string, error) {
-	parsed, err := checkScriptURL(rawURL)
-	if err != nil {
-		return "", err
-	}
-
-	proxyAddr, stopProxy, err := startEgressProxy(ctx)
-	if err != nil {
-		return "", err
-	}
-	defer stopProxy()
-
-	// Chromium skips the proxy for loopback unless told otherwise, and WebRTC would bypass it over UDP.
-	l := launcher.New().
-		Context(ctx).
-		Bin("chromium").
-		Env("PATH=/usr/bin:/bin", "HOME="+os.TempDir()).
-		Headless(true).
-		Proxy(proxyAddr).
-		Set(flags.Flag("proxy-bypass-list"), "<-loopback>").
-		Set(flags.Flag("force-webrtc-ip-handling-policy"), "disable_non_proxied_udp")
-
-	controlURL, err := l.Launch()
-	if err != nil {
-		return "", fmt.Errorf("launching chromium: %w", err)
-	}
-	defer func() {
-		l.Kill()
-		l.Cleanup()
-	}()
-
-	browser := rod.New().Context(ctx).ControlURL(controlURL)
-	if err := browser.Connect(); err != nil {
-		return "", fmt.Errorf("connecting to the browser: %w", err)
-	}
-	defer func() { _ = browser.Close() }()
-
-	page, err := stealth.Page(browser)
-	if err != nil {
-		return "", fmt.Errorf("creating page: %w", err)
-	}
-
-	if err := page.Navigate(parsed.String()); err != nil {
-		return "", fmt.Errorf("navigating to page: %w", err)
-	}
-	if err := page.WaitLoad(); err != nil {
-		return "", fmt.Errorf("waiting for page to load: %w", err)
-	}
-
-	preElement, err := page.Element("pre")
-	if err != nil {
-		return "", fmt.Errorf("getting pre element: %w", err)
-	}
-
-	body, err := preElement.Text()
-	if err != nil {
-		return "", fmt.Errorf("converting pre element to text: %w", err)
-	}
-	if len(body) > maxResponseBytes {
-		return "", errors.New("response too large")
-	}
-	return body, nil
 }

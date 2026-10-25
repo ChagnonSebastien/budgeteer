@@ -22,7 +22,7 @@ func runWithin(t *testing.T, timeout time.Duration, script string) (string, erro
 	defer cancel()
 
 	start := time.Now()
-	result, err := RunJavascript(ctx, script)
+	result, err := (&JavascriptRunner{}).Run(ctx, script)
 	if elapsed := time.Since(start); elapsed > timeout+2*time.Second {
 		t.Fatalf("script ran for %s, past its %s deadline", elapsed, timeout)
 	}

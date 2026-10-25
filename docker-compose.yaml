@@ -14,10 +14,26 @@ services:
       DATABASE_PASSWORD: changeme
       DATABASE_NAME: budgetapp
       DATABASE_SSLMODE: disable
+      BROWSER_URL: http://chromium:9222
+    networks:
+      - default
+      - browser
     restart: always
     depends_on:
       postgres:
         condition: service_healthy
+      chromium:
+        condition: service_started
+
+  # Only reaches the internet through budget-server's egress proxy: keep it on the internal network alone.
+  chromium:
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile
+      target: chromium
+    networks:
+      - browser
+    restart: always
 
   postgres:
     image: postgres:16
@@ -36,6 +52,10 @@ services:
       retries: 5
       start_period: 10s
     restart: always
+
+networks:
+  browser:
+    internal: true
 
 volumes:
   postgres_data:

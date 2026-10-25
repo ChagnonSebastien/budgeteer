@@ -35,3 +35,6 @@ mailer:
   fromAddress: "noreply@budgeteer.app"
   replyTo: ""
   useMock: false
+browser:
+  # DevTools endpoint of the Chromium sidecar (http://host:port). Empty disables httpGetWithStealth.
+  url: ""

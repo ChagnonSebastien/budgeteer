@@ -61,13 +61,20 @@ COPY --from=protoc /app/server/internal/infrastructure/messaging/dto internal/in
 RUN go build -o budget-server .
 
 
+FROM debian:bookworm-20261020@sha256:854dd8ab51d62866dbd8f5431d15ce77b12983a2a4a1e1fe43a2395dc7ef9f61 AS chromium
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends chromium socat tini && \
+    rm -rf /var/lib/apt/lists/*
+RUN useradd --create-home --uid 10001 chromium
+COPY docker/chromium.sh /usr/local/bin/chromium.sh
+USER chromium
+EXPOSE 9222
+ENTRYPOINT ["/usr/bin/tini", "--"]
+CMD ["/bin/bash", "/usr/local/bin/chromium.sh"]
+
+
 FROM debian:bookworm-20261020@sha256:854dd8ab51d62866dbd8f5431d15ce77b12983a2a4a1e1fe43a2395dc7ef9f61
 WORKDIR /app
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends chromium && \
-    rm -rf /var/lib/apt/lists/*
-# Run as a non-root user. The container mounts no volumes, binds an
-# unprivileged port (8080), and Chromium runs better unprivileged than as root.
 RUN useradd --create-home --uid 10001 appuser
 ENV HOME=/home/appuser
 COPY --from=server-build /app/budget-server .

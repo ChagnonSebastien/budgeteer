@@ -58,6 +58,9 @@ type Config struct {
 		PublicUrl      string `mapstructure:"publicUrl"`
 		ClientIPHeader string `mapstructure:"clientIpHeader"`
 	} `mapstructure:"server"`
+	Browser struct {
+		Url string `mapstructure:"url"`
+	} `mapstructure:"browser"`
 }
 
 var cfgFile string
@@ -109,6 +112,7 @@ var startCmd = &cobra.Command{
 			},
 			PublicUrl:      config.Server.PublicUrl,
 			ClientIPHeader: config.Server.ClientIPHeader,
+			BrowserUrl:     config.Browser.Url,
 		}}
 
 		logger := logging.NewLogger(slog.LevelInfo, false)

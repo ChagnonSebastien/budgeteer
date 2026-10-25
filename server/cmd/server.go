@@ -75,6 +75,7 @@ type ServerConfig struct {
 	Mailer         MailerConfig
 	PublicUrl      string
 	ClientIPHeader string
+	BrowserUrl     string
 }
 
 type Server struct {
@@ -178,6 +179,14 @@ func (s *Server) Serve(ctx context.Context) error {
 		}
 	}
 
+	scriptRunner, err := autoupdate.NewJavascriptRunner(s.config.BrowserUrl)
+	if err != nil {
+		return fmt.Errorf("setting up the script runner: %w", err)
+	}
+	if s.config.BrowserUrl == "" {
+		logging.FromContext(ctx).Warn("No browser is configured (BROWSER_URL): httpGetWithStealth is disabled in exchange rate scripts.")
+	}
+
 	webServer := http.NewServer(
 		grpc.NewServerWithHandlers(
 			grpc.Services{
@@ -191,6 +200,7 @@ func (s *Server) Serve(ctx context.Context) error {
 				Settlement:             repos,
 				Import:                 repos,
 				User:                   repos,
+				ScriptRunner:           scriptRunner.Run,
 			},
 		),
 		http.NewAuth(
@@ -208,7 +218,7 @@ func (s *Server) Serve(ctx context.Context) error {
 		),
 	)
 
-	exchangeRateAutoUpdater := autoupdate.NewAutoUpdater(ctx, repos, autoupdate.RunJavascript)
+	exchangeRateAutoUpdater := autoupdate.NewAutoUpdater(ctx, repos, scriptRunner.Run)
 	exchangeRateAutoUpdateScheduler, err := autoupdate.NewScheduler("exchange rate auto update", "0 6 * * *", exchangeRateAutoUpdater.NewRunner())
 	if err != nil {
 		return fmt.Errorf("setting up the exchange rate auto update scheduler: %s", err)
