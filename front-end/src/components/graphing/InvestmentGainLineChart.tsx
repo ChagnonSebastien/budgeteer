@@ -74,7 +74,7 @@ const InvestmentGainLineChart: FC<GainChartProps> = ({ fromDate, toDate, navigat
     <LineChart
       data={gainSeries}
       valueFormat={(value) => `${formatFull(defaultCurrency, value, privacyMode)}`}
-      margin={{ top: 20, right: 20, bottom: 60, left: 60 }}
+      margin={{ top: 20, right: 20, bottom: 80, left: 60 }}
       xAxisConfig={{
         format: (date) => dateVisibility.get(date.getTime()) ?? '',
         grid: true,
