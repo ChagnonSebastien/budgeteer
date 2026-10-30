@@ -69,7 +69,7 @@ const AggregatedDiffChart: FC<Props> = (props) => {
   const { exchangeRateOnDay, defaultCurrency } = useContext(MixedAugmentation)
   const { privacyMode } = useContext(DrawerContext)
 
-  const { showLabelEveryFactor, timeseriesIteratorGenerator } = useTimerangeSegmentation(fromDate, toDate)
+  const { showLabelEveryFactor, timeseriesIteratorGenerator } = useTimerangeSegmentation(fromDate, toDate, 'dense')
 
   const timeseriesIterator = useMemo(
     () => timeseriesIteratorGenerator(transactions),
