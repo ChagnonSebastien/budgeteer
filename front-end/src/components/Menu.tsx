@@ -49,12 +49,14 @@ const NavTooltip: FC<{ title: string; children: ReactElement }> = ({ title, chil
 
 const railItemSx = { justifyContent: 'center', px: 0 }
 
+// Kept even on pages that ignore them, so filters survive a detour.
+const sharedQueryKeys = ['from', 'to', 'accounts', 'categories']
+
 class AppPage implements MenuElement {
   constructor(
     private title: string,
     readonly url: string,
     private iconName: string,
-    private keepQuery: string[],
     private useNeedsAttention: () => boolean = () => false,
   ) {}
 
@@ -78,7 +80,7 @@ class AppPage implements MenuElement {
             onClick={() => {
               const query = new URLSearchParams(location.search)
               for (const key of [...query.keys()]) {
-                if (!this.keepQuery.includes(key)) query.delete(key)
+                if (!sharedQueryKeys.includes(key)) query.delete(key)
               }
 
               navigate(`${this.url}?${query.toString()}`)
@@ -138,47 +140,42 @@ interface MenuEntry {
 }
 
 const appPages: MenuEntry[] = [
-  { guestView: false, element: new AppPage('Dashboard', '/', PreparedIcon.TbLayoutDashboard, []) },
+  { guestView: false, element: new AppPage('Dashboard', '/', PreparedIcon.TbLayoutDashboard) },
   {
     guestView: false,
-    element: new AppPage('Transactions', '/transactions', PreparedIcon.TbArrowsExchange, [
-      'from',
-      'to',
-      'accounts',
-      'categories',
-    ]),
+    element: new AppPage('Transactions', '/transactions', PreparedIcon.TbArrowsExchange),
   },
   {
     guestView: true,
-    element: new AppPage('Shared expenses', '/transaction-groups', PreparedIcon.TbUsersGroup, []),
+    element: new AppPage('Shared expenses', '/transaction-groups', PreparedIcon.TbUsersGroup),
   },
   { guestView: false, element: new Subsection('Analysis') },
   {
     guestView: false,
-    element: new AppPage('Net Worth', '/net-worth', PreparedIcon.TbPigMoney, ['from', 'to', 'accounts']),
+    element: new AppPage('Net Worth', '/net-worth', PreparedIcon.TbPigMoney),
   },
   {
     guestView: false,
-    element: new AppPage('Investments', '/investments', PreparedIcon.TbTrendingUp, []),
+    element: new AppPage('Investments', '/investments', PreparedIcon.TbTrendingUp),
   },
   {
     guestView: false,
-    element: new AppPage('Trends', '/trends', PreparedIcon.TbChartBar, ['categories']),
+    element: new AppPage('Trends', '/trends', PreparedIcon.TbChartBar),
   },
   {
     guestView: false,
-    element: new AppPage('Costs Analysis', '/costs', PreparedIcon.TbReportMoney, []),
+    element: new AppPage('Costs Analysis', '/costs', PreparedIcon.TbReportMoney),
   },
   { guestView: false, element: new Subsection('Setup') },
-  { guestView: false, element: new AppPage('Categories', '/categories', PreparedIcon.TbCategory, []) },
-  { guestView: false, element: new AppPage('Accounts', '/accounts', PreparedIcon.TbBuildingBank, []) },
+  { guestView: false, element: new AppPage('Categories', '/categories', PreparedIcon.TbCategory) },
+  { guestView: false, element: new AppPage('Accounts', '/accounts', PreparedIcon.TbBuildingBank) },
   {
     guestView: false,
-    element: new AppPage('Assets', '/assets', PreparedIcon.TbCoins, [], () => useRateFetchFailures().length > 0),
+    element: new AppPage('Assets', '/assets', PreparedIcon.TbCoins, () => useRateFetchFailures().length > 0),
   },
 ]
 
-const administrationPage = new AppPage('Administration', '/administration', PreparedIcon.TbUserShield, [])
+const administrationPage = new AppPage('Administration', '/administration', PreparedIcon.TbUserShield)
 
 const userStore = new UserStore(localStorage)
 
