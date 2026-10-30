@@ -51,31 +51,31 @@ const denseGenerator = (diffDays: number, diffWeeks: number, diffMonths: number)
   let showLabelEveryFactor = 1
   let i = diffDays + 1
 
-  if (diffMonths > 5 * 12) {
-    // above 5 years
+  if (diffMonths > 10 * 12) {
+    // above 10 years
     subN = subMonths
     showLabelEveryFactor = 6
     i = diffMonths + 1
-  } else if (diffMonths > 4 * 12) {
-    // between 4 year and 5 years
+  } else if (diffMonths > 5 * 12) {
+    // between 5 years and 10 years
+    subN = (date, i) => subWeeks(date, i * 2)
+    showLabelEveryFactor = 13
+    i = Math.floor(diffWeeks / 2) + 1
+  } else if (diffMonths > 3 * 12) {
+    // between 3 years and 5 years
     subN = subWeeks
     showLabelEveryFactor = 16
     i = diffWeeks + 1
-  } else if (diffMonths > 3 * 12) {
-    // between 3 year and 4 years
-    subN = (date, i) => subWeeks(date, i * 2)
-    showLabelEveryFactor = 8
-    i = Math.floor(diffWeeks / 2) + 1
   } else if (diffMonths > 2 * 12) {
-    // between 2 year and 3 years
-    subN = subWeeks
-    showLabelEveryFactor = 8
-    i = diffWeeks + 1
+    // between 2 years and 3 years
+    subN = (date, i) => subDays(date, i * 3)
+    showLabelEveryFactor = 30
+    i = Math.floor(diffDays / 3) + 1
   } else if (diffMonths > 12) {
     // between 1 year and 2 years
-    subN = subWeeks
-    showLabelEveryFactor = 6
-    i = diffWeeks + 1
+    subN = (date, i) => subDays(date, i * 2)
+    showLabelEveryFactor = 30
+    i = Math.floor(diffDays / 2) + 1
   } else if (diffWeeks > 6 * 4) {
     // between 6 months and 1 year
     subN = subDays
