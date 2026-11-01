@@ -104,7 +104,7 @@ func withSecurityHeaders(next http.Handler, frontendPublicUrl string) http.Handl
 		"default-src 'self';",
 		"style-src 'self' 'unsafe-inline';",
 		"script-src 'self';",
-		"script-src-elem 'self' 'unsafe-inline';",
+		"script-src-elem 'self';",
 		"worker-src 'self';",
 		fmt.Sprintf("base-uri %s;", frontendPublicUrl),
 		"form-action 'none';",

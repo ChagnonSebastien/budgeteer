@@ -1,7 +1,6 @@
 import { readFileSync } from 'fs'
 import { resolve } from 'path'
 
-import legacy from '@vitejs/plugin-legacy'
 import react from '@vitejs/plugin-react'
 import { defineConfig, Plugin } from 'vite'
 import { VitePWA } from 'vite-plugin-pwa'
@@ -87,7 +86,6 @@ export default defineConfig({
   plugins: [
     react({ babel: { plugins: ['babel-plugin-react-compiler'] } }),
     iconChunks(),
-    legacy(),
     viteStaticCopy({
       targets: [{ src: 'node_modules/monaco-editor/min/vs', dest: '' }],
     }),
