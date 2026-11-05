@@ -113,6 +113,7 @@ const ImportTransactionsPage: FC = () => {
   const [committing, setCommitting] = useState<{ done: number; total: number } | null>(null)
   const [summary, setSummary] = useState<Summary | null>(null)
   const [confirmUncategorized, setConfirmUncategorized] = useState<number | null>(null)
+  const [flagUncategorized, setFlagUncategorized] = useState(false)
   const [undoing, setUndoing] = useState<ImportRecord[] | null>(null)
   const [currencyToCreate, setCurrencyToCreate] = useState<string | null>(null)
 
@@ -315,6 +316,7 @@ const ImportTransactionsPage: FC = () => {
     setText(decoded)
     setSummary(null)
     setAssigned(new Map())
+    setFlagUncategorized(false)
     if (profile) {
       setMapping(profile)
       setStep(2)
@@ -574,6 +576,7 @@ const ImportTransactionsPage: FC = () => {
                   transactions={transactions}
                   pendingPayees={pendingPayees}
                   pendingCategories={pendingCategories}
+                  flagUncategorized={flagUncategorized}
                   onChange={onRowChange}
                   onCreateCurrency={setCurrencyToCreate}
                 />
@@ -629,7 +632,13 @@ const ImportTransactionsPage: FC = () => {
         maxWidth="xs"
         actions={
           <>
-            <Button color="inherit" onClick={() => setConfirmUncategorized(null)}>
+            <Button
+              color="inherit"
+              onClick={() => {
+                setConfirmUncategorized(null)
+                setFlagUncategorized(true)
+              }}
+            >
               Review
             </Button>
             <SecureButton variant="contained" onClick={commit}>

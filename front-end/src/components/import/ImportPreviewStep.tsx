@@ -1,4 +1,15 @@
-import { Box, Button, Checkbox, Chip, FormControlLabel, IconButton, Stack, TextField, Typography } from '@mui/material'
+import {
+  alpha,
+  Box,
+  Button,
+  Checkbox,
+  Chip,
+  FormControlLabel,
+  IconButton,
+  Stack,
+  TextField,
+  Typography,
+} from '@mui/material'
 import { formatDate } from 'date-fns'
 import { FC, memo, useContext, useMemo } from 'react'
 
@@ -55,6 +66,7 @@ interface RowProps {
   transactions: Transaction[]
   pendingPayees: string[]
   pendingCategories: Map<string, CategoryID>
+  flagUncategorized: boolean
   onChange(key: number, choice: RowChoice): void
   onCreateCurrency(symbol: string): void
 }
@@ -69,6 +81,7 @@ const ImportRowCard: FC<RowProps> = memo(
     transactions,
     pendingPayees,
     pendingCategories,
+    flagUncategorized,
     onChange,
     onCreateCurrency,
   }) => {
@@ -84,13 +97,20 @@ const ImportRowCard: FC<RowProps> = memo(
     const excluded = useMemo(() => [row.accountId], [row.accountId])
     const transferAccount = row.transfer ? accounts.find((a) => a.id === row.transfer!.accountId) : undefined
     const transferChecked = row.transfer !== null && choice.counterparty.id === row.transfer.accountId
+    const warned = flagUncategorized && parsed !== null && choice.included && !trade && !transfer && categoryId === null
 
     const set = (patch: Partial<RowChoice>) => onChange(row.key, { ...choice, ...patch })
 
     return (
       <Stack
         spacing={1}
-        sx={{ p: 1.5, borderRadius: 2, bgcolor: 'surface.subtle', opacity: choice.included ? 1 : 0.6 }}
+        sx={{
+          p: 1.5,
+          borderRadius: 2,
+          bgcolor: warned ? (t) => alpha(t.palette.warning.main, 0.15) : 'surface.subtle',
+          outline: warned ? (t) => `1px solid ${t.palette.warning.main}` : 'none',
+          opacity: choice.included ? 1 : 0.6,
+        }}
       >
         <Stack direction="row" alignItems="center" spacing={1}>
           <Checkbox
@@ -240,6 +260,7 @@ interface Props {
   transactions: Transaction[]
   pendingPayees: string[]
   pendingCategories: Map<string, CategoryID>
+  flagUncategorized: boolean
   onChange(key: number, choice: RowChoice): void
   onCreateCurrency(symbol: string): void
 }
