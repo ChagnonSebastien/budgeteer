@@ -12,7 +12,7 @@ import {
   RowChoice,
   RowStatus,
 } from '../../domain/import/preview'
-import Account, { AccountID } from '../../domain/model/account'
+import Account from '../../domain/model/account'
 import Currency, { formatFull } from '../../domain/model/currency'
 import Transaction from '../../domain/model/transaction'
 import { CategoryServiceContext } from '../../service/ServiceContext'
@@ -48,7 +48,7 @@ const tradeLabels: Partial<Record<ParsedRow['kind'], string>> = { buy: 'Buy ', s
 interface RowProps {
   row: PreviewRow
   choice: RowChoice
-  importAccountId: AccountID
+  showAccount: boolean
   accounts: Account[]
   currencies: Currency[]
   transactions: Transaction[]
@@ -57,7 +57,7 @@ interface RowProps {
 }
 
 const ImportRowCard: FC<RowProps> = memo(
-  ({ row, choice, importAccountId, accounts, currencies, transactions, onChange, onCreateCurrency }) => {
+  ({ row, choice, showAccount, accounts, currencies, transactions, onChange, onCreateCurrency }) => {
     const { state: categories } = useContext(CategoryServiceContext)
     const { IconLib } = useContext(IconToolsContext)
     const parsed: ParsedRow | null = row.parse.outcome === 'parsed' ? row.parse.row : null
@@ -67,7 +67,7 @@ const ImportRowCard: FC<RowProps> = memo(
     const transfer = isTransferChoice(choice, accounts)
     const categoryId = parsed ? effectiveCategory(parsed, choice, accounts, transactions) : null
     const category = categories.find((c) => c.id === categoryId)
-    const excluded = useMemo(() => [importAccountId], [importAccountId])
+    const excluded = useMemo(() => [row.accountId], [row.accountId])
     const transferAccount = row.transfer ? accounts.find((a) => a.id === row.transfer!.accountId) : undefined
     const transferChecked = row.transfer !== null && choice.counterparty.id === row.transfer.accountId
 
@@ -108,6 +108,9 @@ const ImportRowCard: FC<RowProps> = memo(
 
         <Stack direction="row" useFlexGap spacing={1} flexWrap="wrap" alignItems="center">
           <Chip size="small" label={statusLabels[row.status]} color={statusColors[row.status]} />
+          {showAccount && (
+            <Chip size="small" variant="outlined" label={accounts.find((a) => a.id === row.accountId)?.name ?? ''} />
+          )}
           {row.payeeSource === 'fuzzy' && choice.counterparty.id === row.payee.id && (
             <Chip size="small" variant="outlined" label="Suggested" />
           )}
@@ -216,7 +219,7 @@ const ImportRowCard: FC<RowProps> = memo(
 interface Props {
   rows: PreviewRow[]
   choices: (row: PreviewRow) => RowChoice
-  importAccountId: AccountID
+  showAccount: boolean
   accounts: Account[]
   currencies: Currency[]
   transactions: Transaction[]

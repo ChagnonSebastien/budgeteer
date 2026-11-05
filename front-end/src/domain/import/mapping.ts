@@ -1,6 +1,6 @@
-import { normalizeStatementName } from './matching'
+import { normalizeAccountName, normalizeStatementName } from './matching'
 import { CsvTable, DateOrder, DecimalSeparator, Encoding, parseDate, parseMinorUnits } from './parsing'
-import { sameForSearch } from '../../utils'
+import { foldText, sameForSearch } from '../../utils'
 import Currency, { CurrencyID } from '../model/currency'
 
 export type AmountColumns = { kind: 'signed'; column: string } | { kind: 'split'; debit: string; credit: string }
@@ -20,36 +20,83 @@ export interface ImportMapping {
   symbolColumn: string | null
   quantityColumn: string | null
   priceColumn: string | null
+  accountColumn?: string | null
+  unitValueAmounts?: boolean
 }
 
-export const defaultMapping = (headers: string[], defaultCurrency: CurrencyID): ImportMapping => {
+const dateOrders: DateOrder[] = ['ymd', 'dmy', 'mdy']
+
+const detectDateOrder = (values: string[]): DateOrder => {
+  const filled = values.filter((value) => value.trim() !== '')
+  return dateOrders.find((order) => filled.every((value) => parseDate(value, order) !== null)) ?? 'ymd'
+}
+
+const signOf = (text: string): number => {
+  const trimmed = text.trim()
+  if (!/[1-9]/.test(trimmed)) return 0
+  return /^\(|^-|-$/.test(trimmed) ? -1 : 1
+}
+
+const detectUnitValueAmounts = (table: CsvTable, quantityColumn: string, amountColumn: string): boolean => {
+  const quantityIndex = table.headers.indexOf(quantityColumn)
+  const amountIndex = table.headers.indexOf(amountColumn)
+  if (quantityIndex < 0 || amountIndex < 0) return false
+  const moves = table.rows
+    .map((row) => [signOf(row[quantityIndex] ?? ''), signOf(row[amountIndex] ?? '')])
+    .filter(([units, cash]) => units !== 0 && cash !== 0)
+  return moves.length > 0 && moves.every(([units, cash]) => units === cash)
+}
+
+export const defaultMapping = (table: CsvTable, defaultCurrency: CurrencyID, multiAccount: boolean): ImportMapping => {
+  const { headers } = table
   const find = (...patterns: RegExp[]) => headers.find((h) => patterns.some((p) => p.test(h))) ?? ''
   const debit = find(/debit|retrait|withdraw/i)
   const credit = find(/credit|dép[oô]t|deposit/i)
+  const dateColumn = find(/date/i) || (headers[0] ?? '')
+  const dateIndex = headers.indexOf(dateColumn)
+  const amountColumn = find(/amount|montant/i)
+  const quantityColumn = find(/^unit[eé]s$|^units$|quantit|^shares$/i)
+  const split = debit !== '' && credit !== '' && debit !== credit
   return {
     encoding: 'utf-8',
     skipLines: 0,
     hasHeader: true,
-    dateColumn: find(/date/i) || (headers[0] ?? ''),
-    dateOrder: 'ymd',
-    amount:
-      debit && credit && debit !== credit
-        ? { kind: 'split', debit, credit }
-        : { kind: 'signed', column: find(/amount|montant/i) },
+    dateColumn,
+    dateOrder: detectDateOrder(table.rows.map((row) => row[dateIndex] ?? '')),
+    amount: split ? { kind: 'split', debit, credit } : { kind: 'signed', column: amountColumn },
     decimalSeparator: '.',
     invertSign: false,
-    descriptionColumn: find(/desc|libell|payee|merchant|marchand|name/i),
+    descriptionColumn: find(/desc|libell|payee|merchant|marchand|name/i) || find(/^transactions?$/i),
     currencyColumn: null,
     defaultCurrency,
-    symbolColumn: null,
-    quantityColumn: null,
-    priceColumn: null,
+    symbolColumn: find(/symbol|ticker|^titres?$|^fonds?$|security|^fund$/i) || null,
+    quantityColumn: quantityColumn || null,
+    priceColumn: find(/prix unitaire|unit price|^prix$|^price$/i) || null,
+    accountColumn: multiAccount
+      ? find(/^(compte|account)$/i, /account n|n[o°].{0,4}compte|num[eé]ro de compte/i) || null
+      : null,
+    unitValueAmounts: !split && detectUnitValueAmounts(table, quantityColumn, amountColumn),
   }
 }
 
-export type RowKind = 'expense' | 'income' | 'buy' | 'sell' | 'dividend' | 'fee' | 'conversion' | 'stockDividend'
+export const accountNamesOf = (table: CsvTable, mapping: ImportMapping): string[] => {
+  const index = mapping.accountColumn ? table.headers.indexOf(mapping.accountColumn) : -1
+  return table.rows.map((row) => (index >= 0 ? normalizeAccountName(row[index] ?? '') : ''))
+}
 
-export const outflowKinds: RowKind[] = ['expense', 'fee']
+export type RowKind =
+  | 'expense'
+  | 'income'
+  | 'buy'
+  | 'sell'
+  | 'dividend'
+  | 'fee'
+  | 'conversion'
+  | 'stockDividend'
+  | 'unitsIn'
+  | 'unitsOut'
+
+export const outflowKinds: RowKind[] = ['expense', 'fee', 'unitsOut']
 
 export interface Holding {
   currencyId: CurrencyID
@@ -78,11 +125,31 @@ interface Units {
 }
 
 const valuedAt = /valued at \$?\s*([\d.,]+)/i
+const reinvestedIncome = /distribution|dividend|reinvest|interet|interest/
 
-const findCurrency = (currencies: Currency[], value: string): Currency | undefined =>
-  currencies.find((c) => sameForSearch(c.name, value)) ?? currencies.find((c) => sameForSearch(c.symbol, value))
+const nameWords = (text: string): string[] =>
+  foldText(text)
+    .split(/[^\p{L}\p{N}]+/u)
+    .filter((word) => word !== '')
+    .map((word) => (word.length > 3 ? word.replace(/s$/, '') : word))
 
-export const parseRows = (table: CsvTable, mapping: ImportMapping, currencies: Currency[]): RowParse[] => {
+const sameName = (a: string[], b: string[]) => a.length === b.length && a.every((word, i) => word === b[i])
+
+const findCurrency = (currencies: Currency[], value: string): Currency | undefined => {
+  const exact =
+    currencies.find((c) => sameForSearch(c.name, value)) ?? currencies.find((c) => sameForSearch(c.symbol, value))
+  if (exact) return exact
+  const words = nameWords(value)
+  const loose = currencies.filter((c) => sameName(nameWords(c.name), words))
+  return loose.length === 1 ? loose[0] : undefined
+}
+
+export const parseRows = (
+  table: CsvTable,
+  mapping: ImportMapping,
+  currencies: Currency[],
+  groupOf: (row: number) => unknown = () => null,
+): RowParse[] => {
   const column = (name: string | null) => (name ? table.headers.indexOf(name) : -1)
   const dateIndex = column(mapping.dateColumn)
   const descriptionIndex = column(mapping.descriptionColumn)
@@ -125,6 +192,7 @@ export const parseRows = (table: CsvTable, mapping: ImportMapping, currencies: C
     const [a, b] = [unitsOnly[i], unitsOnly[i + 1]]
     if (a === null || b === null || combinedInto.has(i)) continue
     if (cellOf(i, dateIndex) !== cellOf(i + 1, dateIndex) || a.symbol === b.symbol) continue
+    if (groupOf(i) !== groupOf(i + 1)) continue
     if (numeric(a.quantity) > 0 === numeric(b.quantity) > 0) continue
     const [out, received] = numeric(a.quantity) < 0 ? [a, b] : [b, a]
 
@@ -132,6 +200,7 @@ export const parseRows = (table: CsvTable, mapping: ImportMapping, currencies: C
       (_, j) =>
         unitsOnly[j] === null &&
         !swappedIn.has(j) &&
+        groupOf(j) === groupOf(i) &&
         cellOf(j, symbolIndex) === out.symbol &&
         Math.abs(numeric(cellOf(j, quantityIndex))) === Math.abs(numeric(out.quantity)),
     )
@@ -142,6 +211,34 @@ export const parseRows = (table: CsvTable, mapping: ImportMapping, currencies: C
     } else {
       conversions.set(i, { out, in: received })
       combinedInto.set(i + 1, lineOf(i))
+    }
+  }
+
+  // Fund accounts hold no cash: the amount is the value of the units moved, so a switch is a units-out/units-in pair.
+  const unitValue = mapping.unitValueAmounts === true && mapping.amount.kind === 'signed'
+  const unitsMoved = (i: number): Units | null => {
+    const symbol = cellOf(i, symbolIndex)
+    const quantity = cellOf(i, quantityIndex)
+    return symbol && numeric(quantity) !== 0 ? { symbol, quantity } : null
+  }
+  const paired = (i: number) => combinedInto.has(i) || conversions.has(i)
+  if (unitValue) {
+    for (let i = 0; i < table.rows.length; i += 1) {
+      const out = unitsMoved(i)
+      if (out === null || numeric(out.quantity) > 0 || paired(i)) continue
+      const value = Math.abs(numeric(cellOf(i, signedIndex)))
+      let best = -1
+      for (let j = 0; j < table.rows.length; j += 1) {
+        const received = unitsMoved(j)
+        if (received === null || numeric(received.quantity) < 0 || received.symbol === out.symbol || paired(j)) continue
+        if (cellOf(i, dateIndex) !== cellOf(j, dateIndex) || groupOf(i) !== groupOf(j)) continue
+        if (Math.abs(numeric(cellOf(j, signedIndex))) !== value) continue
+        if (best < 0 || Math.abs(j - i) < Math.abs(best - i)) best = j
+      }
+      if (best >= 0) {
+        conversions.set(i, { out, in: unitsMoved(best)! })
+        combinedInto.set(best, lineOf(i))
+      }
     }
   }
 
@@ -223,6 +320,18 @@ export const parseRows = (table: CsvTable, mapping: ImportMapping, currencies: C
     const cash = { cash: Math.abs(signed), currencyId: currency.id }
     const units = swappedIn.get(i) ?? { symbol: cell(symbolIndex), quantity: cell(quantityIndex) }
     if (!units.symbol) return parsed({ kind: signed < 0 ? 'expense' : 'income', ...cash, security: null })
+
+    if (unitValue && !swappedIn.has(i) && numeric(units.quantity) !== 0) {
+      const moved = holding(units)
+      if ('failure' in moved) return moved.failure
+      const kind: RowKind =
+        numeric(units.quantity) < 0
+          ? 'unitsOut'
+          : reinvestedIncome.test(foldText(description))
+            ? 'stockDividend'
+            : 'unitsIn'
+      return parsed({ kind, ...cash, security: moved.holding })
+    }
 
     // distributions put their cash in the quantity column, without a unit price
     const distribution = priceIndex >= 0 && cell(priceIndex) === '' && !swappedIn.has(i)

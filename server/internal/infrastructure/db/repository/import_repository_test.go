@@ -103,6 +103,7 @@ func TestBatchCreateTransactions(t *testing.T) {
 		f.row(model.Some(card), model.Some(payee), model.Some(f.category), 450),
 		f.row(model.Some(card), model.Some(payee), model.Some(f.category), 450),
 	}
+	rows[0].AccountName = "fer056 00000434400"
 
 	first, err := f.r.BatchCreateTransactions(f.ctx, f.userID, f.email, importID, rows)
 	if err != nil {
@@ -115,6 +116,9 @@ func TestBatchCreateTransactions(t *testing.T) {
 	}
 	if names := first.StatementNames[model.AccountID(payee)]; !slices.Equal(names, []string{"mcdonalds"}) {
 		t.Fatalf("statement names learned on the payee: %v", names)
+	}
+	if names := first.StatementNames[model.AccountID(card)]; !slices.Equal(names, []string{"fer056 00000434400"}) {
+		t.Fatalf("account names learned on the import account: %v", names)
 	}
 
 	again, err := f.r.BatchCreateTransactions(f.ctx, f.userID, f.email, importID, rows)
@@ -144,7 +148,7 @@ func TestBatchCreateTransactions(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, account := range accounts {
-		if int(account.ID) == payee && len(account.StatementNames) != 0 {
+		if (int(account.ID) == payee || int(account.ID) == card) && len(account.StatementNames) != 0 {
 			t.Fatalf("undo must forget the names it learned: %v", account.StatementNames)
 		}
 	}

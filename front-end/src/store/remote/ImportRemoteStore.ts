@@ -96,6 +96,7 @@ export default class ImportRemoteStore {
             transaction: toCreateTransactionRequest(row.transaction),
             fingerprint: row.fingerprint,
             statementName: row.statementName,
+            accountName: row.accountName,
             mergeInto: row.mergeInto ?? undefined,
           }),
         ),

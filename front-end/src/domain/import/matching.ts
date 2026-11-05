@@ -40,6 +40,26 @@ const statementTokens = (text: string): string[] =>
 
 export const normalizeStatementName = (description: string): string => statementTokens(description).join(' ')
 
+export const normalizeAccountName = (value: string): string => foldText(value).trim().replace(/\s+/g, ' ')
+
+const accountNumbers = (name: string) => name.split(' ').filter((token) => /\d{5,}/.test(token))
+
+export const sharesAccountNumber = (a: string, b: string): boolean => {
+  const numbers = accountNumbers(b)
+  return accountNumbers(a).some((n) => numbers.includes(n))
+}
+
+export const learnedAccount = (name: string, accounts: Account[]): Account | null => {
+  if (name === '') return null
+  const exact = single(accounts.filter((a) => a.statementNames.includes(name)))
+  if (exact !== null) return exact
+  const numbers = accountNumbers(name)
+  if (numbers.length === 0) return null
+  return single(
+    accounts.filter((a) => a.statementNames.some((known) => accountNumbers(known).some((n) => numbers.includes(n)))),
+  )
+}
+
 const jaroWinkler = (a: string, b: string): number => {
   if (a === b) return 1
   const window = Math.max(0, Math.floor(Math.max(a.length, b.length) / 2) - 1)

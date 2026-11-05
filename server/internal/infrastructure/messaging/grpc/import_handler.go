@@ -69,7 +69,7 @@ func (s *TransactionHandler) BatchCreateTransactions(
 		if row.Fingerprint == "" || len(row.Fingerprint) > maxFingerprintLength {
 			return nil, status.Error(codes.InvalidArgument, "invalid row fingerprint")
 		}
-		if len(row.StatementName) > maxStatementNameLength {
+		if len(row.StatementName) > maxStatementNameLength || len(row.AccountName) > maxStatementNameLength {
 			return nil, status.Error(codes.InvalidArgument, "statement name too long")
 		}
 
@@ -87,6 +87,7 @@ func (s *TransactionHandler) BatchCreateTransactions(
 			Transaction:   transaction,
 			Fingerprint:   row.Fingerprint,
 			StatementName: row.StatementName,
+			AccountName:   row.AccountName,
 			MergeInto:     mergeInto,
 		}
 	}

@@ -132,6 +132,7 @@ message ImportRow {
   string fingerprint = 2;
   string statement_name = 3;
   optional uint32 merge_into = 4;
+  string account_name = 5;
 }
 
 message BatchCreateTransactionsRequest {

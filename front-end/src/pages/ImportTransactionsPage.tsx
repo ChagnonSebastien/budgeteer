@@ -5,6 +5,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { UserContext } from '../App'
 import CurrencyForm, { ExchangeRateConfig } from '../components/currencies/CurrencyForm'
 import useCreateCurrency from '../components/currencies/useCreateCurrency'
+import ImportAccountAssignment, { AccountAssignment } from '../components/import/ImportAccountAssignment'
 import ImportMappingStep from '../components/import/ImportMappingStep'
 import { ImportPreviewList } from '../components/import/ImportPreviewStep'
 import ImportSourceStep from '../components/import/ImportSourceStep'
@@ -13,7 +14,8 @@ import ConfirmDeleteModal from '../components/shared/ConfirmDeleteModal'
 import ContentWithHeader from '../components/shared/ContentWithHeader'
 import { SecureButton } from '../components/shared/SecureButton'
 import { useToast } from '../components/shared/ToastProvider'
-import { defaultMapping, ImportMapping, outflowKinds, parseRows } from '../domain/import/mapping'
+import { accountNamesOf, defaultMapping, ImportMapping, outflowKinds, parseRows } from '../domain/import/mapping'
+import { learnedAccount, sharesAccountNumber } from '../domain/import/matching'
 import { decodeFile, parseCsv } from '../domain/import/parsing'
 import {
   buildPreview,
@@ -52,7 +54,7 @@ interface Fingerprinted {
 }
 
 interface Summary {
-  importId: number
+  importIds: number[]
   created: number
   merged: number
   skipped: number
@@ -96,9 +98,10 @@ const ImportTransactionsPage: FC = () => {
     [myOwnAccounts, hidden_default_account],
   )
   const [step, setStep] = useState(0)
-  const [accountId, setAccountId] = useState<AccountID | null>(
-    importAccounts.some((a) => a.id === prefillAccountId) ? prefillAccountId : null,
+  const [accountIds, setAccountIds] = useState<AccountID[]>(
+    prefillAccountId !== null && importAccounts.some((a) => a.id === prefillAccountId) ? [prefillAccountId] : [],
   )
+  const [assigned, setAssigned] = useState<Map<string, AccountID | null>>(new Map())
   const [profiles, setProfiles] = useState<Map<AccountID, ImportMapping>>(new Map())
   const [imports, setImports] = useState<ImportRecord[]>([])
   const [file, setFile] = useState<File | null>(null)
@@ -109,10 +112,14 @@ const ImportTransactionsPage: FC = () => {
   const [committing, setCommitting] = useState<{ done: number; total: number } | null>(null)
   const [summary, setSummary] = useState<Summary | null>(null)
   const [confirmUncategorized, setConfirmUncategorized] = useState<number | null>(null)
-  const [undoing, setUndoing] = useState<ImportRecord | null>(null)
+  const [undoing, setUndoing] = useState<ImportRecord[] | null>(null)
   const [currencyToCreate, setCurrencyToCreate] = useState<string | null>(null)
 
-  const account = accounts.find((a) => a.id === accountId)
+  const selectedAccounts = useMemo(
+    () => importAccounts.filter((a) => accountIds.includes(a.id)),
+    [importAccounts, accountIds],
+  )
+  const multiAccount = accountIds.length > 1
 
   const loadImports = useCallback(() => importStore.getAll().then(setImports), [importStore])
 
@@ -133,10 +140,10 @@ const ImportTransactionsPage: FC = () => {
   }, [online, importStore, loadImports])
 
   const accountCurrencies = useMemo(() => {
-    const ids = new Set(account?.initialAmounts.map((balance) => balance.currencyId) ?? [])
+    const ids = new Set(selectedAccounts.flatMap((a) => a.initialAmounts.map((balance) => balance.currencyId)))
     const held = currencies.filter((c) => ids.has(c.id))
     return held.length > 0 ? held : currencies
-  }, [account, currencies])
+  }, [selectedAccounts, currencies])
 
   const encoding = mapping?.encoding
   const skipLines = mapping?.skipLines
@@ -155,28 +162,75 @@ const ImportTransactionsPage: FC = () => {
     () => (text && skipLines !== undefined && hasHeader !== undefined ? parseCsv(text, skipLines, hasHeader) : null),
     [text, skipLines, hasHeader],
   )
-  const parses = useMemo(
-    () => (table && mapping ? parseRows({ ...table, rows: table.rows.slice(0, maxRows) }, mapping, currencies) : []),
-    [table, mapping, currencies],
+  const imported = useMemo(() => (table ? { ...table, rows: table.rows.slice(0, maxRows) } : null), [table])
+  const accountNames = useMemo(
+    () => (imported && mapping ? accountNamesOf(imported, mapping) : []),
+    [imported, mapping],
   )
 
-  const [fingerprintedFor, setFingerprintedFor] = useState({ table, mapping })
-  if (fingerprintedFor.table !== table || fingerprintedFor.mapping !== mapping) {
-    setFingerprintedFor({ table, mapping })
+  const resolveAccount = useCallback(
+    (name: string): AccountID | null | undefined => {
+      if (assigned.has(name)) return assigned.get(name)
+      const learned = learnedAccount(name, importAccounts)
+      const scoped = (account: Account) => (accountIds.includes(account.id) ? account.id : null)
+      if (learned?.statementNames.includes(name)) return scoped(learned)
+      const siblings = new Set([...assigned].filter(([other]) => sharesAccountNumber(other, name)).map(([, id]) => id))
+      if (siblings.size === 1) return [...siblings][0]
+      if (learned !== null) return scoped(learned)
+      return accountIds.length === 1 ? accountIds[0] : undefined
+    },
+    [assigned, importAccounts, accountIds],
+  )
+
+  const assignments = useMemo((): AccountAssignment[] => {
+    const rows = new Map<string, number>()
+    for (const name of accountNames) rows.set(name, (rows.get(name) ?? 0) + 1)
+    return [...rows].map(([name, count]) => ({ name, rows: count, accountId: resolveAccount(name) }))
+  }, [accountNames, resolveAccount])
+  const unresolved = assignments.some((a) => a.accountId === undefined)
+
+  const resolvedAccounts = useMemo(
+    () => accountNames.map((name) => resolveAccount(name) ?? null),
+    [accountNames, resolveAccount],
+  )
+  const [rowAccounts, setRowAccounts] = useState(resolvedAccounts)
+  if (rowAccounts.length !== resolvedAccounts.length || rowAccounts.some((id, i) => id !== resolvedAccounts[i])) {
+    setRowAccounts(resolvedAccounts)
+  }
+  const accountOf = useCallback((key: number) => rowAccounts[key] ?? null, [rowAccounts])
+
+  const parses = useMemo(
+    () =>
+      imported && mapping
+        ? parseRows(imported, mapping, currencies, (row) => rowAccounts[row] ?? `unassigned ${accountNames[row]}`)
+        : [],
+    [imported, mapping, currencies, rowAccounts, accountNames],
+  )
+
+  const [fingerprintedFor, setFingerprintedFor] = useState({ table, mapping, rowAccounts })
+  if (
+    fingerprintedFor.table !== table ||
+    fingerprintedFor.mapping !== mapping ||
+    fingerprintedFor.rowAccounts !== rowAccounts
+  ) {
+    setFingerprintedFor({ table, mapping, rowAccounts })
     setFingerprinted(null)
     setOverrides(new Map())
   }
 
-  const selectedAccountId = account?.id
   useEffect(() => {
-    if (step !== 2 || selectedAccountId === undefined) return
+    if (step !== 2 || unresolved) return
     let cancelled = false
-    computeFingerprints(selectedAccountId, parses)
+    computeFingerprints(accountOf, parses)
       .then(async (fingerprints) => {
-        const known = await importStore.knownFingerprints(
-          selectedAccountId,
-          fingerprints.filter((f) => f !== ''),
-        )
+        const byAccount = new Map<AccountID, string[]>()
+        fingerprints.forEach((fingerprint, key) => {
+          const id = accountOf(key)
+          if (fingerprint !== '' && id !== null) byAccount.set(id, [...(byAccount.get(id) ?? []), fingerprint])
+        })
+        const known = new Map<string, TransactionID>()
+        const found = await Promise.all([...byAccount].map(([id, prints]) => importStore.knownFingerprints(id, prints)))
+        for (const map of found) for (const [fingerprint, id] of map) known.set(fingerprint, id)
         if (!cancelled) setFingerprinted({ fingerprints, known })
       })
       .catch((err) => {
@@ -186,14 +240,14 @@ const ImportTransactionsPage: FC = () => {
     return () => {
       cancelled = true
     }
-  }, [step, parses, selectedAccountId, importStore, showToast])
+  }, [step, unresolved, parses, accountOf, importStore, showToast])
 
   const preview = useMemo(
     () =>
-      fingerprinted && account
-        ? buildPreview(account, parses, fingerprinted.fingerprints, fingerprinted.known, accounts, transactions)
+      fingerprinted
+        ? buildPreview(accountOf, parses, fingerprinted.fingerprints, fingerprinted.known, accounts, transactions)
         : [],
-    [fingerprinted, account, parses, accounts, transactions],
+    [fingerprinted, accountOf, parses, accounts, transactions],
   )
 
   const choiceOf = useCallback(
@@ -210,6 +264,14 @@ const ImportTransactionsPage: FC = () => {
     [preview, choiceOf],
   )
 
+  const targetNames = useMemo(() => {
+    const ids = new Set(selected.map((row) => row.accountId))
+    return selectedAccounts
+      .filter((a) => ids.has(a.id))
+      .map((a) => a.name)
+      .join(', ')
+  }, [selected, selectedAccounts])
+
   const uncategorized = useMemo(
     () =>
       selected.filter((row) => {
@@ -221,19 +283,25 @@ const ImportTransactionsPage: FC = () => {
     [selected, choiceOf, accounts, transactions],
   )
 
+  const savedProfiles = accountIds.flatMap((id) => profiles.get(id) ?? [])
+  const profile = multiAccount ? savedProfiles.find((p) => p.accountColumn) : savedProfiles[0]
+
   const onFile = async (picked: File) => {
-    if (typeof account === 'undefined') return
-    const profile = profiles.get(account.id)
-    const decoded = await decodeFile(picked, profile?.encoding ?? 'utf-8')
+    if (accountIds.length === 0) return
+    const base = profile ?? savedProfiles[0]
+    const decoded = await decodeFile(picked, base?.encoding ?? 'utf-8')
     setFile(picked)
     setText(decoded)
     setSummary(null)
+    setAssigned(new Map())
     if (profile) {
       setMapping(profile)
       setStep(2)
     } else {
       const fallbackCurrency = accountCurrencies.find((c) => c.id === default_currency) ?? accountCurrencies[0]
-      setMapping(defaultMapping(parseCsv(decoded, 0, true).headers, fallbackCurrency.id))
+      const sample = parseCsv(decoded, base?.skipLines ?? 0, base?.hasHeader ?? true)
+      const detected = defaultMapping(sample, fallbackCurrency.id, multiAccount)
+      setMapping(base ? { ...base, accountColumn: detected.accountColumn } : detected)
       setStep(1)
     }
   }
@@ -251,7 +319,7 @@ const ImportTransactionsPage: FC = () => {
   }
 
   const commit = async () => {
-    if (typeof account === 'undefined' || mapping === null) return
+    if (mapping === null) return
     setConfirmUncategorized(null)
     setCommitting({ done: 0, total: selected.length })
     try {
@@ -268,7 +336,7 @@ const ImportTransactionsPage: FC = () => {
           row,
           parsed,
           commit: toCommitRow(
-            account.id,
+            row.accountId,
             email,
             parsed,
             row.fingerprint,
@@ -276,67 +344,77 @@ const ImportTransactionsPage: FC = () => {
             categoryId,
             choice.mergeInto,
             choice.note ?? parsed.description,
+            accountNames[row.key] ?? '',
           ),
         }
       })
 
-      const importId = await importStore.start(account.id, file?.name ?? '')
+      const byAccount = new Map<AccountID, typeof planned>()
+      for (const p of planned) byAccount.set(p.row.accountId, [...(byAccount.get(p.row.accountId) ?? []), p])
+
+      const importIds: number[] = []
       const absorbed: Transaction[] = []
       const statementNames = new Map<AccountID, string[]>()
       const counts = { created: 0, merged: 0, skipped: 0 }
+      let done = 0
 
-      for (let start = 0; start < planned.length; start += chunkSize) {
-        const chunk = planned.slice(start, start + chunkSize)
-        const result = await importStore.batchCreate(
-          importId,
-          chunk.map((p): CommitRow => p.commit),
-        )
-        result.rows.forEach((outcome, i) => {
-          counts[outcome.outcome] += 1
-          const { commit: planned, parsed, row } = chunk[i]
-          const t = planned.transaction
-          if (outcome.outcome === 'created') {
-            absorbed.push(
-              new Transaction(
-                outcome.transactionId,
-                t.owner,
-                t.amount,
-                t.currencyId,
-                t.categoryId,
-                t.date,
-                t.senderId,
-                t.receiverId,
-                t.note,
-                t.receiverCurrencyId,
-                t.receiverAmount,
-                t.financialIncomeData,
-                t.transactionGroupData,
-              ),
-            )
-          } else if (outcome.outcome === 'merged' && row.transfer?.stored) {
-            const stored = row.transfer.stored
-            const outflow = outflowKinds.includes(parsed.kind)
-            absorbed.push(
-              new Transaction(
-                stored.id,
-                stored.owner,
-                outflow ? parsed.cash : stored.amount,
-                outflow ? parsed.currencyId : stored.currencyId,
-                null,
-                stored.date,
-                outflow ? account.id : stored.senderId,
-                outflow ? stored.receiverId : account.id,
-                stored.note,
-                outflow ? stored.receiverCurrencyId : parsed.currencyId,
-                outflow ? stored.receiverAmount : parsed.cash,
-                null,
-                null,
-              ),
-            )
-          }
-        })
-        for (const [id, names] of result.statementNames) statementNames.set(id, names)
-        setCommitting({ done: Math.min(start + chunkSize, planned.length), total: planned.length })
+      for (const [accountId, accountRows] of byAccount) {
+        const importId = await importStore.start(accountId, file?.name ?? '')
+        importIds.push(importId)
+        for (let start = 0; start < accountRows.length; start += chunkSize) {
+          const chunk = accountRows.slice(start, start + chunkSize)
+          const result = await importStore.batchCreate(
+            importId,
+            chunk.map((p): CommitRow => p.commit),
+          )
+          result.rows.forEach((outcome, i) => {
+            counts[outcome.outcome] += 1
+            const { commit: planned, parsed, row } = chunk[i]
+            const t = planned.transaction
+            if (outcome.outcome === 'created') {
+              absorbed.push(
+                new Transaction(
+                  outcome.transactionId,
+                  t.owner,
+                  t.amount,
+                  t.currencyId,
+                  t.categoryId,
+                  t.date,
+                  t.senderId,
+                  t.receiverId,
+                  t.note,
+                  t.receiverCurrencyId,
+                  t.receiverAmount,
+                  t.financialIncomeData,
+                  t.transactionGroupData,
+                ),
+              )
+            } else if (outcome.outcome === 'merged' && row.transfer?.stored) {
+              const stored = row.transfer.stored
+              const outflow = outflowKinds.includes(parsed.kind)
+              absorbed.push(
+                new Transaction(
+                  stored.id,
+                  stored.owner,
+                  outflow ? parsed.cash : stored.amount,
+                  outflow ? parsed.currencyId : stored.currencyId,
+                  null,
+                  stored.date,
+                  outflow ? accountId : stored.senderId,
+                  outflow ? stored.receiverId : accountId,
+                  stored.note,
+                  outflow ? stored.receiverCurrencyId : parsed.currencyId,
+                  outflow ? stored.receiverAmount : parsed.cash,
+                  null,
+                  null,
+                ),
+              )
+            }
+          })
+          for (const [id, names] of result.statementNames) statementNames.set(id, names)
+          done += chunk.length
+          setCommitting({ done, total: planned.length })
+        }
       }
 
       await absorbTransactions(absorbed)
@@ -358,11 +436,15 @@ const ImportTransactionsPage: FC = () => {
         })
         .filter((a): a is Account => a !== null)
       await absorbAccounts(updatedAccounts)
-      await importStore.saveProfile(account.id, JSON.stringify(mapping))
-      setProfiles((prev) => new Map(prev).set(account.id, mapping))
+      for (const accountId of byAccount.keys()) await importStore.saveProfile(accountId, JSON.stringify(mapping))
+      setProfiles((prev) => {
+        const next = new Map(prev)
+        for (const accountId of byAccount.keys()) next.set(accountId, mapping)
+        return next
+      })
       await loadImports()
 
-      setSummary({ importId, ...counts })
+      setSummary({ importIds, ...counts })
       setStep(3)
     } catch (err) {
       console.error(err)
@@ -372,11 +454,11 @@ const ImportTransactionsPage: FC = () => {
     }
   }
 
-  const undo = async (record: ImportRecord) => {
+  const undo = async (records: ImportRecord[]) => {
     try {
-      await importStore.delete(record.id)
+      for (const record of records) await importStore.delete(record.id)
       await Promise.all([refreshTransactions(), refreshAccounts(), loadImports()])
-      if (summary?.importId === record.id) {
+      if (summary?.importIds.some((id) => records.some((record) => record.id === id))) {
         setSummary(null)
         setStep(0)
       }
@@ -411,9 +493,9 @@ const ImportTransactionsPage: FC = () => {
         {step === 0 && (
           <ImportSourceStep
             accounts={importAccounts}
-            accountId={accountId}
-            onAccountChange={setAccountId}
-            hasProfile={accountId !== null && profiles.has(accountId)}
+            accountIds={accountIds}
+            onAccountsChange={setAccountIds}
+            hasProfile={profile !== undefined}
             onFile={(picked) => {
               onFile(picked).catch((err) => {
                 console.error(err)
@@ -421,7 +503,7 @@ const ImportTransactionsPage: FC = () => {
               })
             }}
             imports={imports}
-            onUndo={setUndoing}
+            onUndo={(record) => setUndoing([record])}
           />
         )}
 
@@ -433,27 +515,37 @@ const ImportTransactionsPage: FC = () => {
             accountCurrencies={accountCurrencies}
             currencies={currencies}
             parses={parses}
+            multiAccount={multiAccount}
             onBack={() => setStep(0)}
             onNext={() => setStep(2)}
           />
         )}
 
-        {step === 2 && account && (
+        {step === 2 && selectedAccounts.length > 0 && (
           <Stack spacing={2}>
             {table && table.rows.length > maxRows && (
               <Alert severity="warning">Only the first {maxRows} rows are imported; split the file for the rest.</Alert>
             )}
-            {fingerprinted === null ? (
+            {mapping?.accountColumn && (
+              <ImportAccountAssignment
+                assignments={assignments}
+                accounts={selectedAccounts}
+                onChange={(name, id) => setAssigned((prev) => new Map(prev).set(name, id))}
+              />
+            )}
+            {unresolved ? (
+              <Typography color="text.secondary">Pick an account for every value of the account column.</Typography>
+            ) : fingerprinted === null ? (
               <Typography color="text.secondary">Checking rows against your transactions…</Typography>
             ) : (
               <>
                 <Typography variant="body2" color="text.secondary">
-                  {selected.length} of {preview.length} rows will be imported into {account.name}.
+                  {selected.length} of {preview.length} rows will be imported into {targetNames}.
                 </Typography>
                 <ImportPreviewList
                   rows={preview}
                   choices={choiceOf}
-                  importAccountId={account.id}
+                  showAccount={multiAccount}
                   accounts={accounts}
                   currencies={currencies}
                   transactions={transactions}
@@ -491,8 +583,8 @@ const ImportTransactionsPage: FC = () => {
                 color="inherit"
                 disabled={readOnly !== null}
                 onClick={() => {
-                  const record = imports.find((i) => i.id === summary.importId)
-                  if (record) setUndoing(record)
+                  const records = imports.filter((i) => summary.importIds.includes(i.id))
+                  if (records.length > 0) setUndoing(records)
                 }}
               >
                 Undo this import
@@ -529,7 +621,7 @@ const ImportTransactionsPage: FC = () => {
       <ConfirmDeleteModal
         open={undoing !== null}
         title="Undo import"
-        description={`Delete the ${undoing?.rowCount ?? 0} transactions from ${undoing?.fileName || 'this file'} and revert the transfers it merged?`}
+        description={`Delete the ${undoing?.reduce((sum, r) => sum + r.rowCount, 0) ?? 0} transactions from ${undoing?.[0]?.fileName || 'this file'} and revert the transfers it merged?`}
         onCancel={() => setUndoing(null)}
         onConfirm={() => (undoing ? undo(undoing) : Promise.resolve())}
       />

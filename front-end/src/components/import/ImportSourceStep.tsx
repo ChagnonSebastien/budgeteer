@@ -1,4 +1,14 @@
-import { Button, IconButton, List, ListItem, ListItemText, MenuItem, Stack, TextField, Typography } from '@mui/material'
+import {
+  Autocomplete,
+  Button,
+  IconButton,
+  List,
+  ListItem,
+  ListItemText,
+  Stack,
+  TextField,
+  Typography,
+} from '@mui/material'
 import { formatDate } from 'date-fns'
 import { FC, useContext } from 'react'
 
@@ -9,40 +19,52 @@ import { IconToolsContext } from '../icons/IconTools'
 
 interface Props {
   accounts: Account[]
-  accountId: AccountID | null
-  onAccountChange(id: AccountID): void
+  accountIds: AccountID[]
+  onAccountsChange(ids: AccountID[]): void
   hasProfile: boolean
   onFile(file: File): void
   imports: ImportRecord[]
   onUndo(record: ImportRecord): void
 }
 
-const ImportSourceStep: FC<Props> = ({ accounts, accountId, onAccountChange, hasProfile, onFile, imports, onUndo }) => {
+const ImportSourceStep: FC<Props> = ({
+  accounts,
+  accountIds,
+  onAccountsChange,
+  hasProfile,
+  onFile,
+  imports,
+  onUndo,
+}) => {
   const { IconLib } = useContext(IconToolsContext)
   const readOnly = useContext(ReadOnlyContext)
-  const accountImports = imports.filter((record) => record.accountId === accountId)
+  const accountImports = imports.filter((record) => accountIds.includes(record.accountId))
+  const selected = accounts.filter((account) => accountIds.includes(account.id))
 
   return (
     <Stack spacing={3} sx={{ width: '100%' }}>
-      <TextField
-        select
-        variant="standard"
-        label="Account"
-        value={accountId ?? ''}
-        onChange={(ev) => onAccountChange(Number(ev.target.value))}
-        helperText="One file maps to one account, the way banks export it"
-      >
-        {accounts.map((account) => (
-          <MenuItem key={account.id} value={account.id}>
-            {account.name}
-          </MenuItem>
-        ))}
-      </TextField>
+      <Autocomplete
+        multiple
+        disableCloseOnSelect
+        options={accounts}
+        value={selected}
+        onChange={(_, value) => onAccountsChange(value.map((account) => account.id))}
+        getOptionLabel={(account) => account.name}
+        isOptionEqualToValue={(a, b) => a.id === b.id}
+        renderInput={(params) => (
+          <TextField
+            {...params}
+            variant="standard"
+            label="Accounts"
+            helperText="Pick every account the file holds; with several, a column of the file tells them apart"
+          />
+        )}
+      />
 
       <Button
         variant="contained"
         component="label"
-        disabled={accountId === null || readOnly !== null}
+        disabled={accountIds.length === 0 || readOnly !== null}
         startIcon={<IconLib.FaFileImport />}
       >
         {readOnly?.label ?? 'Choose a CSV file'}
@@ -59,7 +81,8 @@ const ImportSourceStep: FC<Props> = ({ accounts, accountId, onAccountChange, has
       </Button>
       {hasProfile && (
         <Typography variant="body2" color="text.secondary">
-          A saved column mapping exists for this account, so the file goes straight to the preview.
+          A saved column mapping exists for {accountIds.length > 1 ? 'these accounts' : 'this account'}, so the file
+          goes straight to the preview.
         </Typography>
       )}
 
@@ -77,7 +100,7 @@ const ImportSourceStep: FC<Props> = ({ accounts, accountId, onAccountChange, has
                 }
               >
                 <ListItemText
-                  primary={record.fileName || 'Untitled file'}
+                  primary={`${record.fileName || 'Untitled file'}${accountIds.length > 1 ? ` (${accounts.find((a) => a.id === record.accountId)?.name ?? ''})` : ''}`}
                   secondary={`${record.rowCount} rows, ${formatDate(record.createdAt, 'PPp')}`}
                 />
               </ListItem>

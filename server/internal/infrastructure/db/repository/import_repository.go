@@ -40,6 +40,7 @@ type ImportRow struct {
 	Transaction   NewTransaction
 	Fingerprint   string
 	StatementName string
+	AccountName   string
 	MergeInto     model.Optional[model.TransactionID]
 }
 
@@ -172,11 +173,17 @@ func (r *Repository) BatchCreateTransactions(
 			}
 			added++
 
-			if id, isSome := counterparty.Value(); isSome && row.StatementName != "" {
-				if _, seen := learned[int32(id)]; !seen {
-					learnedOrder = append(learnedOrder, int32(id))
+			learn := func(account int32, name string) {
+				if _, seen := learned[account]; !seen {
+					learnedOrder = append(learnedOrder, account)
 				}
-				learned[int32(id)] = append(learned[int32(id)], row.StatementName)
+				learned[account] = append(learned[account], name)
+			}
+			if id, isSome := counterparty.Value(); isSome && row.StatementName != "" {
+				learn(int32(id), row.StatementName)
+			}
+			if row.AccountName != "" {
+				learn(imp.Account, row.AccountName)
 			}
 		}
 

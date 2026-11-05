@@ -31,6 +31,8 @@ const kindLabels = {
   fee: 'Fee',
   conversion: 'Conversion',
   stockDividend: 'Stock dividend',
+  unitsIn: 'Units in',
+  unitsOut: 'Units out',
 }
 
 interface Props {
@@ -40,6 +42,7 @@ interface Props {
   accountCurrencies: Currency[]
   currencies: Currency[]
   parses: RowParse[]
+  multiAccount: boolean
   onBack(): void
   onNext(): void
 }
@@ -75,12 +78,13 @@ const Row: FC<{ children: ReactNode }> = ({ children }) => (
 )
 
 const ImportMappingStep: FC<Props> = (props) => {
-  const { headers, mapping, onChange, accountCurrencies, currencies, parses, onBack, onNext } = props
+  const { headers, mapping, onChange, accountCurrencies, currencies, parses, multiAccount, onBack, onNext } = props
   const set = (patch: Partial<ImportMapping>) => onChange({ ...mapping, ...patch })
 
   const sample = useMemo(() => parses.slice(0, sampleSize), [parses])
   const failures = useMemo(() => parses.filter((p) => p.outcome !== 'parsed').length, [parses])
   const ready =
+    (!multiAccount || Boolean(mapping.accountColumn)) &&
     mapping.dateColumn !== '' &&
     mapping.descriptionColumn !== '' &&
     (mapping.amount.kind === 'signed'
@@ -136,12 +140,21 @@ const ImportMappingStep: FC<Props> = (props) => {
         </TextField>
       </Row>
 
-      <ColumnSelect
-        label="Description"
-        headers={headers}
-        value={mapping.descriptionColumn}
-        onChange={(v) => set({ descriptionColumn: v ?? '' })}
-      />
+      <Row>
+        <ColumnSelect
+          label="Description"
+          headers={headers}
+          value={mapping.descriptionColumn}
+          onChange={(v) => set({ descriptionColumn: v ?? '' })}
+        />
+        <ColumnSelect
+          label={multiAccount ? 'Account' : 'Account (optional)'}
+          optional={!multiAccount}
+          headers={headers}
+          value={mapping.accountColumn ?? null}
+          onChange={(v) => set({ accountColumn: v })}
+        />
+      </Row>
 
       <Stack spacing={1}>
         <ToggleButtonGroup
@@ -251,6 +264,17 @@ const ImportMappingStep: FC<Props> = (props) => {
             onChange={(v) => set({ priceColumn: v })}
           />
         </Row>
+        {mapping.quantityColumn && mapping.amount.kind === 'signed' && (
+          <FormControlLabel
+            control={
+              <Switch
+                checked={mapping.unitValueAmounts === true}
+                onChange={(ev) => set({ unitValueAmounts: ev.target.checked })}
+              />
+            }
+            label="Amounts are the value of the units moved (fund accounts holding no cash)"
+          />
+        )}
       </Stack>
 
       <Stack spacing={1}>

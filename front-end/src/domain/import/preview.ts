@@ -35,6 +35,7 @@ export interface TransferOption {
 
 export interface PreviewRow {
   key: number
+  accountId: AccountID
   parse: RowParse
   fingerprint: string
   status: RowStatus
@@ -51,11 +52,15 @@ export interface RowChoice {
   note: string | null
 }
 
-export const computeFingerprints = async (account: AccountID, parses: RowParse[]): Promise<string[]> => {
+export const computeFingerprints = async (
+  accountOf: (key: number) => AccountID | null,
+  parses: RowParse[],
+): Promise<string[]> => {
   const occurrences = new Map<string, number>()
   return Promise.all(
-    parses.map((parse) => {
-      if (parse.outcome !== 'parsed') return ''
+    parses.map((parse, index) => {
+      const account = accountOf(index)
+      if (parse.outcome !== 'parsed' || account === null) return ''
       const { date, kind, cash, currencyId, description, security } = parse.row
       const key = [
         account,
@@ -78,7 +83,8 @@ const isOutflow = (row: ParsedRow) => outflowKinds.includes(row.kind)
 
 export const isTrade = (row: ParsedRow) => row.kind === 'buy' || row.kind === 'sell' || row.kind === 'conversion'
 
-const movesCash = (row: ParsedRow) => !isTrade(row) && row.kind !== 'stockDividend'
+const movesCash = (row: ParsedRow) =>
+  !isTrade(row) && row.kind !== 'stockDividend' && row.kind !== 'unitsIn' && row.kind !== 'unitsOut'
 
 const sideOf = (transaction: Transaction, account: AccountID, outflow: boolean) =>
   outflow
@@ -111,7 +117,7 @@ const pairClosest = <Candidate>(
 const withinWindow = (a: Date, b: Date) => Math.abs(a.getTime() - b.getTime()) <= matchWindowMs
 
 export const buildPreview = (
-  account: Account,
+  accountOf: (key: number) => AccountID | null,
   parses: RowParse[],
   fingerprints: string[],
   known: Map<string, TransactionID>,
@@ -120,12 +126,15 @@ export const buildPreview = (
 ): PreviewRow[] => {
   const mine = new Set(accounts.filter((a) => a.isMine).map((a) => a.id))
   const payees = preparePayees(accounts.filter((a) => !a.isMine))
-  const otherOwnAccounts = accounts.filter((a) => a.isMine && a.id !== account.id)
+  const ownAccounts = accounts.filter((a) => a.isMine)
   const taken = new Set<TransactionID>(known.values())
 
-  const rows: PreviewRow[] = parses.map((parse, key) => {
+  const rows: (PreviewRow | null)[] = parses.map((parse, key) => {
+    const accountId = accountOf(key)
+    if (accountId === null) return null
     const base = {
       key,
+      accountId,
       parse,
       fingerprint: fingerprints[key] ?? '',
       payee: { id: null, name: '' },
@@ -145,12 +154,14 @@ export const buildPreview = (
     }
   })
 
+  const present = () => rows.filter((r): r is PreviewRow => r !== null)
   const open = () =>
-    rows.filter(
+    present().filter(
       (r): r is PreviewRow & { parse: { outcome: 'parsed'; row: ParsedRow } } =>
         r.status === 'new' && r.parse.outcome === 'parsed' && movesCash(r.parse.row),
     )
-  const parsedOf = (key: number) => (rows[key].parse as { row: ParsedRow }).row
+  const rowOf = (key: number) => rows[key]!
+  const parsedOf = (key: number) => (rowOf(key).parse as { row: ParsedRow }).row
 
   const duplicates = pairClosest(
     open().map((r) => ({ key: r.key, date: r.parse.row.date })),
@@ -159,7 +170,7 @@ export const buildPreview = (
       return transactions
         .filter((t) => {
           if (t.senderId !== null && t.senderId === t.receiverId) return false
-          const side = sideOf(t, account.id, isOutflow(row))
+          const side = sideOf(t, rowOf(key).accountId, isOutflow(row))
           return (
             side !== null &&
             side.amount === row.cash &&
@@ -174,22 +185,19 @@ export const buildPreview = (
   for (const [key, stored] of duplicates) {
     const counterpart = isOutflow(parsedOf(key)) ? stored.receiverId : stored.senderId
     const isTransfer = stored.categoryId === null && counterpart !== null && mine.has(counterpart)
-    rows[key].status = isTransfer ? 'imported' : 'duplicate'
+    rowOf(key).status = isTransfer ? 'imported' : 'duplicate'
   }
 
   const mergeable = transactions.filter(
-    (t) =>
-      t.categoryId !== null &&
-      t.financialIncomeData === null &&
-      t.transactionGroupData === null &&
-      t.senderId !== account.id &&
-      t.receiverId !== account.id,
+    (t) => t.categoryId !== null && t.financialIncomeData === null && t.transactionGroupData === null,
   )
   const transferCandidates = (key: number, sameCurrency: boolean) => {
     const row = parsedOf(key)
+    const { accountId } = rowOf(key)
     if (row.kind !== 'expense' && row.kind !== 'income') return []
     return mergeable
       .filter((t) => {
+        if (t.senderId === accountId || t.receiverId === accountId) return false
         if (!withinWindow(t.date, row.date)) return false
         const own = isOutflow(row) ? t.receiverId : t.senderId
         const other = isOutflow(row) ? t.senderId : t.receiverId
@@ -215,20 +223,21 @@ export const buildPreview = (
       taken,
     )
     for (const [key, option] of matched) {
-      rows[key].status = 'transferMatch'
-      rows[key].transfer = option
+      rowOf(key).status = 'transferMatch'
+      rowOf(key).transfer = option
     }
   }
 
   for (const row of open()) {
     if (row.parse.row.kind !== 'expense' && row.parse.row.kind !== 'income') continue
+    const otherOwnAccounts = ownAccounts.filter((a) => a.id !== row.accountId)
     const accountId = exactStatementMatch(row.parse.row.statementName, otherOwnAccounts)
     if (accountId === null) continue
     row.status = 'transferSuggestion'
     row.transfer = { accountId, mergeInto: null, stored: null }
   }
 
-  return rows
+  return present()
 }
 
 export const isImportable = (row: PreviewRow) =>
@@ -280,6 +289,7 @@ export interface CommitRow {
   transaction: TransactionUpdatableFields
   fingerprint: string
   statementName: string
+  accountName: string
   mergeInto: TransactionID | null
 }
 
@@ -292,6 +302,7 @@ export const toCommitRow = (
   categoryId: CategoryID | null,
   mergeInto: TransactionID | null,
   note: string,
+  accountName: string,
 ): CommitRow => {
   const security = row.security
   const cashSide = { amount: row.cash, currency: row.currencyId }
@@ -307,6 +318,10 @@ export const toCommitRow = (
         return { ...transfer, from: securitySide, to: cashSide }
       case 'conversion':
         return { ...transfer, from: cashSide, to: securitySide }
+      case 'unitsIn':
+        return { sender, receiver, from: cashSide, to: securitySide }
+      case 'unitsOut':
+        return { sender, receiver, from: securitySide, to: cashSide }
       case 'stockDividend':
         return { sender, receiver, from: cashSide, to: securitySide }
       default:
@@ -334,6 +349,7 @@ export const toCommitRow = (
     },
     fingerprint,
     statementName: counterpartyId !== null ? row.statementName : '',
+    accountName,
     mergeInto,
   }
 }
