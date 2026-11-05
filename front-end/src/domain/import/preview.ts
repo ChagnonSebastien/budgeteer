@@ -1,6 +1,7 @@
 import { outflowKinds, ParsedRow, RowParse } from './mapping'
 import { exactStatementMatch, MatchSource, matchPayee, preparePayees } from './matching'
 import { formatYmd, sha256Hex } from './parsing'
+import { foldText } from '../../utils'
 import Account, { AccountID } from '../model/account'
 import { CategoryID } from '../model/category'
 import Transaction, {
@@ -278,10 +279,11 @@ export const effectiveCategory = (
   choice: RowChoice,
   accounts: Account[],
   transactions: Transaction[],
+  pendingCategories: Map<string, CategoryID>,
 ): CategoryID | null => {
   if (isTrade(row) || isTransferChoice(choice, accounts)) return null
   if (choice.categoryId !== 'auto') return choice.categoryId
-  if (choice.counterparty.id === null) return null
+  if (choice.counterparty.id === null) return pendingCategories.get(foldText(choice.counterparty.name.trim())) ?? null
   return latestCategoryWith(transactions, choice.counterparty.id, !isOutflow(row))
 }
 

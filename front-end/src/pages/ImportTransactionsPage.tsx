@@ -30,6 +30,7 @@ import {
   toCommitRow,
 } from '../domain/import/preview'
 import Account, { AccountID, payeeFields } from '../domain/model/account'
+import { CategoryID } from '../domain/model/category'
 import { CurrencyUpdatableFields } from '../domain/model/currency'
 import Transaction, { TransactionID } from '../domain/model/transaction'
 import MixedAugmentation from '../service/MixedAugmentation'
@@ -259,6 +260,26 @@ const ImportTransactionsPage: FC = () => {
     setOverrides((prev) => new Map(prev).set(key, choice))
   }, [])
 
+  const pendingPayees = useMemo(() => {
+    const names = new Map<string, string>()
+    for (const { counterparty } of [...overrides.values()].reverse()) {
+      const name = counterparty.name.trim()
+      if (counterparty.id !== null || name === '' || names.has(foldText(name))) continue
+      names.set(foldText(name), name)
+    }
+    return [...names.values()]
+  }, [overrides])
+
+  const pendingCategories = useMemo(() => {
+    const categories = new Map<string, CategoryID>()
+    for (const { counterparty, categoryId } of [...overrides.values()].reverse()) {
+      const name = foldText(counterparty.name.trim())
+      if (counterparty.id !== null || name === '' || categoryId === 'auto' || categoryId === null) continue
+      if (!categories.has(name)) categories.set(name, categoryId)
+    }
+    return categories
+  }, [overrides])
+
   const selected = useMemo(
     () => preview.filter((row) => row.parse.outcome === 'parsed' && choiceOf(row).included),
     [preview, choiceOf],
@@ -278,9 +299,9 @@ const ImportTransactionsPage: FC = () => {
         if (row.parse.outcome !== 'parsed') return false
         const parsed = row.parse.row
         if (isTrade(parsed) || isTransferChoice(choiceOf(row), accounts)) return false
-        return effectiveCategory(parsed, choiceOf(row), accounts, transactions) === null
+        return effectiveCategory(parsed, choiceOf(row), accounts, transactions, pendingCategories) === null
       }).length,
-    [selected, choiceOf, accounts, transactions],
+    [selected, choiceOf, accounts, transactions, pendingCategories],
   )
 
   const savedProfiles = accountIds.flatMap((id) => profiles.get(id) ?? [])
@@ -331,7 +352,9 @@ const ImportTransactionsPage: FC = () => {
         const transfer = isTransferChoice(choice, accounts)
         const trade = isTrade(parsed)
         const categoryId =
-          trade || transfer ? null : (effectiveCategory(parsed, choice, accounts, transactions) ?? rootCategory.id)
+          trade || transfer
+            ? null
+            : (effectiveCategory(parsed, choice, accounts, transactions, pendingCategories) ?? rootCategory.id)
         return {
           row,
           parsed,
@@ -549,6 +572,8 @@ const ImportTransactionsPage: FC = () => {
                   accounts={accounts}
                   currencies={currencies}
                   transactions={transactions}
+                  pendingPayees={pendingPayees}
+                  pendingCategories={pendingCategories}
                   onChange={onRowChange}
                   onCreateCurrency={setCurrencyToCreate}
                 />

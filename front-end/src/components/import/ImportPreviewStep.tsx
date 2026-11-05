@@ -13,6 +13,7 @@ import {
   RowStatus,
 } from '../../domain/import/preview'
 import Account from '../../domain/model/account'
+import { CategoryID } from '../../domain/model/category'
 import Currency, { formatFull } from '../../domain/model/currency'
 import Transaction from '../../domain/model/transaction'
 import { CategoryServiceContext } from '../../service/ServiceContext'
@@ -52,12 +53,25 @@ interface RowProps {
   accounts: Account[]
   currencies: Currency[]
   transactions: Transaction[]
+  pendingPayees: string[]
+  pendingCategories: Map<string, CategoryID>
   onChange(key: number, choice: RowChoice): void
   onCreateCurrency(symbol: string): void
 }
 
 const ImportRowCard: FC<RowProps> = memo(
-  ({ row, choice, showAccount, accounts, currencies, transactions, onChange, onCreateCurrency }) => {
+  ({
+    row,
+    choice,
+    showAccount,
+    accounts,
+    currencies,
+    transactions,
+    pendingPayees,
+    pendingCategories,
+    onChange,
+    onCreateCurrency,
+  }) => {
     const { state: categories } = useContext(CategoryServiceContext)
     const { IconLib } = useContext(IconToolsContext)
     const parsed: ParsedRow | null = row.parse.outcome === 'parsed' ? row.parse.row : null
@@ -65,7 +79,7 @@ const ImportRowCard: FC<RowProps> = memo(
     const outflow = parsed ? outflowKinds.includes(parsed.kind) : false
     const trade = parsed !== null && isTrade(parsed)
     const transfer = isTransferChoice(choice, accounts)
-    const categoryId = parsed ? effectiveCategory(parsed, choice, accounts, transactions) : null
+    const categoryId = parsed ? effectiveCategory(parsed, choice, accounts, transactions, pendingCategories) : null
     const category = categories.find((c) => c.id === categoryId)
     const excluded = useMemo(() => [row.accountId], [row.accountId])
     const transferAccount = row.transfer ? accounts.find((a) => a.id === row.transfer!.accountId) : undefined
@@ -184,6 +198,7 @@ const ImportRowCard: FC<RowProps> = memo(
                   itemDisplayText={(item) => item?.name ?? choice.counterparty.name}
                   excludeIds={excluded}
                   allowNew
+                  pendingNames={pendingPayees}
                   onAccountSelected={({ id, name }) => set({ counterparty: { id, name }, mergeInto: null })}
                 />
               </Box>
@@ -223,6 +238,8 @@ interface Props {
   accounts: Account[]
   currencies: Currency[]
   transactions: Transaction[]
+  pendingPayees: string[]
+  pendingCategories: Map<string, CategoryID>
   onChange(key: number, choice: RowChoice): void
   onCreateCurrency(symbol: string): void
 }

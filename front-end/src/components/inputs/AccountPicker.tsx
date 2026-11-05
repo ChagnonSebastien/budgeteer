@@ -16,6 +16,7 @@ interface Props {
   myOwn?: boolean
   excludeIds?: AccountID[]
   allowNew?: boolean
+  pendingNames?: string[]
 }
 
 const AccountPicker: FC<Props> = (props) => {
@@ -25,6 +26,7 @@ const AccountPicker: FC<Props> = (props) => {
     myOwn,
     excludeIds,
     allowNew = false,
+    pendingNames,
     labelText,
     errorText,
     itemDisplayText = (item) => item?.name ?? '',
@@ -60,21 +62,31 @@ const AccountPicker: FC<Props> = (props) => {
     return ordered
   }, [accounts, transactions])
 
+  // Negative ids keep pending names apart from stored accounts; selecting one reports id null.
+  const pendingAccounts = useMemo(
+    () =>
+      (pendingNames ?? [])
+        .filter((name) => !accounts.some((a) => a.hasName(name)))
+        .map((name, i) => new Account(-(i + 1), name, [], false, '', '', false)),
+    [pendingNames, accounts],
+  )
+  const items = useMemo(() => [...pendingAccounts, ...orderedAccounts], [pendingAccounts, orderedAccounts])
+
   // Get the selected account ID from valueText if possible
   const selectedAccountId = useMemo(() => {
     if (!onAccountSelected) return null
-    const account = accounts.find((a) => a.name === valueText)
+    const account = accounts.find((a) => a.name === valueText) ?? pendingAccounts.find((a) => a.name === valueText)
     return account?.id ?? null
-  }, [accounts, valueText, onAccountSelected])
+  }, [accounts, pendingAccounts, valueText, onAccountSelected])
 
   // Handle account selection
   const handleAccountSelected = (id: AccountID) => {
     if (onAccountSelected) {
-      const account = accounts.find((a) => a.id === id)
+      const account = items.find((a) => a.id === id)
       if (account) {
         onAccountSelected({
-          existing: true,
-          id: account.id,
+          existing: id >= 0,
+          id: id >= 0 ? account.id : null,
           name: account.name,
         })
       }
@@ -96,7 +108,7 @@ const AccountPicker: FC<Props> = (props) => {
   return (
     <ItemPicker<AccountID, Account, AdditionalAccountCardProps>
       variant="dropdown"
-      items={orderedAccounts}
+      items={items}
       ItemListComponent={GroupedAccountList}
       ItemComponent={AccountCard}
       selectedItemId={selectedAccountId}
