@@ -83,8 +83,9 @@ func (s *GrpcWebServer) catchAllHandler(resp http.ResponseWriter, req *http.Requ
 
 	if req.URL.Path != "/" {
 		filePath := filepath.Join(webDirectory, req.URL.Path)
-		_, err := os.Stat(filePath)
-		if err == nil {
+		// Directories fall through to the SPA: /assets is both a route and Vite's output folder.
+		info, err := os.Stat(filePath)
+		if err == nil && !info.IsDir() {
 			// Unhashed files like sw.js must be revalidated, or the CDN keeps serving a stale service worker.
 			if !strings.HasPrefix(req.URL.Path, "/assets/") {
 				resp.Header().Set("Cache-Control", "no-cache")
