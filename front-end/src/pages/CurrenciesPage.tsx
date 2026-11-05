@@ -18,7 +18,7 @@ import { Column } from '../components/shared/Layout'
 import { useNavigateFromDialog } from '../components/shared/useCloseOnBack'
 import useQueryParams from '../components/shared/useQueryParams'
 import Currency, { CurrencyID, formatFull } from '../domain/model/currency'
-import { rateWording } from '../domain/model/currencyClassification'
+import { compareTypeGroups, currencyTypeGroup, rateWording } from '../domain/model/currencyClassification'
 import { isOldAndUnused } from '../domain/model/usage'
 import MixedAugmentation from '../service/MixedAugmentation'
 import { AccountServiceContext, CurrencyServiceContext } from '../service/ServiceContext'
@@ -68,13 +68,15 @@ const CurrenciesPage: FC = () => {
   const groups = Object.entries(
     orderedCurrencies.reduce(
       (groups, currency) => {
-        const groupKey = (groupBy === 'risk' ? currency.risk : currency.type) || groupOther
+        const groupKey = (groupBy === 'risk' ? currency.risk : currencyTypeGroup(currency.type)) || groupOther
         return { ...groups, [groupKey]: [...(groups[groupKey] || []), currency] }
       },
       {} as Record<string, Currency[]>,
     ),
   ).sort(
-    ([a], [b]) => Number(a === groupOther) - Number(b === groupOther) || (groupBy === 'risk' ? a.localeCompare(b) : 0),
+    ([a], [b]) =>
+      Number(a === groupOther) - Number(b === groupOther) ||
+      (groupBy === 'risk' ? a.localeCompare(b) : compareTypeGroups(a, b)),
   )
 
   const getGroupTotal = (groupCurrencies: Currency[]) => {

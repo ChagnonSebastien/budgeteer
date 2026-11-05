@@ -82,6 +82,16 @@ const proposedTypes = Object.entries(proposedCurrencyTypes).flatMap(([group, typ
   Object.entries(types).map(([name, risk]) => ({ name, group, risk })),
 )
 
+const typeGroupOrder = [customTypesGroup, ...Object.keys(proposedCurrencyTypes)]
+
+export function currencyTypeGroup(type: string): string | null {
+  const normalized = type.trim().toLowerCase()
+  if (normalized === '') return null
+  return proposedTypes.find((t) => t.name.toLowerCase() === normalized)?.group ?? customTypesGroup
+}
+
+export const compareTypeGroups = (a: string, b: string) => typeGroupOrder.indexOf(a) - typeGroupOrder.indexOf(b)
+
 export function currencyTypeOptions(currencies: Currency[]): CurrencyTypeOption[] {
   const known = new Set(proposedTypes.map((t) => t.name.toLowerCase()))
   const custom = new Map<string, CurrencyTypeOption>()
